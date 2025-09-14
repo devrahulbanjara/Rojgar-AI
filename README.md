@@ -1,5 +1,76 @@
-# ConvexHire
-Multi-Agent Recruitment Automation and Job Marketplace
+<div align="center">
+  <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
+  
+  **Multi-Agent Recruitment Automation and Job Marketplace**
+  
+  *Transform your hiring process with AI-powered recruitment platform that combines intelligent automation with human expertise*
+
+  [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+  [![Node Version](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.116+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
+  [![React](https://img.shields.io/badge/React-18.3+-61DAFB.svg?logo=react)](https://reactjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178C6.svg?logo=typescript)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4+-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
+  [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://www.docker.com/)
+  [![UV Package Manager](https://img.shields.io/badge/UV-Package_Manager-FF6B35.svg)](https://github.com/astral-sh/uv)
+  [![Google Gemini](https://img.shields.io/badge/Google_Gemini-1.36+-4285F4.svg?logo=google)](https://ai.google.dev/)
+  [![Vite](https://img.shields.io/badge/Vite-5.4+-646CFF.svg?logo=vite)](https://vitejs.dev/)
+  [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+  
+</div>
+
+---
+
+## Overview
+
+ConvexHire is a cutting-edge recruitment platform that leverages artificial intelligence to streamline the hiring process for both recruiters and candidates. Built with modern technologies and best practices, it provides intelligent resume screening, transparent feedback, and efficient workflows that transform traditional recruitment.
+
+> [!IMPORTANT]  
+> ConvexHire is currently in active development. Features and APIs may change as we continue to enhance the platform.
+
+## Project Status
+
+### Development Milestones
+
+- [ ] **Milestone A**: Core Platform Foundation
+  - [ ] Backend API development with FastAPI
+  - [ ] Frontend application with React & TypeScript
+  - [ ] Database schema and models
+  - [ ] Authentication and authorization system
+
+- [ ] **Milestone B**: AI Integration & Smart Features
+  - [ ] Google Gemini AI integration
+  - [ ] Resume parsing and analysis
+  - [ ] Job-candidate matching algorithms
+  - [ ] Template-based job description generation
+
+- [ ] **Milestone C**: Advanced Recruitment Features
+  - [ ] Multi-agent automation workflows
+  - [ ] Real-time analytics dashboard
+  - [ ] Interview scheduling system
+  - [ ] Candidate communication portal
+
+- [ ] **Milestone D**: Production Readiness
+  - [ ] Docker containerization
+  - [ ] CI/CD pipeline setup
+  - [ ] Performance optimization
+  - [ ] Security audit and compliance
+
+> [!NOTE]  
+> Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.
+
+### Key Features
+
+- **AI-Powered Matching**: Advanced algorithms for candidate-job matching with explainable scores
+- **Smart Resume Screening**: Automated resume analysis with detailed insights
+- **Template-Based Job Descriptions**: Customizable JD templates with AI generation
+- **Real-time Analytics**: Comprehensive dashboards for recruitment metrics
+- **Multi-Agent Automation**: Intelligent workflow automation for recruitment processes
+- **Modern Web Interface**: Responsive, accessible, and intuitive user experience
+- **Secure & Scalable**: Enterprise-grade security with cloud-ready architecture
+
+> [!WARNING]  
+> Ensure you have the minimum required versions: Python 3.10+, Node.js 18+, and Docker for optimal compatibility.
 
 ## Star History
 
