@@ -47,7 +47,7 @@ export default function Candidates() {
   const [candidates] = useState<Candidate[]>([
     {
       id: '1',
-      name: 'Alex Thompson',
+      name: 'Subham Joshi',
       email: 'alex.thompson@email.com',
       phone: '+1 (555) 123-4567',
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
@@ -61,7 +61,7 @@ export default function Candidates() {
     },
     {
       id: '2',
-      name: 'Sarah Chen',
+      name: 'Sandeep Sharma',
       email: 'sarah.chen@email.com',
       phone: '+1 (555) 234-5678',
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
@@ -429,11 +429,11 @@ export default function Candidates() {
                       <ScrollArea className="h-[200px]">
                         <div className="space-y-3">
                           <div className="text-sm">
-                            <p className="font-medium">John Smith • 2 hours ago</p>
+                            <p className="font-medium">Rahul Dev Banjara • 2 hours ago</p>
                             <p className="text-muted-foreground">Great cultural fit, strong technical skills</p>
                           </div>
                           <div className="text-sm">
-                            <p className="font-medium">Sarah Chen • 1 day ago</p>
+                            <p className="font-medium">Diwas Adhikari • 1 day ago</p>
                             <p className="text-muted-foreground">Scheduled for technical interview on Monday</p>
                           </div>
                           <div className="text-sm">

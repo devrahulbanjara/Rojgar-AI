@@ -4,7 +4,7 @@ export const candidates: CandidateProfile[] = [
   {
     id: 'can-001',
     email: 'candidate@convexhire.com',
-    name: 'John Doe',
+    name: 'Diwas Adhikari',
     role: 'candidate',
     currentRole: 'Senior Frontend Developer',
     experience: 6,
@@ -17,7 +17,7 @@ export const candidates: CandidateProfile[] = [
   {
     id: 'can-002',
     email: 'jane.smith@email.com',
-    name: 'Jane Smith',
+    name: 'Sampada Poudel',
     role: 'candidate',
     currentRole: 'Full Stack Developer',
     experience: 4,
@@ -30,7 +30,7 @@ export const candidates: CandidateProfile[] = [
   {
     id: 'can-003',
     email: 'alex.chen@email.com',
-    name: 'Alex Chen',
+    name: 'Ashim Khatri Chetri',
     role: 'candidate',
     currentRole: 'Data Scientist',
     experience: 5,
@@ -43,7 +43,7 @@ export const candidates: CandidateProfile[] = [
   {
     id: 'can-004',
     email: 'sarah.jones@email.com',
-    name: 'Sarah Jones',
+    name: 'Ajit Koirala',
     role: 'candidate',
     currentRole: 'DevOps Engineer',
     experience: 7,
@@ -56,7 +56,7 @@ export const candidates: CandidateProfile[] = [
   {
     id: 'can-005',
     email: 'mike.wilson@email.com',
-    name: 'Mike Wilson',
+    name: 'Subham Joshi',
     role: 'candidate',
     currentRole: 'Backend Developer',
     experience: 3,

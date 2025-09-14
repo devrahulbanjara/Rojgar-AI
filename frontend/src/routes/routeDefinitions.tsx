@@ -19,6 +19,7 @@ const RecruiterCandidates = lazy(() => import('@/pages/recruiter/Candidates'));
 const RecruiterInterviews = lazy(() => import('@/pages/recruiter/Interviews'));
 const RecruiterShortlist = lazy(() => import('@/pages/recruiter/Shortlist'));
 const RecruiterFinalSelection = lazy(() => import('@/pages/recruiter/FinalSelection'));
+const RecruiterCandidatePool = lazy(() => import('@/pages/recruiter/CandidatePool'));
 const RecruiterCompanyProfile = lazy(() => import('@/pages/recruiter/CompanyProfile'));
 
 // Candidate pages
@@ -74,6 +75,10 @@ export const routeDefinitions = [
       {
         path: 'final-selection',
         element: <RecruiterFinalSelection />,
+      },
+      {
+        path: 'candidate-pool',
+        element: <RecruiterCandidatePool />,
       },
       {
         path: 'company',

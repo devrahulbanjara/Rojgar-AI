@@ -17,10 +17,10 @@ export default function RecruiterDashboard() {
   ];
 
   const upcomingInterviews = [
-    { id: 1, candidate: 'Sarah Johnson', role: 'Senior Frontend Engineer', time: '2:00 PM Today', location: 'Office - Room A' },
-    { id: 2, candidate: 'Michael Chen', role: 'Data Scientist', time: '10:00 AM Tomorrow', location: 'Office - Room B' },
-    { id: 3, candidate: 'Emily Davis', role: 'Product Manager', time: '3:30 PM Tomorrow', location: 'Office - Main Conference' },
-    { id: 4, candidate: 'Alex Thompson', role: 'Backend Engineer', time: '11:00 AM Friday', location: 'Office - Room A' }
+    { id: 1, candidate: 'Rahul Dev Banjara', role: 'Senior Frontend Engineer', time: '2:00 PM Today', location: 'Office - Room A' },
+    { id: 2, candidate: 'Ashim Khatri Chetri', role: 'Data Scientist', time: '10:00 AM Tomorrow', location: 'Office - Room B' },
+    { id: 3, candidate: 'Sampada Poudel', role: 'Product Manager', time: '3:30 PM Tomorrow', location: 'Office - Main Conference' },
+    { id: 4, candidate: 'Subham Joshi', role: 'Backend Engineer', time: '11:00 AM Friday', location: 'Office - Room A' }
   ];
 
   return (

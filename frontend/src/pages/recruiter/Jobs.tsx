@@ -41,11 +41,11 @@ interface JobTemplate {
 
 export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([
-    { id: '1', title: 'Senior Frontend Engineer', status: 'Active', applicants: 23, datePosted: '2024-01-15', expiryDate: '2024-01-20', daysLeft: 2, assignedTo: 'John Smith', department: 'Engineering', location: 'San Francisco, CA', salary: '150k-200k', currency: 'USD' },
-    { id: '2', title: 'Product Manager', status: 'Expired', applicants: 45, datePosted: '2024-01-10', expiryDate: '2024-01-15', daysLeft: 0, assignedTo: 'Sarah Chen', department: 'Product', location: 'Remote', salary: '130k-180k', currency: 'USD' },
-    { id: '3', title: 'Data Scientist', status: 'Draft', applicants: 0, datePosted: '-', expiryDate: '-', daysLeft: 0, assignedTo: 'Mike Johnson', department: 'Data', location: 'New York, NY', salary: '140k-190k', currency: 'USD' },
-    { id: '4', title: 'DevOps Engineer', status: 'Closed', applicants: 67, datePosted: '2023-12-20', expiryDate: '2023-12-25', daysLeft: 0, assignedTo: 'Emily Davis', department: 'Infrastructure', location: 'Austin, TX', salary: '120k-170k', currency: 'USD' },
-    { id: '5', title: 'Software Engineer', status: 'Active', applicants: 12, datePosted: '2024-01-18', expiryDate: '2024-01-25', daysLeft: 5, assignedTo: 'Raj Sharma', department: 'Engineering', location: 'Kathmandu, Nepal', salary: '15L-25L', currency: 'NPR' },
+    { id: '1', title: 'Senior Frontend Engineer', status: 'Active', applicants: 23, datePosted: '2024-01-15', expiryDate: '2024-01-20', daysLeft: 2, assignedTo: 'Rahul Dev Banjara', department: 'Engineering', location: 'San Francisco, CA', salary: '150k-200k', currency: 'USD' },
+    { id: '2', title: 'Product Manager', status: 'Expired', applicants: 45, datePosted: '2024-01-10', expiryDate: '2024-01-15', daysLeft: 0, assignedTo: 'Diwas Adhikari', department: 'Product', location: 'Remote', salary: '130k-180k', currency: 'USD' },
+    { id: '3', title: 'Data Scientist', status: 'Draft', applicants: 0, datePosted: '-', expiryDate: '-', daysLeft: 0, assignedTo: 'Ashim Khatri Chetri', department: 'Data', location: 'New York, NY', salary: '140k-190k', currency: 'USD' },
+    { id: '4', title: 'DevOps Engineer', status: 'Closed', applicants: 67, datePosted: '2023-12-20', expiryDate: '2023-12-25', daysLeft: 0, assignedTo: 'Sampada Poudel', department: 'Infrastructure', location: 'Austin, TX', salary: '120k-170k', currency: 'USD' },
+    { id: '5', title: 'Software Engineer', status: 'Active', applicants: 12, datePosted: '2024-01-18', expiryDate: '2024-01-25', daysLeft: 5, assignedTo: 'Ajit Koirala', department: 'Engineering', location: 'Kathmandu, Nepal', salary: '15L-25L', currency: 'NPR' },
   ]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -848,17 +848,6 @@ We offer competitive compensation, comprehensive benefits, and a culture of inno
             </Dialog>
           </div>
 
-          {/* JD History */}
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground mb-2">Recent JD History:</p>
-            <div className="flex gap-2 flex-wrap">
-              {jdHistory.slice(0, 3).map((jd) => (
-                <Badge key={jd.id} variant="secondary" className="cursor-pointer">
-                  {jd.title} • {jd.createdAt}
-                </Badge>
-              ))}
-            </div>
-          </div>
         </CardContent>
       </Card>
 

@@ -15,12 +15,12 @@ export const DEMO_USERS = {
   recruiter: {
     email: 'recruiter@convexhire.com',
     password: AUTH.DEFAULT_PASSWORD,
-    name: 'Sarah Johnson',
+    name: 'Rahul Dev Banjara',
   },
   candidate: {
     email: 'candidate@convexhire.com',
     password: AUTH.DEFAULT_PASSWORD,
-    name: 'John Doe',
+    name: 'Diwas Adhikari',
   },
 } as const;
 

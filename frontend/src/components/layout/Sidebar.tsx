@@ -12,7 +12,8 @@ import {
   User,
   Plus,
   Calendar,
-  BarChart3
+  BarChart3,
+  MessageSquare
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
     { title: 'Shortlist', path: '/recruiter/shortlist', icon: Users },
     { title: 'Interviews', path: '/recruiter/interviews', icon: Calendar },
     { title: 'Final Selection', path: '/recruiter/final-selection', icon: BarChart3 },
+    { title: 'Candidate Pool', path: '/recruiter/candidate-pool', icon: MessageSquare },
   ];
 
   const candidateItems = [

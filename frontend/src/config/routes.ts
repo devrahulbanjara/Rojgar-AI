@@ -16,6 +16,7 @@ export const ROUTES = {
     SHORTLIST: '/recruiter/shortlist',
     INTERVIEWS: '/recruiter/interviews',
     FINAL_SELECTION: '/recruiter/final-selection',
+    CANDIDATE_POOL: '/recruiter/candidate-pool',
     COMPANY: '/recruiter/company',
   },
   
@@ -48,6 +49,7 @@ export const ROUTE_METADATA = {
   [ROUTES.RECRUITER.SHORTLIST]: { title: 'Shortlist', requiresAuth: true, role: 'recruiter' },
   [ROUTES.RECRUITER.INTERVIEWS]: { title: 'Interviews', requiresAuth: true, role: 'recruiter' },
   [ROUTES.RECRUITER.FINAL_SELECTION]: { title: 'Final Selection', requiresAuth: true, role: 'recruiter' },
+  [ROUTES.RECRUITER.CANDIDATE_POOL]: { title: 'Candidate Pool', requiresAuth: true, role: 'recruiter' },
   [ROUTES.RECRUITER.COMPANY]: { title: 'Company Profile', requiresAuth: true, role: 'recruiter' },
   [ROUTES.CANDIDATE.DASHBOARD]: { title: 'Dashboard', requiresAuth: true, role: 'candidate' },
   [ROUTES.CANDIDATE.BROWSE]: { title: 'Browse Jobs', requiresAuth: true, role: 'candidate' },

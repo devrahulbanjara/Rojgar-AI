@@ -11,8 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Menu, Search, Building2, LogOut, ToggleLeft, Settings, User } from 'lucide-react';
+import { Menu, Building2, LogOut, ToggleLeft, Settings, User } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
 interface TopbarProps {
@@ -42,14 +41,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center relative">
-            <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search..." 
-              className="pl-10 w-64 bg-secondary/50"
-              disabled
-            />
-          </div>
 
 
           <DropdownMenu>

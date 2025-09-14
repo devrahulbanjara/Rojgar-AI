@@ -20,6 +20,7 @@ const RecruiterJobs = React.lazy(() => import('@/pages/recruiter/Jobs'));
 const RecruiterShortlist = React.lazy(() => import('@/pages/recruiter/Shortlist'));
 const RecruiterInterviews = React.lazy(() => import('@/pages/recruiter/Interviews'));
 const RecruiterFinalSelection = React.lazy(() => import('@/pages/recruiter/FinalSelection'));
+const RecruiterCandidatePool = React.lazy(() => import('@/pages/recruiter/CandidatePool'));
 const RecruiterCompanyProfile = React.lazy(() => import('@/pages/recruiter/CompanyProfile'));
 
 // Candidate pages
@@ -62,6 +63,7 @@ export function AppRouter() {
           <Route path="shortlist" element={<RecruiterShortlist />} />
           <Route path="interviews" element={<RecruiterInterviews />} />
           <Route path="final-selection" element={<RecruiterFinalSelection />} />
+          <Route path="candidate-pool" element={<RecruiterCandidatePool />} />
           <Route path="company" element={<RecruiterCompanyProfile />} />
         </Route>
         
