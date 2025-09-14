@@ -33,7 +33,7 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
     { title: 'Dashboard', path: '/candidate', icon: LayoutDashboard },
     { title: 'Browse Jobs', path: '/candidate/browse', icon: Search },
     { title: 'My Applications', path: '/candidate/applications', icon: FileText },
-    { title: 'Profile', path: '/candidate/profile', icon: User },
+    { title: 'Resumes', path: '/candidate/resumes', icon: FileText },
   ];
 
   const items = role === 'recruiter' ? recruiterItems : candidateItems;

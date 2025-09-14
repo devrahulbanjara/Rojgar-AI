@@ -24,7 +24,7 @@ export const ROUTES = {
     DASHBOARD: '/candidate',
     BROWSE: '/candidate/browse',
     APPLICATIONS: '/candidate/applications',
-    PROFILE: '/candidate/profile',
+    RESUMES: '/candidate/resumes',
   },
   
   // Fallback
@@ -52,5 +52,5 @@ export const ROUTE_METADATA = {
   [ROUTES.CANDIDATE.DASHBOARD]: { title: 'Dashboard', requiresAuth: true, role: 'candidate' },
   [ROUTES.CANDIDATE.BROWSE]: { title: 'Browse Jobs', requiresAuth: true, role: 'candidate' },
   [ROUTES.CANDIDATE.APPLICATIONS]: { title: 'My Applications', requiresAuth: true, role: 'candidate' },
-  [ROUTES.CANDIDATE.PROFILE]: { title: 'Profile', requiresAuth: true, role: 'candidate' },
+  [ROUTES.CANDIDATE.RESUMES]: { title: 'Resumes', requiresAuth: true, role: 'candidate' },
 } as const;

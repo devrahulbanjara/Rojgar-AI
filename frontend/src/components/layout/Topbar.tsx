@@ -12,8 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, Menu, Search, Building2, LogOut, ToggleLeft, Settings, User } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Menu, Search, Building2, LogOut, ToggleLeft, Settings, User } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
 interface TopbarProps {
@@ -39,7 +38,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           
           <div className="flex items-center gap-2">
             <div className="text-2xl font-bold gradient-text">ConvexHire</div>
-            <Badge variant="secondary" className="text-xs">Beta</Badge>
           </div>
         </div>
 
@@ -53,12 +51,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             />
           </div>
 
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -88,9 +80,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                   </DropdownMenuItem>
                 </>
               ) : (
-                <DropdownMenuItem onClick={() => navigate('/candidate/profile')}>
+                <DropdownMenuItem onClick={() => navigate('/candidate/resumes')}>
                   <User className="mr-2 h-4 w-4" />
-                  <span>My Profile</span>
+                  <span>My Resumes</span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={switchRole}>

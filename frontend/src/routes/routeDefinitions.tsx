@@ -25,11 +25,11 @@ const RecruiterCompanyProfile = lazy(() => import('@/pages/recruiter/CompanyProf
 const CandidateDashboard = lazy(() => import('@/pages/candidate/Dashboard'));
 const CandidateBrowseJobs = lazy(() => import('@/pages/candidate/BrowseJobs'));
 const CandidateMyApplications = lazy(() => import('@/pages/candidate/MyApplications'));
-const CandidateProfile = lazy(() => import('@/pages/candidate/Profile'));
+const CandidateResumes = lazy(() => import('@/pages/candidate/Resumes'));
 
 // Layout components
-const AppShell = lazy(() => import('@/components/layout/AppShell'));
-const ProtectedRoute = lazy(() => import('@/components/ProtectedRoute'));
+const AppShell = lazy(() => import('@/components/layout/AppShell').then(module => ({ default: module.AppShell })));
+const ProtectedRoute = lazy(() => import('@/components/ProtectedRoute').then(module => ({ default: module.ProtectedRoute })));
 
 export const routeDefinitions = [
   // Public routes
@@ -104,8 +104,8 @@ export const routeDefinitions = [
         element: <CandidateMyApplications />,
       },
       {
-        path: 'profile',
-        element: <CandidateProfile />,
+        path: 'resumes',
+        element: <CandidateResumes />,
       },
     ],
   },
@@ -115,4 +115,4 @@ export const routeDefinitions = [
     path: ROUTES.NOT_FOUND,
     element: <NotFound />,
   },
-];
+] as const;

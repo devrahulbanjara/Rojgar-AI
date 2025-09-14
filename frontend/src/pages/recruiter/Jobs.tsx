@@ -25,15 +25,17 @@ interface Job {
   department: string;
   location: string;
   salary: string;
+  currency: string;
   description?: string;
 }
 
 export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([
-    { id: '1', title: 'Senior Frontend Engineer', status: 'Active', applicants: 23, datePosted: '2024-01-15', expiryDate: '2024-01-20', daysLeft: 2, assignedTo: 'John Smith', department: 'Engineering', location: 'San Francisco, CA', salary: '$150k-$200k' },
-    { id: '2', title: 'Product Manager', status: 'Expired', applicants: 45, datePosted: '2024-01-10', expiryDate: '2024-01-15', daysLeft: 0, assignedTo: 'Sarah Chen', department: 'Product', location: 'Remote', salary: '$130k-$180k' },
-    { id: '3', title: 'Data Scientist', status: 'Draft', applicants: 0, datePosted: '-', expiryDate: '-', daysLeft: 0, assignedTo: 'Mike Johnson', department: 'Data', location: 'New York, NY', salary: '$140k-$190k' },
-    { id: '4', title: 'DevOps Engineer', status: 'Closed', applicants: 67, datePosted: '2023-12-20', expiryDate: '2023-12-25', daysLeft: 0, assignedTo: 'Emily Davis', department: 'Infrastructure', location: 'Austin, TX', salary: '$120k-$170k' },
+    { id: '1', title: 'Senior Frontend Engineer', status: 'Active', applicants: 23, datePosted: '2024-01-15', expiryDate: '2024-01-20', daysLeft: 2, assignedTo: 'John Smith', department: 'Engineering', location: 'San Francisco, CA', salary: '150k-200k', currency: 'USD' },
+    { id: '2', title: 'Product Manager', status: 'Expired', applicants: 45, datePosted: '2024-01-10', expiryDate: '2024-01-15', daysLeft: 0, assignedTo: 'Sarah Chen', department: 'Product', location: 'Remote', salary: '130k-180k', currency: 'USD' },
+    { id: '3', title: 'Data Scientist', status: 'Draft', applicants: 0, datePosted: '-', expiryDate: '-', daysLeft: 0, assignedTo: 'Mike Johnson', department: 'Data', location: 'New York, NY', salary: '140k-190k', currency: 'USD' },
+    { id: '4', title: 'DevOps Engineer', status: 'Closed', applicants: 67, datePosted: '2023-12-20', expiryDate: '2023-12-25', daysLeft: 0, assignedTo: 'Emily Davis', department: 'Infrastructure', location: 'Austin, TX', salary: '120k-170k', currency: 'USD' },
+    { id: '5', title: 'Software Engineer', status: 'Active', applicants: 12, datePosted: '2024-01-18', expiryDate: '2024-01-25', daysLeft: 5, assignedTo: 'Raj Sharma', department: 'Engineering', location: 'Kathmandu, Nepal', salary: '15L-25L', currency: 'NPR' },
   ]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,6 +52,7 @@ export default function Jobs() {
     generatedJD: '',
     location: '',
     salary: '',
+    currency: 'NPR', // Default to NPR as requested
     department: '',
     expiryDays: '5',
   });
@@ -100,6 +103,7 @@ We offer competitive compensation, comprehensive benefits, and a culture of inno
       department: newJob.department,
       location: newJob.location,
       salary: newJob.salary,
+      currency: newJob.currency,
       description: newJob.generatedJD,
     };
     
@@ -113,6 +117,7 @@ We offer competitive compensation, comprehensive benefits, and a culture of inno
       generatedJD: '',
       location: '',
       salary: '',
+      currency: 'NPR',
       department: '',
       expiryDays: '5',
     });
@@ -248,12 +253,33 @@ We offer competitive compensation, comprehensive benefits, and a culture of inno
                       </div>
                       <div>
                         <Label htmlFor="salary">Salary Range</Label>
-                        <Input
-                          id="salary"
-                          value={newJob.salary}
-                          onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
-                          placeholder="e.g., $150k-$200k"
-                        />
+                        <div className="flex gap-2">
+                          <Select 
+                            value={newJob.currency} 
+                            onValueChange={(value) => setNewJob({ ...newJob, currency: value })}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="NPR">NPR</SelectItem>
+                              <SelectItem value="USD">USD</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            id="salary"
+                            className="flex-1"
+                            value={newJob.salary}
+                            onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
+                            placeholder={newJob.currency === 'NPR' ? 'e.g., 15L-20L' : 'e.g., 150k-200k'}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {newJob.currency === 'NPR' 
+                            ? 'Enter salary in Nepali Rupees (L = Lakh)' 
+                            : 'Enter salary in US Dollars (k = thousand)'
+                          }
+                        </p>
                       </div>
                       <div>
                         <Label htmlFor="department">Department</Label>
@@ -323,6 +349,7 @@ We offer competitive compensation, comprehensive benefits, and a culture of inno
                 <TableHead>Job Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Applicants</TableHead>
+                <TableHead>Salary</TableHead>
                 <TableHead>Date Posted</TableHead>
                 <TableHead>Time Until Expiry</TableHead>
                 <TableHead>Assigned To</TableHead>
@@ -343,6 +370,11 @@ We offer competitive compensation, comprehensive benefits, and a culture of inno
                       <Users className="h-4 w-4 text-muted-foreground" />
                       {job.applicants}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium">
+                      {job.currency} {job.salary}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

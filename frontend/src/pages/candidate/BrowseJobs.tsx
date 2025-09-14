@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +14,13 @@ import { Search, Filter, MapPin, DollarSign, Calendar, Building2, Users, CheckCi
 import { Progress } from '@/components/ui/progress';
 
 export default function BrowseJobs() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
+  const [selectedResume, setSelectedResume] = useState('');
+  const [showCompatibilityTest, setShowCompatibilityTest] = useState(false);
+  const [compatibilityResults, setCompatibilityResults] = useState<any>(null);
 
   // Mock jobs data
   const jobs = [
@@ -26,7 +30,8 @@ export default function BrowseJobs() {
       company: 'TechCorp Solutions',
       location: 'San Francisco, CA',
       locationType: 'Hybrid',
-      salary: '$120k - $180k',
+      salary: '120k - 180k',
+      currency: 'USD',
       postedDate: '2 days ago',
       matchScore: 85,
       tags: ['React', 'TypeScript', 'Node.js'],
@@ -35,11 +40,6 @@ export default function BrowseJobs() {
         '5+ years of experience with React',
         'Strong TypeScript skills',
         'Experience with modern frontend tools'
-      ],
-      whyMatch: [
-        'Your React experience matches perfectly',
-        'You have the required TypeScript skills',
-        'Your portfolio shows relevant projects'
       ]
     },
     {
@@ -48,7 +48,8 @@ export default function BrowseJobs() {
       company: 'InnovateTech',
       location: 'Remote',
       locationType: 'Remote',
-      salary: '$100k - $150k',
+      salary: '100k - 150k',
+      currency: 'USD',
       postedDate: '1 week ago',
       matchScore: 72,
       tags: ['Product Strategy', 'Agile', 'Analytics'],
@@ -57,11 +58,6 @@ export default function BrowseJobs() {
         '3+ years in product management',
         'Experience with agile methodologies',
         'Strong analytical skills'
-      ],
-      whyMatch: [
-        'Your product management background is relevant',
-        'You have agile experience',
-        'Good analytical skills demonstrated'
       ]
     },
     {
@@ -70,7 +66,8 @@ export default function BrowseJobs() {
       company: 'StartupXYZ',
       location: 'New York, NY',
       locationType: 'On-site',
-      salary: '$90k - $130k',
+      salary: '90k - 130k',
+      currency: 'USD',
       postedDate: '3 days ago',
       matchScore: 78,
       tags: ['React', 'Python', 'AWS'],
@@ -79,30 +76,124 @@ export default function BrowseJobs() {
         'Experience with React and Python',
         'AWS knowledge',
         'Strong problem-solving skills'
-      ],
-      whyMatch: [
-        'Your full stack experience is relevant',
-        'You have React expertise',
-        'AWS certification is a plus'
+      ]
+    },
+    {
+      id: 4,
+      title: 'Software Engineer',
+      company: 'TechNepal',
+      location: 'Kathmandu, Nepal',
+      locationType: 'On-site',
+      salary: '15L - 25L',
+      currency: 'NPR',
+      postedDate: '1 day ago',
+      matchScore: 88,
+      tags: ['React', 'Node.js', 'MongoDB'],
+      description: 'Join our growing tech company in Kathmandu...',
+      requirements: [
+        '3+ years of experience with React',
+        'Node.js and MongoDB experience',
+        'Good communication skills in English and Nepali'
       ]
     }
   ];
 
+  // Mock resumes data
+  const availableResumes = [
+    { 
+      id: '1', 
+      name: 'Software Engineer Resume', 
+      isDefault: true,
+      skills: ['React', 'TypeScript', 'Node.js', 'JavaScript', 'HTML', 'CSS']
+    },
+    { 
+      id: '2', 
+      name: 'Frontend Specialist Resume', 
+      isDefault: false,
+      skills: ['React', 'Vue.js', 'Angular', 'TypeScript', 'SASS', 'Webpack']
+    },
+    { 
+      id: '3', 
+      name: 'Full Stack Developer Resume', 
+      isDefault: false,
+      skills: ['React', 'Python', 'Django', 'PostgreSQL', 'Docker', 'AWS']
+    }
+  ];
+
+  const handleCompatibilityTest = () => {
+    if (!selectedResume || !selectedJob) return;
+    
+    const resume = availableResumes.find(r => r.id === selectedResume);
+    if (!resume) return;
+
+    // Mock compatibility analysis
+    const jobSkills = selectedJob.tags;
+    const resumeSkills = resume.skills;
+    
+    const matchingSkills = resumeSkills.filter(skill => 
+      jobSkills.some(jobSkill => 
+        jobSkill.toLowerCase().includes(skill.toLowerCase()) || 
+        skill.toLowerCase().includes(jobSkill.toLowerCase())
+      )
+    );
+    
+    const missingSkills = jobSkills.filter(jobSkill => 
+      !resumeSkills.some(skill => 
+        skill.toLowerCase().includes(jobSkill.toLowerCase()) || 
+        jobSkill.toLowerCase().includes(skill.toLowerCase())
+      )
+    );
+
+    const compatibilityScore = Math.round((matchingSkills.length / jobSkills.length) * 100);
+
+    setCompatibilityResults({
+      score: compatibilityScore,
+      matchingSkills,
+      missingSkills,
+      resumeName: resume.name,
+      suggestions: missingSkills.length > 0 ? [
+        `Add ${missingSkills.join(', ')} to your skills section`,
+        'Update your experience descriptions to include relevant keywords',
+        'Consider adding projects that demonstrate missing skills'
+      ] : []
+    });
+    
+    setShowCompatibilityTest(true);
+  };
+
   const handleApply = () => {
-    if (!coverLetter.trim()) {
+    if (!selectedResume) {
       toast({
-        title: "Cover Letter Required",
-        description: "Please add a cover letter to your application.",
+        title: "Resume Required",
+        description: "Please select a resume for your application.",
         variant: "destructive"
       });
       return;
     }
+    
+    const resumeName = availableResumes.find(r => r.id === selectedResume)?.name;
     toast({
       title: "Application Submitted",
-      description: `Your application for ${selectedJob?.title} has been submitted successfully.`
+      description: `Your application for ${selectedJob?.title} has been submitted with ${resumeName}.`
     });
     setShowApplyDialog(false);
-    setCoverLetter('');
+    setSelectedResume('');
+    setShowCompatibilityTest(false);
+    setCompatibilityResults(null);
+  };
+
+  const handleFixResume = () => {
+    // Navigate to resume editing page with the selected resume
+    navigate('/candidate/resumes', { 
+      state: { 
+        editResumeId: selectedResume,
+        fromJobApplication: true,
+        jobTitle: selectedJob?.title 
+      } 
+    });
+    setShowApplyDialog(false);
+    setShowCompatibilityTest(false);
+    setCompatibilityResults(null);
   };
 
   const filteredJobs = jobs.filter(job =>
@@ -207,7 +298,6 @@ export default function BrowseJobs() {
                     {job.company}
                   </CardDescription>
                 </div>
-                <Badge variant="secondary">{job.matchScore}% match</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -218,7 +308,7 @@ export default function BrowseJobs() {
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
-                  {job.salary}
+                  {job.currency} {job.salary}
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -267,25 +357,6 @@ export default function BrowseJobs() {
             </DialogHeader>
             <div className="space-y-6">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold">Match Score</h3>
-                  <span className="text-sm font-medium">{selectedJob.matchScore}%</span>
-                </div>
-                <Progress value={selectedJob.matchScore} className="mb-4" />
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Why you're a match:</h4>
-                  {selectedJob.whyMatch.map((reason: string, i: number) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-success mt-0.5" />
-                      <span className="text-sm">{reason}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
                 <h3 className="font-semibold mb-2">Job Description</h3>
                 <p className="text-sm text-muted-foreground">{selectedJob.description}</p>
               </div>
@@ -333,29 +404,130 @@ export default function BrowseJobs() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm font-medium">Your profile will be shared:</p>
+              <p className="text-sm font-medium">Your application will include:</p>
               <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                <li>• Resume</li>
-                <li>• Work experience</li>
-                <li>• Skills and certifications</li>
+                <li>• Selected resume (ATS-optimized)</li>
+                <li>• Work experience from resume</li>
+                <li>• Skills and certifications from resume</li>
               </ul>
             </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="cover-letter">Cover Letter</Label>
-              <textarea
-                id="cover-letter"
-                placeholder="Tell the employer why you're interested in this role..."
-                className="w-full min-h-[150px] p-3 border rounded-lg"
-                value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-              />
+              <Label htmlFor="resume-select">Select Resume *</Label>
+              <Select value={selectedResume} onValueChange={setSelectedResume}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a resume for this application" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableResumes.map((resume) => (
+                    <SelectItem key={resume.id} value={resume.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{resume.name}</span>
+                        {resume.isDefault && (
+                          <Badge variant="secondary" className="ml-2">Default</Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                This resume will be tailored and optimized for this specific job application.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="resume-upload">Resume (Optional)</Label>
-              <Button variant="outline" className="w-full">
-                Upload Different Resume
-              </Button>
+
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">ATS Optimization</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Your selected resume will be automatically optimized with keywords from this job posting to improve your chances of passing ATS screening.
+                  </p>
+                </div>
+              </div>
             </div>
+
+            {selectedResume && (
+              <div className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleCompatibilityTest}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Test Resume Compatibility
+                </Button>
+                
+                {showCompatibilityTest && compatibilityResults && (
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">Compatibility Analysis</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-primary">
+                          {compatibilityResults.score}%
+                        </span>
+                        <span className="text-sm text-muted-foreground">Match</span>
+                      </div>
+                    </div>
+                    
+                    <Progress value={compatibilityResults.score} className="h-2" />
+                    
+                    {compatibilityResults.matchingSkills.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-sm text-green-700 mb-2">✓ Matching Skills:</h5>
+                        <div className="flex flex-wrap gap-1">
+                          {compatibilityResults.matchingSkills.map((skill: string) => (
+                            <Badge key={skill} variant="secondary" className="bg-green-100 text-green-800">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {compatibilityResults.missingSkills.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-sm text-red-700 mb-2">⚠ Missing Skills:</h5>
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {compatibilityResults.missingSkills.map((skill: string) => (
+                            <Badge key={skill} variant="destructive" className="bg-red-100 text-red-800">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                        
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <h6 className="font-medium text-sm text-yellow-800 mb-2">Suggestions to improve:</h6>
+                          <ul className="text-xs text-yellow-700 space-y-1">
+                            {compatibilityResults.suggestions.map((suggestion: string, i: number) => (
+                              <li key={i}>• {suggestion}</li>
+                            ))}
+                          </ul>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="mt-3 w-full"
+                            onClick={handleFixResume}
+                          >
+                            Fix Resume
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {compatibilityResults.score >= 80 && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <p className="text-sm text-green-800 font-medium">
+                          🎉 Great match! Your resume aligns well with this job.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowApplyDialog(false)}>
