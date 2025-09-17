@@ -32,29 +32,9 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
 
 ### Development Milestones
 
-- [ ] **Milestone A**: Core Platform Foundation
-  - [ ] Backend API development with FastAPI
-  - [ ] Frontend application with React & TypeScript
-  - [ ] Database schema and models
-  - [ ] Authentication and authorization system
-
-- [ ] **Milestone B**: AI Integration & Smart Features
-  - [ ] Google Gemini AI integration
-  - [ ] Resume parsing and analysis
-  - [ ] Job-candidate matching algorithms
-  - [ ] Template-based job description generation
-
-- [ ] **Milestone C**: Advanced Recruitment Features
-  - [ ] Multi-agent automation workflows
-  - [ ] Real-time analytics dashboard
-  - [ ] Interview scheduling system
-  - [ ] Candidate communication portal
-
-- [ ] **Milestone D**: Production Readiness
-  - [ ] Docker containerization
-  - [ ] CI/CD pipeline setup
-  - [ ] Performance optimization
-  - [ ] Security audit and compliance
+- [ ] **Milestone A**: MVP
+  - [ ] Landing Page Design
+  - [ ] Authentication and Session Management
 
 > [!NOTE]  
 > Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.
