@@ -1,7 +1,8 @@
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { USER_TYPES } from '../../config/constants';
+
 export default function RecruiterDashboard() {
   return (
-    <div>
-      <p>Recruiter Dashboard Under Development</p>
-    </div>
+    <DashboardLayout userType={USER_TYPES.RECRUITER as 'recruiter'} />
   );
 }
