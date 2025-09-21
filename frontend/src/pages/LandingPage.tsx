@@ -72,7 +72,7 @@ export default function LandingPage() {
               <Link to="/login">
                 <Button variant="ghost">Login</Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/login">
                 <Button>Get Started</Button>
               </Link>
             </div>
@@ -106,14 +106,14 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup?type=recruiter">
+            <Link to="/login">
               <Button size="lg" className="group">
                 <Building2 className="mr-2 h-5 w-5" />
                 For Recruiters
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link to="/signup?type=candidate">
+            <Link to="/login">
               <Button size="lg" variant="outline" className="group">
                 <User className="mr-2 h-5 w-5" />
                 For Candidates
@@ -295,7 +295,7 @@ export default function LandingPage() {
           <p className="text-xl text-brand-foreground/90 mb-8 max-w-2xl mx-auto">
             Join ConvexHire today and experience the future of recruitment
           </p>
-          <Link to="/signup">
+          <Link to="/login">
             <Button size="lg" variant="secondary" className="group">
               Get Started Free
               <ChevronRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
