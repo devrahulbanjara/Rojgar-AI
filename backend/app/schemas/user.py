@@ -76,6 +76,7 @@ class LoginRequest(BaseModel):
 
     email: str
     password: str
+    remember_me: bool = False
 
 
 class SignupRequest(UserBase):

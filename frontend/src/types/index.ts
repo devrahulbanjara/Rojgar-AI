@@ -10,7 +10,9 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  userType: UserType;
+  userType?: UserType; // For compatibility
+  role?: UserType; // Backend uses 'role'
+  picture?: string; // For Google OAuth profile pictures
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,6 +21,7 @@ export interface User {
 export interface LoginCredentials {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface SignupData {

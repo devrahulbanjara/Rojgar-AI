@@ -89,10 +89,6 @@ export default function LandingPage() {
           transition={{ duration: 0.6 }}
           className="container mx-auto text-center relative z-10"
         >
-          <Badge className="mb-4" variant="secondary">
-            <Sparkles className="h-3 w-3 mr-1" />
-            AI-Powered Recruitment Platform
-          </Badge>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Transform Your Hiring Process
@@ -106,14 +102,14 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/login">
+            <Link to="/signup?type=recruiter">
               <Button size="lg" className="group">
                 <Building2 className="mr-2 h-5 w-5" />
                 For Recruiters
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link to="/login">
+            <Link to="/signup?type=candidate">
               <Button size="lg" variant="outline" className="group">
                 <User className="mr-2 h-5 w-5" />
                 For Candidates
@@ -310,7 +306,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-primary" />
-              <span className="text-lg font-semibold">ConvexHire</span>
+              <span className="text-lg font-bold gradient-text">ConvexHire</span>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2025 ConvexHire. All rights reserved.
@@ -326,6 +322,17 @@ export default function LandingPage() {
                 Contact
               </a>
             </div>
+          </div>
+          
+          {/* Made with love by Rahul */}
+          <div className="mt-6 pt-6 border-t border-border/50 text-center">
+            <p className="text-sm text-muted-foreground">
+              Made with{' '}
+              <span className="inline-block animate-pulse text-red-500 text-base mx-1 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">
+                ❤️
+              </span>{' '}
+              by <span className="font-medium text-foreground">Rahul</span>
+            </p>
           </div>
         </div>
       </footer>

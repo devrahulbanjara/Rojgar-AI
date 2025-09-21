@@ -35,6 +35,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-jose" },
+    { name = "starlette" },
     { name = "uvicorn" },
 ]
 
@@ -45,6 +46,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.9" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
     { name = "python-jose", specifier = ">=3.5.0" },
+    { name = "starlette", specifier = ">=0.48.0" },
     { name = "uvicorn", specifier = ">=0.36.0" },
 ]
 

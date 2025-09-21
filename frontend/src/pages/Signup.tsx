@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
-import { Mail, Lock, User, ArrowRight, Check, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { FormInput } from '../components/forms/FormInput';
 import { UserTypeSelector } from '../components/forms/UserTypeSelector';
@@ -12,7 +12,7 @@ import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 import { useForm } from '../hooks/useForm';
 import { useAuth } from '../hooks/useAuth';
 import { validateEmail, validatePassword, validateName, validateConfirmPassword } from '../utils/validation';
-import { ROUTES, FEATURES, USER_TYPES } from '../config/constants';
+import { ROUTES, USER_TYPES } from '../config/constants';
 import type { UserType } from '../types';
 
 export default function Signup() {
@@ -20,7 +20,7 @@ export default function Signup() {
   const { signup, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const { values, errors, handleChange, handleSubmit, setFieldError } = useForm({
+  const [formState, formActions] = useForm({
     initialValues: { 
       name: '',
       email: '',
@@ -29,12 +29,15 @@ export default function Signup() {
       userType: USER_TYPES.RECRUITER
     },
     validationRules: {
-      name: validateName,
-      email: validateEmail,
-      password: validatePassword,
-      confirmPassword: (value: string) => validateConfirmPassword(values.password, value),
+      name: [validateName],
+      email: [validateEmail],
+      password: [validatePassword],
+      confirmPassword: [(value: string) => validateConfirmPassword(formState.values.password, value)],
     },
   });
+  
+  const { values, errors } = formState;
+  const { handleChange, handleSubmit, setFieldError } = formActions;
 
   // Set user type from URL parameter and check for auth errors
   useEffect(() => {
@@ -133,9 +136,9 @@ export default function Signup() {
             <FormInput
               id="name"
               name="name"
-              label="Full Name"
+              label={values.userType === 'recruiter' ? 'Company Name' : 'Full Name'}
               type="text"
-              placeholder="Enter your full name"
+              placeholder={values.userType === 'recruiter' ? 'Enter your company name' : 'Enter your full name'}
               value={values.name}
               onChange={handleChange}
               error={errors.name}
@@ -222,18 +225,6 @@ export default function Signup() {
             </Button>
           </form>
 
-          {/* Features badge */}
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
-            <p className="text-sm font-medium mb-2">What you get:</p>
-            <div className="space-y-1">
-              {FEATURES.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Check className="h-3 w-3 text-green-600" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Sign in link */}
           <div className="mt-6 text-center text-sm">

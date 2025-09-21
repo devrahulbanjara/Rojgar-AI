@@ -17,6 +17,9 @@ export const API_CONFIG = {
   timeout: 10000, // 10 seconds
 } as const;
 
+// Export API_BASE_URL for backward compatibility
+export const API_BASE_URL = API_CONFIG.baseUrl;
+
 // Google OAuth Configuration
 export const GOOGLE_CONFIG = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id_here',
@@ -31,6 +34,8 @@ export const ROUTES = {
   SIGNUP: '/signup',
   SELECT_ROLE: '/select-role',
   AUTH_CALLBACK: '/auth/callback',
+  RECRUITER_DASHBOARD: '/dashboard/recruiter',
+  CANDIDATE_DASHBOARD: '/dashboard/candidate',
   RECRUITER: {
     DASHBOARD: '/dashboard/recruiter',
   },

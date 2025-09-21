@@ -18,13 +18,16 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const { values, errors, handleChange, handleSubmit, setFieldError } = useForm({
-    initialValues: { email: '', password: '' },
+  const [formState, formActions] = useForm({
+    initialValues: { email: '', password: '', rememberMe: 'false' },
     validationRules: {
-      email: validateEmail,
-      password: validatePassword,
+      email: [validateEmail],
+      password: [validatePassword],
     },
   });
+  
+  const { values, errors } = formState;
+  const { handleChange, handleSubmit, setFieldError } = formActions;
 
   useEffect(() => {
     // Check for auth errors from URL params
@@ -39,6 +42,7 @@ export default function Login() {
       await login({
         email: formValues.email,
         password: formValues.password,
+        rememberMe: formValues.rememberMe === 'true',
       });
     } catch (error: any) {
       // Handle login errors
@@ -126,6 +130,8 @@ export default function Login() {
                 <input
                   id="remember"
                   type="checkbox"
+                  checked={values.rememberMe === 'true'}
+                  onChange={(e) => handleChange('rememberMe', e.target.checked.toString())}
                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <Label htmlFor="remember" className="text-sm">

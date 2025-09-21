@@ -134,11 +134,18 @@ async def login_with_email(login_data: LoginRequest, response: Response):
     """Login with email and password"""
     token_data = auth_service.login_with_email(login_data)
 
-    # Set cookie
+    # Set cookie with appropriate expiration
+    if login_data.remember_me:
+        # Remember me: 30 days
+        cookie_max_age = 30 * 24 * 60 * 60  # 30 days in seconds
+    else:
+        # Regular session: default expiration
+        cookie_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
     response.set_cookie(
         key="auth_token",
         value=token_data.access_token,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=cookie_max_age,
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
         samesite="lax",

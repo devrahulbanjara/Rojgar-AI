@@ -153,10 +153,17 @@ class AuthService:
                 detail="Invalid email or password",
             )
 
-        # Create JWT token
+        # Create JWT token with appropriate expiration
+        if login_data.remember_me:
+            # Remember me: 30 days
+            expires_delta = timedelta(days=30)
+        else:
+            # Regular session: default expiration
+            expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
         access_token = create_access_token(
             data={"sub": user.id},
-            expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+            expires_delta=expires_delta,
         )
 
         return TokenResponse(

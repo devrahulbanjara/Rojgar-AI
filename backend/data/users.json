@@ -10,5 +10,17 @@
     "is_active": true,
     "created_at": "2025-09-21T07:34:28.012598",
     "updated_at": "2025-09-21T07:34:34.990142"
+  },
+  {
+    "id": "0f357d71-4c1d-406c-b865-fb1331eb3156",
+    "email": "rahul.banjara@adex.ltd",
+    "name": "Rahul",
+    "google_id": null,
+    "password_hash": "ded62ba9efb1ceaec29f5a1003b0e1b48eb7c2934fef928aba00a3427a0e901e",
+    "picture": null,
+    "role": "candidate",
+    "is_active": true,
+    "created_at": "2025-09-21T08:00:02.253428",
+    "updated_at": "2025-09-21T08:00:02.253431"
   }
 ]

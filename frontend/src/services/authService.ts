@@ -39,12 +39,6 @@ class AuthService {
     window.location.href = authUrl.toString();
   }
 
-  // Handle Google OAuth callback (called by backend redirect)
-  handleGoogleCallback(token: string): void {
-    if (token) {
-      this.setToken(token);
-    }
-  }
 
   // Select user role after Google authentication
   async selectRole(role: 'candidate' | 'recruiter'): Promise<{ redirect_url: string }> {
@@ -102,7 +96,11 @@ class AuthService {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include cookies
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+          remember_me: credentials.rememberMe || false,
+        }),
       });
 
       if (!response.ok) {

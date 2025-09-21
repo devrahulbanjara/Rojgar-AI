@@ -10,6 +10,7 @@ import Signup from '../pages/Signup';
 import RoleSelection from '../pages/RoleSelection';
 import RecruiterDashboard from '../pages/recruiter/Dashboard';
 import CandidateDashboard from '../pages/candidate/Dashboard';
+import NotFound from '../pages/NotFound';
 import { ROUTES } from '../config/constants';
 
 // Define route configuration
@@ -42,21 +43,11 @@ export const routes: RouteObject[] = [
     // TODO: Add authentication guard when implementing auth
     // loader: requireAuth(['candidate']),
   },
-  // TODO: Add more routes as needed
-  // {
-  //   path: ROUTES.RECRUITER.JOBS,
-  //   element: <JobsPage />,
-  //   loader: requireAuth(['recruiter']),
-  // },
-  // {
-  //   path: ROUTES.CANDIDATE.APPLICATIONS,
-  //   element: <ApplicationsPage />,
-  //   loader: requireAuth(['candidate']),
-  // },
-  // {
-  //   path: '*',
-  //   element: <NotFoundPage />,
-  // },
+  // Catch-all route for 404 pages
+  {
+    path: '*',
+    element: <NotFound />,
+  },
 ];
 
 // TODO: Implement authentication guard
