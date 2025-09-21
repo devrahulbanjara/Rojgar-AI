@@ -18,7 +18,11 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const [formState, formActions] = useForm({
+  const [formState, formActions] = useForm<{
+    email: string;
+    password: string;
+    rememberMe: string;
+  }>({
     initialValues: { email: '', password: '', rememberMe: 'false' },
     validationRules: {
       email: [validateEmail],

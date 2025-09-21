@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import type { LoginCredentials, SignupData, User, AuthResponse } from '../../types';
 import { authService } from '../../services/authService';
 import { queryKeys } from '../../lib/queryClient';
-import { ROUTES, USER_TYPES } from '../../config/constants';
+import { ROUTES } from '../../config/constants';
 import { getDashboardRoute } from '../../utils/helpers';
 
 // Get current user query
@@ -16,7 +16,16 @@ export const useCurrentUser = () => {
   return useQuery({
     queryKey: queryKeys.auth.user,
     queryFn: async (): Promise<User | null> => {
-      return await authService.getCurrentUser();
+      const user = await authService.getCurrentUser();
+      if (user) {
+        // Convert backend user format to frontend format
+        return {
+          ...user,
+          id: user.id.toString(),
+          userType: user.role,
+        };
+      }
+      return null;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -38,8 +47,11 @@ export const useLogin = () => {
       queryClient.setQueryData(queryKeys.auth.user, data.user);
       
       // Redirect to dashboard
-      const dashboardRoute = getDashboardRoute(data.user.userType || data.user.role);
-      navigate(dashboardRoute);
+      const userType = data.user.userType || data.user.role;
+      if (userType) {
+        const dashboardRoute = getDashboardRoute(userType);
+        navigate(dashboardRoute);
+      }
     },
     onError: (error) => {
       console.error('Login failed:', error);
@@ -63,8 +75,11 @@ export const useSignup = () => {
       queryClient.setQueryData(queryKeys.auth.user, data.user);
       
       // Redirect to appropriate dashboard
-      const dashboardRoute = getDashboardRoute(data.user.userType || data.user.role);
-      navigate(dashboardRoute);
+      const userType = data.user.userType || data.user.role;
+      if (userType) {
+        const dashboardRoute = getDashboardRoute(userType);
+        navigate(dashboardRoute);
+      }
     },
     onError: (error) => {
       console.error('Signup failed:', error);

@@ -11,7 +11,7 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 import { useForm } from '../hooks/useForm';
 import { useAuth } from '../hooks/useAuth';
-import { validateEmail, validatePassword, validateName, validateConfirmPassword } from '../utils/validation';
+import { validateEmail, validatePassword, validateName } from '../utils/validation';
 import { ROUTES, USER_TYPES } from '../config/constants';
 import type { UserType } from '../types';
 
@@ -20,7 +20,13 @@ export default function Signup() {
   const { signup, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const [formState, formActions] = useForm({
+  const [formState, formActions] = useForm<{
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    userType: string;
+  }>({
     initialValues: { 
       name: '',
       email: '',
@@ -32,12 +38,25 @@ export default function Signup() {
       name: [validateName],
       email: [validateEmail],
       password: [validatePassword],
-      confirmPassword: [(value: string) => validateConfirmPassword(formState.values.password, value)],
+      // Don't validate confirmPassword initially to avoid circular dependency
     },
   });
   
   const { values, errors } = formState;
   const { handleChange, handleSubmit, setFieldError } = formActions;
+
+  // Manual validation for confirmPassword
+  useEffect(() => {
+    if (values.confirmPassword) {
+      if (!values.confirmPassword) {
+        setFieldError('confirmPassword', 'Please confirm your password');
+      } else if (values.password && values.confirmPassword !== values.password) {
+        setFieldError('confirmPassword', 'Passwords do not match');
+      } else {
+        setFieldError('confirmPassword', '');
+      }
+    }
+  }, [values.password, values.confirmPassword, setFieldError]);
 
   // Set user type from URL parameter and check for auth errors
   useEffect(() => {

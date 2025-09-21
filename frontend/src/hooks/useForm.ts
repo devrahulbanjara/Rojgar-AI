@@ -6,7 +6,7 @@
 import { useState, useCallback, useRef } from 'react';
 
 export interface ValidationRule<T = any> {
-  (value: T): string | undefined;
+  (value: T, allValues?: any): string | undefined;
 }
 
 export interface FormConfig<T extends Record<string, any>> {
@@ -36,8 +36,8 @@ export interface FormActions<T extends Record<string, any>> {
   clearFieldError: (field: keyof T) => void;
   clearErrors: () => void;
   reset: () => void;
-  handleChange: (field: keyof T, value: T[keyof T]) => void;
-  handleBlur: (field: keyof T) => void;
+  handleChange: (field: string, value: any) => void;
+  handleBlur: (field: string) => void;
   handleSubmit: (onSubmit?: (values: T) => void | Promise<void>) => (e?: React.FormEvent) => Promise<void>;
   validate: () => boolean;
   validateField: (field: keyof T) => string | undefined;
@@ -64,22 +64,22 @@ export function useForm<T extends Record<string, any>>(
   const isDirty = JSON.stringify(values) !== JSON.stringify(initialValuesRef.current);
 
   // Check if form is valid
-  const isValid = Object.keys(validationRules).every(field => {
-    const fieldRules = validationRules[field];
+  const isValid = Object.keys(validationRules || {}).every(field => {
+    const fieldRules = (validationRules as any)?.[field];
     if (!fieldRules) return true;
     
-    const fieldValue = values[field];
-    return fieldRules.every(rule => !rule(fieldValue));
+    const fieldValue = values[field as keyof T];
+    return fieldRules.every((rule: any) => !rule(fieldValue, values));
   });
 
   // Validate a single field
   const validateField = useCallback((field: keyof T): string | undefined => {
-    const fieldRules = validationRules?.[field];
+    const fieldRules = (validationRules as any)?.[field];
     if (!fieldRules) return undefined;
 
     const fieldValue = values[field];
     for (const rule of fieldRules) {
-      const error = rule(fieldValue);
+      const error = (rule as any)(fieldValue, values);
       if (error) return error;
     }
     return undefined;
@@ -168,16 +168,16 @@ export function useForm<T extends Record<string, any>>(
   }, [initialValues]);
 
   // Handle field change
-  const handleChange = useCallback((field: keyof T, value: T[keyof T]) => {
-    setValue(field, value);
+  const handleChange = useCallback((field: string, value: any) => {
+    setValue(field as keyof T, value);
   }, [setValue]);
 
   // Handle field blur
-  const handleBlur = useCallback((field: keyof T) => {
-    setTouched(field, true);
+  const handleBlur = useCallback((field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
     
     if (validateOnBlur) {
-      const error = validateField(field);
+      const error = validateField(field as keyof T);
       if (error) {
         setErrors(prev => ({ ...prev, [field]: error }));
       }

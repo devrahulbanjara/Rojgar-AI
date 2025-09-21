@@ -167,7 +167,7 @@ class AuthService {
   }
 
   // Handle Google callback (not needed with cookies)
-  handleGoogleCallback(token: string): void {
+  handleGoogleCallback(_token: string): void {
     // Token is now set via cookie by the backend
     console.log('Google authentication completed');
   }
