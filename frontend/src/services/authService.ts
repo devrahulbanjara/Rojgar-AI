@@ -1,6 +1,5 @@
 /**
  * Authentication Service
- * API service layer for authentication operations
  * Integrated with FastAPI backend and Google OAuth
  */
 
@@ -38,7 +37,6 @@ class AuthService {
 
     window.location.href = authUrl.toString();
   }
-
 
   // Select user role after Google authentication
   async selectRole(role: 'candidate' | 'recruiter'): Promise<{ redirect_url: string }> {
@@ -168,11 +166,10 @@ class AuthService {
 
   // Handle Google callback (not needed with cookies)
   handleGoogleCallback(_token: string): void {
-    // Token is now set via cookie by the backend
     console.log('Google authentication completed');
   }
 
-  // Check if user is authenticated (check if we can get current user)
+  // Check if user is authenticated
   async isAuthenticated(): Promise<boolean> {
     try {
       const user = await this.getCurrentUser();
@@ -182,10 +179,8 @@ class AuthService {
     }
   }
 
-  // Refresh token method (placeholder for future implementation)
+  // Refresh token method (placeholder)
   async refreshToken(): Promise<string | null> {
-    // JWT tokens from FastAPI don't typically use refresh tokens
-    // This would be implemented if refresh tokens are added to the backend
     return null;
   }
 }

@@ -38,7 +38,7 @@ export default function Signup() {
       name: [validateName],
       email: [validateEmail],
       password: [validatePassword],
-      // Don't validate confirmPassword initially to avoid circular dependency
+      // confirmPassword handled manually
     },
   });
   
@@ -88,7 +88,6 @@ export default function Signup() {
         userType: formValues.userType as UserType,
       });
     } catch (error: any) {
-      // Handle signup errors
       const errorMessage = error?.message || 'Signup failed. Please try again.';
       setFieldError('email', errorMessage);
     }
@@ -99,7 +98,6 @@ export default function Signup() {
   };
 
   const handleGoogleSuccess = () => {
-    // Google login initiated successfully
     console.log('Google signup initiated');
   };
 
@@ -243,7 +241,6 @@ export default function Signup() {
               )}
             </Button>
           </form>
-
 
           {/* Sign in link */}
           <div className="mt-6 text-center text-sm">

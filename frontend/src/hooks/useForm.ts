@@ -38,7 +38,9 @@ export interface FormActions<T extends Record<string, any>> {
   reset: () => void;
   handleChange: (field: string, value: any) => void;
   handleBlur: (field: string) => void;
-  handleSubmit: (onSubmit?: (values: T) => void | Promise<void>) => (e?: React.FormEvent) => Promise<void>;
+  handleSubmit: (
+    onSubmit?: (values: T) => void | Promise<void>
+  ) => (e?: React.FormEvent) => Promise<void>;
   validate: () => boolean;
   validateField: (field: keyof T) => string | undefined;
 }
@@ -61,29 +63,33 @@ export function useForm<T extends Record<string, any>>(
   const initialValuesRef = useRef(initialValues);
 
   // Check if form is dirty
-  const isDirty = JSON.stringify(values) !== JSON.stringify(initialValuesRef.current);
+  const isDirty =
+    JSON.stringify(values) !== JSON.stringify(initialValuesRef.current);
 
   // Check if form is valid
-  const isValid = Object.keys(validationRules || {}).every(field => {
+  const isValid = Object.keys(validationRules || {}).every((field) => {
     const fieldRules = (validationRules as any)?.[field];
     if (!fieldRules) return true;
-    
+
     const fieldValue = values[field as keyof T];
     return fieldRules.every((rule: any) => !rule(fieldValue, values));
   });
 
   // Validate a single field
-  const validateField = useCallback((field: keyof T): string | undefined => {
-    const fieldRules = (validationRules as any)?.[field];
-    if (!fieldRules) return undefined;
+  const validateField = useCallback(
+    (field: keyof T): string | undefined => {
+      const fieldRules = (validationRules as any)?.[field];
+      if (!fieldRules) return undefined;
 
-    const fieldValue = values[field];
-    for (const rule of fieldRules) {
-      const error = (rule as any)(fieldValue, values);
-      if (error) return error;
-    }
-    return undefined;
-  }, [values, validationRules]);
+      const fieldValue = values[field];
+      for (const rule of fieldRules) {
+        const error = (rule as any)(fieldValue, values);
+        if (error) return error;
+      }
+      return undefined;
+    },
+    [values, validationRules]
+  );
 
   // Validate all fields
   const validate = useCallback((): boolean => {
@@ -91,7 +97,7 @@ export function useForm<T extends Record<string, any>>(
     let hasErrors = false;
 
     if (validationRules) {
-      Object.keys(validationRules).forEach(field => {
+      Object.keys(validationRules).forEach((field) => {
         const fieldKey = field as keyof T;
         const error = validateField(fieldKey);
         if (error) {
@@ -106,51 +112,63 @@ export function useForm<T extends Record<string, any>>(
   }, [validateField, validationRules]);
 
   // Set a single value
-  const setValue = useCallback((field: keyof T, value: T[keyof T]) => {
-    setValues(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when value changes
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-    
-    // Validate on change if enabled
-    if (validateOnChange) {
-      const error = validateField(field);
-      if (error) {
-        setErrors(prev => ({ ...prev, [field]: error }));
+  const setValue = useCallback(
+    (field: keyof T, value: T[keyof T]) => {
+      setValues((prev) => ({ ...prev, [field]: value }));
+
+      // Clear error when value changes
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
       }
-    }
-  }, [errors, validateField, validateOnChange]);
+
+      // Validate on change if enabled
+      if (validateOnChange) {
+        const error = validateField(field);
+        if (error) {
+          setErrors((prev) => ({ ...prev, [field]: error }));
+        }
+      }
+    },
+    [errors, validateField, validateOnChange]
+  );
 
   // Set multiple values
   const setValuesAction = useCallback((newValues: Partial<T>) => {
-    setValues(prev => ({ ...prev, ...newValues }));
+    setValues((prev) => ({ ...prev, ...newValues }));
   }, []);
 
   // Set a single error
   const setError = useCallback((field: keyof T, error: string) => {
-    setErrors(prev => ({ ...prev, [field]: error }));
+    setErrors((prev) => ({ ...prev, [field]: error }));
   }, []);
 
   // Set multiple errors
-  const setErrorsAction = useCallback((newErrors: Partial<Record<keyof T, string>>) => {
-    setErrors(prev => ({ ...prev, ...newErrors }));
-  }, []);
+  const setErrorsAction = useCallback(
+    (newErrors: Partial<Record<keyof T, string>>) => {
+      setErrors((prev) => ({ ...prev, ...newErrors }));
+    },
+    []
+  );
 
   // Set touched state
-  const setTouchedField = useCallback((field: keyof T, touchedValue: boolean) => {
-    setTouched(prev => ({ ...prev, [field]: touchedValue }));
-  }, []);
+  const setTouchedField = useCallback(
+    (field: keyof T, touchedValue: boolean) => {
+      setTouched((prev) => ({ ...prev, [field]: touchedValue }));
+    },
+    []
+  );
 
   // Set field error (alias for setError)
-  const setFieldError = useCallback((field: keyof T, error: string) => {
-    setError(field, error);
-  }, [setError]);
+  const setFieldError = useCallback(
+    (field: keyof T, error: string) => {
+      setError(field, error);
+    },
+    [setError]
+  );
 
   // Clear field error
   const clearFieldError = useCallback((field: keyof T) => {
-    setErrors(prev => ({ ...prev, [field]: undefined }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
   }, []);
 
   // Clear all errors
@@ -168,55 +186,64 @@ export function useForm<T extends Record<string, any>>(
   }, [initialValues]);
 
   // Handle field change
-  const handleChange = useCallback((field: string, value: any) => {
-    setValue(field as keyof T, value);
-  }, [setValue]);
+  const handleChange = useCallback(
+    (field: string, value: any) => {
+      setValue(field as keyof T, value);
+    },
+    [setValue]
+  );
 
   // Handle field blur
-  const handleBlur = useCallback((field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    
-    if (validateOnBlur) {
-      const error = validateField(field as keyof T);
-      if (error) {
-        setErrors(prev => ({ ...prev, [field]: error }));
+  const handleBlur = useCallback(
+    (field: string) => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+
+      if (validateOnBlur) {
+        const error = validateField(field as keyof T);
+        if (error) {
+          setErrors((prev) => ({ ...prev, [field]: error }));
+        }
       }
-    }
-  }, [validateField, validateOnBlur]);
+    },
+    [validateField, validateOnBlur]
+  );
 
   // Handle form submit
-  const handleSubmit = useCallback((customOnSubmit?: (values: T) => void | Promise<void>) => {
-    return async (e?: React.FormEvent) => {
-      if (e) {
-        e.preventDefault();
-      }
-
-      // Mark all fields as touched
-      const allTouched = Object.keys(initialValues).reduce((acc, key) => {
-        acc[key as keyof T] = true;
-        return acc;
-      }, {} as Partial<Record<keyof T, boolean>>);
-      setTouched(allTouched);
-
-      // Validate form
-      const isFormValid = validate();
-      if (!isFormValid) {
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        const submitHandler = customOnSubmit || onSubmit;
-        if (submitHandler) {
-          await submitHandler(values);
+  const handleSubmit = useCallback(
+    (customOnSubmit?: (values: T) => void | Promise<void>) => {
+      return async (e?: React.FormEvent) => {
+        if (e) {
+          e.preventDefault();
         }
-      } catch (error) {
-        console.error('Form submission error:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-  }, [values, validate, onSubmit, initialValues]);
+
+        // Mark all fields as touched
+        const allTouched = Object.keys(initialValues).reduce((acc, key) => {
+          acc[key as keyof T] = true;
+          return acc;
+        }, {} as Partial<Record<keyof T, boolean>>);
+        setTouched(allTouched);
+
+        // Validate form
+        const isFormValid = validate();
+        if (!isFormValid) {
+          return;
+        }
+
+        setIsSubmitting(true);
+        try {
+          const submitHandler = customOnSubmit || onSubmit;
+          if (submitHandler) {
+            await submitHandler(values);
+          }
+        } catch (error) {
+          console.error('Form submission error:', error);
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+    },
+    [values, validate, onSubmit, initialValues]
+  );
 
   const state: FormState<T> = {
     values,
