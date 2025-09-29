@@ -1,0 +1,14 @@
+[
+  {
+    "id": "64152ef9-5160-4246-9407-379680033ced",
+    "email": "rdbanjara07@gmail.com",
+    "name": "Rahul Dev Banjara",
+    "google_id": "117249914189156075585",
+    "password_hash": null,
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocJniBJV7i2pVDwZIpFTWvzLUbuhwWKr0a2UdVOGBMIU3vmHBflxnw=s96-c",
+    "role": "recruiter",
+    "is_active": true,
+    "created_at": "2025-09-21T16:57:08.050165",
+    "updated_at": "2025-09-21T16:57:18.775490"
+  }
+]

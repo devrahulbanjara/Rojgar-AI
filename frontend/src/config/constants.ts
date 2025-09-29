@@ -10,11 +10,21 @@ export const APP_CONFIG = {
   version: '1.0.0',
 } as const;
 
-// API Configuration (for future backend integration)
+// API Configuration
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   version: 'v1',
   timeout: 10000, // 10 seconds
+} as const;
+
+// Export API_BASE_URL for backward compatibility
+export const API_BASE_URL = API_CONFIG.baseUrl;
+
+// Google OAuth Configuration
+export const GOOGLE_CONFIG = {
+  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id_here',
+  redirectUri: `${window.location.origin}/auth/callback`,
+  scope: 'openid email profile',
 } as const;
 
 // Route Paths
@@ -22,11 +32,15 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   SIGNUP: '/signup',
+  SELECT_ROLE: '/select-role',
+  AUTH_CALLBACK: '/auth/callback',
+  RECRUITER_DASHBOARD: '/dashboard/recruiter',
+  CANDIDATE_DASHBOARD: '/dashboard/candidate',
   RECRUITER: {
-    DASHBOARD: '/recruiter/dashboard',
+    DASHBOARD: '/dashboard/recruiter',
   },
   CANDIDATE: {
-    DASHBOARD: '/candidate/dashboard',
+    DASHBOARD: '/dashboard/candidate',
   },
 } as const;
 

@@ -1,38 +1,67 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { FormInput } from '../components/forms/FormInput';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 import { useForm } from '../hooks/useForm';
 import { useAuth } from '../hooks/useAuth';
 import { validateEmail, validatePassword } from '../utils/validation';
 import { ROUTES } from '../config/constants';
+import { useEffect, useState } from 'react';
 
 export default function Login() {
   const { login, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const [authError, setAuthError] = useState<string | null>(null);
   
-  const { values, errors, handleChange, handleSubmit, setFieldError } = useForm({
-    initialValues: { email: '', password: '' },
+  const [formState, formActions] = useForm<{
+    email: string;
+    password: string;
+    rememberMe: string;
+  }>({
+    initialValues: { email: '', password: '', rememberMe: 'false' },
     validationRules: {
-      email: validateEmail,
-      password: validatePassword,
+      email: [validateEmail],
+      password: [validatePassword],
     },
   });
+  
+  const { values, errors } = formState;
+  const { handleChange, handleSubmit, setFieldError } = formActions;
+
+  useEffect(() => {
+    // Check for auth errors from URL params
+    const error = searchParams.get('error');
+    if (error === 'auth_failed') {
+      setAuthError('Authentication failed. Please try again.');
+    }
+  }, [searchParams]);
 
   const onSubmit = async (formValues: Record<string, string>) => {
     try {
       await login({
         email: formValues.email,
         password: formValues.password,
+        rememberMe: formValues.rememberMe === 'true',
       });
     } catch (error: any) {
       // Handle login errors
       const errorMessage = error?.message || 'Login failed. Please try again.';
       setFieldError('email', errorMessage);
     }
+  };
+
+  const handleGoogleSuccess = () => {
+    // Google login initiated successfully
+    console.log('Google login initiated');
+  };
+
+  const handleGoogleError = (error: string) => {
+    setAuthError(error);
   };
 
   return (
@@ -45,6 +74,33 @@ export default function Login() {
           <CardTitle className="text-xl text-center">Sign In</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Auth Error Display */}
+          {authError && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
+              <AlertCircle className="h-4 w-4" />
+              {authError}
+            </div>
+          )}
+
+          {/* Google OAuth Button */}
+          <div className="mb-6">
+            <GoogleOAuthButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Email */}
             <FormInput
@@ -78,6 +134,8 @@ export default function Login() {
                 <input
                   id="remember"
                   type="checkbox"
+                  checked={values.rememberMe === 'true'}
+                  onChange={(e) => handleChange('rememberMe', e.target.checked.toString())}
                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <Label htmlFor="remember" className="text-sm">

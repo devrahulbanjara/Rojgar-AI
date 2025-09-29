@@ -1,24 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
-import { Mail, Lock, User, ArrowRight, Check } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { FormInput } from '../components/forms/FormInput';
 import { UserTypeSelector } from '../components/forms/UserTypeSelector';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 import { useForm } from '../hooks/useForm';
 import { useAuth } from '../hooks/useAuth';
-import { validateEmail, validatePassword, validateName, validateConfirmPassword } from '../utils/validation';
-import { ROUTES, FEATURES, USER_TYPES } from '../config/constants';
+import { validateEmail, validatePassword, validateName } from '../utils/validation';
+import { ROUTES, USER_TYPES } from '../config/constants';
 import type { UserType } from '../types';
 
 export default function Signup() {
   const [searchParams] = useSearchParams();
   const { signup, isLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
   
-  const { values, errors, handleChange, handleSubmit, setFieldError } = useForm({
+  const [formState, formActions] = useForm<{
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    userType: string;
+  }>({
     initialValues: { 
       name: '',
       email: '',
@@ -27,18 +35,40 @@ export default function Signup() {
       userType: USER_TYPES.RECRUITER
     },
     validationRules: {
-      name: validateName,
-      email: validateEmail,
-      password: validatePassword,
-      confirmPassword: (value: string) => validateConfirmPassword(values.password, value),
+      name: [validateName],
+      email: [validateEmail],
+      password: [validatePassword],
+      // confirmPassword handled manually
     },
   });
+  
+  const { values, errors } = formState;
+  const { handleChange, handleSubmit, setFieldError } = formActions;
 
-  // Set user type from URL parameter
+  // Manual validation for confirmPassword
+  useEffect(() => {
+    if (values.confirmPassword) {
+      if (!values.confirmPassword) {
+        setFieldError('confirmPassword', 'Please confirm your password');
+      } else if (values.password && values.confirmPassword !== values.password) {
+        setFieldError('confirmPassword', 'Passwords do not match');
+      } else {
+        setFieldError('confirmPassword', '');
+      }
+    }
+  }, [values.password, values.confirmPassword, setFieldError]);
+
+  // Set user type from URL parameter and check for auth errors
   useEffect(() => {
     const typeParam = searchParams.get('type');
     if (typeParam === 'candidate' || typeParam === 'recruiter') {
       handleChange('userType', typeParam);
+    }
+
+    // Check for auth errors from URL params
+    const error = searchParams.get('error');
+    if (error === 'auth_failed') {
+      setAuthError('Authentication failed. Please try again.');
     }
   }, [searchParams, handleChange]);
 
@@ -58,7 +88,6 @@ export default function Signup() {
         userType: formValues.userType as UserType,
       });
     } catch (error: any) {
-      // Handle signup errors
       const errorMessage = error?.message || 'Signup failed. Please try again.';
       setFieldError('email', errorMessage);
     }
@@ -66,6 +95,14 @@ export default function Signup() {
 
   const handleUserTypeChange = (userType: UserType) => {
     handleChange('userType', userType);
+  };
+
+  const handleGoogleSuccess = () => {
+    console.log('Google signup initiated');
+  };
+
+  const handleGoogleError = (error: string) => {
+    setAuthError(error);
   };
 
   return (
@@ -78,6 +115,33 @@ export default function Signup() {
           <CardTitle className="text-xl text-center">Sign Up</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Auth Error Display */}
+          {authError && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
+              <AlertCircle className="h-4 w-4" />
+              {authError}
+            </div>
+          )}
+
+          {/* Google OAuth Button */}
+          <div className="mb-6">
+            <GoogleOAuthButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* User Type Selection */}
             <UserTypeSelector
@@ -89,9 +153,9 @@ export default function Signup() {
             <FormInput
               id="name"
               name="name"
-              label="Full Name"
+              label={values.userType === 'recruiter' ? 'Company Name' : 'Full Name'}
               type="text"
-              placeholder="Enter your full name"
+              placeholder={values.userType === 'recruiter' ? 'Enter your company name' : 'Enter your full name'}
               value={values.name}
               onChange={handleChange}
               error={errors.name}
@@ -177,19 +241,6 @@ export default function Signup() {
               )}
             </Button>
           </form>
-
-          {/* Features badge */}
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
-            <p className="text-sm font-medium mb-2">What you get:</p>
-            <div className="space-y-1">
-              {FEATURES.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Check className="h-3 w-3 text-green-600" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Sign in link */}
           <div className="mt-6 text-center text-sm">

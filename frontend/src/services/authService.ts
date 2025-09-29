@@ -1,93 +1,148 @@
 /**
  * Authentication Service
- * API service layer for authentication operations
- * Ready for FastAPI backend integration
+ * Integrated with FastAPI backend and Google OAuth
  */
 
 import type { LoginCredentials, SignupData, AuthResponse } from '../types';
-// import { API_CONFIG } from '../config/constants'; // TODO: Enable when backend is ready
+import { API_CONFIG, GOOGLE_CONFIG } from '../config/constants';
+
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: {
+    id: number;
+    google_id: string;
+    email: string;
+    name: string;
+    picture?: string;
+    role?: 'candidate' | 'recruiter';
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+}
 
 class AuthService {
-  // private baseUrl = `${API_CONFIG.baseUrl}/${API_CONFIG.version}/auth`; // TODO: Enable when backend is ready
+  private baseUrl = `${API_CONFIG.baseUrl}/auth`;
 
-  // Login method - ready for FastAPI integration
-  async login(_credentials: LoginCredentials): Promise<AuthResponse> {
+  // Google OAuth Login
+  async initiateGoogleLogin(): Promise<void> {
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    authUrl.searchParams.set('client_id', GOOGLE_CONFIG.clientId);
+    authUrl.searchParams.set('redirect_uri', `${API_CONFIG.baseUrl}/auth/google/callback`);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('scope', GOOGLE_CONFIG.scope);
+    authUrl.searchParams.set('access_type', 'offline');
+    authUrl.searchParams.set('prompt', 'consent');
+
+    window.location.href = authUrl.toString();
+  }
+
+  // Select user role after Google authentication
+  async selectRole(role: 'candidate' | 'recruiter'): Promise<{ redirect_url: string }> {
     try {
-      // TODO: Uncomment and implement when FastAPI backend is ready
-      /*
+      const response = await fetch(`${this.baseUrl}/select-role`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({ role }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to select role: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('AuthService.selectRole error:', error);
+      throw error;
+    }
+  }
+
+  // Get current user
+  async getCurrentUser(): Promise<TokenResponse['user'] | null> {
+    try {
+      const response = await fetch(`${API_CONFIG.baseUrl}/users/me`, {
+        credentials: 'include', // Include cookies
+      });
+
+      if (response.status === 401) {
+        // Token is invalid, clear it
+        this.logout();
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to get user: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('AuthService.getCurrentUser error:', error);
+      return null;
+    }
+  }
+
+  // Traditional login method
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    try {
       const response = await fetch(`${this.baseUrl}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(credentials),
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+          remember_me: credentials.rememberMe || false,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Login failed: ${response.statusText}`);
+        throw new Error('Invalid email or password');
       }
 
-      const data: ApiResponse<AuthResponse> = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      // Store token in localStorage or secure storage
-      if (data.data?.token) {
-        localStorage.setItem('auth_token', data.data.token);
-        if (data.data.refreshToken) {
-          localStorage.setItem('refresh_token', data.data.refreshToken);
-        }
-      }
-
-      return data.data!;
-      */
-
-      // Mock implementation for demo
-      throw new Error('FastAPI backend not implemented yet. Please integrate with backend.');
+      const data = await response.json();
+      return {
+        user: data.user,
+        token: data.access_token,
+      };
     } catch (error) {
       console.error('AuthService.login error:', error);
       throw error;
     }
   }
 
-  // Signup method - ready for FastAPI integration
-  async signup(_data: SignupData): Promise<AuthResponse> {
+  // Traditional signup method
+  async signup(data: SignupData): Promise<AuthResponse> {
     try {
-      // TODO: Uncomment and implement when FastAPI backend is ready
-      /*
       const response = await fetch(`${this.baseUrl}/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role: data.userType,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Signup failed: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Signup failed');
       }
 
-      const result: ApiResponse<AuthResponse> = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Signup failed');
-      }
-
-      // Store token in localStorage or secure storage
-      if (result.data?.token) {
-        localStorage.setItem('auth_token', result.data.token);
-        if (result.data.refreshToken) {
-          localStorage.setItem('refresh_token', result.data.refreshToken);
-        }
-      }
-
-      return result.data!;
-      */
-
-      // Mock implementation for demo
-      throw new Error('FastAPI backend not implemented yet. Please integrate with backend.');
+      const responseData = await response.json();
+      return {
+        user: responseData.user,
+        token: responseData.access_token,
+      };
     } catch (error) {
       console.error('AuthService.signup error:', error);
       throw error;
@@ -97,118 +152,36 @@ class AuthService {
   // Logout method
   async logout(): Promise<void> {
     try {
-      // TODO: Uncomment and implement when FastAPI backend is ready
-      /*
-      const token = this.getToken();
-      if (token) {
-        await fetch(`${this.baseUrl}/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
-      */
-
-      // Clear stored tokens
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
-    } catch (error) {
-      console.error('AuthService.logout error:', error);
-      // Continue with logout even if API call fails
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
-    }
-  }
-
-  // Get current user method
-  async getCurrentUser(): Promise<AuthResponse['user'] | null> {
-    try {
-      const token = this.getToken();
-      if (!token) {
-        return null;
-      }
-
-      // TODO: Uncomment and implement when FastAPI backend is ready
-      /*
-      const response = await fetch(`${this.baseUrl}/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token is invalid, clear it
-          this.logout();
-          return null;
-        }
-        throw new Error(`Failed to get user: ${response.statusText}`);
-      }
-
-      const data: ApiResponse<AuthResponse['user']> = await response.json();
-      return data.data || null;
-      */
-
-      // Mock implementation for demo
-      return null;
-    } catch (error) {
-      console.error('AuthService.getCurrentUser error:', error);
-      return null;
-    }
-  }
-
-  // Refresh token method
-  async refreshToken(): Promise<string | null> {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) {
-        return null;
-      }
-
-      // TODO: Uncomment and implement when FastAPI backend is ready
-      /*
-      const response = await fetch(`${this.baseUrl}/refresh`, {
+      await fetch(`${this.baseUrl}/logout`, {
         method: 'POST',
+        credentials: 'include', // Include cookies
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refresh_token: refreshToken }),
       });
-
-      if (!response.ok) {
-        this.logout();
-        return null;
-      }
-
-      const data: ApiResponse<{ token: string; refresh_token?: string }> = await response.json();
-      
-      if (data.data?.token) {
-        localStorage.setItem('auth_token', data.data.token);
-        if (data.data.refresh_token) {
-          localStorage.setItem('refresh_token', data.data.refresh_token);
-        }
-        return data.data.token;
-      }
-      */
-
-      return null;
     } catch (error) {
-      console.error('AuthService.refreshToken error:', error);
-      this.logout();
-      return null;
+      console.error('AuthService.logout error:', error);
     }
   }
 
-  // Get stored token
-  getToken(): string | null {
-    return localStorage.getItem('auth_token');
+  // Handle Google callback (not needed with cookies)
+  handleGoogleCallback(_token: string): void {
+    console.log('Google authentication completed');
   }
 
   // Check if user is authenticated
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      const user = await this.getCurrentUser();
+      return !!user;
+    } catch {
+      return false;
+    }
+  }
+
+  // Refresh token method (placeholder)
+  async refreshToken(): Promise<string | null> {
+    return null;
   }
 }
 
