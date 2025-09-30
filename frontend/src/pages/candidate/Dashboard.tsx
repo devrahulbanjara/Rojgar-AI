@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { StatCard } from '../../components/common/StatCard';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../config/constants';
+import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { 
   LogOut,
   Sparkles,
-  User
+  User,
+  FileText,
+  Calendar,
+  Trophy
 } from 'lucide-react';
 
 interface DashboardUser {
@@ -21,6 +27,7 @@ export default function CandidateDashboard() {
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { stats, isLoading: statsLoading } = useDashboardStats();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -117,9 +124,42 @@ export default function CandidateDashboard() {
         </div>
       </header>
 
-      {/* Main Content - Empty for now */}
+      {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
-        {/* Empty content area */}
+        <div className="space-y-8">
+          {/* Welcome Section */}
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Welcome back, {user.name}!
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Track your applications and improve your profile.
+            </p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <StatCard
+              title="Applications"
+              value={stats.totalApplications || 0}
+              icon={<FileText className="h-5 w-5 text-primary" />}
+              description="Total applications submitted"
+            />
+            <StatCard
+              title="Interviews"
+              value={stats.interviewsScheduled || 0}
+              icon={<Calendar className="h-5 w-5 text-primary" />}
+              description="Scheduled interviews"
+            />
+            <StatCard
+              title="Offers"
+              value="0"
+              icon={<Trophy className="h-5 w-5 text-primary" />}
+              description="Job offers received"
+            />
+          </div>
+
+        </div>
       </main>
     </div>
   );

@@ -10,5 +10,17 @@
     "is_active": true,
     "created_at": "2025-09-21T16:57:08.050165",
     "updated_at": "2025-09-21T16:57:18.775490"
+  },
+  {
+    "id": "a4ad2593-404b-4b59-81aa-f8d52cd27a9f",
+    "email": "rdbanjara08@gmail.com",
+    "name": "RahulCandidate Banjara",
+    "google_id": null,
+    "password_hash": "c1694a94cff4d7b9cf0b1e5c7d8aab9b6aff7ac2172f2a143e40fd91d835e5f8",
+    "picture": null,
+    "role": "candidate",
+    "is_active": true,
+    "created_at": "2025-09-30T13:00:10.207393",
+    "updated_at": "2025-09-30T13:00:10.207401"
   }
 ]
