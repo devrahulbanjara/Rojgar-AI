@@ -32,8 +32,10 @@ export const StatCard: React.FC<StatCardProps> = ({
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+            <p className="text-2xl font-bold" aria-label={`${title}: ${value}`}>
+              {value}
+            </p>
             {description && (
               <p className="text-xs text-muted-foreground">{description}</p>
             )}
@@ -44,6 +46,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                     "text-xs font-medium",
                     trend.isPositive ? "text-green-600" : "text-red-600"
                   )}
+                  aria-label={`${trend.isPositive ? 'Increase' : 'Decrease'} of ${trend.value}%`}
                 >
                   {trend.isPositive ? "+" : ""}{trend.value}%
                 </span>
@@ -52,7 +55,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             )}
           </div>
           {icon && (
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0" aria-hidden="true">
               {icon}
             </div>
           )}
