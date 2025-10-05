@@ -76,10 +76,13 @@
     --radius-lg: 1rem;
     --radius-xl: 1.5rem;
     
-    /* Animations */
-    --transition-fast: 150ms;
-    --transition-base: 250ms;
-    --transition-slow: 350ms;
+    /* Animations - Clean, smooth, fluid, minimal */
+    --transition-fast: 120ms;
+    --transition-base: 200ms;
+    --transition-slow: 300ms;
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --ease-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   .dark {
@@ -193,69 +196,85 @@
 }
 
 @layer utilities {
-  /* Animation utilities */
+  /* Animation utilities - Optimized for smooth performance */
   .animate-in {
-    animation: fadeIn var(--transition-base) ease-out;
+    animation: fadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-slide-up {
-    animation: slideUp var(--transition-base) ease-out;
+    animation: slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-slide-down {
-    animation: slideDown var(--transition-base) ease-out;
+    animation: slideDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-slide-in-right {
-    animation: slideInRight var(--transition-base) ease-out;
+    animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-slide-in-left {
-    animation: slideInLeft var(--transition-base) ease-out;
+    animation: slideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-scale-in {
-    animation: scaleIn var(--transition-fast) ease-out;
+    animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    will-change: opacity, transform;
   }
   
   .animate-scale-out {
-    animation: scaleOut var(--transition-fast) ease-out;
+    animation: scaleOut 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-bounce-in {
-    animation: bounceIn 0.6s ease-out;
+    animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    will-change: opacity, transform;
   }
   
   .animate-fade-in-up {
-    animation: fadeInUp 0.5s ease-out;
+    animation: fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-fade-in-down {
-    animation: fadeInDown 0.5s ease-out;
+    animation: fadeInDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-fade-in-left {
-    animation: fadeInLeft 0.5s ease-out;
+    animation: fadeInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-fade-in-right {
-    animation: fadeInRight 0.5s ease-out;
+    animation: fadeInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-zoom-in {
-    animation: zoomIn 0.3s ease-out;
+    animation: zoomIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    will-change: opacity, transform;
   }
   
   .animate-zoom-out {
-    animation: zoomOut 0.3s ease-out;
+    animation: zoomOut 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
   }
   
   .animate-float {
-    animation: float 3s ease-in-out infinite;
+    animation: float 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+    will-change: transform;
   }
   
   .animate-gradient {
-    animation: gradient 3s ease infinite;
+    animation: gradient 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+    will-change: background-position;
   }
   
   /* Shimmer loading effect */
@@ -265,38 +284,47 @@
     animation: shimmer 1.5s ease-in-out infinite;
   }
   
-  /* Enhanced hover effects */
+  /* Enhanced hover effects - Clean, smooth, fluid, minimal */
   .hover-lift {
-    transition: transform var(--transition-base) ease-out, box-shadow var(--transition-base) ease-out;
+    transition: transform var(--transition-base) var(--ease-smooth), box-shadow var(--transition-base) var(--ease-smooth);
   }
   
   .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
   
   .hover-scale {
-    transition: transform var(--transition-base) ease-out;
+    transition: transform var(--transition-base) var(--ease-smooth);
   }
   
   .hover-scale:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
   
   .hover-glow {
-    transition: box-shadow var(--transition-base) ease-out;
+    transition: box-shadow var(--transition-base) var(--ease-smooth);
   }
   
   .hover-glow:hover {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
   }
   
   .hover-rotate {
-    transition: transform var(--transition-base) ease-out;
+    transition: transform var(--transition-base) var(--ease-smooth);
   }
   
   .hover-rotate:hover {
-    transform: rotate(5deg);
+    transform: rotate(2deg);
+  }
+  
+  .hover-gentle {
+    transition: all var(--transition-base) var(--ease-smooth);
+  }
+  
+  .hover-gentle:hover {
+    transform: translateY(-0.5px);
+    box-shadow: var(--shadow-sm);
   }
   
   /* Focus states */
@@ -304,39 +332,62 @@
     @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2;
   }
   
-  /* Smooth transitions */
+  /* Smooth transitions - Clean, smooth, fluid, minimal */
   .transition-smooth {
-    transition: all var(--transition-base) ease-out;
+    transition: all var(--transition-base) var(--ease-smooth);
   }
   
   .transition-fast {
-    transition: all var(--transition-fast) ease-out;
+    transition: all var(--transition-fast) var(--ease-smooth);
   }
   
   .transition-slow {
-    transition: all var(--transition-slow) ease-out;
+    transition: all var(--transition-slow) var(--ease-smooth);
   }
   
-  /* Stagger animations */
+  .transition-spring {
+    transition: all var(--transition-base) var(--ease-spring);
+  }
+  
+  .transition-gentle {
+    transition: all var(--transition-base) var(--ease-gentle);
+  }
+  
+  /* Optimized stagger animations */
   .stagger-1 {
-    animation-delay: 0.1s;
+    animation-delay: 0.05s;
   }
   
   .stagger-2 {
-    animation-delay: 0.2s;
+    animation-delay: 0.1s;
   }
   
   .stagger-3 {
-    animation-delay: 0.3s;
+    animation-delay: 0.15s;
   }
   
   .stagger-4 {
-    animation-delay: 0.4s;
+    animation-delay: 0.2s;
   }
   
   .stagger-5 {
-    animation-delay: 0.5s;
+    animation-delay: 0.25s;
   }
+  
+  /* Smooth stagger for lists */
+  .stagger-list > * {
+    animation: fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    will-change: opacity, transform;
+  }
+  
+  .stagger-list > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-list > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-list > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-list > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-list > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-list > *:nth-child(6) { animation-delay: 0.3s; }
+  .stagger-list > *:nth-child(7) { animation-delay: 0.35s; }
+  .stagger-list > *:nth-child(8) { animation-delay: 0.4s; }
   
   /* Page transition utilities */
   .page-enter {
@@ -364,7 +415,7 @@
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
@@ -375,7 +426,7 @@
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
@@ -386,7 +437,7 @@
   @keyframes slideInRight {
     from {
       opacity: 0;
-      transform: translateX(20px);
+      transform: translateX(16px);
     }
     to {
       opacity: 1;
@@ -397,7 +448,7 @@
   @keyframes scaleIn {
     from {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.96);
     }
     to {
       opacity: 1;

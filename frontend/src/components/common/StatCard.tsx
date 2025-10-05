@@ -3,7 +3,7 @@
  * A reusable component for displaying statistics with icons and values
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '../../lib/utils';
 
@@ -19,7 +19,7 @@ export interface StatCardProps {
   className?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({
+export const StatCard = memo<StatCardProps>(({
   title,
   value,
   icon,
@@ -28,7 +28,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover-scale", className)}>
+    <Card className={cn("hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1) hover:scale-[1.01]", className)}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -63,4 +63,6 @@ export const StatCard: React.FC<StatCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+StatCard.displayName = 'StatCard';

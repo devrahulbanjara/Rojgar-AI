@@ -32,9 +32,6 @@ export interface SignupData {
   userType: UserType;
 }
 
-// Re-export API types from services
-export type { ApiResponse } from '../services/api';
-
 export interface AuthResponse {
   user: User;
   token: string;
@@ -111,16 +108,14 @@ export interface LoadingState {
   message?: string;
 }
 
-// Route Types
-export interface RouteConfig {
-  path: string;
-  component: React.ComponentType;
-  protected?: boolean;
-  allowedUserTypes?: UserType[];
+// API Response Types
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+  errors?: Array<{ detail: any }>;
+  meta?: Record<string, any>;
 }
-
-// Re-export job types for convenience
-export * from './job';
 
 // Dashboard Types (for future expansion)
 export interface DashboardStats {
@@ -135,3 +130,7 @@ export interface DashboardData {
   stats: DashboardStats;
   recentActivity: any[];
 }
+
+// Re-export job and application types
+export * from './job';
+export * from './application';

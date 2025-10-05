@@ -1,5 +1,6 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { cn } from '../../lib/utils';
 import type { UserType } from '../../types/index';
 import {
@@ -22,6 +23,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, role }: SidebarProps) {
+  const pathname = usePathname();
+  
   const recruiterItems = [
     { title: 'Dashboard', path: '/dashboard/recruiter', icon: LayoutDashboard },
     { title: 'Jobs', path: '/recruiter/jobs', icon: BriefcaseIcon },
@@ -53,24 +56,27 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
           </h3>
         </div>
         
-        {items.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/dashboard/recruiter' || item.path === '/dashboard/candidate'}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+        {items.map((item) => {
+          const isActive = pathname === item.path || 
+            (item.path === '/dashboard/recruiter' && pathname === '/dashboard/recruiter') ||
+            (item.path === '/dashboard/candidate' && pathname === '/dashboard/candidate');
+          
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1)',
                 isActive
                   ? 'bg-primary text-white shadow-sm'
-                  : 'text-slate-700 hover:bg-slate-100'
-              )
-            }
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="font-medium">{item.title}</span>
-          </NavLink>
-        ))}
+                  : 'text-slate-700 hover:bg-slate-100 hover:scale-[1.02]'
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="font-medium">{item.title}</span>
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );

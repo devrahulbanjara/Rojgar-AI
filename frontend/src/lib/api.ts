@@ -4,14 +4,7 @@
  */
 
 import { API_BASE_URL } from '../config/constants';
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message: string;
-  data?: T;
-  errors?: Array<{ detail: any }>;
-  meta?: Record<string, any>;
-}
+import type { ApiResponse } from '../types';
 
 export class ApiError extends Error {
   status: number;

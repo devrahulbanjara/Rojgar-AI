@@ -85,52 +85,6 @@ export interface JobSearchParams {
   sort_order?: 'asc' | 'desc';
 }
 
-// Application Types
-export type ApplicationStatus = 
-  | 'Applied' 
-  | 'In Review' 
-  | 'Shortlisted' 
-  | 'Interview Scheduled' 
-  | 'Interview Completed' 
-  | 'Offer Extended' 
-  | 'Offer Accepted' 
-  | 'Hired' 
-  | 'Rejected' 
-  | 'Withdrawn';
-
-export interface Application {
-  id: string;
-  jobId: string;
-  candidateId: string;
-  candidateName: string;
-  candidateEmail: string;
-  resumeUrl?: string;
-  coverLetter?: string;
-  status: ApplicationStatus;
-  matchScore?: number;
-  appliedDate: Date;
-  lastUpdateDate: Date;
-  notes?: string;
-  interviewDate?: Date;
-  feedback?: string;
-  candidate?: {
-    name: string;
-    email: string;
-    phone?: string;
-    location?: string;
-    experience: number;
-    skills: string[];
-    education?: string;
-    preferredRoles: string[];
-    avatar?: string;
-  };
-  job?: {
-    title: string;
-    company: string;
-    location: string;
-  };
-}
-
 // Job API Response Types
 export interface JobListResponse {
   jobs: Job[];
@@ -168,21 +122,6 @@ export interface CreateJobRequest {
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
   id: string;
-}
-
-// Application Form Types
-export interface CreateApplicationRequest {
-  jobId: string;
-  resumeUrl?: string;
-  coverLetter?: string;
-}
-
-export interface UpdateApplicationRequest {
-  id: string;
-  status?: ApplicationStatus;
-  notes?: string;
-  feedback?: string;
-  interviewDate?: Date;
 }
 
 // Job Component Props Types
@@ -237,13 +176,4 @@ export interface UseJobDetailReturn {
   loading: boolean;
   error: string | null;
   refetch: () => void;
-}
-
-export interface UseApplicationsReturn {
-  applications: Application[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => void;
-  createApplication: (data: CreateApplicationRequest) => Promise<void>;
-  updateApplication: (data: UpdateApplicationRequest) => Promise<void>;
 }

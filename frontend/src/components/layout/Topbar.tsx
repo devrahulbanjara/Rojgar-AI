@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { Menu, Building2, LogOut, ToggleLeft, Settings, User } from 'lucide-react';
 import { authService } from '../../services/authService';
@@ -15,15 +15,15 @@ interface TopbarProps {
 }
 
 export function Topbar({ onMenuClick, user }: TopbarProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
       await authService.logout();
-      navigate(ROUTES.HOME);
+      router.push(ROUTES.HOME);
     } catch (error) {
       console.error('Logout failed:', error);
-      navigate(ROUTES.HOME);
+      router.push(ROUTES.HOME);
     }
   };
 
@@ -56,7 +56,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="h-8 w-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1) hover:scale-105">
               {user ? getInitials(user.name) : 'U'}
             </div>
             <span className="hidden md:block font-medium text-slate-700">{user?.name}</span>

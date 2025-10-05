@@ -1,3 +1,9 @@
+/**
+ * Application Query Hooks
+ */
+
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { API_CONFIG } from '../../config/constants';
 import { queryKeys } from '../../lib/queryClient';
@@ -20,12 +26,12 @@ export const useApplicationQueries = () => {
     return response.json();
   };
 
-      const useApplicationTrackingBoard = () => {
-        return useQuery({
-          queryKey: queryKeys.applications.trackingBoard,
-          queryFn: fetchApplicationTrackingBoard,
-        });
-      };
+  const useApplicationTrackingBoard = () => {
+    return useQuery({
+      queryKey: queryKeys.applications.trackingBoard,
+      queryFn: fetchApplicationTrackingBoard,
+    });
+  };
 
   return {
     useApplicationTrackingBoard,

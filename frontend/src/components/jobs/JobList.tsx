@@ -3,10 +3,10 @@
  * Displays a list of jobs with enhanced UX and selection state
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import { JobCard } from './JobCard';
 import { LoadingSpinner } from '../common/LoadingSpinner';
-import { EmptyState, SkeletonJobCard } from '../common';
+import { EmptyState, SkeletonJobCard, StaggerContainer } from '../common';
 import { cn } from '../../design-system/components';
 import type { Job } from '../../types/job';
 import { AlertCircle, Search, Filter } from 'lucide-react';
@@ -21,7 +21,7 @@ interface JobListProps {
   className?: string;
 }
 
-export const JobList: React.FC<JobListProps> = ({
+export const JobList = memo<JobListProps>(({
   jobs,
   loading = false,
   error,
@@ -32,18 +32,15 @@ export const JobList: React.FC<JobListProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="space-y-4">
+      <StaggerContainer className="space-y-4" staggerDelay={0.08}>
         {/* Enhanced Loading Skeletons */}
         {Array.from({ length: 5 }).map((_, index) => (
-          <div 
-            key={index} 
-            className="animate-fade-in-up"
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <SkeletonJobCard className="bg-card border border-border rounded-xl" />
-          </div>
+          <SkeletonJobCard 
+            key={index}
+            className="bg-card border border-border rounded-xl" 
+          />
         ))}
-      </div>
+      </StaggerContainer>
     );
   }
 
@@ -90,7 +87,10 @@ export const JobList: React.FC<JobListProps> = ({
   }
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <StaggerContainer 
+      className={cn('space-y-3', className)}
+      staggerDelay={0.06}
+    >
       {jobs.map((job) => (
         <JobCard
           key={job.id}
@@ -101,6 +101,8 @@ export const JobList: React.FC<JobListProps> = ({
           showApplyButton={false} // Apply button is now in the detail view
         />
       ))}
-    </div>
+    </StaggerContainer>
   );
-};
+});
+
+JobList.displayName = 'JobList';

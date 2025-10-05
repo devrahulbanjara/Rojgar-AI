@@ -3,8 +3,8 @@
  * Specialized service for job-related API operations with type safety
  */
 
-import { apiClient } from './api';
-import type { ApiResponse as BaseApiResponse } from './api';
+import { apiClient } from '../lib/api';
+import type { ApiResponse as BaseApiResponse } from '../types';
 import type { 
   Job, 
   JobListResponse, 
@@ -12,10 +12,8 @@ import type {
   JobSearchParams, 
   CreateJobRequest,
   UpdateJobRequest,
-  Application,
-  CreateApplicationRequest,
-  UpdateApplicationRequest
 } from '../types/job';
+import type { Application, CreateApplicationRequest, UpdateApplicationRequest } from '../types/application';
 
 // Job API endpoints
 const jobEndpoints = {

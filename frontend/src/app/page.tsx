@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+'use client';
+
+import Link from 'next/link';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { PageTransition } from '../components/common/PageTransition';
@@ -86,10 +88,10 @@ export default function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <Link to="/login">
+              <Link href="/login">
                 <Button variant="ghost" className="hover-scale transition-smooth">Sign In</Button>
               </Link>
-              <Link to="/login">
+              <Link href="/login">
                 <Button className="hover-scale transition-smooth">Get Started</Button>
               </Link>
             </motion.div>
@@ -125,13 +127,13 @@ export default function LandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
-                <Link to="/signup?type=candidate">
+                <Link href="/signup?type=candidate">
                   <Button size="lg" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto hover-scale transition-smooth">
                     <User className="mr-2 h-5 w-5" />
                     Find Jobs
                   </Button>
                 </Link>
-                <Link to="/signup?type=recruiter">
+                <Link href="/signup?type=recruiter">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto hover-scale transition-smooth">
                     <Building2 className="mr-2 h-5 w-5" />
                     Hire Talent
@@ -299,7 +301,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <Link to="/login">
+            <Link href="/login">
               <Button variant="outline" size="lg" className="hover-scale transition-smooth">
                 View All Jobs
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -352,7 +354,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works - Simplified */}
+      {/* How It Works */}
       <section className="py-16 px-6 bg-gray-50">
         <div className="container mx-auto">
           <motion.div
@@ -451,7 +453,7 @@ export default function LandingPage() {
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of professionals and companies who trust ConvexHire for their career and hiring needs
           </p>
-          <Link to="/login">
+          <Link href="/login">
             <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 hover-scale transition-smooth">
               Get Started
             </Button>

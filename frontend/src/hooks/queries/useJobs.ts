@@ -3,15 +3,16 @@
  * Provides data fetching, caching, and state management for jobs
  */
 
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobService, applicationService } from '../../services/jobService';
 import type { 
   JobSearchParams, 
   CreateJobRequest, 
   UpdateJobRequest,
-  CreateApplicationRequest,
-  UpdateApplicationRequest
 } from '../../types/job';
+import type { CreateApplicationRequest, UpdateApplicationRequest } from '../../types/application';
 
 // Query keys for consistent caching
 export const jobQueryKeys = {

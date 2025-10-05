@@ -3,6 +3,8 @@
  * Comprehensive form state management with validation
  */
 
+'use client';
+
 import { useState, useCallback, useRef } from 'react';
 
 export interface ValidationRule<T = any> {

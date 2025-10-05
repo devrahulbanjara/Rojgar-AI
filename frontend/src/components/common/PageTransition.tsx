@@ -3,7 +3,7 @@
  * Provides smooth page transitions for navigation
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { cn } from '../../design-system/components';
 
 interface PageTransitionProps {
@@ -11,7 +11,7 @@ interface PageTransitionProps {
   className?: string;
 }
 
-export const PageTransition: React.FC<PageTransitionProps> = ({
+export const PageTransition = memo<PageTransitionProps>(({
   children,
   className
 }) => {
@@ -29,14 +29,16 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   return (
     <div
       className={cn(
-        'transition-all duration-300 ease-out',
+        'transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1)',
         isVisible 
           ? 'opacity-100 translate-y-0' 
-          : 'opacity-0 translate-y-4',
+          : 'opacity-0 translate-y-2',
         className
       )}
     >
       {children}
     </div>
   );
-};
+});
+
+PageTransition.displayName = 'PageTransition';
