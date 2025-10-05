@@ -62,11 +62,17 @@ export const queryKeys = {
     detail: (id: string) => ['jobs', id] as const,
     search: (params: Record<string, any>) => ['jobs', 'search', params] as const,
   },
-  // Application related queries (for future use)
+  // Application related queries
   applications: {
     all: ['applications'] as const,
     detail: (id: string) => ['applications', id] as const,
     byUser: (userId: string) => ['applications', 'user', userId] as const,
     byJob: (jobId: string) => ['applications', 'job', jobId] as const,
+    trackingBoard: ['applications', 'tracking-board'] as const,
+  },
+  // Dashboard related queries
+  dashboard: {
+    stats: ['dashboard', 'stats'] as const,
+    activity: ['dashboard', 'activity'] as const,
   },
 } as const;

@@ -11,6 +11,7 @@ import RoleSelection from '../pages/RoleSelection';
 import RecruiterDashboard from '../pages/recruiter/Dashboard';
 import CandidateDashboard from '../pages/candidate/Dashboard';
 import NotFound from '../pages/NotFound';
+import { AppShell } from '../components/layout/AppShell';
 import { ROUTES } from '../config/constants';
 
 // Define route configuration
@@ -32,16 +33,27 @@ export const routes: RouteObject[] = [
     element: <RoleSelection />,
   },
   {
+    path: '/dashboard',
+    element: <AppShell />,
+    children: [
+      {
+        path: 'recruiter',
+        element: <RecruiterDashboard />,
+      },
+      {
+        path: 'candidate',
+        element: <CandidateDashboard />,
+      },
+    ],
+  },
+  // Legacy routes for backward compatibility
+  {
     path: ROUTES.RECRUITER.DASHBOARD,
     element: <RecruiterDashboard />,
-    // TODO: Add authentication guard when implementing auth
-    // loader: requireAuth(['recruiter']),
   },
   {
     path: ROUTES.CANDIDATE.DASHBOARD,
     element: <CandidateDashboard />,
-    // TODO: Add authentication guard when implementing auth
-    // loader: requireAuth(['candidate']),
   },
   // Catch-all route for 404 pages
   {
