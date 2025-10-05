@@ -33,7 +33,7 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
 ### Development Milestones
 
 - [ ] **Milestone A**: MVP
-  - [ ] Landing Page Design
+  - [x] Landing Page Design  
   - [ ] Authentication and Session Management
 
 > [!NOTE]  
