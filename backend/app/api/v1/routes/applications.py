@@ -1,15 +1,13 @@
+"""
+Application API Routes
+Clean, production-ready endpoints for application management
+"""
+
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 
-from app.core.security import verify_token
-
-
-# Helper function to get current user from token
-async def get_current_user(token: str = Depends(verify_token)):
-    return token
-
-
+from app.core.security import get_current_user_id
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationResponse,
@@ -22,40 +20,36 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[ApplicationResponse])
-async def get_applications(current_user=Depends(get_current_user)):
-    """Get all applications for the current user"""
-    applications = ApplicationService.get_user_applications(current_user["id"])
-    return [app.to_dict() for app in applications]
+async def get_applications(request: Request):
+    """Get all applications for the current authenticated user"""
+    user_id = get_current_user_id(request)
+    applications = ApplicationService.get_user_applications(user_id)
+    return [ApplicationResponse(**app.to_dict()) for app in applications]
 
 
-@router.get("/tracking-board", response_model=dict)
-async def get_application_tracking_board(current_user=Depends(get_current_user)):
+@router.get("/tracking-board", response_model=ApplicationTrackingBoardResponse)
+async def get_application_tracking_board(request: Request):
     """Get applications organized by stage for the application tracking board"""
-    return ApplicationService.get_application_tracking_board(current_user["id"])
-
-
-@router.get("/tracking-board/test", response_model=dict)
-async def get_application_tracking_board_test():
-    """Get applications organized by stage for the application tracking board (test endpoint without auth)"""
-    return ApplicationService.get_application_tracking_board("08e24b25-dc8f-4e38-98e7-723b3c721162")  # Use the correct user ID for testing
+    user_id = get_current_user_id(request)
+    return ApplicationService.get_application_tracking_board(user_id)
 
 
 @router.post(
     "/", response_model=ApplicationResponse, status_code=status.HTTP_201_CREATED
 )
-async def create_application(
-    application: ApplicationCreate, current_user=Depends(get_current_user)
-):
-    """Create a new application for the current user"""
+async def create_application(application: ApplicationCreate, request: Request):
+    """Create a new application for the current authenticated user"""
+    user_id = get_current_user_id(request)
     new_application = ApplicationService.create_application(
-        user_id=current_user["id"], application_data=application
+        user_id=user_id, application_data=application
     )
     return new_application.to_dict()
 
 
 @router.get("/{application_id}", response_model=ApplicationResponse)
-async def get_application(application_id: int, current_user=Depends(get_current_user)):
-    """Get a specific application by ID"""
+async def get_application(application_id: int, request: Request):
+    """Get a specific application by ID for the current authenticated user"""
+    user_id = get_current_user_id(request)
     application = ApplicationService.get_application(application_id)
 
     if not application:
@@ -64,7 +58,7 @@ async def get_application(application_id: int, current_user=Depends(get_current_
         )
 
     # Check if the application belongs to the current user
-    if application.user_id != current_user["id"]:
+    if application.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this application",
@@ -77,9 +71,11 @@ async def get_application(application_id: int, current_user=Depends(get_current_
 async def update_application(
     application_id: int,
     application_update: ApplicationUpdate,
-    current_user=Depends(get_current_user),
+    request: Request,
 ):
-    """Update an application by ID"""
+    """Update an application by ID for the current authenticated user"""
+    user_id = get_current_user_id(request)
+    
     # First check if the application exists and belongs to the user
     existing_application = ApplicationService.get_application(application_id)
 
@@ -88,7 +84,7 @@ async def update_application(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
         )
 
-    if existing_application.user_id != current_user["id"]:
+    if existing_application.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this application",
@@ -107,10 +103,10 @@ async def update_application(
 
 
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_application(
-    application_id: int, current_user=Depends(get_current_user)
-):
-    """Delete an application by ID"""
+async def delete_application(application_id: int, request: Request):
+    """Delete an application by ID for the current authenticated user"""
+    user_id = get_current_user_id(request)
+    
     # First check if the application exists and belongs to the user
     existing_application = ApplicationService.get_application(application_id)
 
@@ -119,7 +115,7 @@ async def delete_application(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
         )
 
-    if existing_application.user_id != current_user["id"]:
+    if existing_application.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this application",

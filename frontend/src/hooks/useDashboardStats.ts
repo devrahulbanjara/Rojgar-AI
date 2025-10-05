@@ -3,6 +3,8 @@
  * Manages dashboard statistics for candidates and recruiters
  */
 
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
 
@@ -33,5 +35,11 @@ export const useDashboardStats = () => {
     queryFn: fetchDashboardStats,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    initialData: {
+      totalApplications: 0,
+      activeJobs: 0,
+      interviewsScheduled: 0,
+      responseRate: 0,
+    },
   });
 };

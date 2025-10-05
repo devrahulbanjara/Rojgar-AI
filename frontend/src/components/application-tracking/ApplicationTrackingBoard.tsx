@@ -10,16 +10,53 @@ interface ApplicationTrackingBoardProps {
     outcome: Application[];
   };
   isLoading: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
 }
 
-export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> = ({ applications, isLoading }) => {
+export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> = ({ 
+  applications, 
+  isLoading, 
+  error, 
+  onRetry 
+}) => {
   const isEmpty = 
     applications.applied.length === 0 && 
     applications.interviewing.length === 0 && 
     applications.outcome.length === 0;
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        }
+        title="Failed to load applications"
+        description="There was an error loading your applications. Please try again."
+        action={
+          onRetry && (
+            <button
+              onClick={onRetry}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Try Again
+            </button>
+          )
+        }
+      />
+    );
   }
 
   if (isEmpty) {

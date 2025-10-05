@@ -23,7 +23,7 @@ export interface Application {
   id: number;
   job_title: string;
   company_name: string;
-  user_id: number;
+  user_id: string; // Changed from number to string to match backend UUID
   applied_date: string;
   stage: ApplicationStage;
   status: ApplicationStatus;
@@ -35,4 +35,29 @@ export interface ApplicationTrackingBoard {
   applied: Application[];
   interviewing: Application[];
   outcome: Application[];
+}
+
+// Application Form Types
+export interface CreateApplicationRequest {
+  jobId: string;
+  resumeUrl?: string;
+  coverLetter?: string;
+}
+
+export interface UpdateApplicationRequest {
+  id: string;
+  status?: ApplicationStatus;
+  notes?: string;
+  feedback?: string;
+  interviewDate?: Date;
+}
+
+// Application Hook Return Types
+export interface UseApplicationsReturn {
+  applications: Application[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+  createApplication: (data: CreateApplicationRequest) => Promise<void>;
+  updateApplication: (data: UpdateApplicationRequest) => Promise<void>;
 }

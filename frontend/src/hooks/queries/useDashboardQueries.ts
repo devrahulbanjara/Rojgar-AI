@@ -3,15 +3,17 @@
  * React Query hooks for dashboard-related data fetching
  */
 
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
-import type { DashboardData, DashboardStats, UserType } from '../../types';
+import type { DashboardStats, UserType } from '../../types';
 import { queryKeys } from '../../lib/queryClient';
 import { useCurrentUser } from './useAuthQueries';
 
 // Get dashboard stats
 export const useDashboardStats = (userType?: UserType) => {
   return useQuery({
-    queryKey: queryKeys.dashboard.stats(userType || 'recruiter'),
+    queryKey: [...queryKeys.dashboard.stats, userType || 'recruiter'],
     queryFn: async (): Promise<DashboardStats> => {
       // TODO: Replace with actual API call when backend is ready
       // const response = await apiService.get(`/dashboard/stats?userType=${userType}`);
@@ -45,7 +47,7 @@ export const useDashboardStats = (userType?: UserType) => {
 // Get dashboard activity
 export const useDashboardActivity = (userId?: string) => {
   return useQuery({
-    queryKey: queryKeys.dashboard.activity(userId || ''),
+    queryKey: [...queryKeys.dashboard.activity, userId || ''],
     queryFn: async (): Promise<any[]> => {
       // TODO: Replace with actual API call when backend is ready
       // const response = await apiService.get(`/dashboard/activity/${userId}`);
@@ -79,37 +81,4 @@ export const useDashboardActivity = (userId?: string) => {
     staleTime: 2 * 60 * 1000, // 2 minutes (activity is more dynamic)
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
-};
-
-// Get complete dashboard data
-export const useDashboardData = () => {
-  const { data: user } = useCurrentUser();
-  const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats(user?.userType);
-  const { data: activity, isLoading: activityLoading, error: activityError } = useDashboardActivity(user?.id);
-
-  return {
-    dashboardData: user ? {
-      user,
-      stats: stats || {},
-      recentActivity: activity || [],
-    } as DashboardData : null,
-    isLoading: statsLoading || activityLoading,
-    error: statsError || activityError,
-    user,
-    stats,
-    activity,
-  };
-};
-
-// Prefetch dashboard data (useful for optimistic navigation)
-export const usePrefetchDashboard = () => {
-  const { data: user } = useCurrentUser();
-  
-  // This would be called when user hovers over dashboard link, etc.
-  // queryClient.prefetchQuery({
-  //   queryKey: queryKeys.dashboard.stats(user?.userType || 'recruiter'),
-  //   queryFn: () => fetchDashboardStats(user?.userType),
-  // });
-  
-  return { user };
 };

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StatCard } from '../common/StatCard';
+import { StaggerContainer } from '../common/AnimatedContainer';
 import { FileText, Calendar, Trophy, BriefcaseIcon, Users, TrendingUp } from 'lucide-react';
 import type { DashboardStats } from '../../hooks/useDashboardStats';
 
@@ -13,7 +14,7 @@ interface StatsGridProps {
  * Responsive stats grid component
  * Displays different stats based on user type (candidate vs recruiter)
  */
-export const StatsGrid: React.FC<StatsGridProps> = ({
+export const StatsGrid = memo<StatsGridProps>(({
   stats,
   userType = 'candidate',
   className = '',
@@ -70,7 +71,11 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
   const gridCols = userType === 'recruiter' ? 'md:grid-cols-4' : 'md:grid-cols-3';
 
   return (
-    <div className={`grid gap-6 ${gridCols} ${className}`}>
+    <StaggerContainer 
+      className={`grid gap-6 ${gridCols} ${className}`}
+      delay={0.1}
+      staggerDelay={0.08}
+    >
       {statsToShow.map((stat, index) => (
         <StatCard
           key={index}
@@ -80,6 +85,8 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
           description={stat.description}
         />
       ))}
-    </div>
+    </StaggerContainer>
   );
-};
+});
+
+StatsGrid.displayName = 'StatsGrid';
