@@ -1,0 +1,70 @@
+{
+  "applications": [
+    {
+      "id": 1,
+      "job_title": "Senior Frontend Developer",
+      "company_name": "TechCorp Inc.",
+      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
+      "applied_date": "2024-01-15",
+      "stage": "applied",
+      "status": "pending",
+      "description": "React, TypeScript, and modern web development position",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "job_title": "Full Stack Engineer",
+      "company_name": "StartupXYZ",
+      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
+      "applied_date": "2024-01-12",
+      "stage": "applied",
+      "status": "pending",
+      "description": "Full-stack development with Node.js and React",
+      "updated_at": "2024-01-12T14:20:00Z"
+    },
+    {
+      "id": 3,
+      "job_title": "Software Engineer",
+      "company_name": "BigTech Solutions",
+      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
+      "applied_date": "2024-01-10",
+      "stage": "screening",
+      "status": "under_review",
+      "description": "Backend development with Python and Django",
+      "updated_at": "2024-01-18T09:15:00Z"
+    },
+    {
+      "id": 4,
+      "job_title": "React Developer",
+      "company_name": "WebAgency Pro",
+      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
+      "applied_date": "2024-01-08",
+      "stage": "interviewing",
+      "status": "interview_scheduled",
+      "description": "Frontend development with React and Redux",
+      "updated_at": "2024-01-16T16:45:00Z"
+    },
+    {
+      "id": 5,
+      "job_title": "DevOps Engineer",
+      "company_name": "CloudFirst",
+      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
+      "applied_date": "2024-01-05",
+      "stage": "offer",
+      "status": "offer_extended",
+      "description": "AWS, Docker, Kubernetes, and CI/CD pipeline management",
+      "updated_at": "2024-01-20T11:30:00Z"
+    },
+    {
+      "id": 6,
+      "job_title": "Product Manager",
+      "company_name": "InnovateLab",
+      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
+      "applied_date": "2024-01-03",
+      "stage": "decision",
+      "status": "accepted",
+      "description": "Product strategy and roadmap development",
+      "updated_at": "2024-01-19T13:20:00Z"
+    }
+  ]
+}
