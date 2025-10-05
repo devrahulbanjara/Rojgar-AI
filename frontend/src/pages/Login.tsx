@@ -7,6 +7,7 @@ import { AuthLayout } from '../components/layout/AuthLayout';
 import { FormInput } from '../components/forms/FormInput';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
+import { PageTransition } from '../components/common/PageTransition';
 import { useForm } from '../hooks/useForm';
 import { useAuth } from '../hooks/useAuth';
 import { validateEmail, validatePassword } from '../utils/validation';
@@ -65,25 +66,26 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your account to continue"
-    >
-      <Card className="backdrop-blur-sm bg-card/80 border border-border/50 shadow-xl">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-xl text-center">Sign In</CardTitle>
-        </CardHeader>
+    <PageTransition>
+      <AuthLayout
+        title="Welcome back"
+        subtitle="Sign in to your account to continue"
+      >
+        <Card className="backdrop-blur-sm bg-card/80 border border-border/50 shadow-xl animate-fade-in-up">
+          <CardHeader className="space-y-1 animate-fade-in-down">
+            <CardTitle className="text-xl text-center">Sign In</CardTitle>
+          </CardHeader>
         <CardContent>
           {/* Auth Error Display */}
           {authError && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm animate-fade-in-down">
               <AlertCircle className="h-4 w-4" />
               {authError}
             </div>
           )}
 
           {/* Google OAuth Button */}
-          <div className="mb-6">
+          <div className="mb-6 animate-fade-in-up stagger-1">
             <GoogleOAuthButton
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
@@ -92,7 +94,7 @@ export default function Login() {
           </div>
 
           {/* Divider */}
-          <div className="relative mb-6">
+          <div className="relative mb-6 animate-fade-in-up stagger-2">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -101,7 +103,7 @@ export default function Login() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 animate-fade-in-up stagger-3">
             {/* Email */}
             <FormInput
               id="email"
@@ -150,7 +152,7 @@ export default function Login() {
             {/* Submit button */}
             <Button 
               type="submit" 
-              className="w-full group" 
+              className="w-full group hover-scale transition-smooth" 
               disabled={isLoading}
             >
               {isLoading ? (
@@ -165,14 +167,15 @@ export default function Login() {
           </form>
 
           {/* Sign up link */}
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-6 text-center text-sm animate-fade-in-up stagger-4">
             <span className="text-muted-foreground">Don't have an account? </span>
-            <Link to={ROUTES.SIGNUP} className="text-primary hover:underline font-medium">
+            <Link to={ROUTES.SIGNUP} className="text-primary hover:underline font-medium transition-colors duration-300">
               Sign up
             </Link>
           </div>
         </CardContent>
       </Card>
     </AuthLayout>
+    </PageTransition>
   );
 }

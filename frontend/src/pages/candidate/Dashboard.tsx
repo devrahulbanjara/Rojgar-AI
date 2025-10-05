@@ -1,6 +1,6 @@
 import { ApplicationTrackingBoard } from '../../components/application-tracking/ApplicationTrackingBoard';
 import { WelcomeMessage, StatsGrid } from '../../components/dashboard';
-import { SectionHeader } from '../../components/common';
+import { SectionHeader, PageTransition } from '../../components/common';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { useApplicationTrackingBoard } from '../../hooks/useApplicationTrackingBoard';
 import { useAuth } from '../../hooks/useAuth';
@@ -14,18 +14,22 @@ export default function CandidateDashboard() {
   const firstName = user?.name?.split(' ')[0];
 
   return (
-    <div className="space-y-8">
+    <PageTransition className="space-y-8">
       {/* Welcome Message */}
-      <WelcomeMessage firstName={firstName} />
+      <div className="animate-fade-in-up">
+        <WelcomeMessage firstName={firstName} />
+      </div>
 
       {/* Stats Grid */}
-      <StatsGrid 
-        stats={stats || {}} 
-        userType="candidate" 
-      />
+      <div className="animate-fade-in-up stagger-1">
+        <StatsGrid 
+          stats={stats || {}} 
+          userType="candidate" 
+        />
+      </div>
 
       {/* Application Tracking Section */}
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in-up stagger-2">
         <SectionHeader
           title="Your Applications"
           subtitle="Track your job application journey"
@@ -36,6 +40,6 @@ export default function CandidateDashboard() {
           isLoading={applicationTrackingLoading} 
         />
       </div>
-    </div>
+    </PageTransition>
   );
 }

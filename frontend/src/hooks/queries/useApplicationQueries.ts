@@ -5,7 +5,13 @@ import type { ApplicationTrackingBoard } from '../../types/application';
 
 export const useApplicationQueries = () => {
   const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
-    const response = await fetch(`${API_CONFIG.baseUrl}/applications/tracking-board/test`);
+    const response = await fetch(`${API_CONFIG.baseUrl}/applications/tracking-board`, {
+      method: 'GET',
+      credentials: 'include', // Include cookies for authentication
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);

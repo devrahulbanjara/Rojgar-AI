@@ -22,5 +22,17 @@
     "is_active": true,
     "created_at": "2025-10-04T01:12:32.243872",
     "updated_at": "2025-10-04T01:12:32.243877"
+  },
+  {
+    "id": "ef40a423-4edb-4395-b28e-e2192ec604fc",
+    "email": "test@example.com",
+    "name": "Test User",
+    "google_id": null,
+    "password_hash": "c1694a94cff4d7b9cf0b1e5c7d8aab9b6aff7ac2172f2a143e40fd91d835e5f8",
+    "picture": null,
+    "role": "candidate",
+    "is_active": true,
+    "created_at": "2025-10-05T11:35:35.228604",
+    "updated_at": "2025-10-05T11:35:35.228608"
   }
 ]

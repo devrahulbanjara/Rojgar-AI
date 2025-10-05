@@ -28,19 +28,19 @@ export const StatCard: React.FC<StatCardProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("hover:shadow-md transition-shadow duration-200", className)}>
+    <Card className={cn("hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover-scale", className)}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-            <p className="text-2xl font-bold" aria-label={`${title}: ${value}`}>
+            <h3 className="text-sm font-medium text-muted-foreground animate-fade-in-left">{title}</h3>
+            <p className="text-2xl font-bold animate-fade-in-up stagger-1" aria-label={`${title}: ${value}`}>
               {value}
             </p>
             {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
+              <p className="text-xs text-muted-foreground animate-fade-in-up stagger-2">{description}</p>
             )}
             {trend && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 animate-fade-in-up stagger-3">
                 <span
                   className={cn(
                     "text-xs font-medium",
@@ -55,7 +55,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             )}
           </div>
           {icon && (
-            <div className="flex-shrink-0" aria-hidden="true">
+            <div className="flex-shrink-0 animate-fade-in-right stagger-1" aria-hidden="true">
               {icon}
             </div>
           )}

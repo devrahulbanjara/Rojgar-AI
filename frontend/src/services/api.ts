@@ -168,6 +168,27 @@ export const endpoints = {
     stats: '/dashboard/stats',
     recentActivity: '/dashboard/activity',
   },
+  
+  // Job endpoints
+  jobs: {
+    list: '/jobs',
+    detail: (id: string) => `/jobs/${id}`,
+    create: '/jobs',
+    update: (id: string) => `/jobs/${id}`,
+    delete: (id: string) => `/jobs/${id}`,
+    search: '/jobs/search',
+  },
+  
+  // Application endpoints
+  applications: {
+    list: '/applications',
+    detail: (id: string) => `/applications/${id}`,
+    create: '/applications',
+    update: (id: string) => `/applications/${id}`,
+    delete: (id: string) => `/applications/${id}`,
+    byJob: (jobId: string) => `/applications/job/${jobId}`,
+    byCandidate: (candidateId: string) => `/applications/candidate/${candidateId}`,
+  },
 } as const;
 
 // Type-safe API methods
@@ -194,6 +215,29 @@ export const api = {
   dashboard: {
     getStats: () => apiClient.get(endpoints.dashboard.stats),
     getRecentActivity: () => apiClient.get(endpoints.dashboard.recentActivity),
+  },
+  
+  // Job methods
+  jobs: {
+    list: (params?: Record<string, any>) => 
+      apiClient.get(`${endpoints.jobs.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
+    get: (id: string) => apiClient.get(endpoints.jobs.detail(id)),
+    create: (data: any) => apiClient.post(endpoints.jobs.create, data),
+    update: (id: string, data: any) => apiClient.put(endpoints.jobs.update(id), data),
+    delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
+    search: (params: any) => apiClient.post(endpoints.jobs.search, params),
+  },
+  
+  // Application methods
+  applications: {
+    list: (params?: Record<string, any>) => 
+      apiClient.get(`${endpoints.applications.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
+    get: (id: string) => apiClient.get(endpoints.applications.detail(id)),
+    create: (data: any) => apiClient.post(endpoints.applications.create, data),
+    update: (id: string, data: any) => apiClient.put(endpoints.applications.update(id), data),
+    delete: (id: string) => apiClient.delete(endpoints.applications.delete(id)),
+    getByJob: (jobId: string) => apiClient.get(endpoints.applications.byJob(jobId)),
+    getByCandidate: (candidateId: string) => apiClient.get(endpoints.applications.byCandidate(candidateId)),
   },
 };
 

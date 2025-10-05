@@ -10,6 +10,7 @@ import Signup from '../pages/Signup';
 import RoleSelection from '../pages/RoleSelection';
 import RecruiterDashboard from '../pages/recruiter/Dashboard';
 import CandidateDashboard from '../pages/candidate/Dashboard';
+import Jobs from '../pages/candidate/Jobs';
 import NotFound from '../pages/NotFound';
 import { AppShell } from '../components/layout/AppShell';
 import { ROUTES } from '../config/constants';
@@ -43,6 +44,16 @@ export const routes: RouteObject[] = [
       {
         path: 'candidate',
         element: <CandidateDashboard />,
+      },
+    ],
+  },
+  {
+    path: '/candidate',
+    element: <AppShell />,
+    children: [
+      {
+        path: 'browse-jobs',
+        element: <Jobs />,
       },
     ],
   },

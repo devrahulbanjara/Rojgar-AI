@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { PageTransition } from '../components/common/PageTransition';
 import { motion } from 'framer-motion';
 import {
   Briefcase,
@@ -65,23 +66,33 @@ const platformStats = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <PageTransition className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 animate-fade-in-down">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-8 w-8 text-primary" />
+            <motion.div 
+              className="flex items-center gap-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Sparkles className="h-8 w-8 text-primary animate-float" />
               <span className="text-2xl font-bold gradient-text">ConvexHire</span>
-            </div>
-            <div className="flex items-center gap-4">
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <Link to="/login">
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost" className="hover-scale transition-smooth">Sign In</Button>
               </Link>
               <Link to="/login">
-                <Button>Get Started</Button>
+                <Button className="hover-scale transition-smooth">Get Started</Button>
               </Link>
-            </div>
+            </motion.div>
           </div>
         </div>
       </nav>
@@ -108,20 +119,25 @@ export default function LandingPage() {
                 we make the process simple and transparent.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4">
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
                 <Link to="/signup?type=candidate">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto hover-scale transition-smooth">
                     <User className="mr-2 h-5 w-5" />
                     Find Jobs
                   </Button>
                 </Link>
                 <Link to="/signup?type=recruiter">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto hover-scale transition-smooth">
                     <Building2 className="mr-2 h-5 w-5" />
                     Hire Talent
                   </Button>
                 </Link>
-              </div>
+              </motion.div>
             </motion.div>
 
             <motion.div
@@ -191,7 +207,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200">
+                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-200 hover-scale">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-gray-900">{category.title}</h3>
@@ -237,7 +253,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200">
+                <Card className="hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer border border-gray-200 hover-scale">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
@@ -266,7 +282,7 @@ export default function LandingPage() {
                       <span className="text-sm text-gray-500">
                         {job.applicants} applicants
                       </span>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 hover-scale transition-smooth">
                         Apply Now
                       </Button>
                     </div>
@@ -276,14 +292,20 @@ export default function LandingPage() {
             ))}
           </div>
           
-          <div className="text-center mt-8">
+          <motion.div 
+            className="text-center mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
             <Link to="/login">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="hover-scale transition-smooth">
                 View All Jobs
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -315,9 +337,13 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="text-center"
               >
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <motion.div 
+                  className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 hover-scale transition-smooth"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <stat.icon className="h-8 w-8 text-blue-600" />
-                </div>
+                </motion.div>
                 <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
                 <p className="text-gray-600">{stat.label}</p>
               </motion.div>
@@ -351,7 +377,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="bg-white rounded-xl p-8 shadow-sm border border-gray-200"
+              className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -382,7 +408,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="bg-white rounded-xl p-8 shadow-sm border border-gray-200"
+              className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -426,7 +452,7 @@ export default function LandingPage() {
             Join thousands of professionals and companies who trust ConvexHire for their career and hiring needs
           </p>
           <Link to="/login">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 hover-scale transition-smooth">
               Get Started
             </Button>
           </Link>
@@ -434,19 +460,29 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 bg-gray-50 border-t border-gray-200">
+      <footer className="py-8 px-6 bg-gray-50 border-t border-gray-200 animate-fade-in-up">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
+            <motion.div 
+              className="flex items-center gap-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Sparkles className="h-6 w-6 text-primary animate-float" />
               <span className="text-lg font-bold gradient-text">ConvexHire</span>
-            </div>
-            <p className="text-sm text-gray-600">
+            </motion.div>
+            <motion.p 
+              className="text-sm text-gray-600"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               © 2025 ConvexHire. All rights reserved.
-            </p>
+            </motion.p>
           </div>
         </div>
       </footer>
-    </div>
+    </PageTransition>
   );
 }

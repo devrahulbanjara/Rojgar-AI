@@ -72,13 +72,18 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
   return (
     <div className={`grid gap-6 ${gridCols} ${className}`}>
       {statsToShow.map((stat, index) => (
-        <StatCard
+        <div 
           key={index}
-          title={stat.title}
-          value={stat.value}
-          icon={stat.icon}
-          description={stat.description}
-        />
+          className="animate-fade-in-up"
+          style={{ animationDelay: `${index * 0.1}s` }}
+        >
+          <StatCard
+            title={stat.title}
+            value={stat.value}
+            icon={stat.icon}
+            description={stat.description}
+          />
+        </div>
       ))}
     </div>
   );

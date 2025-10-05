@@ -32,13 +32,8 @@ export interface SignupData {
   userType: UserType;
 }
 
-// API Response Types
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-}
+// Re-export API types from services
+export type { ApiResponse } from '../services/api';
 
 export interface AuthResponse {
   user: User;
@@ -123,6 +118,9 @@ export interface RouteConfig {
   protected?: boolean;
   allowedUserTypes?: UserType[];
 }
+
+// Re-export job types for convenience
+export * from './job';
 
 // Dashboard Types (for future expansion)
 export interface DashboardStats {

@@ -113,10 +113,212 @@ module.exports = {
             transform: "translateY(0)",
           },
         },
+        slideInRight: {
+          "0%": {
+            opacity: "0",
+            transform: "translateX(20px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
+        slideInLeft: {
+          "0%": {
+            opacity: "0",
+            transform: "translateX(-20px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
+        scaleIn: {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.95)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+        },
+        scaleOut: {
+          "0%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "scale(0.95)",
+          },
+        },
+        bounceIn: {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.3)",
+          },
+          "50%": {
+            opacity: "1",
+            transform: "scale(1.05)",
+          },
+          "70%": {
+            transform: "scale(0.9)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+        },
+        slideDown: {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(-20px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        fadeInUp: {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(30px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        fadeInDown: {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(-30px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        fadeInLeft: {
+          "0%": {
+            opacity: "0",
+            transform: "translateX(-30px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
+        fadeInRight: {
+          "0%": {
+            opacity: "0",
+            transform: "translateX(30px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
+        zoomIn: {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.5)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+        },
+        zoomOut: {
+          "0%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "scale(0.5)",
+          },
+        },
+        pulse: {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.5",
+          },
+        },
+        wiggle: {
+          "0%, 100%": {
+            transform: "rotate(-3deg)",
+          },
+          "50%": {
+            transform: "rotate(3deg)",
+          },
+        },
+        float: {
+          "0%, 100%": {
+            transform: "translateY(0px)",
+          },
+          "50%": {
+            transform: "translateY(-10px)",
+          },
+        },
+        shimmer: {
+          "0%": {
+            backgroundPosition: "-200px 0",
+          },
+          "100%": {
+            backgroundPosition: "calc(200px + 100%) 0",
+          },
+        },
+        gradient: {
+          "0%, 100%": {
+            backgroundPosition: "0% 50%",
+          },
+          "50%": {
+            backgroundPosition: "100% 50%",
+          },
+        },
+        typing: {
+          "0%": {
+            width: "0",
+          },
+          "100%": {
+            width: "100%",
+          },
+        },
+        blink: {
+          "0%, 50%": {
+            opacity: "1",
+          },
+          "51%, 100%": {
+            opacity: "0",
+          },
+        },
       },
       animation: {
         "fade-in": "fadeIn 0.3s ease-out",
         "slide-up": "slideUp 0.3s ease-out",
+        "slide-down": "slideDown 0.3s ease-out",
+        "slide-in-right": "slideInRight 0.3s ease-out",
+        "slide-in-left": "slideInLeft 0.3s ease-out",
+        "scale-in": "scaleIn 0.2s ease-out",
+        "scale-out": "scaleOut 0.2s ease-out",
+        "bounce-in": "bounceIn 0.6s ease-out",
+        "fade-in-up": "fadeInUp 0.5s ease-out",
+        "fade-in-down": "fadeInDown 0.5s ease-out",
+        "fade-in-left": "fadeInLeft 0.5s ease-out",
+        "fade-in-right": "fadeInRight 0.5s ease-out",
+        "zoom-in": "zoomIn 0.3s ease-out",
+        "zoom-out": "zoomOut 0.3s ease-out",
+        "pulse": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "wiggle": "wiggle 1s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "shimmer": "shimmer 1.5s ease-in-out infinite",
+        "gradient": "gradient 3s ease infinite",
+        "typing": "typing 3.5s steps(40, end)",
+        "blink": "blink 1s step-end infinite",
       },
     },
   },

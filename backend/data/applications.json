@@ -17,10 +17,10 @@
       "company_name": "StartupXYZ",
       "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
       "applied_date": "2024-01-12",
-      "stage": "applied",
-      "status": "pending",
+      "stage": "screening",
+      "status": "under_review",
       "description": "Full-stack development with Node.js and React",
-      "updated_at": "2024-01-12T14:20:00Z"
+      "updated_at": "2024-01-18T14:20:00Z"
     },
     {
       "id": 3,
@@ -28,10 +28,10 @@
       "company_name": "BigTech Solutions",
       "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
       "applied_date": "2024-01-10",
-      "stage": "screening",
-      "status": "under_review",
+      "stage": "interviewing",
+      "status": "interview_scheduled",
       "description": "Backend development with Python and Django",
-      "updated_at": "2024-01-18T09:15:00Z"
+      "updated_at": "2024-01-20T09:15:00Z"
     },
     {
       "id": 4,
@@ -39,10 +39,10 @@
       "company_name": "WebAgency Pro",
       "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
       "applied_date": "2024-01-08",
-      "stage": "interviewing",
-      "status": "interview_scheduled",
+      "stage": "offer",
+      "status": "offer_extended",
       "description": "Frontend development with React and Redux",
-      "updated_at": "2024-01-16T16:45:00Z"
+      "updated_at": "2024-01-22T16:45:00Z"
     },
     {
       "id": 5,
@@ -50,21 +50,32 @@
       "company_name": "CloudFirst",
       "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
       "applied_date": "2024-01-05",
-      "stage": "offer",
-      "status": "offer_extended",
+      "stage": "decision",
+      "status": "accepted",
       "description": "AWS, Docker, Kubernetes, and CI/CD pipeline management",
-      "updated_at": "2024-01-20T11:30:00Z"
+      "updated_at": "2024-01-25T11:30:00Z"
     },
     {
       "id": 6,
-      "job_title": "Product Manager",
-      "company_name": "InnovateLab",
-      "user_id": "08e24b25-dc8f-4e38-98e7-723b3c721162",
-      "applied_date": "2024-01-03",
-      "stage": "decision",
-      "status": "accepted",
-      "description": "Product strategy and roadmap development",
-      "updated_at": "2024-01-19T13:20:00Z"
+      "job_title": "Frontend Developer",
+      "company_name": "TechStart Inc.",
+      "user_id": "ef40a423-4edb-4395-b28e-e2192ec604fc",
+      "applied_date": "2024-01-20",
+      "stage": "applied",
+      "status": "pending",
+      "description": "React and Vue.js development position",
+      "updated_at": "2024-01-20T14:30:00Z"
+    },
+    {
+      "id": 7,
+      "job_title": "Backend Developer",
+      "company_name": "DataCorp",
+      "user_id": "ef40a423-4edb-4395-b28e-e2192ec604fc",
+      "applied_date": "2024-01-18",
+      "stage": "screening",
+      "status": "under_review",
+      "description": "Node.js and Python backend development",
+      "updated_at": "2024-01-22T10:15:00Z"
     }
   ]
 }

@@ -33,7 +33,7 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
 
   const candidateItems = [
     { title: 'Dashboard', path: '/dashboard/candidate', icon: LayoutDashboard },
-    { title: 'Browse Jobs', path: '/candidate/browse', icon: Search },
+    { title: 'Jobs', path: '/candidate/browse-jobs', icon: Search },
     { title: 'Resumes', path: '/candidate/resumes', icon: FileText },
   ];
 
