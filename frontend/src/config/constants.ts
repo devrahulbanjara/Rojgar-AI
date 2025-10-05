@@ -12,7 +12,7 @@ export const APP_CONFIG = {
 
 // API Configuration
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
   version: 'v1',
   timeout: 10000, // 10 seconds
 } as const;
@@ -22,8 +22,8 @@ export const API_BASE_URL = API_CONFIG.baseUrl;
 
 // Google OAuth Configuration
 export const GOOGLE_CONFIG = {
-  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id_here',
-  redirectUri: `${window.location.origin}/auth/callback`,
+  clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'your_google_client_id_here',
+  redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
   scope: 'openid email profile',
 } as const;
 
@@ -41,6 +41,7 @@ export const ROUTES = {
   },
   CANDIDATE: {
     DASHBOARD: '/dashboard/candidate',
+    JOBS: '/candidate/browse-jobs',
   },
 } as const;
 
@@ -89,5 +90,5 @@ export const FEATURES = [
 ] as const;
 
 // Environment
-export const IS_DEVELOPMENT = import.meta.env.DEV;
-export const IS_PRODUCTION = import.meta.env.PROD;
+export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+export const IS_PRODUCTION = process.env.NODE_ENV === 'production';

@@ -41,7 +41,7 @@ class ApplicationUpdate(BaseModel):
 
 class ApplicationResponse(ApplicationBase):
     id: int
-    user_id: int
+    user_id: str
     applied_date: datetime
     stage: ApplicationStage
     status: ApplicationStatus

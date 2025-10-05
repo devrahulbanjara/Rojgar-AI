@@ -3,6 +3,8 @@
  * Manages user authentication state using React Query for better caching and state management
  */
 
+'use client';
+
 import type { LoginCredentials, SignupData, UseAuthReturn } from '../types';
 import { useCurrentUser, useLogin, useSignup, useLogout, useIsAuthenticated } from './queries/useAuthQueries';
 

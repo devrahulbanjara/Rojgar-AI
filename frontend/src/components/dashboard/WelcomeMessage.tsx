@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { memo } from 'react';
+import { AnimatedContainer } from '../common/AnimatedContainer';
 
 interface WelcomeMessageProps {
   firstName?: string;
@@ -9,17 +10,23 @@ interface WelcomeMessageProps {
  * Personalized welcome message component
  * Displays a clean welcome message with user's first name
  */
-export const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
+export const WelcomeMessage = memo<WelcomeMessageProps>(({
   firstName,
   className = '',
 }) => {
   const displayName = firstName || 'there';
   
   return (
-    <div className={`mb-6 ${className}`}>
+    <AnimatedContainer 
+      className={`mb-6 ${className}`}
+      direction="left"
+      delay={0.1}
+    >
       <h1 className="text-3xl font-bold text-slate-900">
-        Welcome back, {displayName}!
+        Welcome back, <span className="text-primary">{displayName}</span>!
       </h1>
-    </div>
+    </AnimatedContainer>
   );
-};
+});
+
+WelcomeMessage.displayName = 'WelcomeMessage';

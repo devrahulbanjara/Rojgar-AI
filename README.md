@@ -8,13 +8,12 @@
   [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
   [![Node Version](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.116+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
-  [![React](https://img.shields.io/badge/React-18.3+-61DAFB.svg?logo=react)](https://reactjs.org/)
+  [![Next.js](https://img.shields.io/badge/Next.js-15+-000000.svg?logo=next.js)](https://nextjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178C6.svg?logo=typescript)](https://www.typescriptlang.org/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4+-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
   [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://www.docker.com/)
   [![UV Package Manager](https://img.shields.io/badge/UV-Package_Manager-FF6B35.svg)](https://github.com/astral-sh/uv)
   [![Google Gemini](https://img.shields.io/badge/Google_Gemini-1.36+-4285F4.svg?logo=google)](https://ai.google.dev/)
-  [![Vite](https://img.shields.io/badge/Vite-5.4+-646CFF.svg?logo=vite)](https://vitejs.dev/)
   [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
   
 </div>
@@ -34,7 +33,9 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
 
 - [ ] **Milestone A**: MVP
   - [x] Landing Page Design  
-  - [ ] Authentication and Session Management
+  - [x] Authentication and Session Management
+  - [x] Candidate Dashboard
+  - [x] Candidate Jobs Page Design
 
 > [!NOTE]  
 > Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.

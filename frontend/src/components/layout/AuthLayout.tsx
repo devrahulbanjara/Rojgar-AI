@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { APP_CONFIG, ROUTES, ANIMATIONS } from '../../config/constants';
@@ -33,7 +33,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
       >
         {/* Logo and Header */}
         <div className="text-center mb-8">
-          <Link to={ROUTES.HOME} className="flex items-center justify-center gap-2 mb-4">
+          <Link href={ROUTES.HOME} className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold gradient-text">{APP_CONFIG.name}</span>
           </Link>
@@ -49,7 +49,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         {/* Back to home */}
         <div className="text-center mt-6">
           <Link 
-            to={ROUTES.HOME} 
+            href={ROUTES.HOME} 
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Back to home
