@@ -26,7 +26,7 @@ class Application:
         id: int,
         job_title: str,
         company_name: str,
-        user_id: int,
+        user_id: str,
         applied_date: datetime,
         stage: ApplicationStage = ApplicationStage.APPLIED,
         status: ApplicationStatus = ApplicationStatus.PENDING,
@@ -45,20 +45,36 @@ class Application:
 
     @classmethod
     def from_dict(cls, data: dict):
+        # Parse applied_date - handle both date and datetime formats
+        applied_date_str = data["applied_date"]
+        if "T" in applied_date_str:
+            applied_date = datetime.fromisoformat(applied_date_str)
+        else:
+            applied_date = datetime.fromisoformat(applied_date_str + "T00:00:00")
+        
+        # Parse updated_at - handle both date and datetime formats
+        updated_at = None
+        if "updated_at" in data:
+            updated_at_str = data["updated_at"]
+            # Remove 'Z' suffix if present
+            if updated_at_str.endswith('Z'):
+                updated_at_str = updated_at_str[:-1]
+            
+            if "T" in updated_at_str:
+                updated_at = datetime.fromisoformat(updated_at_str)
+            else:
+                updated_at = datetime.fromisoformat(updated_at_str + "T00:00:00")
+        
         return cls(
             id=data["id"],
             job_title=data["job_title"],
             company_name=data["company_name"],
             user_id=data["user_id"],
-            applied_date=datetime.fromisoformat(data["applied_date"]),
+            applied_date=applied_date,
             stage=ApplicationStage(data["stage"]),
             status=ApplicationStatus(data["status"]),
             description=data.get("description"),
-            updated_at=(
-                datetime.fromisoformat(data["updated_at"])
-                if "updated_at" in data
-                else None
-            ),
+            updated_at=updated_at,
         )
 
     def to_dict(self):
@@ -68,8 +84,8 @@ class Application:
             "company_name": self.company_name,
             "user_id": self.user_id,
             "applied_date": self.applied_date.isoformat(),
-            "stage": self.stage,
-            "status": self.status,
+            "stage": self.stage.value,
+            "status": self.status.value,
             "description": self.description,
             "updated_at": self.updated_at.isoformat(),
         }

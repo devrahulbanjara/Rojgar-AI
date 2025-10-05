@@ -1,18 +1,30 @@
+"""
+Application Service
+Clean, production-ready business logic layer for applications
+"""
+
 from typing import List, Optional, Dict
 from datetime import datetime
+import logging
 
 from app.models.application import Application, ApplicationStage, ApplicationStatus
 from app.repositories.application_repo import ApplicationRepository
 from app.schemas.application import ApplicationCreate, ApplicationUpdate
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 
 class ApplicationService:
+    """Service layer for application business logic"""
     @staticmethod
     def get_all_applications() -> List[Application]:
         return ApplicationRepository.get_all()
 
     @staticmethod
-    def get_user_applications(user_id: int) -> List[Application]:
+    def get_user_applications(user_id: str) -> List[Application]:
+        """Get all applications for a specific user"""
+        logger.info(f"Fetching applications for user: {user_id}")
         return ApplicationRepository.get_by_user_id(user_id)
 
     @staticmethod
@@ -21,8 +33,10 @@ class ApplicationService:
 
     @staticmethod
     def create_application(
-        user_id: int, application_data: ApplicationCreate
+        user_id: str, application_data: ApplicationCreate
     ) -> Application:
+        """Create a new application for a user"""
+        logger.info(f"Creating application for user {user_id}: {application_data.job_title} at {application_data.company_name}")
         return ApplicationRepository.create(
             job_title=application_data.job_title,
             company_name=application_data.company_name,
@@ -51,5 +65,7 @@ class ApplicationService:
         return ApplicationRepository.delete(application_id)
 
     @staticmethod
-    def get_application_tracking_board(user_id: int) -> Dict[str, List[dict]]:
+    def get_application_tracking_board(user_id: str) -> Dict[str, List[dict]]:
+        """Get applications organized by stage for the tracking board"""
+        logger.info(f"Generating tracking board for user: {user_id}")
         return ApplicationRepository.get_application_tracking_board(user_id)

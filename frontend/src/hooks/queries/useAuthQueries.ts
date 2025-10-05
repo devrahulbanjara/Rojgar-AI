@@ -3,13 +3,15 @@
  * React Query hooks for authentication-related API calls
  */
 
+'use client';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import type { LoginCredentials, SignupData, User, AuthResponse } from '../../types';
 import { authService } from '../../services/authService';
 import { queryKeys } from '../../lib/queryClient';
 import { ROUTES } from '../../config/constants';
-import { getDashboardRoute } from '../../utils/helpers';
+import { getDashboardRoute } from '../../lib/utils';
 
 // Get current user query
 export const useCurrentUser = () => {
@@ -35,7 +37,7 @@ export const useCurrentUser = () => {
 
 // Login mutation
 export const useLogin = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -50,7 +52,7 @@ export const useLogin = () => {
       const userType = data.user.userType || data.user.role;
       if (userType) {
         const dashboardRoute = getDashboardRoute(userType);
-        navigate(dashboardRoute);
+        router.push(dashboardRoute);
       }
     },
     onError: (error) => {
@@ -63,7 +65,7 @@ export const useLogin = () => {
 
 // Signup mutation
 export const useSignup = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -78,7 +80,7 @@ export const useSignup = () => {
       const userType = data.user.userType || data.user.role;
       if (userType) {
         const dashboardRoute = getDashboardRoute(userType);
-        navigate(dashboardRoute);
+        router.push(dashboardRoute);
       }
     },
     onError: (error) => {
@@ -91,7 +93,7 @@ export const useSignup = () => {
 
 // Logout mutation
 export const useLogout = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -103,13 +105,13 @@ export const useLogout = () => {
       queryClient.clear();
       
       // Redirect to home
-      navigate(ROUTES.HOME);
+      router.push(ROUTES.HOME);
     },
     onError: (error) => {
       console.error('Logout failed:', error);
       // Even if logout fails, clear local data and redirect
       queryClient.clear();
-      navigate(ROUTES.HOME);
+      router.push(ROUTES.HOME);
     },
   });
 };
