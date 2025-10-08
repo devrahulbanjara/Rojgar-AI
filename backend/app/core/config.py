@@ -41,7 +41,7 @@ class Settings(BaseSettings):
 
     # URLs
     FRONTEND_URL: str = Field(
-        default="http://localhost:5173", description="Frontend URL"
+        default="http://localhost:3000", description="Frontend URL"
     )
     BACKEND_URL: str = Field(default="http://localhost:8000", description="Backend URL")
 
