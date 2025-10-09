@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/ConvexHire.png" />
+    <source media="(prefers-color-scheme: light)" srcset="docs/ConvexHire_transparent.png" />
+    <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
+  </picture>
   
   **Multi-Agent Recruitment Automation and Job Marketplace**
   
