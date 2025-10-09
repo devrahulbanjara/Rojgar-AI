@@ -7,11 +7,8 @@ import {
   LayoutDashboard,
   BriefcaseIcon,
   Users,
-  Building2,
   Search,
   FileText,
-  User,
-  Plus,
   Calendar,
   BarChart3,
   MessageSquare
@@ -45,35 +42,33 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-16 h-[calc(100vh-64px)] bg-white border-r border-slate-200 transition-all duration-300 z-40',
-        isOpen ? 'w-64' : 'w-0 overflow-hidden'
+        'fixed left-0 h-[calc(100vh-72px)] bg-white border-r border-[#E5E7EB] transition-all duration-300 z-40',
+        'top-[72px]',
+        isOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
       )}
     >
-      <nav className="p-4 space-y-2">
-        <div className="mb-4">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">
-            {role === 'recruiter' ? 'Recruiter Portal' : 'Candidate Portal'}
-          </h3>
-        </div>
-        
+      <nav className="py-8 px-4 space-y-2">
         {items.map((item) => {
-          const isActive = pathname === item.path || 
-            (item.path === '/dashboard/recruiter' && pathname === '/dashboard/recruiter') ||
-            (item.path === '/dashboard/candidate' && pathname === '/dashboard/candidate');
+          const isActive = pathname === item.path;
+          const Icon = item.icon;
           
           return (
             <Link
               key={item.path}
               href={item.path}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1)',
+                'flex items-center gap-3 h-11 px-4 rounded-xl transition-all duration-200 relative',
                 isActive
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-slate-700 hover:bg-slate-100 hover:scale-[1.02]'
+                  ? 'bg-[#3056F5]/8 text-[#3056F5]'
+                  : 'text-[#475569] hover:bg-[#F9FAFB] hover:text-[#0F172A]'
               )}
             >
-              <item.icon className="h-5 w-5" />
-              <span className="font-medium">{item.title}</span>
+              {/* Active indicator */}
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#3056F5] rounded-r-full" />
+              )}
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              <span className="text-[15px] font-medium">{item.title}</span>
             </Link>
           );
         })}

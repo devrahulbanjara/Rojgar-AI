@@ -13,25 +13,26 @@ const tiers = [
     price: 'Free',
     description: 'Perfect for getting started',
     features: [
-      'Up to 5 job postings',
-      'Basic candidate search',
-      'Email support',
-      'Community access',
+      'Up to 3 active job postings',
+      'AI Job Description Generator',
+      'Basic AI Resume Screening and Scoring',
+      'Candidate portal with Resume Builder',
+      'Transparent, automated feedback for candidates',
+      'Community and Email support',
     ],
   },
   {
     icon: Zap,
     name: 'Pro',
-    price: '$99',
+    price: '$49',
     period: '/month',
     description: 'For growing teams',
     features: [
+      'Everything in Starter, plus:',
       'Unlimited job postings',
-      'Advanced AI matching',
-      'Priority support',
-      'Analytics dashboard',
-      'Interview scheduling',
-      'Custom branding',
+      'Automated Interview Scheduling Agent',
+      'Offer Letter Automation and Management',
+      'Candidate Dashboard with explainable AI scores',
     ],
     highlighted: true,
   },
@@ -41,12 +42,10 @@ const tiers = [
     price: 'Custom',
     description: 'For large organizations',
     features: [
-      'Everything in Pro',
-      'Dedicated account manager',
-      'Custom integrations',
-      'SLA guarantee',
-      'Advanced security',
-      'Training & onboarding',
+      'Everything in Pro, plus:',
+      'RAG-based search to query past candidate data',
+      'Interview evaluation using Speech-to-Text analysis',
+      'Custom fairness and bias reporting',
     ],
   },
 ];
@@ -63,7 +62,7 @@ export function PricingSection() {
           className="text-center mb-16"
         >
           <h2 className="text-5xl font-semibold text-[#0F172A] mb-6 tracking-tight max-lg:text-4xl">
-            Simple, Transparent Pricing
+            Pricing
           </h2>
           <p className="text-xl text-[#475569] max-w-2xl mx-auto">
             Choose the plan that fits your needs. No hidden fees, no surprises.

@@ -24,6 +24,6 @@ export default function LandingPage() {
         <PricingSection />
       </main>
       <LandingFooter />
-    </div>
+        </div>
   );
 }

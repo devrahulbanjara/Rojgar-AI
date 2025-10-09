@@ -6,4 +6,3 @@ export { InsightsSection } from './InsightsSection';
 export { NeuralIntelligenceSection } from './NeuralIntelligenceSection';
 export { PricingSection } from './PricingSection';
 export { LandingFooter } from './LandingFooter';
-

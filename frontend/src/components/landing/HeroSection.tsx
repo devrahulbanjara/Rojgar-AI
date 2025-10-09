@@ -26,8 +26,7 @@ export function HeroSection() {
               <span className="text-brand-blue">Humans</span>
             </h1>
             <p className="text-xl text-[#475569] mb-10 leading-relaxed max-w-xl">
-              From job descriptions to offer letters — ConvexHire automates
-              intelligently, not impersonally.
+            Smarter hiring. Better matches. Happier candidates.
             </p>
 
             <motion.div
