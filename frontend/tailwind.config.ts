@@ -18,8 +18,10 @@ const config: Config = {
     extend: {
       fontFamily: {
         jakarta: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
+        'brand-blue': '#3056F5',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -82,6 +84,8 @@ const config: Config = {
         md: "var(--radius)",
         sm: "var(--radius-sm)",
         xl: "var(--radius-xl)",
+        '2xl': '1.5rem',
+        '3xl': '2rem',
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
