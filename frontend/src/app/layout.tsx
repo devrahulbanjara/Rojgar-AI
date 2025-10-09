@@ -11,7 +11,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ConvexHire - AI-Powered Recruitment Platform",
+  title: "ConvexHire",
   description: "Transform your hiring process with AI-powered job matching, real-time application tracking, and automated scheduling.",
   icons: {
     icon: [
