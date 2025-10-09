@@ -5,9 +5,8 @@
 
 import React, { memo } from 'react';
 import { JobCard } from './JobCard';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { EmptyState, SkeletonJobCard, StaggerContainer } from '../common';
-import { cn } from '../../design-system/components';
+import { SkeletonJobCard, StaggerContainer } from '../common';
+import { cn } from '../../lib/utils';
 import type { Job } from '../../types/job';
 import { AlertCircle, Search, Filter } from 'lucide-react';
 
@@ -47,17 +46,20 @@ export const JobList = memo<JobListProps>(({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-destructive" />
+        <div 
+          className="w-16 h-16 rounded-2xl flex items-center justify-center"
+          style={{ background: 'rgba(220, 38, 38, 0.1)' }}
+        >
+          <AlertCircle className="w-8 h-8 text-[#DC2626]" />
         </div>
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Failed to load jobs</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
+          <h3 className="text-lg font-semibold text-[#0F172A] mb-2">Failed to load jobs</h3>
+          <p className="text-sm text-[#475569] text-center max-w-md mb-4">
             {error}
           </p>
           <button 
             onClick={() => window.location.reload()}
-            className="text-sm text-primary hover:underline font-medium"
+            className="text-sm text-[#3056F5] hover:text-[#2B3CF5] hover:underline font-medium"
           >
             Try again
           </button>
@@ -69,15 +71,18 @@ export const JobList = memo<JobListProps>(({
   if (!jobs || jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-          <Search className="w-8 h-8 text-muted-foreground" />
+        <div 
+          className="w-16 h-16 rounded-2xl flex items-center justify-center"
+          style={{ background: 'rgba(48, 86, 245, 0.08)' }}
+        >
+          <Search className="w-8 h-8 text-[#3056F5]" />
         </div>
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">No jobs found</h3>
-          <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
+          <h3 className="text-lg font-semibold text-[#0F172A] mb-2">No jobs found</h3>
+          <p className="text-sm text-[#475569] text-center max-w-md mb-4">
             Try adjusting your search criteria or check back later for new opportunities.
           </p>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
             <Filter className="w-4 h-4" />
             <span>Try different filters or search terms</span>
           </div>
@@ -87,10 +92,7 @@ export const JobList = memo<JobListProps>(({
   }
 
   return (
-    <StaggerContainer 
-      className={cn('space-y-3', className)}
-      staggerDelay={0.06}
-    >
+    <div className={cn('space-y-3', className)}>
       {jobs.map((job) => (
         <JobCard
           key={job.id}
@@ -101,7 +103,7 @@ export const JobList = memo<JobListProps>(({
           showApplyButton={false} // Apply button is now in the detail view
         />
       ))}
-    </StaggerContainer>
+    </div>
   );
 });
 

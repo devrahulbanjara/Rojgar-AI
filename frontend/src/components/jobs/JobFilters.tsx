@@ -9,7 +9,7 @@ import { Select } from '../ui/select';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Search, Filter, X, MapPin, Briefcase, DollarSign } from 'lucide-react';
-import { cn } from '../../design-system/components';
+import { cn } from '../../lib/utils';
 import type { JobFiltersProps, JobFilters as JobFiltersType } from '../../types/job';
 
 const LOCATION_OPTIONS = [
@@ -309,8 +309,8 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
               <Input
                 type="number"
                 placeholder="Min salary"
-                value={localFilters.salary_min || ''}
-                onChange={(e) => handleFilterChange('salary_min', e.target.value ? Number(e.target.value) : undefined)}
+                value={localFilters.salary_min?.toString() || ''}
+                onChange={(e) => handleFilterChange('salary_min', e.target.value ? Number(e.target.value) : '')}
               />
             </div>
 
@@ -321,8 +321,8 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
               <Input
                 type="number"
                 placeholder="Max salary"
-                value={localFilters.salary_max || ''}
-                onChange={(e) => handleFilterChange('salary_max', e.target.value ? Number(e.target.value) : undefined)}
+                value={localFilters.salary_max?.toString() || ''}
+                onChange={(e) => handleFilterChange('salary_max', e.target.value ? Number(e.target.value) : '')}
               />
             </div>
           </div>
@@ -378,22 +378,22 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                     />
                   </Badge>
                 )}
-                {filters.salary_min && (
+                {filters.salary_min !== undefined && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     Min: {filters.salary_min}
-                <X 
-                  className="w-3 h-3 cursor-pointer" 
-                  onClick={() => handleFilterChange('salary_min', undefined)}
-                />
+                    <X 
+                      className="w-3 h-3 cursor-pointer" 
+                      onClick={() => handleFilterChange('salary_min', '')}
+                    />
                   </Badge>
                 )}
-                {filters.salary_max && (
+                {filters.salary_max !== undefined && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     Max: {filters.salary_max}
-                <X 
-                  className="w-3 h-3 cursor-pointer" 
-                  onClick={() => handleFilterChange('salary_max', undefined)}
-                />
+                    <X 
+                      className="w-3 h-3 cursor-pointer" 
+                      onClick={() => handleFilterChange('salary_max', '')}
+                    />
                   </Badge>
                 )}
               </div>

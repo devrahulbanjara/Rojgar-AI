@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { StatCard } from '../common/StatCard';
-import { StaggerContainer } from '../common/AnimatedContainer';
 import { FileText, Calendar, Trophy, BriefcaseIcon, Users, TrendingUp } from 'lucide-react';
 import type { DashboardStats } from '../../hooks/useDashboardStats';
 
@@ -23,19 +22,19 @@ export const StatsGrid = memo<StatsGridProps>(({
     {
       title: 'Applications',
       value: stats.totalApplications || 0,
-      icon: <FileText className="h-5 w-5 text-primary" />,
+      icon: <FileText />,
       description: 'Total applications submitted',
     },
     {
       title: 'Interviews',
       value: stats.interviewsScheduled || 0,
-      icon: <Calendar className="h-5 w-5 text-primary" />,
+      icon: <Calendar />,
       description: 'Scheduled interviews',
     },
     {
       title: 'Offers',
       value: 0, // This would come from stats in a real app
-      icon: <Trophy className="h-5 w-5 text-primary" />,
+      icon: <Trophy />,
       description: 'Job offers received',
     },
   ];
@@ -44,25 +43,25 @@ export const StatsGrid = memo<StatsGridProps>(({
     {
       title: 'Active Jobs',
       value: stats.activeJobs || 0,
-      icon: <BriefcaseIcon className="h-5 w-5 text-primary" />,
+      icon: <BriefcaseIcon />,
       description: 'Jobs currently posted',
     },
     {
       title: 'Candidates',
       value: stats.totalApplications || 0, // Using totalApplications as candidate count
-      icon: <Users className="h-5 w-5 text-primary" />,
+      icon: <Users />,
       description: 'Active candidates',
     },
     {
       title: 'Interviews',
       value: stats.interviewsScheduled || 0,
-      icon: <Calendar className="h-5 w-5 text-primary" />,
+      icon: <Calendar />,
       description: 'Scheduled this week',
     },
     {
       title: 'Hires',
       value: 0, // This would come from stats in a real app
-      icon: <TrendingUp className="h-5 w-5 text-primary" />,
+      icon: <TrendingUp />,
       description: 'Successful placements',
     },
   ];
@@ -71,11 +70,7 @@ export const StatsGrid = memo<StatsGridProps>(({
   const gridCols = userType === 'recruiter' ? 'md:grid-cols-4' : 'md:grid-cols-3';
 
   return (
-    <StaggerContainer 
-      className={`grid gap-6 ${gridCols} ${className}`}
-      delay={0.1}
-      staggerDelay={0.08}
-    >
+    <div className={`grid gap-6 ${gridCols} ${className}`}>
       {statsToShow.map((stat, index) => (
         <StatCard
           key={index}
@@ -85,7 +80,7 @@ export const StatsGrid = memo<StatsGridProps>(({
           description={stat.description}
         />
       ))}
-    </StaggerContainer>
+    </div>
   );
 });
 

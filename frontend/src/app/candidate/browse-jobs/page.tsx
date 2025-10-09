@@ -24,7 +24,7 @@ import {
   Users,
   TrendingUp
 } from 'lucide-react';
-import { cn } from '../../../design-system/components';
+import { cn } from '../../../lib/utils';
 import type { Job, JobFilters as JobFiltersType } from '../../../types/job';
 
 export default function Jobs() {
@@ -93,16 +93,23 @@ export default function Jobs() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
           {/* Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Find Your Next Opportunity</h1>
-            <p className="text-slate-600">Discover jobs that match your skills and career goals</p>
+            <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] mb-2 leading-tight">
+              Find Your Next Opportunity
+            </h1>
+            <p className="text-base text-[#475569]">
+              Discover jobs that match your skills and career goals
+            </p>
           </AnimatedContainer>
 
           {/* Search and Filters Bar */}
           <AnimatedContainer direction="up" delay={0.2}>
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <div 
+              className="bg-white rounded-2xl border border-[#E5E7EB] p-6"
+              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            >
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Search Bar */}
               <div className="flex-1">
@@ -115,22 +122,26 @@ export default function Jobs() {
 
               {/* Filter Toggle */}
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={cn(
-                    "flex items-center gap-2",
-                    showFilters && "bg-primary text-primary-foreground"
+                    "flex items-center gap-2 h-11 px-4 rounded-xl border-[1.5px] text-sm font-medium transition-all duration-200",
+                    showFilters 
+                      ? "bg-[#3056F5] border-[#3056F5] text-white"
+                      : "bg-white border-[#E5E7EB] text-[#475569] hover:border-[#CBD5E1]"
                   )}
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                   Filters
                   {activeFiltersCount > 0 && (
-                    <Badge variant="secondary" className="ml-1">
+                    <span className={cn(
+                      "ml-1 px-2 py-0.5 rounded-full text-xs font-semibold",
+                      showFilters ? "bg-white/20 text-white" : "bg-[#3056F5]/10 text-[#3056F5]"
+                    )}>
                       {activeFiltersCount}
-                    </Badge>
+                    </span>
                   )}
-                </Button>
+                </button>
 
                 {/* Sort Dropdown */}
                 <select
@@ -140,7 +151,7 @@ export default function Jobs() {
                     setSortBy(newSortBy);
                     setSortOrder(newSortOrder);
                   }}
-                  className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="h-11 px-4 bg-white border-[1.5px] border-[#E5E7EB] rounded-xl text-sm font-medium text-[#475569] focus:outline-none focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10 transition-all"
                 >
                   {sortOptions.map(option => (
                     <React.Fragment key={option.value}>
@@ -154,19 +165,17 @@ export default function Jobs() {
 
             {/* Filters Panel */}
             {showFilters && (
-              <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="mt-6 pt-6 border-t border-[#E5E7EB]">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-slate-900">Filters</h3>
+                  <h3 className="text-lg font-semibold text-[#0F172A]">Filters</h3>
                   {activeFiltersCount > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={handleClearFilters}
-                      className="text-slate-500 hover:text-slate-700"
+                      className="flex items-center gap-1 text-sm font-medium text-[#475569] hover:text-[#3056F5] transition-colors"
                     >
-                      <X className="h-4 w-4 mr-1" />
+                      <X className="h-4 w-4" />
                       Clear all
-                    </Button>
+                    </button>
                   )}
                 </div>
                 <JobFilters
@@ -189,14 +198,17 @@ export default function Jobs() {
                 ? 'lg:w-1/2 w-full' 
                 : 'w-full'
             }`}>
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 h-[calc(100vh-200px)] flex flex-col">
-                <div className="p-4 lg:p-6 border-b border-slate-200 flex-shrink-0">
+              <div 
+                className="bg-white rounded-2xl border border-[#E5E7EB] h-[calc(100vh-200px)] flex flex-col"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+              >
+                <div className="p-6 border-b border-[#E5E7EB] flex-shrink-0">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-slate-900">
+                    <h2 className="text-lg font-semibold text-[#0F172A]">
                       {isLoading ? 'Loading...' : `${jobs.length} Jobs Found`}
                     </h2>
                     {!isLoading && jobs.length > 0 && (
-                      <div className="flex items-center gap-1 text-sm text-slate-500">
+                      <div className="flex items-center gap-1 text-sm text-[#94A3B8]">
                         <TrendingUp className="h-4 w-4" />
                         <span className="hidden sm:inline">Updated just now</span>
                       </div>
@@ -226,21 +238,23 @@ export default function Jobs() {
                 delay={0.1}
                 className="lg:w-1/2 w-full flex-shrink-0"
               >
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 h-[calc(100vh-200px)] relative flex flex-col">
+                <div 
+                  className="bg-white rounded-2xl border border-[#E5E7EB] h-[calc(100vh-200px)] relative flex flex-col"
+                  style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                >
                   {/* Close Button */}
                   <button
                     onClick={() => setSelectedJob(null)}
-                    className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-slate-100 transition-colors"
+                    className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-[#F9FAFB] transition-colors"
                     aria-label="Close job details"
                   >
-                    <X className="h-5 w-5 text-slate-500" />
+                    <X className="h-5 w-5 text-[#475569]" />
                   </button>
                   
                   <div className="flex-1 overflow-y-auto overflow-x-hidden">
                     <JobDetailView
                       job={selectedJob}
                       onApply={() => handleJobApply(selectedJob)}
-                      showApplyButton={true}
                     />
                   </div>
                 </div>

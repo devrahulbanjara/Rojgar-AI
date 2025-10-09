@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { cn } from '../../design-system/components';
+import { cn } from '../../lib/utils';
 
 export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   variant?: 'default' | 'outline';
