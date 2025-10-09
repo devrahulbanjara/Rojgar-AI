@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/ConvexHire.png" />
+    <source media="(prefers-color-scheme: light)" srcset="docs/ConvexHire_transparent.png" />
+    <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
+  </picture>
   
   **Multi-Agent Recruitment Automation and Job Marketplace**
   
@@ -36,6 +40,9 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
   - [x] Authentication and Session Management
   - [x] Candidate Dashboard
   - [x] Candidate Jobs Page Design
+  - [ ] Candidate Multi Resume
+  - [ ] Recruiter Dashboard
+  - [ ] Recruiter Shortlist
 
 > [!NOTE]  
 > Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.

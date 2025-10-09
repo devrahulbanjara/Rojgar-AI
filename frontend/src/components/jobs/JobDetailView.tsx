@@ -18,12 +18,11 @@ import {
   ArrowRight,
   ExternalLink,
   CheckCircle,
-  Star,
   TrendingUp,
   Heart,
   Share2
 } from 'lucide-react';
-import { cn } from '../../design-system/components';
+import { cn } from '../../lib/utils';
 import { jobUtils } from '../../services/jobService';
 import type { Job } from '../../types/job';
 
@@ -46,12 +45,10 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
 
   const handleSave = () => {
     // TODO: Implement save functionality
-    console.log('Save job:', job.id);
   };
 
   const handleShare = () => {
     // TODO: Implement share functionality
-    console.log('Share job:', job.id);
   };
 
   return (

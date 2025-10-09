@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { cn } from '../../design-system/components';
+import { cn } from '../../lib/utils';
 
 export interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {
   orientation?: 'horizontal' | 'vertical';

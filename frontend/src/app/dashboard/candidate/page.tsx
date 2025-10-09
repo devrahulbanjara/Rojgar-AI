@@ -25,8 +25,8 @@ export default function CandidateDashboard() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen bg-slate-50">
-        <div className="space-y-6">
+      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
+        <div className="space-y-8">
           {/* Welcome Message */}
           <AnimatedContainer direction="up" delay={0.1}>
             <WelcomeMessage firstName={firstName} />
@@ -42,11 +42,15 @@ export default function CandidateDashboard() {
 
           {/* Application Tracking Section */}
           <AnimatedContainer direction="up" delay={0.3}>
-            <div className="space-y-6">
-              <SectionHeader
-                title="Your Applications"
-                subtitle="Track your job application journey"
-              />
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl max-lg:text-2xl font-semibold text-[#0F172A] mb-2">
+                  Your Applications
+                </h2>
+                <p className="text-base text-[#475569]">
+                  Track your job application journey
+                </p>
+              </div>
               
               <ApplicationTrackingBoard 
                 applications={applicationTrackingData} 

@@ -8,7 +8,7 @@ interface DashboardHeaderProps {
 
 /**
  * Reusable dashboard header component
- * Provides consistent styling for dashboard page headers
+ * Updated with new design system
  */
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   title,
@@ -16,12 +16,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`mb-6 ${className}`}>
-      <h1 className="text-3xl font-bold text-slate-900">
+    <div className={`mb-12 ${className}`}>
+      <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight">
         {title}
       </h1>
       {subtitle && (
-        <p className="text-slate-600 mt-2">
+        <p className="text-base text-[#475569] mt-2 leading-relaxed">
           {subtitle}
         </p>
       )}

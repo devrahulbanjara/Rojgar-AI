@@ -1,10 +1,9 @@
 /**
  * StatCard Component
- * A reusable component for displaying statistics with icons and values
+ * Updated with new premium design system
  */
 
 import React, { memo } from 'react';
-import { Card, CardContent } from '../ui/card';
 import { cn } from '../../lib/utils';
 
 export interface StatCardProps {
@@ -28,40 +27,57 @@ export const StatCard = memo<StatCardProps>(({
   className,
 }) => {
   return (
-    <Card className={cn("hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1) hover:scale-[1.01]", className)}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-muted-foreground animate-fade-in-left">{title}</h3>
-            <p className="text-2xl font-bold animate-fade-in-up stagger-1" aria-label={`${title}: ${value}`}>
-              {value}
-            </p>
-            {description && (
-              <p className="text-xs text-muted-foreground animate-fade-in-up stagger-2">{description}</p>
-            )}
-            {trend && (
-              <div className="flex items-center gap-1 animate-fade-in-up stagger-3">
-                <span
-                  className={cn(
-                    "text-xs font-medium",
-                    trend.isPositive ? "text-green-600" : "text-red-600"
-                  )}
-                  aria-label={`${trend.isPositive ? 'Increase' : 'Decrease'} of ${trend.value}%`}
-                >
-                  {trend.isPositive ? "+" : ""}{trend.value}%
-                </span>
-                <span className="text-xs text-muted-foreground">vs last month</span>
-              </div>
-            )}
-          </div>
-          {icon && (
-            <div className="flex-shrink-0 animate-fade-in-right stagger-1" aria-hidden="true">
-              {icon}
-            </div>
-          )}
+    <div 
+      className={cn(
+        "bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.01]",
+        className
+      )}
+      style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+      }}
+    >
+      {/* Icon Container */}
+      {icon && (
+        <div 
+          className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+          style={{ background: 'rgba(48, 86, 245, 0.08)' }}
+        >
+          {React.isValidElement(icon) && React.cloneElement(icon, {
+            ...icon.props,
+            className: 'h-6 w-6 text-[#3056F5]',
+          })}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {/* Number */}
+      <p className="text-[40px] max-lg:text-4xl font-bold text-[#0F172A] leading-none mb-2">
+        {value}
+      </p>
+
+      {/* Label */}
+      <p className="text-sm font-medium text-[#475569]">
+        {description || title}
+      </p>
+
+      {/* Trend (optional) */}
+      {trend && (
+        <div className="flex items-center gap-1 mt-3">
+          <span
+            className={cn(
+              "text-xs font-medium",
+              trend.isPositive ? "text-[#16A34A]" : "text-[#DC2626]"
+            )}
+          >
+            {trend.isPositive ? "+" : ""}{trend.value}%
+          </span>
+          <span className="text-xs text-[#94A3B8]">vs last month</span>
+        </div>
+      )}
+    </div>
   );
 });
 

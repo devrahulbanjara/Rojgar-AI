@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '../ui/button';
-import { Menu, Building2, LogOut, ToggleLeft, Settings, User } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
+import { LogoLink } from '../common/Logo';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../config/constants';
 
@@ -37,40 +37,49 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200">
-      <div className="flex items-center justify-between h-full px-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
+    <header 
+      className="fixed top-0 left-0 right-0 z-50 h-[72px] border-b border-[#E5E7EB] transition-all duration-300"
+      style={{ 
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
+      <div className="flex items-center justify-between h-full px-8">
+        {/* Left: Menu + Logo */}
+        <div className="flex items-center gap-6">
+          <button
             onClick={onMenuClick}
-            className="lg:hidden"
+            className="lg:hidden p-2 rounded-lg hover:bg-[#F9FAFB] transition-colors"
+            aria-label="Toggle menu"
           >
-            <Menu className="h-5 w-5" />
-          </Button>
+            <Menu className="h-5 w-5 text-[#475569]" />
+          </button>
           
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold gradient-text">ConvexHire</div>
-          </div>
+          <LogoLink variant="full" size="lg" />
         </div>
 
+        {/* Right: User Profile + Logout */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1) hover:scale-105">
+          {/* User Profile */}
+          <div className="flex items-center gap-3 px-2 py-2 pr-4 rounded-xl bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-all duration-200 hover:scale-[1.02]"
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          >
+            <div className="w-10 h-10 bg-[#3056F5] text-white rounded-full flex items-center justify-center text-sm font-semibold">
               {user ? getInitials(user.name) : 'U'}
             </div>
-            <span className="hidden md:block font-medium text-slate-700">{user?.name}</span>
+            <span className="hidden md:block text-[15px] font-medium text-[#0F172A]">
+              {user?.name}
+            </span>
           </div>
           
-          <Button
-            variant="ghost"
-            size="sm"
+          {/* Logout Button */}
+          <button
             onClick={handleLogout}
-            className="text-slate-600 hover:text-slate-900"
+            className="flex items-center gap-2 text-sm font-medium text-[#475569] hover:text-[#3056F5] transition-colors pr-2"
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </div>
       </div>
     </header>

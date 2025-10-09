@@ -34,5 +34,17 @@
     "is_active": true,
     "created_at": "2025-10-05T11:35:35.228604",
     "updated_at": "2025-10-05T11:35:35.228608"
+  },
+  {
+    "id": "c7b920c2-2fa2-470c-8d84-594de6b0ebae",
+    "email": "np03cs4a230050@heraldcollege.edu.np",
+    "name": "Rahul Dev Banjara",
+    "google_id": "101402816379203537041",
+    "password_hash": null,
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocLwBDuJod0IZ63Adatu2vtBg9qQkFAx4C_Ckvj2OCUMe3df_tRzFw=s96-c",
+    "role": "recruiter",
+    "is_active": true,
+    "created_at": "2025-10-09T15:04:06.808677",
+    "updated_at": "2025-10-09T15:12:39.777890"
   }
 ]

@@ -13,6 +13,16 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "ConvexHire - AI-Powered Recruitment Platform",
   description: "Transform your hiring process with AI-powered job matching, real-time application tracking, and automated scheduling.",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
