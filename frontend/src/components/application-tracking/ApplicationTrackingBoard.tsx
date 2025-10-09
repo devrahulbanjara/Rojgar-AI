@@ -108,7 +108,7 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
       </div>
 
       {/* Desktop: Full width grid */}
-      <div className="hidden md:grid md:grid-cols-3 gap-8" role="list" aria-label="Application columns">
+      <div className="hidden md:grid md:grid-cols-3 gap-6" role="list" aria-label="Application columns">
         <div role="listitem">
           <ApplicationTrackingColumn 
             title="Applied" 

@@ -4,16 +4,18 @@
  */
 
 import React, { useEffect, useState, memo } from 'react';
-import { cn } from '../../design-system/components';
+import { cn } from '../../lib/utils';
 
 interface PageTransitionProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const PageTransition = memo<PageTransitionProps>(({
   children,
-  className
+  className,
+  style
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -35,6 +37,7 @@ export const PageTransition = memo<PageTransitionProps>(({
           : 'opacity-0 translate-y-2',
         className
       )}
+      style={style}
     >
       {children}
     </div>

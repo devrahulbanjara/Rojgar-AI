@@ -51,14 +51,3 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "environment": settings.ENVIRONMENT}
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True if settings.ENVIRONMENT == "development" else False,
-    )

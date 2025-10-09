@@ -13,8 +13,8 @@ export default function RecruiterDashboard() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen bg-slate-50">
-        <div className="space-y-6">
+      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
+        <div className="space-y-8">
           {/* Header */}
           <AnimatedContainer direction="up" delay={0.1}>
             <DashboardHeader
@@ -33,19 +33,29 @@ export default function RecruiterDashboard() {
 
           {/* Recent Activity Section */}
           <AnimatedContainer direction="up" delay={0.3}>
-            <div className="space-y-6">
-              <DashboardHeader
-                title="Recent Activity"
-                subtitle="Latest updates from your recruitment pipeline"
-              />
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl max-lg:text-2xl font-semibold text-[#0F172A] mb-2">
+                  Recent Activity
+                </h2>
+                <p className="text-base text-[#475569]">
+                  Latest updates from your recruitment pipeline
+                </p>
+              </div>
               
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+              <div 
+                className="bg-white rounded-2xl border border-[#E5E7EB] p-8"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+              >
                 <div className="text-center py-12">
-                  <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BriefcaseIcon className="h-8 w-8 text-slate-400" />
+                  <div 
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    style={{ background: 'rgba(48, 86, 245, 0.08)' }}
+                  >
+                    <BriefcaseIcon className="h-8 w-8 text-[#3056F5]" />
                   </div>
-                  <h3 className="text-lg font-medium text-slate-700 mb-2">No recent activity</h3>
-                  <p className="text-slate-500 max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold text-[#0F172A] mb-2">No recent activity</h3>
+                  <p className="text-[#475569] max-w-md mx-auto">
                     Your recruitment activities will appear here as you post jobs and review candidates.
                   </p>
                 </div>

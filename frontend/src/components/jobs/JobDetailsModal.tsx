@@ -20,7 +20,7 @@ import {
   CheckCircle,
   X
 } from 'lucide-react';
-import { cn } from '../../design-system/components';
+import { cn } from '../../lib/utils';
 import { jobUtils } from '../../services/jobService';
 import type { JobDetailsModalProps } from '../../types/job';
 
