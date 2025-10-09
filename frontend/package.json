@@ -13,6 +13,9 @@
     "clean": "rm -rf .next out dist"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.3.0",
+    "@react-three/postprocessing": "^3.0.4",
     "@tanstack/react-query": "^5.89.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -21,11 +24,13 @@
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.544.0",
     "next": "^15.5.4",
+    "postprocessing": "^6.37.8",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "recharts": "^3.2.1",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",

@@ -6,8 +6,8 @@ import {
   RecruiterPlatformSection,
   CandidatePlatformSection,
   InsightsSection,
+  NeuralIntelligenceSection,
   PricingSection,
-  TrustSection,
   LandingFooter,
 } from '../components/landing';
 
@@ -20,10 +20,10 @@ export default function LandingPage() {
         <RecruiterPlatformSection />
         <CandidatePlatformSection />
         <InsightsSection />
+        <NeuralIntelligenceSection />
         <PricingSection />
-        <TrustSection />
       </main>
       <LandingFooter />
-        </div>
+    </div>
   );
 }
