@@ -3,25 +3,22 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SearchParamsWrapper } from '../../components/common/SearchParamsWrapper';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Label } from '../../components/ui/label';
-import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { AuthLayout } from '../../components/layout/AuthLayout';
-import { FormInput } from '../../components/forms/FormInput';
 import { UserTypeSelector } from '../../components/forms/UserTypeSelector';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { GoogleOAuthButton } from '../../components/auth/GoogleOAuthButton';
 import { PageTransition } from '../../components/common/PageTransition';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../hooks/useAuth';
 import { validateEmail, validatePassword, validateName } from '../../lib/utils';
-import { ROUTES, USER_TYPES } from '../../config/constants';
+import { USER_TYPES } from '../../config/constants';
 import type { UserType } from '../../types';
 
 export default function Signup() {
   const { signup, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [formState, formActions] = useForm<{
     name: string;
@@ -41,7 +38,6 @@ export default function Signup() {
       name: [validateName],
       email: [validateEmail],
       password: [validatePassword],
-      // confirmPassword handled manually
     },
   });
   
@@ -68,7 +64,6 @@ export default function Signup() {
       handleChange('userType', typeParam);
     }
 
-    // Check for auth errors from URL params
     const error = searchParams.get('error');
     if (error === 'auth_failed') {
       setAuthError('Authentication failed. Please try again.');
@@ -76,7 +71,6 @@ export default function Signup() {
   };
 
   const onSubmit = async (formValues: Record<string, string>) => {
-    // Validate passwords match
     if (formValues.password !== formValues.confirmPassword) {
       setFieldError('confirmPassword', 'Passwords do not match');
       return;
@@ -91,14 +85,12 @@ export default function Signup() {
         userType: formValues.userType as UserType,
       });
     } catch (error: any) {
-      // Handle signup errors
       const errorMessage = error?.message || 'Signup failed. Please try again.';
       setFieldError('email', errorMessage);
     }
   };
 
   const handleGoogleSuccess = () => {
-    // Google signup initiated successfully
     console.log('Google signup initiated');
   };
 
@@ -116,149 +108,213 @@ export default function Signup() {
               title="Create your account"
               subtitle="Join ConvexHire and start your journey"
             >
-        <Card className="backdrop-blur-sm bg-card/80 border border-border/50 shadow-xl animate-fade-in-up">
-          <CardHeader className="space-y-1 animate-fade-in-down">
-            <CardTitle className="text-xl text-center">Sign Up</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Auth Error Display */}
-            {authError && (
-              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm animate-fade-in-down">
-                <AlertCircle className="h-4 w-4" />
-                {authError}
-              </div>
-            )}
+              {/* Page Title */}
+              <h2 className="text-2xl font-semibold text-[#0F172A] mb-6 text-center">Sign Up</h2>
 
-            {/* Google OAuth Button */}
-            <div className="mb-6 animate-fade-in-up stagger-1">
-              <GoogleOAuthButton
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                disabled={isLoading}
-              />
-            </div>
+              {/* Auth Error Display */}
+              {authError && (
+                <div className="mb-6 p-3 bg-[#FEF2F2] border border-[#DC2626]/20 rounded-xl flex items-center gap-2 text-[#DC2626] text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  {authError}
+                </div>
+              )}
 
-            {/* Divider */}
-            <div className="relative mb-6 animate-fade-in-up stagger-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with email
-                </span>
-              </div>
-            </div>
-
-            {/* Signup Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 animate-fade-in-up stagger-3">
-              {/* User Type Selector */}
-              <div className="space-y-2 animate-fade-in-up stagger-4">
-                <Label className="text-sm font-medium">I am a</Label>
-                <UserTypeSelector
-                  value={values.userType}
-                  onChange={(value) => handleChange('userType', value)}
+              {/* Google OAuth Button */}
+              <div className="mb-6">
+                <GoogleOAuthButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
                   disabled={isLoading}
                 />
               </div>
 
-              {/* Name Field */}
-              <div className="space-y-2 animate-fade-in-up stagger-5">
-                <Label htmlFor="name" className="text-sm font-medium">
-                  Full Name
-                </Label>
-                <FormInput
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={values.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  error={errors.name}
-                  icon={User}
-                  disabled={isLoading}
-                />
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#E5E7EB]"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-4 text-[#94A3B8]">Or continue with email</span>
+                </div>
               </div>
 
-              {/* Email Field */}
-              <div className="space-y-2 animate-fade-in-up stagger-6">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </Label>
-                <FormInput
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={values.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  error={errors.email}
-                  icon={Mail}
+              {/* Signup Form */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                {/* Role Selection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#0F172A]">
+                    I am a
+                  </label>
+                  <UserTypeSelector
+                    value={values.userType}
+                    onChange={(value) => handleChange('userType', value)}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Full Name Field */}
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-[#0F172A]">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={values.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    disabled={isLoading}
+                    className={`w-full h-12 px-4 bg-white border-[1.5px] rounded-xl text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                      errors.name
+                        ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
+                        : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
+                    }`}
+                  />
+                  {errors.name && (
+                    <p className="text-xs text-[#DC2626] flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-[#0F172A]">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={values.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    disabled={isLoading}
+                    className={`w-full h-12 px-4 bg-white border-[1.5px] rounded-xl text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                      errors.email
+                        ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
+                        : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
+                    }`}
+                  />
+                  {errors.email && (
+                    <p className="text-xs text-[#DC2626] flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <label htmlFor="password" className="block text-sm font-medium text-[#0F172A]">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a password"
+                      value={values.password}
+                      onChange={(e) => handleChange('password', e.target.value)}
+                      disabled={isLoading}
+                      className={`w-full h-12 px-4 pr-12 bg-white border-[1.5px] rounded-xl text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                        errors.password
+                          ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
+                          : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569] transition-colors"
+                      aria-label="Toggle password visibility"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password ? (
+                    <p className="text-xs text-[#DC2626] flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.password}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-[#94A3B8]">Minimum 8 characters</p>
+                  )}
+                </div>
+
+                {/* Confirm Password Field */}
+                <div className="space-y-2">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#0F172A]">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm your password"
+                      value={values.confirmPassword}
+                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                      disabled={isLoading}
+                      className={`w-full h-12 px-4 pr-12 bg-white border-[1.5px] rounded-xl text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                        errors.confirmPassword
+                          ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
+                          : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569] transition-colors"
+                      aria-label="Toggle confirm password visibility"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-xs text-[#DC2626] flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+
+                {/* Create Account Button */}
+                <button
+                  type="submit"
                   disabled={isLoading}
-                />
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2 animate-fade-in-up stagger-7">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </Label>
-                <FormInput
-                  id="password"
-                  type="password"
-                  placeholder="Create a password"
-                  value={values.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
-                  error={errors.password}
-                  icon={Lock}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Confirm Password Field */}
-              <div className="space-y-2 animate-fade-in-up stagger-8">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                  Confirm Password
-                </Label>
-                <FormInput
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={values.confirmPassword}
-                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                  error={errors.confirmPassword}
-                  icon={Lock}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full animate-fade-in-up stagger-9"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <LoadingSpinner size="sm" className="mr-2" />
-                ) : (
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                )}
-                {isLoading ? 'Creating account...' : 'Create Account'}
-              </Button>
-            </form>
-
-            {/* Sign In Link */}
-            <div className="mt-6 text-center animate-fade-in-up stagger-10">
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link
-                  href="/login"
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
+                  className="w-full h-12 bg-[#3056F5] hover:bg-[#2B3CF5] text-white text-[15px] font-semibold rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#3056F5] disabled:hover:shadow-none mt-6 flex items-center justify-center gap-2"
+                  style={{ boxShadow: isLoading ? 'none' : '0 4px 12px rgba(48,86,245,0.3)' }}
                 >
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-            </Card>
-          </AuthLayout>
+                  {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+                  {isLoading ? 'Creating account...' : 'Create Account'}
+                </button>
+              </form>
+
+              {/* Sign In Link */}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-[#475569]">
+                  Already have an account?{' '}
+                  <Link
+                    href="/login"
+                    className="font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"
+                  >
+                    Sign in
+                  </Link>
+                </p>
+              </div>
+            </AuthLayout>
           );
         }}
       </SearchParamsWrapper>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '../ui/button';
+import { LogoLink } from '../common/Logo';
 import { useEffect, useState } from 'react';
 
 export function LandingNavbar() {
@@ -31,11 +32,7 @@ export function LandingNavbar() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold text-[#0F172A] tracking-tight">
-                ConvexHire
-              </span>
-            </Link>
+            <LogoLink variant="full" size="md" />
           </motion.div>
 
           <motion.div

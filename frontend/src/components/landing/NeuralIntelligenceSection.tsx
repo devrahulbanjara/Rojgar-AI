@@ -41,6 +41,7 @@ export function NeuralIntelligenceSection() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [animationPhase, setAnimationPhase] = useState<'forward' | 'backward' | 'pause'>('forward');
   const [time, setTime] = useState(0);
+  const [hoveredNeuronIndex, setHoveredNeuronIndex] = useState<number | null>(null);
 
   // Check for reduced motion preference
   const prefersReducedMotion =
@@ -248,7 +249,7 @@ export function NeuralIntelligenceSection() {
               Intelligence You Can See
             </h2>
             <p className="text-lg text-[#475569] leading-relaxed">
-              Watch our AI reason through every hiring decision—live.
+              Watch our AI reason through every hiring decision.
             </p>
           </motion.div>
 
@@ -316,38 +317,61 @@ export function NeuralIntelligenceSection() {
                     const pulsePhase = prefersReducedMotion
                       ? 0
                       : Math.sin(time + neuron.pulseOffset) * 0.5 + 0.5;
-                    const opacity = 0.1 + pulsePhase * 0.2;
-                    const glowIntensity = pulsePhase;
+                    const isHovered = hoveredNeuronIndex === i;
+                    const opacity = isHovered ? 0.4 : 0.1 + pulsePhase * 0.2;
+                    const glowIntensity = isHovered ? 1 : pulsePhase;
 
                     return (
                       <g key={`neuron-${i}`}>
-                        {!prefersReducedMotion && glowIntensity > 0.6 && (
+                        {/* Outer glow ring */}
+                        {!prefersReducedMotion && (glowIntensity > 0.6 || isHovered) && (
                           <circle
                             cx={neuron.x}
                             cy={neuron.y}
-                            r={neuronSize + 4}
+                            r={neuronSize + (isHovered ? 8 : 4)}
                             fill="none"
                             stroke="#3056F5"
                             strokeWidth="0.5"
-                            opacity={glowIntensity * 0.3}
+                            opacity={isHovered ? 0.5 : glowIntensity * 0.3}
                             style={{
-                              filter: `blur(${glowIntensity * 8}px)`,
+                              filter: `blur(${isHovered ? 12 : glowIntensity * 8}px)`,
+                              transition: 'all 0.3s ease',
                             }}
                           />
                         )}
+                        {/* Main neuron circle with hover interaction */}
                         <circle
                           cx={neuron.x}
                           cy={neuron.y}
                           r={neuronSize}
                           fill={`rgba(48, 86, 245, ${opacity})`}
                           stroke="#3056F5"
-                          strokeWidth="2"
+                          strokeWidth={isHovered ? "3" : "2"}
                           style={{
-                            filter: !prefersReducedMotion && glowIntensity > 0.6
-                              ? `drop-shadow(0 0 ${glowIntensity * 20}px rgba(48, 86, 245, ${glowIntensity * 0.6}))`
+                            filter: !prefersReducedMotion && (glowIntensity > 0.6 || isHovered)
+                              ? `drop-shadow(0 0 ${isHovered ? 30 : glowIntensity * 20}px rgba(48, 86, 245, ${isHovered ? 0.8 : glowIntensity * 0.6}))`
                               : 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
                           }}
+                          onMouseEnter={() => setHoveredNeuronIndex(i)}
+                          onMouseLeave={() => setHoveredNeuronIndex(null)}
                         />
+                        {/* Extra glow for hovered state */}
+                        {isHovered && (
+                          <circle
+                            cx={neuron.x}
+                            cy={neuron.y}
+                            r={neuronSize + 12}
+                            fill="none"
+                            stroke="#3056F5"
+                            strokeWidth="1"
+                            opacity="0.3"
+                            style={{
+                              filter: 'blur(8px)',
+                            }}
+                          />
+                        )}
                       </g>
                     );
                   })}

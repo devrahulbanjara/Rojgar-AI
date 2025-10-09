@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Linkedin, Twitter, Github } from 'lucide-react';
+import { LogoLink } from '../common/Logo';
 import Link from 'next/link';
 
 export function LandingFooter() {
@@ -16,11 +17,9 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <Link href="/" className="inline-block mb-4">
-              <span className="text-2xl font-bold text-[#0F172A] tracking-tight">
-                ConvexHire
-              </span>
-            </Link>
+            <div className="mb-4">
+              <LogoLink variant="full" size="md" />
+            </div>
             <p className="text-sm text-[#94A3B8]">
               © 2025 ConvexHire. All rights reserved.
             </p>
