@@ -1,111 +1,62 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Edit3, Search, MessageSquare, Layers } from 'lucide-react';
+import {
+  FileEdit,
+  Brain,
+  Eye,
+  Clock,
+} from 'lucide-react';
+import Image from 'next/image';
 
 const features = [
   {
-    icon: Edit3,
-    title: 'Resume Builder',
-    description: 'Create professional resumes tailored to each opportunity',
+    icon: FileEdit,
+    title: 'Adaptive Resume Builder',
+    description:
+      'Build job-specific resumes in just a few clicks — AI agents adapt content, suggest missing skills, and optimize keywords for every opportunity.',
   },
   {
-    icon: Search,
-    title: 'Keyword Match',
-    description: 'See how well your resume matches job requirements',
+    icon: Brain,
+    title: 'Intelligent Interview Preparation',
+    description:
+      'Prepare smarter with AI-driven insights — tailored questions, guidance, and simulations based on job descriptions, past interviews, and your own resume.',
   },
   {
-    icon: MessageSquare,
-    title: 'Instant Feedback',
-    description: 'Get real-time suggestions to improve your applications',
+    icon: Eye,
+    title: 'Transparent Hiring Process',
+    description:
+      'Know exactly why you were shortlisted, selected, or rejected — AI explains every decision with clear, data-backed reasoning.',
   },
   {
-    icon: Layers,
-    title: 'Multi-Resume',
-    description: 'Manage multiple resumes for different job types',
+    icon: Clock,
+    title: 'Future-fit Hiring',
+    description:
+      'Your past interviews fuel tomorrow’s opportunities — get automatically rediscovered by companies for future roles.',
   },
 ];
 
 export function CandidatePlatformSection() {
   return (
-    <section id="candidates" className="py-32 px-6 bg-[#F9FAFB]">
-      <div className="container mx-auto">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left: Visual Mock */}
+    <section id="candidates" className="py-16 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-[#F9FAFB]">
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
+          {/* Left: Text Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative order-2 lg:order-1"
+            className="order-1 xl:order-1 px-2 xl:px-0 xl:text-left text-center"
           >
-            <div className="bg-white rounded-3xl shadow-2xl p-8 border border-[#E5E7EB]">
-              {/* Resume Compatibility Mock */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-[#0F172A]">
-                    Resume Compatibility
-                  </h3>
-                  <span className="text-3xl font-bold text-brand-blue">
-                    87%
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    whileInView={{ width: '87%' }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1.5, delay: 0.3 }}
-                    className="h-full bg-gradient-to-r from-brand-blue to-[#2B3CF5] rounded-full"
-                  />
-                </div>
-
-                {/* Match Details */}
-                <div className="space-y-3 pt-4">
-                  {[
-                    { label: 'Skills Match', value: '92%' },
-                    { label: 'Experience Match', value: '85%' },
-                    { label: 'Education Match', value: '95%' },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.5 + i * 0.1 }}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#F9FAFB]"
-                    >
-                      <span className="text-sm font-medium text-[#475569]">
-                        {item.label}
-                      </span>
-                      <span className="text-sm font-bold text-brand-blue">
-                        {item.value}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right: Text Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="order-1 lg:order-2"
-          >
-            <h2 className="text-5xl font-semibold text-[#0F172A] mb-6 tracking-tight max-lg:text-4xl">
-              Candidate Platform
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#0F172A] mb-4 sm:mb-6 tracking-tight">
+              For Candidates
             </h2>
-            <p className="text-xl text-[#475569] mb-10 leading-relaxed">
+            <p className="text-lg sm:text-xl lg:text-2xl text-[#475569] mb-8 sm:mb-10 leading-relaxed">
               Tools that help you stand out and land your dream job faster
             </p>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6 xl:items-start items-center">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
@@ -115,16 +66,16 @@ export function CandidatePlatformSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="flex items-start gap-4"
+                    className="flex xl:items-start items-center gap-3 sm:gap-4 xl:flex-row flex-col"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
-                      <Icon className="h-6 w-6 text-brand-blue" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-brand-blue" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#0F172A] mb-1">
+                    <div className="xl:text-left text-center">
+                      <h3 className="text-base sm:text-lg font-semibold text-[#0F172A] mb-1 sm:mb-2">
                         {feature.title}
                       </h3>
-                      <p className="text-base text-[#475569]">
+                      <p className="text-sm sm:text-base text-[#475569] leading-relaxed break-words">
                         {feature.description}
                       </p>
                     </div>
@@ -133,6 +84,27 @@ export function CandidatePlatformSection() {
               })}
             </div>
           </motion.div>
+
+          {/* Right: Candidate Illustration */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="order-2 xl:order-2 hidden xl:block px-4"
+          >
+            <div className="relative w-full max-w-[500px] mx-auto">
+              <Image
+                src="/illustrations/candidate.svg"
+                alt="Candidate using AI-powered job search tools"
+                width={500}
+                height={500}
+                className="w-full h-auto drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)]"
+                priority
+              />
+            </div>
+          </motion.div>
+
         </div>
       </div>
     </section>

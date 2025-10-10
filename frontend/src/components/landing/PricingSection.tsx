@@ -52,24 +52,24 @@ const tiers = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-32 px-6 bg-[#F9FAFB]">
-      <div className="container mx-auto">
+    <section id="pricing" className="py-16 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-[#F9FAFB]">
+      <div className="w-full max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16 lg:mb-20 px-3"
         >
-          <h2 className="text-5xl font-semibold text-[#0F172A] mb-6 tracking-tight max-lg:text-4xl">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#0F172A] mb-4 sm:mb-6 tracking-tight">
             Pricing
           </h2>
-          <p className="text-xl text-[#475569] max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl lg:text-2xl text-[#475569] max-w-3xl mx-auto leading-relaxed">
             Choose the plan that fits your needs. No hidden fees, no surprises.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-3">
           {tiers.map((tier, index) => {
             const Icon = tier.icon;
             return (
@@ -81,40 +81,40 @@ export function PricingSection() {
                 transition={{ duration: 0.6, delay: index * 0.15 }}
               >
                 <Card
-                  className={`h-full rounded-3xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                  className={`h-full rounded-2xl sm:rounded-3xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 ${
                     tier.highlighted
                       ? 'bg-white border-2 border-brand-blue shadow-xl'
                       : 'bg-white border border-[#E5E7EB] shadow-lg'
                   }`}
                 >
-                  <CardContent className="p-10">
+                  <CardContent className="p-6 sm:p-8 lg:p-10">
                     {tier.highlighted && (
-                      <div className="inline-block mb-4 px-4 py-1 bg-brand-blue/10 text-brand-blue text-sm font-semibold rounded-full">
+                      <div className="inline-block mb-3 sm:mb-4 px-3 sm:px-4 py-1 bg-brand-blue/10 text-brand-blue text-xs sm:text-sm font-semibold rounded-full">
                         Most Popular
                       </div>
                     )}
-                    <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 flex items-center justify-center mb-6">
-                      <Icon className="h-8 w-8 text-brand-blue" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl sm:rounded-2xl bg-brand-blue/10 flex items-center justify-center mb-4 sm:mb-6">
+                      <Icon className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-brand-blue" />
                     </div>
-                    <h3 className="text-2xl font-semibold text-[#0F172A] mb-2">
+                    <h3 className="text-xl sm:text-2xl font-semibold text-[#0F172A] mb-2">
                       {tier.name}
                     </h3>
-                    <p className="text-base text-[#475569] mb-6">
+                    <p className="text-sm sm:text-base text-[#475569] mb-4 sm:mb-6">
                       {tier.description}
                     </p>
-                    <div className="mb-8">
-                      <span className="text-5xl font-bold text-[#0F172A]">
+                    <div className="mb-6 sm:mb-8">
+                      <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0F172A]">
                         {tier.price}
                       </span>
                       {tier.period && (
-                        <span className="text-[#475569] text-lg">
+                        <span className="text-[#475569] text-base sm:text-lg">
                           {tier.period}
                         </span>
                       )}
                     </div>
                     <Link href="/signup">
                       <Button
-                        className={`w-full rounded-xl py-6 text-base font-medium transition-all duration-200 ${
+                        className={`w-full rounded-xl py-4 sm:py-5 lg:py-6 text-sm sm:text-base font-medium transition-all duration-200 ${
                           tier.highlighted
                             ? 'bg-brand-blue hover:bg-[#2B3CF5] text-white shadow-lg hover:shadow-xl hover:scale-105'
                             : 'bg-[#F9FAFB] hover:bg-brand-blue text-[#0F172A] hover:text-white'
@@ -123,14 +123,14 @@ export function PricingSection() {
                         Get Started
                       </Button>
                     </Link>
-                    <ul className="mt-8 space-y-4">
+                    <ul className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
                       {tier.features.map((feature) => (
                         <li
                           key={feature}
-                          className="flex items-start gap-3 text-[#475569]"
+                          className="flex items-start gap-2 sm:gap-3 text-[#475569]"
                         >
-                          <Check className="h-5 w-5 text-brand-blue flex-shrink-0 mt-0.5" />
-                          <span className="text-base">{feature}</span>
+                          <Check className="h-4 w-4 sm:h-5 sm:w-5 text-brand-blue flex-shrink-0 mt-0.5" />
+                          <span className="text-sm sm:text-base leading-relaxed break-words">{feature}</span>
                         </li>
                       ))}
                     </ul>
