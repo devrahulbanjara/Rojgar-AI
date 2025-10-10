@@ -360,23 +360,23 @@ export function NeuralIntelligenceSection() {
   return (
     <section
       ref={sectionRef}
-      className="py-32 px-6 bg-[#F9FAFB] max-lg:py-20"
+      className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-[#F9FAFB]"
       aria-label="Neural network visualization showing AI decision-making"
     >
-      <div className="container mx-auto max-w-7xl">
-        <div className="grid lg:grid-cols-5 gap-16 items-center max-lg:gap-10">
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-5 gap-12 lg:gap-16 xl:gap-20 items-center">
           {/* Left Column - Text (40%) */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="lg:col-span-2"
+            className="lg:col-span-2 px-4 lg:px-0"
           >
-            <h2 className="text-5xl font-semibold text-[#0F172A] mb-4 tracking-tight max-lg:text-4xl">
-              Intelligence You Can See
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#0F172A] mb-4 sm:mb-6 tracking-tight">
+              Neural Intelligence in Action
             </h2>
-            <p className="text-lg text-[#475569] leading-relaxed">
+            <p className="text-lg sm:text-xl lg:text-2xl text-[#475569] leading-relaxed">
               Watch our AI reason through every hiring decision.
             </p>
           </motion.div>
@@ -387,7 +387,7 @@ export function NeuralIntelligenceSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-3"
+            className="lg:col-span-3 px-4 lg:px-0"
           >
             <div className="bg-white rounded-3xl shadow-lg p-12 border border-[#E5E7EB] transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] max-lg:p-8">
               
