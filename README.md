@@ -43,6 +43,7 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
   - [ ] Candidate Multi Resume
   - [ ] Recruiter Dashboard
   - [ ] Recruiter Shortlist
+  - [x] Responsive Landing Page for Mobile and Tablet
 
 > [!NOTE]  
 > Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.

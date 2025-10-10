@@ -31,7 +31,7 @@ export const PageTransition = memo<PageTransitionProps>(({
   return (
     <div
       className={cn(
-        'transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1)',
+        'transition-all duration-200 cubic-bezier(0.6, 0, 0.2, 1)',
         isVisible 
           ? 'opacity-100 translate-y-0' 
           : 'opacity-0 translate-y-2',
