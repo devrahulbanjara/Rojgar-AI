@@ -1,43 +1,13 @@
-"""
-User Pydantic schemas for request/response validation
-"""
-
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
-from enum import Enum
+from typing import Optional
+from sqlmodel import SQLModel
+
+# Import base model and enums from models layer
+from app.models.user import UserBase, UserRole
 
 
-class UserRole(str, Enum):
-    """User role enumeration"""
-
-    CANDIDATE = "candidate"
-    RECRUITER = "recruiter"
-
-
-class UserBase(BaseModel):
-    """Base user schema"""
-
-    email: str
-    name: str
-    picture: Optional[str] = None
-
-
-class UserCreate(UserBase):
-    """Schema for creating a user"""
-
-    google_id: str
-    password: Optional[str] = None  # For email/password signup
-
-
-class UserUpdate(BaseModel):
-    """Schema for updating a user"""
-
-    role: UserRole
-
-
-class UserResponse(UserBase):
-    """Schema for user response"""
+class UserRead(UserBase):
+    """Schema for reading user data in API responses"""
 
     id: str
     google_id: Optional[str] = None
@@ -47,15 +17,23 @@ class UserResponse(UserBase):
     updated_at: datetime
 
 
-class TokenResponse(BaseModel):
-    """Schema for token response"""
+class UserCreate(UserBase):
+    """Schema for creating a user via API"""
 
-    access_token: str
-    token_type: str
-    user: UserResponse
+    password: str
+    role: UserRole
 
 
-class GoogleUserInfo(BaseModel):
+class UserUpdate(SQLModel):
+    """Schema for updating user data via API"""
+
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    role: Optional[UserRole] = None
+
+
+# OAuth and Auth specific schemas
+class GoogleUserInfo(SQLModel):
     """Schema for Google user information"""
 
     id: str
@@ -65,13 +43,15 @@ class GoogleUserInfo(BaseModel):
     verified_email: bool
 
 
-class RoleSelectionRequest(BaseModel):
-    """Schema for role selection request"""
+class TokenResponse(SQLModel):
+    """Schema for token response"""
 
-    role: UserRole
+    access_token: str
+    token_type: str
+    user: UserRead
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(SQLModel):
     """Schema for email/password login"""
 
     email: str
@@ -83,4 +63,10 @@ class SignupRequest(UserBase):
     """Schema for email/password signup"""
 
     password: str
+    role: UserRole
+
+
+class RoleSelectionRequest(SQLModel):
+    """Schema for role selection request"""
+
     role: UserRole

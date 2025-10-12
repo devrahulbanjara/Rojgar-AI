@@ -10,24 +10,22 @@ from fastapi.responses import JSONResponse
 from app.core.security import get_current_user_id
 from app.schemas.application import (
     ApplicationCreate,
-    ApplicationResponse,
+    ApplicationRead,
     ApplicationUpdate,
-    ApplicationTrackingBoardResponse,
 )
 from app.services.application_service import ApplicationService
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ApplicationResponse])
+@router.get("/", response_model=List[ApplicationRead])
 async def get_applications(request: Request):
     """Get all applications for the current authenticated user"""
     user_id = get_current_user_id(request)
-    applications = ApplicationService.get_user_applications(user_id)
-    return [ApplicationResponse(**app.to_dict()) for app in applications]
+    return ApplicationService.get_user_applications(user_id)
 
 
-@router.get("/tracking-board", response_model=ApplicationTrackingBoardResponse)
+@router.get("/tracking-board")
 async def get_application_tracking_board(request: Request):
     """Get applications organized by stage for the application tracking board"""
     user_id = get_current_user_id(request)
@@ -35,18 +33,17 @@ async def get_application_tracking_board(request: Request):
 
 
 @router.post(
-    "/", response_model=ApplicationResponse, status_code=status.HTTP_201_CREATED
+    "/", response_model=ApplicationRead, status_code=status.HTTP_201_CREATED
 )
 async def create_application(application: ApplicationCreate, request: Request):
     """Create a new application for the current authenticated user"""
     user_id = get_current_user_id(request)
-    new_application = ApplicationService.create_application(
+    return ApplicationService.create_application(
         user_id=user_id, application_data=application
     )
-    return new_application.to_dict()
 
 
-@router.get("/{application_id}", response_model=ApplicationResponse)
+@router.get("/{application_id}", response_model=ApplicationRead)
 async def get_application(application_id: int, request: Request):
     """Get a specific application by ID for the current authenticated user"""
     user_id = get_current_user_id(request)
@@ -64,10 +61,10 @@ async def get_application(application_id: int, request: Request):
             detail="Not authorized to access this application",
         )
 
-    return application.to_dict()
+    return application
 
 
-@router.put("/{application_id}", response_model=ApplicationResponse)
+@router.put("/{application_id}", response_model=ApplicationRead)
 async def update_application(
     application_id: int,
     application_update: ApplicationUpdate,
@@ -99,7 +96,7 @@ async def update_application(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
         )
 
-    return updated_application.to_dict()
+    return updated_application
 
 
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)

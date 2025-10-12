@@ -1,188 +1,183 @@
-"""
-Application Repository
-Clean, production-ready data access layer for applications
-"""
-
-import json
-import os
-import logging
 from datetime import datetime
 from typing import List, Optional, Dict
-
+from sqlmodel import Session, select
 from app.models.application import Application, ApplicationStage, ApplicationStatus
+from app.schemas.application import ApplicationCreate, ApplicationUpdate
+from app.core.database import engine
+from app.core.logging_config import get_logger
 
-# Configure logging
-logger = logging.getLogger(__name__)
-
-# Data file configuration
-DATA_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data"
-)
-APPLICATIONS_FILE = os.path.join(DATA_DIR, "applications.json")
-
-# Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
-
-# Create applications.json if it doesn't exist
-if not os.path.exists(APPLICATIONS_FILE):
-    with open(APPLICATIONS_FILE, "w") as f:
-        json.dump({"applications": []}, f)
-        logger.info("Created new applications.json file")
+logger = get_logger(__name__)
 
 
 class ApplicationRepository:
     """Repository for application data operations with proper error handling"""
-    
+
     @staticmethod
-    def _load_applications() -> List[dict]:
-        """Load applications from JSON file with error handling"""
+    def get_all() -> List[Application]:
+        """Get all applications"""
         try:
-            with open(APPLICATIONS_FILE, "r") as f:
-                data = json.load(f)
-                applications = data.get("applications", [])
-                logger.debug(f"Loaded {len(applications)} applications from file")
+            with Session(engine) as session:
+                statement = select(Application)
+                applications = list(session.exec(statement).all())
+                logger.info(f"Retrieved {len(applications)} applications from database")
                 return applications
-        except FileNotFoundError:
-            logger.warning("Applications file not found, returning empty list")
-            return []
-        except json.JSONDecodeError as e:
-            logger.error(f"Error parsing applications JSON: {e}")
-            return []
         except Exception as e:
-            logger.error(f"Unexpected error loading applications: {e}")
+            logger.error(f"Error retrieving all applications: {e}")
             return []
 
     @staticmethod
-    def _save_applications(applications: List[dict]) -> None:
-        """Save applications to JSON file with error handling"""
+    def get_by_user_id(user_id: str) -> List[Application]:
+        """Get all applications for a specific user"""
         try:
-            with open(APPLICATIONS_FILE, "w") as f:
-                json.dump({"applications": applications}, f, indent=2)
-                logger.debug(f"Saved {len(applications)} applications to file")
+            with Session(engine) as session:
+                statement = select(Application).where(Application.user_id == user_id)
+                user_applications = list(session.exec(statement).all())
+                logger.info(
+                    f"Found {len(user_applications)} applications for user {user_id}"
+                )
+                return user_applications
         except Exception as e:
-            logger.error(f"Error saving applications: {e}")
+            logger.error(f"Error retrieving applications for user {user_id}: {e}")
+            return []
+
+    @staticmethod
+    def get_by_id(application_id: int) -> Optional[Application]:
+        """Get a specific application by ID"""
+        try:
+            with Session(engine) as session:
+                application = session.get(Application, application_id)
+                if application:
+                    logger.info(f"Retrieved application {application_id} from database")
+                else:
+                    logger.warning(
+                        f"Application {application_id} not found in database"
+                    )
+                return application
+        except Exception as e:
+            logger.error(f"Error retrieving application {application_id}: {e}")
+            return None
+
+    @staticmethod
+    def create(application_data: ApplicationCreate, user_id: str) -> Application:
+        """Create a new application from ApplicationCreate model"""
+        try:
+            with Session(engine) as session:
+                # Use model_validate to create Application table model from ApplicationCreate
+                # This is type-safe and handles all field mappings automatically
+                new_application = Application.model_validate(
+                    application_data,
+                    update={
+                        "user_id": user_id,
+                        "stage": ApplicationStage.APPLIED,
+                        "status": ApplicationStatus.PENDING,
+                    },
+                )
+                session.add(new_application)
+                session.commit()
+                session.refresh(new_application)
+                logger.info(
+                    f"Created new application {new_application.id} for user {user_id}"
+                )
+                return new_application
+        except Exception as e:
+            logger.error(f"Error creating application: {e}")
             raise
 
-    @classmethod
-    def get_all(cls) -> List[Application]:
-        applications_data = cls._load_applications()
-        return [Application.from_dict(app) for app in applications_data]
+    @staticmethod
+    def update(
+        application_id: int, update_data: ApplicationUpdate
+    ) -> Optional[Application]:
+        """Update an application from ApplicationUpdate model"""
+        try:
+            with Session(engine) as session:
+                application = session.get(Application, application_id)
+                if application:
+                    # Use model_dump to get only the fields that were explicitly set
+                    update_dict = update_data.model_dump(exclude_unset=True)
 
-    @classmethod
-    def get_by_user_id(cls, user_id: str) -> List[Application]:
-        """Get all applications for a specific user"""
-        applications_data = cls._load_applications()
-        user_applications = [
-            app for app in applications_data if app["user_id"] == user_id
-        ]
-        logger.info(f"Found {len(user_applications)} applications for user {user_id}")
-        return [Application.from_dict(app) for app in user_applications]
+                    # Update only provided fields - this is type-safe now
+                    for key, value in update_dict.items():
+                        if hasattr(application, key) and value is not None:
+                            setattr(application, key, value)
 
-    @classmethod
-    def get_by_id(cls, application_id: int) -> Optional[Application]:
-        applications_data = cls._load_applications()
-        for app_data in applications_data:
-            if app_data["id"] == application_id:
-                return Application.from_dict(app_data)
-        return None
+                    # Always update the updated_at timestamp
+                    application.updated_at = datetime.utcnow()
 
-    @classmethod
-    def create(
-        cls,
-        job_title: str,
-        company_name: str,
-        user_id: str,
-        description: Optional[str] = None,
-    ) -> Application:
-        """Create a new application"""
-        applications_data = cls._load_applications()
+                    session.add(application)
+                    session.commit()
+                    session.refresh(application)
+                    logger.info(f"Updated application {application_id}")
+                    return application
+                else:
+                    logger.warning(f"Application {application_id} not found for update")
+                    return None
+        except Exception as e:
+            logger.error(f"Error updating application {application_id}: {e}")
+            return None
 
-        # Generate new ID
-        new_id = 1
-        if applications_data:
-            new_id = max(app["id"] for app in applications_data) + 1
+    @staticmethod
+    def delete(application_id: int) -> bool:
+        """Delete an application"""
+        try:
+            with Session(engine) as session:
+                application = session.get(Application, application_id)
+                if application:
+                    session.delete(application)
+                    session.commit()
+                    logger.info(f"Deleted application {application_id}")
+                    return True
+                else:
+                    logger.warning(
+                        f"Application {application_id} not found for deletion"
+                    )
+                    return False
+        except Exception as e:
+            logger.error(f"Error deleting application {application_id}: {e}")
+            return False
 
-        now = datetime.now()
-
-        new_application = {
-            "id": new_id,
-            "job_title": job_title,
-            "company_name": company_name,
-            "user_id": user_id,
-            "applied_date": now.strftime("%Y-%m-%d"),
-            "stage": ApplicationStage.APPLIED.value,
-            "status": ApplicationStatus.PENDING.value,
-            "description": description,
-            "updated_at": now.isoformat(),
-        }
-
-        applications_data.append(new_application)
-        cls._save_applications(applications_data)
-        
-        logger.info(f"Created new application {new_id} for user {user_id}")
-        return Application.from_dict(new_application)
-
-    @classmethod
-    def update(cls, application_id: int, update_data: dict) -> Optional[Application]:
-        applications_data = cls._load_applications()
-
-        for i, app in enumerate(applications_data):
-            if app["id"] == application_id:
-                # Update only provided fields
-                for key, value in update_data.items():
-                    if key in app and value is not None:
-                        app[key] = value
-
-                # Always update the updated_at timestamp
-                app["updated_at"] = datetime.now().isoformat()
-
-                applications_data[i] = app
-                cls._save_applications(applications_data)
-                return Application.from_dict(app)
-
-        return None
-
-    @classmethod
-    def delete(cls, application_id: int) -> bool:
-        applications_data = cls._load_applications()
-        initial_count = len(applications_data)
-
-        applications_data = [
-            app for app in applications_data if app["id"] != application_id
-        ]
-
-        if len(applications_data) < initial_count:
-            cls._save_applications(applications_data)
-            return True
-
-        return False
-
-    @classmethod
-    def get_application_tracking_board(cls, user_id: str) -> Dict[str, List[dict]]:
+    @staticmethod
+    def get_application_tracking_board(user_id: str) -> Dict[str, List[dict]]:
         """Get applications organized by stage for the tracking board"""
-        applications = cls.get_by_user_id(user_id)
+        try:
+            applications = ApplicationRepository.get_by_user_id(user_id)
 
-        # Group applications into 3 broader states
-        board = {
-            "applied": [],      # Applied + Screening
-            "interviewing": [], # Interviewing
-            "outcome": [],      # Offer + Decision
-        }
+            # Group applications into 3 broader states
+            board = {
+                "applied": [],  # Applied + Screening
+                "interviewing": [],  # Interviewing
+                "outcome": [],  # Offer + Decision
+            }
 
-        for app in applications:
-            # Map old stages to new broader states
-            if app.stage in [ApplicationStage.APPLIED, ApplicationStage.SCREENING]:
-                board["applied"].append(app)
-            elif app.stage == ApplicationStage.INTERVIEWING:
-                board["interviewing"].append(app)
-            elif app.stage in [ApplicationStage.OFFER, ApplicationStage.DECISION]:
-                board["outcome"].append(app)
+            for app in applications:
+                # Convert to dict
+                app_dict = {
+                    "id": app.id,
+                    "job_title": app.job_title,
+                    "company_name": app.company_name,
+                    "user_id": app.user_id,
+                    "applied_date": app.applied_date.isoformat(),
+                    "stage": app.stage.value,
+                    "status": app.status.value,
+                    "description": app.description,
+                    "updated_at": app.updated_at.isoformat(),
+                }
 
-        # Convert to dictionary format
-        result = {
-            state: [app.to_dict() for app in apps]
-            for state, apps in board.items()
-        }
-        
-        logger.info(f"Generated tracking board for user {user_id} with {len(applications)} applications")
-        return result
+                # Map old stages to new broader states
+                if app.stage in [ApplicationStage.APPLIED, ApplicationStage.SCREENING]:
+                    board["applied"].append(app_dict)
+                elif app.stage == ApplicationStage.INTERVIEWING:
+                    board["interviewing"].append(app_dict)
+                elif app.stage in [ApplicationStage.OFFER, ApplicationStage.DECISION]:
+                    board["outcome"].append(app_dict)
+
+            logger.info(
+                f"Generated tracking board for user {user_id} with {len(applications)} applications"
+            )
+            return board
+        except Exception as e:
+            logger.error(f"Error generating tracking board for user {user_id}: {e}")
+            return {
+                "applied": [],
+                "interviewing": [],
+                "outcome": [],
+            }

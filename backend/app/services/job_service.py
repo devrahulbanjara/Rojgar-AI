@@ -8,8 +8,8 @@ from datetime import datetime
 import logging
 
 from app.models.job import Job, Company
+from app.schemas.job import JobRead, CompanyRead
 from app.repositories.job_repo import JobRepository
-from app.schemas.job import JobCreate, JobUpdate, JobSearchParams, JobStatsResponse
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -43,53 +43,52 @@ class JobService:
         return JobRepository.get_featured_jobs(limit)
 
     @staticmethod
-    def search_jobs(search_params: JobSearchParams) -> Tuple[List[Job], int]:
+    def search_jobs(search_params: Dict[str, Any], with_company: bool = False) -> Tuple[List[Job], int]:
         """Search jobs with filters and pagination"""
-        logger.info(f"Searching jobs with params: {search_params.dict()}")
+        logger.info(f"Searching jobs with params: {search_params}")
         
-        # Convert Pydantic model to dict for repository
-        params_dict = search_params.dict(exclude_none=True)
-        
-        jobs, total_count = JobRepository.search_jobs(params_dict)
+        jobs, total_count = JobRepository.search_jobs(search_params, with_company=with_company)
         
         logger.info(f"Search returned {len(jobs)} jobs out of {total_count} total")
         return jobs, total_count
 
     @staticmethod
-    def get_jobs_with_companies(jobs: List[Job]) -> List[Dict[str, Any]]:
-        """Get jobs with their company information"""
-        logger.info(f"Enriching {len(jobs)} jobs with company data")
-        
-        companies = JobRepository.get_all_companies()
-        company_map = {company.id: company for company in companies}
+    def get_jobs_with_companies(jobs: List[Job]) -> List[JobRead]:
+        """
+        Get jobs with their company information.
+        Note: For best performance, pass jobs that were fetched with the company 
+        relationship already loaded (using with_company=True in repository methods).
+        """
+        logger.info(f"Converting {len(jobs)} jobs to JobRead with company data")
         
         enriched_jobs = []
         for job in jobs:
-            job_dict = job.to_dict()
-            company = company_map.get(job.company_id)
-            if company:
-                job_dict["company"] = company.to_dict()
-            enriched_jobs.append(job_dict)
+            job_read = JobRead.model_validate(job)
+            # If the company relationship is loaded, use it directly
+            if job.company:
+                job_read.company = CompanyRead.model_validate(job.company)
+            enriched_jobs.append(job_read)
         
-        logger.info(f"Enriched {len(enriched_jobs)} jobs with company data")
+        logger.info(f"Converted {len(enriched_jobs)} jobs with company data")
         return enriched_jobs
 
     @staticmethod
-    def get_job_with_company(job_id: int) -> Optional[Dict[str, Any]]:
-        """Get a specific job with company information"""
+    def get_job_with_company(job_id: int) -> Optional[JobRead]:
+        """Get a specific job with company information using relationship loading"""
         logger.info(f"Retrieving job {job_id} with company data")
         
-        job = JobRepository.get_job_by_id(job_id)
+        # Use with_company=True to leverage eager loading via relationship
+        job = JobRepository.get_job_by_id(job_id, with_company=True)
         if not job:
             return None
         
-        company = JobRepository.get_company_by_id(job.company_id)
-        job_dict = job.to_dict()
+        job_read = JobRead.model_validate(job)
         
-        if company:
-            job_dict["company"] = company.to_dict()
+        # Company is already loaded via relationship
+        if job.company:
+            job_read.company = CompanyRead.model_validate(job.company)
         
-        return job_dict
+        return job_read
 
     @staticmethod
     def increment_job_views(job_id: int) -> bool:
@@ -104,16 +103,13 @@ class JobService:
         return JobRepository.increment_job_applications(job_id)
 
     @staticmethod
-    def get_job_statistics() -> JobStatsResponse:
+    def get_job_statistics() -> Dict[str, Any]:
         """Get job statistics"""
         logger.info("Generating job statistics")
         
-        stats_dict = JobRepository.get_job_statistics()
+        stats = JobRepository.get_job_statistics()
         
-        # Convert to Pydantic model
-        stats = JobStatsResponse(**stats_dict)
-        
-        logger.info(f"Generated job statistics: {stats.dict()}")
+        logger.info(f"Generated job statistics")
         return stats
 
     @staticmethod
@@ -205,11 +201,11 @@ class JobService:
         # Filter high salary jobs
         high_salary_jobs = [
             job for job in all_jobs
-            if job.status.value == "Active" and job.salary_range.min >= min_salary
+            if job.status.value == "Active" and job.salary_min >= min_salary
         ]
         
         # Sort by salary (highest first)
-        high_salary_jobs.sort(key=lambda x: x.salary_range.min, reverse=True)
+        high_salary_jobs.sort(key=lambda x: x.salary_min, reverse=True)
         
         limited_jobs = high_salary_jobs[:limit]
         
@@ -247,7 +243,7 @@ class JobService:
         total_views = sum(job.views_count for job in jobs)
         
         # Get average salary
-        salaries = [job.salary_range.min for job in active_jobs if job.salary_range]
+        salaries = [job.salary_min for job in active_jobs]
         avg_salary = sum(salaries) / len(salaries) if salaries else 0
         
         # Get unique skills
@@ -256,9 +252,13 @@ class JobService:
             all_skills.extend(job.skills)
         unique_skills = list(set(all_skills))
         
+        # Convert to Read models
+        company_read = CompanyRead.model_validate(company)
+        jobs_read = [JobRead.model_validate(job) for job in active_jobs]
+        
         company_data = {
-            "company": company.to_dict(),
-            "jobs": [job.to_dict() for job in active_jobs],
+            "company": company_read,
+            "jobs": jobs_read,
             "statistics": {
                 "total_jobs": total_jobs,
                 "active_jobs": active_jobs_count,

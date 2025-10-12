@@ -8,8 +8,8 @@ from datetime import datetime
 import logging
 
 from app.models.application import Application, ApplicationStage, ApplicationStatus
+from app.schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationRead
 from app.repositories.application_repo import ApplicationRepository
-from app.schemas.application import ApplicationCreate, ApplicationUpdate
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -18,47 +18,41 @@ logger = logging.getLogger(__name__)
 class ApplicationService:
     """Service layer for application business logic"""
     @staticmethod
-    def get_all_applications() -> List[Application]:
-        return ApplicationRepository.get_all()
+    def get_all_applications() -> List[ApplicationRead]:
+        applications = ApplicationRepository.get_all()
+        return [ApplicationRead.model_validate(app) for app in applications]
 
     @staticmethod
-    def get_user_applications(user_id: str) -> List[Application]:
+    def get_user_applications(user_id: str) -> List[ApplicationRead]:
         """Get all applications for a specific user"""
         logger.info(f"Fetching applications for user: {user_id}")
-        return ApplicationRepository.get_by_user_id(user_id)
+        applications = ApplicationRepository.get_by_user_id(user_id)
+        return [ApplicationRead.model_validate(app) for app in applications]
 
     @staticmethod
-    def get_application(application_id: int) -> Optional[Application]:
-        return ApplicationRepository.get_by_id(application_id)
+    def get_application(application_id: int) -> Optional[ApplicationRead]:
+        application = ApplicationRepository.get_by_id(application_id)
+        return ApplicationRead.model_validate(application) if application else None
 
     @staticmethod
     def create_application(
         user_id: str, application_data: ApplicationCreate
-    ) -> Application:
+    ) -> ApplicationRead:
         """Create a new application for a user"""
         logger.info(f"Creating application for user {user_id}: {application_data.job_title} at {application_data.company_name}")
-        return ApplicationRepository.create(
-            job_title=application_data.job_title,
-            company_name=application_data.company_name,
-            user_id=user_id,
-            description=application_data.description,
-        )
+        # Repository now accepts ApplicationCreate directly - type-safe and clean!
+        application = ApplicationRepository.create(application_data, user_id)
+        return ApplicationRead.model_validate(application)
 
     @staticmethod
     def update_application(
         application_id: int, update_data: ApplicationUpdate
-    ) -> Optional[Application]:
-        # Convert Pydantic model to dict, excluding None values
-        update_dict = update_data.dict(exclude_unset=True)
-
-        # Convert enum values to strings for storage
-        if "stage" in update_dict and update_dict["stage"] is not None:
-            update_dict["stage"] = update_dict["stage"].value
-
-        if "status" in update_dict and update_dict["status"] is not None:
-            update_dict["status"] = update_dict["status"].value
-
-        return ApplicationRepository.update(application_id, update_dict)
+    ) -> Optional[ApplicationRead]:
+        """Update an application - repository now handles ApplicationUpdate directly"""
+        # Repository now accepts ApplicationUpdate directly - no need to convert to dict!
+        # The repository handles the model_dump and validation internally
+        application = ApplicationRepository.update(application_id, update_data)
+        return ApplicationRead.model_validate(application) if application else None
 
     @staticmethod
     def delete_application(application_id: int) -> bool:

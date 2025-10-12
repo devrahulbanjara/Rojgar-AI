@@ -9,15 +9,13 @@ from datetime import timedelta
 from fastapi import HTTPException, status
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import (
+    UserRead,
     GoogleUserInfo,
-    UserCreate,
     TokenResponse,
-    UserResponse,
     LoginRequest,
     SignupRequest,
-    UserRole,
 )
 from app.repositories.user_repo import user_repo
 from app.utils.common import generate_user_id
@@ -74,17 +72,7 @@ class AuthService:
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.name,
-                picture=user.picture,
-                google_id=user.google_id,
-                role=user.role,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            ),
+            user=UserRead.model_validate(user),
         )
 
     def _hash_password(self, password: str) -> str:
@@ -125,16 +113,7 @@ class AuthService:
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.name,
-                picture=user.picture,
-                role=user.role,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            ),
+            user=UserRead.model_validate(user),
         )
 
     def login_with_email(self, login_data: LoginRequest) -> TokenResponse:
@@ -169,19 +148,10 @@ class AuthService:
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.name,
-                picture=user.picture,
-                role=user.role,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            ),
+            user=UserRead.model_validate(user),
         )
 
-    def select_role(self, user_id: str, role: UserRole) -> UserResponse:
+    def select_role(self, user_id: str, role: UserRole) -> UserRead:
         """Select role for a user"""
         user = user_repo.get_by_id(user_id)
         if not user:
@@ -202,17 +172,7 @@ class AuthService:
                 detail="Failed to update user role",
             )
 
-        return UserResponse(
-            id=updated_user.id,
-            email=updated_user.email,
-            name=updated_user.name,
-            picture=updated_user.picture,
-            google_id=updated_user.google_id,
-            role=updated_user.role,
-            is_active=updated_user.is_active,
-            created_at=updated_user.created_at,
-            updated_at=updated_user.updated_at,
-        )
+        return UserRead.model_validate(updated_user)
 
 
 # Global service instance
