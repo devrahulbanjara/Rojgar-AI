@@ -2,21 +2,42 @@
 Main FastAPI application entry point
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.database import init_db
 from app.core.logging_config import get_logger
 from app.api.v1.routes import auth, users, applications, jobs
 
 # Setup logging
 logger = get_logger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan manager
+    Handles startup and shutdown events
+    """
+    # Startup: Initialize database
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("Database initialized successfully")
+    
+    yield
+    
+    # Shutdown: cleanup if needed
+    logger.info("Shutting down application...")
+
+
 # Create FastAPI app
 app = FastAPI(
     title="ConvexHire API",
     description="Backend API for ConvexHire recruitment platform",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 logger.info("Starting ConvexHire API application")
