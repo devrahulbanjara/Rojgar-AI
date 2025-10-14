@@ -181,3 +181,62 @@ class ApplicationRepository:
                 "interviewing": [],
                 "outcome": [],
             }
+
+    @staticmethod
+    def get_application_stats(user_id: str) -> Dict[str, int]:
+        """Get application statistics for the user"""
+        try:
+            applications = ApplicationRepository.get_by_user_id(user_id)
+
+            # Calculate statistics
+            total_applications = len(applications)
+            interviews_scheduled = sum(
+                1
+                for app in applications
+                if app.status == ApplicationStatus.INTERVIEW_SCHEDULED
+            )
+
+            # Count offers received
+            offers_received = sum(
+                1
+                for app in applications
+                if app.status == ApplicationStatus.OFFER_EXTENDED
+            )
+
+            # Active applications (not in final state)
+            active_applications = sum(
+                1
+                for app in applications
+                if app.status
+                not in [ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED]
+            )
+
+            # Calculate response rate (applications with status other than pending)
+            responded_applications = sum(
+                1 for app in applications if app.status != ApplicationStatus.PENDING
+            )
+            response_rate = (
+                int((responded_applications / total_applications) * 100)
+                if total_applications > 0
+                else 0
+            )
+
+            stats = {
+                "totalApplications": total_applications,
+                "activeApplications": active_applications,
+                "interviewsScheduled": interviews_scheduled,
+                "offersReceived": offers_received,
+                "responseRate": response_rate,
+            }
+
+            logger.info(f"Generated stats for user {user_id}: {stats}")
+            return stats
+        except Exception as e:
+            logger.error(f"Error generating stats for user {user_id}: {e}")
+            return {
+                "totalApplications": 0,
+                "activeApplications": 0,
+                "interviewsScheduled": 0,
+                "offersReceived": 0,
+                "responseRate": 0,
+            }

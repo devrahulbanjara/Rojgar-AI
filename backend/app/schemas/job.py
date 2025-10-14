@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, List
 from sqlmodel import SQLModel, Field
+from pydantic import computed_field
 
 # Import base models and enums from models layer
 from app.models.job import (
@@ -41,7 +42,8 @@ class JobRead(JobBase):
     updated_at: datetime
     company: Optional[CompanyRead] = None
 
-    # Computed field for backward compatibility with API
+    # Computed field for backward compatibility with API (properly serialized)
+    @computed_field
     @property
     def salary_range(self) -> SalaryRange:
         """Get salary range as nested object"""

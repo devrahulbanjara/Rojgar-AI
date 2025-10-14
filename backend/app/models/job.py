@@ -2,6 +2,7 @@ from datetime import datetime, date
 from typing import Optional, List, TYPE_CHECKING
 from enum import Enum
 from sqlmodel import Field, SQLModel, Column, JSON, Relationship
+from pydantic import computed_field
 
 if TYPE_CHECKING:
     pass  # For avoiding circular imports
@@ -64,8 +65,6 @@ class CompanyBase(SQLModel):
 
 class Company(CompanyBase, table=True):
     """Company table model"""
-    __tablename__ = "companies"
-    
     id: Optional[int] = Field(default=None, primary_key=True)
     
     # Relationship to jobs
@@ -86,7 +85,7 @@ class CompanyCreate(CompanyBase):
 class JobBase(SQLModel):
     """Base job model with common fields"""
     title: str
-    company_id: int
+    company_id: Optional[int] = None
     department: str
     level: JobLevel
     location: str
@@ -106,14 +105,13 @@ class JobBase(SQLModel):
 
 class Job(JobBase, table=True):
     """Job table model"""
-    __tablename__ = "jobs"
-    
     id: Optional[int] = Field(default=None, primary_key=True)
+    company_id: int = Field(foreign_key="company.id")
     posted_date: date = Field(default_factory=date.today)
     status: JobStatus = Field(default=JobStatus.ACTIVE, index=True)
     applicant_count: int = Field(default=0)
     views_count: int = Field(default=0)
-    created_by: str = Field(foreign_key="users.id")
+    created_by: str = Field(foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
@@ -145,7 +143,8 @@ class JobRead(JobBase):
     updated_at: datetime
     company: Optional[CompanyRead] = None
     
-    # Computed field for backward compatibility with API
+    # Computed field for backward compatibility with API (properly serialized)
+    @computed_field
     @property
     def salary_range(self) -> SalaryRange:
         """Get salary range as nested object"""

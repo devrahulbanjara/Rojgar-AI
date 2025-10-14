@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlmodel import Session, select
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.core.database import engine
 
 

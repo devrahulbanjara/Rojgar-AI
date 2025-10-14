@@ -1,8 +1,3 @@
-"""
-Logging Configuration
-Centralized logging setup for the application
-"""
-
 import logging
 import sys
 from typing import Optional

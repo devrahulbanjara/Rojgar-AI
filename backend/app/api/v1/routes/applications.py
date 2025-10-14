@@ -1,8 +1,3 @@
-"""
-Application API Routes
-Clean, production-ready endpoints for application management
-"""
-
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
@@ -30,6 +25,13 @@ async def get_application_tracking_board(request: Request):
     """Get applications organized by stage for the application tracking board"""
     user_id = get_current_user_id(request)
     return ApplicationService.get_application_tracking_board(user_id)
+
+
+@router.get("/stats")
+async def get_application_stats(request: Request):
+    """Get application statistics for the current authenticated user"""
+    user_id = get_current_user_id(request)
+    return ApplicationService.get_application_stats(user_id)
 
 
 @router.post(

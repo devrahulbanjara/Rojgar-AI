@@ -1,8 +1,3 @@
-"""
-Job API Routes
-Clean, production-ready endpoints for job management
-"""
-
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query, Path, Depends
 from fastapi.responses import JSONResponse

@@ -5,9 +5,6 @@ from sqlalchemy.orm import selectinload
 from app.models.job import (
     Job,
     Company,
-    JobLevel,
-    LocationType,
-    EmploymentType,
     JobStatus,
 )
 from app.core.database import engine

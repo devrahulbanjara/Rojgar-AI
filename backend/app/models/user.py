@@ -25,8 +25,6 @@ class UserBase(SQLModel):
 # Table model for database
 class User(UserBase, table=True):
     """User table model"""
-    __tablename__ = "users"
-
     id: str = Field(primary_key=True)
     google_id: Optional[str] = Field(default=None, unique=True, index=True)
     password_hash: Optional[str] = Field(default=None, exclude=True)

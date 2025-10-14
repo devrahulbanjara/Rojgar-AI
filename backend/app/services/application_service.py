@@ -1,8 +1,3 @@
-"""
-Application Service
-Clean, production-ready business logic layer for applications
-"""
-
 from typing import List, Optional, Dict
 from datetime import datetime
 import logging
@@ -63,3 +58,9 @@ class ApplicationService:
         """Get applications organized by stage for the tracking board"""
         logger.info(f"Generating tracking board for user: {user_id}")
         return ApplicationRepository.get_application_tracking_board(user_id)
+
+    @staticmethod
+    def get_application_stats(user_id: str) -> Dict[str, int]:
+        """Get application statistics for the user"""
+        logger.info(f"Getting application stats for user: {user_id}")
+        return ApplicationRepository.get_application_stats(user_id)

@@ -1,7 +1,3 @@
-"""
-Security utilities for authentication and JWT handling
-"""
-
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt

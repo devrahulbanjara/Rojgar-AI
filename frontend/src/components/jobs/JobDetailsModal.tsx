@@ -118,7 +118,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               <div className="flex items-center gap-2 text-muted-foreground">
                 <DollarSign className="w-4 h-4" />
                 <span className="font-medium">
-                  {jobUtils.formatSalaryRange(job.salary_range)}
+                  {jobUtils.formatJobSalary(job)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">

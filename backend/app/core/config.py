@@ -1,7 +1,3 @@
-"""
-Application configuration settings with validation and type hints
-"""
-
 from typing import List, Optional
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
@@ -35,7 +31,7 @@ class Settings(BaseSettings):
 
     # CORS Configuration
     CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:5173", "http://localhost:3000"],
+        default=["http://localhost:3000"],
         description="Allowed CORS origins",
     )
 

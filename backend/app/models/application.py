@@ -38,10 +38,8 @@ class ApplicationBase(SQLModel):
 
 class Application(ApplicationBase, table=True):
     """Application table model"""
-    __tablename__ = "applications"
-
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: str = Field(foreign_key="users.id", index=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
     applied_date: datetime = Field(default_factory=datetime.utcnow)
     stage: ApplicationStage = Field(default=ApplicationStage.APPLIED, index=True)
     status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, index=True)
