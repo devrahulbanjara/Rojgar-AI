@@ -213,9 +213,33 @@ export class ApplicationService {
 // Utility functions for job data transformation
 export const jobUtils = {
   /**
+   * Get salary range from job (handles both computed and raw fields)
+   */
+  getSalaryRange: (job: Job): { min: number; max: number; currency: string } | undefined => {
+    if (job.salary_range) {
+      return job.salary_range;
+    }
+    
+    // Fallback to raw fields if salary_range is not computed
+    if (job.salary_min !== undefined && job.salary_max !== undefined) {
+      return {
+        min: job.salary_min,
+        max: job.salary_max,
+        currency: job.salary_currency || 'USD',
+      };
+    }
+    
+    return undefined;
+  },
+
+  /**
    * Format salary range for display
    */
-  formatSalaryRange: (salaryRange: { min: number; max: number; currency: string }): string => {
+  formatSalaryRange: (salaryRange?: { min: number; max: number; currency: string }): string => {
+    if (!salaryRange) {
+      return 'Salary not specified';
+    }
+    
     const { min, max, currency } = salaryRange;
     const formatNumber = (num: number) => {
       if (num >= 1000000) {
@@ -227,6 +251,14 @@ export const jobUtils = {
     };
     
     return `${currency} ${formatNumber(min)} - ${formatNumber(max)}`;
+  },
+
+  /**
+   * Format salary range for a job (convenience method)
+   */
+  formatJobSalary: (job: Job): string => {
+    const salaryRange = jobUtils.getSalaryRange(job);
+    return jobUtils.formatSalaryRange(salaryRange);
   },
 
   /**

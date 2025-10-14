@@ -32,11 +32,15 @@ export interface Job {
   location: string;
   location_type: LocationType;
   employment_type: EmploymentType;
-  salary_range: {
+  salary_range?: {
     min: number;
     max: number;
     currency: string;
   };
+  // Fallback fields if salary_range is not computed
+  salary_min?: number;
+  salary_max?: number;
+  salary_currency?: string;
   description: string;
   requirements: string[];
   skills: string[];

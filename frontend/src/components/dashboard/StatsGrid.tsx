@@ -33,7 +33,7 @@ export const StatsGrid = memo<StatsGridProps>(({
     },
     {
       title: 'Offers',
-      value: 0, // This would come from stats in a real app
+      value: stats.offersReceived || 0,
       icon: <Trophy />,
       description: 'Job offers received',
     },

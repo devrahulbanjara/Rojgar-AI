@@ -1,219 +1,186 @@
 """
-Authentication service for handling Google OAuth and email/password auth
+Authentication service - Business logic for authentication operations
 """
 
+import uuid
 import httpx
-import hashlib
 from typing import Optional
-from datetime import timedelta
-from fastapi import HTTPException, status
+from sqlmodel import Session, select
+
 from app.core.config import settings
-from app.core.security import create_access_token
-from app.models.user import User
-from app.schemas.user import (
-    GoogleUserInfo,
-    UserCreate,
-    TokenResponse,
-    UserResponse,
-    LoginRequest,
-    SignupRequest,
-    UserRole,
-)
-from app.repositories.user_repo import user_repo
-from app.utils.common import generate_user_id
+from app.core.security import hash_password, verify_password, create_token
+from app.models.user import User, UserResponse, GoogleUserInfo, UserRole
 
 
 class AuthService:
-    """Service for authentication operations"""
-
-    async def verify_google_token(self, token: str) -> GoogleUserInfo:
-        """Verify Google OAuth token and get user info"""
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={token}"
-                )
-
-                if response.status_code != 200:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid Google token",
-                    )
-
-                return GoogleUserInfo(**response.json())
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to verify Google token",
-            )
-
-    def authenticate_with_google(self, google_user: GoogleUserInfo) -> TokenResponse:
-        """Authenticate user with Google OAuth"""
-        # Check if user exists
-        existing_user = user_repo.get_by_google_id(google_user.id)
-
-        if existing_user:
-            user = existing_user
+    """Service for handling authentication logic"""
+    
+    @staticmethod
+    def create_user_response(user: User) -> UserResponse:
+        """Convert a User model to UserResponse"""
+        return UserResponse(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            picture=user.picture,
+            google_id=user.google_id,
+            role=user.role,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        )
+    
+    @staticmethod
+    def get_user_by_email(email: str, db: Session) -> Optional[User]:
+        """Find user by email"""
+        return db.exec(select(User).where(User.email == email)).first()
+    
+    @staticmethod
+    def get_user_by_google_id(google_id: str, db: Session) -> Optional[User]:
+        """Find user by Google ID"""
+        return db.exec(select(User).where(User.google_id == google_id)).first()
+    
+    @staticmethod
+    def create_user(
+        email: str,
+        name: str,
+        password: Optional[str] = None,
+        google_id: Optional[str] = None,
+        picture: Optional[str] = None,
+        role: Optional[UserRole] = None,
+        db: Session = None
+    ) -> User:
+        """Create a new user"""
+        new_user = User(
+            id=str(uuid.uuid4()),
+            email=email,
+            name=name,
+            picture=picture,
+            google_id=google_id,
+            role=role,
+        )
+        
+        if password:
+            new_user.password_hash = hash_password(password)
+        
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        return new_user
+    
+    @staticmethod
+    def verify_user_password(user: User, password: str) -> bool:
+        """Verify user password"""
+        if not user.password_hash:
+            return False
+        return verify_password(password, user.password_hash)
+    
+    @staticmethod
+    def create_access_token(user_id: str, remember_me: bool = False) -> tuple[str, int]:
+        """
+        Create access token for user
+        Returns: (token, max_age_seconds)
+        """
+        if remember_me:
+            token = create_token(user_id, expires_minutes=30 * 24 * 60)  # 30 days
+            max_age = 30 * 24 * 60 * 60
         else:
-            # Create new user
-            user = User(
-                id=generate_user_id(),
-                google_id=google_user.id,
+            token = create_token(user_id)
+            max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        
+        return token, max_age
+    
+    @staticmethod
+    def generate_google_auth_url() -> str:
+        """Generate Google OAuth URL"""
+        from urllib.parse import urlencode
+        
+        google_auth_url = "https://accounts.google.com/o/oauth2/auth"
+        params = {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "redirect_uri": f"{settings.BACKEND_URL}/auth/google/callback",
+            "scope": "openid email profile",
+            "response_type": "code",
+            "access_type": "offline",
+            "prompt": "consent",
+        }
+        
+        return f"{google_auth_url}?{urlencode(params)}"
+    
+    @staticmethod
+    async def exchange_google_code(code: str) -> GoogleUserInfo:
+        """
+        Exchange Google authorization code for user info
+        Raises HTTPException on failure
+        """
+        from fastapi import HTTPException, status
+        
+        async with httpx.AsyncClient() as client:
+            # Exchange code for tokens
+            token_response = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": f"{settings.BACKEND_URL}/auth/google/callback",
+                },
+            )
+            
+            if token_response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to get Google token",
+                )
+            
+            tokens = token_response.json()
+            access_token = tokens.get("access_token")
+            
+            # Get user info from Google
+            user_response = await client.get(
+                f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
+            )
+            
+            if user_response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to get user info from Google",
+                )
+            
+            return GoogleUserInfo(**user_response.json())
+    
+    @staticmethod
+    def get_or_create_google_user(google_user: GoogleUserInfo, db: Session) -> User:
+        """Get existing Google user or create new one"""
+        user = AuthService.get_user_by_google_id(google_user.id, db)
+        
+        if not user:
+            user = AuthService.create_user(
                 email=google_user.email,
                 name=google_user.name,
+                google_id=google_user.id,
                 picture=google_user.picture,
+                db=db
             )
-            user = user_repo.create(user)
-
-        # Create JWT token
-        access_token = create_access_token(
-            data={"sub": user.id},
-            expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        )
-
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.name,
-                picture=user.picture,
-                google_id=user.google_id,
-                role=user.role,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            ),
-        )
-
-    def _hash_password(self, password: str) -> str:
-        """Hash password using SHA-256 (simple implementation)"""
-        return hashlib.sha256(f"{password}{settings.SECRET_KEY}".encode()).hexdigest()
-
-    def _verify_password(self, password: str, hashed: str) -> bool:
-        """Verify password against hash"""
-        return self._hash_password(password) == hashed
-
-    def signup_with_email(self, signup_data: SignupRequest) -> TokenResponse:
-        """Sign up user with email and password"""
-        # Check if user already exists
-        existing_user = user_repo.get_by_email(signup_data.email)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists",
-            )
-
-        # Create new user
-        user = User(
-            id=generate_user_id(),
-            email=signup_data.email,
-            name=signup_data.name,
-            picture=signup_data.picture,
-            password_hash=self._hash_password(signup_data.password),
-            role=signup_data.role,
-        )
-        user = user_repo.create(user)
-
-        # Create JWT token
-        access_token = create_access_token(
-            data={"sub": user.id},
-            expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        )
-
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.name,
-                picture=user.picture,
-                role=user.role,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            ),
-        )
-
-    def login_with_email(self, login_data: LoginRequest) -> TokenResponse:
-        """Login user with email and password"""
-        user = user_repo.get_by_email(login_data.email)
-
-        if not user or not user.password_hash:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password",
-            )
-
-        if not self._verify_password(login_data.password, user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password",
-            )
-
-        # Create JWT token with appropriate expiration
-        if login_data.remember_me:
-            # Remember me: 30 days
-            expires_delta = timedelta(days=30)
+        
+        return user
+    
+    @staticmethod
+    def update_user_role(user: User, role: UserRole, db: Session) -> User:
+        """Update user role"""
+        user.role = role
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+    
+    @staticmethod
+    def get_redirect_url_for_user(user: User) -> str:
+        """Get appropriate redirect URL based on user role"""
+        if user.role:
+            return f"{settings.FRONTEND_URL}/dashboard/{user.role.value}"
         else:
-            # Regular session: default expiration
-            expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+            return f"{settings.FRONTEND_URL}/select-role"
 
-        access_token = create_access_token(
-            data={"sub": user.id},
-            expires_delta=expires_delta,
-        )
-
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.name,
-                picture=user.picture,
-                role=user.role,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-            ),
-        )
-
-    def select_role(self, user_id: str, role: UserRole) -> UserResponse:
-        """Select role for a user"""
-        user = user_repo.get_by_id(user_id)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
-
-        if user.role is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User role already selected",
-            )
-
-        updated_user = user_repo.update(user_id, role=role)
-        if not updated_user:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update user role",
-            )
-
-        return UserResponse(
-            id=updated_user.id,
-            email=updated_user.email,
-            name=updated_user.name,
-            picture=updated_user.picture,
-            google_id=updated_user.google_id,
-            role=updated_user.role,
-            is_active=updated_user.is_active,
-            created_at=updated_user.created_at,
-            updated_at=updated_user.updated_at,
-        )
-
-
-# Global service instance
-auth_service = AuthService()
