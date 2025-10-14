@@ -163,7 +163,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
             <DollarSign className="w-4 h-4 text-muted-foreground" />
             <div>
               <p className="font-medium text-foreground">
-                {jobUtils.formatSalaryRange(job.salary_range)}
+                {jobUtils.formatJobSalary(job)}
               </p>
               <p className="text-xs text-muted-foreground">Salary</p>
             </div>

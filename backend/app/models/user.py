@@ -1,53 +1,90 @@
 """
-User data model (JSON-based storage)
+User model - Simple, easy to understand
+Everything related to users in one place
 """
 
 from typing import Optional
 from datetime import datetime
-from dataclasses import dataclass, asdict
-from app.schemas.user import UserRole
+from enum import Enum
+from sqlmodel import Field, SQLModel
 
 
-@dataclass
-class User:
-    """User model for JSON storage"""
+class UserRole(str, Enum):
+    """What type of user: candidate or recruiter"""
+    CANDIDATE = "candidate"
+    RECRUITER = "recruiter"
 
+
+class User(SQLModel, table=True):
+    """
+    User table in database
+    Stores all user information
+    """
+    # Basic info
+    id: str = Field(primary_key=True)
+    email: str = Field(unique=True, index=True)
+    name: str
+    picture: Optional[str] = None
+    
+    # Auth info
+    google_id: Optional[str] = Field(default=None, unique=True, index=True)
+    password_hash: Optional[str] = Field(default=None)
+    role: Optional[UserRole] = Field(default=None)
+    
+    # Status
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ============= Request/Response Schemas =============
+# These are used for API input/output only
+
+class SignupRequest(SQLModel):
+    """What we need to create a new user account"""
+    email: str
+    password: str
+    name: str
+    role: UserRole
+    picture: Optional[str] = None
+
+
+class LoginRequest(SQLModel):
+    """What we need to login"""
+    email: str
+    password: str
+    remember_me: bool = False
+
+
+class GoogleUserInfo(SQLModel):
+    """Info we get back from Google OAuth"""
     id: str
     email: str
     name: str
-    google_id: Optional[str] = None
-    password_hash: Optional[str] = None
     picture: Optional[str] = None
+    verified_email: bool
+
+
+class RoleSelectionRequest(SQLModel):
+    """To select role after Google login"""
+    role: UserRole
+
+
+class UserResponse(SQLModel):
+    """What we send back about a user"""
+    id: str
+    email: str
+    name: str
+    picture: Optional[str] = None
+    google_id: Optional[str] = None
     role: Optional[UserRole] = None
-    is_active: bool = True
-    created_at: datetime = None
-    updated_at: datetime = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
-    def __post_init__(self):
-        if self.created_at is None:
-            self.created_at = datetime.utcnow()
-        if self.updated_at is None:
-            self.updated_at = datetime.utcnow()
 
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization"""
-        data = asdict(self)
-        # Convert datetime to ISO format
-        data["created_at"] = self.created_at.isoformat() if self.created_at else None
-        data["updated_at"] = self.updated_at.isoformat() if self.updated_at else None
-        # Convert enum to string
-        data["role"] = self.role.value if self.role else None
-        return data
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "User":
-        """Create User instance from dictionary"""
-        # Convert ISO format to datetime
-        if data.get("created_at"):
-            data["created_at"] = datetime.fromisoformat(data["created_at"])
-        if data.get("updated_at"):
-            data["updated_at"] = datetime.fromisoformat(data["updated_at"])
-        # Convert string to enum
-        if data.get("role"):
-            data["role"] = UserRole(data["role"])
-        return cls(**data)
+class TokenResponse(SQLModel):
+    """Response after successful login/signup"""
+    access_token: str
+    token_type: str
+    user: UserResponse

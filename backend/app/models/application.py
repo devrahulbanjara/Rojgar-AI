@@ -1,9 +1,16 @@
+"""
+Application model - Simple, easy to understand
+Everything related to job applications in one place
+"""
+
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+from sqlmodel import Field, SQLModel
 
 
 class ApplicationStage(str, Enum):
+    """Where the application is in the process"""
     APPLIED = "applied"
     SCREENING = "screening"
     INTERVIEWING = "interviewing"
@@ -12,6 +19,7 @@ class ApplicationStage(str, Enum):
 
 
 class ApplicationStatus(str, Enum):
+    """Current status of the application"""
     PENDING = "pending"
     UNDER_REVIEW = "under_review"
     INTERVIEW_SCHEDULED = "interview_scheduled"
@@ -20,72 +28,50 @@ class ApplicationStatus(str, Enum):
     REJECTED = "rejected"
 
 
-class Application:
-    def __init__(
-        self,
-        id: int,
-        job_title: str,
-        company_name: str,
-        user_id: str,
-        applied_date: datetime,
-        stage: ApplicationStage = ApplicationStage.APPLIED,
-        status: ApplicationStatus = ApplicationStatus.PENDING,
-        description: Optional[str] = None,
-        updated_at: Optional[datetime] = None,
-    ):
-        self.id = id
-        self.job_title = job_title
-        self.company_name = company_name
-        self.user_id = user_id
-        self.applied_date = applied_date
-        self.stage = stage
-        self.status = status
-        self.description = description
-        self.updated_at = updated_at or applied_date
+class Application(SQLModel, table=True):
+    """
+    Application table in database
+    Tracks job applications made by candidates
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)
+    
+    # Job info (stored as text, not linked to actual job)
+    job_title: str
+    company_name: str
+    description: Optional[str] = None
+    
+    # Status tracking
+    applied_date: datetime = Field(default_factory=datetime.utcnow)
+    stage: ApplicationStage = Field(default=ApplicationStage.APPLIED, index=True)
+    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, index=True)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    @classmethod
-    def from_dict(cls, data: dict):
-        # Parse applied_date - handle both date and datetime formats
-        applied_date_str = data["applied_date"]
-        if "T" in applied_date_str:
-            applied_date = datetime.fromisoformat(applied_date_str)
-        else:
-            applied_date = datetime.fromisoformat(applied_date_str + "T00:00:00")
-        
-        # Parse updated_at - handle both date and datetime formats
-        updated_at = None
-        if "updated_at" in data:
-            updated_at_str = data["updated_at"]
-            # Remove 'Z' suffix if present
-            if updated_at_str.endswith('Z'):
-                updated_at_str = updated_at_str[:-1]
-            
-            if "T" in updated_at_str:
-                updated_at = datetime.fromisoformat(updated_at_str)
-            else:
-                updated_at = datetime.fromisoformat(updated_at_str + "T00:00:00")
-        
-        return cls(
-            id=data["id"],
-            job_title=data["job_title"],
-            company_name=data["company_name"],
-            user_id=data["user_id"],
-            applied_date=applied_date,
-            stage=ApplicationStage(data["stage"]),
-            status=ApplicationStatus(data["status"]),
-            description=data.get("description"),
-            updated_at=updated_at,
-        )
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "job_title": self.job_title,
-            "company_name": self.company_name,
-            "user_id": self.user_id,
-            "applied_date": self.applied_date.isoformat(),
-            "stage": self.stage.value,
-            "status": self.status.value,
-            "description": self.description,
-            "updated_at": self.updated_at.isoformat(),
-        }
+# ============= Request/Response Schemas =============
+
+class CreateApplicationRequest(SQLModel):
+    """What we need to create a new application"""
+    job_title: str
+    company_name: str
+    description: Optional[str] = None
+
+
+class UpdateApplicationRequest(SQLModel):
+    """What can be updated in an application"""
+    stage: Optional[ApplicationStage] = None
+    status: Optional[ApplicationStatus] = None
+    description: Optional[str] = None
+
+
+class ApplicationResponse(SQLModel):
+    """What we send back about an application"""
+    id: int
+    user_id: str
+    job_title: str
+    company_name: str
+    description: Optional[str] = None
+    applied_date: datetime
+    stage: ApplicationStage
+    status: ApplicationStatus
+    updated_at: datetime

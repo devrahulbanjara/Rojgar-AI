@@ -1,23 +1,24 @@
 """
-User service for user-related operations
+User service - Business logic for user operations
 """
 
 from typing import Optional
-from fastapi import HTTPException, status
-from app.models.user import User
-from app.schemas.user import UserResponse
-from app.repositories.user_repo import user_repo
+from sqlmodel import Session
+
+from app.models.user import User, UserResponse
 
 
 class UserService:
-    """Service for user operations"""
-
-    def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
+    """Service for handling user-related business logic"""
+    
+    @staticmethod
+    def get_user_by_id(user_id: str, db: Session) -> Optional[User]:
         """Get user by ID"""
-        user = user_repo.get_by_id(user_id)
-        if not user:
-            return None
-
+        return db.get(User, user_id)
+    
+    @staticmethod
+    def to_user_response(user: User) -> UserResponse:
+        """Convert User model to UserResponse"""
         return UserResponse(
             id=user.id,
             email=user.email,
@@ -30,15 +31,3 @@ class UserService:
             updated_at=user.updated_at,
         )
 
-    def get_current_user(self, user_id: str) -> UserResponse:
-        """Get current authenticated user"""
-        user = self.get_user_by_id(user_id)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
-        return user
-
-
-# Global service instance
-user_service = UserService()

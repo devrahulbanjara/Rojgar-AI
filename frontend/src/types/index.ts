@@ -121,7 +121,9 @@ export interface ApiResponse<T = any> {
 export interface DashboardStats {
   totalApplications?: number;
   activeJobs?: number;
+  activeApplications?: number;
   interviewsScheduled?: number;
+  offersReceived?: number;
   responseRate?: number;
 }
 

@@ -181,6 +181,8 @@ export const endpoints = {
     delete: (id: string) => `/applications/${id}`,
     byJob: (jobId: string) => `/applications/job/${jobId}`,
     byCandidate: (candidateId: string) => `/applications/candidate/${candidateId}`,
+    trackingBoard: '/applications/tracking-board',
+    stats: '/applications/stats',
   },
 } as const;
 
@@ -231,6 +233,8 @@ export const api = {
     delete: (id: string) => apiClient.delete(endpoints.applications.delete(id)),
     getByJob: (jobId: string) => apiClient.get(endpoints.applications.byJob(jobId)),
     getByCandidate: (candidateId: string) => apiClient.get(endpoints.applications.byCandidate(candidateId)),
+    getTrackingBoard: () => apiClient.get(endpoints.applications.trackingBoard),
+    getStats: () => apiClient.get(endpoints.applications.stats),
   },
 };
 

@@ -106,7 +106,7 @@ export const JobCard = memo<JobCardProps>(({
           <div className="flex items-center gap-1">
             <DollarSign className="w-4 h-4" />
             <span className="font-medium">
-              {jobUtils.formatSalaryRange(job.salary_range)}
+              {jobUtils.formatJobSalary(job)}
             </span>
           </div>
           <div className="flex items-center gap-1">
