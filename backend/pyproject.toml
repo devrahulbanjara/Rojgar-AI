@@ -11,4 +11,5 @@ dependencies = [
     "python-jose>=3.5.0",
     "sqlmodel>=0.0.27",
     "starlette>=0.48.0",
+    "passlib[bcrypt]>=1.7.4",
 ]
