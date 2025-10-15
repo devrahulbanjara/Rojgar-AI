@@ -5,7 +5,7 @@ Simple database queries for job listings
 
 from typing import List
 from fastapi import APIRouter, HTTPException, status, Query, Depends
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.job import (
