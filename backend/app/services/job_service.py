@@ -3,8 +3,8 @@ Job service - Business logic for job operations
 """
 
 from typing import List, Optional, Dict
-from sqlmodel import Session, select, func, or_, and_, col
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import select, func, or_, and_
 
 from app.models.job import (
     Job,
@@ -21,55 +21,12 @@ class JobService:
     @staticmethod
     def to_job_response(job: Job) -> JobResponse:
         """Convert Job model to JobResponse"""
-        response = JobResponse(
-            id=job.id,
-            title=job.title,
-            department=job.department,
-            level=job.level,
-            description=job.description,
-            location=job.location,
-            location_type=job.location_type,
-            is_remote=job.is_remote,
-            employment_type=job.employment_type,
-            salary_min=job.salary_min,
-            salary_max=job.salary_max,
-            salary_currency=job.salary_currency,
-            requirements=job.requirements,
-            skills=job.skills,
-            benefits=job.benefits,
-            posted_date=job.posted_date,
-            application_deadline=job.application_deadline,
-            status=job.status,
-            is_featured=job.is_featured,
-            applicant_count=job.applicant_count,
-            views_count=job.views_count,
-            company_id=job.company_id,
-            created_by=job.created_by,
-            created_at=job.created_at,
-            updated_at=job.updated_at,
-        )
-        
-        # Add company info if loaded
-        if job.company:
-            response.company = JobService.to_company_response(job.company)
-        
-        return response
+        return JobResponse.model_validate(job)
     
     @staticmethod
     def to_company_response(company: Company) -> CompanyResponse:
         """Convert Company model to CompanyResponse"""
-        return CompanyResponse(
-            id=company.id,
-            name=company.name,
-            logo=company.logo,
-            website=company.website,
-            description=company.description,
-            location=company.location,
-            size=company.size,
-            industry=company.industry,
-            brand_color=company.brand_color,
-            founded_year=company.founded_year,
-        )
+        return CompanyResponse.model_validate(company)
     
     @staticmethod
     def search_jobs(
@@ -92,7 +49,7 @@ class JobService:
     ) -> Dict:
         """Search and filter jobs with pagination"""
         # Start with active jobs only
-        query = select(Job).where(Job.status == JobStatus.ACTIVE)
+        query = select(Job).where(Job.status == JobStatus.ACTIVE.value)
         
         # Add company relationship
         query = query.options(selectinload(Job.company))
@@ -102,17 +59,17 @@ class JobService:
             search_term = f"%{search.lower()}%"
             query = query.where(
                 or_(
-                    col(Job.title).ilike(search_term),
-                    col(Job.description).ilike(search_term),
-                    col(Job.location).ilike(search_term),
+                    Job.title.ilike(search_term),
+                    Job.description.ilike(search_term),
+                    Job.location.ilike(search_term),
                 )
             )
         
         # Apply filters
         if location:
-            query = query.where(col(Job.location).ilike(f"%{location}%"))
+            query = query.where(Job.location.ilike(f"%{location}%"))
         if department:
-            query = query.where(col(Job.department).ilike(f"%{department}%"))
+            query = query.where(Job.department.ilike(f"%{department}%"))
         if level:
             query = query.where(Job.level == level)
         if location_type:
@@ -132,7 +89,7 @@ class JobService:
         
         # Get total count
         count_query = select(func.count()).select_from(query.subquery())
-        total = db.exec(count_query).one()
+        total = db.execute(count_query).scalar_one()
         
         # Apply sorting
         sort_column = Job.posted_date
@@ -142,16 +99,16 @@ class JobService:
             sort_column = Job.salary_min
         
         if sort_order == "desc":
-            query = query.order_by(col(sort_column).desc())
+            query = query.order_by(sort_column.desc())
         else:
-            query = query.order_by(col(sort_column).asc())
+            query = query.order_by(sort_column.asc())
         
         # Apply pagination
         offset = (page - 1) * limit
         query = query.offset(offset).limit(limit)
         
         # Execute
-        jobs = db.exec(query).all()
+        jobs = db.execute(query).scalars().all()
         
         # Calculate pagination info
         total_pages = (total + limit - 1) // limit
@@ -171,7 +128,7 @@ class JobService:
     def get_job_by_id(job_id: int, db: Session, increment_view: bool = False) -> Optional[Job]:
         """Get a job by ID with company info"""
         query = select(Job).where(Job.id == job_id).options(selectinload(Job.company))
-        job = db.exec(query).first()
+        job = db.execute(query).scalar_one_or_none()
         
         if job and increment_view:
             job.views_count += 1
@@ -186,50 +143,50 @@ class JobService:
         """Get featured jobs"""
         query = (
             select(Job)
-            .where(and_(Job.is_featured == True, Job.status == JobStatus.ACTIVE))
+            .where(and_(Job.is_featured == True, Job.status == JobStatus.ACTIVE.value))
             .options(selectinload(Job.company))
-            .order_by(col(Job.posted_date).desc())
+            .order_by(Job.posted_date.desc())
             .limit(limit)
         )
         
-        return db.exec(query).all()
+        return db.execute(query).scalars().all()
     
     @staticmethod
     def get_recent_jobs(db: Session, limit: int = 10) -> List[Job]:
         """Get recently posted jobs"""
         query = (
             select(Job)
-            .where(Job.status == JobStatus.ACTIVE)
+            .where(Job.status == JobStatus.ACTIVE.value)
             .options(selectinload(Job.company))
-            .order_by(col(Job.posted_date).desc())
+            .order_by(Job.posted_date.desc())
             .limit(limit)
         )
         
-        return db.exec(query).all()
+        return db.execute(query).scalars().all()
     
     @staticmethod
     def get_remote_jobs(db: Session, limit: int = 20) -> List[Job]:
         """Get remote jobs"""
         query = (
             select(Job)
-            .where(and_(Job.is_remote == True, Job.status == JobStatus.ACTIVE))
+            .where(and_(Job.is_remote == True, Job.status == JobStatus.ACTIVE.value))
             .options(selectinload(Job.company))
-            .order_by(col(Job.posted_date).desc())
+            .order_by(Job.posted_date.desc())
             .limit(limit)
         )
         
-        return db.exec(query).all()
+        return db.execute(query).scalars().all()
     
     @staticmethod
     def get_jobs_by_skill(db: Session, skill: str, limit: int = 20) -> List[Job]:
         """Get jobs that require a specific skill"""
         query = (
             select(Job)
-            .where(Job.status == JobStatus.ACTIVE)
+            .where(Job.status == JobStatus.ACTIVE.value)
             .options(selectinload(Job.company))
         )
         
-        all_jobs = db.exec(query).all()
+        all_jobs = db.execute(query).scalars().all()
         
         # Filter by skill (case-insensitive)
         skill_lower = skill.lower()
@@ -248,15 +205,15 @@ class JobService:
         query = (
             select(Job)
             .where(and_(
-                col(Job.location).ilike(f"%{location}%"),
-                Job.status == JobStatus.ACTIVE
+                Job.location.ilike(f"%{location}%"),
+                Job.status == JobStatus.ACTIVE.value
             ))
             .options(selectinload(Job.company))
-            .order_by(col(Job.posted_date).desc())
+            .order_by(Job.posted_date.desc())
             .limit(limit)
         )
         
-        return db.exec(query).all()
+        return db.execute(query).scalars().all()
     
     @staticmethod
     def get_high_salary_jobs(db: Session, min_salary: int, limit: int = 20) -> List[Job]:
@@ -265,19 +222,19 @@ class JobService:
             select(Job)
             .where(and_(
                 Job.salary_min >= min_salary,
-                Job.status == JobStatus.ACTIVE
+                Job.status == JobStatus.ACTIVE.value
             ))
             .options(selectinload(Job.company))
-            .order_by(col(Job.salary_min).desc())
+            .order_by(Job.salary_min.desc())
             .limit(limit)
         )
         
-        return db.exec(query).all()
+        return db.execute(query).scalars().all()
     
     @staticmethod
     def increment_job_view(job_id: int, db: Session) -> bool:
         """Increment view count for a job"""
-        job = db.get(Job, job_id)
+        job = db.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job:
             return False
         
@@ -289,7 +246,7 @@ class JobService:
     @staticmethod
     def increment_job_application(job_id: int, db: Session) -> bool:
         """Increment application count for a job"""
-        job = db.get(Job, job_id)
+        job = db.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job:
             return False
         
@@ -303,12 +260,12 @@ class JobService:
     @staticmethod
     def get_all_companies(db: Session) -> List[Company]:
         """Get all companies"""
-        return db.exec(select(Company)).all()
+        return db.execute(select(Company)).scalars().all()
     
     @staticmethod
     def get_company_by_id(company_id: int, db: Session) -> Optional[Company]:
         """Get a specific company"""
-        return db.get(Company, company_id)
+        return db.execute(select(Company).where(Company.id == company_id)).scalar_one_or_none()
     
     @staticmethod
     def get_company_jobs(company_id: int, db: Session) -> List[Job]:
@@ -319,18 +276,20 @@ class JobService:
             .options(selectinload(Job.company))
         )
         
-        return db.exec(query).all()
+        return db.execute(query).scalars().all()
     
     @staticmethod
     def get_company_info_with_stats(company_id: int, db: Session) -> Optional[Dict]:
         """Get company with jobs and statistics"""
-        company = db.get(Company, company_id)
+        company = db.execute(
+            select(Company).where(Company.id == company_id)
+        ).scalar_one_or_none()
         if not company:
             return None
         
         # Get all jobs for this company
-        jobs = db.exec(select(Job).where(Job.company_id == company_id)).all()
-        active_jobs = [j for j in jobs if j.status == JobStatus.ACTIVE]
+        jobs = db.execute(select(Job).where(Job.company_id == company_id)).scalars().all()
+        active_jobs = [j for j in jobs if j.status == JobStatus.ACTIVE.value]
         
         # Calculate stats
         total_applications = sum(j.applicant_count for j in jobs)
@@ -360,23 +319,23 @@ class JobService:
     def get_job_statistics(db: Session) -> Dict:
         """Get overall job statistics"""
         # Get counts
-        total_jobs = db.exec(select(func.count(Job.id))).one()
-        active_jobs = db.exec(
-            select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE)
-        ).one()
-        featured_jobs = db.exec(
+        total_jobs = db.execute(select(func.count(Job.id))).scalar_one()
+        active_jobs = db.execute(
+            select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
+        ).scalar_one()
+        featured_jobs = db.execute(
             select(func.count(Job.id)).where(Job.is_featured == True)
-        ).one()
-        remote_jobs = db.exec(
+        ).scalar_one()
+        remote_jobs = db.execute(
             select(func.count(Job.id)).where(Job.is_remote == True)
-        ).one()
+        ).scalar_one()
         
         # Average salary
-        avg_salary_result = db.exec(select(func.avg(Job.salary_min))).one()
+        avg_salary_result = db.execute(select(func.avg(Job.salary_min))).scalar_one()
         avg_salary = round(avg_salary_result, 2) if avg_salary_result else 0
         
         # Get all jobs for analysis
-        all_jobs = db.exec(select(Job)).all()
+        all_jobs = db.execute(select(Job)).scalars().all()
         
         # Top skills
         all_skills = []
@@ -397,7 +356,7 @@ class JobService:
         top_locations = [loc for loc, count in top_locations]
         
         # Top companies
-        companies = db.exec(select(Company)).all()
+        companies = db.execute(select(Company)).scalars().all()
         company_map = {c.id: c.name for c in companies}
         company_counts = {}
         for job in all_jobs:
@@ -415,4 +374,3 @@ class JobService:
             "top_locations": top_locations,
             "top_companies": top_companies,
         }
-
