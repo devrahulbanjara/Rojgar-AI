@@ -5,7 +5,7 @@ Simple and easy to understand
 
 from fastapi import APIRouter, HTTPException, status, Response, Depends
 from fastapi.responses import RedirectResponse
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db

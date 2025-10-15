@@ -4,11 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.17.0",
     "fastapi[standard]>=0.118.2",
     "httpx>=0.28.1",
     "pydantic>=2.11.9",
     "pydantic-settings>=2.10.1",
     "python-jose>=3.5.0",
-    "sqlmodel>=0.0.27",
+    "sqlalchemy>=2.0.44",
     "starlette>=0.48.0",
 ]

@@ -5,7 +5,8 @@ Authentication service - Business logic for authentication operations
 import uuid
 import httpx
 from typing import Optional
-from sqlmodel import Session, select
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.security import hash_password, verify_password, create_token
@@ -18,27 +19,17 @@ class AuthService:
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
         """Convert a User model to UserResponse"""
-        return UserResponse(
-            id=user.id,
-            email=user.email,
-            name=user.name,
-            picture=user.picture,
-            google_id=user.google_id,
-            role=user.role,
-            is_active=user.is_active,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
+        return UserResponse.model_validate(user)
     
     @staticmethod
     def get_user_by_email(email: str, db: Session) -> Optional[User]:
         """Find user by email"""
-        return db.exec(select(User).where(User.email == email)).first()
+        return db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     
     @staticmethod
     def get_user_by_google_id(google_id: str, db: Session) -> Optional[User]:
         """Find user by Google ID"""
-        return db.exec(select(User).where(User.google_id == google_id)).first()
+        return db.execute(select(User).where(User.google_id == google_id)).scalar_one_or_none()
     
     @staticmethod
     def create_user(
@@ -57,7 +48,7 @@ class AuthService:
             name=name,
             picture=picture,
             google_id=google_id,
-            role=role,
+            role=role.value if role else None,
         )
         
         if password:
@@ -170,7 +161,7 @@ class AuthService:
     @staticmethod
     def update_user_role(user: User, role: UserRole, db: Session) -> User:
         """Update user role"""
-        user.role = role
+        user.role = role.value
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -180,7 +171,6 @@ class AuthService:
     def get_redirect_url_for_user(user: User) -> str:
         """Get appropriate redirect URL based on user role"""
         if user.role:
-            return f"{settings.FRONTEND_URL}/dashboard/{user.role.value}"
+            return f"{settings.FRONTEND_URL}/dashboard/{user.role}"
         else:
             return f"{settings.FRONTEND_URL}/select-role"
-

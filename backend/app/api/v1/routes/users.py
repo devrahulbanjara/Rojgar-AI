@@ -4,7 +4,7 @@ Simple and easy to understand
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user_id
