@@ -4,7 +4,8 @@ Application service - Business logic for application operations
 
 from typing import List, Dict, Optional
 from datetime import datetime
-from sqlmodel import Session, select
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.models.application import (
     Application,
@@ -20,24 +21,14 @@ class ApplicationService:
     @staticmethod
     def to_response(app: Application) -> ApplicationResponse:
         """Convert Application model to ApplicationResponse"""
-        return ApplicationResponse(
-            id=app.id,
-            user_id=app.user_id,
-            job_title=app.job_title,
-            company_name=app.company_name,
-            description=app.description,
-            applied_date=app.applied_date,
-            stage=app.stage,
-            status=app.status,
-            updated_at=app.updated_at,
-        )
+        return ApplicationResponse.model_validate(app)
     
     @staticmethod
     def get_user_applications(user_id: str, db: Session) -> List[Application]:
         """Get all applications for a user"""
-        return db.exec(
+        return db.execute(
             select(Application).where(Application.user_id == user_id)
-        ).all()
+        ).scalars().all()
     
     @staticmethod
     def get_tracking_board(user_id: str, db: Session) -> Dict[str, List[dict]]:
@@ -61,18 +52,18 @@ class ApplicationService:
                 "company_name": app.company_name,
                 "user_id": app.user_id,
                 "applied_date": app.applied_date.isoformat(),
-                "stage": app.stage.value,
-                "status": app.status.value,
+                "stage": app.stage,
+                "status": app.status,
                 "description": app.description,
                 "updated_at": app.updated_at.isoformat(),
             }
             
             # Put in right column based on stage
-            if app.stage in [ApplicationStage.APPLIED, ApplicationStage.SCREENING]:
+            if app.stage in [ApplicationStage.APPLIED.value, ApplicationStage.SCREENING.value]:
                 board["applied"].append(app_dict)
-            elif app.stage == ApplicationStage.INTERVIEWING:
+            elif app.stage == ApplicationStage.INTERVIEWING.value:
                 board["interviewing"].append(app_dict)
-            elif app.stage in [ApplicationStage.OFFER, ApplicationStage.DECISION]:
+            elif app.stage in [ApplicationStage.OFFER.value, ApplicationStage.DECISION.value]:
                 board["outcome"].append(app_dict)
         
         return board
@@ -86,21 +77,21 @@ class ApplicationService:
         total = len(applications)
         active = sum(
             1 for app in applications
-            if app.status not in [ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED]
+            if app.status not in [ApplicationStatus.ACCEPTED.value, ApplicationStatus.REJECTED.value]
         )
         interviews = sum(
             1 for app in applications
-            if app.status == ApplicationStatus.INTERVIEW_SCHEDULED
+            if app.status == ApplicationStatus.INTERVIEW_SCHEDULED.value
         )
         offers = sum(
             1 for app in applications
-            if app.status == ApplicationStatus.OFFER_EXTENDED
+            if app.status == ApplicationStatus.OFFER_EXTENDED.value
         )
         
         # Response rate (applications that got a response)
         responded = sum(
             1 for app in applications
-            if app.status != ApplicationStatus.PENDING
+            if app.status != ApplicationStatus.PENDING.value
         )
         response_rate = int((responded / total) * 100) if total > 0 else 0
         
@@ -126,8 +117,8 @@ class ApplicationService:
             job_title=job_title,
             company_name=company_name,
             description=description,
-            stage=ApplicationStage.APPLIED,
-            status=ApplicationStatus.PENDING,
+            stage=ApplicationStage.APPLIED.value,
+            status=ApplicationStatus.PENDING.value,
         )
         
         db.add(new_app)
@@ -139,7 +130,9 @@ class ApplicationService:
     @staticmethod
     def get_application_by_id(application_id: int, db: Session) -> Optional[Application]:
         """Get a specific application"""
-        return db.get(Application, application_id)
+        return db.execute(
+            select(Application).where(Application.id == application_id)
+        ).scalar_one_or_none()
     
     @staticmethod
     def update_application(
@@ -151,9 +144,9 @@ class ApplicationService:
     ) -> Application:
         """Update an application"""
         if stage is not None:
-            application.stage = stage
+            application.stage = stage.value
         if status is not None:
-            application.status = status
+            application.status = status.value
         if description is not None:
             application.description = description
         
@@ -175,4 +168,3 @@ class ApplicationService:
     def verify_ownership(application: Application, user_id: str) -> bool:
         """Check if user owns the application"""
         return application.user_id == user_id
-

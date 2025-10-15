@@ -1,9 +1,11 @@
 """
-Database setup - Simple SQLite database with SQLModel
+Database setup - Simple SQLite database with SQLAlchemy
 """
 
-from sqlmodel import SQLModel, Session, create_engine
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from app.core.config import settings
+from app.models import Base
 
 # Create the database engine
 # This connects to our SQLite database
@@ -19,7 +21,7 @@ def init_db():
     Create all database tables
     Call this once when the app starts
     """
-    SQLModel.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
 
 
 def get_db():
