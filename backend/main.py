@@ -4,12 +4,16 @@ Simple FastAPI app for job recruitment platform
 """
 
 from contextlib import asynccontextmanager
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.v1.routes import auth, users, applications, jobs
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -18,15 +22,15 @@ async def lifespan(app: FastAPI):
     Lifespan manager - runs when app starts and shuts down
     """
     # Startup: Create database tables
-    print("🚀 Starting ConvexHire API...")
-    print("📊 Initializing database...")
+    logger.info("Starting ConvexHire API...")
+    logger.info("Initializing database...")
     init_db()
-    print("✅ Database ready!")
+    logger.info("Database ready!")
     
     yield
     
     # Shutdown
-    print("👋 Shutting down ConvexHire API...")
+    logger.info("Shutting down ConvexHire API...")
 
 
 # Create the FastAPI application
