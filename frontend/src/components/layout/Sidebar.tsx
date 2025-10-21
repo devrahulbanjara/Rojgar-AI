@@ -11,7 +11,8 @@ import {
   FileText,
   Calendar,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  User
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
     { title: 'Dashboard', path: '/dashboard/candidate', icon: LayoutDashboard },
     { title: 'Jobs', path: '/candidate/browse-jobs', icon: Search },
     { title: 'Resumes', path: '/candidate/resumes', icon: FileText },
+    { title: 'Profile', path: '/candidate/profile', icon: User },
   ];
 
   const items = role === 'recruiter' ? recruiterItems : candidateItems;

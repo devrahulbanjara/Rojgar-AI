@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { useJobs, useCreateApplication } from '../../../hooks/queries/useJobs';
+import { useJobSearch, useCreateApplication } from '../../../hooks/queries/useJobs';
 import { JobSearchBar, JobFilters, JobList, JobDetailView } from '../../../components/jobs';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
@@ -34,8 +34,8 @@ export default function Jobs() {
   const [sortBy, setSortBy] = useState<'postedDate' | 'salary' | 'title' | 'company'>('postedDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Use real API calls
-  const { data: jobsData, isLoading, error } = useJobs({
+  // Use real API calls with search endpoint
+  const { data: jobsData, isLoading, error } = useJobSearch({
     page: 1,
     limit: 20,
     ...filters,
@@ -68,7 +68,7 @@ export default function Jobs() {
   const handleJobApply = useCallback(async (job: Job) => {
     try {
       await createApplicationMutation.mutateAsync({
-        jobId: job.id.toString(),
+        jobId: job.job_id.toString(),
       });
       // Show success message or redirect
     } catch (error) {

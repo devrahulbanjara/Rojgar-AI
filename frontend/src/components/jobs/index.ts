@@ -9,3 +9,4 @@ export { JobList } from './JobList';
 export { JobDetailsModal } from './JobDetailsModal';
 export { JobSearchBar } from './JobSearchBar';
 export { JobDetailView } from './JobDetailView';
+export { RecommendedJobs } from './RecommendedJobs';

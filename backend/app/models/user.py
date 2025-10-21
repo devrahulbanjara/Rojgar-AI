@@ -3,11 +3,11 @@ User model - Simple, easy to understand
 Everything related to users in one place
 """
 
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 from sqlalchemy import String, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.models import Base
@@ -41,6 +41,10 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    skills: Mapped[List["Skill"]] = relationship("Skill", back_populates="user")
+    profile: Mapped[Optional["Profile"]] = relationship("Profile", back_populates="user", uselist=False)
 
 
 # ============= Request/Response Schemas =============

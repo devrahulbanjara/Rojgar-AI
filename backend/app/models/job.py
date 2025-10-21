@@ -74,7 +74,7 @@ class Job(Base):
     """
     __tablename__ = "job"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    job_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     
     # Basic job info
     title: Mapped[str] = mapped_column(String)
@@ -142,7 +142,7 @@ class JobResponse(BaseModel):
     """What we send back about a job"""
     model_config = ConfigDict(from_attributes=True)
     
-    id: int
+    job_id: int
     title: str
     department: str
     level: JobLevel

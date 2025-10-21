@@ -86,6 +86,7 @@ export interface UseAuthReturn {
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
   logout: () => void;
+  refetchUser?: () => void;
   // Additional error states for granular control
   loginError?: any;
   signupError?: any;
@@ -136,3 +137,7 @@ export interface DashboardData {
 // Re-export job and application types
 export * from './job';
 export * from './application';
+
+// Re-export profile and resume types
+export * from './profile';
+export * from './resume';
