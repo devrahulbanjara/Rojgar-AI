@@ -12,26 +12,18 @@ import type { ApplicationTrackingBoard } from '../types/application';
 
 const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
   try {
-    const response = await apiClient.get<ApplicationTrackingBoard>('/applications/tracking-board');
+    const response = await apiClient.get<ApplicationTrackingBoard>('/api/v1/applications/tracking-board');
     
-    // Handle both response formats: direct data or wrapped in ApiResponse
-    // Backend returns data directly as { applied: [], interviewing: [], outcome: [] }
+    // Backend now returns data directly as { applied: [], interviewing: [], outcome: [] }
     if (response && typeof response === 'object') {
-      // If it's already the tracking board structure
       if ('applied' in response && 'interviewing' in response && 'outcome' in response) {
-        return response as any as ApplicationTrackingBoard;
-      }
-      // If it's wrapped in an ApiResponse structure
-      if ('data' in response && response.data) {
-        return response.data as ApplicationTrackingBoard;
+        return response as ApplicationTrackingBoard;
       }
     }
     
     // Fallback to empty board
-    console.warn('Unexpected response format from tracking board API:', response);
     return { applied: [], interviewing: [], outcome: [] };
   } catch (error) {
-    console.error('Error fetching application tracking board:', error);
     throw error;
   }
 };

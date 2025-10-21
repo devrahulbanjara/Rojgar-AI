@@ -3,6 +3,7 @@
 import React from 'react';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
+import { MainContentContainer } from '../common/MainContentContainer';
 import { useAuth } from '../../hooks/useAuth';
 
 interface AppShellProps {
@@ -31,9 +32,9 @@ export function AppShell({ children }: AppShellProps) {
             sidebarOpen ? 'ml-[260px]' : 'ml-0'
           } max-lg:ml-0`}
         >
-          <div className="container mx-auto px-12 py-12 max-lg:px-6 max-lg:py-6 max-w-7xl">
+          <MainContentContainer>
             {children}
-          </div>
+          </MainContentContainer>
         </main>
       </div>
     </div>

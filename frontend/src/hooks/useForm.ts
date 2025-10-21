@@ -238,7 +238,7 @@ export function useForm<T extends Record<string, any>>(
             await submitHandler(values);
           }
         } catch (error) {
-          console.error('Form submission error:', error);
+          // Handle form submission error
         } finally {
           setIsSubmitting(false);
         }
