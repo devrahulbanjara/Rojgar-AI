@@ -12,6 +12,8 @@ export { EmptyState } from './EmptyState';
 export { PageTransition } from './PageTransition';
 export { SkeletonLoader, SkeletonCard, SkeletonJobCard, SkeletonStats } from './SkeletonLoader';
 export { AnimatedContainer, StaggerContainer } from './AnimatedContainer';
+export { MainContentContainer } from './MainContentContainer';
+export { PageHeader } from './PageHeader';
 
 // Re-export types for better developer experience
 export type { StatCardProps } from './StatCard';

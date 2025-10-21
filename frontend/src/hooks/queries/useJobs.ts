@@ -42,11 +42,7 @@ export function useJobs(params?: JobSearchParams) {
   return useQuery({
     queryKey: jobQueryKeys.list(params),
     queryFn: async () => {
-      const response = await jobService.getJobs(params);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch jobs');
-      }
-      return response.data;
+      return await jobService.getJobs(params);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -57,11 +53,7 @@ export function useRecommendedJobs(limit: number = 5) {
   return useQuery({
     queryKey: jobQueryKeys.recommendations(limit),
     queryFn: async () => {
-      const response = await jobService.getRecommendedJobs(limit);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch recommended jobs');
-      }
-      return response.data;
+      return await jobService.getRecommendedJobs(limit);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
@@ -72,11 +64,7 @@ export function useJobSearch(params?: JobSearchParams) {
   return useQuery({
     queryKey: jobQueryKeys.search(params),
     queryFn: async () => {
-      const response = await jobService.searchJobs(params);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to search jobs');
-      }
-      return response.data;
+      return await jobService.searchJobs(params);
     },
     staleTime: 2 * 60 * 1000, // 2 minutes (shorter for search results)
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -87,11 +75,7 @@ export function useJob(id: string) {
   return useQuery({
     queryKey: jobQueryKeys.detail(id),
     queryFn: async () => {
-      const response = await jobService.getJobById(id);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch job');
-      }
-      return response.data;
+      return await jobService.getJobById(id);
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
@@ -103,11 +87,7 @@ export function useFeaturedJobs(limit: number = 10) {
   return useQuery({
     queryKey: [...jobQueryKeys.featured(), limit],
     queryFn: async () => {
-      const response = await jobService.getFeaturedJobs(limit);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch featured jobs');
-      }
-      return response.data;
+      return await jobService.getFeaturedJobs(limit);
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
@@ -118,11 +98,7 @@ export function useJobsByCompany(companyId: string, params?: { page?: number; li
   return useQuery({
     queryKey: [...jobQueryKeys.byCompany(companyId), params],
     queryFn: async () => {
-      const response = await jobService.getJobsByCompany(companyId, params);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch company jobs');
-      }
-      return response.data;
+      return await jobService.getJobsByCompany(companyId, params);
     },
     enabled: !!companyId,
     staleTime: 5 * 60 * 1000,
@@ -136,11 +112,7 @@ export function useCreateJob() {
   
   return useMutation({
     mutationFn: async (data: CreateJobRequest) => {
-      const response = await jobService.createJob(data);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to create job');
-      }
-      return response.data;
+      return await jobService.createJob(data);
     },
     onSuccess: () => {
       // Invalidate and refetch job lists
@@ -155,11 +127,7 @@ export function useUpdateJob() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateJobRequest }) => {
-      const response = await jobService.updateJob(id, data);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to update job');
-      }
-      return response.data;
+      return await jobService.updateJob(id, data);
     },
     onSuccess: (data, variables) => {
       // Update the specific job in cache
@@ -176,11 +144,7 @@ export function useDeleteJob() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await jobService.deleteJob(id);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to delete job');
-      }
-      return response.data;
+      return await jobService.deleteJob(id);
     },
     onSuccess: (_, id) => {
       // Remove the job from cache
@@ -203,11 +167,7 @@ export function useApplications(params?: {
   return useQuery({
     queryKey: applicationQueryKeys.list(params),
     queryFn: async () => {
-      const response = await applicationService.getApplications(params);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch applications');
-      }
-      return response.data;
+      return await applicationService.getApplications(params);
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -218,11 +178,7 @@ export function useApplication(id: string) {
   return useQuery({
     queryKey: applicationQueryKeys.detail(id),
     queryFn: async () => {
-      const response = await applicationService.getApplicationById(id);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch application');
-      }
-      return response.data;
+      return await applicationService.getApplicationById(id);
     },
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
@@ -234,11 +190,7 @@ export function useApplicationsByJob(jobId: string, params?: { page?: number; li
   return useQuery({
     queryKey: [...applicationQueryKeys.byJob(jobId), params],
     queryFn: async () => {
-      const response = await applicationService.getApplicationsByJob(jobId, params);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch job applications');
-      }
-      return response.data;
+      return await applicationService.getApplicationsByJob(jobId, params);
     },
     enabled: !!jobId,
     staleTime: 2 * 60 * 1000,
@@ -250,11 +202,7 @@ export function useApplicationsByCandidate(candidateId: string, params?: { page?
   return useQuery({
     queryKey: [...applicationQueryKeys.byCandidate(candidateId), params],
     queryFn: async () => {
-      const response = await applicationService.getApplicationsByCandidate(candidateId, params);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch candidate applications');
-      }
-      return response.data;
+      return await applicationService.getApplicationsByCandidate(candidateId, params);
     },
     enabled: !!candidateId,
     staleTime: 2 * 60 * 1000,
@@ -268,11 +216,7 @@ export function useCreateApplication() {
   
   return useMutation({
     mutationFn: async (data: CreateApplicationRequest) => {
-      const response = await applicationService.createApplication(data);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to create application');
-      }
-      return response.data;
+      return await applicationService.createApplication(data);
     },
     onSuccess: (data) => {
       // Invalidate application lists
@@ -294,11 +238,7 @@ export function useUpdateApplication() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateApplicationRequest }) => {
-      const response = await applicationService.updateApplication(id, data);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to update application');
-      }
-      return response.data;
+      return await applicationService.updateApplication(id, data);
     },
     onSuccess: (data, variables) => {
       // Update the specific application in cache
@@ -320,11 +260,7 @@ export function useDeleteApplication() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await applicationService.deleteApplication(id);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to delete application');
-      }
-      return response.data;
+      return await applicationService.deleteApplication(id);
     },
     onSuccess: (_, id) => {
       // Remove the application from cache

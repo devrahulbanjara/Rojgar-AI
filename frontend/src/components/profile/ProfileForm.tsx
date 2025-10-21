@@ -26,7 +26,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     setMessage(null);
 
     try {
-      await apiClient.put('/users/profile', {
+      await apiClient.put('/api/v1/users/profile', {
         name: formData.name,
       });
       

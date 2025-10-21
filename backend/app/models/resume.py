@@ -8,15 +8,12 @@ from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import String, DateTime, ForeignKey, Text, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pydantic import BaseModel, ConfigDict
 
 from app.models import Base
 
 if TYPE_CHECKING:
     from app.models.profile import Profile, WorkExperience, EducationRecord, Certification, ProfileSkill
 
-# Import response models directly for use in type annotations
-from app.models.profile import WorkExperienceResponse, EducationRecordResponse, CertificationResponse, ProfileSkillResponse
 
 
 class Resume(Base):
@@ -42,6 +39,11 @@ class Resume(Base):
     
     # Customized professional summary (can override Profile default)
     custom_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Customized professional links (can override Profile defaults)
+    linkedin_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    github_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    portfolio_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -69,6 +71,15 @@ class ResumeExperience(Base):
     # Customized description for this resume
     custom_description: Mapped[str] = mapped_column(Text)
     
+    # Resume-specific overrides (don't affect original work experience)
+    job_title: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    company: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    end_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    is_current: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    master_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
     # Ordering within this resume
     display_order: Mapped[int] = mapped_column(Integer, default=0)
     
@@ -90,6 +101,17 @@ class ResumeEducation(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     resume_id: Mapped[str] = mapped_column(String, ForeignKey("resume.id"), index=True)
     education_record_id: Mapped[str] = mapped_column(String, ForeignKey("education_record.id"), index=True)
+    
+    # Resume-specific overrides (don't affect original education record)
+    school_university: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    degree: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    field_of_study: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    end_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    is_current: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    gpa: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    honors: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Ordering within this resume
     display_order: Mapped[int] = mapped_column(Integer, default=0)
@@ -113,6 +135,15 @@ class ResumeCertification(Base):
     resume_id: Mapped[str] = mapped_column(String, ForeignKey("resume.id"), index=True)
     certification_id: Mapped[str] = mapped_column(String, ForeignKey("certification.id"), index=True)
     
+    # Resume-specific overrides (don't affect original certification)
+    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    issuing_body: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    credential_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    credential_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    issue_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    expiration_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    does_not_expire: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    
     # Ordering within this resume
     display_order: Mapped[int] = mapped_column(Integer, default=0)
     
@@ -135,6 +166,11 @@ class ResumeSkill(Base):
     resume_id: Mapped[str] = mapped_column(String, ForeignKey("resume.id"), index=True)
     profile_skill_id: Mapped[str] = mapped_column(String, ForeignKey("profile_skill.id"), index=True)
     
+    # Resume-specific overrides (don't affect original profile skill)
+    skill_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    proficiency_level: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    years_of_experience: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    
     # Ordering within this resume
     display_order: Mapped[int] = mapped_column(Integer, default=0)
     
@@ -147,97 +183,3 @@ class ResumeSkill(Base):
     profile_skill: Mapped["ProfileSkill"] = relationship("ProfileSkill", back_populates="resume_skills")
 
 
-# ============= Request/Response Schemas =============
-
-class ResumeResponse(BaseModel):
-    """Complete resume response"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: str
-    profile_id: str
-    name: str
-    target_job_title: Optional[str] = None
-    contact_full_name: Optional[str] = None
-    contact_email: Optional[str] = None
-    contact_phone: Optional[str] = None
-    contact_location: Optional[str] = None
-    custom_summary: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
-    
-    # Nested data
-    experiences: List["ResumeExperienceResponse"] = []
-    educations: List["ResumeEducationResponse"] = []
-    certifications: List["ResumeCertificationResponse"] = []
-    skills: List["ResumeSkillResponse"] = []
-
-
-class ResumeExperienceResponse(BaseModel):
-    """Resume experience response"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: str
-    resume_id: str
-    work_experience_id: str
-    custom_description: str
-    display_order: int
-    created_at: datetime
-    updated_at: datetime
-    
-    # Include the original work experience data
-    work_experience: Optional[WorkExperienceResponse] = None
-
-
-class ResumeEducationResponse(BaseModel):
-    """Resume education response"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: str
-    resume_id: str
-    education_record_id: str
-    display_order: int
-    created_at: datetime
-    updated_at: datetime
-    
-    # Include the original education record data
-    education_record: Optional[EducationRecordResponse] = None
-
-
-class ResumeCertificationResponse(BaseModel):
-    """Resume certification response"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: str
-    resume_id: str
-    certification_id: str
-    display_order: int
-    created_at: datetime
-    updated_at: datetime
-    
-    # Include the original certification data
-    certification: Optional[CertificationResponse] = None
-
-
-class ResumeSkillResponse(BaseModel):
-    """Resume skill response"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: str
-    resume_id: str
-    profile_skill_id: str
-    display_order: int
-    created_at: datetime
-    updated_at: datetime
-    
-    # Include the original profile skill data
-    profile_skill: Optional[ProfileSkillResponse] = None
-
-
-# Update forward references - these will be rebuilt when all models are loaded
-def rebuild_models():
-    """Rebuild all models to resolve forward references"""
-    ResumeResponse.model_rebuild()
-    ResumeExperienceResponse.model_rebuild()
-    ResumeEducationResponse.model_rebuild()
-    ResumeCertificationResponse.model_rebuild()
-    ResumeSkillResponse.model_rebuild()

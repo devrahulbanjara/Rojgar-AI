@@ -35,7 +35,6 @@ export function GoogleOAuthButton({
       await authService.initiateGoogleLogin();
       onSuccess?.();
     } catch (error) {
-      console.error('Google login error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Google login failed';
       onError?.(errorMessage);
     } finally {

@@ -15,30 +15,28 @@ import type {
 export const skillService = {
   // Skills CRUD operations
   async getSkills(): Promise<SkillsListResponse> {
-    const response = await apiClient.get<SkillsListResponse>('/skills/');
-    return response.data || response as SkillsListResponse;
+    return apiClient.get<SkillsListResponse>('/skills/');
   },
 
   async createSkill(skillData: SkillCreateRequest): Promise<Skill> {
-    const response = await apiClient.post<Skill>('/skills/', skillData);
-    return response.data || response as Skill;
+    return apiClient.post<Skill>('/skills/', skillData);
   },
 
 
   async deleteSkill(skillId: string): Promise<void> {
-    await apiClient.delete(`/skills/${skillId}`);
+    return apiClient.delete(`/skills/${skillId}`);
   },
 
   async deleteAllSkills(): Promise<void> {
-    await apiClient.delete('/skills/');
+    return apiClient.delete('/skills/');
   },
 
   // Profile management
   async updateProfile(profileData: ProfileUpdateRequest): Promise<void> {
-    await apiClient.put('/users/profile', profileData);
+    return apiClient.put('/api/v1/users/profile', profileData);
   },
 
   async changePassword(passwordData: PasswordChangeRequest): Promise<void> {
-    await apiClient.put('/users/password', passwordData);
+    return apiClient.put('/api/v1/users/password', passwordData);
   }
 };

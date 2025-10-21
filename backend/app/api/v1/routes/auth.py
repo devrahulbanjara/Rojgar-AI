@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user_id
-from app.models.user import (
+from app.schemas.user import (
     SignupRequest,
     LoginRequest,
     RoleSelectionRequest,

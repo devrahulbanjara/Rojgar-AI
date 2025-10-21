@@ -23,13 +23,13 @@ interface TokenResponse {
 }
 
 class AuthService {
-  private baseUrl = `${API_CONFIG.baseUrl}/auth`;
+  private baseUrl = `${API_CONFIG.baseUrl}/api/v1/auth`;
 
   // Google OAuth Login
   async initiateGoogleLogin(): Promise<void> {
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', GOOGLE_CONFIG.clientId);
-    authUrl.searchParams.set('redirect_uri', `${API_CONFIG.baseUrl}/auth/google/callback`);
+    authUrl.searchParams.set('redirect_uri', `${API_CONFIG.baseUrl}/api/v1/auth/google/callback`);
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('scope', GOOGLE_CONFIG.scope);
     authUrl.searchParams.set('access_type', 'offline');
@@ -56,7 +56,6 @@ class AuthService {
 
       return await response.json();
     } catch (error) {
-      console.error('AuthService.selectRole error:', error);
       throw error;
     }
   }
@@ -64,7 +63,7 @@ class AuthService {
   // Get current user
   async getCurrentUser(): Promise<TokenResponse['user'] | null> {
     try {
-      const response = await fetch(`${API_CONFIG.baseUrl}/users/me`, {
+      const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/users/me`, {
         credentials: 'include', // Include cookies
       });
 
@@ -80,7 +79,6 @@ class AuthService {
 
       return await response.json();
     } catch (error) {
-      console.error('AuthService.getCurrentUser error:', error);
       return null;
     }
   }
@@ -111,7 +109,6 @@ class AuthService {
         token: data.access_token,
       };
     } catch (error) {
-      console.error('AuthService.login error:', error);
       throw error;
     }
   }
@@ -144,7 +141,6 @@ class AuthService {
         token: responseData.access_token,
       };
     } catch (error) {
-      console.error('AuthService.signup error:', error);
       throw error;
     }
   }
@@ -160,13 +156,13 @@ class AuthService {
         },
       });
     } catch (error) {
-      console.error('AuthService.logout error:', error);
+      // Silently handle logout errors
     }
   }
 
   // Handle Google callback (not needed with cookies)
   handleGoogleCallback(_token: string): void {
-    console.log('Google authentication completed');
+    // Google authentication completed
   }
 
   // Check if user is authenticated

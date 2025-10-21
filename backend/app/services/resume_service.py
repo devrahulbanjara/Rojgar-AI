@@ -9,13 +9,11 @@ from sqlalchemy import select
 from fastapi import HTTPException
 import uuid
 
-from app.models.resume import (
-    Resume, ResumeExperience, ResumeEducation, ResumeCertification, ResumeSkill,
+from app.models.resume import Resume, ResumeExperience, ResumeEducation, ResumeCertification, ResumeSkill
+from app.models.profile import Profile, WorkExperience, EducationRecord, Certification, ProfileSkill
+from app.schemas.resume import (
     ResumeResponse, ResumeExperienceResponse, ResumeEducationResponse,
     ResumeCertificationResponse, ResumeSkillResponse
-)
-from app.models.profile import (
-    Profile, WorkExperience, EducationRecord, Certification, ProfileSkill
 )
 
 
@@ -103,6 +101,11 @@ class ResumeService:
         contact_location = resume_data.get("contact_location") or self._format_location(profile.location_city, profile.location_country)
         custom_summary = resume_data.get("custom_summary") or profile.professional_summary
         
+        # Autofill professional links from profile if not provided
+        linkedin_url = resume_data.get("linkedin_url") or profile.linkedin_url
+        github_url = resume_data.get("github_url") or profile.github_url
+        portfolio_url = resume_data.get("portfolio_url") or profile.portfolio_url
+        
         resume = Resume(
             id=str(uuid.uuid4()),
             profile_id=profile.id,
@@ -111,7 +114,10 @@ class ResumeService:
             contact_email=contact_email,
             contact_phone=contact_phone,
             contact_location=contact_location,
-            custom_summary=custom_summary
+            custom_summary=custom_summary,
+            linkedin_url=linkedin_url,
+            github_url=github_url,
+            portfolio_url=portfolio_url
         )
         
         self.db.add(resume)
@@ -288,8 +294,8 @@ class ResumeService:
         
         return ResumeExperienceResponse.model_validate(resume_experience)
     
-    def update_experience_in_resume(self, user_id: str, resume_id: str, resume_experience_id: str, custom_description: str) -> ResumeExperienceResponse:
-        """Update the custom description for an experience in a resume"""
+    def update_experience_in_resume(self, user_id: str, resume_id: str, resume_experience_id: str, experience_data: dict) -> ResumeExperienceResponse:
+        """Update an experience in a resume - updates resume-specific fields without affecting profile data"""
         # Get profile first
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
@@ -318,7 +324,28 @@ class ResumeService:
         if not resume_experience:
             raise HTTPException(status_code=404, detail="Resume experience not found")
         
-        resume_experience.custom_description = custom_description
+        # Update resume-specific fields (these don't affect the original work experience)
+        if experience_data.get('custom_description') is not None:
+            resume_experience.custom_description = experience_data['custom_description']
+        
+        # Update resume-specific overrides
+        if experience_data.get('job_title') is not None:
+            resume_experience.job_title = experience_data['job_title']
+        if experience_data.get('company') is not None:
+            resume_experience.company = experience_data['company']
+        if experience_data.get('location') is not None:
+            resume_experience.location = experience_data['location']
+        if experience_data.get('is_current') is not None:
+            resume_experience.is_current = experience_data['is_current']
+        if experience_data.get('master_description') is not None:
+            resume_experience.master_description = experience_data['master_description']
+        
+        # Convert string dates to Python date objects if provided
+        if experience_data.get('start_date'):
+            resume_experience.start_date = datetime.strptime(experience_data['start_date'], '%Y-%m-%d').date()
+        if experience_data.get('end_date'):
+            resume_experience.end_date = datetime.strptime(experience_data['end_date'], '%Y-%m-%d').date()
+        
         resume_experience.updated_at = datetime.utcnow()
         
         self.db.commit()
@@ -423,6 +450,65 @@ class ResumeService:
         
         return ResumeEducationResponse.model_validate(resume_education)
     
+    def update_education_in_resume(self, user_id: str, resume_id: str, resume_education_id: str, education_data: dict) -> ResumeEducationResponse:
+        """Update an education record in a resume - updates resume-specific fields without affecting profile data"""
+        # Get profile first
+        profile = self.db.execute(
+            select(Profile).where(Profile.user_id == user_id)
+        ).scalar_one_or_none()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Verify resume ownership
+        resume = self.db.execute(
+            select(Resume)
+            .where(Resume.id == resume_id)
+            .where(Resume.profile_id == profile.id)
+        ).scalar_one_or_none()
+        
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        
+        # Get resume education
+        resume_education = self.db.execute(
+            select(ResumeEducation)
+            .where(ResumeEducation.id == resume_education_id)
+            .where(ResumeEducation.resume_id == resume_id)
+        ).scalar_one_or_none()
+        
+        if not resume_education:
+            raise HTTPException(status_code=404, detail="Resume education not found")
+        
+        # Update resume-specific overrides (these don't affect the original education record)
+        if education_data.get('school_university') is not None:
+            resume_education.school_university = education_data['school_university']
+        if education_data.get('degree') is not None:
+            resume_education.degree = education_data['degree']
+        if education_data.get('field_of_study') is not None:
+            resume_education.field_of_study = education_data['field_of_study']
+        if education_data.get('location') is not None:
+            resume_education.location = education_data['location']
+        if education_data.get('is_current') is not None:
+            resume_education.is_current = education_data['is_current']
+        if education_data.get('gpa') is not None:
+            resume_education.gpa = education_data['gpa']
+        if education_data.get('honors') is not None:
+            resume_education.honors = education_data['honors']
+        
+        # Convert string dates to Python date objects if provided
+        if education_data.get('start_date'):
+            resume_education.start_date = datetime.strptime(education_data['start_date'], '%Y-%m-%d').date()
+        if education_data.get('end_date'):
+            resume_education.end_date = datetime.strptime(education_data['end_date'], '%Y-%m-%d').date()
+        
+        resume_education.updated_at = datetime.utcnow()
+        
+        self.db.commit()
+        self.db.refresh(resume_education)
+        
+        return ResumeEducationResponse.model_validate(resume_education)
+
     def remove_education_from_resume(self, user_id: str, resume_id: str, resume_education_id: str) -> bool:
         """Remove an education record from a resume"""
         # Get profile first
@@ -520,6 +606,61 @@ class ResumeService:
         
         return ResumeCertificationResponse.model_validate(resume_certification)
     
+    def update_certification_in_resume(self, user_id: str, resume_id: str, resume_certification_id: str, certification_data: dict) -> ResumeCertificationResponse:
+        """Update a certification in a resume - updates resume-specific fields without affecting profile data"""
+        # Get profile first
+        profile = self.db.execute(
+            select(Profile).where(Profile.user_id == user_id)
+        ).scalar_one_or_none()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Verify resume ownership
+        resume = self.db.execute(
+            select(Resume)
+            .where(Resume.id == resume_id)
+            .where(Resume.profile_id == profile.id)
+        ).scalar_one_or_none()
+        
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        
+        # Get resume certification
+        resume_certification = self.db.execute(
+            select(ResumeCertification)
+            .where(ResumeCertification.id == resume_certification_id)
+            .where(ResumeCertification.resume_id == resume_id)
+        ).scalar_one_or_none()
+        
+        if not resume_certification:
+            raise HTTPException(status_code=404, detail="Resume certification not found")
+        
+        # Update resume-specific overrides (these don't affect the original certification)
+        if certification_data.get('name') is not None:
+            resume_certification.name = certification_data['name']
+        if certification_data.get('issuing_body') is not None:
+            resume_certification.issuing_body = certification_data['issuing_body']
+        if certification_data.get('credential_id') is not None:
+            resume_certification.credential_id = certification_data['credential_id']
+        if certification_data.get('credential_url') is not None:
+            resume_certification.credential_url = certification_data['credential_url']
+        if certification_data.get('does_not_expire') is not None:
+            resume_certification.does_not_expire = certification_data['does_not_expire']
+        
+        # Convert string dates to Python date objects if provided
+        if certification_data.get('issue_date'):
+            resume_certification.issue_date = datetime.strptime(certification_data['issue_date'], '%Y-%m-%d').date()
+        if certification_data.get('expiration_date'):
+            resume_certification.expiration_date = datetime.strptime(certification_data['expiration_date'], '%Y-%m-%d').date()
+        
+        resume_certification.updated_at = datetime.utcnow()
+        
+        self.db.commit()
+        self.db.refresh(resume_certification)
+        
+        return ResumeCertificationResponse.model_validate(resume_certification)
+
     def remove_certification_from_resume(self, user_id: str, resume_id: str, resume_certification_id: str) -> bool:
         """Remove a certification from a resume"""
         # Get profile first
@@ -617,6 +758,51 @@ class ResumeService:
         
         return ResumeSkillResponse.model_validate(resume_skill)
     
+    def update_skill_in_resume(self, user_id: str, resume_id: str, resume_skill_id: str, skill_data: dict) -> ResumeSkillResponse:
+        """Update a skill in a resume - updates resume-specific fields without affecting profile data"""
+        # Get profile first
+        profile = self.db.execute(
+            select(Profile).where(Profile.user_id == user_id)
+        ).scalar_one_or_none()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Verify resume ownership
+        resume = self.db.execute(
+            select(Resume)
+            .where(Resume.id == resume_id)
+            .where(Resume.profile_id == profile.id)
+        ).scalar_one_or_none()
+        
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        
+        # Get resume skill
+        resume_skill = self.db.execute(
+            select(ResumeSkill)
+            .where(ResumeSkill.id == resume_skill_id)
+            .where(ResumeSkill.resume_id == resume_id)
+        ).scalar_one_or_none()
+        
+        if not resume_skill:
+            raise HTTPException(status_code=404, detail="Resume skill not found")
+        
+        # Update resume-specific overrides (these don't affect the original profile skill)
+        if skill_data.get('skill_name') is not None:
+            resume_skill.skill_name = skill_data['skill_name']
+        if skill_data.get('proficiency_level') is not None:
+            resume_skill.proficiency_level = skill_data['proficiency_level']
+        if skill_data.get('years_of_experience') is not None:
+            resume_skill.years_of_experience = skill_data['years_of_experience']
+        
+        resume_skill.updated_at = datetime.utcnow()
+        
+        self.db.commit()
+        self.db.refresh(resume_skill)
+        
+        return ResumeSkillResponse.model_validate(resume_skill)
+
     def remove_skill_from_resume(self, user_id: str, resume_id: str, resume_skill_id: str) -> bool:
         """Remove a skill from a resume"""
         # Get profile first
@@ -650,3 +836,237 @@ class ResumeService:
         self.db.delete(resume_skill)
         self.db.commit()
         return True
+
+    # Resume-specific section creation methods (don't affect profile)
+    def create_experience_for_resume(self, user_id: str, resume_id: str, experience_data: dict) -> ResumeExperienceResponse:
+        """Create a new work experience directly for this resume (doesn't affect profile)"""
+        # Verify resume ownership
+        resume = self._get_resume_by_id_and_user(resume_id, user_id)
+        
+        # Convert string dates to Python date objects
+        start_date = None
+        if experience_data.get('start_date'):
+            start_date = datetime.strptime(experience_data['start_date'], '%Y-%m-%d').date()
+        
+        end_date = None
+        if experience_data.get('end_date'):
+            end_date = datetime.strptime(experience_data['end_date'], '%Y-%m-%d').date()
+        
+        # Create a temporary work experience record (not saved to profile)
+        temp_experience = WorkExperience(
+            id=str(uuid.uuid4()),
+            profile_id=resume.profile_id,
+            job_title=experience_data['job_title'],
+            company=experience_data['company'],
+            location=experience_data.get('location'),
+            start_date=start_date,
+            end_date=end_date,
+            is_current=experience_data.get('is_current', False),
+            master_description=experience_data['master_description'],
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Create resume experience linking to the temp experience
+        resume_experience = ResumeExperience(
+            id=str(uuid.uuid4()),
+            resume_id=resume_id,
+            work_experience_id=temp_experience.id,
+            custom_description=experience_data['master_description'],
+            display_order=0,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Add temp experience to session (but don't commit to profile)
+        self.db.add(temp_experience)
+        self.db.add(resume_experience)
+        self.db.commit()
+        
+        # Return the resume experience with the temp work experience data
+        return ResumeExperienceResponse(
+            id=resume_experience.id,
+            resume_id=resume_experience.resume_id,
+            work_experience_id=resume_experience.work_experience_id,
+            custom_description=resume_experience.custom_description,
+            display_order=resume_experience.display_order,
+            created_at=resume_experience.created_at,
+            updated_at=resume_experience.updated_at,
+            work_experience=temp_experience
+        )
+
+    def create_education_for_resume(self, user_id: str, resume_id: str, education_data: dict) -> ResumeEducationResponse:
+        """Create a new education record directly for this resume (doesn't affect profile)"""
+        # Verify resume ownership
+        resume = self._get_resume_by_id_and_user(resume_id, user_id)
+        
+        # Convert string dates to Python date objects
+        start_date = None
+        if education_data.get('start_date'):
+            start_date = datetime.strptime(education_data['start_date'], '%Y-%m-%d').date()
+        
+        end_date = None
+        if education_data.get('end_date'):
+            end_date = datetime.strptime(education_data['end_date'], '%Y-%m-%d').date()
+        
+        # Create a temporary education record (not saved to profile)
+        temp_education = EducationRecord(
+            id=str(uuid.uuid4()),
+            profile_id=resume.profile_id,
+            school_university=education_data['school_university'],
+            degree=education_data['degree'],
+            field_of_study=education_data['field_of_study'],
+            location=education_data.get('location'),
+            start_date=start_date,
+            end_date=end_date,
+            is_current=education_data.get('is_current', False),
+            gpa=education_data.get('gpa'),
+            honors=education_data.get('honors'),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Create resume education linking to the temp education
+        resume_education = ResumeEducation(
+            id=str(uuid.uuid4()),
+            resume_id=resume_id,
+            education_record_id=temp_education.id,
+            display_order=0,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Add temp education to session (but don't commit to profile)
+        self.db.add(temp_education)
+        self.db.add(resume_education)
+        self.db.commit()
+        
+        # Return the resume education with the temp education data
+        return ResumeEducationResponse(
+            id=resume_education.id,
+            resume_id=resume_education.resume_id,
+            education_record_id=resume_education.education_record_id,
+            display_order=resume_education.display_order,
+            created_at=resume_education.created_at,
+            updated_at=resume_education.updated_at,
+            education_record=temp_education
+        )
+
+    def create_certification_for_resume(self, user_id: str, resume_id: str, certification_data: dict) -> ResumeCertificationResponse:
+        """Create a new certification directly for this resume (doesn't affect profile)"""
+        # Verify resume ownership
+        resume = self._get_resume_by_id_and_user(resume_id, user_id)
+        
+        # Convert string dates to Python date objects
+        issue_date = None
+        if certification_data.get('issue_date'):
+            issue_date = datetime.strptime(certification_data['issue_date'], '%Y-%m-%d').date()
+        
+        expiration_date = None
+        if certification_data.get('expiration_date'):
+            expiration_date = datetime.strptime(certification_data['expiration_date'], '%Y-%m-%d').date()
+        
+        # Create a temporary certification record (not saved to profile)
+        temp_certification = Certification(
+            id=str(uuid.uuid4()),
+            profile_id=resume.profile_id,
+            name=certification_data['name'],
+            issuing_body=certification_data['issuing_body'],
+            credential_id=certification_data.get('credential_id'),
+            credential_url=certification_data.get('credential_url'),
+            issue_date=issue_date,
+            expiration_date=expiration_date,
+            does_not_expire=certification_data.get('does_not_expire', False),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Create resume certification linking to the temp certification
+        resume_certification = ResumeCertification(
+            id=str(uuid.uuid4()),
+            resume_id=resume_id,
+            certification_id=temp_certification.id,
+            display_order=0,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Add temp certification to session (but don't commit to profile)
+        self.db.add(temp_certification)
+        self.db.add(resume_certification)
+        self.db.commit()
+        
+        # Return the resume certification with the temp certification data
+        return ResumeCertificationResponse(
+            id=resume_certification.id,
+            resume_id=resume_certification.resume_id,
+            certification_id=resume_certification.certification_id,
+            display_order=resume_certification.display_order,
+            created_at=resume_certification.created_at,
+            updated_at=resume_certification.updated_at,
+            certification=temp_certification
+        )
+
+    def create_skill_for_resume(self, user_id: str, resume_id: str, skill_data: dict) -> ResumeSkillResponse:
+        """Create a new skill directly for this resume (doesn't affect profile)"""
+        # Verify resume ownership
+        resume = self._get_resume_by_id_and_user(resume_id, user_id)
+        
+        # Create a temporary skill record (not saved to profile)
+        temp_skill = ProfileSkill(
+            id=str(uuid.uuid4()),
+            profile_id=resume.profile_id,
+            skill_name=skill_data['skill_name'],
+            proficiency_level=skill_data.get('proficiency_level', 'Intermediate'),
+            years_of_experience=skill_data.get('years_of_experience'),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Create resume skill linking to the temp skill
+        resume_skill = ResumeSkill(
+            id=str(uuid.uuid4()),
+            resume_id=resume_id,
+            profile_skill_id=temp_skill.id,
+            display_order=0,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Add temp skill to session (but don't commit to profile)
+        self.db.add(temp_skill)
+        self.db.add(resume_skill)
+        self.db.commit()
+        
+        # Return the resume skill with the temp skill data
+        return ResumeSkillResponse(
+            id=resume_skill.id,
+            resume_id=resume_skill.resume_id,
+            profile_skill_id=resume_skill.profile_skill_id,
+            display_order=resume_skill.display_order,
+            created_at=resume_skill.created_at,
+            updated_at=resume_skill.updated_at,
+            profile_skill=temp_skill
+        )
+
+    def _get_resume_by_id_and_user(self, resume_id: str, user_id: str) -> Resume:
+        """Helper method to get resume by ID and verify user ownership"""
+        # Get profile first
+        profile = self.db.execute(
+            select(Profile).where(Profile.user_id == user_id)
+        ).scalar_one_or_none()
+        
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        
+        # Get resume
+        resume = self.db.execute(
+            select(Resume)
+            .where(Resume.id == resume_id)
+            .where(Resume.profile_id == profile.id)
+        ).scalar_one_or_none()
+        
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        
+        return resume

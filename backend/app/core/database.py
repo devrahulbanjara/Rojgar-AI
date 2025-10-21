@@ -8,7 +8,6 @@ from app.core.config import settings
 from app.models import Base
 
 # Create the database engine
-# This connects to our SQLite database
 engine = create_engine(
     settings.DATABASE_URL,
     echo=False,  # Set to True to see SQL queries in console

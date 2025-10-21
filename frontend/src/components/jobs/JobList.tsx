@@ -95,9 +95,9 @@ export const JobList = memo<JobListProps>(({
     <div className={cn('space-y-3', className)}>
       {jobs.map((job) => (
         <JobCard
-          key={job.job_id}
+          key={job.id}
           job={job}
-          isSelected={selectedJob?.job_id === job.job_id}
+          isSelected={selectedJob?.id === job.id}
           onSelect={onJobSelect}
           onApply={onApply}
           showApplyButton={false} // Apply button is now in the detail view

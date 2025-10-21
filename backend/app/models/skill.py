@@ -6,7 +6,6 @@ from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pydantic import BaseModel, ConfigDict
 
 from app.models import Base
 
@@ -34,25 +33,3 @@ class Skill(Base):
     user: Mapped["User"] = relationship("User", back_populates="skills")
 
 
-# ============= Request/Response Schemas =============
-
-class SkillCreateRequest(BaseModel):
-    """What we need to create a new skill"""
-    skill: str
-
-
-class SkillResponse(BaseModel):
-    """What we send back about a skill"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: str
-    user_id: str
-    skill: str
-    created_at: datetime
-    updated_at: datetime
-
-
-class SkillsListResponse(BaseModel):
-    """Response for listing skills"""
-    skills: list[SkillResponse]
-    total: int

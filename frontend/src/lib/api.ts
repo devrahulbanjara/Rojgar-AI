@@ -32,7 +32,7 @@ class ApiClient {
   async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     
     const config: RequestInit = {
@@ -46,16 +46,30 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      
+      // Handle 204 No Content responses (like DELETE operations)
+      if (response.status === 204) {
+        return null as T;
+      }
+
+      // Only try to parse JSON if there's content
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
 
       if (!response.ok) {
         throw new ApiError(
-          data.message || `HTTP ${response.status}: ${response.statusText}`,
+          data.message || data.detail || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           data
         );
       }
 
+      // Return data directly (standardized format)
       return data;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -71,7 +85,7 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
@@ -79,7 +93,7 @@ class ApiClient {
     endpoint: string,
     data?: any,
     options?: RequestInit
-  ): Promise<ApiResponse<T>> {
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -91,7 +105,7 @@ class ApiClient {
     endpoint: string,
     data?: any,
     options?: RequestInit
-  ): Promise<ApiResponse<T>> {
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -103,7 +117,7 @@ class ApiClient {
     endpoint: string,
     data?: any,
     options?: RequestInit
-  ): Promise<ApiResponse<T>> {
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
@@ -111,7 +125,7 @@ class ApiClient {
     });
   }
 
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
@@ -140,50 +154,50 @@ export const apiClient = new ApiClient(API_BASE_URL);
 export const endpoints = {
   // Auth endpoints
   auth: {
-    login: '/auth/login',
-    signup: '/auth/signup',
-    logout: '/auth/logout',
-    googleCallback: '/auth/google/callback',
-    selectRole: '/auth/select-role',
-    me: '/users/me',
+    login: '/api/v1/auth/login',
+    signup: '/api/v1/auth/signup',
+    logout: '/api/v1/auth/logout',
+    googleCallback: '/api/v1/auth/google/callback',
+    selectRole: '/api/v1/auth/select-role',
+    me: '/api/v1/users/me',
   },
   
   // User endpoints
   users: {
-    list: '/users',
-    detail: (id: string) => `/users/${id}`,
-    update: (id: string) => `/users/${id}`,
-    delete: (id: string) => `/users/${id}`,
+    list: '/api/v1/users',
+    detail: (id: string) => `/api/v1/users/${id}`,
+    update: (id: string) => `/api/v1/users/${id}`,
+    delete: (id: string) => `/api/v1/users/${id}`,
   },
   
   // Dashboard endpoints
   dashboard: {
-    stats: '/dashboard/stats',
-    recentActivity: '/dashboard/activity',
+    stats: '/api/v1/dashboard/stats',
+    recentActivity: '/api/v1/dashboard/activity',
   },
   
   // Job endpoints
   jobs: {
-    list: '/jobs',
-    recommendations: '/jobs/recommendations',
-    search: '/jobs/search',
-    detail: (id: string) => `/jobs/${id}`,
-    create: '/jobs',
-    update: (id: string) => `/jobs/${id}`,
-    delete: (id: string) => `/jobs/${id}`,
+    list: '/api/v1/jobs',
+    recommendations: '/api/v1/jobs/recommendations',
+    search: '/api/v1/jobs/search',
+    detail: (id: string) => `/api/v1/jobs/${id}`,
+    create: '/api/v1/jobs',
+    update: (id: string) => `/api/v1/jobs/${id}`,
+    delete: (id: string) => `/api/v1/jobs/${id}`,
   },
   
   // Application endpoints
   applications: {
-    list: '/applications',
-    detail: (id: string) => `/applications/${id}`,
-    create: '/applications',
-    update: (id: string) => `/applications/${id}`,
-    delete: (id: string) => `/applications/${id}`,
-    byJob: (jobId: string) => `/applications/job/${jobId}`,
-    byCandidate: (candidateId: string) => `/applications/candidate/${candidateId}`,
-    trackingBoard: '/applications/tracking-board',
-    stats: '/applications/stats',
+    list: '/api/v1/applications',
+    detail: (id: string) => `/api/v1/applications/${id}`,
+    create: '/api/v1/applications',
+    update: (id: string) => `/api/v1/applications/${id}`,
+    delete: (id: string) => `/api/v1/applications/${id}`,
+    byJob: (jobId: string) => `/api/v1/applications/job/${jobId}`,
+    byCandidate: (candidateId: string) => `/api/v1/applications/candidate/${candidateId}`,
+    trackingBoard: '/api/v1/applications/tracking-board',
+    stats: '/api/v1/applications/stats',
   },
   
   // Profile endpoints (SSOT - Single Source of Truth)
@@ -227,19 +241,26 @@ export const endpoints = {
     autofillData: '/api/v1/resumes/autofill-data',
     experiences: {
       add: (resumeId: string) => `/api/v1/resumes/${resumeId}/experiences`,
+      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/experiences/create`,
       update: (resumeId: string, expId: string) => `/api/v1/resumes/${resumeId}/experiences/${expId}`,
       remove: (resumeId: string, expId: string) => `/api/v1/resumes/${resumeId}/experiences/${expId}`,
     },
     education: {
       add: (resumeId: string) => `/api/v1/resumes/${resumeId}/education`,
+      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/education/create`,
+      update: (resumeId: string, eduId: string) => `/api/v1/resumes/${resumeId}/education/${eduId}`,
       remove: (resumeId: string, eduId: string) => `/api/v1/resumes/${resumeId}/education/${eduId}`,
     },
     certifications: {
       add: (resumeId: string) => `/api/v1/resumes/${resumeId}/certifications`,
+      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/certifications/create`,
+      update: (resumeId: string, certId: string) => `/api/v1/resumes/${resumeId}/certifications/${certId}`,
       remove: (resumeId: string, certId: string) => `/api/v1/resumes/${resumeId}/certifications/${certId}`,
     },
     skills: {
       add: (resumeId: string) => `/api/v1/resumes/${resumeId}/skills`,
+      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/skills/create`,
+      update: (resumeId: string, skillId: string) => `/api/v1/resumes/${resumeId}/skills/${skillId}`,
       remove: (resumeId: string, skillId: string) => `/api/v1/resumes/${resumeId}/skills/${skillId}`,
     },
   },
@@ -340,19 +361,26 @@ export const api = {
     getAutofillData: () => apiClient.get(endpoints.resumes.autofillData),
     experiences: {
       add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.experiences.add(resumeId), data),
+      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.experiences.create(resumeId), data),
       update: (resumeId: string, expId: string, data: any) => apiClient.put(endpoints.resumes.experiences.update(resumeId, expId), data),
       remove: (resumeId: string, expId: string) => apiClient.delete(endpoints.resumes.experiences.remove(resumeId, expId)),
     },
     education: {
       add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.education.add(resumeId), data),
+      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.education.create(resumeId), data),
+      update: (resumeId: string, eduId: string, data: any) => apiClient.put(endpoints.resumes.education.update(resumeId, eduId), data),
       remove: (resumeId: string, eduId: string) => apiClient.delete(endpoints.resumes.education.remove(resumeId, eduId)),
     },
     certifications: {
       add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.certifications.add(resumeId), data),
+      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.certifications.create(resumeId), data),
+      update: (resumeId: string, certId: string, data: any) => apiClient.put(endpoints.resumes.certifications.update(resumeId, certId), data),
       remove: (resumeId: string, certId: string) => apiClient.delete(endpoints.resumes.certifications.remove(resumeId, certId)),
     },
     skills: {
       add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.skills.add(resumeId), data),
+      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.skills.create(resumeId), data),
+      update: (resumeId: string, skillId: string, data: any) => apiClient.put(endpoints.resumes.skills.update(resumeId, skillId), data),
       remove: (resumeId: string, skillId: string) => apiClient.delete(endpoints.resumes.skills.remove(resumeId, skillId)),
     },
   },
@@ -379,17 +407,6 @@ export const handleApiError = (error: any): string => {
 export const setupApiInterceptors = () => {
   // You can add global request/response interceptors here
   // For example, automatic token refresh, request logging, etc.
-  
-  // Example: Log all requests in development
-  if (process.env.NODE_ENV === 'development') {
-    const originalRequest = apiClient.request.bind(apiClient);
-    apiClient.request = async function<T>(endpoint: string, options: RequestInit = {}) {
-      console.log(`API Request: ${options.method || 'GET'} ${endpoint}`, options);
-      const response = await originalRequest<T>(endpoint, options);
-      console.log(`API Response: ${endpoint}`, response);
-      return response;
-    };
-  }
 };
 
 // Initialize interceptors

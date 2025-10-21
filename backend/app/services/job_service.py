@@ -6,13 +6,8 @@ from typing import List, Optional, Dict
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func, or_, and_
 
-from app.models.job import (
-    Job,
-    Company,
-    JobStatus,
-    JobResponse,
-    CompanyResponse,
-)
+from app.models.job import Job, Company, JobStatus
+from app.schemas.job import JobResponse, CompanyResponse
 
 
 class JobService:
@@ -30,11 +25,9 @@ class JobService:
     
     @staticmethod
     def get_recommended_jobs(db: Session, limit: int = 5) -> Dict:
-        """Get recommended jobs for homepage (placeholder for Qdrant vector DB integration)"""
-        # TODO: Implement Qdrant vector DB integration to get similar job IDs
-        # For now, return 5 static jobs as placeholder
-        
-        # Get 5 most recent active jobs as placeholder
+        """Get recommended jobs for homepage"""
+        # Currently returns recent active jobs as placeholder
+        # Future enhancement: integrate with Qdrant vector DB for semantic matching
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -150,7 +143,7 @@ class JobService:
     @staticmethod
     def get_job_by_id(job_id: int, db: Session, increment_view: bool = False) -> Optional[Job]:
         """Get a job by ID with company info"""
-        query = select(Job).where(Job.job_id == job_id).options(selectinload(Job.company))
+        query = select(Job).where(Job.id == job_id).options(selectinload(Job.company))
         job = db.execute(query).scalar_one_or_none()
         
         if job and increment_view:
@@ -257,7 +250,7 @@ class JobService:
     @staticmethod
     def increment_job_view(job_id: int, db: Session) -> bool:
         """Increment view count for a job"""
-        job = db.execute(select(Job).where(Job.job_id == job_id)).scalar_one_or_none()
+        job = db.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job:
             return False
         
@@ -269,7 +262,7 @@ class JobService:
     @staticmethod
     def increment_job_application(job_id: int, db: Session) -> bool:
         """Increment application count for a job"""
-        job = db.execute(select(Job).where(Job.job_id == job_id)).scalar_one_or_none()
+        job = db.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job:
             return False
         
@@ -342,15 +335,15 @@ class JobService:
     def get_job_statistics(db: Session) -> Dict:
         """Get overall job statistics"""
         # Get counts
-        total_jobs = db.execute(select(func.count(Job.job_id))).scalar_one()
+        total_jobs = db.execute(select(func.count(Job.id))).scalar_one()
         active_jobs = db.execute(
-            select(func.count(Job.job_id)).where(Job.status == JobStatus.ACTIVE.value)
+            select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
         ).scalar_one()
         featured_jobs = db.execute(
-            select(func.count(Job.job_id)).where(Job.is_featured == True)
+            select(func.count(Job.id)).where(Job.is_featured == True)
         ).scalar_one()
         remote_jobs = db.execute(
-            select(func.count(Job.job_id)).where(Job.is_remote == True)
+            select(func.count(Job.id)).where(Job.is_remote == True)
         ).scalar_one()
         
         # Average salary

@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { AppShell } from '../../../components/layout/AppShell';
-import { PageTransition, AnimatedContainer } from '../../../components/common';
+import { PageTransition, AnimatedContainer, PageHeader } from '../../../components/common';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
 import { resumeService, ResumeAutofillData, WorkExperienceAutofill, EducationAutofill, CertificationAutofill, SkillAutofill } from '../../../services/resumeService';
-import { FileText, Plus, Edit, Eye, Trash2, Calendar, CheckCircle, AlertCircle, User, Briefcase, GraduationCap, Award, Code, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Plus, Edit, Eye, Trash2, Calendar, CheckCircle, AlertCircle, User, Briefcase, GraduationCap, Award, Code } from 'lucide-react';
 import type { Resume, ResumeCreateRequest } from '../../../types/resume';
 
 export default function ResumeDashboard() {
@@ -78,7 +78,6 @@ export default function ResumeDashboard() {
       setSelectedCertifications(new Set(data.certifications.map(cert => cert.id)));
       setSelectedSkills(new Set(data.skills.map(skill => skill.id)));
     } catch (error: any) {
-      console.warn('Failed to load autofill data:', error);
       // Don't show error to user, just continue without autofill
     }
   };
@@ -251,31 +250,13 @@ export default function ResumeDashboard() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-[#0F172A] mb-2">
-                    Resume Builder
-                  </h1>
-                  <p className="text-[#475569]">
-                    Create and manage tailored resumes from your profile data.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => {
-                    setIsCreating(true);
-                    loadAutofillData();
-                  }}
-                  className="flex items-center gap-2 px-6 py-3 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create New Resume
-                </Button>
-              </div>
-            </div>
+            <PageHeader
+              title="Resume Builder"
+              subtitle="Create and manage tailored resumes from your profile data"
+            />
           </AnimatedContainer>
 
           {message && (
@@ -404,11 +385,6 @@ export default function ResumeDashboard() {
                           <Briefcase className="w-5 h-5 text-[#3056F5]" />
                           Work Experiences ({selectedExperiences.size} selected)
                         </h4>
-                        {expandedSections.has('experiences') ? (
-                          <ChevronUp className="w-5 h-5 text-[#6B7280]" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
-                        )}
                       </div>
                       
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -460,11 +436,6 @@ export default function ResumeDashboard() {
                           <GraduationCap className="w-5 h-5 text-[#3056F5]" />
                           Education ({selectedEducation.size} selected)
                         </h4>
-                        {expandedSections.has('education') ? (
-                          <ChevronUp className="w-5 h-5 text-[#6B7280]" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
-                        )}
                       </div>
                       
                       {expandedSections.has('education') && (
@@ -513,11 +484,6 @@ export default function ResumeDashboard() {
                           <Award className="w-5 h-5 text-[#3056F5]" />
                           Certifications ({selectedCertifications.size} selected)
                         </h4>
-                        {expandedSections.has('certifications') ? (
-                          <ChevronUp className="w-5 h-5 text-[#6B7280]" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
-                        )}
                       </div>
                       
                       {expandedSections.has('certifications') && (
@@ -563,11 +529,6 @@ export default function ResumeDashboard() {
                           <Code className="w-5 h-5 text-[#3056F5]" />
                           Skills ({selectedSkills.size} selected)
                         </h4>
-                        {expandedSections.has('skills') ? (
-                          <ChevronUp className="w-5 h-5 text-[#6B7280]" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
-                        )}
                       </div>
                       
                       {expandedSections.has('skills') && (
@@ -626,9 +587,21 @@ export default function ResumeDashboard() {
           {!isCreating && (
             <AnimatedContainer direction="up" delay={0.3}>
               <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-8">
-                <div className="flex items-center gap-2 mb-6">
-                  <FileText className="w-5 h-5 text-[#3056F5]" />
-                  <h2 className="text-xl font-semibold text-[#0F172A]">Your Resumes</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-[#3056F5]" />
+                    <h2 className="text-xl font-semibold text-[#0F172A]">Your Resumes</h2>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setIsCreating(true);
+                      loadAutofillData();
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create New Resume
+                  </Button>
                 </div>
 
                 {isLoading ? (
