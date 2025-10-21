@@ -91,7 +91,7 @@ export default function Signup() {
   };
 
   const handleGoogleSuccess = () => {
-    console.log('Google signup initiated');
+    // Google signup initiated
   };
 
   const handleGoogleError = (error: string) => {

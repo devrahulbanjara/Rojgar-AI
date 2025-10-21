@@ -18,16 +18,21 @@ export const useCurrentUser = () => {
   return useQuery({
     queryKey: queryKeys.auth.user,
     queryFn: async (): Promise<User | null> => {
-      const user = await authService.getCurrentUser();
-      if (user) {
-        // Convert backend user format to frontend format
-        return {
-          ...user,
-          id: user.id.toString(),
-          userType: user.role,
-        };
+      try {
+        const user = await authService.getCurrentUser();
+        
+        if (user) {
+          // Convert backend user format to frontend format
+          return {
+            ...user,
+            id: user.id.toString(),
+            userType: user.role,
+          };
+        }
+        return null;
+      } catch (error) {
+        return null;
       }
-      return null;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -56,7 +61,6 @@ export const useLogin = () => {
       }
     },
     onError: (error) => {
-      console.error('Login failed:', error);
       // Clear any existing auth data
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
@@ -84,7 +88,6 @@ export const useSignup = () => {
       }
     },
     onError: (error) => {
-      console.error('Signup failed:', error);
       // Clear any existing auth data
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
@@ -108,7 +111,6 @@ export const useLogout = () => {
       router.push(ROUTES.HOME);
     },
     onError: (error) => {
-      console.error('Logout failed:', error);
       // Even if logout fails, clear local data and redirect
       queryClient.clear();
       router.push(ROUTES.HOME);

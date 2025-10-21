@@ -6,7 +6,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.models.user import User, UserResponse
+from app.models.user import User
+from app.schemas.user import UserResponse
 
 
 class UserService:

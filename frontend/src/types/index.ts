@@ -86,6 +86,7 @@ export interface UseAuthReturn {
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
   logout: () => void;
+  refetchUser?: () => void;
   // Additional error states for granular control
   loginError?: any;
   signupError?: any;
@@ -110,12 +111,15 @@ export interface LoadingState {
 
 // API Response Types
 export interface ApiResponse<T = any> {
-  success: boolean;
-  message: string;
+  success?: boolean;
+  message?: string;
   data?: T;
   errors?: Array<{ detail: any }>;
   meta?: Record<string, any>;
 }
+
+// For endpoints that return data directly (standardized format)
+export type DirectApiResponse<T = any> = T;
 
 // Dashboard Types (for future expansion)
 export interface DashboardStats {
@@ -136,3 +140,7 @@ export interface DashboardData {
 // Re-export job and application types
 export * from './job';
 export * from './application';
+
+// Re-export profile and resume types
+export * from './profile';
+export * from './resume';
