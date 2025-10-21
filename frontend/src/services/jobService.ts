@@ -18,11 +18,12 @@ import type { Application, CreateApplicationRequest, UpdateApplicationRequest } 
 // Job API endpoints
 const jobEndpoints = {
   list: '/jobs',
+  recommendations: '/jobs/recommendations',
+  search: '/jobs/search',
   detail: (id: string) => `/jobs/${id}`,
   create: '/jobs',
   update: (id: string) => `/jobs/${id}`,
   delete: (id: string) => `/jobs/${id}`,
-  search: '/jobs/search',
 } as const;
 
 // Application API endpoints
@@ -39,9 +40,20 @@ const applicationEndpoints = {
 // Job Service Class
 export class JobService {
   /**
-   * Get list of jobs with optional filters and pagination
+   * Get recommended jobs for homepage
    */
-  static async getJobs(params?: JobSearchParams): Promise<BaseApiResponse<JobListResponse>> {
+  static async getRecommendedJobs(limit: number = 5): Promise<BaseApiResponse<JobListResponse>> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('limit', limit.toString());
+    
+    const endpoint = `${jobEndpoints.recommendations}?${queryParams.toString()}`;
+    return apiClient.get<JobListResponse>(endpoint);
+  }
+
+  /**
+   * Search jobs with filters and pagination
+   */
+  static async searchJobs(params?: JobSearchParams): Promise<BaseApiResponse<JobListResponse>> {
     const queryParams = new URLSearchParams();
     
     if (params?.page) queryParams.append('page', params.page.toString());
@@ -68,8 +80,17 @@ export class JobService {
     if (params?.is_featured !== undefined) queryParams.append('is_featured', params.is_featured.toString());
     if (params?.company_id) queryParams.append('company_id', params.company_id.toString());
     
-    const endpoint = `${jobEndpoints.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const endpoint = `${jobEndpoints.search}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<JobListResponse>(endpoint);
+  }
+
+  /**
+   * Get list of jobs with optional filters and pagination (legacy method)
+   * @deprecated Use searchJobs for filtered results or getRecommendedJobs for homepage
+   */
+  static async getJobs(params?: JobSearchParams): Promise<BaseApiResponse<JobListResponse>> {
+    // For backward compatibility, redirect to searchJobs
+    return JobService.searchJobs(params);
   }
 
   /**
@@ -100,12 +121,6 @@ export class JobService {
     return apiClient.delete<void>(jobEndpoints.delete(id));
   }
 
-  /**
-   * Search jobs with advanced filters
-   */
-  static async searchJobs(searchParams: JobSearchParams): Promise<BaseApiResponse<JobListResponse>> {
-    return apiClient.post<JobListResponse>(jobEndpoints.search, searchParams);
-  }
 
   /**
    * Get jobs by company

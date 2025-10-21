@@ -23,7 +23,7 @@ export interface Company {
 }
 
 export interface Job {
-  id: number;
+  job_id: number;
   company_id: number;
   company?: Company;
   title: string;
@@ -125,7 +125,7 @@ export interface CreateJobRequest {
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
-  id: string;
+  job_id: string;
 }
 
 // Job Component Props Types

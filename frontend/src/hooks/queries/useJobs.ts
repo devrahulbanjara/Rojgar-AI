@@ -19,6 +19,8 @@ export const jobQueryKeys = {
   all: ['jobs'] as const,
   lists: () => [...jobQueryKeys.all, 'list'] as const,
   list: (params?: JobSearchParams) => [...jobQueryKeys.lists(), params] as const,
+  recommendations: (limit?: number) => [...jobQueryKeys.all, 'recommendations', limit] as const,
+  search: (params?: JobSearchParams) => [...jobQueryKeys.all, 'search', params] as const,
   details: () => [...jobQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...jobQueryKeys.details(), id] as const,
   featured: () => [...jobQueryKeys.all, 'featured'] as const,
@@ -48,6 +50,36 @@ export function useJobs(params?: JobSearchParams) {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+export function useRecommendedJobs(limit: number = 5) {
+  return useQuery({
+    queryKey: jobQueryKeys.recommendations(limit),
+    queryFn: async () => {
+      const response = await jobService.getRecommendedJobs(limit);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch recommended jobs');
+      }
+      return response.data;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  });
+}
+
+export function useJobSearch(params?: JobSearchParams) {
+  return useQuery({
+    queryKey: jobQueryKeys.search(params),
+    queryFn: async () => {
+      const response = await jobService.searchJobs(params);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to search jobs');
+      }
+      return response.data;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes (shorter for search results)
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
