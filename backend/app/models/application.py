@@ -8,7 +8,6 @@ from typing import Optional
 from enum import Enum
 from sqlalchemy import String, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.models import Base
 
@@ -54,42 +53,3 @@ class Application(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
-# ============= Request/Response Schemas =============
-
-class CreateApplicationRequest(BaseModel):
-    """What we need to create a new application"""
-    job_title: str
-    company_name: str
-    description: Optional[str] = None
-
-
-class UpdateApplicationRequest(BaseModel):
-    """What can be updated in an application"""
-    stage: Optional[ApplicationStage] = None
-    status: Optional[ApplicationStatus] = None
-    description: Optional[str] = None
-
-
-class ApplicationResponse(BaseModel):
-    """What we send back about an application"""
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: int
-    user_id: str
-    job_title: str
-    company_name: str
-    description: Optional[str] = None
-    applied_date: datetime
-    stage: ApplicationStage
-    status: ApplicationStatus
-    updated_at: datetime
-    
-    @field_validator('stage', 'status', mode='before')
-    @classmethod
-    def normalize_enum(cls, v):
-        """Ensure enum values are in the correct format"""
-        if v is None:
-            return v
-        if isinstance(v, str):
-            return v.lower()
-        return v

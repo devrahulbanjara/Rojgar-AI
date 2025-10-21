@@ -9,7 +9,7 @@ import type { LoginCredentials, SignupData, UseAuthReturn } from '../types';
 import { useCurrentUser, useLogin, useSignup, useLogout, useIsAuthenticated } from './queries/useAuthQueries';
 
 export const useAuth = (): UseAuthReturn => {
-  const { data: user } = useCurrentUser();
+  const { data: user, refetch: refetchUser } = useCurrentUser();
   const { isAuthenticated, isLoading: authLoading } = useIsAuthenticated();
   
   const loginMutation = useLogin();
@@ -41,6 +41,7 @@ export const useAuth = (): UseAuthReturn => {
     login,
     signup,
     logout,
+    refetchUser,
     // Expose mutation states for more granular control if needed
     loginError: loginMutation.error,
     signupError: signupMutation.error,

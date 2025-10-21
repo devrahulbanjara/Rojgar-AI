@@ -54,7 +54,6 @@ export default function RoleSelection() {
       const response = await authService.selectRole(selectedRole);
       router.push(response.redirect_url);
     } catch (error) {
-      console.error('Role selection error:', error);
       setError(error instanceof Error ? error.message : 'Failed to select role');
     } finally {
       setIsLoading(false);

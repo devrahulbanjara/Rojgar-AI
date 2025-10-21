@@ -10,6 +10,16 @@ dependencies = [
     "pydantic>=2.11.9",
     "pydantic-settings>=2.10.1",
     "python-jose>=3.5.0",
+    "qdrant-client>=1.15.1",
+    "sentence-transformers>=5.1.1",
     "sqlalchemy>=2.0.44",
     "starlette>=0.48.0",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.0.1",
+    "notebook>=7.4.7",
+    "pandas>=2.3.3",
 ]
