@@ -10,7 +10,8 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.security import hash_password, verify_password, create_token
-from app.models.user import User, UserResponse, GoogleUserInfo, UserRole
+from app.models.user import User, UserRole
+from app.schemas.user import UserResponse, GoogleUserInfo
 
 
 class AuthService:

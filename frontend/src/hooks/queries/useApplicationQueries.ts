@@ -11,7 +11,7 @@ import type { ApplicationTrackingBoard } from '../../types/application';
 
 export const useApplicationQueries = () => {
   const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
-    const response = await fetch(`${API_CONFIG.baseUrl}/applications/tracking-board`, {
+    const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/applications/tracking-board`, {
       method: 'GET',
       credentials: 'include', // Include cookies for authentication
       headers: {

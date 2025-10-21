@@ -1,0 +1,286 @@
+"""
+Job-related Pydantic schemas for API requests and responses
+"""
+
+from typing import Optional, List, Dict, Any
+from datetime import date, datetime
+from pydantic import BaseModel, Field, ConfigDict, computed_field, field_validator
+from enum import Enum
+
+
+class JobLevel(str, Enum):
+    """Job experience level"""
+    JUNIOR = "Junior"
+    MID = "Mid"
+    SENIOR = "Senior"
+    LEAD = "Lead"
+    PRINCIPAL = "Principal"
+
+
+class LocationType(str, Enum):
+    """Where the job is located"""
+    REMOTE = "Remote"
+    ONSITE = "On-site"
+    HYBRID = "Hybrid"
+
+
+class EmploymentType(str, Enum):
+    """Type of employment"""
+    FULL_TIME = "Full-time"
+    PART_TIME = "Part-time"
+    CONTRACT = "Contract"
+    INTERNSHIP = "Internship"
+
+
+class JobStatus(str, Enum):
+    """Job posting status"""
+    ACTIVE = "Active"
+    INACTIVE = "Inactive"
+    CLOSED = "Closed"
+    DRAFT = "Draft"
+
+
+# ===== Job Request Schemas =====
+
+class JobCreateRequest(BaseModel):
+    """Schema for creating a new job"""
+    title: str = Field(..., min_length=1, max_length=200, description="Job title")
+    department: str = Field(..., min_length=1, max_length=100, description="Department")
+    level: str = Field(..., min_length=1, max_length=50, description="Experience level")
+    description: str = Field(..., min_length=10, description="Job description")
+    location: str = Field(..., min_length=1, max_length=200, description="Job location")
+    location_type: str = Field(..., description="Location type (On-site, Remote, Hybrid)")
+    is_remote: bool = Field(default=False, description="Is this a remote position")
+    employment_type: str = Field(..., description="Employment type (Full-time, Part-time, Contract)")
+    salary_min: int = Field(..., ge=0, description="Minimum salary")
+    salary_max: int = Field(..., ge=0, description="Maximum salary")
+    salary_currency: str = Field(default="USD", max_length=3, description="Salary currency")
+    requirements: List[str] = Field(default_factory=list, description="Job requirements")
+    skills: List[str] = Field(default_factory=list, description="Required skills")
+    benefits: List[str] = Field(default_factory=list, description="Job benefits")
+    application_deadline: Optional[date] = Field(None, description="Application deadline")
+    is_featured: bool = Field(default=False, description="Is this a featured job")
+    company_id: int = Field(..., description="Company ID")
+
+
+class JobUpdateRequest(BaseModel):
+    """Schema for updating a job"""
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    department: Optional[str] = Field(None, min_length=1, max_length=100)
+    level: Optional[str] = Field(None, min_length=1, max_length=50)
+    description: Optional[str] = Field(None, min_length=10)
+    location: Optional[str] = Field(None, min_length=1, max_length=200)
+    location_type: Optional[str] = Field(None)
+    is_remote: Optional[bool] = Field(None)
+    employment_type: Optional[str] = Field(None)
+    salary_min: Optional[int] = Field(None, ge=0)
+    salary_max: Optional[int] = Field(None, ge=0)
+    salary_currency: Optional[str] = Field(None, max_length=3)
+    requirements: Optional[List[str]] = Field(None)
+    skills: Optional[List[str]] = Field(None)
+    benefits: Optional[List[str]] = Field(None)
+    application_deadline: Optional[date] = Field(None)
+    is_featured: Optional[bool] = Field(None)
+    status: Optional[str] = Field(None, description="Job status")
+
+
+class JobSearchRequest(BaseModel):
+    """Schema for job search parameters"""
+    page: int = Field(default=1, ge=1, description="Page number")
+    limit: int = Field(default=20, ge=1, le=100, description="Items per page")
+    search: Optional[str] = Field(None, description="Search term")
+    location: Optional[str] = Field(None, description="Location filter")
+    department: Optional[str] = Field(None, description="Department filter")
+    level: Optional[str] = Field(None, description="Experience level filter")
+    location_type: Optional[str] = Field(None, description="Location type filter")
+    employment_type: Optional[str] = Field(None, description="Employment type filter")
+    salary_min: Optional[int] = Field(None, ge=0, description="Minimum salary filter")
+    salary_max: Optional[int] = Field(None, ge=0, description="Maximum salary filter")
+    is_remote: Optional[bool] = Field(None, description="Remote work filter")
+    is_featured: Optional[bool] = Field(None, description="Featured jobs filter")
+    company_id: Optional[int] = Field(None, description="Company filter")
+    sort_by: str = Field(default="posted_date", description="Sort field")
+    sort_order: str = Field(default="desc", description="Sort order (asc/desc)")
+
+
+class JobRecommendationRequest(BaseModel):
+    """Schema for job recommendations"""
+    limit: int = Field(default=5, ge=1, le=20, description="Number of recommendations")
+
+
+# ===== Company Request Schemas =====
+
+class CompanyCreateRequest(BaseModel):
+    """Schema for creating a new company"""
+    name: str = Field(..., min_length=1, max_length=200, description="Company name")
+    logo: Optional[str] = Field(None, description="Company logo URL")
+    website: Optional[str] = Field(None, description="Company website")
+    description: Optional[str] = Field(None, description="Company description")
+    location: Optional[str] = Field(None, max_length=200, description="Company location")
+    size: Optional[str] = Field(None, description="Company size")
+    industry: Optional[str] = Field(None, description="Industry")
+    brand_color: Optional[str] = Field(None, description="Brand color")
+    founded_year: Optional[int] = Field(None, ge=1800, le=2025, description="Founded year")
+
+
+class CompanyUpdateRequest(BaseModel):
+    """Schema for updating a company"""
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    logo: Optional[str] = Field(None)
+    website: Optional[str] = Field(None)
+    description: Optional[str] = Field(None)
+    location: Optional[str] = Field(None, max_length=200)
+    size: Optional[str] = Field(None)
+    industry: Optional[str] = Field(None)
+    brand_color: Optional[str] = Field(None)
+    founded_year: Optional[int] = Field(None, ge=1800, le=2025)
+
+
+# ===== Job Action Request Schemas =====
+
+class JobViewRequest(BaseModel):
+    """Schema for job view tracking"""
+    job_id: int = Field(..., description="Job ID to view")
+
+
+class JobApplicationRequest(BaseModel):
+    """Schema for job application tracking"""
+    job_id: int = Field(..., description="Job ID to apply to")
+
+
+class JobStatsRequest(BaseModel):
+    """Schema for job statistics request"""
+    pass  # No specific parameters needed for stats
+
+
+# ===== Response Schemas (for reference) =====
+
+class SalaryRange(BaseModel):
+    """Salary range information"""
+    min: int
+    max: int
+    currency: str
+
+
+class CompanyResponse(BaseModel):
+    """Company response schema"""
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    name: str
+    logo: Optional[str] = None
+    website: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    size: Optional[str] = None
+    industry: Optional[str] = None
+    brand_color: Optional[str] = None
+    founded_year: Optional[int] = None
+
+
+class JobResponse(BaseModel):
+    """Job response schema"""
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    title: str
+    department: str
+    level: JobLevel
+    description: str
+    location: str
+    location_type: LocationType
+    is_remote: bool
+    employment_type: EmploymentType
+    salary_min: int
+    salary_max: int
+    salary_currency: str
+    requirements: List[str]
+    skills: List[str]
+    benefits: List[str]
+    posted_date: date
+    application_deadline: date
+    status: JobStatus
+    is_featured: bool
+    applicant_count: int
+    views_count: int
+    company_id: int
+    company: Optional[CompanyResponse] = None
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    
+    @field_validator('level', 'location_type', 'employment_type', 'status', mode='before')
+    @classmethod
+    def normalize_enum(cls, v, info):
+        """Ensure enum values are in the correct format"""
+        if v is None:
+            return v
+        if not isinstance(v, str):
+            return v
+            
+        # Define mappings for each field
+        mappings = {
+            'level': {
+                'JUNIOR': 'Junior', 'junior': 'Junior',
+                'MID': 'Mid', 'mid': 'Mid',
+                'SENIOR': 'Senior', 'senior': 'Senior',
+                'LEAD': 'Lead', 'lead': 'Lead',
+                'PRINCIPAL': 'Principal', 'principal': 'Principal'
+            },
+            'location_type': {
+                'REMOTE': 'Remote', 'remote': 'Remote',
+                'ONSITE': 'On-site', 'onsite': 'On-site', 'ON-SITE': 'On-site', 'on-site': 'On-site',
+                'HYBRID': 'Hybrid', 'hybrid': 'Hybrid'
+            },
+            'employment_type': {
+                'FULL_TIME': 'Full-time', 'full_time': 'Full-time', 'FULL-TIME': 'Full-time', 'full-time': 'Full-time',
+                'PART_TIME': 'Part-time', 'part_time': 'Part-time', 'PART-TIME': 'Part-time', 'part-time': 'Part-time',
+                'CONTRACT': 'Contract', 'contract': 'Contract',
+                'INTERNSHIP': 'Internship', 'internship': 'Internship'
+            },
+            'status': {
+                'ACTIVE': 'Active', 'active': 'Active',
+                'INACTIVE': 'Inactive', 'inactive': 'Inactive',
+                'CLOSED': 'Closed', 'closed': 'Closed',
+                'DRAFT': 'Draft', 'draft': 'Draft'
+            }
+        }
+        
+        field_name = info.field_name
+        if field_name in mappings and v in mappings[field_name]:
+            return mappings[field_name][v]
+        
+        return v
+    
+    # Add a computed salary_range for backwards compatibility
+    @computed_field
+    @property
+    def salary_range(self) -> dict:
+        """Returns salary range as a dict"""
+        return {
+            "min": self.salary_min,
+            "max": self.salary_max,
+            "currency": self.salary_currency
+        }
+
+
+class JobSearchResponse(BaseModel):
+    """Job search response schema"""
+    jobs: List[JobResponse]
+    total: int
+    page: int
+    total_pages: int
+    has_next: bool
+    has_prev: bool
+
+
+class JobStatsResponse(BaseModel):
+    """Job statistics response schema"""
+    total_jobs: int
+    active_jobs: int
+    featured_jobs: int
+    remote_jobs: int
+    avg_salary: float
+    top_skills: List[str]
+    top_locations: List[str]
+    top_companies: List[str]

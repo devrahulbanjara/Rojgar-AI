@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { DashboardHeader, StatsGrid } from '../../../components/dashboard';
 import { AppShell } from '../../../components/layout/AppShell';
-import { PageTransition, AnimatedContainer } from '../../../components/common';
+import { PageTransition, AnimatedContainer, PageHeader } from '../../../components/common';
 import { useDashboardStats } from '../../../hooks/useDashboardStats';
 import { BriefcaseIcon } from 'lucide-react';
 
@@ -34,14 +34,10 @@ export default function RecruiterDashboard() {
           {/* Recent Activity Section */}
           <AnimatedContainer direction="up" delay={0.3}>
             <div className="space-y-8">
-              <div>
-                <h2 className="text-3xl max-lg:text-2xl font-semibold text-[#0F172A] mb-2">
-                  Recent Activity
-                </h2>
-                <p className="text-base text-[#475569]">
-                  Latest updates from your recruitment pipeline
-                </p>
-              </div>
+              <PageHeader
+                title="Recent Activity"
+                subtitle="Latest updates from your recruitment pipeline"
+              />
               
               <div 
                 className="bg-white rounded-2xl border border-[#E5E7EB] p-8"

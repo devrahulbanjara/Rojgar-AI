@@ -53,7 +53,7 @@ export default function Login() {
   };
 
   const handleGoogleSuccess = () => {
-    console.log('Google login initiated');
+    // Google login initiated
   };
 
   const handleGoogleError = (error: string) => {

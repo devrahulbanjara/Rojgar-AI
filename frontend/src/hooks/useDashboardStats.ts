@@ -20,7 +20,7 @@ export interface DashboardStats {
 
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
-    const response = await apiClient.get<DashboardStats>('/applications/stats');
+    const response = await apiClient.get<DashboardStats>('/api/v1/applications/stats');
     
     // Handle both response formats: direct data or wrapped in ApiResponse
     if (response && typeof response === 'object') {
@@ -34,7 +34,6 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       }
     }
     
-    console.warn('Unexpected response format from stats API:', response);
     return {
       totalApplications: 0,
       activeApplications: 0,
@@ -43,7 +42,6 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       responseRate: 0,
     };
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
     // Return default stats on error instead of throwing
     return {
       totalApplications: 0,

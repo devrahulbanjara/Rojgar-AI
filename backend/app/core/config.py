@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # ===== Database =====
     DATABASE_URL: str = "sqlite:///./convexhire.db"
     
+    # ===== Qdrant Vector Database =====
+    QDRANT_URL: str = "https://e884396c-756d-4b...cp.cloud.qdrant.io:6333"
+    QDRANT_API_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5...95GHHt0FGTSWAH7uqJG5UMc"
+    QDRANT_COLLECTION_JOBS: str = "jobs"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

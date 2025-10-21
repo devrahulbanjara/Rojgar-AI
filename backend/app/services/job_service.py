@@ -6,13 +6,8 @@ from typing import List, Optional, Dict
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func, or_, and_
 
-from app.models.job import (
-    Job,
-    Company,
-    JobStatus,
-    JobResponse,
-    CompanyResponse,
-)
+from app.models.job import Job, Company, JobStatus
+from app.schemas.job import JobResponse, CompanyResponse
 
 
 class JobService:
@@ -27,6 +22,27 @@ class JobService:
     def to_company_response(company: Company) -> CompanyResponse:
         """Convert Company model to CompanyResponse"""
         return CompanyResponse.model_validate(company)
+    
+    @staticmethod
+    def get_recommended_jobs(db: Session, limit: int = 5) -> Dict:
+        """Get recommended jobs for homepage"""
+        # Currently returns recent active jobs as placeholder
+        # Future enhancement: integrate with Qdrant vector DB for semantic matching
+        query = (
+            select(Job)
+            .where(Job.status == JobStatus.ACTIVE.value)
+            .options(selectinload(Job.company))
+            .order_by(Job.posted_date.desc())
+            .limit(limit)
+        )
+        
+        jobs = db.execute(query).scalars().all()
+        
+        return {
+            "jobs": [JobService.to_job_response(job) for job in jobs],
+            "total": len(jobs),
+            "limit": limit,
+        }
     
     @staticmethod
     def search_jobs(
