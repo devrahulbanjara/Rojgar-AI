@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { ApplicationTrackingBoard } from '../../../components/application-tracking/ApplicationTrackingBoard';
 import { WelcomeMessage, StatsGrid } from '../../../components/dashboard';
-import { SectionHeader, PageTransition, AnimatedContainer } from '../../../components/common';
+import { SectionHeader, PageTransition, AnimatedContainer, PageHeader } from '../../../components/common';
 import { AppShell } from '../../../components/layout/AppShell';
 import { useDashboardStats } from '../../../hooks/useDashboardStats';
 import { useApplicationTrackingBoard } from '../../../hooks/useApplicationTrackingBoard';
@@ -43,14 +43,10 @@ export default function CandidateDashboard() {
           {/* Application Tracking Section */}
           <AnimatedContainer direction="up" delay={0.3}>
             <div className="space-y-8">
-              <div>
-                <h2 className="text-3xl max-lg:text-2xl font-semibold text-[#0F172A] mb-2">
-                  Your Applications
-                </h2>
-                <p className="text-base text-[#475569]">
-                  Track your job application journey
-                </p>
-              </div>
+              <PageHeader
+                title="Your Applications"
+                subtitle="Track your job application journey"
+              />
               
               <ApplicationTrackingBoard 
                 applications={applicationTrackingData} 

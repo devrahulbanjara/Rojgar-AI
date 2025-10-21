@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user_id
-from app.models.application import (
+from app.core.dependencies import get_application_by_id, get_application_for_update, get_application_for_delete
+from app.models.application import Application
+from app.schemas.application import (
     CreateApplicationRequest,
     UpdateApplicationRequest,
     ApplicationResponse,
@@ -32,14 +34,14 @@ def get_my_applications(
     # Get all applications for this user
     applications = ApplicationService.get_user_applications(user_id, db)
     
-    return [ApplicationService.to_response(app) for app in applications]
+    return applications
 
 
-@router.get("/tracking-board")
+@router.get("/tracking-board", response_model=Dict[str, List[dict]])
 def get_tracking_board(
     request: Request,
     db: Session = Depends(get_db)
-) -> Dict[str, List[dict]]:
+):
     """
     Get applications organized by stage for the tracking board
     Organizes into 3 columns: applied, interviewing, outcome
@@ -49,11 +51,11 @@ def get_tracking_board(
     return ApplicationService.get_tracking_board(user_id, db)
 
 
-@router.get("/stats")
+@router.get("/stats", response_model=Dict[str, int])
 def get_application_stats(
     request: Request,
     db: Session = Depends(get_db)
-) -> Dict[str, int]:
+):
     """Get statistics about user's applications"""
     user_id = get_current_user_id(request)
     
@@ -78,63 +80,24 @@ def create_application(
         db=db
     )
     
-    return ApplicationService.to_response(new_app)
+    return new_app
 
 
 @router.get("/{application_id}", response_model=ApplicationResponse)
 def get_application(
-    application_id: int,
-    request: Request,
-    db: Session = Depends(get_db)
+    app: Application = Depends(get_application_by_id)
 ):
     """Get a specific application"""
-    user_id = get_current_user_id(request)
-    
-    # Get application
-    app = ApplicationService.get_application_by_id(application_id, db)
-    
-    if not app:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found",
-        )
-    
-    # Check ownership
-    if not ApplicationService.verify_ownership(app, user_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this application",
-        )
-    
-    return ApplicationService.to_response(app)
+    return app
 
 
 @router.put("/{application_id}", response_model=ApplicationResponse)
 def update_application(
-    application_id: int,
     update_data: UpdateApplicationRequest,
-    request: Request,
+    app: Application = Depends(get_application_for_update),
     db: Session = Depends(get_db)
 ):
     """Update an application"""
-    user_id = get_current_user_id(request)
-    
-    # Get application
-    app = ApplicationService.get_application_by_id(application_id, db)
-    
-    if not app:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found",
-        )
-    
-    # Check ownership
-    if not ApplicationService.verify_ownership(app, user_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this application",
-        )
-    
     # Update application
     updated_app = ApplicationService.update_application(
         application=app,
@@ -144,34 +107,15 @@ def update_application(
         db=db
     )
     
-    return ApplicationService.to_response(updated_app)
+    return updated_app
 
 
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_application(
-    application_id: int,
-    request: Request,
+    app: Application = Depends(get_application_for_delete),
     db: Session = Depends(get_db)
 ):
     """Delete an application"""
-    user_id = get_current_user_id(request)
-    
-    # Get application
-    app = ApplicationService.get_application_by_id(application_id, db)
-    
-    if not app:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found",
-        )
-    
-    # Check ownership
-    if not ApplicationService.verify_ownership(app, user_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this application",
-        )
-    
     ApplicationService.delete_application(app, db)
     
     return None

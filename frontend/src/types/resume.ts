@@ -13,12 +13,15 @@ export interface Resume {
   contact_phone?: string;
   contact_location?: string;
   custom_summary?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  portfolio_url?: string;
   created_at: string;
   updated_at: string;
   
   // Nested data
   experiences: ResumeExperience[];
-  education: ResumeEducation[];
+  educations: ResumeEducation[];
   certifications: ResumeCertification[];
   skills: ResumeSkill[];
 }
@@ -30,6 +33,15 @@ export interface ResumeExperience {
   custom_description: string;
   created_at: string;
   updated_at: string;
+  
+  // Resume-specific overrides (don't affect original work experience)
+  job_title?: string;
+  company?: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  is_current?: boolean;
+  master_description?: string;
   
   // Related work experience data
   work_experience: {
@@ -50,6 +62,17 @@ export interface ResumeEducation {
   education_record_id: string;
   created_at: string;
   updated_at: string;
+  
+  // Resume-specific overrides (don't affect original education record)
+  school_university?: string;
+  degree?: string;
+  field_of_study?: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  is_current?: boolean;
+  gpa?: string;
+  honors?: string;
   
   // Related education data
   education_record: {
@@ -73,6 +96,15 @@ export interface ResumeCertification {
   created_at: string;
   updated_at: string;
   
+  // Resume-specific overrides (don't affect original certification)
+  name?: string;
+  issuing_body?: string;
+  credential_id?: string;
+  credential_url?: string;
+  issue_date?: string;
+  expiration_date?: string;
+  does_not_expire?: boolean;
+  
   // Related certification data
   certification: {
     id: string;
@@ -93,6 +125,11 @@ export interface ResumeSkill {
   created_at: string;
   updated_at: string;
   
+  // Resume-specific overrides (don't affect original profile skill)
+  skill_name?: string;
+  proficiency_level?: string;
+  years_of_experience?: number;
+  
   // Related skill data
   profile_skill: {
     id: string;
@@ -110,6 +147,9 @@ export interface ResumeCreateRequest {
   contact_phone?: string;
   contact_location?: string;
   custom_summary?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  portfolio_url?: string;
 }
 
 export interface ResumeUpdateRequest {
@@ -119,6 +159,9 @@ export interface ResumeUpdateRequest {
   contact_phone?: string;
   contact_location?: string;
   custom_summary?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  portfolio_url?: string;
 }
 
 export interface AddExperienceToResumeRequest {

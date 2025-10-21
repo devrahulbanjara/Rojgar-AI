@@ -13,7 +13,7 @@ import { JobSearchBar, JobFilters, JobList, JobDetailView } from '../../../compo
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { AnimatedContainer } from '../../../components/common';
+import { AnimatedContainer, PageHeader } from '../../../components/common';
 import { 
   Filter, 
   SlidersHorizontal, 
@@ -68,11 +68,11 @@ export default function Jobs() {
   const handleJobApply = useCallback(async (job: Job) => {
     try {
       await createApplicationMutation.mutateAsync({
-        jobId: job.job_id.toString(),
+        jobId: job.id.toString(),
       });
       // Show success message or redirect
     } catch (error) {
-      console.error('Failed to apply to job:', error);
+      // Handle application error silently
     }
   }, [createApplicationMutation]);
 
@@ -96,12 +96,10 @@ export default function Jobs() {
       <div className="space-y-8">
           {/* Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] mb-2 leading-tight">
-              Find Your Next Opportunity
-            </h1>
-            <p className="text-base text-[#475569]">
-              Discover jobs that match your skills and career goals
-            </p>
+            <PageHeader
+              title="Find Your Next Opportunity"
+              subtitle="Discover jobs that match your skills and career goals"
+            />
           </AnimatedContainer>
 
           {/* Search and Filters Bar */}

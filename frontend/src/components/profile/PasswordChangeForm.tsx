@@ -54,7 +54,7 @@ export function PasswordChangeForm() {
     setMessage(null);
 
     try {
-      await apiClient.put('/users/password', {
+      await apiClient.put('/api/v1/users/password', {
         current_password: formData.currentPassword,
         new_password: formData.newPassword,
         confirm_password: formData.confirmPassword,

@@ -22,7 +22,6 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
       await authService.logout();
       router.push(ROUTES.HOME);
     } catch (error) {
-      console.error('Logout failed:', error);
       router.push(ROUTES.HOME);
     }
   };

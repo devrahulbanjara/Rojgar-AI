@@ -17,24 +17,24 @@ import type { Application, CreateApplicationRequest, UpdateApplicationRequest } 
 
 // Job API endpoints
 const jobEndpoints = {
-  list: '/jobs',
-  recommendations: '/jobs/recommendations',
-  search: '/jobs/search',
-  detail: (id: string) => `/jobs/${id}`,
-  create: '/jobs',
-  update: (id: string) => `/jobs/${id}`,
-  delete: (id: string) => `/jobs/${id}`,
+  list: '/api/v1/jobs',
+  recommendations: '/api/v1/jobs/recommendations',
+  search: '/api/v1/jobs/search',
+  detail: (id: string) => `/api/v1/jobs/${id}`,
+  create: '/api/v1/jobs',
+  update: (id: string) => `/api/v1/jobs/${id}`,
+  delete: (id: string) => `/api/v1/jobs/${id}`,
 } as const;
 
 // Application API endpoints
 const applicationEndpoints = {
-  list: '/applications',
-  detail: (id: string) => `/applications/${id}`,
-  create: '/applications',
-  update: (id: string) => `/applications/${id}`,
-  delete: (id: string) => `/applications/${id}`,
-  byJob: (jobId: string) => `/applications/job/${jobId}`,
-  byCandidate: (candidateId: string) => `/applications/candidate/${candidateId}`,
+  list: '/api/v1/applications',
+  detail: (id: string) => `/api/v1/applications/${id}`,
+  create: '/api/v1/applications',
+  update: (id: string) => `/api/v1/applications/${id}`,
+  delete: (id: string) => `/api/v1/applications/${id}`,
+  byJob: (jobId: string) => `/api/v1/applications/job/${jobId}`,
+  byCandidate: (candidateId: string) => `/api/v1/applications/candidate/${candidateId}`,
 } as const;
 
 // Job Service Class
@@ -42,18 +42,18 @@ export class JobService {
   /**
    * Get recommended jobs for homepage
    */
-  static async getRecommendedJobs(limit: number = 5): Promise<BaseApiResponse<JobListResponse>> {
+  static async getRecommendedJobs(limit: number = 5): Promise<Job[]> {
     const queryParams = new URLSearchParams();
     queryParams.append('limit', limit.toString());
     
     const endpoint = `${jobEndpoints.recommendations}?${queryParams.toString()}`;
-    return apiClient.get<JobListResponse>(endpoint);
+    return apiClient.get<Job[]>(endpoint);
   }
 
   /**
    * Search jobs with filters and pagination
    */
-  static async searchJobs(params?: JobSearchParams): Promise<BaseApiResponse<JobListResponse>> {
+  static async searchJobs(params?: JobSearchParams): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
     
     if (params?.page) queryParams.append('page', params.page.toString());
@@ -88,7 +88,7 @@ export class JobService {
    * Get list of jobs with optional filters and pagination (legacy method)
    * @deprecated Use searchJobs for filtered results or getRecommendedJobs for homepage
    */
-  static async getJobs(params?: JobSearchParams): Promise<BaseApiResponse<JobListResponse>> {
+  static async getJobs(params?: JobSearchParams): Promise<JobListResponse> {
     // For backward compatibility, redirect to searchJobs
     return JobService.searchJobs(params);
   }
@@ -96,28 +96,28 @@ export class JobService {
   /**
    * Get job details by ID
    */
-  static async getJobById(id: string): Promise<BaseApiResponse<JobDetailResponse>> {
-    return apiClient.get<JobDetailResponse>(jobEndpoints.detail(id));
+  static async getJobById(id: string): Promise<Job> {
+    return apiClient.get<Job>(jobEndpoints.detail(id));
   }
 
   /**
    * Create a new job
    */
-  static async createJob(data: CreateJobRequest): Promise<BaseApiResponse<Job>> {
+  static async createJob(data: CreateJobRequest): Promise<Job> {
     return apiClient.post<Job>(jobEndpoints.create, data);
   }
 
   /**
    * Update an existing job
    */
-  static async updateJob(id: string, data: UpdateJobRequest): Promise<BaseApiResponse<Job>> {
+  static async updateJob(id: string, data: UpdateJobRequest): Promise<Job> {
     return apiClient.put<Job>(jobEndpoints.update(id), data);
   }
 
   /**
    * Delete a job
    */
-  static async deleteJob(id: string): Promise<BaseApiResponse<void>> {
+  static async deleteJob(id: string): Promise<void> {
     return apiClient.delete<void>(jobEndpoints.delete(id));
   }
 
@@ -125,7 +125,7 @@ export class JobService {
   /**
    * Get jobs by company
    */
-  static async getJobsByCompany(companyId: string, params?: { page?: number; limit?: number }): Promise<BaseApiResponse<JobListResponse>> {
+  static async getJobsByCompany(companyId: string, params?: { page?: number; limit?: number }): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
     queryParams.append('company_id', companyId);
     if (params?.page) queryParams.append('page', params.page.toString());
@@ -138,7 +138,7 @@ export class JobService {
   /**
    * Get featured/recommended jobs
    */
-  static async getFeaturedJobs(limit: number = 10): Promise<BaseApiResponse<Job[]>> {
+  static async getFeaturedJobs(limit: number = 10): Promise<Job[]> {
     const queryParams = new URLSearchParams();
     queryParams.append('featured', 'true');
     queryParams.append('limit', limit.toString());
@@ -159,51 +159,51 @@ export class ApplicationService {
     jobId?: string; 
     candidateId?: string; 
     status?: string;
-  }): Promise<BaseApiResponse<{ applications: Application[]; total: number; page: number; totalPages: number }>> {
+  }): Promise<Application[]> {
     const queryParams = new URLSearchParams();
     
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.jobId) queryParams.append('job_id', params.jobId);
+    if (params?.jobId) queryParams.append('id', params.jobId);
     if (params?.candidateId) queryParams.append('candidate_id', params.candidateId);
     if (params?.status) queryParams.append('status', params.status);
     
     const endpoint = `${applicationEndpoints.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return apiClient.get(endpoint);
+    return apiClient.get<Application[]>(endpoint);
   }
 
   /**
    * Get application details by ID
    */
-  static async getApplicationById(id: string): Promise<BaseApiResponse<Application>> {
+  static async getApplicationById(id: string): Promise<Application> {
     return apiClient.get<Application>(applicationEndpoints.detail(id));
   }
 
   /**
    * Create a new application
    */
-  static async createApplication(data: CreateApplicationRequest): Promise<BaseApiResponse<Application>> {
+  static async createApplication(data: CreateApplicationRequest): Promise<Application> {
     return apiClient.post<Application>(applicationEndpoints.create, data);
   }
 
   /**
    * Update an existing application
    */
-  static async updateApplication(id: string, data: UpdateApplicationRequest): Promise<BaseApiResponse<Application>> {
+  static async updateApplication(id: string, data: UpdateApplicationRequest): Promise<Application> {
     return apiClient.put<Application>(applicationEndpoints.update(id), data);
   }
 
   /**
    * Delete an application
    */
-  static async deleteApplication(id: string): Promise<BaseApiResponse<void>> {
+  static async deleteApplication(id: string): Promise<void> {
     return apiClient.delete<void>(applicationEndpoints.delete(id));
   }
 
   /**
    * Get applications for a specific job
    */
-  static async getApplicationsByJob(jobId: string, params?: { page?: number; limit?: number }): Promise<BaseApiResponse<Application[]>> {
+  static async getApplicationsByJob(jobId: string, params?: { page?: number; limit?: number }): Promise<Application[]> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
@@ -215,7 +215,7 @@ export class ApplicationService {
   /**
    * Get applications for a specific candidate
    */
-  static async getApplicationsByCandidate(candidateId: string, params?: { page?: number; limit?: number }): Promise<BaseApiResponse<Application[]>> {
+  static async getApplicationsByCandidate(candidateId: string, params?: { page?: number; limit?: number }): Promise<Application[]> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());

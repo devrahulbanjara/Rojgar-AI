@@ -61,7 +61,6 @@ export const useLogin = () => {
       }
     },
     onError: (error) => {
-      console.error('Login failed:', error);
       // Clear any existing auth data
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
@@ -89,7 +88,6 @@ export const useSignup = () => {
       }
     },
     onError: (error) => {
-      console.error('Signup failed:', error);
       // Clear any existing auth data
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
@@ -113,7 +111,6 @@ export const useLogout = () => {
       router.push(ROUTES.HOME);
     },
     onError: (error) => {
-      console.error('Logout failed:', error);
       // Even if logout fails, clear local data and redirect
       queryClient.clear();
       router.push(ROUTES.HOME);

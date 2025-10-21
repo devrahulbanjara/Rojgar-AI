@@ -51,7 +51,8 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
     >
       <nav className="py-8 px-4 space-y-2">
         {items.map((item) => {
-          const isActive = pathname === item.path;
+          // Check if current path starts with the item path for nested routes
+          const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
           const Icon = item.icon;
           
           return (

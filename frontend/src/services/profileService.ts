@@ -25,18 +25,15 @@ import type {
 export const profileService = {
   // Profile CRUD operations
   async getProfile(): Promise<Profile> {
-    const response = await api.profile.get();
-    return response as Profile;
+    return api.profile.get();
   },
 
   async createProfile(profileData: ProfileCreateRequest): Promise<Profile> {
-    const response = await api.profile.create(profileData);
-    return response as Profile;
+    return api.profile.create(profileData);
   },
 
   async updateProfile(profileData: ProfileUpdateRequest): Promise<Profile> {
-    const response = await api.profile.update(profileData);
-    return response as Profile;
+    return api.profile.update(profileData);
   },
 
   // Work Experience management
@@ -46,17 +43,15 @@ export const profileService = {
   },
 
   async createWorkExperience(experienceData: WorkExperienceCreateRequest): Promise<WorkExperience> {
-    const response = await api.profile.workExperience.create(experienceData);
-    return response as WorkExperience;
+    return api.profile.workExperience.create(experienceData);
   },
 
   async updateWorkExperience(id: string, experienceData: WorkExperienceUpdateRequest): Promise<WorkExperience> {
-    const response = await api.profile.workExperience.update(id, experienceData);
-    return response as WorkExperience;
+    return api.profile.workExperience.update(id, experienceData);
   },
 
   async deleteWorkExperience(id: string): Promise<void> {
-    await api.profile.workExperience.delete(id);
+    return api.profile.workExperience.delete(id);
   },
 
   // Education management
@@ -66,17 +61,15 @@ export const profileService = {
   },
 
   async createEducationRecord(educationData: EducationCreateRequest): Promise<EducationRecord> {
-    const response = await api.profile.education.create(educationData);
-    return response as EducationRecord;
+    return api.profile.education.create(educationData);
   },
 
   async updateEducationRecord(id: string, educationData: EducationUpdateRequest): Promise<EducationRecord> {
-    const response = await api.profile.education.update(id, educationData);
-    return response as EducationRecord;
+    return api.profile.education.update(id, educationData);
   },
 
   async deleteEducationRecord(id: string): Promise<void> {
-    await api.profile.education.delete(id);
+    return api.profile.education.delete(id);
   },
 
   // Certification management
@@ -86,17 +79,15 @@ export const profileService = {
   },
 
   async createCertification(certificationData: CertificationCreateRequest): Promise<Certification> {
-    const response = await api.profile.certifications.create(certificationData);
-    return response as Certification;
+    return api.profile.certifications.create(certificationData);
   },
 
   async updateCertification(id: string, certificationData: CertificationUpdateRequest): Promise<Certification> {
-    const response = await api.profile.certifications.update(id, certificationData);
-    return response as Certification;
+    return api.profile.certifications.update(id, certificationData);
   },
 
   async deleteCertification(id: string): Promise<void> {
-    await api.profile.certifications.delete(id);
+    return api.profile.certifications.delete(id);
   },
 
   // Skills management
@@ -106,16 +97,14 @@ export const profileService = {
   },
 
   async createProfileSkill(skillData: ProfileSkillCreateRequest): Promise<ProfileSkill> {
-    const response = await api.profile.skills.create(skillData);
-    return response as ProfileSkill;
+    return api.profile.skills.create(skillData);
   },
 
   async updateProfileSkill(id: string, skillData: ProfileSkillUpdateRequest): Promise<ProfileSkill> {
-    const response = await api.profile.skills.update(id, skillData);
-    return response as ProfileSkill;
+    return api.profile.skills.update(id, skillData);
   },
 
   async deleteProfileSkill(id: string): Promise<void> {
-    await api.profile.skills.delete(id);
+    return api.profile.skills.delete(id);
   },
 };

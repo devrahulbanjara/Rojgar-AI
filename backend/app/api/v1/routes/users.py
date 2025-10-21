@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.security import get_current_user_id, verify_password, hash_password
-from app.models.user import UserResponse
+from app.schemas.user import UserResponse
 from app.services.user_service import UserService
 
 router = APIRouter()
@@ -69,7 +69,7 @@ def update_profile(
     return UserService.to_user_response(user)
 
 
-@router.put("/password")
+@router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
     password_data: PasswordChangeRequest,
     user_id: str = Depends(get_current_user_id),
@@ -116,5 +116,3 @@ def change_password(
     # Update password
     user.password_hash = hash_password(password_data.new_password)
     db.commit()
-    
-    return {"message": "Password changed successfully"}

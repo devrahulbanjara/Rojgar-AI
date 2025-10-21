@@ -53,7 +53,6 @@ export default function AuthCallback() {
         router.push(redirectUrl);
       }
     } catch (error) {
-      console.error('Auth callback error:', error);
       setError(error instanceof Error ? error.message : 'Authentication failed');
     }
   };

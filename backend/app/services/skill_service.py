@@ -5,7 +5,8 @@ Skill Service - Business logic for skills management
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from app.models.skill import Skill, SkillCreateRequest, SkillResponse, SkillsListResponse
+from app.models.skill import Skill
+from app.schemas.skill import SkillCreateRequest, SkillResponse, SkillsListResponse
 # No security imports needed for skill service
 import uuid
 

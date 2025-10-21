@@ -7,21 +7,13 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.models.application import (
-    Application,
-    ApplicationStage,
-    ApplicationStatus,
-    ApplicationResponse,
-)
+from app.models.application import Application, ApplicationStage, ApplicationStatus
+from app.schemas.application import ApplicationResponse
 
 
 class ApplicationService:
     """Service for handling application-related business logic"""
     
-    @staticmethod
-    def to_response(app: Application) -> ApplicationResponse:
-        """Convert Application model to ApplicationResponse"""
-        return ApplicationResponse.model_validate(app)
     
     @staticmethod
     def get_user_applications(user_id: str, db: Session) -> List[Application]:
