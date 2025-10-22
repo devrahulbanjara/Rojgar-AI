@@ -31,7 +31,7 @@ export default function Jobs() {
   const [filters, setFilters] = useState<JobFiltersType>({});
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'postedDate' | 'salary' | 'title' | 'company'>('postedDate');
+  const [sortBy, setSortBy] = useState<'postedDate' | 'salary'>('postedDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Use real API calls with search endpoint
@@ -83,13 +83,6 @@ export default function Jobs() {
     ).length;
   }, [filters]);
 
-  // Sort options
-  const sortOptions = [
-    { value: 'postedDate', label: 'Posted Date' },
-    { value: 'salary', label: 'Salary' },
-    { value: 'title', label: 'Job Title' },
-    { value: 'company', label: 'Company' },
-  ];
 
   return (
     <AppShell>
@@ -141,7 +134,7 @@ export default function Jobs() {
                   )}
                 </button>
 
-                {/* Sort Dropdown */}
+                {/* Sort Dropdown - Only 4 options: Posted Date (Latest/Oldest) and Salary (Highest/Lowest) */}
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -151,12 +144,10 @@ export default function Jobs() {
                   }}
                   className="h-11 px-4 bg-white border-[1.5px] border-[#E5E7EB] rounded-xl text-sm font-medium text-[#475569] focus:outline-none focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10 transition-all"
                 >
-                  {sortOptions.map(option => (
-                    <React.Fragment key={option.value}>
-                      <option value={`${option.value}-desc`}>{option.label} (Newest)</option>
-                      <option value={`${option.value}-asc`}>{option.label} (Oldest)</option>
-                    </React.Fragment>
-                  ))}
+                  <option value="postedDate-desc">Posted Date (Latest)</option>
+                  <option value="postedDate-asc">Posted Date (Oldest)</option>
+                  <option value="salary-desc">Salary (Highest)</option>
+                  <option value="salary-asc">Salary (Lowest)</option>
                 </select>
               </div>
             </div>

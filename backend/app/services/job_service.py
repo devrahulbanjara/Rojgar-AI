@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func, or_, and_
 
 from app.models.job import Job, Company, JobStatus
-from app.schemas.job import JobResponse, CompanyResponse
+from app.schemas.job import JobResponse, CompanyResponse, JobSearchRequest
 
 
 class JobService:
@@ -25,9 +25,6 @@ class JobService:
     
     @staticmethod
     def get_recommended_jobs(db: Session, limit: int = 5) -> Dict:
-        """Get recommended jobs for homepage"""
-        # Currently returns recent active jobs as placeholder
-        # Future enhancement: integrate with Qdrant vector DB for semantic matching
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -44,101 +41,77 @@ class JobService:
             "limit": limit,
         }
     
+
     @staticmethod
-    def search_jobs(
-        db: Session,
-        page: int = 1,
-        limit: int = 20,
-        search: Optional[str] = None,
-        location: Optional[str] = None,
-        department: Optional[str] = None,
-        level: Optional[str] = None,
-        location_type: Optional[str] = None,
-        employment_type: Optional[str] = None,
-        salary_min: Optional[int] = None,
-        salary_max: Optional[int] = None,
-        is_remote: Optional[bool] = None,
-        is_featured: Optional[bool] = None,
-        company_id: Optional[int] = None,
-        sort_by: str = "posted_date",
-        sort_order: str = "desc",
-    ) -> Dict:
+    def search_jobs(db: Session, params: JobSearchRequest) -> Dict:
         """Search and filter jobs with pagination"""
-        # Start with active jobs only
-        query = select(Job).where(Job.status == JobStatus.ACTIVE.value)
-        
-        # Add company relationship
-        query = query.options(selectinload(Job.company))
-        
-        # Apply search filter
-        if search:
-            search_term = f"%{search.lower()}%"
+
+        query = (
+            select(Job)
+            .join(Company, Job.company_id == Company.id)
+            .where(Job.status == JobStatus.ACTIVE.value)
+            .options(selectinload(Job.company))
+        )
+
+        if params.search:
+            search_term = f"%{params.search.lower()}%"
             query = query.where(
                 or_(
                     Job.title.ilike(search_term),
                     Job.description.ilike(search_term),
                     Job.location.ilike(search_term),
+                    Company.name.ilike(search_term),
                 )
             )
-        
-        # Apply filters
-        if location:
-            query = query.where(Job.location.ilike(f"%{location}%"))
-        if department:
-            query = query.where(Job.department.ilike(f"%{department}%"))
-        if level:
-            query = query.where(Job.level == level)
-        if location_type:
-            query = query.where(Job.location_type == location_type)
-        if employment_type:
-            query = query.where(Job.employment_type == employment_type)
-        if salary_min:
-            query = query.where(Job.salary_max >= salary_min)
-        if salary_max:
-            query = query.where(Job.salary_min <= salary_max)
-        if is_remote is not None:
-            query = query.where(Job.is_remote == is_remote)
-        if is_featured is not None:
-            query = query.where(Job.is_featured == is_featured)
-        if company_id:
-            query = query.where(Job.company_id == company_id)
-        
-        # Get total count
-        count_query = select(func.count()).select_from(query.subquery())
-        total = db.execute(count_query).scalar_one()
-        
-        # Apply sorting
-        sort_column = Job.posted_date
-        if sort_by == "title":
-            sort_column = Job.title
-        elif sort_by == "salary":
+
+        if params.location:
+            query = query.where(Job.location.ilike(f"%{params.location}%"))
+        if params.department:
+            query = query.where(Job.department.ilike(f"%{params.department}%"))
+        if params.level:
+            query = query.where(Job.level == params.level)
+        if params.location_type:
+            query = query.where(Job.location_type == params.location_type)
+        if params.employment_type:
+            query = query.where(Job.employment_type == params.employment_type)
+        if params.salary_min:
+            query = query.where(Job.salary_max >= params.salary_min)
+        if params.salary_max:
+            query = query.where(Job.salary_min <= params.salary_max)
+        if params.is_remote is not None:
+            query = query.where(Job.is_remote == params.is_remote)
+        if params.is_featured is not None:
+            query = query.where(Job.is_featured == params.is_featured)
+        if params.company_id:
+            query = query.where(Job.company_id == params.company_id)
+
+        total = db.scalar(select(func.count()).select_from(query.subquery()))
+
+        # Only allow sorting by posted_date or salary
+        if params.sort_by == "salary":
             sort_column = Job.salary_min
-        
-        if sort_order == "desc":
-            query = query.order_by(sort_column.desc())
         else:
-            query = query.order_by(sort_column.asc())
+            # Default to posted_date
+            sort_column = Job.posted_date
         
-        # Apply pagination
-        offset = (page - 1) * limit
-        query = query.offset(offset).limit(limit)
-        
-        # Execute
-        jobs = db.execute(query).scalars().all()
-        
-        # Calculate pagination info
-        total_pages = (total + limit - 1) // limit
-        has_next = page < total_pages
-        has_prev = page > 1
-        
+        sort_method = sort_column.desc() if params.sort_order == "desc" else sort_column.asc()
+        query = query.order_by(sort_method)
+
+        offset = (params.page - 1) * params.limit
+        query = query.offset(offset).limit(params.limit)
+
+        jobs = db.scalars(query).all()
+
+        total_pages = max((total + params.limit - 1) // params.limit, 1)
         return {
             "jobs": [JobService.to_job_response(job) for job in jobs],
             "total": total,
-            "page": page,
+            "page": params.page,
             "total_pages": total_pages,
-            "has_next": has_next,
-            "has_prev": has_prev,
+            "has_next": params.page < total_pages,
+            "has_prev": params.page > 1,
         }
+
     
     @staticmethod
     def get_job_by_id(job_id: int, db: Session, increment_view: bool = False) -> Optional[Job]:

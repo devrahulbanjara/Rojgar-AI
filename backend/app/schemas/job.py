@@ -88,19 +88,19 @@ class JobSearchRequest(BaseModel):
     """Schema for job search parameters"""
     page: int = Field(default=1, ge=1, description="Page number")
     limit: int = Field(default=20, ge=1, le=100, description="Items per page")
-    search: Optional[str] = Field(None, description="Search term")
-    location: Optional[str] = Field(None, description="Location filter")
-    department: Optional[str] = Field(None, description="Department filter")
-    level: Optional[str] = Field(None, description="Experience level filter")
-    location_type: Optional[str] = Field(None, description="Location type filter")
-    employment_type: Optional[str] = Field(None, description="Employment type filter")
-    salary_min: Optional[int] = Field(None, ge=0, description="Minimum salary filter")
-    salary_max: Optional[int] = Field(None, ge=0, description="Maximum salary filter")
-    is_remote: Optional[bool] = Field(None, description="Remote work filter")
-    is_featured: Optional[bool] = Field(None, description="Featured jobs filter")
-    company_id: Optional[int] = Field(None, description="Company filter")
-    sort_by: str = Field(default="posted_date", description="Sort field")
-    sort_order: str = Field(default="desc", description="Sort order (asc/desc)")
+    search: Optional[str] = None
+    location: Optional[str] = None
+    department: Optional[str] = None
+    level: Optional[str] = None
+    location_type: Optional[str] = None
+    employment_type: Optional[str] = None
+    salary_min: Optional[int] = None
+    salary_max: Optional[int] = None
+    is_remote: Optional[bool] = None
+    is_featured: Optional[bool] = None
+    company_id: Optional[int] = None
+    sort_by: str = Field(default="posted_date", description="Sort by: posted_date or salary")
+    sort_order: str = Field(default="desc", description="Sort order: asc or desc")
 
 
 class JobRecommendationRequest(BaseModel):

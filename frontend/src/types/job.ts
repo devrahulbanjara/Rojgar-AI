@@ -85,7 +85,7 @@ export interface JobSearchParams {
   is_remote?: boolean;
   is_featured?: boolean;
   company_id?: number;
-  sort_by?: 'posted_date' | 'salary' | 'title' | 'company' | 'views_count' | 'applicant_count';
+  sort_by?: 'posted_date' | 'salary';
   sort_order?: 'asc' | 'desc';
 }
 
