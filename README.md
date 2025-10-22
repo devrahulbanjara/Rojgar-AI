@@ -58,7 +58,7 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
   - [ ] Expose job stats in UI (dashboard widgets)
 
 - Upcoming/Stretch
-  - [ ] Semantic/AI job recommendations (deferred; using recency-based for now)
+  - [x] Semantic/AI job recommendations (deferred; using recency-based for now)
 
 > [!NOTE]  
 > Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.
