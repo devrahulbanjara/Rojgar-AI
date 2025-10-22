@@ -5,7 +5,6 @@ from enum import Enum
 
 
 class JobLevel(str, Enum):
-    """Job experience level"""
 
     JUNIOR = "Junior"
     MID = "Mid"
@@ -15,7 +14,6 @@ class JobLevel(str, Enum):
 
 
 class LocationType(str, Enum):
-    """Where the job is located"""
 
     REMOTE = "Remote"
     ONSITE = "On-site"
@@ -23,7 +21,6 @@ class LocationType(str, Enum):
 
 
 class EmploymentType(str, Enum):
-    """Type of employment"""
 
     FULL_TIME = "Full-time"
     PART_TIME = "Part-time"
@@ -32,7 +29,6 @@ class EmploymentType(str, Enum):
 
 
 class JobStatus(str, Enum):
-    """Job posting status"""
 
     ACTIVE = "Active"
     INACTIVE = "Inactive"
@@ -41,7 +37,6 @@ class JobStatus(str, Enum):
 
 
 class JobCreateRequest(BaseModel):
-    """Schema for creating a new job"""
 
     title: str = Field(..., min_length=1, max_length=200, description="Job title")
     department: str = Field(..., min_length=1, max_length=100, description="Department")
@@ -73,7 +68,6 @@ class JobCreateRequest(BaseModel):
 
 
 class JobUpdateRequest(BaseModel):
-    """Schema for updating a job"""
 
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     department: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -95,7 +89,6 @@ class JobUpdateRequest(BaseModel):
 
 
 class JobSearchRequest(BaseModel):
-    """Schema for job search parameters"""
 
     page: int = Field(default=1, ge=1, description="Page number")
     limit: int = Field(default=20, ge=1, le=100, description="Items per page")
@@ -107,13 +100,11 @@ class JobSearchRequest(BaseModel):
 
 
 class JobRecommendationRequest(BaseModel):
-    """Schema for job recommendations"""
 
     limit: int = Field(default=5, ge=1, le=20, description="Number of recommendations")
 
 
 class CompanyCreateRequest(BaseModel):
-    """Schema for creating a new company"""
 
     name: str = Field(..., min_length=1, max_length=200, description="Company name")
     logo: Optional[str] = Field(None, description="Company logo URL")
@@ -131,7 +122,6 @@ class CompanyCreateRequest(BaseModel):
 
 
 class CompanyUpdateRequest(BaseModel):
-    """Schema for updating a company"""
 
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     logo: Optional[str] = Field(None)
@@ -145,25 +135,21 @@ class CompanyUpdateRequest(BaseModel):
 
 
 class JobViewRequest(BaseModel):
-    """Schema for job view tracking"""
 
     job_id: int = Field(..., description="Job ID to view")
 
 
 class JobApplicationRequest(BaseModel):
-    """Schema for job application tracking"""
 
     job_id: int = Field(..., description="Job ID to apply to")
 
 
 class JobStatsRequest(BaseModel):
-    """Schema for job statistics request"""
 
     pass  # No specific parameters needed for stats
 
 
 class SalaryRange(BaseModel):
-    """Salary range information"""
 
     min: int
     max: int
@@ -171,7 +157,6 @@ class SalaryRange(BaseModel):
 
 
 class CompanyResponse(BaseModel):
-    """Company response schema"""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -188,7 +173,6 @@ class CompanyResponse(BaseModel):
 
 
 class JobResponse(BaseModel):
-    """Job response schema"""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -224,13 +208,11 @@ class JobResponse(BaseModel):
     )
     @classmethod
     def normalize_enum(cls, v, info):
-        """Ensure enum values are in the correct format"""
         if v is None:
             return v
         if not isinstance(v, str):
             return v
 
-        # Define mappings for each field
         mappings = {
             "level": {
                 "JUNIOR": "Junior",
@@ -289,7 +271,6 @@ class JobResponse(BaseModel):
     @computed_field
     @property
     def salary_range(self) -> dict:
-        """Returns salary range as a dict"""
         return {
             "min": self.salary_min,
             "max": self.salary_max,
@@ -298,7 +279,6 @@ class JobResponse(BaseModel):
 
 
 class JobSearchResponse(BaseModel):
-    """Job search response schema"""
 
     jobs: List[JobResponse]
     total: int
@@ -309,7 +289,6 @@ class JobSearchResponse(BaseModel):
 
 
 class JobStatsResponse(BaseModel):
-    """Job statistics response schema"""
 
     total_jobs: int
     active_jobs: int

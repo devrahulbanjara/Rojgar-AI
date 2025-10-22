@@ -13,7 +13,6 @@ router = APIRouter()
 async def get_profile(
     user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)
 ):
-    """Get the current user's complete profile"""
     service = ProfileService(db)
     profile = service.get_profile_by_user_id(user_id)
 
@@ -32,7 +31,6 @@ async def create_profile(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Create a new profile for the current user"""
     service = ProfileService(db)
     return service.create_profile(user_id, profile_data.model_dump())
 
@@ -43,7 +41,6 @@ async def update_profile(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Update the current user's profile"""
     service = ProfileService(db)
     return service.update_profile(user_id, profile_data.model_dump(exclude_unset=True))
 
@@ -55,7 +52,6 @@ async def add_work_experience(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Add a work experience to the profile"""
     service = ProfileService(db)
     return service.add_work_experience(user_id, experience_data.model_dump())
 
@@ -67,7 +63,6 @@ async def update_work_experience(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Update a work experience"""
     service = ProfileService(db)
     return service.update_work_experience(
         user_id, experience_id, experience_data.model_dump(exclude_unset=True)
@@ -82,7 +77,6 @@ async def delete_work_experience(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete a work experience"""
     service = ProfileService(db)
     service.delete_work_experience(user_id, experience_id)
 
@@ -94,7 +88,6 @@ async def add_education(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Add an education record to the profile"""
     service = ProfileService(db)
     return service.add_education(user_id, education_data.model_dump())
 
@@ -106,7 +99,6 @@ async def update_education(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Update an education record"""
     service = ProfileService(db)
     return service.update_education(
         user_id, education_id, education_data.model_dump(exclude_unset=True)
@@ -119,7 +111,6 @@ async def delete_education(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete an education record"""
     service = ProfileService(db)
     service.delete_education(user_id, education_id)
 
@@ -131,7 +122,6 @@ async def add_certification(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Add a certification to the profile"""
     service = ProfileService(db)
     return service.add_certification(user_id, certification_data.model_dump())
 
@@ -143,7 +133,6 @@ async def update_certification(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Update a certification"""
     service = ProfileService(db)
     return service.update_certification(
         user_id, certification_id, certification_data.model_dump(exclude_unset=True)
@@ -158,7 +147,6 @@ async def delete_certification(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete a certification"""
     service = ProfileService(db)
     service.delete_certification(user_id, certification_id)
 
@@ -170,7 +158,6 @@ async def add_skill(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Add a skill to the profile"""
     service = ProfileService(db)
     return service.add_skill(user_id, skill_data.model_dump())
 
@@ -182,7 +169,6 @@ async def update_skill(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Update a skill"""
     service = ProfileService(db)
     return service.update_skill(
         user_id, skill_id, skill_data.model_dump(exclude_unset=True)
@@ -195,6 +181,5 @@ async def delete_skill(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete a skill"""
     service = ProfileService(db)
     service.delete_skill(user_id, skill_id)

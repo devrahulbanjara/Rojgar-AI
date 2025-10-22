@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { useJobSearch, useCreateApplication } from '../../../hooks/queries/useJobs';
+import { usePersonalizedRecommendations, useCreateApplication } from '../../../hooks/queries/useJobs';
+import { useAuth } from '../../../hooks/useAuth';
 import { JobSearchBar, JobList, JobDetailView } from '../../../components/jobs';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
@@ -22,19 +23,19 @@ import { cn } from '../../../lib/utils';
 import type { Job, JobFilters as JobFiltersType } from '../../../types/job';
 
 export default function Jobs() {
-  const [filters, setFilters] = useState<JobFiltersType>({});
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [sortBy, setSortBy] = useState<'postedDate' | 'salary'>('postedDate');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Use real API calls with search endpoint
-  const { data: jobsData, isLoading, error } = useJobSearch({
-    page: 1,
-    limit: 20,
-    ...filters,
-    sort_by: sortBy === 'postedDate' ? 'posted_date' : sortBy,
-    sort_order: sortOrder
-  });
+  // Get current user for personalized recommendations
+  const { user, isAuthenticated } = useAuth();
+
+  // Use personalized recommendations instead of search
+  const { data: jobsData, isLoading, error } = usePersonalizedRecommendations(
+    user?.id || '', 
+    currentPage, 
+    10
+  );
 
   // Create application mutation
   const createApplicationMutation = useCreateApplication();
@@ -42,14 +43,9 @@ export default function Jobs() {
   // Get jobs from API response
   const jobs = jobsData?.jobs || [];
 
-  // Handle filter changes
-  const handleFiltersChange = useCallback((newFilters: Partial<JobFiltersType>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
-  }, []);
-
-  // Clear all filters
-  const handleClearFilters = useCallback(() => {
-    setFilters({});
+  // Handle pagination
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
   }, []);
 
   // Handle job selection
@@ -75,46 +71,9 @@ export default function Jobs() {
           {/* Header */}
           <AnimatedContainer direction="up" delay={0.1}>
             <PageHeader
-              title="Find Your Next Opportunity"
-              subtitle="Discover jobs that match your skills and career goals"
+              title="Recommended for You"
+              subtitle="Jobs matched to your skills and experience"
             />
-          </AnimatedContainer>
-
-          {/* Search and Filters Bar */}
-          <AnimatedContainer direction="up" delay={0.2}>
-            <div 
-              className="bg-white rounded-2xl border border-[#E5E7EB] p-6"
-              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-            >
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search Bar */}
-              <div className="flex-1">
-                <JobSearchBar
-                  value={filters.search || ''}
-                  onChange={(value) => handleFiltersChange({ search: value })}
-                  placeholder="Search jobs, companies, or keywords..."
-                />
-              </div>
-
-              {/* Sort Dropdown - Only 4 options: Posted Date (Latest/Oldest) and Salary (Highest/Lowest) */}
-                <select
-                  value={`${sortBy}-${sortOrder}`}
-                  onChange={(e) => {
-                    const [newSortBy, newSortOrder] = e.target.value.split('-') as [typeof sortBy, typeof sortOrder];
-                    setSortBy(newSortBy);
-                    setSortOrder(newSortOrder);
-                  }}
-                  className="h-11 px-4 bg-white border-[1.5px] border-[#E5E7EB] rounded-xl text-sm font-medium text-[#475569] focus:outline-none focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10 transition-all"
-                >
-                  <option value="postedDate-desc">Posted Date (Latest)</option>
-                  <option value="postedDate-asc">Posted Date (Oldest)</option>
-                  <option value="salary-desc">Salary (Highest)</option>
-                  <option value="salary-asc">Salary (Lowest)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Filters removed */}
           </AnimatedContainer>
 
           {/* Main Content */}
@@ -132,13 +91,18 @@ export default function Jobs() {
               >
                 <div className="p-6 border-b border-[#E5E7EB] flex-shrink-0">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-[#0F172A]">
-                      {isLoading ? 'Loading...' : `${jobs.length} Jobs Found`}
-                    </h2>
+                    <div>
+                      <h2 className="text-lg font-semibold text-[#0F172A]">
+                        {isLoading ? 'Loading...' : `Recommended Jobs (${jobsData?.total || 0})`}
+                      </h2>
+                      <p className="text-sm text-[#64748B] mt-1">
+                        Sorted by relevance to your skills
+                      </p>
+                    </div>
                     {!isLoading && jobs.length > 0 && (
                       <div className="flex items-center gap-1 text-sm text-[#94A3B8]">
                         <TrendingUp className="h-4 w-4" />
-                        <span className="hidden sm:inline">Updated just now</span>
+                        <span className="hidden sm:inline">AI-Powered</span>
                       </div>
                     )}
                   </div>
@@ -156,6 +120,76 @@ export default function Jobs() {
                     />
                   </div>
                 </div>
+                
+                {/* Pagination - Bottom Left */}
+                {jobsData && jobsData.total_pages > 1 && (
+                  <div className="p-4 border-t border-[#F1F5F9] bg-[#FAFBFC]">
+                    <div className="flex items-center justify-start">
+                      <div className="flex items-center gap-1 bg-white rounded-lg p-1 shadow-sm border border-[#E5E7EB]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={!jobsData.has_prev}
+                          className="h-8 w-8 p-0 hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </Button>
+                        
+                        <div className="flex items-center gap-1 mx-2">
+                          {Array.from({ length: Math.min(5, jobsData.total_pages) }, (_, i) => {
+                            let pageNum;
+                            if (jobsData.total_pages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= jobsData.total_pages - 2) {
+                              pageNum = jobsData.total_pages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "ghost"}
+                                size="sm"
+                                onClick={() => handlePageChange(pageNum)}
+                                className={`h-8 w-8 p-0 text-sm font-medium ${
+                                  currentPage === pageNum 
+                                    ? 'bg-[#3056F5] text-white shadow-sm' 
+                                    : 'hover:bg-[#F8FAFC] text-[#64748B]'
+                                }`}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={!jobsData.has_next}
+                          className="h-8 w-8 p-0 hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Button>
+                      </div>
+                      
+                      <div className="ml-4">
+                        <span className="text-xs text-[#94A3B8] bg-white px-3 py-1 rounded-full border border-[#E5E7EB]">
+                          {currentPage} of {jobsData.total_pages} pages
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

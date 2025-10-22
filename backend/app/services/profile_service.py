@@ -13,13 +13,11 @@ from app.schemas.profile import (
 
 
 class ProfileService:
-    """Service for managing candidate profiles - the master data store"""
     
     def __init__(self, db: Session):
         self.db = db
     
     def get_profile_by_user_id(self, user_id: str) -> Optional[ProfileResponse]:
-        """Get complete profile for a user"""
         stmt = (
             select(Profile)
             .options(
@@ -36,7 +34,6 @@ class ProfileService:
         if not profile:
             return None
         
-        # Create response with user data included
         profile_dict = {
             "id": profile.id,
             "user_id": profile.user_id,
@@ -62,7 +59,6 @@ class ProfileService:
         return ProfileResponse.model_validate(profile_dict)
     
     def _update_user_and_profile_fields(self, user_id: str, profile_data: dict, create_profile: bool = False) -> None:
-        """Helper method to update user and profile fields with retry logic"""
         from app.models.user import User
         import time
         
@@ -71,7 +67,6 @@ class ProfileService:
         
         for attempt in range(max_retries):
             try:
-                # Get user
                 user = self.db.execute(
                     select(User).where(User.id == user_id)
                 ).scalar_one_or_none()
@@ -79,7 +74,6 @@ class ProfileService:
                 if not user:
                     raise HTTPException(status_code=404, detail="User not found")
                 
-                # Get existing profile if updating
                 profile = None
                 if not create_profile:
                     profile = self.db.execute(
@@ -89,22 +83,18 @@ class ProfileService:
                     if not profile:
                         raise HTTPException(status_code=404, detail="Profile not found")
                 
-                # Separate user fields from profile fields
                 user_fields = {'name', 'email', 'picture'}
                 profile_fields = {
                     'phone', 'location_city', 'location_country', 'linkedin_url', 
                     'github_url', 'portfolio_url', 'professional_headline', 'professional_summary'
                 }
                 
-                # Update user table fields
                 for field, value in profile_data.items():
                     if field in user_fields and hasattr(user, field) and value is not None:
                         setattr(user, field, value)
                         user.updated_at = datetime.utcnow()
                 
-                # Handle profile fields
                 if create_profile:
-                    # Create new profile
                     profile = Profile(
                         id=str(uuid.uuid4()),
                         user_id=user_id,
@@ -119,7 +109,6 @@ class ProfileService:
                     )
                     self.db.add(profile)
                 else:
-                    # Update existing profile
                     for field, value in profile_data.items():
                         if field in profile_fields and hasattr(profile, field) and value is not None:
                             setattr(profile, field, value)
@@ -130,46 +119,34 @@ class ProfileService:
                 if profile:
                     self.db.refresh(profile)
                 
-                return  # Success, exit retry loop
+                return
                 
             except Exception as e:
                 if "database is locked" in str(e).lower() and attempt < max_retries - 1:
-                    # Database is locked, wait and retry
-                    time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
-                    self.db.rollback()  # Rollback the failed transaction
+                    time.sleep(retry_delay * (2 ** attempt))
+                    self.db.rollback()
                     continue
                 else:
-                    # Re-raise the exception if it's not a lock issue or we've exhausted retries
-                    self.db.rollback()  # Rollback on error
+                    self.db.rollback()
                     raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
         
-        # Fallback
         raise HTTPException(status_code=500, detail=f"Failed to {'create' if create_profile else 'update'} profile after multiple attempts")
     
     def create_profile(self, user_id: str, profile_data: dict) -> ProfileResponse:
-        """Create a new profile for a user - handles both user and profile table updates"""
-        # Check if profile already exists
         existing = self.get_profile_by_user_id(user_id)
         if existing:
             raise HTTPException(status_code=400, detail="Profile already exists for this user")
         
-        # Update user and create profile
         self._update_user_and_profile_fields(user_id, profile_data, create_profile=True)
         
-        # Return profile with user data included
         return self.get_profile_by_user_id(user_id)
     
     def update_profile(self, user_id: str, profile_data: dict) -> ProfileResponse:
-        """Update profile information - handles both user and profile table updates"""
-        # Update user and profile fields
         self._update_user_and_profile_fields(user_id, profile_data, create_profile=False)
         
-        # Return profile with updated user data included
         return self.get_profile_by_user_id(user_id)
     
-    # Work Experience Management
     def add_work_experience(self, user_id: str, experience_data: dict) -> WorkExperienceResponse:
-        """Add a work experience to the profile"""
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -177,7 +154,6 @@ class ProfileService:
         if not profile:
             raise HTTPException(status_code=404, detail="Profile not found")
         
-        # Convert string dates to Python date objects
         start_date = None
         if experience_data.get("start_date"):
             start_date = datetime.strptime(experience_data["start_date"], '%Y-%m-%d').date()
@@ -205,8 +181,6 @@ class ProfileService:
         return WorkExperienceResponse.model_validate(experience)
     
     def update_work_experience(self, user_id: str, experience_id: str, experience_data: dict) -> WorkExperienceResponse:
-        """Update a work experience"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -223,10 +197,8 @@ class ProfileService:
         if not experience:
             raise HTTPException(status_code=404, detail="Work experience not found")
         
-        # Update fields with proper date conversion
         for field, value in experience_data.items():
             if hasattr(experience, field):
-                # Convert string dates to Python date objects
                 if field in ['start_date', 'end_date'] and value:
                     value = datetime.strptime(value, '%Y-%m-%d').date()
                 setattr(experience, field, value)
@@ -238,8 +210,6 @@ class ProfileService:
         return WorkExperienceResponse.model_validate(experience)
     
     def delete_work_experience(self, user_id: str, experience_id: str) -> bool:
-        """Delete a work experience"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -260,9 +230,7 @@ class ProfileService:
         self.db.commit()
         return True
     
-    # Education Management
     def add_education(self, user_id: str, education_data: dict) -> EducationRecordResponse:
-        """Add an education record to the profile"""
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -291,8 +259,6 @@ class ProfileService:
         return EducationRecordResponse.model_validate(education)
     
     def update_education(self, user_id: str, education_id: str, education_data: dict) -> EducationRecordResponse:
-        """Update an education record"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -309,7 +275,6 @@ class ProfileService:
         if not education:
             raise HTTPException(status_code=404, detail="Education record not found")
         
-        # Update fields
         for field, value in education_data.items():
             if hasattr(education, field):
                 setattr(education, field, value)
@@ -322,7 +287,6 @@ class ProfileService:
     
     def delete_education(self, user_id: str, education_id: str) -> bool:
         """Delete an education record"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -343,9 +307,7 @@ class ProfileService:
         self.db.commit()
         return True
     
-    # Certification Management
     def add_certification(self, user_id: str, certification_data: dict) -> CertificationResponse:
-        """Add a certification to the profile"""
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -372,8 +334,6 @@ class ProfileService:
         return CertificationResponse.model_validate(certification)
     
     def update_certification(self, user_id: str, certification_id: str, certification_data: dict) -> CertificationResponse:
-        """Update a certification"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -390,7 +350,6 @@ class ProfileService:
         if not certification:
             raise HTTPException(status_code=404, detail="Certification not found")
         
-        # Update fields
         for field, value in certification_data.items():
             if hasattr(certification, field):
                 setattr(certification, field, value)
@@ -402,8 +361,6 @@ class ProfileService:
         return CertificationResponse.model_validate(certification)
     
     def delete_certification(self, user_id: str, certification_id: str) -> bool:
-        """Delete a certification"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -424,9 +381,7 @@ class ProfileService:
         self.db.commit()
         return True
     
-    # Skills Management
     def add_skill(self, user_id: str, skill_data: dict) -> ProfileSkillResponse:
-        """Add a skill to the profile"""
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -449,8 +404,6 @@ class ProfileService:
         return ProfileSkillResponse.model_validate(skill)
     
     def update_skill(self, user_id: str, skill_id: str, skill_data: dict) -> ProfileSkillResponse:
-        """Update a skill"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -467,7 +420,6 @@ class ProfileService:
         if not skill:
             raise HTTPException(status_code=404, detail="Skill not found")
         
-        # Update fields
         for field, value in skill_data.items():
             if hasattr(skill, field):
                 setattr(skill, field, value)
@@ -479,8 +431,6 @@ class ProfileService:
         return ProfileSkillResponse.model_validate(skill)
     
     def delete_skill(self, user_id: str, skill_id: str) -> bool:
-        """Delete a skill"""
-        # Verify ownership through profile
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -502,8 +452,6 @@ class ProfileService:
         return True
     
     def get_profile_data_for_autofill(self, user_id: str) -> dict:
-        """Get comprehensive profile data formatted for resume autofill"""
-        # Get profile with all related data
         profile = self.db.execute(
             select(Profile)
             .options(
@@ -519,10 +467,8 @@ class ProfileService:
         if not profile:
             raise HTTPException(status_code=404, detail="Profile not found")
         
-        # Format location
         location = self._format_location(profile.location_city, profile.location_country)
         
-        # Convert profile data to autofill format
         work_experiences = []
         for exp in profile.work_experiences:
             work_experiences.append({
@@ -589,7 +535,6 @@ class ProfileService:
         }
     
     def _format_location(self, city: Optional[str], country: Optional[str]) -> Optional[str]:
-        """Format location from city and country"""
         if not city and not country:
             return None
         if city and country:

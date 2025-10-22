@@ -1,45 +1,28 @@
-"""
-Configuration - Simple settings loaded from environment variables
-All app configuration in one place
-"""
-
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
-    """
-    Application settings
-    These are loaded from environment variables or .env file
-    """
-    
-    # ===== Google OAuth =====
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     
-    # ===== JWT Settings =====
-    SECRET_KEY: str  # Used to sign JWT tokens
-    ALGORITHM: str = "HS256"  # JWT algorithm
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # How long tokens last
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECURE: bool = False
     
-    # ===== URLs =====
-    FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str
+    BACKEND_URL: str
     
-    # ===== Environment =====
-    ENVIRONMENT: str = "development"  # development, staging, or production
+    ENVIRONMENT: str = "development"
     
-    # ===== Database =====
-    DATABASE_URL: str = "sqlite:///./convexhire.db"
+    DATABASE_URL: str
     
-    # ===== Qdrant Vector Database =====
-    QDRANT_URL: str = "https://e884396c-756d-4b...cp.cloud.qdrant.io:6333"
-    QDRANT_API_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5...95GHHt0FGTSWAH7uqJG5UMc"
-    QDRANT_COLLECTION_JOBS: str = "jobs"
+    QDRANT_URL: str
+    QDRANT_API_KEY: str
+    QDRANT_COLLECTION_JOBS: str
+    EMBEDDING_MODEL: str
     
     class Config:
         env_file = ".env"
         case_sensitive = True
 
-
-# Create a single instance to use everywhere
 settings = Settings()

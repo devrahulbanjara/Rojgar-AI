@@ -8,25 +8,18 @@ from app.schemas.application import ApplicationResponse
 
 
 class ApplicationService:
-    """Service for handling application-related business logic"""
     
     
     @staticmethod
     def get_user_applications(user_id: str, db: Session) -> List[Application]:
-        """Get all applications for a user"""
         return db.execute(
             select(Application).where(Application.user_id == user_id)
         ).scalars().all()
     
     @staticmethod
     def get_tracking_board(user_id: str, db: Session) -> Dict[str, List[dict]]:
-        """
-        Get applications organized by stage for the tracking board
-        Organizes into 3 columns: applied, interviewing, outcome
-        """
         applications = ApplicationService.get_user_applications(user_id, db)
         
-        # Organize into board columns
         board = {
             "applied": [],       # Applied + Screening
             "interviewing": [],  # Interviewing
@@ -46,7 +39,6 @@ class ApplicationService:
                 "updated_at": app.updated_at.isoformat(),
             }
             
-            # Put in right column based on stage
             if app.stage in [ApplicationStage.APPLIED.value, ApplicationStage.SCREENING.value]:
                 board["applied"].append(app_dict)
             elif app.stage == ApplicationStage.INTERVIEWING.value:
@@ -58,10 +50,8 @@ class ApplicationService:
     
     @staticmethod
     def get_application_stats(user_id: str, db: Session) -> Dict[str, int]:
-        """Get statistics about user's applications"""
         applications = ApplicationService.get_user_applications(user_id, db)
         
-        # Calculate stats
         total = len(applications)
         active = sum(
             1 for app in applications
@@ -76,7 +66,6 @@ class ApplicationService:
             if app.status == ApplicationStatus.OFFER_EXTENDED.value
         )
         
-        # Response rate (applications that got a response)
         responded = sum(
             1 for app in applications
             if app.status != ApplicationStatus.PENDING.value
@@ -99,7 +88,6 @@ class ApplicationService:
         description: Optional[str],
         db: Session
     ) -> Application:
-        """Create a new job application"""
         new_app = Application(
             user_id=user_id,
             job_title=job_title,
@@ -117,7 +105,6 @@ class ApplicationService:
     
     @staticmethod
     def get_application_by_id(application_id: int, db: Session) -> Optional[Application]:
-        """Get a specific application"""
         return db.execute(
             select(Application).where(Application.id == application_id)
         ).scalar_one_or_none()
@@ -130,7 +117,6 @@ class ApplicationService:
         description: Optional[str] = None,
         db: Session = None
     ) -> Application:
-        """Update an application"""
         if stage is not None:
             application.stage = stage.value
         if status is not None:
@@ -148,11 +134,9 @@ class ApplicationService:
     
     @staticmethod
     def delete_application(application: Application, db: Session) -> None:
-        """Delete an application"""
         db.delete(application)
         db.commit()
     
     @staticmethod
     def verify_ownership(application: Application, user_id: str) -> bool:
-        """Check if user owns the application"""
         return application.user_id == user_id

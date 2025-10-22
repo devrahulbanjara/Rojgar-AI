@@ -40,7 +40,25 @@ const applicationEndpoints = {
 // Job Service Class
 export class JobService {
   /**
-   * Get recommended jobs for homepage
+   * Get personalized job recommendations based on user skills
+   */
+  static async getPersonalizedRecommendations(
+    userId: string, 
+    page: number = 1, 
+    limit: number = 10
+  ): Promise<JobListResponse> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('user_id', userId);
+    queryParams.append('page', page.toString());
+    queryParams.append('limit', limit.toString());
+    
+    const endpoint = `${jobEndpoints.recommendations}?${queryParams.toString()}`;
+    return apiClient.get<JobListResponse>(endpoint);
+  }
+
+  /**
+   * Get recommended jobs for homepage (legacy method)
+   * @deprecated Use getPersonalizedRecommendations for personalized results
    */
   static async getRecommendedJobs(limit: number = 5): Promise<Job[]> {
     const queryParams = new URLSearchParams();

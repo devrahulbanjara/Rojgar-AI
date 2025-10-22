@@ -1,12 +1,7 @@
-"""
-Resume schemas - Pydantic models for resume API data contracts
-"""
-
 from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
-# Import response models from profile schema
 from .profile import (
     WorkExperienceResponse, EducationRecordResponse, 
     CertificationResponse, ProfileSkillResponse
@@ -65,7 +60,6 @@ class AddSkillToResumeRequest(BaseModel):
     profile_skill_id: str
 
 
-# Resume-specific section creation requests (don't affect profile)
 class CreateResumeExperienceRequest(BaseModel):
     job_title: str
     company: str
@@ -105,7 +99,6 @@ class CreateResumeSkillRequest(BaseModel):
 
 
 class UpdateEducationInResumeRequest(BaseModel):
-    """Update education record in resume"""
     school_university: Optional[str] = None
     degree: Optional[str] = None
     field_of_study: Optional[str] = None
@@ -118,7 +111,6 @@ class UpdateEducationInResumeRequest(BaseModel):
 
 
 class UpdateCertificationInResumeRequest(BaseModel):
-    """Update certification in resume"""
     name: Optional[str] = None
     issuing_body: Optional[str] = None
     credential_id: Optional[str] = None
@@ -129,14 +121,12 @@ class UpdateCertificationInResumeRequest(BaseModel):
 
 
 class UpdateSkillInResumeRequest(BaseModel):
-    """Update skill in resume"""
     skill_name: Optional[str] = None
     proficiency_level: Optional[str] = None
     years_of_experience: Optional[int] = None
 
 
 class ResumeAutofillData(BaseModel):
-    """Profile data for resume autofill"""
     contact_full_name: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
@@ -151,10 +141,7 @@ class ResumeAutofillData(BaseModel):
     skills: List[dict] = []
 
 
-# ============= Response Schemas =============
-
 class ResumeResponse(BaseModel):
-    """Complete resume response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -172,7 +159,6 @@ class ResumeResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    # Nested data
     experiences: List["ResumeExperienceResponse"] = []
     educations: List["ResumeEducationResponse"] = []
     certifications: List["ResumeCertificationResponse"] = []
@@ -180,7 +166,6 @@ class ResumeResponse(BaseModel):
 
 
 class ResumeExperienceResponse(BaseModel):
-    """Resume experience response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -191,7 +176,6 @@ class ResumeExperienceResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    # Resume-specific overrides
     job_title: Optional[str] = None
     company: Optional[str] = None
     location: Optional[str] = None
@@ -200,12 +184,10 @@ class ResumeExperienceResponse(BaseModel):
     is_current: Optional[bool] = None
     master_description: Optional[str] = None
     
-    # Include the original work experience data
     work_experience: Optional["WorkExperienceResponse"] = None
 
 
 class ResumeEducationResponse(BaseModel):
-    """Resume education response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -215,7 +197,6 @@ class ResumeEducationResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    # Resume-specific overrides
     school_university: Optional[str] = None
     degree: Optional[str] = None
     field_of_study: Optional[str] = None
@@ -226,12 +207,10 @@ class ResumeEducationResponse(BaseModel):
     gpa: Optional[str] = None
     honors: Optional[str] = None
     
-    # Include the original education record data
     education_record: Optional["EducationRecordResponse"] = None
 
 
 class ResumeCertificationResponse(BaseModel):
-    """Resume certification response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -241,7 +220,6 @@ class ResumeCertificationResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    # Resume-specific overrides
     name: Optional[str] = None
     issuing_body: Optional[str] = None
     credential_id: Optional[str] = None
@@ -250,12 +228,10 @@ class ResumeCertificationResponse(BaseModel):
     expiration_date: Optional[datetime] = None
     does_not_expire: Optional[bool] = None
     
-    # Include the original certification data
     certification: Optional["CertificationResponse"] = None
 
 
 class ResumeSkillResponse(BaseModel):
-    """Resume skill response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -265,18 +241,14 @@ class ResumeSkillResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    # Resume-specific overrides
     skill_name: Optional[str] = None
     proficiency_level: Optional[str] = None
     years_of_experience: Optional[int] = None
     
-    # Include the original profile skill data
     profile_skill: Optional["ProfileSkillResponse"] = None
 
 
-# Update forward references - these will be rebuilt when all models are loaded
 def rebuild_models():
-    """Rebuild all models to resolve forward references"""
     ResumeResponse.model_rebuild()
     ResumeExperienceResponse.model_rebuild()
     ResumeEducationResponse.model_rebuild()
