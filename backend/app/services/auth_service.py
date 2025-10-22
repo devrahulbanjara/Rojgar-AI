@@ -1,7 +1,3 @@
-"""
-Authentication service - Business logic for authentication operations
-"""
-
 import uuid
 import httpx
 from typing import Optional
@@ -11,7 +7,7 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.core.security import hash_password, verify_password, create_token
 from app.models.user import User, UserRole
-from app.schemas.user import UserResponse, GoogleUserInfo
+from app.schemas.user import UserResponse, GoogleUserInfo, CreateUserRequest
 
 
 class AuthService:
@@ -19,46 +15,33 @@ class AuthService:
     
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
-        """Convert a User model to UserResponse"""
         return UserResponse.model_validate(user)
     
     @staticmethod
     def get_user_by_email(email: str, db: Session) -> Optional[User]:
-        """Find user by email"""
         return db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     
     @staticmethod
     def get_user_by_google_id(google_id: str, db: Session) -> Optional[User]:
-        """Find user by Google ID"""
         return db.execute(select(User).where(User.google_id == google_id)).scalar_one_or_none()
     
     @staticmethod
-    def create_user(
-        email: str,
-        name: str,
-        password: Optional[str] = None,
-        google_id: Optional[str] = None,
-        picture: Optional[str] = None,
-        role: Optional[UserRole] = None,
-        db: Session = None
-    ) -> User:
-        """Create a new user"""
+    def create_user(user_data: CreateUserRequest, db: Session) -> User:
         new_user = User(
             id=str(uuid.uuid4()),
-            email=email,
-            name=name,
-            picture=picture,
-            google_id=google_id,
-            role=role.value if role else None,
+            email=user_data.email,
+            name=user_data.name,
+            picture=user_data.picture,
+            google_id=user_data.google_id,
+            role=user_data.role.value if user_data.role else None,
         )
-        
-        if password:
-            new_user.password_hash = hash_password(password)
-        
+
+        if user_data.password:
+            new_user.password_hash = hash_password(user_data.password)
+
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        
         return new_user
     
     @staticmethod
@@ -149,13 +132,13 @@ class AuthService:
         user = AuthService.get_user_by_google_id(google_user.id, db)
         
         if not user:
-            user = AuthService.create_user(
+            create_user_data = CreateUserRequest(
                 email=google_user.email,
                 name=google_user.name,
                 google_id=google_user.id,
-                picture=google_user.picture,
-                db=db
+                picture=google_user.picture
             )
+            user = AuthService.create_user(create_user_data, db)
         
         return user
     
