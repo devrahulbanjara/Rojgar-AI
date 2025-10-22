@@ -59,33 +59,13 @@ export interface Job {
 
 export interface JobFilters {
   search?: string;
-  location?: string;
-  department?: string;
-  level?: JobLevel[];
-  location_type?: LocationType[];
-  employment_type?: EmploymentType[];
-  salary_min?: number;
-  salary_max?: number;
-  is_remote?: boolean;
-  is_featured?: boolean;
-  company_id?: number;
 }
 
 export interface JobSearchParams {
   page?: number;
   limit?: number;
   search?: string;
-  location?: string;
-  department?: string;
-  level?: JobLevel[];
-  location_type?: LocationType[];
-  employment_type?: EmploymentType[];
-  salary_min?: number;
-  salary_max?: number;
-  is_remote?: boolean;
-  is_featured?: boolean;
-  company_id?: number;
-  sort_by?: 'posted_date' | 'salary' | 'title' | 'company' | 'views_count' | 'applicant_count';
+  sort_by?: 'posted_date' | 'salary';
   sort_order?: 'asc' | 'desc';
 }
 
