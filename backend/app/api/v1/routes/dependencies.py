@@ -1,5 +1,4 @@
 from fastapi import HTTPException, status
-from typing import List
 
 
 def _job_not_found(job_id: int):

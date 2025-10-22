@@ -1,19 +1,13 @@
-"""
-Profile schemas - Pydantic models for profile API data contracts
-"""
-
 from typing import Optional, List
 from datetime import datetime, date
 from pydantic import BaseModel, ConfigDict
 
 
 class ProfileCreateRequest(BaseModel):
-    # User table fields (will update user table)
     name: Optional[str] = None
     email: Optional[str] = None
     picture: Optional[str] = None
     
-    # Profile table fields (will update profile table)
     phone: Optional[str] = None
     location_city: Optional[str] = None
     location_country: Optional[str] = None
@@ -25,12 +19,10 @@ class ProfileCreateRequest(BaseModel):
 
 
 class ProfileUpdateRequest(BaseModel):
-    # User table fields (will update user table)
     name: Optional[str] = None
     email: Optional[str] = None
     picture: Optional[str] = None
     
-    # Profile table fields (will update profile table)
     phone: Optional[str] = None
     location_city: Optional[str] = None
     location_country: Optional[str] = None
@@ -117,10 +109,7 @@ class SkillUpdateRequest(BaseModel):
     years_of_experience: Optional[int] = None
 
 
-# ============= Response Schemas =============
-
 class ProfileResponse(BaseModel):
-    """Complete profile response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -136,12 +125,10 @@ class ProfileResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    # User data (from user table)
     user_name: Optional[str] = None
     user_email: Optional[str] = None
     user_picture: Optional[str] = None
     
-    # Nested data
     work_experiences: List["WorkExperienceResponse"] = []
     education_records: List["EducationRecordResponse"] = []
     certifications: List["CertificationResponse"] = []
@@ -149,7 +136,6 @@ class ProfileResponse(BaseModel):
 
 
 class WorkExperienceResponse(BaseModel):
-    """Work experience response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -166,7 +152,6 @@ class WorkExperienceResponse(BaseModel):
 
 
 class EducationRecordResponse(BaseModel):
-    """Education record response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -185,7 +170,6 @@ class EducationRecordResponse(BaseModel):
 
 
 class CertificationResponse(BaseModel):
-    """Certification response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -202,7 +186,6 @@ class CertificationResponse(BaseModel):
 
 
 class ProfileSkillResponse(BaseModel):
-    """Profile skill response"""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
@@ -214,9 +197,7 @@ class ProfileSkillResponse(BaseModel):
     updated_at: datetime
 
 
-# Update forward references - these will be rebuilt when all models are loaded
 def rebuild_profile_models():
-    """Rebuild all profile models to resolve forward references"""
     ProfileResponse.model_rebuild()
     WorkExperienceResponse.model_rebuild()
     EducationRecordResponse.model_rebuild()

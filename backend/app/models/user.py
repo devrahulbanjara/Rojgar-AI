@@ -1,8 +1,3 @@
-"""
-User model - Simple, easy to understand
-Everything related to users in one place
-"""
-
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -13,35 +8,26 @@ from app.models import Base
 
 
 class UserRole(str, Enum):
-    """What type of user: candidate or recruiter"""
     CANDIDATE = "candidate"
     RECRUITER = "recruiter"
 
 
 class User(Base):
-    """
-    User table in database
-    Stores all user information
-    """
     __tablename__ = "user"
     
-    # Basic info
     id: Mapped[str] = mapped_column(String, primary_key=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
     name: Mapped[str] = mapped_column(String)
     picture: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
-    # Auth info
     google_id: Mapped[Optional[str]] = mapped_column(String, unique=True, index=True, nullable=True)
     password_hash: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     role: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
-    # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # Relationships
     skills: Mapped[List["Skill"]] = relationship("Skill", back_populates="user")
     profile: Mapped[Optional["Profile"]] = relationship("Profile", back_populates="user", uselist=False)
 

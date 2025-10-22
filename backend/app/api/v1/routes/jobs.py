@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, status, Query, Depends
+from fastapi import APIRouter, status, Query, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -7,9 +7,9 @@ from app.schemas.job import (
     JobResponse,
     CompanyResponse,
     JobSearchRequest,
-    JobRecommendationRequest,
     JobStatsResponse,
     JobSearchResponse,
+    JobCreateRequest,
 )
 from app.services.job_service import JobService
 from app.api.v1.routes.dependencies import (
@@ -22,13 +22,15 @@ from app.api.v1.routes.dependencies import (
 router = APIRouter()
 
 
-@router.get("/recommendations", response_model=List[JobResponse])
-def get_recommended_jobs(
-    rec_params: JobRecommendationRequest = Depends(),
+@router.get("/recommendations", response_model=dict)
+def get_personalized_job_recommendations(
+    user_id: str = Query(..., description="User ID"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=50, description="Items per page"),
     db: Session = Depends(get_db),
 ):
-    result = JobService.get_recommended_jobs(db=db, limit=rec_params.limit)
-    return result["jobs"]
+    """Get personalized job recommendations based on user skills"""
+    return JobService.get_personalized_job_recommendations(user_id, db, page, limit)
 
 
 @router.get("/search", response_model=JobSearchResponse)
@@ -73,7 +75,8 @@ def get_company(
 def get_company_jobs(
     company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
 ):
-    return _to_job_responses(JobService.get_company_jobs(company_id, db))
+    jobs = JobService.get_company_jobs(company_id, db)
+    return [JobService.to_job_response(job) for job in jobs]
 
 
 @router.get("/company/{company_id}/info", response_model=dict)
@@ -105,3 +108,21 @@ def increment_application(
 ):
     if not JobService.increment_job_application(job_id, db):
         _job_not_found(job_id)
+
+@router.post("/create", response_model=JobResponse)
+def create_job(
+    job_data: JobCreateRequest,
+    db: Session = Depends(get_db)
+):
+    job = JobService.create_job_with_vector_sync(job_data.model_dump(), db)
+    if not job:
+        raise HTTPException(status_code=500, detail="Failed to create job")
+    return JobService.to_job_response(job)
+
+
+@router.get("/vector/search", response_model=List[dict])
+def search_similar_jobs(
+    query: str = Query(..., description="Search query"),
+    limit: int = Query(5, ge=1, le=20, description="Number of results")
+):
+    return JobService.search_similar_jobs(query, limit)

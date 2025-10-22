@@ -48,6 +48,22 @@ export function useJobs(params?: JobSearchParams) {
   });
 }
 
+export function usePersonalizedRecommendations(
+  userId: string, 
+  page: number = 1, 
+  limit: number = 10
+) {
+  return useQuery({
+    queryKey: ['jobs', 'personalized', userId, page, limit],
+    queryFn: async () => {
+      return await jobService.getPersonalizedRecommendations(userId, page, limit);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!userId, // Only run if userId is provided
+  });
+}
+
 export function useRecommendedJobs(limit: number = 5) {
   return useQuery({
     queryKey: jobQueryKeys.recommendations(limit),

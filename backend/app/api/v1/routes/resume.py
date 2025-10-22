@@ -1,7 +1,3 @@
-"""
-Resume API routes - Tailored views of Profile data
-"""
-
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -10,26 +6,10 @@ from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.services.resume_service import ResumeService
 from app.services.profile_service import ProfileService
-from app.schemas.resume import (
-    ResumeResponse, ResumeExperienceResponse, ResumeEducationResponse,
-    ResumeCertificationResponse, ResumeSkillResponse,
-    ResumeCreateRequest, ResumeUpdateRequest,
-    AddExperienceToResumeRequest, UpdateExperienceInResumeRequest,
-    AddEducationToResumeRequest, AddCertificationToResumeRequest,
-    AddSkillToResumeRequest, CreateResumeExperienceRequest,
-    CreateResumeEducationRequest, CreateResumeCertificationRequest,
-    CreateResumeSkillRequest, ResumeAutofillData,
-    UpdateEducationInResumeRequest, UpdateCertificationInResumeRequest,
-    UpdateSkillInResumeRequest
-)
+from app.schemas.resume import *
 
 router = APIRouter()
 
-
-# Routes
-
-
-# Resume Routes
 @router.get("/", response_model=List[ResumeResponse])
 async def get_resumes(
     user_id: str = Depends(get_current_user_id),

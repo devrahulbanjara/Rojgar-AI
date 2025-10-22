@@ -11,7 +11,6 @@ from app.schemas.user import UserResponse, GoogleUserInfo, CreateUserRequest
 
 
 class AuthService:
-    """Service for handling authentication logic"""
     
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
@@ -46,17 +45,12 @@ class AuthService:
     
     @staticmethod
     def verify_user_password(user: User, password: str) -> bool:
-        """Verify user password"""
         if not user.password_hash:
             return False
         return verify_password(password, user.password_hash)
     
     @staticmethod
     def create_access_token(user_id: str, remember_me: bool = False) -> tuple[str, int]:
-        """
-        Create access token for user
-        Returns: (token, max_age_seconds)
-        """
         if remember_me:
             token = create_token(user_id, expires_minutes=30 * 24 * 60)  # 30 days
             max_age = 30 * 24 * 60 * 60
@@ -68,7 +62,6 @@ class AuthService:
     
     @staticmethod
     def generate_google_auth_url() -> str:
-        """Generate Google OAuth URL"""
         from urllib.parse import urlencode
         
         google_auth_url = "https://accounts.google.com/o/oauth2/auth"
@@ -85,14 +78,9 @@ class AuthService:
     
     @staticmethod
     async def exchange_google_code(code: str) -> GoogleUserInfo:
-        """
-        Exchange Google authorization code for user info
-        Raises HTTPException on failure
-        """
         from fastapi import HTTPException, status
         
         async with httpx.AsyncClient() as client:
-            # Exchange code for tokens
             token_response = await client.post(
                 "https://oauth2.googleapis.com/token",
                 data={
@@ -113,7 +101,6 @@ class AuthService:
             tokens = token_response.json()
             access_token = tokens.get("access_token")
             
-            # Get user info from Google
             user_response = await client.get(
                 f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
             )
@@ -128,7 +115,6 @@ class AuthService:
     
     @staticmethod
     def get_or_create_google_user(google_user: GoogleUserInfo, db: Session) -> User:
-        """Get existing Google user or create new one"""
         user = AuthService.get_user_by_google_id(google_user.id, db)
         
         if not user:
@@ -144,7 +130,6 @@ class AuthService:
     
     @staticmethod
     def update_user_role(user: User, role: UserRole, db: Session) -> User:
-        """Update user role"""
         user.role = role.value
         db.add(user)
         db.commit()
@@ -153,7 +138,6 @@ class AuthService:
     
     @staticmethod
     def get_redirect_url_for_user(user: User) -> str:
-        """Get appropriate redirect URL based on user role"""
         if user.role:
             return f"{settings.FRONTEND_URL}/dashboard/{user.role}"
         else:
