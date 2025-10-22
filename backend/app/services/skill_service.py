@@ -1,7 +1,3 @@
-"""
-Skill Service - Business logic for skills management
-"""
-
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_

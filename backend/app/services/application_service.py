@@ -1,7 +1,3 @@
-"""
-Application service - Business logic for application operations
-"""
-
 from typing import List, Dict, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session

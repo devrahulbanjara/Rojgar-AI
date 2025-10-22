@@ -1,7 +1,3 @@
-"""
-User service - Business logic for user operations
-"""
-
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select

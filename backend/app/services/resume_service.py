@@ -1,7 +1,3 @@
-"""
-Resume Service - Manages tailored views of Profile data
-"""
-
 from typing import Optional, List
 from datetime import datetime
 from sqlalchemy.orm import Session, selectinload
