@@ -35,15 +35,30 @@ ConvexHire is a cutting-edge recruitment platform that leverages artificial inte
 
 ### Development Milestones
 
-- [ ] **Milestone A**: MVP
-  - [x] Landing Page Design  
-  - [x] Authentication and Session Management
-  - [x] Candidate Dashboard
-  - [x] Candidate Jobs Page Design
-  - [ ] Candidate Multi Resume
-  - [ ] Recruiter Dashboard
-  - [ ] Recruiter Shortlist
-  - [x] Responsive Landing Page for Mobile and Tablet
+- Core Platform
+  - [x] Responsive landing page
+  - [x] Authentication and session management
+  - [x] API v1 (jobs, resumes, profiles, applications)
+  - [x] Config, logging, database setup
+
+- Candidate Experience
+  - [x] Candidate dashboard
+  - [x] Browse jobs: search by title/company, sort by date/salary
+  - [x] Recent active job recommendations
+  - [x] Multi‑resume editor: one top “Save” action, per‑item delete (X)
+  - [x] Profile management
+  - [ ] Resume export to PDF
+
+- Recruiter Experience
+  - [x] Recruiter dashboard (foundation)
+  - [ ] Shortlist and candidate management
+
+- Reporting & Analytics
+  - [x] Job stats API (totals, averages, top skills/locations/companies)
+  - [ ] Expose job stats in UI (dashboard widgets)
+
+- Upcoming/Stretch
+  - [ ] Semantic/AI job recommendations (deferred; using recency-based for now)
 
 > [!NOTE]  
 > Milestone progress will be updated regularly as development continues. Each milestone represents a significant phase in the platform's evolution.
