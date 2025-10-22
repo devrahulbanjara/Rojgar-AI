@@ -32,9 +32,9 @@ class JobService:
             .order_by(Job.posted_date.desc())
             .limit(limit)
         )
-        
+
         jobs = db.execute(query).scalars().all()
-        
+
         return {
             "jobs": [JobService.to_job_response(job) for job in jobs],
             "total": len(jobs),
@@ -44,7 +44,7 @@ class JobService:
 
     @staticmethod
     def search_jobs(db: Session, params: JobSearchRequest) -> Dict:
-        """Search and filter jobs with pagination"""
+        """Search jobs by title or company name with pagination and sorting"""
 
         query = (
             select(Job)
@@ -58,42 +58,13 @@ class JobService:
             query = query.where(
                 or_(
                     Job.title.ilike(search_term),
-                    Job.description.ilike(search_term),
-                    Job.location.ilike(search_term),
                     Company.name.ilike(search_term),
                 )
             )
 
-        if params.location:
-            query = query.where(Job.location.ilike(f"%{params.location}%"))
-        if params.department:
-            query = query.where(Job.department.ilike(f"%{params.department}%"))
-        if params.level:
-            query = query.where(Job.level == params.level)
-        if params.location_type:
-            query = query.where(Job.location_type == params.location_type)
-        if params.employment_type:
-            query = query.where(Job.employment_type == params.employment_type)
-        if params.salary_min:
-            query = query.where(Job.salary_max >= params.salary_min)
-        if params.salary_max:
-            query = query.where(Job.salary_min <= params.salary_max)
-        if params.is_remote is not None:
-            query = query.where(Job.is_remote == params.is_remote)
-        if params.is_featured is not None:
-            query = query.where(Job.is_featured == params.is_featured)
-        if params.company_id:
-            query = query.where(Job.company_id == params.company_id)
-
         total = db.scalar(select(func.count()).select_from(query.subquery()))
 
-        # Only allow sorting by posted_date or salary
-        if params.sort_by == "salary":
-            sort_column = Job.salary_min
-        else:
-            # Default to posted_date
-            sort_column = Job.posted_date
-        
+        sort_column = Job.salary_min if params.sort_by == "salary" else Job.posted_date
         sort_method = sort_column.desc() if params.sort_order == "desc" else sort_column.asc()
         query = query.order_by(sort_method)
 
@@ -128,21 +99,8 @@ class JobService:
         return job
     
     @staticmethod
-    def get_featured_jobs(db: Session, limit: int = 10) -> List[Job]:
-        """Get featured jobs"""
-        query = (
-            select(Job)
-            .where(and_(Job.is_featured == True, Job.status == JobStatus.ACTIVE.value))
-            .options(selectinload(Job.company))
-            .order_by(Job.posted_date.desc())
-            .limit(limit)
-        )
-        
-        return db.execute(query).scalars().all()
-    
-    @staticmethod
     def get_recent_jobs(db: Session, limit: int = 10) -> List[Job]:
-        """Get recently posted jobs"""
+        """Get recently posted active jobs"""
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -152,73 +110,7 @@ class JobService:
         )
         
         return db.execute(query).scalars().all()
-    
-    @staticmethod
-    def get_remote_jobs(db: Session, limit: int = 20) -> List[Job]:
-        """Get remote jobs"""
-        query = (
-            select(Job)
-            .where(and_(Job.is_remote == True, Job.status == JobStatus.ACTIVE.value))
-            .options(selectinload(Job.company))
-            .order_by(Job.posted_date.desc())
-            .limit(limit)
-        )
-        
-        return db.execute(query).scalars().all()
-    
-    @staticmethod
-    def get_jobs_by_skill(db: Session, skill: str, limit: int = 20) -> List[Job]:
-        """Get jobs that require a specific skill"""
-        query = (
-            select(Job)
-            .where(Job.status == JobStatus.ACTIVE.value)
-            .options(selectinload(Job.company))
-        )
-        
-        all_jobs = db.execute(query).scalars().all()
-        
-        # Filter by skill (case-insensitive)
-        skill_lower = skill.lower()
-        matching_jobs = [
-            job for job in all_jobs
-            if any(skill_lower in s.lower() for s in job.skills)
-        ]
-        
-        # Sort by posted date and limit
-        matching_jobs.sort(key=lambda x: x.posted_date, reverse=True)
-        return matching_jobs[:limit]
-    
-    @staticmethod
-    def get_jobs_by_location(db: Session, location: str, limit: int = 20) -> List[Job]:
-        """Get jobs in a specific location"""
-        query = (
-            select(Job)
-            .where(and_(
-                Job.location.ilike(f"%{location}%"),
-                Job.status == JobStatus.ACTIVE.value
-            ))
-            .options(selectinload(Job.company))
-            .order_by(Job.posted_date.desc())
-            .limit(limit)
-        )
-        
-        return db.execute(query).scalars().all()
-    
-    @staticmethod
-    def get_high_salary_jobs(db: Session, min_salary: int, limit: int = 20) -> List[Job]:
-        """Get jobs with salary above minimum threshold"""
-        query = (
-            select(Job)
-            .where(and_(
-                Job.salary_min >= min_salary,
-                Job.status == JobStatus.ACTIVE.value
-            ))
-            .options(selectinload(Job.company))
-            .order_by(Job.salary_min.desc())
-            .limit(limit)
-        )
-        
-        return db.execute(query).scalars().all()
+
     
     @staticmethod
     def increment_job_view(job_id: int, db: Session) -> bool:

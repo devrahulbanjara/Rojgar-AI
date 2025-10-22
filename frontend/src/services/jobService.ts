@@ -61,24 +61,8 @@ export class JobService {
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
     
-    // Add filters
+    // Only search term
     if (params?.search) queryParams.append('search', params.search);
-    if (params?.location) queryParams.append('location', params.location);
-    if (params?.department) queryParams.append('department', params.department);
-    if (params?.location_type?.length) {
-      params.location_type.forEach(type => queryParams.append('location_type', type));
-    }
-    if (params?.employment_type?.length) {
-      params.employment_type.forEach(type => queryParams.append('employment_type', type));
-    }
-    if (params?.level?.length) {
-      params.level.forEach(level => queryParams.append('level', level));
-    }
-    if (params?.salary_min) queryParams.append('salary_min', params.salary_min.toString());
-    if (params?.salary_max) queryParams.append('salary_max', params.salary_max.toString());
-    if (params?.is_remote !== undefined) queryParams.append('is_remote', params.is_remote.toString());
-    if (params?.is_featured !== undefined) queryParams.append('is_featured', params.is_featured.toString());
-    if (params?.company_id) queryParams.append('company_id', params.company_id.toString());
     
     const endpoint = `${jobEndpoints.search}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<JobListResponse>(endpoint);
@@ -138,14 +122,7 @@ export class JobService {
   /**
    * Get featured/recommended jobs
    */
-  static async getFeaturedJobs(limit: number = 10): Promise<Job[]> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('featured', 'true');
-    queryParams.append('limit', limit.toString());
-    
-    const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`;
-    return apiClient.get<Job[]>(endpoint);
-  }
+  // Removed getFeaturedJobs as functionality is deprecated
 }
 
 // Application Service Class
