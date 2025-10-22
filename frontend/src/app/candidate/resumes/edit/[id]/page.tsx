@@ -1098,15 +1098,6 @@ export default function ResumeEditor() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleUpdateExperience(resumeExp.id, editingExperience[resumeExp.id])}
-                                className="p-2 border-green-200 text-green-600 hover:bg-green-50"
-                                title="Save Changes"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
                                 onClick={() => handleRemoveExperience(resumeExp.id)}
                                 className="p-2 border-red-200 text-red-600 hover:bg-red-50"
                                 title="Remove"
@@ -1368,15 +1359,6 @@ export default function ResumeEditor() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleUpdateEducation(resumeEdu.id, editingEducation[resumeEdu.id])}
-                                className="p-2 border-green-200 text-green-600 hover:bg-green-50"
-                                title="Save Changes"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
                                 onClick={() => handleRemoveEducation(resumeEdu.id)}
                                 className="p-2 border-red-200 text-red-600 hover:bg-red-50"
                                 title="Remove"
@@ -1592,15 +1574,6 @@ export default function ResumeEditor() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleUpdateSkill(resumeSkill.id, editingSkill[resumeSkill.id])}
-                                className="p-2 border-green-200 text-green-600 hover:bg-green-50"
-                                title="Save Changes"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
                                 onClick={() => handleRemoveSkill(resumeSkill.id)}
                                 className="p-2 border-red-200 text-red-600 hover:bg-red-50"
                                 title="Remove"
@@ -1810,15 +1783,6 @@ export default function ResumeEditor() {
                               </div>
                             </div>
                             <div className="flex gap-2 ml-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdateCertification(resumeCert.id, editingCertification[resumeCert.id])}
-                                className="p-2 border-green-200 text-green-600 hover:bg-green-50"
-                                title="Save Changes"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"

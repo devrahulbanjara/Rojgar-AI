@@ -1,8 +1,3 @@
-"""
-User routes - Get current user info
-Simple and easy to understand
-"""
-
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -30,9 +25,6 @@ def get_current_user(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """
-    Get information about the currently logged in user
-    """
     user = UserService.get_user_by_id(user_id, db)
     
     if not user:
@@ -50,9 +42,6 @@ def update_profile(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """
-    Update user profile information
-    """
     user = UserService.get_user_by_id(user_id, db)
     
     if not user:
@@ -61,7 +50,6 @@ def update_profile(
             detail="User not found",
         )
     
-    # Update user name
     user.name = profile_data.name
     db.commit()
     db.refresh(user)
@@ -75,9 +63,6 @@ def change_password(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """
-    Change user password
-    """
     user = UserService.get_user_by_id(user_id, db)
     
     if not user:
@@ -86,21 +71,18 @@ def change_password(
             detail="User not found",
         )
     
-    # Check if user has a password (not Google OAuth only)
     if not user.password_hash:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password change not available for Google OAuth users",
         )
     
-    # Verify current password
     if not verify_password(password_data.current_password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect",
         )
     
-    # Validate new password
     if password_data.new_password != password_data.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -113,6 +95,5 @@ def change_password(
             detail="New password must be at least 8 characters long",
         )
     
-    # Update password
     user.password_hash = hash_password(password_data.new_password)
     db.commit()
