@@ -53,9 +53,6 @@ def get_recent_jobs(limit: int = Query(10, ge=1, le=50), db: Session = Depends(g
     return [JobService.to_job_response(j) for j in JobService.get_recent_jobs(db, limit)]
 
 
- 
-
-
 @router.get("/companies/list", response_model=List[CompanyResponse])
 def get_companies(db: Session = Depends(get_db)):
     companies = JobService.get_all_companies(db)

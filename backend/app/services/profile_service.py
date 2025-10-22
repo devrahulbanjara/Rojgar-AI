@@ -1,7 +1,3 @@
-"""
-Profile Service - Manages the Single Source of Truth for candidate data
-"""
-
 from typing import Optional, List
 from datetime import datetime, date
 from sqlalchemy.orm import Session, selectinload

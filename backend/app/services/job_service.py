@@ -1,7 +1,3 @@
-"""
-Job service - Business logic for job operations
-"""
-
 from typing import List, Optional, Dict
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func, or_, and_
