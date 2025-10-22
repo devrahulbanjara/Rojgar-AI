@@ -1,10 +1,5 @@
-"""
-Application routes - Manage job applications
-Simple CRUD operations for applications
-"""
-
 from typing import List, Dict
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, status, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -21,17 +16,13 @@ from app.services.application_service import ApplicationService
 router = APIRouter()
 
 
-# ============= Routes =============
-
 @router.get("/", response_model=List[ApplicationResponse])
 def get_my_applications(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Get all applications for the logged in user"""
     user_id = get_current_user_id(request)
     
-    # Get all applications for this user
     applications = ApplicationService.get_user_applications(user_id, db)
     
     return applications
@@ -42,10 +33,6 @@ def get_tracking_board(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """
-    Get applications organized by stage for the tracking board
-    Organizes into 3 columns: applied, interviewing, outcome
-    """
     user_id = get_current_user_id(request)
     
     return ApplicationService.get_tracking_board(user_id, db)
@@ -56,7 +43,6 @@ def get_application_stats(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Get statistics about user's applications"""
     user_id = get_current_user_id(request)
     
     return ApplicationService.get_application_stats(user_id, db)
@@ -68,10 +54,8 @@ def create_application(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Create a new job application"""
     user_id = get_current_user_id(request)
     
-    # Create application
     new_app = ApplicationService.create_application(
         user_id=user_id,
         job_title=app_data.job_title,
@@ -87,7 +71,6 @@ def create_application(
 def get_application(
     app: Application = Depends(get_application_by_id)
 ):
-    """Get a specific application"""
     return app
 
 
@@ -97,8 +80,6 @@ def update_application(
     app: Application = Depends(get_application_for_update),
     db: Session = Depends(get_db)
 ):
-    """Update an application"""
-    # Update application
     updated_app = ApplicationService.update_application(
         application=app,
         stage=update_data.stage,
@@ -115,7 +96,6 @@ def delete_application(
     app: Application = Depends(get_application_for_delete),
     db: Session = Depends(get_db)
 ):
-    """Delete an application"""
     ApplicationService.delete_application(app, db)
     
     return None

@@ -4,7 +4,6 @@
  */
 
 export { JobCard } from './JobCard';
-export { JobFilters } from './JobFilters';
 export { JobList } from './JobList';
 export { JobDetailsModal } from './JobDetailsModal';
 export { JobSearchBar } from './JobSearchBar';
