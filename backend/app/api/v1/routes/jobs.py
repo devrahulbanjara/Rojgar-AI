@@ -1,12 +1,12 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, status, Query, Depends
+from fastapi import APIRouter, status, Query, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.job import (
-    JobResponse, 
-    CompanyResponse, 
-    JobSearchRequest, 
+    JobResponse,
+    CompanyResponse,
+    JobSearchRequest,
     JobRecommendationRequest,
     JobStatsResponse,
     JobSearchResponse,
@@ -15,10 +15,9 @@ from app.services.job_service import JobService
 from app.api.v1.routes.dependencies import (
     _job_not_found,
     _company_not_found,
-    _validate_job_id, 
-    _validate_company_id, 
-    _to_job_responses
-    )
+    _validate_job_id,
+    _validate_company_id,
+)
 
 router = APIRouter()
 
@@ -33,15 +32,14 @@ def get_recommended_jobs(
 
 
 @router.get("/search", response_model=JobSearchResponse)
-def search_jobs(search_params: JobSearchRequest = Depends(), db: Session = Depends(get_db)):
+def search_jobs(
+    search_params: JobSearchRequest = Depends(), db: Session = Depends(get_db)
+):
     return JobService.search_jobs(db, search_params)
 
 
 @router.get("/{job_id}", response_model=JobResponse)
-def get_job(
-    job_id: int = Depends(_validate_job_id), 
-    db: Session = Depends(get_db)
-):
+def get_job(job_id: int = Depends(_validate_job_id), db: Session = Depends(get_db)):
     """Get a job by ID"""
     job = JobService.get_job_by_id(job_id, db, increment_view=True)
     if not job:
@@ -49,44 +47,13 @@ def get_job(
     return JobService.to_job_response(job)
 
 
-@router.get("/featured/list", response_model=List[JobResponse])
-def get_featured_jobs(limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
-    """Get featured jobs"""
-    return _to_job_responses(JobService.get_featured_jobs(db, limit))
-
-
 @router.get("/recent/list", response_model=List[JobResponse])
 def get_recent_jobs(limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
     """Get recently posted jobs"""
-    return _to_job_responses(JobService.get_recent_jobs(db, limit))
+    return [JobService.to_job_response(j) for j in JobService.get_recent_jobs(db, limit)]
 
 
-@router.get("/remote/list", response_model=List[JobResponse])
-def get_remote_jobs(limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db)):
-    """Get remote jobs"""
-    return _to_job_responses(JobService.get_remote_jobs(db, limit))
-
-
-@router.get("/skill/{skill}", response_model=List[JobResponse])
-def get_jobs_by_skill(skill: str, limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db)):
-    """Get jobs requiring a specific skill"""
-    return _to_job_responses(JobService.get_jobs_by_skill(db, skill, limit))
-
-
-@router.get("/location/{location}", response_model=List[JobResponse])
-def get_jobs_by_location(location: str, limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db)):
-    """Get jobs in a specific location"""
-    return _to_job_responses(JobService.get_jobs_by_location(db, location, limit))
-
-
-@router.get("/high-salary/list", response_model=List[JobResponse])
-def get_high_salary_jobs(
-    min_salary: int = Query(..., ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-): 
-    return _to_job_responses(JobService.get_high_salary_jobs(db, min_salary, limit))
-
+ 
 
 
 @router.get("/companies/list", response_model=List[CompanyResponse])
@@ -97,8 +64,7 @@ def get_companies(db: Session = Depends(get_db)):
 
 @router.get("/company/{company_id}", response_model=CompanyResponse)
 def get_company(
-    company_id: int = Depends(_validate_company_id), 
-    db: Session = Depends(get_db)
+    company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
 ):
     company = JobService.get_company_by_id(company_id, db)
     if not company:
@@ -108,16 +74,14 @@ def get_company(
 
 @router.get("/company/{company_id}/jobs", response_model=List[JobResponse])
 def get_company_jobs(
-    company_id: int = Depends(_validate_company_id), 
-    db: Session = Depends(get_db)
+    company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
 ):
     return _to_job_responses(JobService.get_company_jobs(company_id, db))
 
 
 @router.get("/company/{company_id}/info", response_model=dict)
 def get_company_info(
-    company_id: int = Depends(_validate_company_id), 
-    db: Session = Depends(get_db)
+    company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
 ):
     result = JobService.get_company_info_with_stats(company_id, db)
     if not result:
@@ -132,8 +96,7 @@ def get_job_statistics(db: Session = Depends(get_db)):
 
 @router.post("/{job_id}/view", status_code=status.HTTP_204_NO_CONTENT)
 def increment_view(
-    job_id: int = Depends(_validate_job_id), 
-    db: Session = Depends(get_db)
+    job_id: int = Depends(_validate_job_id), db: Session = Depends(get_db)
 ):
     if not JobService.increment_job_view(job_id, db):
         _job_not_found(job_id)
@@ -141,8 +104,7 @@ def increment_view(
 
 @router.post("/{job_id}/apply", status_code=status.HTTP_204_NO_CONTENT)
 def increment_application(
-    job_id: int = Depends(_validate_job_id), 
-    db: Session = Depends(get_db)
+    job_id: int = Depends(_validate_job_id), db: Session = Depends(get_db)
 ):
     if not JobService.increment_job_application(job_id, db):
         _job_not_found(job_id)

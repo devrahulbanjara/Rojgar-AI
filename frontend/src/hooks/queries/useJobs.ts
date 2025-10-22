@@ -23,7 +23,6 @@ export const jobQueryKeys = {
   search: (params?: JobSearchParams) => [...jobQueryKeys.all, 'search', params] as const,
   details: () => [...jobQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...jobQueryKeys.details(), id] as const,
-  featured: () => [...jobQueryKeys.all, 'featured'] as const,
   byCompany: (companyId: string) => [...jobQueryKeys.all, 'company', companyId] as const,
 };
 
@@ -83,17 +82,6 @@ export function useJob(id: string) {
   });
 }
 
-export function useFeaturedJobs(limit: number = 10) {
-  return useQuery({
-    queryKey: [...jobQueryKeys.featured(), limit],
-    queryFn: async () => {
-      return await jobService.getFeaturedJobs(limit);
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-  });
-}
-
 export function useJobsByCompany(companyId: string, params?: { page?: number; limit?: number }) {
   return useQuery({
     queryKey: [...jobQueryKeys.byCompany(companyId), params],
@@ -117,7 +105,6 @@ export function useCreateJob() {
     onSuccess: () => {
       // Invalidate and refetch job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.featured() });
     },
   });
 }
@@ -134,7 +121,6 @@ export function useUpdateJob() {
       queryClient.setQueryData(jobQueryKeys.detail(variables.id), data);
       // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.featured() });
     },
   });
 }
@@ -151,7 +137,6 @@ export function useDeleteJob() {
       queryClient.removeQueries({ queryKey: jobQueryKeys.detail(id) });
       // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.featured() });
     },
   });
 }

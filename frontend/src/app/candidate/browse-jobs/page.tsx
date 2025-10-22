@@ -9,19 +9,13 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useJobSearch, useCreateApplication } from '../../../hooks/queries/useJobs';
-import { JobSearchBar, JobFilters, JobList, JobDetailView } from '../../../components/jobs';
+import { JobSearchBar, JobList, JobDetailView } from '../../../components/jobs';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { AnimatedContainer, PageHeader } from '../../../components/common';
 import { 
-  Filter, 
-  SlidersHorizontal, 
   X, 
-  Search,
-  MapPin,
-  Clock,
-  Users,
   TrendingUp
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
@@ -30,7 +24,6 @@ import type { Job, JobFilters as JobFiltersType } from '../../../types/job';
 export default function Jobs() {
   const [filters, setFilters] = useState<JobFiltersType>({});
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'postedDate' | 'salary'>('postedDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -76,14 +69,6 @@ export default function Jobs() {
     }
   }, [createApplicationMutation]);
 
-  // Count active filters
-  const activeFiltersCount = useMemo(() => {
-    return Object.values(filters).filter(value => 
-      value !== undefined && value !== null && value !== ''
-    ).length;
-  }, [filters]);
-
-
   return (
     <AppShell>
       <div className="space-y-8">
@@ -111,30 +96,7 @@ export default function Jobs() {
                 />
               </div>
 
-              {/* Filter Toggle */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    "flex items-center gap-2 h-11 px-4 rounded-xl border-[1.5px] text-sm font-medium transition-all duration-200",
-                    showFilters 
-                      ? "bg-[#3056F5] border-[#3056F5] text-white"
-                      : "bg-white border-[#E5E7EB] text-[#475569] hover:border-[#CBD5E1]"
-                  )}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filters
-                  {activeFiltersCount > 0 && (
-                    <span className={cn(
-                      "ml-1 px-2 py-0.5 rounded-full text-xs font-semibold",
-                      showFilters ? "bg-white/20 text-white" : "bg-[#3056F5]/10 text-[#3056F5]"
-                    )}>
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Sort Dropdown - Only 4 options: Posted Date (Latest/Oldest) and Salary (Highest/Lowest) */}
+              {/* Sort Dropdown - Only 4 options: Posted Date (Latest/Oldest) and Salary (Highest/Lowest) */}
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -152,30 +114,7 @@ export default function Jobs() {
               </div>
             </div>
 
-            {/* Filters Panel */}
-            {showFilters && (
-              <div className="mt-6 pt-6 border-t border-[#E5E7EB]">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-[#0F172A]">Filters</h3>
-                  {activeFiltersCount > 0 && (
-                    <button
-                      onClick={handleClearFilters}
-                      className="flex items-center gap-1 text-sm font-medium text-[#475569] hover:text-[#3056F5] transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                      Clear all
-                    </button>
-                  )}
-                </div>
-                <JobFilters
-                  filters={filters}
-                  onFiltersChange={handleFiltersChange}
-                  onClearFilters={handleClearFilters}
-                  compact={true}
-                />
-              </div>
-            )}
-            </div>
+            {/* Filters removed */}
           </AnimatedContainer>
 
           {/* Main Content */}

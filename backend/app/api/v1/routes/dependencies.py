@@ -1,7 +1,5 @@
 from fastapi import HTTPException, status
 from typing import List
-from app.schemas.job import JobResponse
-from app.services.job_service import JobService
 
 
 def _job_not_found(job_id: int):
@@ -37,5 +35,4 @@ def _validate_company_id(company_id: int) -> int:
     return company_id
 
 
-def _to_job_responses(jobs) -> List[JobResponse]:
-    return [JobService.to_job_response(j) for j in jobs]
+ 
