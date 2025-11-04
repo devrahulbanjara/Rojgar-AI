@@ -4,6 +4,7 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 import logging
+import threading
 
 from app.models.job import Job
 from app.core.config import settings
@@ -16,25 +17,27 @@ class VectorJobService:
     _model: Optional[SentenceTransformer] = None
     _client: Optional[QdrantClient] = None
     _collection_name: Optional[str] = None
+    _lock = threading.Lock()  # Thread-safe initialization
     
     def __init__(self):
-        # Initialize model and client only once (lazy initialization)
-        if VectorJobService._model is None:
-            logger.info(f"Initializing SentenceTransformer model: {settings.EMBEDDING_MODEL}")
-            VectorJobService._model = SentenceTransformer(settings.EMBEDDING_MODEL)
-            logger.info("SentenceTransformer model initialized successfully")
-        
-        if VectorJobService._client is None:
-            qdrant_url = settings.QDRANT_URL
-            qdrant_api_key = settings.QDRANT_API_KEY
-            VectorJobService._collection_name = settings.QDRANT_COLLECTION_JOBS
+        # Initialize model and client only once (lazy initialization with thread safety)
+        with VectorJobService._lock:
+            if VectorJobService._model is None:
+                logger.info(f"Initializing SentenceTransformer model: {settings.EMBEDDING_MODEL}")
+                VectorJobService._model = SentenceTransformer(settings.EMBEDDING_MODEL)
+                logger.info("SentenceTransformer model initialized successfully")
             
-            logger.info(f"Connecting to Qdrant at: {qdrant_url}")
-            VectorJobService._client = QdrantClient(
-                url=qdrant_url,
-                api_key=qdrant_api_key,
-            )
-            logger.info("Qdrant client initialized successfully")
+            if VectorJobService._client is None:
+                qdrant_url = settings.QDRANT_URL
+                qdrant_api_key = settings.QDRANT_API_KEY
+                VectorJobService._collection_name = settings.QDRANT_COLLECTION_JOBS
+                
+                logger.info(f"Connecting to Qdrant at: {qdrant_url}")
+                VectorJobService._client = QdrantClient(
+                    url=qdrant_url,
+                    api_key=qdrant_api_key,
+                )
+                logger.info("Qdrant client initialized successfully")
         
         # Use cached instances
         self.model = VectorJobService._model

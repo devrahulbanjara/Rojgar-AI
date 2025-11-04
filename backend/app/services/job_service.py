@@ -257,12 +257,14 @@ class JobService:
         
         top_company_ids = [cid for cid, _ in sorted(company_counts.items(), key=lambda x: x[1], reverse=True)[:5]]
         
-        # Only fetch names for top companies
-        companies = db.execute(
-            select(Company.id, Company.name).where(Company.id.in_(top_company_ids))
-        ).all()
-        company_map = {c.id: c.name for c in companies}
-        top_companies = [company_map.get(cid, f"Company {cid}") for cid in top_company_ids]
+        # Only fetch names for top companies if there are any
+        top_companies = []
+        if top_company_ids:
+            companies = db.execute(
+                select(Company.id, Company.name).where(Company.id.in_(top_company_ids))
+            ).all()
+            company_map = {c.id: c.name for c in companies}
+            top_companies = [company_map.get(cid, f"Company {cid}") for cid in top_company_ids]
         
         return {
             "total_jobs": total_jobs,
