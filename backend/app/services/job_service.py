@@ -155,33 +155,67 @@ class JobService:
         if not company:
             return None
         
-        jobs = db.execute(select(Job).where(Job.company_id == company_id)).scalars().all()
-        active_jobs = [j for j in jobs if j.status == JobStatus.ACTIVE.value]
+        # Use database aggregation for counts and sums
+        total_jobs = db.execute(
+            select(func.count(Job.id)).where(Job.company_id == company_id)
+        ).scalar_one()
         
-        total_applications = sum(j.applicant_count for j in jobs)
-        total_views = sum(j.views_count for j in jobs)
-        avg_salary = sum(j.salary_min for j in active_jobs) / len(active_jobs) if active_jobs else 0
+        active_jobs_count = db.execute(
+            select(func.count(Job.id))
+            .where(Job.company_id == company_id)
+            .where(Job.status == JobStatus.ACTIVE.value)
+        ).scalar_one()
         
-        all_skills = []
+        # Aggregate applications and views in database
+        stats = db.execute(
+            select(
+                func.sum(Job.applicant_count),
+                func.sum(Job.views_count)
+            )
+            .where(Job.company_id == company_id)
+        ).one()
+        
+        total_applications = stats[0] or 0
+        total_views = stats[1] or 0
+        
+        # Get average salary only for active jobs
+        avg_salary_result = db.execute(
+            select(func.avg(Job.salary_min))
+            .where(Job.company_id == company_id)
+            .where(Job.status == JobStatus.ACTIVE.value)
+        ).scalar_one()
+        avg_salary = avg_salary_result if avg_salary_result else 0
+        
+        # Fetch active jobs with eager loading for display
+        active_jobs = db.execute(
+            select(Job)
+            .where(Job.company_id == company_id)
+            .where(Job.status == JobStatus.ACTIVE.value)
+            .options(selectinload(Job.company))
+        ).scalars().all()
+        
+        # Extract unique skills from active jobs
+        all_skills = set()
         for job in active_jobs:
-            all_skills.extend(job.skills)
-        unique_skills = list(set(all_skills))
+            if job.skills:
+                all_skills.update(job.skills)
         
         return {
             "company": JobService.to_company_response(company),
             "jobs": [JobService.to_job_response(job) for job in active_jobs],
             "statistics": {
-                "total_jobs": len(jobs),
-                "active_jobs": len(active_jobs),
+                "total_jobs": total_jobs,
+                "active_jobs": active_jobs_count,
                 "total_applications": total_applications,
                 "total_views": total_views,
                 "average_salary": round(avg_salary, 2),
-                "unique_skills": unique_skills,
+                "unique_skills": list(all_skills),
             }
         }
     
     @staticmethod
     def get_job_statistics(db: Session) -> Dict:
+        # Aggregate counts in a single query for better performance
         total_jobs = db.execute(select(func.count(Job.id))).scalar_one()
         active_jobs = db.execute(
             select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
@@ -196,31 +230,39 @@ class JobService:
         avg_salary_result = db.execute(select(func.avg(Job.salary_min))).scalar_one()
         avg_salary = round(avg_salary_result, 2) if avg_salary_result else 0
         
-        all_jobs = db.execute(select(Job)).scalars().all()
+        # Only fetch the specific columns we need instead of full Job objects
+        jobs_data = db.execute(
+            select(Job.skills, Job.location, Job.company_id)
+        ).all()
         
-        all_skills = []
-        for job in all_jobs:
-            all_skills.extend(job.skills)
+        # Process skills efficiently
         skill_counts = {}
-        for skill in all_skills:
-            skill_counts[skill] = skill_counts.get(skill, 0) + 1
-        top_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        top_skills = [skill for skill, count in top_skills]
+        for skills, _, _ in jobs_data:
+            if skills:
+                for skill in skills:
+                    skill_counts[skill] = skill_counts.get(skill, 0) + 1
+        top_skills = [skill for skill, _ in sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10]]
         
+        # Process locations efficiently
         location_counts = {}
-        for job in all_jobs:
-            if job.location:
-                location_counts[job.location] = location_counts.get(job.location, 0) + 1
-        top_locations = sorted(location_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        top_locations = [loc for loc, count in top_locations]
+        for _, location, _ in jobs_data:
+            if location:
+                location_counts[location] = location_counts.get(location, 0) + 1
+        top_locations = [loc for loc, _ in sorted(location_counts.items(), key=lambda x: x[1], reverse=True)[:10]]
         
-        companies = db.execute(select(Company)).scalars().all()
-        company_map = {c.id: c.name for c in companies}
+        # Process companies efficiently - fetch company names only for top companies
         company_counts = {}
-        for job in all_jobs:
-            company_counts[job.company_id] = company_counts.get(job.company_id, 0) + 1
-        top_company_ids = sorted(company_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        top_companies = [company_map.get(cid, f"Company {cid}") for cid, count in top_company_ids]
+        for _, _, company_id in jobs_data:
+            company_counts[company_id] = company_counts.get(company_id, 0) + 1
+        
+        top_company_ids = [cid for cid, _ in sorted(company_counts.items(), key=lambda x: x[1], reverse=True)[:5]]
+        
+        # Only fetch names for top companies
+        companies = db.execute(
+            select(Company.id, Company.name).where(Company.id.in_(top_company_ids))
+        ).all()
+        company_map = {c.id: c.name for c in companies}
+        top_companies = [company_map.get(cid, f"Company {cid}") for cid in top_company_ids]
         
         return {
             "total_jobs": total_jobs,

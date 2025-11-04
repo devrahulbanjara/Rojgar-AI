@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
@@ -11,21 +11,35 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-class VectorJobService:    
+class VectorJobService:
+    # Class-level cache for model and client (singleton pattern)
+    _model: Optional[SentenceTransformer] = None
+    _client: Optional[QdrantClient] = None
+    _collection_name: Optional[str] = None
+    
     def __init__(self):
-        self.model = SentenceTransformer(settings.EMBEDDING_MODEL)
+        # Initialize model and client only once (lazy initialization)
+        if VectorJobService._model is None:
+            logger.info(f"Initializing SentenceTransformer model: {settings.EMBEDDING_MODEL}")
+            VectorJobService._model = SentenceTransformer(settings.EMBEDDING_MODEL)
+            logger.info("SentenceTransformer model initialized successfully")
         
-        qdrant_url = settings.QDRANT_URL
-        qdrant_api_key = settings.QDRANT_API_KEY
-        collection_name = settings.QDRANT_COLLECTION_JOBS
+        if VectorJobService._client is None:
+            qdrant_url = settings.QDRANT_URL
+            qdrant_api_key = settings.QDRANT_API_KEY
+            VectorJobService._collection_name = settings.QDRANT_COLLECTION_JOBS
+            
+            logger.info(f"Connecting to Qdrant at: {qdrant_url}")
+            VectorJobService._client = QdrantClient(
+                url=qdrant_url,
+                api_key=qdrant_api_key,
+            )
+            logger.info("Qdrant client initialized successfully")
         
-        logger.info(f"Connecting to Qdrant at: {qdrant_url}")
-        
-        self.client = QdrantClient(
-            url=qdrant_url,
-            api_key=qdrant_api_key,
-        )
-        self.collection_name = collection_name
+        # Use cached instances
+        self.model = VectorJobService._model
+        self.client = VectorJobService._client
+        self.collection_name = VectorJobService._collection_name
         self._ensure_collection_exists()
     
     def _ensure_collection_exists(self):

@@ -17,13 +17,26 @@ class ResumeService:
     
     def __init__(self, db: Session):
         self.db = db
+        self._profile_cache = {}  # Cache profiles by user_id within a request
+    
+    def _get_profile_by_user_id(self, user_id: str) -> Profile:
+        """Get profile with caching to avoid redundant queries in the same request"""
+        if user_id not in self._profile_cache:
+            profile = self.db.execute(
+                select(Profile).where(Profile.user_id == user_id)
+            ).scalar_one_or_none()
+            
+            if not profile:
+                raise HTTPException(status_code=404, detail="Profile not found")
+            
+            self._profile_cache[user_id] = profile
+        
+        return self._profile_cache[user_id]
     
     def get_resumes_by_user_id(self, user_id: str) -> List[ResumeResponse]:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
+        try:
+            profile = self._get_profile_by_user_id(user_id)
+        except HTTPException:
             return []
         
         stmt = (
@@ -42,12 +55,7 @@ class ResumeService:
         return [ResumeResponse.model_validate(resume) for resume in resumes]
     
     def get_resume_by_id(self, user_id: str, resume_id: str) -> Optional[ResumeResponse]:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         stmt = (
             select(Resume)
@@ -160,12 +168,7 @@ class ResumeService:
         return city or country
     
     def update_resume(self, user_id: str, resume_id: str, resume_data: dict) -> ResumeResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -187,12 +190,7 @@ class ResumeService:
         return ResumeResponse.model_validate(resume)
     
     def delete_resume(self, user_id: str, resume_id: str) -> bool:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -208,12 +206,7 @@ class ResumeService:
         return True
     
     def add_experience_to_resume(self, user_id: str, resume_id: str, work_experience_id: str, custom_description: str) -> ResumeExperienceResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -265,12 +258,7 @@ class ResumeService:
         return ResumeExperienceResponse.model_validate(resume_experience)
     
     def update_experience_in_resume(self, user_id: str, resume_id: str, resume_experience_id: str, experience_data: dict) -> ResumeExperienceResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -317,12 +305,7 @@ class ResumeService:
         return ResumeExperienceResponse.model_validate(resume_experience)
     
     def remove_experience_from_resume(self, user_id: str, resume_id: str, resume_experience_id: str) -> bool:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -347,12 +330,7 @@ class ResumeService:
         return True
     
     def add_education_to_resume(self, user_id: str, resume_id: str, education_record_id: str) -> ResumeEducationResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -403,12 +381,7 @@ class ResumeService:
         return ResumeEducationResponse.model_validate(resume_education)
     
     def update_education_in_resume(self, user_id: str, resume_id: str, resume_education_id: str, education_data: dict) -> ResumeEducationResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -456,12 +429,7 @@ class ResumeService:
         return ResumeEducationResponse.model_validate(resume_education)
 
     def remove_education_from_resume(self, user_id: str, resume_id: str, resume_education_id: str) -> bool:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -486,12 +454,7 @@ class ResumeService:
         return True
     
     def add_certification_to_resume(self, user_id: str, resume_id: str, certification_id: str) -> ResumeCertificationResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -542,12 +505,7 @@ class ResumeService:
         return ResumeCertificationResponse.model_validate(resume_certification)
     
     def update_certification_in_resume(self, user_id: str, resume_id: str, resume_certification_id: str, certification_data: dict) -> ResumeCertificationResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -591,12 +549,7 @@ class ResumeService:
         return ResumeCertificationResponse.model_validate(resume_certification)
 
     def remove_certification_from_resume(self, user_id: str, resume_id: str, resume_certification_id: str) -> bool:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -621,12 +574,7 @@ class ResumeService:
         return True
     
     def add_skill_to_resume(self, user_id: str, resume_id: str, profile_skill_id: str) -> ResumeSkillResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -677,12 +625,7 @@ class ResumeService:
         return ResumeSkillResponse.model_validate(resume_skill)
     
     def update_skill_in_resume(self, user_id: str, resume_id: str, resume_skill_id: str, skill_data: dict) -> ResumeSkillResponse:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -717,12 +660,7 @@ class ResumeService:
         return ResumeSkillResponse.model_validate(resume_skill)
 
     def remove_skill_from_resume(self, user_id: str, resume_id: str, resume_skill_id: str) -> bool:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
         
         resume = self.db.execute(
             select(Resume)
@@ -931,12 +869,7 @@ class ResumeService:
         )
 
     def _get_resume_by_id_and_user(self, resume_id: str, user_id: str) -> Resume:
-        profile = self.db.execute(
-            select(Profile).where(Profile.user_id == user_id)
-        ).scalar_one_or_none()
-        
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
+        profile = self._get_profile_by_user_id(user_id)
             
         resume = self.db.execute(
             select(Resume)
