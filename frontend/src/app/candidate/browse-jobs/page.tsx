@@ -14,10 +14,9 @@ import { JobSearchBar, JobList, JobDetailView } from '../../../components/jobs';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { AnimatedContainer, PageHeader } from '../../../components/common';
+import { AnimatedContainer, PageHeader, AIPoweredBadge } from '../../../components/common';
 import { 
-  X, 
-  TrendingUp
+  X
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import type { Job, JobFilters as JobFiltersType } from '../../../types/job';
@@ -100,9 +99,8 @@ export default function Jobs() {
                       </p>
                     </div>
                     {!isLoading && jobs.length > 0 && (
-                      <div className="flex items-center gap-1 text-sm text-[#94A3B8]">
-                        <TrendingUp className="h-4 w-4" />
-                        <span className="hidden sm:inline">AI-Powered</span>
+                      <div className="hidden sm:block">
+                        <AIPoweredBadge />
                       </div>
                     )}
                   </div>
