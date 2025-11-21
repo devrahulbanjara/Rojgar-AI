@@ -1,0 +1,18 @@
+Sampada Poudel
+Address: Kirtipur, Kathmandu
+Email: sampada@email.com
+GitHub: /sampadapoudel
+SUMMARY
+A motivated software developer with 1.5 years of experience in web development. Eager to transition into a backend-focused role.
+EDUCATION
+BSc. CSIT | Tribhuvan University, Kirtipur
+WORK EXPERIENCE
+Junior Frontend Developer | Leapfrog Technology (2023 - Present)
+- Developed responsive user interfaces using React and TypeScript.
+- Consumed REST APIs to display data on the frontend.
+- Gained experience with version control using Git.
+SKILLS
+- Languages: JavaScript, TypeScript
+- Frontend: React, Redux
+- Backend: Node.js (Basic)
+- Others: Git
