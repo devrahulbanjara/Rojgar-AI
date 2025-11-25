@@ -5,10 +5,12 @@ description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.17.0",
+    "docling>=2.63.0",
     "fastapi[standard]>=0.118.2",
     "httpx>=0.28.1",
     "langchain-groq>=1.0.0",
     "langgraph>=1.0.3",
+    "loguru>=0.7.3",
     "psycopg2-binary>=2.9.11",
     "pydantic>=2.11.9",
     "pydantic-settings>=2.10.1",
