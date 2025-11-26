@@ -12,7 +12,7 @@ from app.schemas.user import (
     TokenResponse,
     CreateUserRequest,
 )
-from backend.app.services.auth.auth_service import AuthService
+from app.services.auth.auth_service import AuthService
 from app.core.config import settings
 
 router = APIRouter()
