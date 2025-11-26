@@ -69,21 +69,21 @@ The goal was to identify an engine that balances low Word Error Rate (WER) with 
 
 | OCR System | Avg. WER | Layout Handling | Table Extraction | Speed (per CV) | Hardware Req | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Docling (IBM)** | **2.1%** | **Very Strong** | **Excellent** | **~1.9s** | **Moderate CPU/GPU** | **Selected for production due to consistency.** |
-| Chandra OCR | 2.4% | Strong | Very Good | ~2.3s | High-end GPU (12GB+) | Tested via Datalab due to high compute cost. |
-| Paddle OCR | 5.8% | Decent | Fair | ~1.5s | Light CPU/GPU | Struggles with complex formatting recovery. |
-| Tesseract | 19.7% | Weak | Poor | ~1.1s | Very Light | Insufficient for modern resume layouts. |
+| **Docling (IBM)** | **3.1%** | **Strong** | **Excellent** | **~4.9s** | **Light CPU/GPU** | **Selected for production due to consistency.** |
+| Chandra OCR | 3.0% | Strong | **Extremely Good** | ~30.5s | High-end GPU | Tested via Datalab due to high compute cost. |
+| Paddle OCR | 5.8% | Decent | Fair | ~20.2s | Light CPU/GPU | Struggles with complex formatting recovery. |
+| Tesseract | 19.7% | Weak | Poor | ~4.1s | Very Light | Insufficient for modern resume layouts. |
 
 ### Performance Breakdown by Document
 
-| Engine | CV1 WER | CV2 WER | CV3 WER | CV4 WER | CV5 WER | Avg. WER | Execution Method |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Docling** | **1.6%** | **2.3%** | **2.0%** | **2.7%** | **1.8%** | **2.1%** | **Ran locally** |
-| Chandra | 1.9% | 2.8% | 2.3% | 2.6% | 2.4% | 2.4% | Datalab Demo |
-| Paddle | 4.9% | 6.3% | 5.4% | 6.8% | 5.5% | 5.8% | Ran locally |
-| Tesseract | 18.4% | 21.1% | 19.3% | 22.7% | 16.9% | 19.7% | Ran locally |
+| Engine     | CV1 WER | CV2 WER | CV3 WER | CV4 WER | CV5 WER | Avg. WER | Execution Method |
+| :--------- | :------ | :------ | :------ | :------ | :------ | :------- | :---------------- |
+| **Docling** | **2.9%** | **3.4%** | **3.1%** | **3.7%** | **2.4%** | **3.1%** | **Ran locally** |
+| Chandra    | 2.7% | 3.3% | 3.1% | 2.9% | 3.0% | 3.0% | Datalab Demo |
+| Paddle     | 5.1% | 6.4% | 5.7% | 6.0% | 5.8% | 5.8% | Ran locally |
+| Tesseract  | 18.9% | 21.3% | 19.1% | 22.0% | 17.2% | 19.7% | Ran locally |
 
-*Based on this analysis, **Docling** was integrated into the Resume Parser Agent for its superior ability to maintain document structure, which is vital for downstream LLM reasoning.*
+*Based on this analysis, **Docling** was integrated into the Resume Parser Agent for its superior ability to maintain document structure, faster inference time, and mainly which ran locally on low specs hardware, which is vital for downstream LLM reasoning in our case.*
 
 ## Project Milestones
 
@@ -141,6 +141,16 @@ The goal was to identify an engine that balances low Word Error Rate (WER) with 
     ```
 
 The application will be accessible at `http://localhost:3000`.
+
+## Star History
+
+<a href="https://www.star-history.com/#devrahulbanjara/ConvexHire&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date" />
+ </picture>
+</a>
 
 ## Citations & Acknowledgements
 
