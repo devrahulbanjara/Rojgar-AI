@@ -1,210 +1,281 @@
 from langchain_core.prompts import ChatPromptTemplate
 
+JOB_DESCRIPTION_PARSER_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are an experienced Technical Recruiter with 10+ years of experience in technology hiring. Your task is to extract structured job requirements from a job description exactly as per the JSON schema below.
 
-JOB_DESCRIPTION_PARSER_PROMPT = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """You are an experienced Technical Recruiter with 10+ years of experience in technology hiring. Your task is to extract structured job requirements from a job description.
+            ### Schema to Follow:
+            {{
+                "required_skills": ["Python", "FastAPI", "Docker", "AWS"],
+                "min_degree": "BSc Computer Science",
+                "years_required": 3.0,
+                "responsibilities": [
+                    "Design and implement REST APIs using Python and FastAPI",
+                    "Maintain and optimize PostgreSQL databases",
+                    "Deploy and monitor applications on AWS"
+                ]
+            }}
 
-### Task Instructions:
-1. Identify ALL technical skills, tools, frameworks, and technologies mentioned
-2. Extract the minimum educational qualification required
-3. Determine the minimum years of experience required (if not explicitly stated, infer from job level: Entry=0-2, Mid=3-5, Senior=5-8, Lead=8+)
+            ### Task Instructions:
+            1. Extract ALL required technical and professional skills mentioned (programming languages, frameworks, tools, platforms, domain-specific skills).
+            2. Extract the minimum degree required.
+            3. Determine the minimum years of experience; infer if not explicitly mentioned based on role level (Junior=0-2, Mid=3-5, Senior=5-8, Lead=8+).
+            4. Extract the list of key responsibilities, each as a separate string.
 
-### Output Format Requirements:
-Return a JSON object with:
-- required_skills: List of strings containing ALL skills mentioned (technical skills, soft skills, tools, frameworks)
-- min_degree: String containing the minimum degree requirement
-- years_required: Number representing minimum years of experience
+            ### Critical Rules:
+            - Only include REQUIRED skills; ignore nice-to-have skills.
+            - Include variations of skills (e.g., Python and Django separately if both are mentioned).
+            - Be comprehensive but do NOT invent any skills or responsibilities.
+            - Maintain exact JSON structure matching the schema.
+            - Return numeric fields as numbers (years_required), strings as strings, lists as lists.
 
-### Quality Criteria:
-- Include variations of skills (e.g., if "Python" is mentioned, include it; if "Django" is mentioned separately, include both)
-- Distinguish between "required" and "nice-to-have" - only extract REQUIRED skills
-- Be comprehensive but precise - don't invent skills not mentioned in the job description""",
-    ),
-    ("human", "Job Description:\n###\n{jd_text}\n###"),
-])
+            ### Example Output:
+            {{
+                "required_skills": ["Python", "FastAPI", "Docker", "AWS", "REST APIs"],
+                "min_degree": "BSc Computer Science",
+                "years_required": 3.0,
+                "responsibilities": [
+                    "Design and implement REST APIs using Python and FastAPI",
+                    "Maintain and optimize PostgreSQL databases",
+                    "Deploy and monitor applications on AWS"
+                ]
+            }}
 
-
-RESUME_PARSER_PROMPT = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """You are an expert Resume Parser for an Applicant Tracking System (ATS). Your task is to extract structured, privacy-safe information from resumes.
-
-### Task Instructions:
-Extract the following information accurately:
-
-1. **Skills**: List ALL technical skills, programming languages, frameworks, tools, platforms, and methodologies mentioned
-2. **Work Experience**: Extract each job with:
-   - company: Company name
-   - position: Job title/role
-   - duration: Time period (e.g., "2020-2023" or "Jan 2020 - Dec 2023")
-3. **Education**: Extract each degree with:
-   - degree: Degree name and field (e.g., "BSc. Computer Science")
-   - institution: University/College name
-4. **Years of Experience**: Calculate TOTAL years of professional work experience (sum all work durations)
-5. **Projects**: Extract each project with:
-   - name: Project title
-   - description: Brief summary of what was built and technologies used
-
-### Critical Rules:
-- Do NOT include any numeric fields inside work_experience or education objects
-- Only 'duration' should be a string representation of the time period
-- 'years_experience' at the top level should be the only numeric field
-- Extract skills comprehensively - include tools, languages, frameworks, and soft skills
-- If projects are not clearly listed, leave the projects array empty
-
-### Quality Standards:
-- Be thorough but accurate - don't invent information not present in the resume
-- Parse dates carefully to calculate accurate total experience
-- Maintain consistency in field naming and structure""",
-    ),
-    ("human", "Resume Text:\n###\n{resume_text}\n###"),
-])
+            Follow this structure strictly when extracting information from job descriptions.
+            """,
+        ),
+        ("human", "Job Description:\n###\n{jd_text}\n###"),
+    ]
+)
 
 
-WORK_ALIGNMENT_PROMPT = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """You are a Senior Technical Recruiter evaluating work experience alignment with a job opening. Your evaluation will determine if a candidate's background makes them suitable for this role.
+RESUME_PARSER_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are an expert Resume Parser for an Applicant Tracking System (ATS). Your task is to extract structured, privacy-safe information from resumes exactly according to the schema below:
 
-### Evaluation Framework:
-Assess the candidate's work experience against these criteria:
+            ### Schema to Follow:
+            {{
+                "skills": ["Python", "FastAPI", "PostgreSQL"],
+                "work_experience": [
+                    {{
+                        "company": "Company Name",
+                        "position": "Job Title",
+                        "duration": "Jan 2020 - Dec 2023",
+                        "responsibilities": [
+                            "Responsibility 1",
+                            "Responsibility 2"
+                        ]
+                    }}
+                ],
+                "education": [
+                    {{
+                        "degree": "BSc Computer Science",
+                        "institution": "University Name",
+                        "year": 2018  # optional
+                    }}
+                ],
+                "years_experience": 5.0,
+                "projects": [
+                    {{
+                        "name": "Project Name",
+                        "description": "Brief summary of the project",
+                        "technologies": ["Python", "FastAPI"]
+                    }}
+                ]
+            }}
 
-1. **Role Relevance (40%)**: How similar are their past positions to the target role?
-   - Direct match (same role/responsibilities): High relevance
-   - Adjacent roles (transferable skills): Medium relevance  
-   - Unrelated roles: Low relevance
+            ### Task Instructions:
+            1. **Skills**: Extract ALL technical skills, programming languages, frameworks, tools, platforms, and methodologies mentioned.
+            2. **Work Experience**: Extract each job with the fields: company, position, duration (string), responsibilities (list of strings).
+            3. **Education**: Extract each degree with the fields: degree, institution, and optional year.
+            4. **Years of Experience**: Calculate TOTAL professional experience in years.
+            5. **Projects**: Extract each project with fields: name, description, technologies (list). Leave empty if none.
 
-2. **Industry Experience (20%)**: Is their industry background relevant?
-   - Same industry: High relevance
-   - Related industry: Medium relevance
-   - Different industry: Low relevance (unless skills are highly transferable)
+            ### Critical Rules:
+            - Only 'duration' should be a string; all other numeric fields belong at the top level.
+            - Do NOT invent information not present in the resume.
+            - Maintain consistent field names and JSON structure.
+            - If a field is missing in the resume, return empty lists or null as appropriate.
 
-3. **Technical Depth (25%)**: Do their work experiences show hands-on use of required technologies?
-   - Multiple roles using required tech: Strong depth
-   - Some exposure: Moderate depth
-   - No mention: Weak depth
+            ### Example Output:
+            {{
+                "skills": ["Python", "AWS", "FastAPI"],
+                "work_experience": [
+                    {{
+                        "company": "XYZ Corp",
+                        "position": "Backend Engineer",
+                        "duration": "Jun 2020 - Mar 2024",
+                        "responsibilities": [
+                            "Developed REST APIs",
+                            "Maintained databases",
+                            "Deployed applications on AWS"
+                        ]
+                    }}
+                ],
+                "education": [
+                    {{
+                        "degree": "BSc Computer Science",
+                        "institution": "ABC University",
+                        "year": 2018
+                    }}
+                ],
+                "years_experience": 5.0,
+                "projects": [
+                    {{
+                        "name": "Recommendation Engine",
+                        "description": "Developed a product recommendation engine using Python and FastAPI.",
+                        "technologies": ["Python", "FastAPI"]
+                    }}
+                ]
+            }}
 
-4. **Career Progression (15%)**: Does their career show growth and increasing responsibility?
-   - Clear upward trajectory: Positive indicator
-   - Lateral moves with skill expansion: Neutral
-   - Stagnation or downward moves: Concerning
+            Follow this structure strictly when extracting information from resumes.
+            """,
+        ),
+        ("human", "Resume Text:\n###\n{resume_text}\n###"),
+    ]
+)
 
-### Scoring Scale (0-10):
-- 9-10: Exceptional match - Background perfectly aligns with requirements
-- 7-8: Strong match - Most experiences are highly relevant
-- 5-6: Moderate match - Some relevant experience but gaps exist
-- 3-4: Weak match - Limited relevant experience
-- 0-2: Poor match - Experience doesn't align with role requirements
+WORK_ALIGNMENT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are a Senior Technical Recruiter evaluating a candidate's work experience against a specific job description. 
 
-### Output Requirements:
-Return JSON with:
-- score: Number between 0-10 based on the framework above
-- justification: 2-3 sentence explanation covering role relevance, technical depth, and any concerns
+            ### Objective:
+            Provide a numeric score (0-10) and a concise justification describing alignment with the job requirements.
 
-### Thinking Process:
-1. First, identify the key requirements from the job description
-2. Then, analyze each work experience entry for alignment
-3. Apply the evaluation framework systematically
-4. Provide a balanced assessment noting both strengths and weaknesses""",
-    ),
-    (
-        "human",
-        "Job Description:\n###\n{job_desc}\n###\n\nCandidate's Work Experience:\n###\n{work_exp}\n###",
-    ),
-])
+            ### Evaluation Criteria:
+            1. Role Relevance (40%): Are past roles similar to the target job responsibilities?
+            2. Industry Experience (20%): Is the candidate's industry background relevant?
+            3. Technical Depth (25%): Are required technologies demonstrated in past roles?
+            4. Career Progression (15%): Does the career trajectory show growth and responsibility?
 
+            ### Output Requirements:
+            Return JSON matching the EvaluationScore model:
+            {{
+                "score": <float between 0 and 10>,
+                "justification": "<concise explanation citing specific experience>"
+            }}
 
-PROJECT_EVALUATION_PROMPT = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """You are a Technical Hiring Manager evaluating project portfolios. Projects demonstrate practical application of skills and are critical indicators of candidate capability.
+            ### Notes:
+            - Be thorough but do not invent experience.
+            - Mention specific skills, roles, and responsibilities that support the score.
+            - Keep justification actionable and concise.
+            """,
+        ),
+        (
+            "human",
+            "Job Description:\n###\n{job_desc}\n###\n\nCandidate's Work Experience:\n###\n{work_exp}\n###",
+        ),
+    ]
+)
 
-### Evaluation Framework:
-Assess projects based on these dimensions:
+PROJECT_EVALUATION_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are a Technical Hiring Manager evaluating a candidate's projects for alignment with a job description.
 
-1. **Technical Relevance (40%)**: Do projects use technologies required for the job?
-   - Uses multiple required technologies: High relevance
-   - Uses some required technologies: Moderate relevance
-   - Uses different tech stack: Low relevance
+            ### Objective:
+            Assign a numeric score (0-10) and a concise justification explaining the alignment of projects with required skills and responsibilities.
 
-2. **Complexity & Scope (30%)**: What is the sophistication level of the projects?
-   - Production-grade applications with multiple features: High complexity
-   - Functional prototypes or moderate applications: Medium complexity
-   - Basic implementations or tutorials: Low complexity
+            ### Evaluation Criteria:
+            1. Technical Relevance (40%): Do projects use the required technologies?
+            2. Complexity & Scope (30%): Level of sophistication and completeness.
+            3. Problem-Solving Alignment (20%): Do projects address similar problems as the role?
+            4. Impact & Scale (10%): Real-world impact, user metrics, or business outcomes.
 
-3. **Problem-Solving Alignment (20%)**: Do projects address similar problems as the target role?
-   - Projects solve similar business/technical problems: High alignment
-   - Projects in related domains: Moderate alignment
-   - Projects in unrelated domains: Low alignment
+            ### Output Requirements:
+            Return JSON matching the EvaluationScore model:
+            {{
+                "score": <float between 0 and 10>,
+                "justification": "<concise explanation citing specific projects>"
+            }}
 
-4. **Impact & Scale (10%)**: Do projects show real-world impact?
-   - Projects mention users, metrics, or business outcomes: High impact
-   - Personal projects with clear purpose: Medium impact
-   - Learning projects: Low impact (but still valuable)
-
-### Scoring Scale (0-10):
-- 9-10: Exceptional - Projects directly demonstrate required capabilities
-- 7-8: Strong - Projects show relevant technical expertise
-- 5-6: Moderate - Some relevant project work, but gaps exist
-- 3-4: Weak - Projects show limited relevant experience
-- 0-2: Minimal - No projects listed or irrelevant projects
-
-### Output Requirements:
-Return JSON with:
-- score: Number between 0-10 based on framework
-- justification: 2-3 sentence assessment highlighting technical relevance, complexity, and alignment with role requirements
-
-### Important Notes:
-- Absence of projects should result in score 0 with justification "No projects listed"
-- Personal/academic projects are valuable if they demonstrate relevant skills
-- Quality over quantity - one excellent project > multiple basic ones
-- Consider both breadth (variety) and depth (sophistication)""",
-    ),
-    (
-        "human",
-        "Job Description:\n###\n{job_desc}\n###\n\nCandidate's Projects:\n###\n{projects}\n###",
-    ),
-])
+            ### Notes:
+            - If no projects are listed, assign score 0 and justification: "No projects listed".
+            - Highlight the most relevant and impactful projects.
+            - Keep justification actionable and concise.
+            """,
+        ),
+        (
+            "human",
+            "Job Description:\n###\n{job_desc}\n###\n\nCandidate's Projects:\n###\n{projects}\n###",
+        ),
+    ]
+)
 
 
-DEGREE_MAPPER_PROMPT = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """You are an Education Credential Evaluator for technical hiring. Your task is to normalize degree names into standardized categories.
+DEGREE_MAPPER_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are a Senior Technical Recruiter in Nepal with expert knowledge of university curriculums (TU, KU, PU, PoU, and foreign affiliations).
 
-### Task Instructions:
-Map the given degree to ONE of these categories based on relevance to technical roles:
+            Your task is to normalize a candidate's degree into **one of six standardized categories** based on their suitability for a high-performance Software Engineering role.
 
-**Category Definitions:**
-- **Computer Engineering**: Bachelor's or Master's in Computer Engineering, Software Engineering, or Computer Science & Engineering
-- **CSIT**: Bachelor's or Master's in Computer Science, Information Technology, Computer Applications (BCA/MCA)
-- **BIT**: Bachelor's in Information Technology, Information Systems, IT Management
-- **BBS**: Bachelor of Business Studies, Business Administration, Management (non-technical business degrees)
-- **Others**: All other degrees including science, arts, commerce, or unrelated technical fields
+            ### 1. Computer Engineering (The "Hard" Engineers)
+            *   **Criteria:** 4-year Engineering degrees (BE/B.Tech) with deep focus on hardware, logic, or low-level computing.
+            *   **MUST INCLUDE:**
+                *   "BE Computer" / "BCT"
+                *   "BE Software"
+                *   "BE IT" (Engineering based)
+                *   **"Electronics & Communication" (BEX)** or **"Electronics, Communication & Information" (BEI)**. *(Note: Treat IOE Electronics graduates as Computer Engineers due to their high technical/math aptitude).*
 
-### Mapping Rules:
-1. Prioritize the field of study over the degree type
-2. "Computer Science" → CSIT
-3. "Software Engineering" or "Computer Engineering" → Computer Engineering  
-4. "Information Technology" → CSIT or BIT (use CSIT if from technical university)
-5. Business/Management degrees → BBS
-6. Engineering degrees (Electrical, Mechanical, Civil) → Others
-7. If degree field is unclear or non-technical → Others
+            ### 2. CSIT (Theoretical Computer Science)
+            *   **Criteria:** Degrees focused on Algorithms, Data Structures, and Theory.
+            *   **MUST INCLUDE:**
+                *   **"BSc CSIT"** (Tribhuvan University)
+                *   "BSc Computer Science"
+                *   "MSc Computer Science"
+                *   "MSCS"
 
-### Output Format:
-Return ONLY the category name as a single string: "Computer Engineering", "CSIT", "BIT", "BBS", or "Others"
+            ### 3. BIT (Applied IT & Hybrid)
+            *   **Criteria:** Application-focused, practical IT degrees, or Management-IT hybrids.
+            *   **MUST INCLUDE:**
+                *   "BCA" (Computer Application)
+                *   "BIT" (Information Technology)
+                *   **"BIM"** (Bachelor of Information Management) -> *Map this here, NOT to Management.*
+                *   "BCIS" (Computer Information Systems)
+                *   "BBIS"
 
-### Examples:
-- "BSc. Computer Science, MIT" → "CSIT"
-- "BE Computer Engineering, Tribhuvan University" → "Computer Engineering"
-- "Bachelor in Information Technology" → "CSIT"
-- "BBA, Kathmandu University" → "BBS"
-- "BSc. Physics" → "Others"
-- "BE Mechanical Engineering" → "Others"
+            ### 4. STEM (Non-IT Technical)
+            *   **Criteria:** High-IQ technical degrees that are NOT Computer/IT related.
+            *   **MUST INCLUDE:**
+                *   Non-IT Engineering: **Civil**, **Mechanical**, **Electrical**, **Geomatics**.
+                *   Pure Sciences: **Physics**, **Mathematics**, **Statistics**.
+                *   *(Reasoning: These candidates have strong logic/math skills and are trainable).*
 
-Do NOT include any explanation, only return the category name.""",
-    ),
-    ("human", "Degree: {degree}"),
-])
+            ### 5. Management (Business)
+            *   **Criteria:** Pure business/finance degrees with minimal coding.
+            *   **MUST INCLUDE:**
+                *   "BBS" (Bachelor of Business Studies)
+                *   "BBA", "BBM", "MBS", "MBA", "CA".
+
+            ### 6. Others
+            *   **Criteria:** Arts, Humanities, Education, Law, Social Work (BSW), or unknown diplomas.
+
+            ### Rules:
+            1. **Prioritize Curriculum over Title:** If a degree is "Management" but has "Information" (like BIM), map to **BIT**.
+            2. **Handle Electronics:** "Electronics Engineering" -> **Computer Engineering**.
+            3. **Handle Abbreviations:** Recognized localized acronyms like BCT, BEX, BEI, BCA, BIM.
+            4. **Output:** Return ONLY the category name. No markdown, no explanations.
+
+            ### Examples:
+            *   "B.E. in Electronics and Communication (BEX)" -> "Computer Engineering"
+            *   "BSc CSIT, Amrit Science Campus" -> "CSIT"
+            *   "Bachelor of Information Management (BIM)" -> "BIT"
+            *   "B.E. Civil Engineering" -> "STEM"
+            *   "Master of Business Studies (MBS)" -> "Management"
+            *   "BSc. Physics" -> "STEM"
+            *   "B.A. Major English" -> "Others"
+            """,
+        ),
+        ("human", "Degree: {degree}"),
+    ]
+)

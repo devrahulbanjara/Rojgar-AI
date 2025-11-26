@@ -1,16 +1,7 @@
 from langgraph.graph import StateGraph, END, START
-from schemas import WorkflowState
-from nodes import (
-    parse_job_description,
-    extract_resume_structure,
-    evaluate_skills,
-    evaluate_experience_years,
-    evaluate_work_alignment,
-    evaluate_projects,
-    evaluate_degree,
-    aggregate_scores,
-    generate_report,
-)
+
+from app.services.agents.shortlist.schemas import WorkflowState
+from app.services.agents.shortlist.nodes import *
 
 
 def create_workflow() -> StateGraph:
