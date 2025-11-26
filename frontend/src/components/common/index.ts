@@ -14,6 +14,7 @@ export { SkeletonLoader, SkeletonCard, SkeletonJobCard, SkeletonStats } from './
 export { AnimatedContainer, StaggerContainer } from './AnimatedContainer';
 export { MainContentContainer } from './MainContentContainer';
 export { PageHeader } from './PageHeader';
+export { default as AIPoweredBadge } from './AIPoweredBadge';
 
 // Re-export types for better developer experience
 export type { StatCardProps } from './StatCard';
