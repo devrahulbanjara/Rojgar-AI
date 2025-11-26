@@ -49,7 +49,7 @@ ConvexHire operates on a scalable microservices architecture. The backend levera
 *   **Integration Layer:** Connects to external services (Calendar APIs, Email Services, E-Signature).
 
 <div align="center">
-  <img src="ddocs/Architecture Diagram.png" alt="System Architecture Diagram" width="100%" />
+  <img src="docs/Architecture Diagram.png" alt="System Architecture Diagram" width="100%" />
 </div>
 
 ---
