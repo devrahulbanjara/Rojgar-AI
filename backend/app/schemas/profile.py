@@ -195,11 +195,3 @@ class ProfileSkillResponse(BaseModel):
     years_of_experience: Optional[int] = None
     created_at: datetime
     updated_at: datetime
-
-
-def rebuild_profile_models():
-    ProfileResponse.model_rebuild()
-    WorkExperienceResponse.model_rebuild()
-    EducationRecordResponse.model_rebuild()
-    CertificationResponse.model_rebuild()
-    ProfileSkillResponse.model_rebuild()

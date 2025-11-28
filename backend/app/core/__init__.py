@@ -23,16 +23,6 @@ from .security import (
     get_current_user_id,
 )
 
-# Exceptions
-from .exceptions import (
-    ConvexHireException,
-    ResourceNotFoundError,
-    UnauthorizedError,
-    ValidationError,
-    DatabaseError,
-    register_exception_handlers,
-)
-
 # Logging
 from .logging_config import logger, configure_file_logging, get_logger
 
@@ -50,13 +40,6 @@ __all__ = [
     "create_token",
     "verify_token",
     "get_current_user_id",
-    # Exceptions
-    "ConvexHireException",
-    "ResourceNotFoundError",
-    "UnauthorizedError",
-    "ValidationError",
-    "DatabaseError",
-    "register_exception_handlers",
     # Logging
     "logger",
     "configure_file_logging",
