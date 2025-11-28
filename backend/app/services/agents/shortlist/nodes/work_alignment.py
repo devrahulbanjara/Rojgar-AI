@@ -2,8 +2,8 @@ import json
 from typing import Dict, Any
 
 from app.core import logger
+from app.models.agents.shortlist import WorkflowState, EvaluationScore
 from ..llm_service import get_llm
-from ..schemas import WorkflowState, EvaluationScore
 from ..templates import WORK_ALIGNMENT_PROMPT
 
 

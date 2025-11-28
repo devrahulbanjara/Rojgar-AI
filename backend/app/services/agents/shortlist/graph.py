@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END, START
 
-from .schemas import WorkflowState
+from app.models.agents.shortlist import WorkflowState
 from .nodes import *
 
 

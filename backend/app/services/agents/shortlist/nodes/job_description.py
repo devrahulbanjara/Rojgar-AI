@@ -1,9 +1,9 @@
 from typing import Dict, Any
 
 from app.core import logger
+from app.models.agents.shortlist import WorkflowState, JobRequirements
 from ..llm_service import get_llm
 from ..file_handler import read_job_description
-from ..schemas import WorkflowState, JobRequirements
 from ..templates import JOB_DESCRIPTION_PARSER_PROMPT
 
 

@@ -1,8 +1,8 @@
 from typing import Dict, Any
 
 from app.core import settings, logger
+from app.models.agents.shortlist import WorkflowState
 from ..llm_service import get_llm
-from ..schemas import WorkflowState
 from ..templates import DEGREE_MAPPER_PROMPT
 
 

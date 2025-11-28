@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from app.core import settings, logger
-from ..schemas import WorkflowState, CandidateScore
+from app.models.agents.shortlist import WorkflowState, CandidateScore
 
 
 def aggregate_scores(state: WorkflowState) -> Dict[str, Any]:

@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from app.core import logger
-from ..schemas import WorkflowState
+from app.models.agents.shortlist import WorkflowState
 
 
 def evaluate_experience_years(state: WorkflowState) -> Dict[str, Any]:

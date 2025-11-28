@@ -10,7 +10,7 @@ Example:
 """
 
 # Schemas (data models for the workflow)
-from .schemas import (
+from app.models.agents.shortlist import (
     ResumeStructured,
     JobRequirements,
     EvaluationScore,
