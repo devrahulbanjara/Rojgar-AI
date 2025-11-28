@@ -1,8 +1,7 @@
 from pathlib import Path
 from loguru import logger
 
-from app.services.agents.shortlist.graph import create_workflow
-from app.services.agents.shortlist.file_handler import discover_resume_files
+from . import create_workflow, discover_resume_files
 from app.core.config import settings
 
 logger.add(settings.OUTPUT_DIR / "ats_screening.log", rotation="10 MB", level="INFO")
