@@ -1,5 +1,6 @@
 from pathlib import Path
-from loguru import logger
+
+from app.core import logger
 
 
 class DocumentProcessor:

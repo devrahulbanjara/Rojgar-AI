@@ -2,18 +2,15 @@ from fastapi import APIRouter, HTTPException, status, Response, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.core.database import get_db
-from app.core.security import get_current_user_id
-from app.schemas.user import (
+from app.core import settings, get_db, get_current_user_id
+from app.schemas import (
     SignupRequest,
     LoginRequest,
     RoleSelectionRequest,
     TokenResponse,
     CreateUserRequest,
 )
-from app.services.auth.auth_service import AuthService
-from app.core.config import settings
+from app.services import AuthService
 
 router = APIRouter()
 
@@ -130,7 +127,7 @@ def select_role(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    from app.services.user_service import UserService
+    from app.services import UserService
 
     user = UserService.get_user_by_id(user_id, db)
     if not user:

@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 
 
 class UserRole(str, Enum):
@@ -16,7 +16,7 @@ class SignupRequest(BaseModel):
     role: UserRole
     picture: Optional[str] = None
 
- 
+
 class CreateUserRequest(BaseModel):
     email: str
     name: str
@@ -46,7 +46,7 @@ class RoleSelectionRequest(BaseModel):
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str
     email: str
     name: str
@@ -56,15 +56,6 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
-    @field_validator('role', mode='before')
-    @classmethod
-    def normalize_role(cls, v):
-        if v is None:
-            return v
-        if isinstance(v, str):
-            return v.lower()
-        return v
 
 
 class TokenResponse(BaseModel):

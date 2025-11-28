@@ -1,11 +1,10 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.security import get_current_user_id
-from app.core.exceptions import ResourceNotFoundError, UnauthorizedError
-from app.services.application_service import ApplicationService
-from app.models.application import Application
+from .database import get_db
+from .security import get_current_user_id
+from app.services import ApplicationService
+from app.models import Application
 
 
 def get_application_by_id(
@@ -16,10 +15,16 @@ def get_application_by_id(
     app = ApplicationService.get_application_by_id(application_id, db)
     
     if not app:
-        raise ResourceNotFoundError("Application", str(application_id))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Application not found with ID: {application_id}"
+        )
     
     if not ApplicationService.verify_ownership(app, user_id):
-        raise UnauthorizedError("Not authorized to access this application")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this application"
+        )
     
     return app
 

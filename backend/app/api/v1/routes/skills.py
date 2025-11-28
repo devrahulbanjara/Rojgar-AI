@@ -1,10 +1,10 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.core.security import get_current_user_id
-from app.schemas.skill import SkillCreateRequest, SkillResponse, SkillsListResponse
-from app.services.skill_service import SkillService
+
+from app.core import get_db, get_current_user_id
+from app.schemas import SkillCreateRequest, SkillResponse, SkillsListResponse
+from app.services import SkillService
 
 router = APIRouter()
 

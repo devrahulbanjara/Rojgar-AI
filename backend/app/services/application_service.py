@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.models.application import Application, ApplicationStage, ApplicationStatus
+from app.models import Application, ApplicationStage, ApplicationStatus
 
 
 class ApplicationService:

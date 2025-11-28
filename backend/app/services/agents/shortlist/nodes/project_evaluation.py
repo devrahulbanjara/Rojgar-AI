@@ -1,8 +1,9 @@
 import json
 from typing import Dict, Any
-from loguru import logger
+
+from app.core import logger
+from app.models.agents.shortlist import WorkflowState, EvaluationScore
 from ..llm_service import get_llm
-from ..schemas import WorkflowState, EvaluationScore
 from ..templates import PROJECT_EVALUATION_PROMPT
 
 
