@@ -2,9 +2,9 @@ from typing import Dict, Any
 from pathlib import Path
 
 from app.core import logger
+from app.models.agents.shortlist import WorkflowState, ResumeStructured
 from ..llm_service import get_llm
 from ..document_processor import DocumentProcessor
-from ..schemas import WorkflowState, ResumeStructured
 from ..templates import RESUME_PARSER_PROMPT
 
 
