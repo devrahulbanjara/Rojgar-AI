@@ -6,12 +6,6 @@ from app.core import get_db
 from app.schemas import JobResponse, CompanyResponse, JobSearchRequest
 from app.schemas.job import JobStatsResponse, JobSearchResponse, JobCreateRequest
 from app.services import JobService
-from .dependencies import (
-    _job_not_found,
-    _company_not_found,
-    _validate_job_id,
-    _validate_company_id,
-)
 
 router = APIRouter()
 
@@ -35,11 +29,11 @@ def search_jobs(
 
 
 @router.get("/{job_id}", response_model=JobResponse)
-def get_job(job_id: int = Depends(_validate_job_id), db: Session = Depends(get_db)):
+def get_job(job_id: int, db: Session = Depends(get_db)):
     """Get a job by ID"""
     job = JobService.get_job_by_id(job_id, db, increment_view=True)
     if not job:
-        _job_not_found(job_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
     return JobService.to_job_response(job)
 
 
@@ -56,30 +50,24 @@ def get_companies(db: Session = Depends(get_db)):
 
 
 @router.get("/company/{company_id}", response_model=CompanyResponse)
-def get_company(
-    company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
-):
+def get_company(company_id: int, db: Session = Depends(get_db)):
     company = JobService.get_company_by_id(company_id, db)
     if not company:
-        _company_not_found(company_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Company {company_id} not found")
     return JobService.to_company_response(company)
 
 
 @router.get("/company/{company_id}/jobs", response_model=List[JobResponse])
-def get_company_jobs(
-    company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
-):
+def get_company_jobs(company_id: int, db: Session = Depends(get_db)):
     jobs = JobService.get_company_jobs(company_id, db)
     return [JobService.to_job_response(job) for job in jobs]
 
 
 @router.get("/company/{company_id}/info", response_model=dict)
-def get_company_info(
-    company_id: int = Depends(_validate_company_id), db: Session = Depends(get_db)
-):
+def get_company_info(company_id: int, db: Session = Depends(get_db)):
     result = JobService.get_company_info_with_stats(company_id, db)
     if not result:
-        _company_not_found(company_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Company {company_id} not found")
     return result
 
 
@@ -89,28 +77,22 @@ def get_job_statistics(db: Session = Depends(get_db)):
 
 
 @router.post("/{job_id}/view", status_code=status.HTTP_204_NO_CONTENT)
-def increment_view(
-    job_id: int = Depends(_validate_job_id), db: Session = Depends(get_db)
-):
+def increment_view(job_id: int, db: Session = Depends(get_db)):
     if not JobService.increment_job_view(job_id, db):
-        _job_not_found(job_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
 
 
 @router.post("/{job_id}/apply", status_code=status.HTTP_204_NO_CONTENT)
-def increment_application(
-    job_id: int = Depends(_validate_job_id), db: Session = Depends(get_db)
-):
+def increment_application(job_id: int, db: Session = Depends(get_db)):
     if not JobService.increment_job_application(job_id, db):
-        _job_not_found(job_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
+
 
 @router.post("/create", response_model=JobResponse)
-def create_job(
-    job_data: JobCreateRequest,
-    db: Session = Depends(get_db)
-):
+def create_job(job_data: JobCreateRequest, db: Session = Depends(get_db)):
     job = JobService.create_job_with_vector_sync(job_data.model_dump(), db)
     if not job:
-        raise HTTPException(status_code=500, detail="Failed to create job")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create job")
     return JobService.to_job_response(job)
 
 
