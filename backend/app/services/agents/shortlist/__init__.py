@@ -1,8 +1,3 @@
-# config/__init__.py
-"""Configuration module for ATS screening system."""
-
-# models/__init__.py
-"""Data models and schemas."""
 from .schemas import (
     ResumeStructured,
     JobRequirements,
@@ -19,8 +14,6 @@ __all__ = [
     "WorkflowState",
 ]
 
-# prompts/__init__.py
-"""Prompt templates for LLM interactions."""
 from .templates import (
     JOB_DESCRIPTION_PARSER_PROMPT,
     RESUME_PARSER_PROMPT,
@@ -37,15 +30,11 @@ __all__ = [
     "DEGREE_MAPPER_PROMPT",
 ]
 
-# services/__init__.py
-"""Services for document processing and LLM interactions."""
 from .document_processor import DocumentProcessor
 from .llm_service import get_llm
 
 __all__ = ["DocumentProcessor", "get_llm"]
 
-# workflows/__init__.py
-"""Workflow definitions and node functions."""
 from .graph import create_workflow
 from .nodes import (
     parse_job_description,
@@ -72,8 +61,6 @@ __all__ = [
     "generate_report",
 ]
 
-# utils/__init__.py
-"""Utility functions for file handling."""
 from .file_handler import (
     read_job_description,
     discover_resume_files,

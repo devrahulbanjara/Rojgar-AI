@@ -1,9 +1,8 @@
 from typing import Dict, Any
 from loguru import logger
-
+from app.core.config import settings
 from ..llm_service import get_llm
 from ..schemas import WorkflowState
-from app.core.config import settings
 from ..templates import DEGREE_MAPPER_PROMPT
 
 
