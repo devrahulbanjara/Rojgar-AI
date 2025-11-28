@@ -19,13 +19,3 @@ export interface SkillsListResponse {
   skills: Skill[];
   total: number;
 }
-
-export interface ProfileUpdateRequest {
-  name: string;
-}
-
-export interface PasswordChangeRequest {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
