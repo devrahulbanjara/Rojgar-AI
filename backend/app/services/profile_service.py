@@ -5,14 +5,14 @@ from sqlalchemy import select
 from fastapi import HTTPException
 import uuid
 
-from app.models.profile import (
+from app.models import (
     Profile,
     WorkExperience,
     EducationRecord,
     Certification,
     ProfileSkill,
 )
-from app.schemas.profile import (
+from app.schemas import (
     ProfileResponse,
     WorkExperienceResponse,
     EducationRecordResponse,
@@ -70,7 +70,7 @@ class ProfileService:
     def _update_user_and_profile_fields(
         self, user_id: str, profile_data: dict, create_profile: bool = False
     ) -> None:
-        from app.models.user import User
+        from app.models import User
         import time
 
         max_retries = 3

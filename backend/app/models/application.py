@@ -4,7 +4,7 @@ from enum import Enum
 from sqlalchemy import String, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models import Base
+from . import Base
 
 
 class ApplicationStage(str, Enum):

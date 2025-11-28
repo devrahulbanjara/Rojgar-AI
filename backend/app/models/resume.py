@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import String, DateTime, ForeignKey, Text, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models import Base
+from . import Base
 
 if TYPE_CHECKING:
     from app.models.profile import Profile, WorkExperience, EducationRecord, Certification, ProfileSkill

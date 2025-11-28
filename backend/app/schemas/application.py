@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 
 
 class ApplicationStage(str, Enum):
@@ -35,7 +35,7 @@ class UpdateApplicationRequest(BaseModel):
 
 class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     user_id: str
     job_title: str
@@ -45,12 +45,3 @@ class ApplicationResponse(BaseModel):
     stage: ApplicationStage
     status: ApplicationStatus
     updated_at: datetime
-    
-    @field_validator('stage', 'status', mode='before')
-    @classmethod
-    def normalize_enum(cls, v):
-        if v is None:
-            return v
-        if isinstance(v, str):
-            return v.lower()
-        return v

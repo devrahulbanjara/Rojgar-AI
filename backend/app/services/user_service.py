@@ -2,8 +2,8 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.models.user import User
-from app.schemas.user import UserResponse
+from app.models import User
+from app.schemas import UserResponse
 
 
 class UserService:

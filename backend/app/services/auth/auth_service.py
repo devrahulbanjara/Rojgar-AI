@@ -4,10 +4,9 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.core.config import settings
-from app.core.security import hash_password, verify_password, create_token
-from app.models.user import User, UserRole
-from app.schemas.user import UserResponse, GoogleUserInfo, CreateUserRequest
+from app.core import settings, hash_password, verify_password, create_token
+from app.models import User, UserRole
+from app.schemas import UserResponse, GoogleUserInfo, CreateUserRequest
 
 
 class AuthService:
@@ -67,7 +66,7 @@ class AuthService:
         google_auth_url = "https://accounts.google.com/o/oauth2/auth"
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
-            "redirect_uri": f"{settings.BACKEND_URL}/auth/google/callback",
+            "redirect_uri": f"{settings.BACKEND_URL}/api/v1/auth/google/callback",
             "scope": "openid email profile",
             "response_type": "code",
             "access_type": "offline",
@@ -88,7 +87,7 @@ class AuthService:
                     "client_secret": settings.GOOGLE_CLIENT_SECRET,
                     "code": code,
                     "grant_type": "authorization_code",
-                    "redirect_uri": f"{settings.BACKEND_URL}/auth/google/callback",
+                    "redirect_uri": f"{settings.BACKEND_URL}/api/v1/auth/google/callback",
                 },
             )
             
