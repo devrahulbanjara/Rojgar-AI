@@ -1,5 +1,6 @@
 from typing import Dict, Any
-from loguru import logger
+
+from app.core import logger
 from ..llm_service import get_llm
 from ..file_handler import read_job_description
 from ..schemas import WorkflowState, JobRequirements

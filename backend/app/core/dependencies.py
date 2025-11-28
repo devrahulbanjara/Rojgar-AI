@@ -1,11 +1,11 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.security import get_current_user_id
-from app.core.exceptions import ResourceNotFoundError, UnauthorizedError
-from app.services.application_service import ApplicationService
-from app.models.application import Application
+from .database import get_db
+from .security import get_current_user_id
+from .exceptions import ResourceNotFoundError, UnauthorizedError
+from app.services import ApplicationService
+from app.models import Application
 
 
 def get_application_by_id(

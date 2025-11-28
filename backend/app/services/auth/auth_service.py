@@ -4,10 +4,9 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.core.config import settings
-from app.core.security import hash_password, verify_password, create_token
-from app.models.user import User, UserRole
-from app.schemas.user import UserResponse, GoogleUserInfo, CreateUserRequest
+from app.core import settings, hash_password, verify_password, create_token
+from app.models import User, UserRole
+from app.schemas import UserResponse, GoogleUserInfo, CreateUserRequest
 
 
 class AuthService:

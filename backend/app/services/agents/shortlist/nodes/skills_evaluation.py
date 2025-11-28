@@ -1,5 +1,6 @@
 from typing import Dict, Any
-from loguru import logger
+
+from app.core import logger
 from ..schemas import WorkflowState
 
 

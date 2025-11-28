@@ -1,9 +1,10 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from app.models.skill import Skill
-from app.schemas.skill import SkillCreateRequest, SkillResponse, SkillsListResponse
 import uuid
+
+from app.models import Skill
+from app.schemas import SkillCreateRequest, SkillResponse, SkillsListResponse
 
 
 class SkillService:
