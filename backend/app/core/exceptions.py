@@ -2,9 +2,8 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-import logging
 
-logger = logging.getLogger(__name__)
+from .logging_config import logger
 
 
 class ConvexHireException(Exception):
@@ -91,7 +90,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
-        logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+        logger.exception(f"Unhandled exception: {str(exc)}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={

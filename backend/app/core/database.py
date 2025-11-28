@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from app.core.config import settings
+from .config import settings
 from app.models import Base
 
 engine = create_engine(

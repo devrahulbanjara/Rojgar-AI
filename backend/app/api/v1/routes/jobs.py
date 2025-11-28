@@ -2,17 +2,11 @@ from typing import List
 from fastapi import APIRouter, status, Query, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.schemas.job import (
-    JobResponse,
-    CompanyResponse,
-    JobSearchRequest,
-    JobStatsResponse,
-    JobSearchResponse,
-    JobCreateRequest,
-)
-from app.services.job_service import JobService
-from app.api.v1.routes.dependencies import (
+from app.core import get_db
+from app.schemas import JobResponse, CompanyResponse, JobSearchRequest
+from app.schemas.job import JobStatsResponse, JobSearchResponse, JobCreateRequest
+from app.services import JobService
+from .dependencies import (
     _job_not_found,
     _company_not_found,
     _validate_job_id,

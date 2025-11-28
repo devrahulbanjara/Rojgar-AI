@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from pathlib import Path
-from loguru import logger
+
+from app.core import logger
 from ..llm_service import get_llm
 from ..document_processor import DocumentProcessor
 from ..schemas import WorkflowState, ResumeStructured
