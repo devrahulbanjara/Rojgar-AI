@@ -32,8 +32,8 @@ class Settings(BaseSettings):
 
     # LLM Settings
     FAST_LLM: str = "llama-3.1-8b-instant"
+    THINK_LLM: str = "openai/gpt-oss-120b"
     LLM_TEMPERATURE: int = 0
-    LLM_MAX_TOKENS: int = 500
     LLM_MAX_RETRIES: int = 3
     GROQ_API_KEY: str
 
