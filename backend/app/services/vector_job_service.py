@@ -2,12 +2,9 @@ from typing import List, Dict
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
-import logging
 
-from app.models.job import Job
-from app.core.config import settings
-
-logger = logging.getLogger(__name__)
+from app.models import Job
+from app.core import settings, logger
 
 
 class VectorJobService:

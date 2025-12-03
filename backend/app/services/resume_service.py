@@ -5,21 +5,19 @@ from sqlalchemy import select
 from fastapi import HTTPException
 import uuid
 
-from app.models.resume import (
+from app.models import (
     Resume,
     ResumeExperience,
     ResumeEducation,
     ResumeCertification,
     ResumeSkill,
-)
-from app.models.profile import (
     Profile,
     WorkExperience,
     EducationRecord,
     Certification,
     ProfileSkill,
 )
-from app.schemas.resume import (
+from app.schemas import (
     ResumeResponse,
     ResumeExperienceResponse,
     ResumeEducationResponse,

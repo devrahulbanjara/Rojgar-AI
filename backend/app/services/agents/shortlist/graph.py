@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END, START
 
-from app.services.agents.shortlist.schemas import WorkflowState
-from app.services.agents.shortlist.nodes import *
+from app.models.agents.shortlist import WorkflowState
+from .nodes import *
 
 
 def create_workflow() -> StateGraph:

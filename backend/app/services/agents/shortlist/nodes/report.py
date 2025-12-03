@@ -1,7 +1,7 @@
 from typing import Dict, Any
-from loguru import logger
-from ..schemas import WorkflowState
-from app.core.config import settings
+
+from app.core import settings, logger
+from app.models.agents.shortlist import WorkflowState
 from ..file_handler import save_json_report, save_text_report
 
 

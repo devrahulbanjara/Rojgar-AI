@@ -2,10 +2,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.security import get_current_user_id
-from app.services.resume_service import ResumeService
-from app.services.profile_service import ProfileService
+from app.core import get_db, get_current_user_id
+from app.services import ResumeService, ProfileService
 from app.schemas.resume import *
 
 router = APIRouter()

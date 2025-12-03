@@ -4,7 +4,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Request
 
-from app.core.config import settings
+from .config import settings
 
 
 def hash_password(password: str) -> str:

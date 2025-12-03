@@ -4,7 +4,7 @@ from enum import Enum
 from sqlalchemy import String, Integer, Boolean, Date, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models import Base
+from . import Base
 
 
 class JobLevel(str, Enum):
