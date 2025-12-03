@@ -23,49 +23,26 @@ def generator_node(state: JobState) -> dict:
 
     if is_revision:
         current_draft = state["draft"].model_dump_json(indent=2)
-        user_prompt = f"""## Current Draft
-            {current_draft}
-            
-            ## Revision Request
-            {feedback}
-            
-            ## Task
-            Analyze the feedback and update the relevant sections while preserving the quality of unchanged parts.
-            
-            Think step-by-step:
-            1. What specific changes does the feedback request?
-            2. Which sections need to be updated?
-            3. How can I maintain consistency across all sections?
-            
-            Now generate the revised job description."""
-    else:
-        user_prompt = f"""## Requirements
-            {reqs}
-            
-            ## Style Reference
-            Study this example for tone and structure:
-            {fmt}
-            
-            ## Task
-            Create a complete job description that:
-            1. Matches the requirements exactly (role, experience, compensation)
-            2. Follows the style and tone of the reference
-            3. Includes specific, actionable details
-            4. Is compelling to qualified candidates
-            
-            Generate the job description now."""
-
-    messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
-
-    try:
-        response_obj = structured_llm.invoke(messages)
-    except Exception as e:
-        print(f"⚠️ Generation failed, retrying: {e}")
-        messages.append(
-            HumanMessage(
-                content="Return ONLY valid JSON. No markdown formatting or additional text."
-            )
+        user_prompt = (
+            f"Current Draft:\n{current_draft}\n\n"
+            f"Revision Request:\n{feedback}\n\n"
+            "Update relevant sections while preserving quality of unchanged parts."
         )
-        response_obj = structured_llm.invoke(messages)
+    else:
+        user_prompt = (
+            f"Requirements:\n{reqs}\n\n"
+            f"Style Reference:\n{fmt}\n\n"
+            "Create a complete job description matching the requirements and style reference."
+        )
 
-    return {"draft": response_obj, "revision_count": state.get("revision_count", 0) + 1}
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_prompt),
+    ]
+
+    response_obj = structured_llm.invoke(messages)
+
+    return {
+        "draft": response_obj,
+        "revision_count": state.get("revision_count", 0) + 1,
+    }
