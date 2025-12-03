@@ -19,4 +19,4 @@ def create_workflow() -> StateGraph:
 
     memory = MemorySaver()
 
-    return workflow.compile(checkpointer=memory, interrupt_before=["human_review"])
+    return workflow.compile(checkpointer=memory)
