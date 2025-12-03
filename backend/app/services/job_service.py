@@ -2,11 +2,9 @@ from typing import List, Optional, Dict
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func, or_, and_
 
-from app.models.job import Job, Company, JobStatus
-from app.models.skill import Skill
-from app.models.profile import Profile, ProfileSkill
-from app.schemas.job import JobResponse, CompanyResponse, JobSearchRequest
-from app.services.vector_job_service import VectorJobService
+from app.models import Job, Company, JobStatus, Skill, Profile, ProfileSkill
+from app.schemas import JobResponse, CompanyResponse, JobSearchRequest
+from .vector_job_service import VectorJobService
 
 
 class JobService:

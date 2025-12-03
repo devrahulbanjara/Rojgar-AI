@@ -2,16 +2,15 @@ from typing import List, Dict
 from fastapi import APIRouter, status, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.security import get_current_user_id
+from app.core import get_db, get_current_user_id
 from app.core.dependencies import get_application_by_id, get_application_for_update, get_application_for_delete
-from app.models.application import Application
+from app.models import Application
 from app.schemas.application import (
     CreateApplicationRequest,
     UpdateApplicationRequest,
     ApplicationResponse,
 )
-from app.services.application_service import ApplicationService
+from app.services import ApplicationService
 
 router = APIRouter()
 

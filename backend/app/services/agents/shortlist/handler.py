@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 from typing import List, Dict, Any
-from loguru import logger
-from app.core.config import settings
+
+from app.core import settings, logger
 
 
 def get_job_description_path() -> Path:
