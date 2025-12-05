@@ -7,156 +7,280 @@
   
   # ConvexHire
   
-  **Multi-Agent Recruitment Automation & Job Marketplace**
+  <h3>Multi-Agent Recruitment Automation & Job Marketplace</h3>
   
-  *An intelligent, bias-aware recruitment platform leveraging Multi-Agent Systems (MAS) and Retrieval-Augmented Generation (RAG).*
+  <p>
+    <i>An intelligent, bias-aware recruitment platform leveraging Multi-Agent Systems (MAS) <br/> and Retrieval-Augmented Generation (RAG).</i>
+  </p>
 
-  [![Python](https://img.shields.io/badge/Python-3.12+-00599C?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
-  [![Node.js](https://img.shields.io/badge/Node.js-24+-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-  [![FastAPI](https://img.shields.io/badge/FastAPI-0.118.2+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-  [![Next.js](https://img.shields.io/badge/Next.js-15+-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
-  [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-  [![UV](https://img.shields.io/badge/UV-Package_Manager-DE5FE6?style=flat-square)](https://github.com/astral-sh/uv)
-  [![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](LICENSE)
+  <!-- Tech Stack Badges -->
+  <p>
+    <a href="https://www.python.org/">
+      <img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+    </a>
+    <a href="https://nextjs.org/">
+      <img src="https://img.shields.io/badge/Next.js-15+-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+    </a>
+    <a href="https://fastapi.tiangolo.com/">
+      <img src="https://img.shields.io/badge/FastAPI-0.118+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+    </a>
+  </p>
+  
+  <!-- DevOps Badges -->
+  <p>
+    <a href="https://www.docker.com/">
+      <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+    </a>
+    <a href="https://github.com/astral-sh/uv">
+      <img src="https://img.shields.io/badge/UV-Package_Manager-DE5FE6?style=for-the-badge&logo=uv&logoColor=white" alt="UV" />
+    </a>
+  </p>
+  
+  <!-- Repo Status -->
+  <p>
+    <img src="https://img.shields.io/github/stars/devrahulbanjara/ConvexHire?style=social" alt="GitHub Stars" />
+    <img src="https://img.shields.io/github/forks/devrahulbanjara/ConvexHire?style=social" alt="GitHub Forks" />
+    <br/>
+    <img src="https://img.shields.io/github/license/devrahulbanjara/ConvexHire?style=flat-square&color=blue" alt="License" />
+    <img src="https://img.shields.io/github/last-commit/devrahulbanjara/ConvexHire?style=flat-square&color=orange" alt="Last Commit" />
+    <img src="https://img.shields.io/github/repo-size/devrahulbanjara/ConvexHire?style=flat-square&color=red" alt="Repo Size" />
+  </p>
+  
+  <br/>
+
+  [🚀 Quick Start](#-quick-start) • [📖 Documentation](#introduction) • [🏗️ Architecture](#-system-architecture) • [🔬 Benchmarks](#-technical-deep-dive-ocr-benchmark)
   
 </div>
 
 ---
 
-## Introduction
-
-ConvexHire is an advanced recruitment ecosystem designed to close the "Candidate Experience Gap." Traditional Applicant Tracking Systems (ATS) rely on opaque keyword matching that often disqualifies eligible candidates without explanation.
-
-This project implements a **Multi-Agent System (MAS)** where specialized AI agents handle distinct recruitment tasks—from semantic resume parsing to automated interview scheduling—orchestrated by **LangGraph**. The system emphasizes **Explainable AI (XAI)**, providing transparency in match scoring and keeping a human-in-the-loop for all critical hiring decisions.
-
-## System Workflow
-
-The platform handles complex interactions between Recruiters and Candidates. The workflow below illustrates the end-to-end journey, highlighting the **Human-in-the-Loop (HITL)** checkpoints where AI suggestions require human approval (e.g., JD Approval, Final Hiring Decision).
+## 🛠️ Technologies & Stack
 
 <div align="center">
-  <img src="docs/System flow diagram.png" alt="System Flow Diagram" width="100%" />
+
+| Technology | Icon | Description |
+| :--- | :---: | :--- |
+| **LangChain** | <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langchain-color.png" height="40"/> | LLM application framework with chaining capabilities |
+| **LangGraph** | <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langgraph-color.png" height="40"/> | Orchestration layer for cyclic multi-agent workflows |
+| **LangSmith** | <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langsmith-color.png" height="40"/> | Observability, testing, and debugging platform |
+| **Groq** | <img src="https://raw.githubusercontent.com/RMNCLDYO/groq-ai-toolkit/main/.github/groq-logo.png" height="20"/> | Ultra-low latency LLM inference engine |
+| **Google Gemini** | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/2560px-Google_Gemini_logo.svg.png" height="20"/> | Multimodal AI model for complex reasoning |
+| **Qdrant** | <img src="https://qdrant.tech/images/logo_with_text.png" height="20"/> | Vector Search Engine for semantic matching |
+| **Hugging Face** | <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Hf-logo-with-title.svg" height="30"/> | SOTA Embedding models and Transformers |
+
 </div>
 
 ---
 
-## System Architecture
+## 💡 Why ConvexHire?
 
-ConvexHire operates on a scalable microservices architecture. The backend leverages **LangGraph** to orchestrate the state between various AI agents (JD Generator, Resume Screener, Scheduling Agent), ensuring context is maintained throughout the recruitment lifecycle.
+<table>
+<tr>
+<td width="33%" align="center">
+  <h3>🤖 AI-Powered</h3>
+  <p>Multi-agent system with specialized AI workers for screening, ranking, and scheduling.</p>
+</td>
+<td width="33%" align="center">
+  <h3>🔍 Transparent</h3>
+  <p>Explainable AI (XAI) provides clear reasoning for every candidate match score.</p>
+</td>
+<td width="33%" align="center">
+  <h3>👥 Human-in-Loop</h3>
+  <p>Critical hiring decisions always require human approval and oversight.</p>
+</td>
+</tr>
+</table>
 
-**Key Architectural Components:**
-*   **Orchestration Layer:** LangGraph manages the flow between the Recruiter Agents and Candidate Agents.
-*   **Data Persistence:** PostgreSQL (Supabase) for relational data and Qdrant for vector embeddings.
-*   **Integration Layer:** Connects to external services (Calendar APIs, Email Services, E-Signature).
+### The Problem We Solve
+Traditional ATS platforms rely on opaque keyword matching, often disqualifying qualified candidates without explanation. **ConvexHire** bridges the "Candidate Experience Gap" through semantic understanding, deep document analysis, and transparent scoring.
+
+---
+
+## 🔄 System Workflow
+
+> [!NOTE]
+> Click on the diagram below to view it in full resolution.
 
 <div align="center">
-  <img src="docs/Architecture Diagram.png" alt="System Architecture Diagram" width="100%" />
+  <a href="docs/System flow diagram.png" target="_blank">
+    <img src="docs/System flow diagram.png" alt="System Flow Diagram" width="90%" />
+  </a>
+  <br/>
+  <em>Complete end-to-end recruitment workflow with AI agent orchestration.</em>
+</div>
+
+<br/>
+
+**Human-in-the-Loop Checkpoints:**
+1. `JD Approval` → Recruiter validates the AI-generated Job Description.
+2. `Candidate Review` → Recruiter reviews shortlisted candidates.
+3. `Final Decision` → Human confirmation before sending offers.
+
+---
+
+## 🏗️ System Architecture
+
+> [!TIP]
+> The system utilizes a microservices approach orchestrated by LangGraph.
+
+<div align="center">
+  <a href="docs/Architecture Diagram.png" target="_blank">
+    <img src="docs/Architecture Diagram.png" alt="System Architecture" width="90%" />
+  </a>
+  <br/>
+  <em>Scalable architecture featuring PostgreSQL, Qdrant, and External APIs.</em>
+</div>
+
+<br/>
+
+| Layer | Technology | Function |
+| :--- | :--- | :--- |
+| **Orchestration** | LangGraph | Manages agent state, memory, and cyclic flows |
+| **Persistence** | Supabase (PostgreSQL) | Relational data for users, jobs, and applications |
+| **Vector Store** | Qdrant | Stores embeddings for semantic search |
+| **Integrations** | Gmail / Google Calendar | Communication and interview scheduling |
+
+---
+
+## 🔬 Technical Deep Dive: OCR Benchmark
+
+> [!IMPORTANT]
+> **Challenge:** Accurately extracting text from scanned, multi-column CVs while preserving reading order.
+> We evaluated 4 leading engines on complex, double-column resumes.
+
+### 🏆 Performance Comparison
+
+<div align="center">
+
+| 🏅 Rank | OCR Engine | Avg. WER | Speed | Layout Quality | Verdict |
+|:---:|:-----------|:--------:|:-----:|:--------------:|:----------------:|
+| 🥇 | [**Docling (IBM)**](https://www.docling.ai/) | **3.1%** | **4.9s** | ⭐⭐⭐⭐⭐ | ✅ **Selected** |
+| 🥈 | [**Chandra OCR**](https://github.com/datalab-to/chandra) | 3.0% | 30.5s | ⭐⭐⭐⭐⭐ | ❌ GPU Heavy |
+| 🥉 | [**Paddle OCR**](https://github.com/PaddlePaddle/PaddleOCR) | 5.8% | 20.2s | ⭐⭐⭐ | ⚠️ Layout Issues |
+| 4️⃣ | [**Tesseract**](https://github.com/tesseract-ocr/tesseract) | 19.7% | 4.1s | ⭐ | ❌ Inaccurate |
+
+</div>
+
+<details>
+<summary><b>📊 Click to view detailed breakdown by document</b></summary>
+
+<br/>
+
+| Engine | CV1 | CV2 | CV3 | CV4 | CV5 | Average | Environment |
+|:---|:---:|:---:|:---:|:---:|:---:|:-------:|:-----------:|
+| **Docling** | **2.9%** | **3.4%** | **3.1%** | **3.7%** | **2.4%** | **3.1%** | 💻 Local CPU |
+| Chandra | 2.7% | 3.3% | 3.1% | 2.9% | 3.0% | 3.0% | ☁️ Datalab |
+| Paddle | 5.1% | 6.4% | 5.7% | 6.0% | 5.8% | 5.8% | 💻 Local |
+| Tesseract | 18.9% | 21.3% | 19.1% | 22.0% | 17.2% | 19.7% | 💻 Local |
+
+</details>
+
+<div align="center">
+
+### 🎯 Why Docling?
+
+```mermaid
+graph LR
+    A[Complex Layout] --> B(Docling)
+    B --> C{Result}
+    C -->|Layout Preserved| D[Perfect LLM Context]
+    C -->|Fast 4.9s| E[Real-time UX]
+    C -->|CPU Optimized| F[Low Cost]
+```
+
 </div>
 
 ---
 
-## Technical Deep Dive: OCR Benchmark Analysis
+## 🗺️ Project Roadmap
 
-A critical component of ConvexHire is the **Resume Parsing Agent**. To ensure high-fidelity extraction from scanned or non-selectable PDF resumes, a comparative analysis of four major OCR engines was conducted.
+### Phase 1: Foundation ✅
+- [x] 🔐 **Auth:** RBAC Authentication via Google 0Auth 2.0
+- [x] 🗄️ **DB:** Database Schema setup with Alembic & Supabase
+- [x] 📱 **UI:** Responsive Dashboard implementation
 
-The goal was to identify an engine that balances low Word Error Rate (WER) with the ability to preserve complex document layouts (e.g., multi-column CVs).
+### Phase 2: Core Agents 🚧
+- [x] 📋 **Job Feed:** Advanced filtering & search
+- [x] 🎯 **Matching:** Vector-based Recommendation Engine
+- [x] 🤖 **Screening:** Resume Analysis Agent
+- [x] 📄 **Parsing:** OCR Integration ([Docling](https://www.docling.ai/))
+- [x] 📝 **Content:** AI JD Generator
+- [ ] 📅 **Scheduling:** Calendar Agent
+- [ ] 📡 **Outreach:** Job Broadcaster
+- [ ] 💼 **Hiring:** Offer Generator
 
-**Evaluation Context**
-*   **Dataset:** 5 Double Column CVs containing complex formatting (scanned + stylized).
-*   **Metric:** Word Error Rate (WER).
-*   **Execution:** Comparative testing on local hardware versus cloud-hosted GPU environments.
+### Phase 3: Orchestration 🔮
+- [ ] **Multi-Agent Grid:** Enable inter-agent communication
+- [ ] **Frontend Integration:** Real-time WebSocket updates
+- [ ] **Production:** Deployment & Load Balancing
 
-### System Comparison
+---
 
-| OCR System | Avg. WER | Layout Handling | Table Extraction | Speed (per CV) | Hardware Req | Notes |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Docling (IBM)** | **3.1%** | **Strong** | **Excellent** | **~4.9s** | **Light CPU/GPU** | **Selected for production due to consistency.** |
-| Chandra OCR | 3.0% | Strong | **Extremely Good** | ~30.5s | High-end GPU | Tested via Datalab due to high compute cost. |
-| Paddle OCR | 5.8% | Decent | Fair | ~20.2s | Light CPU/GPU | Struggles with complex formatting recovery. |
-| Tesseract | 19.7% | Weak | Poor | ~4.1s | Very Light | Insufficient for modern resume layouts. |
+## 🚀 Quick Start
 
-### Performance Breakdown by Document
+> [!WARNING]
+> **Prerequisites:** 
+> 1. [Node.js v18+](https://nodejs.org/) 
+> 2. [Python 3.10+](https://www.python.org/)
+> 3. [UV Package Manager](https://docs.astral.sh/uv/getting-started/installation/)
 
-| Engine     | CV1 WER | CV2 WER | CV3 WER | CV4 WER | CV5 WER | Avg. WER | Execution Method |
-| :--------- | :------ | :------ | :------ | :------ | :------ | :------- | :---------------- |
-| **Docling** | **2.9%** | **3.4%** | **3.1%** | **3.7%** | **2.4%** | **3.1%** | **Ran locally** |
-| Chandra    | 2.7% | 3.3% | 3.1% | 2.9% | 3.0% | 3.0% | Datalab Demo |
-| Paddle     | 5.1% | 6.4% | 5.7% | 6.0% | 5.8% | 5.8% | Ran locally |
-| Tesseract  | 18.9% | 21.3% | 19.1% | 22.0% | 17.2% | 19.7% | Ran locally |
+### 📦 Installation Steps
 
-*Based on this analysis, **Docling** was integrated into the Resume Parser Agent for its superior ability to maintain document structure, faster inference time, and mainly which ran locally on low specs hardware, which is vital for downstream LLM reasoning in our case.*
+#### 1️⃣ Clone Repository
+```bash
+git clone https://github.com/devrahulbanjara/ConvexHire.git
+cd ConvexHire
+```
 
-## Project Milestones
+#### 2️⃣ Backend Setup (FastAPI)
+```bash
+cd backend
+# create env from example
+cp .env.example .env
+# Install dependencies & run
+uv sync
+uv run fastapi dev
+```
+> Backend runs on: `http://localhost:8000`  
+> Swagger Docs: `http://localhost:8000/docs`
 
-### Phase 1: Foundation
-- [x] Authentication & Session Management (RBAC)
-- [x] Database Schema & Migration Setup (Alembic)
-- [x] Responsive Candidate Dashboard
+#### 3️⃣ Frontend Setup (Next.js)
+```bash
+cd ../frontend
+# create env from local
+cp .env.local .env
+# Install dependencies & run
+npm install
+npm run dev
+```
+> App runs on: `http://localhost:3000`
 
-### Phase 2: AI Agents & Automation
-- [x] **Resume Screening Agent:** Semantic analysis with PII redaction.
-- [x] **OCR Integration:** Implementation of Docling for non-digital PDFs.
-- [ ] **JD Generator:** Agentic creation of job descriptions from brief prompts.
-- [ ] **Job Broadcaster:** Automated multi-platform posting.
-- [ ] **Scheduling Agent:** Autonomous interview negotiation.
-- [ ] **Offer Generator:** Template-based offer letter automation.
+---
 
-### Phase 3: Search & Discovery
-- [x] Job Feed with basic filtering.
-- [x] Job Recommendation Engine (Recency-based).
-- [ ] RAG-Based Talent Pool (Semantic search over candidate history).
+## 📊 Star History
 
-## Setup Guide
+<div align="center">
 
-### Prerequisites
-*   Node.js (v18+)
-*   Python (v3.10+)
-*   UV Package Manager (`pip install uv`)
+[![Star History Chart](https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date)](https://star-history.com/#devrahulbanjara/ConvexHire&Date)
 
-### Installation
+**⭐ Like this project? Give us a star on GitHub!**
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/devrahulbanjara/ConvexHire.git
-    cd ConvexHire
-    ```
+</div>
 
-2.  **Frontend Configuration**
-    Navigate to the frontend directory, configure the environment, and install dependencies.
-    ```bash
-    cd frontend
-    cp .env.local .env
-    # Update .env with your API keys
-    npm install
-    npm run dev
-    ```
+---
 
-3.  **Backend Configuration**
-    Open a new terminal. Navigate to the backend, configure the environment, and sync dependencies using `uv`.
-    ```bash
-    cd backend
-    cp .env.example .env
-    # Update .env with Database and LLM credentials
-    uv sync
-    uv run fastapi dev
-    ```
+## 🙏 Acknowledgements
 
-The application will be accessible at `http://localhost:3000`.
+This project leverages [**Docling**](https://github.com/DS4SD/docling) by IBM Research for efficient document conversion.
 
-## Star History
+<details>
+<summary><b>📚 Citation Reference</b></summary>
 
-<a href="https://www.star-history.com/#devrahulbanjara/ConvexHire&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date" />
- </picture>
-</a>
+<br/>
 
-## Citations & Acknowledgements
-
-This project utilizes **Docling** for efficient document conversion. We gratefully acknowledge the work of the IBM Research team:
-
-> Livathinos, N., Auer, C., Lysak, M., Nassar, A., Dolfi, M., Vagenas, P., ... & Staar, P. W. J. (2025). *Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion*. arXiv preprint arXiv:2501.17887. Available at: [https://arxiv.org/abs/2501.17887](https://arxiv.org/abs/2501.17887)
+> Livathinos, N., Auer, C., Lysak, M., Nassar, A., Dolfi, M., Vagenas, P., ... & Staar, P. W. J. (2025). *Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion*. arXiv preprint arXiv:2501.17887. 
+> 
+> 🔗 [https://arxiv.org/abs/2501.17887](https://arxiv.org/abs/2501.17887)
 
 ```bibtex
 @misc{livathinos2025doclingefficientopensourcetoolkit,
@@ -166,5 +290,19 @@ This project utilizes **Docling** for efficient document conversion. We grateful
       eprint={2501.17887},
       archivePrefix={arXiv},
       primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2501.17887}, 
+      url={https://arxiv.org/abs/2501.17887}
 }
+```
+</details>
+
+---
+
+<div align="center">
+
+### 💖 Built with passion for better recruitment
+
+[Report Bug](https://github.com/devrahulbanjara/ConvexHire/issues) • [Request Feature](https://github.com/devrahulbanjara/ConvexHire/issues) • [Contribute](CONTRIBUTING.md)
+
+**Made by [@devrahulbanjara](https://github.com/devrahulbanjara)**
+
+</div>
