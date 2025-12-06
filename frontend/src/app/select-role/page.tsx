@@ -40,7 +40,7 @@ export default function RoleSelection() {
         router.push(ROUTES.LOGIN);
       }
     };
-    
+
     checkAuth();
   }, [router]);
 
@@ -50,7 +50,7 @@ export default function RoleSelection() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await authService.selectRole(selectedRole);
       router.push(response.redirect_url);
     } catch (error) {
@@ -66,7 +66,7 @@ export default function RoleSelection() {
         {(searchParams) => {
           handleSearchParams(searchParams);
           return (
-            <div 
+            <div
               className="min-h-screen flex items-center justify-center p-6"
               style={{ background: '#F9FAFB' }}
             >
@@ -92,7 +92,7 @@ export default function RoleSelection() {
                 </div>
 
                 {/* Content Card */}
-                <div 
+                <div
                   className="bg-white rounded-3xl p-12 max-md:p-8 border border-[#E5E7EB]"
                   style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}
                 >
@@ -121,14 +121,14 @@ export default function RoleSelection() {
                       }`}
                     >
                       <div className="flex items-center gap-4">
-                        <div 
+                        <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${
                             selectedRole === 'recruiter'
                               ? 'bg-white/20'
                               : 'bg-[#3056F5]/10'
                           }`}
                         >
-                          <Briefcase 
+                          <Briefcase
                             className={`h-6 w-6 transition-colors duration-200 ${
                               selectedRole === 'recruiter'
                                 ? 'text-white'
@@ -137,7 +137,7 @@ export default function RoleSelection() {
                           />
                         </div>
                         <div className="flex-1 text-left">
-                          <h3 
+                          <h3
                             className={`text-base font-semibold mb-1 transition-colors duration-200 ${
                               selectedRole === 'recruiter'
                                 ? 'text-white'
@@ -146,7 +146,7 @@ export default function RoleSelection() {
                           >
                             I&apos;m hiring talent
                           </h3>
-                          <p 
+                          <p
                             className={`text-sm transition-colors duration-200 ${
                               selectedRole === 'recruiter'
                                 ? 'text-white/80'
@@ -183,14 +183,14 @@ export default function RoleSelection() {
                       }`}
                     >
                       <div className="flex items-center gap-4">
-                        <div 
+                        <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${
                             selectedRole === 'candidate'
                               ? 'bg-white/20'
                               : 'bg-[#3056F5]/10'
                           }`}
                         >
-                          <User 
+                          <User
                             className={`h-6 w-6 transition-colors duration-200 ${
                               selectedRole === 'candidate'
                                 ? 'text-white'
@@ -199,7 +199,7 @@ export default function RoleSelection() {
                           />
                         </div>
                         <div className="flex-1 text-left">
-                          <h3 
+                          <h3
                             className={`text-base font-semibold mb-1 transition-colors duration-200 ${
                               selectedRole === 'candidate'
                                 ? 'text-white'
@@ -208,7 +208,7 @@ export default function RoleSelection() {
                           >
                             I&apos;m looking for a job
                           </h3>
-                          <p 
+                          <p
                             className={`text-sm transition-colors duration-200 ${
                               selectedRole === 'candidate'
                                 ? 'text-white/80'
@@ -258,8 +258,8 @@ export default function RoleSelection() {
 
                 {/* Back to home - Below Card */}
                 <div className="text-center mt-6">
-                  <Link 
-                    href={ROUTES.HOME} 
+                  <Link
+                    href={ROUTES.HOME}
                     className="inline-flex items-center gap-2 text-sm font-medium text-[#3056F5] hover:text-[#2B3CF5] transition-colors"
                   >
                     <ArrowLeft className="h-4 w-4" />

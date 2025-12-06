@@ -16,18 +16,18 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
-      <Topbar 
-        onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
+      <Topbar
+        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         user={user}
       />
-      
+
       <div className="flex min-h-[calc(100vh-72px)] pt-[72px]">
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          role={user?.role || 'candidate'} 
+        <Sidebar
+          isOpen={sidebarOpen}
+          role={user?.role || 'candidate'}
         />
-        
-        <main 
+
+        <main
           className={`flex-1 transition-all duration-300 ${
             sidebarOpen ? 'ml-[260px]' : 'ml-0'
           } max-lg:ml-0`}

@@ -8,11 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
-import { 
-  MapPin, 
-  DollarSign, 
-  Calendar, 
-  Building2, 
+import {
+  MapPin,
+  DollarSign,
+  Calendar,
+  Building2,
   Users,
   Clock,
   ArrowRight,
@@ -49,8 +49,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 {job.company?.logo && (
-                  <img 
-                    src={job.company.logo} 
+                  <img
+                    src={job.company.logo}
                     alt={job.company.name}
                     className="w-12 h-12 rounded-lg object-cover"
                   />
@@ -64,10 +64,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex flex-wrap gap-2 mb-4">
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={cn(
                     'text-sm font-medium',
                     jobUtils.getJobLevelColor(job.level)
@@ -75,8 +75,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 >
                   {job.level}
                 </Badge>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={cn(
                     'text-sm',
                     jobUtils.getLocationTypeColor(job.location_type)
@@ -84,8 +84,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 >
                   {job.location_type}
                 </Badge>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={cn(
                     'text-sm',
                     jobUtils.getEmploymentTypeColor(job.employment_type)
@@ -95,7 +95,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 </Badge>
               </div>
             </div>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -126,7 +126,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 <span>{job.department}</span>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="w-4 h-4" />
@@ -178,9 +178,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               <h3 className="text-lg font-semibold text-foreground">Required Skills</h3>
               <div className="flex flex-wrap gap-2">
                 {job.skills.map((skill, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="outline" 
+                  <Badge
+                    key={index}
+                    variant="outline"
                     className="text-sm px-3 py-1"
                   >
                     {skill}
@@ -217,9 +217,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   </div>
                 )}
                 {job.company.website && (
-                  <a 
-                    href={job.company.website} 
-                    target="_blank" 
+                  <a
+                    href={job.company.website}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-primary hover:underline"
                   >

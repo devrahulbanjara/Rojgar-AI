@@ -20,7 +20,7 @@ export const useCurrentUser = () => {
     queryFn: async (): Promise<User | null> => {
       try {
         const user = await authService.getCurrentUser();
-        
+
         if (user) {
           // Convert backend user format to frontend format
           return {
@@ -52,7 +52,7 @@ export const useLogin = () => {
     onSuccess: (data) => {
       // Update user cache
       queryClient.setQueryData(queryKeys.auth.user, data.user);
-      
+
       // Redirect to dashboard
       const userType = data.user.userType || data.user.role;
       if (userType) {
@@ -79,7 +79,7 @@ export const useSignup = () => {
     onSuccess: (data) => {
       // Update user cache
       queryClient.setQueryData(queryKeys.auth.user, data.user);
-      
+
       // Redirect to appropriate dashboard
       const userType = data.user.userType || data.user.role;
       if (userType) {
@@ -106,7 +106,7 @@ export const useLogout = () => {
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
-      
+
       // Redirect to home
       router.push(ROUTES.HOME);
     },

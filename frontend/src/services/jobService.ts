@@ -5,11 +5,11 @@
 
 import { apiClient } from '../lib/api';
 import type { ApiResponse as BaseApiResponse } from '../types';
-import type { 
-  Job, 
-  JobListResponse, 
-  JobDetailResponse, 
-  JobSearchParams, 
+import type {
+  Job,
+  JobListResponse,
+  JobDetailResponse,
+  JobSearchParams,
   CreateJobRequest,
   UpdateJobRequest,
 } from '../types/job';
@@ -43,15 +43,15 @@ export class JobService {
    * Get personalized job recommendations based on user skills
    */
   static async getPersonalizedRecommendations(
-    userId: string, 
-    page: number = 1, 
+    userId: string,
+    page: number = 1,
     limit: number = 10
   ): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
     queryParams.append('user_id', userId);
     queryParams.append('page', page.toString());
     queryParams.append('limit', limit.toString());
-    
+
     const endpoint = `${jobEndpoints.recommendations}?${queryParams.toString()}`;
     return apiClient.get<JobListResponse>(endpoint);
   }
@@ -63,7 +63,7 @@ export class JobService {
   static async getRecommendedJobs(limit: number = 5): Promise<Job[]> {
     const queryParams = new URLSearchParams();
     queryParams.append('limit', limit.toString());
-    
+
     const endpoint = `${jobEndpoints.recommendations}?${queryParams.toString()}`;
     return apiClient.get<Job[]>(endpoint);
   }
@@ -73,15 +73,15 @@ export class JobService {
    */
   static async searchJobs(params?: JobSearchParams): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
-    
+
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
-    
+
     // Only search term
     if (params?.search) queryParams.append('search', params.search);
-    
+
     const endpoint = `${jobEndpoints.search}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<JobListResponse>(endpoint);
   }
@@ -132,7 +132,7 @@ export class JobService {
     queryParams.append('company_id', companyId);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    
+
     const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`;
     return apiClient.get<JobListResponse>(endpoint);
   }
@@ -148,21 +148,21 @@ export class ApplicationService {
   /**
    * Get list of applications
    */
-  static async getApplications(params?: { 
-    page?: number; 
-    limit?: number; 
-    jobId?: string; 
-    candidateId?: string; 
+  static async getApplications(params?: {
+    page?: number;
+    limit?: number;
+    jobId?: string;
+    candidateId?: string;
     status?: string;
   }): Promise<Application[]> {
     const queryParams = new URLSearchParams();
-    
+
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.jobId) queryParams.append('id', params.jobId);
     if (params?.candidateId) queryParams.append('candidate_id', params.candidateId);
     if (params?.status) queryParams.append('status', params.status);
-    
+
     const endpoint = `${applicationEndpoints.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<Application[]>(endpoint);
   }
@@ -202,7 +202,7 @@ export class ApplicationService {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    
+
     const endpoint = `${applicationEndpoints.byJob(jobId)}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<Application[]>(endpoint);
   }
@@ -214,7 +214,7 @@ export class ApplicationService {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
-    
+
     const endpoint = `${applicationEndpoints.byCandidate(candidateId)}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<Application[]>(endpoint);
   }
@@ -229,7 +229,7 @@ export const jobUtils = {
     if (job.salary_range) {
       return job.salary_range;
     }
-    
+
     // Fallback to raw fields if salary_range is not computed
     if (job.salary_min !== undefined && job.salary_max !== undefined) {
       return {
@@ -238,7 +238,7 @@ export const jobUtils = {
         currency: job.salary_currency || 'USD',
       };
     }
-    
+
     return undefined;
   },
 
@@ -249,7 +249,7 @@ export const jobUtils = {
     if (!salaryRange) {
       return 'Salary not specified';
     }
-    
+
     const { min, max, currency } = salaryRange;
     const formatNumber = (num: number) => {
       if (num >= 1000000) {
@@ -259,7 +259,7 @@ export const jobUtils = {
       }
       return num.toString();
     };
-    
+
     return `${currency} ${formatNumber(min)} - ${formatNumber(max)}`;
   },
 
@@ -279,7 +279,7 @@ export const jobUtils = {
     const postedDate = new Date(date);
     const diffInMs = now.getTime() - postedDate.getTime();
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffInDays === 0) {
       return 'Today';
     } else if (diffInDays === 1) {

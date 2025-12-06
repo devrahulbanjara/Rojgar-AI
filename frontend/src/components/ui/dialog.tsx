@@ -44,12 +44,12 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children, className })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
-      
+
       {/* Dialog */}
       <div className={cn(
         'relative z-50 w-full max-w-lg mx-4 bg-background rounded-lg shadow-lg',

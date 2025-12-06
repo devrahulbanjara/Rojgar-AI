@@ -15,7 +15,7 @@ export function CareerHistoryTab() {
   const [isAddingExperience, setIsAddingExperience] = useState(false);
   const [isAddingEducation, setIsAddingEducation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   const [experienceForm, setExperienceForm] = useState({
     job_title: '',
     company: '',
@@ -52,9 +52,9 @@ export function CareerHistoryTab() {
       setWorkExperiences(experiences);
       setEducationRecords(education);
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to load career data. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: 'Failed to load career data. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -88,9 +88,9 @@ export function CareerHistoryTab() {
       setIsAddingExperience(false);
       setMessage({ type: 'success', text: 'Work experience added successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add work experience. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add work experience. Please try again.'
       });
     }
   };
@@ -126,9 +126,9 @@ export function CareerHistoryTab() {
       setIsAddingEducation(false);
       setMessage({ type: 'success', text: 'Education record added successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add education record. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add education record. Please try again.'
       });
     }
   };
@@ -141,9 +141,9 @@ export function CareerHistoryTab() {
       setWorkExperiences(prev => prev.filter(exp => exp.id !== id));
       setMessage({ type: 'success', text: 'Work experience deleted successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to delete work experience.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to delete work experience.'
       });
     }
   };
@@ -156,17 +156,17 @@ export function CareerHistoryTab() {
       setEducationRecords(prev => prev.filter(edu => edu.id !== id));
       setMessage({ type: 'success', text: 'Education record deleted successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to delete education record.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to delete education record.'
       });
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
     });
   };
 
@@ -191,8 +191,8 @@ export function CareerHistoryTab() {
 
       {message && (
         <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success' 
-            ? 'bg-green-50 text-green-700 border-green-200' 
+          message.type === 'success'
+            ? 'bg-green-50 text-green-700 border-green-200'
             : 'bg-red-50 text-red-700 border-red-200'
         }`}>
           {message.type === 'success' ? (
@@ -301,9 +301,9 @@ export function CareerHistoryTab() {
                 <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
                   Add Experience
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsAddingExperience(false)}
                   className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                 >
@@ -483,9 +483,9 @@ export function CareerHistoryTab() {
                 <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
                   Add Education
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsAddingEducation(false)}
                   className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                 >

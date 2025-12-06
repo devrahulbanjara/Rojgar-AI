@@ -16,12 +16,12 @@ export interface Profile {
   professional_summary?: string;
   created_at: string;
   updated_at: string;
-  
+
   // User data (from user table)
   user_name?: string;
   user_email?: string;
   user_picture?: string;
-  
+
   // Nested data
   work_experiences: WorkExperience[];
   education_records: EducationRecord[];
@@ -89,7 +89,7 @@ export interface ProfileCreateRequest {
   name?: string;
   email?: string;
   picture?: string;
-  
+
   // Profile table fields (will update profile table)
   phone?: string;
   location_city?: string;
@@ -106,7 +106,7 @@ export interface ProfileUpdateRequest {
   name?: string;
   email?: string;
   picture?: string;
-  
+
   // Profile table fields (will update profile table)
   phone?: string;
   location_city?: string;

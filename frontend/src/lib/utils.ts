@@ -12,7 +12,7 @@ import { ROUTES, VALIDATION } from '../config/constants';
 /**
  * Utility function to merge Tailwind CSS classes
  * Combines clsx for conditional classes and tailwind-merge for Tailwind class deduplication
- * 
+ *
  * @param inputs - Class values to merge
  * @returns Merged class string
  */
@@ -138,8 +138,8 @@ export const formatUserName = (name: string): string => {
  * @returns Dashboard route path
  */
 export const getDashboardRoute = (userType: UserType): string => {
-  return userType === 'recruiter' 
-    ? ROUTES.RECRUITER.DASHBOARD 
+  return userType === 'recruiter'
+    ? ROUTES.RECRUITER.DASHBOARD
     : ROUTES.CANDIDATE.DASHBOARD;
 };
 
@@ -176,11 +176,11 @@ export const validateEmail = (email: string): string | undefined => {
   if (!email) {
     return 'Email is required';
   }
-  
+
   if (!VALIDATION.email.pattern.test(email)) {
     return VALIDATION.email.message;
   }
-  
+
   return undefined;
 };
 
@@ -193,11 +193,11 @@ export const validatePassword = (password: string): string | undefined => {
   if (!password) {
     return 'Password is required';
   }
-  
+
   if (password.length < VALIDATION.password.minLength) {
     return VALIDATION.password.message;
   }
-  
+
   return undefined;
 };
 
@@ -210,11 +210,11 @@ export const validateName = (name: string): string | undefined => {
   if (!name) {
     return 'Name is required';
   }
-  
+
   if (name.length < VALIDATION.name.minLength) {
     return VALIDATION.name.message;
   }
-  
+
   return undefined;
 };
 
@@ -228,11 +228,11 @@ export const validateConfirmPassword = (confirmPassword: string, password: strin
   if (!confirmPassword) {
     return 'Please confirm your password';
   }
-  
+
   if (confirmPassword !== password) {
     return 'Passwords do not match';
   }
-  
+
   return undefined;
 };
 
@@ -246,7 +246,7 @@ export const validateRequired = (value: string, fieldName: string): string | und
   if (!value || value.trim() === '') {
     return `${fieldName} is required`;
   }
-  
+
   return undefined;
 };
 

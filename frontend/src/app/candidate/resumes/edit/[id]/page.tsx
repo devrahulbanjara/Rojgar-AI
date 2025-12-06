@@ -12,14 +12,14 @@ import { Textarea } from '../../../../../components/ui/textarea';
 import { LoadingSpinner } from '../../../../../components/common/LoadingSpinner';
 import { resumeService } from '../../../../../services/resumeService';
 import { profileService } from '../../../../../services/profileService';
-import { 
-  FileText, 
-  User, 
-  Briefcase, 
-  GraduationCap, 
-  Award, 
-  Settings, 
-  Save, 
+import {
+  FileText,
+  User,
+  Briefcase,
+  GraduationCap,
+  Award,
+  Settings,
+  Save,
   ArrowLeft,
   Plus,
   Check,
@@ -28,8 +28,8 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import type { 
-  Resume, 
+import type {
+  Resume,
   ResumeUpdateRequest,
   WorkExperience,
   EducationRecord,
@@ -63,7 +63,7 @@ export default function ResumeEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
-  
+
   const [resumeForm, setResumeForm] = useState({
     name: '',
     contact_full_name: '',
@@ -176,9 +176,9 @@ export default function ResumeEditor() {
       setSelectedCertifications(resumeData.certifications?.map(cert => cert.certification_id) || []);
       setSelectedSkills(resumeData.skills?.map(skill => skill.profile_skill_id) || []);
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to load resume data. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: 'Failed to load resume data. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -188,35 +188,35 @@ export default function ResumeEditor() {
   const handleSaveResume = async () => {
     try {
       setIsSaving(true);
-      
+
       // First, save all pending work experience edits
       const experienceUpdatePromises = Object.entries(editingExperience).map(async ([resumeExpId, experienceData]) => {
         if (experienceData && Object.keys(experienceData).length > 0) {
           return handleUpdateExperience(resumeExpId, experienceData);
         }
       });
-      
+
       // Save all pending education edits
       const educationUpdatePromises = Object.entries(editingEducation).map(async ([resumeEduId, educationData]) => {
         if (educationData && Object.keys(educationData).length > 0) {
           return handleUpdateEducation(resumeEduId, educationData);
         }
       });
-      
+
       // Save all pending certification edits
       const certificationUpdatePromises = Object.entries(editingCertification).map(async ([resumeCertId, certificationData]) => {
         if (certificationData && Object.keys(certificationData).length > 0) {
           return handleUpdateCertification(resumeCertId, certificationData);
         }
       });
-      
+
       // Save all pending skill edits
       const skillUpdatePromises = Object.entries(editingSkill).map(async ([resumeSkillId, skillData]) => {
         if (skillData && Object.keys(skillData).length > 0) {
           return handleUpdateSkill(resumeSkillId, skillData);
         }
       });
-      
+
       // Wait for all updates to complete
       await Promise.all([
         ...experienceUpdatePromises,
@@ -224,13 +224,13 @@ export default function ResumeEditor() {
         ...certificationUpdatePromises,
         ...skillUpdatePromises
       ]);
-      
+
       // Clear all editing states after successful updates
       setEditingExperience({});
       setEditingEducation({});
       setEditingCertification({});
       setEditingSkill({});
-      
+
       // Then save the resume basic information
       const updateData: ResumeUpdateRequest = {
         name: resumeForm.name,
@@ -247,9 +247,9 @@ export default function ResumeEditor() {
       await resumeService.updateResume(resumeId, updateData);
       setMessage({ type: 'success', text: 'Resume saved successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to save resume.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to save resume.'
       });
     } finally {
       setIsSaving(false);
@@ -258,7 +258,7 @@ export default function ResumeEditor() {
 
   const handleToggleExperience = async (experienceId: string) => {
     const isSelected = selectedExperiences.includes(experienceId);
-    
+
     try {
       if (isSelected) {
         // Remove from resume
@@ -280,16 +280,16 @@ export default function ResumeEditor() {
         }
       }
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update experience.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update experience.'
       });
     }
   };
 
   const handleToggleEducation = async (educationId: string) => {
     const isSelected = selectedEducation.includes(educationId);
-    
+
     try {
       if (isSelected) {
         // Remove from resume
@@ -307,16 +307,16 @@ export default function ResumeEditor() {
         setSelectedEducation(prev => [...prev, educationId]);
       }
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update education.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update education.'
       });
     }
   };
 
   const handleToggleCertification = async (certificationId: string) => {
     const isSelected = selectedCertifications.includes(certificationId);
-    
+
     try {
       if (isSelected) {
         // Remove from resume
@@ -334,16 +334,16 @@ export default function ResumeEditor() {
         setSelectedCertifications(prev => [...prev, certificationId]);
       }
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update certification.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update certification.'
       });
     }
   };
 
   const handleToggleSkill = async (skillId: string) => {
     const isSelected = selectedSkills.includes(skillId);
-    
+
     try {
       if (isSelected) {
         // Remove from resume
@@ -361,9 +361,9 @@ export default function ResumeEditor() {
         setSelectedSkills(prev => [...prev, skillId]);
       }
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update skill.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update skill.'
       });
     }
   };
@@ -375,9 +375,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Education removed from resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to remove education.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to remove education.'
       });
     }
   };
@@ -392,9 +392,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Education added to resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add education.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add education.'
       });
     }
   };
@@ -409,9 +409,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Skill added to resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add skill.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add skill.'
       });
     }
   };
@@ -426,9 +426,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Certification added to resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add certification.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add certification.'
       });
     }
   };
@@ -447,9 +447,9 @@ export default function ResumeEditor() {
         setMessage({ type: 'success', text: 'Work experience added to resume successfully!' });
       }
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add work experience.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add work experience.'
       });
     }
   };
@@ -461,9 +461,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Work experience removed from resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to remove work experience.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to remove work experience.'
       });
     }
   };
@@ -475,9 +475,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Certification removed from resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to remove certification.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to remove certification.'
       });
     }
   };
@@ -489,9 +489,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Skill removed from resume successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to remove skill.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to remove skill.'
       });
     }
   };
@@ -520,9 +520,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Work experience updated successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update work experience.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update work experience.'
       });
     }
   };
@@ -538,9 +538,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Education updated successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update education.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update education.'
       });
     }
   };
@@ -556,9 +556,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Certification updated successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update certification.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update certification.'
       });
     }
   };
@@ -574,9 +574,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'Skill updated successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update skill.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update skill.'
       });
     }
   };
@@ -616,9 +616,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'New work experience created and added to resume!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to create work experience.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to create work experience.'
       });
     }
   };
@@ -661,9 +661,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'New education record created and added to resume!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to create education record.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to create education record.'
       });
     }
   };
@@ -702,9 +702,9 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'New certification created and added to resume!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to create certification.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to create certification.'
       });
     }
   };
@@ -735,17 +735,17 @@ export default function ResumeEditor() {
       await loadData();
       setMessage({ type: 'success', text: 'New skill created and added to resume!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to create skill.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to create skill.'
       });
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
     });
   };
 
@@ -822,8 +822,8 @@ export default function ResumeEditor() {
           {message && (
             <AnimatedContainer direction="up" delay={0.2}>
               <div className={`p-4 rounded-xl border flex items-center gap-3 ${
-                message.type === 'success' 
-                  ? 'bg-green-50 text-green-700 border-green-200' 
+                message.type === 'success'
+                  ? 'bg-green-50 text-green-700 border-green-200'
                   : message.type === 'error'
                   ? 'bg-red-50 text-red-700 border-red-200'
                   : 'bg-blue-50 text-blue-700 border-blue-200'
@@ -847,7 +847,7 @@ export default function ResumeEditor() {
                 <FileText className="w-5 h-5 text-[#3056F5]" />
                 <h3 className="text-lg font-semibold text-[#0F172A]">Resume Details</h3>
               </div>
-              
+
               <div className="space-y-6">
                 {/* Resume Name - Full Width */}
                 <div className="space-y-2">
@@ -866,7 +866,7 @@ export default function ResumeEditor() {
                   <User className="w-4 h-4 text-[#3056F5]" />
                   <h4 className="text-md font-medium text-[#0F172A]">Contact Information</h4>
                 </div>
-                
+
                 {/* Contact Fields - Two Column Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -925,7 +925,7 @@ export default function ResumeEditor() {
                   <Settings className="w-4 h-4 text-[#3056F5]" />
                   <h4 className="text-md font-medium text-[#0F172A]">Professional Links</h4>
                 </div>
-                
+
                 {/* Professional Links - Two Column Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -978,7 +978,7 @@ export default function ResumeEditor() {
                       Add Experience
                     </Button>
                   </div>
-                  
+
                   {resume?.experiences?.length === 0 ? (
                     <div className="text-center py-8 text-[#6B7280]">
                       <Briefcase className="w-12 h-12 mx-auto mb-3 text-[#9CA3AF]" />
@@ -1224,7 +1224,7 @@ export default function ResumeEditor() {
                       Add Education
                     </Button>
                   </div>
-                  
+
                   {!resume?.educations || resume.educations.length === 0 ? (
                     <div className="text-center py-8 text-[#6B7280]">
                       <GraduationCap className="w-12 h-12 mx-auto mb-3 text-[#9CA3AF]" />
@@ -1502,7 +1502,7 @@ export default function ResumeEditor() {
                       Add Skill
                     </Button>
                   </div>
-                  
+
                   {resume?.skills?.length === 0 ? (
                     <div className="text-center py-8 text-[#6B7280]">
                       <Settings className="w-12 h-12 mx-auto mb-3 text-[#9CA3AF]" />
@@ -1666,7 +1666,7 @@ export default function ResumeEditor() {
                       Add Certification
                     </Button>
                   </div>
-                  
+
                   {resume?.certifications?.length === 0 ? (
                     <div className="text-center py-8 text-[#6B7280]">
                       <Award className="w-12 h-12 mx-auto mb-3 text-[#9CA3AF]" />

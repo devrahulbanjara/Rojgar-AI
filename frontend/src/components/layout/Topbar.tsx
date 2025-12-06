@@ -36,9 +36,9 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
   };
 
   return (
-    <header 
+    <header
       className="fixed top-0 left-0 right-0 z-50 h-[72px] border-b border-[#E5E7EB] transition-all duration-300"
-      style={{ 
+      style={{
         background: 'rgba(255, 255, 255, 0.8)',
         backdropFilter: 'blur(12px)',
       }}
@@ -53,7 +53,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           >
             <Menu className="h-5 w-5 text-[#475569]" />
           </button>
-          
+
           <LogoLink variant="full" size="lg" />
         </div>
 
@@ -70,7 +70,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
               {user?.name}
             </span>
           </div>
-          
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}

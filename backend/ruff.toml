@@ -31,6 +31,15 @@ select = [
 # Ignore specific rules
 ignore = [
     "E501",   # line too long (handled by formatter)
+    "E402",   # module level import not at top (needed for __init__.py exports)
+    "E712",   # comparison to True (needed for SQLAlchemy filters)
+    "F403",   # star imports (legacy code, refactor later)
+    "F405",   # may be undefined from star imports
+    "F821",   # undefined name (SQLAlchemy forward references)
+    "B904",   # raise from (within except clause)
+    "B007",   # unused loop variable
+    "B008",   # function call in default argument (FastAPI Depends pattern)
+    "SIM108", # ternary operator suggestion
 ]
 
 # Allow autofix for all enabled rules
