@@ -51,15 +51,15 @@ export default function CandidateProfile() {
                   {!isAuthenticated ? 'Authentication Required' : 'Profile Not Found'}
                 </h1>
                 <p className="text-[#475569] mb-4">
-                  {!isAuthenticated 
-                    ? 'Please log in to view your profile.' 
+                  {!isAuthenticated
+                    ? 'Please log in to view your profile.'
                     : 'Unable to load your profile information. Please try refreshing the page.'
                   }
                 </p>
                 {!isAuthenticated && (
                   <div className="mt-4">
-                    <a 
-                      href="/login" 
+                    <a
+                      href="/login"
                       className="inline-flex items-center px-4 py-2 bg-[#3056F5] text-white rounded-lg hover:bg-[#1E40AF] transition-colors"
                     >
                       Go to Login

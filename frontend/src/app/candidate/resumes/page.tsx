@@ -18,7 +18,7 @@ export default function ResumeDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   const [createForm, setCreateForm] = useState({
     name: '',
     contact_full_name: '',
@@ -48,9 +48,9 @@ export default function ResumeDashboard() {
       const resumesData = await resumeService.getResumes();
       setResumes(resumesData);
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to load resumes. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: 'Failed to load resumes. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -61,7 +61,7 @@ export default function ResumeDashboard() {
     try {
       const data = await resumeService.getAutofillData();
       setAutofillData(data);
-      
+
       // Autofill the form with profile data
       setCreateForm(prev => ({
         ...prev,
@@ -98,20 +98,20 @@ export default function ResumeDashboard() {
 
       const newResume = await resumeService.createResume(resumeData);
       setResumes(prev => [...prev, newResume]);
-      setCreateForm({ 
-        name: '', 
-        contact_full_name: '', 
-        contact_email: '', 
-        contact_phone: '', 
-        contact_location: '', 
-        custom_summary: '' 
+      setCreateForm({
+        name: '',
+        contact_full_name: '',
+        contact_email: '',
+        contact_phone: '',
+        contact_location: '',
+        custom_summary: ''
       });
       setIsCreating(false);
       setMessage({ type: 'success', text: 'Resume created successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to create resume. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to create resume. Please try again.'
       });
     }
   };
@@ -124,18 +124,18 @@ export default function ResumeDashboard() {
       setResumes(prev => prev.filter(resume => resume.id !== id));
       setMessage({ type: 'success', text: 'Resume deleted successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to delete resume.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to delete resume.'
       });
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -232,8 +232,8 @@ export default function ResumeDashboard() {
                   Please log in to view your resumes.
                 </p>
                 <div className="mt-4">
-                  <a 
-                    href="/login" 
+                  <a
+                    href="/login"
                     className="inline-flex items-center px-4 py-2 bg-[#3056F5] text-white rounded-lg hover:bg-[#1E40AF] transition-colors"
                   >
                     Go to Login
@@ -262,8 +262,8 @@ export default function ResumeDashboard() {
           {message && (
             <AnimatedContainer direction="up" delay={0.2}>
               <div className={`p-4 rounded-xl border flex items-center gap-3 ${
-                message.type === 'success' 
-                  ? 'bg-green-50 text-green-700 border-green-200' 
+                message.type === 'success'
+                  ? 'bg-green-50 text-green-700 border-green-200'
                   : 'bg-red-50 text-red-700 border-red-200'
               }`}>
                 {message.type === 'success' ? (
@@ -283,7 +283,7 @@ export default function ResumeDashboard() {
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-[#0F172A]">Create New Resume</h3>
                 </div>
-                
+
                 <form onSubmit={handleCreateResume} className="space-y-6">
                   {/* Resume Information */}
                   <div className="space-y-4">
@@ -377,7 +377,7 @@ export default function ResumeDashboard() {
                   {/* Work Experiences Autofill */}
                   {autofillData && autofillData.work_experiences.length > 0 && (
                     <div className="space-y-4">
-                      <div 
+                      <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection('experiences')}
                       >
@@ -386,14 +386,14 @@ export default function ResumeDashboard() {
                           Work Experiences ({selectedExperiences.size} selected)
                         </h4>
                       </div>
-                      
+
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <p className="text-sm text-blue-700">
-                          <strong>Note:</strong> All profile data will be automatically included in your resume. 
+                          <strong>Note:</strong> All profile data will be automatically included in your resume.
                           You can customize which items to include after creation.
                         </p>
                       </div>
-                      
+
                       {expandedSections.has('experiences') && (
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                           {autofillData.work_experiences.map((exp) => (
@@ -428,7 +428,7 @@ export default function ResumeDashboard() {
                   {/* Education Autofill */}
                   {autofillData && autofillData.education_records.length > 0 && (
                     <div className="space-y-4">
-                      <div 
+                      <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection('education')}
                       >
@@ -437,7 +437,7 @@ export default function ResumeDashboard() {
                           Education ({selectedEducation.size} selected)
                         </h4>
                       </div>
-                      
+
                       {expandedSections.has('education') && (
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                           {autofillData.education_records.map((edu) => (
@@ -476,7 +476,7 @@ export default function ResumeDashboard() {
                   {/* Certifications Autofill */}
                   {autofillData && autofillData.certifications.length > 0 && (
                     <div className="space-y-4">
-                      <div 
+                      <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection('certifications')}
                       >
@@ -485,7 +485,7 @@ export default function ResumeDashboard() {
                           Certifications ({selectedCertifications.size} selected)
                         </h4>
                       </div>
-                      
+
                       {expandedSections.has('certifications') && (
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                           {autofillData.certifications.map((cert) => (
@@ -521,7 +521,7 @@ export default function ResumeDashboard() {
                   {/* Skills Autofill */}
                   {autofillData && autofillData.skills.length > 0 && (
                     <div className="space-y-4">
-                      <div 
+                      <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection('skills')}
                       >
@@ -530,7 +530,7 @@ export default function ResumeDashboard() {
                           Skills ({selectedSkills.size} selected)
                         </h4>
                       </div>
-                      
+
                       {expandedSections.has('skills') && (
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -569,9 +569,9 @@ export default function ResumeDashboard() {
                     <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
                       Create Resume
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => setIsCreating(false)}
                       className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                     >
@@ -626,7 +626,7 @@ export default function ResumeDashboard() {
                             <span>Created {formatDate(resume.created_at)}</span>
                           </div>
                         </div>
-                        
+
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <Button

@@ -18,14 +18,14 @@ interface RecommendedJobsProps {
  * Recommended Jobs Component
  * Displays personalized job recommendations using the new recommendations endpoint
  */
-export function RecommendedJobs({ 
-  limit = 5, 
+export function RecommendedJobs({
+  limit = 5,
   title = "Recommended for You",
   subtitle = "Jobs matched to your profile and preferences",
   className = ""
 }: RecommendedJobsProps) {
   const { data: jobsData, isLoading, error } = useRecommendedJobs(limit);
-  
+
   const jobs = jobsData?.jobs || [];
 
   if (isLoading) {
@@ -70,7 +70,7 @@ export function RecommendedJobs({
   return (
     <div className={`space-y-6 ${className}`}>
       <SectionHeader title={title} subtitle={subtitle} />
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {jobs.map((job) => (
           <JobCard

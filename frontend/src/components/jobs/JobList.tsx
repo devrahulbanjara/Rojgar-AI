@@ -34,9 +34,9 @@ export const JobList = memo<JobListProps>(({
       <StaggerContainer className="space-y-4" staggerDelay={0.08}>
         {/* Enhanced Loading Skeletons */}
         {Array.from({ length: 5 }).map((_, index) => (
-          <SkeletonJobCard 
+          <SkeletonJobCard
             key={index}
-            className="bg-card border border-border rounded-xl" 
+            className="bg-card border border-border rounded-xl"
           />
         ))}
       </StaggerContainer>
@@ -46,7 +46,7 @@ export const JobList = memo<JobListProps>(({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <div 
+        <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{ background: 'rgba(220, 38, 38, 0.1)' }}
         >
@@ -57,7 +57,7 @@ export const JobList = memo<JobListProps>(({
           <p className="text-sm text-[#475569] text-center max-w-md mb-4">
             {error}
           </p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="text-sm text-[#3056F5] hover:text-[#2B3CF5] hover:underline font-medium"
           >
@@ -71,7 +71,7 @@ export const JobList = memo<JobListProps>(({
   if (!jobs || jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <div 
+        <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{ background: 'rgba(48, 86, 245, 0.08)' }}
         >

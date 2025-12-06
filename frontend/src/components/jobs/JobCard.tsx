@@ -4,10 +4,10 @@
  */
 
 import React, { memo, useCallback } from 'react';
-import { 
-  MapPin, 
-  DollarSign, 
-  Building2, 
+import {
+  MapPin,
+  DollarSign,
+  Building2,
   Users,
   Clock
 } from 'lucide-react';
@@ -46,8 +46,8 @@ export const JobCard = memo<JobCardProps>(({
       className={cn(
         'group cursor-pointer transition-all duration-200 w-full bg-white rounded-xl border p-4 lg:p-5',
         'hover:-translate-y-0.5 active:scale-[0.99]',
-        isSelected 
-          ? 'border-[#3056F5] shadow-md bg-[#3056F5]/5' 
+        isSelected
+          ? 'border-[#3056F5] shadow-md bg-[#3056F5]/5'
           : 'border-[#E5E7EB] hover:border-[#CBD5E1]',
         className
       )}
@@ -120,7 +120,7 @@ export const JobCard = memo<JobCardProps>(({
           <div className="flex flex-wrap gap-1.5">
             {job.skills.slice(0, 3).map((skill, index) => (
               <span
-                key={index} 
+                key={index}
                 className="px-2 py-1 bg-[#F9FAFB] text-[#3056F5] text-xs font-medium rounded-md"
               >
                 {skill}

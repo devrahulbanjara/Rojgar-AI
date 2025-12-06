@@ -13,11 +13,11 @@ import { useAuth } from '../../../hooks/useAuth';
 export default function CandidateDashboard() {
   const { user } = useAuth();
   const { data: stats } = useDashboardStats();
-  const { 
-    applicationTrackingData, 
-    isLoading: applicationTrackingLoading, 
+  const {
+    applicationTrackingData,
+    isLoading: applicationTrackingLoading,
     error: applicationTrackingError,
-    refetch: refetchApplications 
+    refetch: refetchApplications
   } = useApplicationTrackingBoard();
 
   // Get first name from user's full name
@@ -34,9 +34,9 @@ export default function CandidateDashboard() {
 
           {/* Stats Grid */}
           <AnimatedContainer direction="up" delay={0.2}>
-            <StatsGrid 
-              stats={stats || {}} 
-              userType="candidate" 
+            <StatsGrid
+              stats={stats || {}}
+              userType="candidate"
             />
           </AnimatedContainer>
 
@@ -47,9 +47,9 @@ export default function CandidateDashboard() {
                 title="Your Applications"
                 subtitle="Track your job application journey"
               />
-              
-              <ApplicationTrackingBoard 
-                applications={applicationTrackingData} 
+
+              <ApplicationTrackingBoard
+                applications={applicationTrackingData}
                 isLoading={applicationTrackingLoading}
                 error={applicationTrackingError}
                 onRetry={refetchApplications}

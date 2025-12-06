@@ -84,7 +84,7 @@ export const LOADING_TIMES = {
 // Feature Highlights (for landing page)
 export const FEATURES = [
   'AI-powered job matching',
-  'Real-time application tracking', 
+  'Real-time application tracking',
   'Automated scheduling',
   'Transparent feedback system',
 ] as const;
