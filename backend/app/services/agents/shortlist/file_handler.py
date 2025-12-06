@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
-from app.core import settings, logger
+from app.core import logger, settings
 
 
 def get_job_description_path() -> Path:
@@ -19,7 +19,7 @@ def read_job_description() -> str:
     return jd_path.read_text(encoding="utf-8")
 
 
-def discover_resume_files() -> List[Path]:
+def discover_resume_files() -> list[Path]:
     resume_files = []
     for ext in settings.SUPPORTED_RESUME_FORMATS:
         resume_files.extend(settings.RESUMES_DIR.glob(f"*{ext}"))
@@ -34,7 +34,7 @@ def discover_resume_files() -> List[Path]:
     return sorted(resume_files)
 
 
-def save_json_report(report: Dict[str, Any], filename: str) -> Path:
+def save_json_report(report: dict[str, Any], filename: str) -> Path:
     settings.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     output_path = settings.OUTPUT_DIR / filename

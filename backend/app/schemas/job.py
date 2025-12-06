@@ -1,7 +1,7 @@
-from typing import Optional, List
 from datetime import date, datetime
-from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class JobLevel(str, Enum):
@@ -38,16 +38,24 @@ class JobCreateRequest(BaseModel):
     level: str = Field(..., min_length=1, max_length=50, description="Experience level")
     description: str = Field(..., min_length=10, description="Job description")
     location: str = Field(..., min_length=1, max_length=200, description="Job location")
-    location_type: str = Field(..., description="Location type (On-site, Remote, Hybrid)")
+    location_type: str = Field(
+        ..., description="Location type (On-site, Remote, Hybrid)"
+    )
     is_remote: bool = Field(default=False, description="Is this a remote position")
-    employment_type: str = Field(..., description="Employment type (Full-time, Part-time, Contract)")
+    employment_type: str = Field(
+        ..., description="Employment type (Full-time, Part-time, Contract)"
+    )
     salary_min: int = Field(..., ge=0, description="Minimum salary")
     salary_max: int = Field(..., ge=0, description="Maximum salary")
-    salary_currency: str = Field(default="USD", max_length=3, description="Salary currency")
-    requirements: List[str] = Field(default_factory=list, description="Job requirements")
-    skills: List[str] = Field(default_factory=list, description="Required skills")
-    benefits: List[str] = Field(default_factory=list, description="Job benefits")
-    application_deadline: Optional[date] = Field(None, description="Application deadline")
+    salary_currency: str = Field(
+        default="USD", max_length=3, description="Salary currency"
+    )
+    requirements: list[str] = Field(
+        default_factory=list, description="Job requirements"
+    )
+    skills: list[str] = Field(default_factory=list, description="Required skills")
+    benefits: list[str] = Field(default_factory=list, description="Job benefits")
+    application_deadline: date | None = Field(None, description="Application deadline")
     is_featured: bool = Field(default=False, description="Is this a featured job")
     company_id: int = Field(..., description="Company ID")
 
@@ -55,8 +63,10 @@ class JobCreateRequest(BaseModel):
 class JobSearchRequest(BaseModel):
     page: int = Field(default=1, ge=1, description="Page number")
     limit: int = Field(default=20, ge=1, le=100, description="Items per page")
-    search: Optional[str] = None
-    sort_by: str = Field(default="posted_date", description="Sort by: posted_date or salary")
+    search: str | None = None
+    sort_by: str = Field(
+        default="posted_date", description="Sort by: posted_date or salary"
+    )
     sort_order: str = Field(default="desc", description="Sort order: asc or desc")
 
 
@@ -65,14 +75,14 @@ class CompanyResponse(BaseModel):
 
     id: int
     name: str
-    logo: Optional[str] = None
-    website: Optional[str] = None
-    description: Optional[str] = None
-    location: Optional[str] = None
-    size: Optional[str] = None
-    industry: Optional[str] = None
-    brand_color: Optional[str] = None
-    founded_year: Optional[int] = None
+    logo: str | None = None
+    website: str | None = None
+    description: str | None = None
+    location: str | None = None
+    size: str | None = None
+    industry: str | None = None
+    brand_color: str | None = None
+    founded_year: int | None = None
 
 
 class JobResponse(BaseModel):
@@ -90,9 +100,9 @@ class JobResponse(BaseModel):
     salary_min: int
     salary_max: int
     salary_currency: str
-    requirements: List[str]
-    skills: List[str]
-    benefits: List[str]
+    requirements: list[str]
+    skills: list[str]
+    benefits: list[str]
     posted_date: date
     application_deadline: date
     status: JobStatus
@@ -100,14 +110,14 @@ class JobResponse(BaseModel):
     applicant_count: int
     views_count: int
     company_id: int
-    company: Optional[CompanyResponse] = None
+    company: CompanyResponse | None = None
     created_by: str
     created_at: datetime
     updated_at: datetime
 
 
 class JobSearchResponse(BaseModel):
-    jobs: List[JobResponse]
+    jobs: list[JobResponse]
     total: int
     page: int
     total_pages: int
@@ -121,6 +131,6 @@ class JobStatsResponse(BaseModel):
     featured_jobs: int
     remote_jobs: int
     avg_salary: float
-    top_skills: List[str]
-    top_locations: List[str]
-    top_companies: List[str]
+    top_skills: list[str]
+    top_locations: list[str]
+    top_companies: list[str]

@@ -1,9 +1,9 @@
-from typing import List, Optional, Dict
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import select, func, or_, and_
 
-from app.models import Job, Company, JobStatus, Skill, Profile, ProfileSkill
-from app.schemas import JobResponse, CompanyResponse, JobSearchRequest
+from app.models import Company, Job, JobStatus, Profile, ProfileSkill, Skill
+from app.schemas import CompanyResponse, JobResponse, JobSearchRequest
+
 from .vector_job_service import VectorJobService
 
 
@@ -17,7 +17,7 @@ class JobService:
         return CompanyResponse.model_validate(company)
 
     @staticmethod
-    def get_recommended_jobs(db: Session, limit: int = 5) -> Dict:
+    def get_recommended_jobs(db: Session, limit: int = 5) -> dict:
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -35,8 +35,7 @@ class JobService:
         }
 
     @staticmethod
-    def search_jobs(db: Session, params: JobSearchRequest) -> Dict:
-
+    def search_jobs(db: Session, params: JobSearchRequest) -> dict:
         query = (
             select(Job)
             .join(Company, Job.company_id == Company.id)
@@ -79,7 +78,7 @@ class JobService:
     @staticmethod
     def get_job_by_id(
         job_id: int, db: Session, increment_view: bool = False
-    ) -> Optional[Job]:
+    ) -> Job | None:
         query = select(Job).where(Job.id == job_id).options(selectinload(Job.company))
         job = db.execute(query).scalar_one_or_none()
 
@@ -92,7 +91,7 @@ class JobService:
         return job
 
     @staticmethod
-    def get_recent_jobs(db: Session, limit: int = 10) -> List[Job]:
+    def get_recent_jobs(db: Session, limit: int = 10) -> list[Job]:
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -128,17 +127,17 @@ class JobService:
     # Company-related methods
 
     @staticmethod
-    def get_all_companies(db: Session) -> List[Company]:
+    def get_all_companies(db: Session) -> list[Company]:
         return db.execute(select(Company)).scalars().all()
 
     @staticmethod
-    def get_company_by_id(company_id: int, db: Session) -> Optional[Company]:
+    def get_company_by_id(company_id: int, db: Session) -> Company | None:
         return db.execute(
             select(Company).where(Company.id == company_id)
         ).scalar_one_or_none()
 
     @staticmethod
-    def get_company_jobs(company_id: int, db: Session) -> List[Job]:
+    def get_company_jobs(company_id: int, db: Session) -> list[Job]:
         query = (
             select(Job)
             .where(Job.company_id == company_id)
@@ -148,7 +147,7 @@ class JobService:
         return db.execute(query).scalars().all()
 
     @staticmethod
-    def get_company_info_with_stats(company_id: int, db: Session) -> Optional[Dict]:
+    def get_company_info_with_stats(company_id: int, db: Session) -> dict | None:
         company = db.execute(
             select(Company).where(Company.id == company_id)
         ).scalar_one_or_none()
@@ -187,7 +186,7 @@ class JobService:
         }
 
     @staticmethod
-    def get_job_statistics(db: Session) -> Dict:
+    def get_job_statistics(db: Session) -> dict:
         total_jobs = db.execute(select(func.count(Job.id))).scalar_one()
         active_jobs = db.execute(
             select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
@@ -251,7 +250,7 @@ class JobService:
         return vector_service.add_job_to_vector_db(job)
 
     @staticmethod
-    def search_similar_jobs(query: str, limit: int = 5) -> List[Dict]:
+    def search_similar_jobs(query: str, limit: int = 5) -> list[dict]:
         vector_service = VectorJobService()
         return vector_service.search_similar_jobs(query, limit)
 
@@ -261,7 +260,7 @@ class JobService:
         return vector_service.delete_job_from_vector_db(job_id)
 
     @staticmethod
-    def create_job_with_vector_sync(job_data: dict, db: Session) -> Optional[Job]:
+    def create_job_with_vector_sync(job_data: dict, db: Session) -> Job | None:
         try:
             job = Job(**job_data)
             db.add(job)
@@ -281,7 +280,7 @@ class JobService:
             return None
 
     @staticmethod
-    def get_user_skills(user_id: str, db: Session) -> List[str]:
+    def get_user_skills(user_id: str, db: Session) -> list[str]:
         skills = []
 
         user_skills = (
@@ -311,7 +310,7 @@ class JobService:
     @staticmethod
     def get_personalized_job_recommendations(
         user_id: str, db: Session, page: int = 1, limit: int = 10
-    ) -> Dict:
+    ) -> dict:
         try:
             user_skills = JobService.get_user_skills(user_id, db)
 

@@ -73,7 +73,7 @@ export function NeuralIntelligenceSection() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: false, margin: '-100px' });
-  
+
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [neurons, setNeurons] = useState<Neuron[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -215,7 +215,7 @@ export function NeuralIntelligenceSection() {
         const inputNeurons = neurons.filter((n) => n.layer === 'input');
         const hiddenNeurons = neurons.filter((n) => n.layer === 'hidden');
         const outputNeurons = neurons.filter((n) => n.layer === 'output');
-        
+
         if (inputNeurons.length && hiddenNeurons.length && outputNeurons.length) {
           const newSignals: Signal[] = [];
           const forwardColors = [
@@ -223,21 +223,21 @@ export function NeuralIntelligenceSection() {
             NEURAL_COLORS.signals.forward.secondary,
             NEURAL_COLORS.signals.forward.accent
           ];
-          
+
           // Each input neuron sends to ALL hidden neurons, each hidden to ALL outputs
           inputNeurons.forEach((inputNeuron, inputIdx) => {
             hiddenNeurons.forEach((hiddenNeuron, hiddenIdx) => {
               // Pick a random output for this path
               const outputNeuron = outputNeurons[Math.floor(Math.random() * outputNeurons.length)];
-              
+
               const path: Connection[] = [
                 { from: inputNeuron, to: hiddenNeuron },
                 { from: hiddenNeuron, to: outputNeuron },
               ];
-              
+
               const colorIndex = (inputIdx + hiddenIdx) % forwardColors.length;
               const signalSize = 4 + Math.random() * 2; // Varied sizes
-              
+
               newSignals.push({
                 connection: path[0],
                 progress: 0,
@@ -251,7 +251,7 @@ export function NeuralIntelligenceSection() {
               });
             });
           });
-          
+
           updateSignals(newSignals);
         }
       } else if (animationPhase === 'backward' && phaseTime < 0.1 && signalsRef.current.length === 0) {
@@ -259,7 +259,7 @@ export function NeuralIntelligenceSection() {
         const inputNeurons = neurons.filter((n) => n.layer === 'input');
         const hiddenNeurons = neurons.filter((n) => n.layer === 'hidden');
         const outputNeurons = neurons.filter((n) => n.layer === 'output');
-        
+
         if (inputNeurons.length && hiddenNeurons.length && outputNeurons.length) {
           const newSignals: Signal[] = [];
           const backwardColors = [
@@ -267,23 +267,23 @@ export function NeuralIntelligenceSection() {
             NEURAL_COLORS.signals.backward.secondary,
             NEURAL_COLORS.signals.backward.accent
           ];
-          
+
           // For backward propagation, signals start from output neurons and flow to input neurons
           // We create connections that go from right to left: output → hidden → input
           outputNeurons.forEach((outputNeuron, outputIdx) => {
             hiddenNeurons.forEach((hiddenNeuron, hiddenIdx) => {
               // Pick a random input for this path
               const inputNeuron = inputNeurons[Math.floor(Math.random() * inputNeurons.length)];
-              
+
               // Create path for backward propagation: output → hidden → input
               const path: Connection[] = [
                 { from: outputNeuron, to: hiddenNeuron },   // Output → Hidden
                 { from: hiddenNeuron, to: inputNeuron },    // Hidden → Input
               ];
-              
+
               const colorIndex = (outputIdx + hiddenIdx) % backwardColors.length;
               const signalSize = 4 + Math.random() * 2;
-              
+
               newSignals.push({
                 connection: path[0],
                 progress: 0,
@@ -297,7 +297,7 @@ export function NeuralIntelligenceSection() {
               });
             });
           });
-          
+
           updateSignals(newSignals);
         }
       }
@@ -305,14 +305,14 @@ export function NeuralIntelligenceSection() {
       // Update signals and handle path transitions
       updateSignals((prev) => {
         const updated: Signal[] = [];
-        
+
         for (const signal of prev) {
           const newProgress = signal.progress + deltaTime / 1.5;
-          
+
           // If signal completed its current connection
           if (newProgress >= 1 && signal.path && signal.pathIndex !== undefined) {
             const nextIndex = signal.pathIndex + 1;
-            
+
             // If there's a next connection in the path
             if (nextIndex < signal.path.length) {
               updated.push({
@@ -331,7 +331,7 @@ export function NeuralIntelligenceSection() {
             });
           }
         }
-        
+
         return updated;
       });
 
@@ -390,12 +390,12 @@ export function NeuralIntelligenceSection() {
             className="lg:col-span-3 px-4 lg:px-0"
           >
             <div className="bg-white rounded-3xl shadow-lg p-12 border border-[#E5E7EB] transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] max-lg:p-8">
-              
+
               <div
                 ref={canvasRef}
                 className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden transition-all duration-1000"
                 style={{
-                  background: animationPhase === 'forward' 
+                  background: animationPhase === 'forward'
                     ? NEURAL_COLORS.gradients.forward
                     : NEURAL_COLORS.gradients.backward,
                 }}
@@ -416,7 +416,7 @@ export function NeuralIntelligenceSection() {
                       } else if (conn.from.layer === 'hidden' && conn.to.layer === 'output') {
                         strokeColor = NEURAL_COLORS.layers.hidden;
                       }
-                      
+
                       return (
                         <line
                           key={`conn-${i}`}
@@ -437,7 +437,7 @@ export function NeuralIntelligenceSection() {
                   {!prefersReducedMotion &&
                     signals.map((signal) => {
                       const { from, to } = signal.connection;
-                      
+
                       // Calculate signal position based on direction
                       let x, y;
                       if (signal.direction === 'backward') {
@@ -450,9 +450,9 @@ export function NeuralIntelligenceSection() {
                         x = from.x + (to.x - from.x) * signal.progress;
                         y = from.y + (to.y - from.y) * signal.progress;
                       }
-                      
+
                       const currentSize = signal.size || signalSize;
-                      
+
                       return (
                         <g key={signal.id}>
                           {/* Trail effect for some signals */}
@@ -460,14 +460,12 @@ export function NeuralIntelligenceSection() {
                             <>
                               {[0.2, 0.1, 0.05].map((offset, i) => {
                                 const trailProgress = Math.max(0, signal.progress - offset);
-                                let trailX, trailY;
-                                
                                 // Trail follows the same direction as the main signal
-                                trailX = from.x + (to.x - from.x) * trailProgress;
-                                trailY = from.y + (to.y - from.y) * trailProgress;
-                                
+                                const trailX = from.x + (to.x - from.x) * trailProgress;
+                                const trailY = from.y + (to.y - from.y) * trailProgress;
+
                                 const trailOpacity = (1 - i * 0.3) * 0.4;
-                                
+
                                 return signal.progress > offset ? (
                                   <circle
                                     key={`trail-${i}`}
@@ -484,7 +482,7 @@ export function NeuralIntelligenceSection() {
                               })}
                             </>
                           )}
-                          
+
                           {/* Main signal with glow */}
                           <circle
                             cx={x}
@@ -495,7 +493,7 @@ export function NeuralIntelligenceSection() {
                               filter: `drop-shadow(0 0 ${currentSize * 3}px ${signal.color})`,
                             }}
                           />
-                          
+
                           {/* Bright core */}
                           <circle
                             cx={x}
@@ -504,7 +502,7 @@ export function NeuralIntelligenceSection() {
                             fill="white"
                             opacity="0.9"
                           />
-                          
+
                           {/* Inner sparkle */}
                           <circle
                             cx={x}
@@ -525,10 +523,10 @@ export function NeuralIntelligenceSection() {
                     const isHovered = hoveredNeuronIndex === i;
                     const opacity = isHovered ? 0.6 : 0.2 + pulsePhase * 0.3;
                     const glowIntensity = isHovered ? 1 : pulsePhase;
-                    
+
                     // Get layer-specific color
                     const layerColor = NEURAL_COLORS.layers[neuron.layer];
-                    
+
                     // Convert hex to rgba for opacity
                     const hexToRgb = (hex: string) => {
                       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -560,7 +558,7 @@ export function NeuralIntelligenceSection() {
                             }}
                           />
                         )}
-                        
+
                         {/* Main neuron circle with hover interaction */}
                         <circle
                           cx={neuron.x}
@@ -579,7 +577,7 @@ export function NeuralIntelligenceSection() {
                           onMouseEnter={() => setHoveredNeuronIndex(i)}
                           onMouseLeave={() => setHoveredNeuronIndex(null)}
                         />
-                        
+
                         {/* Inner bright core */}
                         <circle
                           cx={neuron.x}
@@ -588,7 +586,7 @@ export function NeuralIntelligenceSection() {
                           fill="white"
                           opacity={isHovered ? 0.9 : 0.7}
                         />
-                        
+
                         {/* Extra glow for hovered state */}
                         {isHovered && (
                           <>

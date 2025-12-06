@@ -1,6 +1,6 @@
-from pydantic_settings import BaseSettings
 from pathlib import Path
-from typing import Dict, List
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     REPORT_SUMMARY: str = "shortlist_summary.txt"
     JOB_DESCRIPTION_FILE: str = "job_description.txt"
 
+    # Gmail Settings
+    GMAIL_APP_PASSWORD: str
+    GMAIL_USER: str = "convexhire@gmail.com"
+    BOOKING_LINK: str = "https://cal.com/convexhire/interview?overlayCalendar=true"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
@@ -79,7 +84,7 @@ class Settings(BaseSettings):
         return path
 
     @property
-    def SCORE_WEIGHTS(self) -> Dict[str, float]:
+    def SCORE_WEIGHTS(self) -> dict[str, float]:
         return {
             "skills": 0.20,
             "experience_years": 0.20,
@@ -89,7 +94,7 @@ class Settings(BaseSettings):
         }
 
     @property
-    def DEGREE_WEIGHTS(self) -> Dict[str, int]:
+    def DEGREE_WEIGHTS(self) -> dict[str, int]:
         return {
             "Computer Engineering": 10,
             "CSIT": 9,
@@ -100,7 +105,7 @@ class Settings(BaseSettings):
         }
 
     @property
-    def DEGREE_CATEGORIES(self) -> List[str]:
+    def DEGREE_CATEGORIES(self) -> list[str]:
         return [
             "Computer Engineering",
             "CSIT",
@@ -111,7 +116,7 @@ class Settings(BaseSettings):
         ]
 
     @property
-    def SUPPORTED_RESUME_FORMATS(self) -> List[str]:
+    def SUPPORTED_RESUME_FORMATS(self) -> list[str]:
         return [".pdf", ".docx"]
 
 

@@ -1,5 +1,6 @@
-from app.models.agents.jd_generator import JobState
 from langgraph.types import interrupt
+
+from app.models.agents.jd_generator import JobState
 
 
 def human_node(state: JobState) -> dict:

@@ -28,6 +28,7 @@ dev = [
     "notebook>=7.4.7",
     "pandas>=2.3.3",
     "pytest>=9.0.1",
+    "ruff>=0.14.8",
     "supabase>=2.22.1",
 ]
 

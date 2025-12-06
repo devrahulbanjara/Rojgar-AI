@@ -1,10 +1,10 @@
-from typing import Dict, Any
+from typing import Any
 
-from app.core import settings, logger
-from app.models.agents.shortlist import WorkflowState, CandidateScore
+from app.core import logger, settings
+from app.models.agents.shortlist import CandidateScore, WorkflowState
 
 
-def aggregate_scores(state: WorkflowState) -> Dict[str, Any]:
+def aggregate_scores(state: WorkflowState) -> dict[str, Any]:
     logger.info("Aggregating scores")
     scored_candidates = []
 

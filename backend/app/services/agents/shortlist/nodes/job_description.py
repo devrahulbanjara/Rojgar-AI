@@ -1,13 +1,14 @@
-from typing import Dict, Any
+from typing import Any
 
 from app.core import logger
-from app.models.agents.shortlist import WorkflowState, JobRequirements
-from ..llm_service import get_llm
+from app.models.agents.shortlist import JobRequirements, WorkflowState
+
 from ..file_handler import read_job_description
+from ..llm_service import get_llm
 from ..templates import JOB_DESCRIPTION_PARSER_PROMPT
 
 
-def parse_job_description(state: WorkflowState) -> Dict[str, Any]:
+def parse_job_description(state: WorkflowState) -> dict[str, Any]:
     logger.info("Parsing job description")
     jd_text = read_job_description()
 

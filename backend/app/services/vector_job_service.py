@@ -1,10 +1,9 @@
-from typing import List, Dict
-from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct
+from qdrant_client.models import Distance, PointStruct, VectorParams
+from sentence_transformers import SentenceTransformer
 
+from app.core import logger, settings
 from app.models import Job
-from app.core import settings, logger
 
 
 class VectorJobService:
@@ -49,7 +48,7 @@ class VectorJobService:
         skills_text = ", ".join(job.skills) if job.skills else ""
         return f"{job.title}. {job.description}. {skills_text}"
 
-    def _create_job_payload(self, job: Job) -> Dict:
+    def _create_job_payload(self, job: Job) -> dict:
         return {
             "job_id": job.id,
             "title": job.title,
@@ -84,7 +83,7 @@ class VectorJobService:
             logger.error(f"Error adding job {job.id} to vector database: {str(e)}")
             return False
 
-    def search_similar_jobs(self, query: str, limit: int = 5) -> List[Dict]:
+    def search_similar_jobs(self, query: str, limit: int = 5) -> list[dict]:
         try:
             query_vector = self.model.encode([query])[0]
 
@@ -124,8 +123,8 @@ class VectorJobService:
             return False
 
     def get_personalized_job_recommendations(
-        self, user_skills: List[str], page: int = 1, limit: int = 10
-    ) -> List[Dict]:
+        self, user_skills: list[str], page: int = 1, limit: int = 10
+    ) -> list[dict]:
         try:
             skills_text = ", ".join(user_skills)
 
