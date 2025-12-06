@@ -32,11 +32,11 @@ def run_auto_approved(candidates: list[dict]) -> list[dict]:
         result = app.invoke(initial_state, config)
         results.append(result)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Candidate: {result['name']} ({result['email']})")
         print(f"Approved: {result['approved']}")
         print(f"Send Status: {result['send_status']}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
     return results
 
@@ -70,21 +70,25 @@ def run_with_approval(candidate: dict, thread_id: str = "hitl_demo") -> dict:
     if "__interrupt__" in result:
         payload = result["__interrupt__"][0].value
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("DRAFT EMAIL REVIEW")
         print("=" * 70)
         print(f"\nCandidate: {payload['candidate_name']}")
         print(f"Email: {payload['candidate_email']}")
-        print(f"\nReason for shortlisting:")
+        print("\nReason for shortlisting:")
         print(f"  {payload['reason']}")
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
 
-        user_input = input("\n>>> Type 'approve' to send, or 'reject' to cancel: ").strip().lower()
+        user_input = (
+            input("\n>>> Type 'approve' to send, or 'reject' to cancel: ")
+            .strip()
+            .lower()
+        )
         approved = user_input == "approve"
 
         result = app.invoke(Command(resume=approved), config)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("FINAL RESULT")
     print("=" * 60)
     print(f"Candidate: {result['name']} ({result['email']})")
@@ -131,4 +135,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-

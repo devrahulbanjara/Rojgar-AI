@@ -11,48 +11,48 @@ Example:
 
 # Schemas (data models for the workflow)
 from app.models.agents.shortlist import (
-    ResumeStructured,
-    JobRequirements,
-    EvaluationScore,
     CandidateScore,
+    EvaluationScore,
+    JobRequirements,
+    ResumeStructured,
     WorkflowState,
-)
-
-# Prompt templates
-from .templates import (
-    JOB_DESCRIPTION_PARSER_PROMPT,
-    RESUME_PARSER_PROMPT,
-    WORK_ALIGNMENT_PROMPT,
-    PROJECT_EVALUATION_PROMPT,
-    DEGREE_MAPPER_PROMPT,
 )
 
 # Services
 from .document_processor import DocumentProcessor
-from .llm_service import get_llm
-
-# Workflow
-from .graph import create_workflow
-
-# Node functions (for advanced usage)
-from .nodes import (
-    parse_job_description,
-    extract_resume_structure,
-    evaluate_skills,
-    evaluate_experience_years,
-    evaluate_work_alignment,
-    evaluate_projects,
-    evaluate_degree,
-    aggregate_scores,
-    generate_report,
-)
 
 # File utilities
 from .file_handler import (
-    read_job_description,
     discover_resume_files,
+    read_job_description,
     save_json_report,
     save_text_report,
+)
+
+# Workflow
+from .graph import create_workflow
+from .llm_service import get_llm
+
+# Node functions (for advanced usage)
+from .nodes import (
+    aggregate_scores,
+    evaluate_degree,
+    evaluate_experience_years,
+    evaluate_projects,
+    evaluate_skills,
+    evaluate_work_alignment,
+    extract_resume_structure,
+    generate_report,
+    parse_job_description,
+)
+
+# Prompt templates
+from .templates import (
+    DEGREE_MAPPER_PROMPT,
+    JOB_DESCRIPTION_PARSER_PROMPT,
+    PROJECT_EVALUATION_PROMPT,
+    RESUME_PARSER_PROMPT,
+    WORK_ALIGNMENT_PROMPT,
 )
 
 __all__ = [

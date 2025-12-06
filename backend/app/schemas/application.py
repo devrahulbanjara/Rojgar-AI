@@ -1,6 +1,6 @@
-from typing import Optional
 from datetime import datetime
 from enum import Enum
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -24,13 +24,13 @@ class ApplicationStatus(str, Enum):
 class CreateApplicationRequest(BaseModel):
     job_title: str
     company_name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class UpdateApplicationRequest(BaseModel):
-    stage: Optional[ApplicationStage] = None
-    status: Optional[ApplicationStatus] = None
-    description: Optional[str] = None
+    stage: ApplicationStage | None = None
+    status: ApplicationStatus | None = None
+    description: str | None = None
 
 
 class ApplicationResponse(BaseModel):
@@ -40,7 +40,7 @@ class ApplicationResponse(BaseModel):
     user_id: str
     job_title: str
     company_name: str
-    description: Optional[str] = None
+    description: str | None = None
     applied_date: datetime
     stage: ApplicationStage
     status: ApplicationStatus

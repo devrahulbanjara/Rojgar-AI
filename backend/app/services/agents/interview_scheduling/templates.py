@@ -89,4 +89,3 @@ def get_interview_email_template(
     </div>
 </body>
 </html>"""
-

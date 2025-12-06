@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
-import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.database import init_db
-from app.api.v1 import api_router
 from app.core.logging_config import logger
 
 
@@ -19,9 +19,9 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
     logger.info("Database ready!")
-    
+
     yield
-    
+
     logger.info("Shutting down ConvexHire API...")
 
 

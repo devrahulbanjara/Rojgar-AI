@@ -2,8 +2,9 @@
 Compose email node - Generate the email draft content.
 """
 
-from app.models.agents.interview_scheduling import InterviewSchedulingState
 from app.core.config import settings
+from app.models.agents.interview_scheduling import InterviewSchedulingState
+
 from ..templates import get_interview_email_template
 
 
@@ -20,4 +21,3 @@ def compose_email_draft(state: InterviewSchedulingState) -> dict:
     )
 
     return {"draft_email": html_body}
-

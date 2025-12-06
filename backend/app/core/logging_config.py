@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+
 from loguru import logger
 
 logger.remove()
@@ -15,7 +16,7 @@ logger.add(
 def configure_file_logging(log_dir: Path, filename: str = "app.log") -> None:
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / filename
-    
+
     logger.add(
         log_path,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",

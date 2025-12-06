@@ -12,11 +12,9 @@ Example:
     from app.services.agents.interview_scheduling import create_workflow, app
 """
 
-from . import shortlist
-from . import interview_scheduling
+from . import interview_scheduling, shortlist
 
 __all__ = [
     "shortlist",
     "interview_scheduling",
 ]
-

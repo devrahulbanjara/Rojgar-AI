@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from app.core import settings, logger, configure_file_logging
-from .graph import create_workflow
+from app.core import configure_file_logging, logger, settings
+
 from .file_handler import discover_resume_files
+from .graph import create_workflow
 
 # Configure file logging for this service
 configure_file_logging(settings.OUTPUT_DIR, "ats_screening.log")

@@ -1,15 +1,14 @@
-from typing import List, Dict, Optional
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+from datetime import UTC, datetime
+
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.models import Application, ApplicationStage, ApplicationStatus
 
 
 class ApplicationService:
-
     @staticmethod
-    def get_user_applications(user_id: str, db: Session) -> List[Application]:
+    def get_user_applications(user_id: str, db: Session) -> list[Application]:
         return (
             db.execute(select(Application).where(Application.user_id == user_id))
             .scalars()
@@ -17,7 +16,7 @@ class ApplicationService:
         )
 
     @staticmethod
-    def get_tracking_board(user_id: str, db: Session) -> Dict[str, List[dict]]:
+    def get_tracking_board(user_id: str, db: Session) -> dict[str, list[dict]]:
         applications = ApplicationService.get_user_applications(user_id, db)
 
         board = {
@@ -55,7 +54,7 @@ class ApplicationService:
         return board
 
     @staticmethod
-    def get_application_stats(user_id: str, db: Session) -> Dict[str, int]:
+    def get_application_stats(user_id: str, db: Session) -> dict[str, int]:
         applications = ApplicationService.get_user_applications(user_id, db)
 
         total = len(applications)
@@ -94,7 +93,7 @@ class ApplicationService:
         user_id: str,
         job_title: str,
         company_name: str,
-        description: Optional[str],
+        description: str | None,
         db: Session,
     ) -> Application:
         new_app = Application(
@@ -113,9 +112,7 @@ class ApplicationService:
         return new_app
 
     @staticmethod
-    def get_application_by_id(
-        application_id: int, db: Session
-    ) -> Optional[Application]:
+    def get_application_by_id(application_id: int, db: Session) -> Application | None:
         return db.execute(
             select(Application).where(Application.id == application_id)
         ).scalar_one_or_none()
@@ -123,9 +120,9 @@ class ApplicationService:
     @staticmethod
     def update_application(
         application: Application,
-        stage: Optional[ApplicationStage] = None,
-        status: Optional[ApplicationStatus] = None,
-        description: Optional[str] = None,
+        stage: ApplicationStage | None = None,
+        status: ApplicationStatus | None = None,
+        description: str | None = None,
         db: Session = None,
     ) -> Application:
         if stage is not None:
@@ -135,7 +132,7 @@ class ApplicationService:
         if description is not None:
             application.description = description
 
-        application.updated_at = datetime.now(timezone.utc)
+        application.updated_at = datetime.now(UTC)
 
         db.add(application)
         db.commit()

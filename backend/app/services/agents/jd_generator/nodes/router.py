@@ -1,4 +1,5 @@
 from typing import Literal
+
 from app.models.agents.jd_generator import JobState
 
 
