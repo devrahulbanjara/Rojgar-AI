@@ -25,9 +25,9 @@ export default function RecruiterDashboard() {
 
           {/* Stats Grid */}
           <AnimatedContainer direction="up" delay={0.2}>
-            <StatsGrid 
-              stats={stats || {}} 
-              userType="recruiter" 
+            <StatsGrid
+              stats={stats || {}}
+              userType="recruiter"
             />
           </AnimatedContainer>
 
@@ -38,13 +38,13 @@ export default function RecruiterDashboard() {
                 title="Recent Activity"
                 subtitle="Latest updates from your recruitment pipeline"
               />
-              
-              <div 
+
+              <div
                 className="bg-white rounded-2xl border border-[#E5E7EB] p-8"
                 style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               >
                 <div className="text-center py-12">
-                  <div 
+                  <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                     style={{ background: 'rgba(48, 86, 245, 0.08)' }}
                   >

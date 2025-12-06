@@ -21,7 +21,7 @@ export interface DashboardStats {
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const response = await apiClient.get<DashboardStats>('/api/v1/applications/stats');
-    
+
     // Handle both response formats: direct data or wrapped in ApiResponse
     if (response && typeof response === 'object') {
       // If it has the stats fields directly
@@ -33,7 +33,7 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
         return response.data as DashboardStats;
       }
     }
-    
+
     return {
       totalApplications: 0,
       activeApplications: 0,

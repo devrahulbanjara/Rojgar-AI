@@ -34,7 +34,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -46,7 +46,7 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       // Handle 204 No Content responses (like DELETE operations)
       if (response.status === 204) {
         return null as T;
@@ -161,7 +161,7 @@ export const endpoints = {
     selectRole: '/api/v1/auth/select-role',
     me: '/api/v1/users/me',
   },
-  
+
   // User endpoints
   users: {
     list: '/api/v1/users',
@@ -169,13 +169,13 @@ export const endpoints = {
     update: (id: string) => `/api/v1/users/${id}`,
     delete: (id: string) => `/api/v1/users/${id}`,
   },
-  
+
   // Dashboard endpoints
   dashboard: {
     stats: '/api/v1/dashboard/stats',
     recentActivity: '/api/v1/dashboard/activity',
   },
-  
+
   // Job endpoints
   jobs: {
     list: '/api/v1/jobs',
@@ -186,7 +186,7 @@ export const endpoints = {
     update: (id: string) => `/api/v1/jobs/${id}`,
     delete: (id: string) => `/api/v1/jobs/${id}`,
   },
-  
+
   // Application endpoints
   applications: {
     list: '/api/v1/applications',
@@ -199,7 +199,7 @@ export const endpoints = {
     trackingBoard: '/api/v1/applications/tracking-board',
     stats: '/api/v1/applications/stats',
   },
-  
+
   // Profile endpoints (SSOT - Single Source of Truth)
   profile: {
     get: '/api/v1/profile',
@@ -230,7 +230,7 @@ export const endpoints = {
       delete: (id: string) => `/api/v1/profile/skills/${id}`,
     },
   },
-  
+
   // Resume endpoints (Tailored views)
   resumes: {
     list: '/api/v1/resumes',
@@ -276,39 +276,39 @@ export const api = {
     selectRole: (role: string) => apiClient.post(endpoints.auth.selectRole, { role }),
     getCurrentUser: () => apiClient.get(endpoints.auth.me),
   },
-  
+
   // User methods
   users: {
-    list: (params?: Record<string, any>) => 
+    list: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.users.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.users.detail(id)),
     update: (id: string, data: any) => apiClient.put(endpoints.users.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.users.delete(id)),
   },
-  
+
   // Dashboard methods
   dashboard: {
     getStats: () => apiClient.get(endpoints.dashboard.stats),
     getRecentActivity: () => apiClient.get(endpoints.dashboard.recentActivity),
   },
-  
+
   // Job methods
   jobs: {
-    list: (params?: Record<string, any>) => 
+    list: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.jobs.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
-    recommendations: (params?: Record<string, any>) => 
+    recommendations: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.jobs.recommendations}${params ? `?${new URLSearchParams(params)}` : ''}`),
-    search: (params?: Record<string, any>) => 
+    search: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.jobs.search}${params ? `?${new URLSearchParams(params)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.jobs.detail(id)),
     create: (data: any) => apiClient.post(endpoints.jobs.create, data),
     update: (id: string, data: any) => apiClient.put(endpoints.jobs.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
   },
-  
+
   // Application methods
   applications: {
-    list: (params?: Record<string, any>) => 
+    list: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.applications.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.applications.detail(id)),
     create: (data: any) => apiClient.post(endpoints.applications.create, data),
@@ -319,7 +319,7 @@ export const api = {
     getTrackingBoard: () => apiClient.get(endpoints.applications.trackingBoard),
     getStats: () => apiClient.get(endpoints.applications.stats),
   },
-  
+
   // Profile methods (SSOT - Single Source of Truth)
   profile: {
     get: () => apiClient.get(endpoints.profile.get),
@@ -350,7 +350,7 @@ export const api = {
       delete: (id: string) => apiClient.delete(endpoints.profile.skills.delete(id)),
     },
   },
-  
+
   // Resume methods (Tailored views)
   resumes: {
     list: () => apiClient.get(endpoints.resumes.list),
@@ -391,15 +391,15 @@ export const handleApiError = (error: any): string => {
   if (error instanceof ApiError) {
     return error.message;
   }
-  
+
   if (error?.response?.data?.message) {
     return error.response.data.message;
   }
-  
+
   if (error?.message) {
     return error.message;
   }
-  
+
   return 'An unexpected error occurred';
 };
 

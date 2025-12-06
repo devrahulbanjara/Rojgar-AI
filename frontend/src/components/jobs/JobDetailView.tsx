@@ -8,11 +8,11 @@ import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
-import { 
-  MapPin, 
-  DollarSign, 
-  Calendar, 
-  Building2, 
+import {
+  MapPin,
+  DollarSign,
+  Calendar,
+  Building2,
   Users,
   Clock,
   ArrowRight,
@@ -57,8 +57,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
         {/* Company Header */}
         <div className="flex items-start gap-4 mb-4">
           {job.company?.logo && (
-            <img 
-              src={job.company.logo} 
+            <img
+              src={job.company.logo}
               alt={job.company.name}
               className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-border"
             />
@@ -85,7 +85,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
 
         {/* Action Buttons */}
         <div className="flex gap-2">
-          <Button 
+          <Button
             onClick={handleApply}
             disabled={isApplying}
             className="flex-1 group"
@@ -104,8 +104,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
               </>
             )}
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="lg"
             onClick={handleSave}
             className="px-3"
@@ -113,8 +113,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           >
             <Heart className="w-4 h-4" aria-hidden="true" />
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="lg"
             onClick={handleShare}
             className="px-3"
@@ -128,8 +128,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
       <CardContent className="space-y-6">
         {/* Job Badges */}
         <div className="flex flex-wrap gap-2">
-          <Badge 
-            variant="secondary" 
+          <Badge
+            variant="secondary"
             className={cn(
               'text-sm font-medium px-3 py-1',
               jobUtils.getJobLevelColor(job.level)
@@ -137,8 +137,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           >
             {job.level}
           </Badge>
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={cn(
               'text-sm px-3 py-1',
               jobUtils.getLocationTypeColor(job.location_type)
@@ -146,8 +146,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           >
             {job.location_type}
           </Badge>
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={cn(
               'text-sm px-3 py-1',
               jobUtils.getEmploymentTypeColor(job.employment_type)
@@ -226,9 +226,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
             <h2 className="text-lg font-semibold text-foreground">Required Skills</h2>
             <div className="flex flex-wrap gap-2">
               {job.skills.map((skill, index) => (
-                <Badge 
-                  key={index} 
-                  variant="outline" 
+                <Badge
+                  key={index}
+                  variant="outline"
                   className="text-sm px-3 py-1.5 hover:bg-muted/50 transition-colors"
                 >
                   {skill}
@@ -267,9 +267,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
                   </div>
                 )}
                 {job.company.website && (
-                  <a 
-                    href={job.company.website} 
-                    target="_blank" 
+                  <a
+                    href={job.company.website}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-primary hover:underline"
                   >

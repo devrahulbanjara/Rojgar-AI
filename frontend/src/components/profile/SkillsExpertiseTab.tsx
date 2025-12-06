@@ -14,7 +14,7 @@ export function SkillsExpertiseTab() {
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [isAddingCertification, setIsAddingCertification] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   const [skillForm, setSkillForm] = useState({
     skill_name: '',
     proficiency_level: 'Intermediate',
@@ -45,9 +45,9 @@ export function SkillsExpertiseTab() {
       setSkills(skillsData);
       setCertifications(certificationsData);
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to load skills and certifications. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: 'Failed to load skills and certifications. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -73,9 +73,9 @@ export function SkillsExpertiseTab() {
       setIsAddingSkill(false);
       setMessage({ type: 'success', text: 'Skill added successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add skill. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add skill. Please try again.'
       });
     }
   };
@@ -107,9 +107,9 @@ export function SkillsExpertiseTab() {
       setIsAddingCertification(false);
       setMessage({ type: 'success', text: 'Certification added successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to add certification. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to add certification. Please try again.'
       });
     }
   };
@@ -122,9 +122,9 @@ export function SkillsExpertiseTab() {
       setSkills(prev => prev.filter(skill => skill.id !== id));
       setMessage({ type: 'success', text: 'Skill deleted successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to delete skill.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to delete skill.'
       });
     }
   };
@@ -137,17 +137,17 @@ export function SkillsExpertiseTab() {
       setCertifications(prev => prev.filter(cert => cert.id !== id));
       setMessage({ type: 'success', text: 'Certification deleted successfully!' });
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to delete certification.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to delete certification.'
       });
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
     });
   };
 
@@ -172,8 +172,8 @@ export function SkillsExpertiseTab() {
 
       {message && (
         <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success' 
-            ? 'bg-green-50 text-green-700 border-green-200' 
+          message.type === 'success'
+            ? 'bg-green-50 text-green-700 border-green-200'
             : 'bg-red-50 text-red-700 border-red-200'
         }`}>
           {message.type === 'success' ? (
@@ -248,9 +248,9 @@ export function SkillsExpertiseTab() {
                 <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
                   Add Skill
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsAddingSkill(false)}
                   className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                 >
@@ -270,8 +270,8 @@ export function SkillsExpertiseTab() {
           ) : (
             <div className="flex flex-wrap gap-3">
               {skills.map((skill) => (
-                <div 
-                  key={skill.id} 
+                <div
+                  key={skill.id}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#F3F4F6] text-[#0F172A] rounded-full border border-[#E5E7EB] hover:bg-[#E5E7EB] transition-colors duration-200 group"
                 >
                   <span className="text-sm font-medium">{skill.skill_name}</span>
@@ -390,9 +390,9 @@ export function SkillsExpertiseTab() {
                 <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
                   Add Certification
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsAddingCertification(false)}
                   className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                 >
@@ -435,9 +435,9 @@ export function SkillsExpertiseTab() {
                         )}
                       </div>
                       {certification.credential_url && (
-                        <a 
-                          href={certification.credential_url} 
-                          target="_blank" 
+                        <a
+                          href={certification.credential_url}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-[#3056F5] hover:underline mt-1 inline-block"
                         >

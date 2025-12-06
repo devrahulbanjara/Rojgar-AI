@@ -18,10 +18,10 @@ export const useDashboardStats = (userType?: UserType) => {
       // TODO: Replace with actual API call when backend is ready
       // const response = await apiService.get(`/dashboard/stats?userType=${userType}`);
       // return response.data;
-      
+
       // Mock implementation for demo
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-      
+
       if (userType === 'recruiter') {
         return {
           totalApplications: 145,
@@ -52,10 +52,10 @@ export const useDashboardActivity = (userId?: string) => {
       // TODO: Replace with actual API call when backend is ready
       // const response = await apiService.get(`/dashboard/activity/${userId}`);
       // return response.data;
-      
+
       // Mock implementation for demo
       await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
-      
+
       return [
         {
           id: '1',
