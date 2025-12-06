@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-from app.services.agents.shortlist.schemas import WorkflowState
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from loguru import logger
@@ -10,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.services.agents.shortlist.nodes.resume_parsing import extract_resume_structure
+from app.services.agents.shortlist.schemas import WorkflowState
 
 TEST_RESUMES_DIR = Path(__file__).parent / "test_resumes"
 PASS_THRESHOLD = 75
@@ -42,7 +42,7 @@ def evaluate_extraction(ground_truth: dict, prediction: dict) -> EvaluationScore
         - **Skills**: OK if order differs. Match concepts (e.g. 'JS' == 'JavaScript').
         - **Experience**: Dates/Companies must match. Omissions are critical errors.
         - **Formatting**: Ignore whitespace differences.
-        
+
         Provide a strict score (0-100) and detailed reasoning.""",
             ),
             ("human", "GROUND TRUTH:\n{ground_truth}\n\nAI PREDICTION:\n{prediction}"),
@@ -99,7 +99,9 @@ def test_extract_resume_structure(test_resumes, ground_truths):
 
     total_scores = []
 
-    for idx, (structured, gt) in enumerate(zip(structured_resumes, ground_truths)):
+    for idx, (structured, gt) in enumerate(
+        zip(structured_resumes, ground_truths, strict=False)
+    ):
         resume_data = structured["data"]
         filename = structured["source_file"]
 
@@ -115,13 +117,13 @@ def test_extract_resume_structure(test_resumes, ground_truths):
         )
         logger.info(f"Reasoning: {score.reasoning}")
 
-        assert score.overall_quality >= PASS_THRESHOLD, (
-            f"{filename} failed with score {score.overall_quality} (threshold: {PASS_THRESHOLD})"
-        )
+        assert (
+            score.overall_quality >= PASS_THRESHOLD
+        ), f"{filename} failed with score {score.overall_quality} (threshold: {PASS_THRESHOLD})"
 
     avg_score = sum(total_scores) / len(total_scores)
     logger.info(f"Average score: {avg_score:.1f}/100")
 
-    assert avg_score >= PASS_THRESHOLD, (
-        f"Average score {avg_score:.1f} below threshold {PASS_THRESHOLD}"
-    )
+    assert (
+        avg_score >= PASS_THRESHOLD
+    ), f"Average score {avg_score:.1f} below threshold {PASS_THRESHOLD}"

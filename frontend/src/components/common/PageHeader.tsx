@@ -14,13 +14,13 @@ interface PageHeaderProps {
  * Standardized page header component for consistent headings across all pages
  * Ensures uniform typography, spacing, and layout
  */
-export function PageHeader({ 
-  title, 
-  subtitle, 
+export function PageHeader({
+  title,
+  subtitle,
   className,
   titleClassName,
   subtitleClassName,
-  children 
+  children
 }: PageHeaderProps) {
   return (
     <div className={cn('space-y-2', className)}>

@@ -20,7 +20,7 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -74,15 +74,15 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
             professional_summary: newProfile.professional_summary || '',
           });
         } catch (createError: any) {
-          setMessage({ 
-            type: 'error', 
-            text: 'Failed to create profile. Please try again.' 
+          setMessage({
+            type: 'error',
+            text: 'Failed to create profile. Please try again.'
           });
         }
       } else {
-        setMessage({ 
-          type: 'error', 
-          text: 'Failed to load profile. Please try again.' 
+        setMessage({
+          type: 'error',
+          text: 'Failed to load profile. Please try again.'
         });
       }
     } finally {
@@ -113,9 +113,9 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       refetchUser?.();
     } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update profile. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update profile. Please try again.'
       });
     } finally {
       setIsSaving(false);
@@ -150,8 +150,8 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
 
       {message && (
         <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success' 
-            ? 'bg-green-50 text-green-700 border-green-200' 
+          message.type === 'success'
+            ? 'bg-green-50 text-green-700 border-green-200'
             : 'bg-red-50 text-red-700 border-red-200'
         }`}>
           {message.type === 'success' ? (
@@ -170,7 +170,7 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
             <UserIcon className="w-5 h-5 text-[#3056F5]" />
             <h4 className="text-lg font-semibold text-[#0F172A]">Contact Details</h4>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium text-[#374151]">
@@ -252,7 +252,7 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
             <Globe className="w-5 h-5 text-[#3056F5]" />
             <h4 className="text-lg font-semibold text-[#0F172A]">Professional Links</h4>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label htmlFor="linkedin_url" className="text-sm font-medium text-[#374151]">
@@ -316,7 +316,7 @@ export function ProfileInformationTab({ user }: ProfileInformationTabProps) {
             <UserIcon className="w-5 h-5 text-[#3056F5]" />
             <h4 className="text-lg font-semibold text-[#0F172A]">Professional Summary</h4>
           </div>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="professional_headline" className="text-sm font-medium text-[#374151]">

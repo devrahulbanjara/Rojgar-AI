@@ -19,7 +19,7 @@ def generator_node(state: JobState) -> dict:
             - Honest and realistic (no buzzwords or marketing fluff)
             - Well-structured and scannable
             - Focused on what makes the role and company unique
-            
+
             Output only valid JSON matching the schema. No markdown, no explanations.
             """
 

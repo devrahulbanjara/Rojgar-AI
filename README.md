@@ -4,11 +4,11 @@
     <source media="(prefers-color-scheme: light)" srcset="docs/ConvexHire_transparent.png" />
     <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
   </picture>
-  
+
   # ConvexHire
-  
+
   <h3>Multi-Agent Recruitment Automation & Job Marketplace</h3>
-  
+
   <p>
     <i>An intelligent, bias-aware recruitment platform leveraging Multi-Agent Systems (MAS) <br/> and Retrieval-Augmented Generation (RAG).</i>
   </p>
@@ -25,7 +25,7 @@
       <img src="https://img.shields.io/badge/FastAPI-0.118+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
     </a>
   </p>
-  
+
   <!-- DevOps Badges -->
   <p>
     <a href="https://www.docker.com/">
@@ -35,7 +35,7 @@
       <img src="https://img.shields.io/badge/UV-Package_Manager-DE5FE6?style=for-the-badge&logo=uv&logoColor=white" alt="UV" />
     </a>
   </p>
-  
+
   <!-- Repo Status -->
   <p>
     <img src="https://img.shields.io/github/stars/devrahulbanjara/ConvexHire?style=social" alt="GitHub Stars" />
@@ -45,11 +45,11 @@
     <img src="https://img.shields.io/github/last-commit/devrahulbanjara/ConvexHire?style=flat-square&color=orange" alt="Last Commit" />
     <img src="https://img.shields.io/github/repo-size/devrahulbanjara/ConvexHire?style=flat-square&color=red" alt="Repo Size" />
   </p>
-  
+
   <br/>
 
   [🚀 Quick Start](#-quick-start) • [📖 Documentation](#introduction) • [🏗️ Architecture](#-system-architecture) • [🔬 Benchmarks](#-technical-deep-dive-ocr-benchmark)
-  
+
 </div>
 
 ---
@@ -219,8 +219,8 @@ graph LR
 ## 🚀 Quick Start
 
 > [!WARNING]
-> **Prerequisites:** 
-> 1. [Node.js v18+](https://nodejs.org/) 
+> **Prerequisites:**
+> 1. [Node.js v18+](https://nodejs.org/)
 > 2. [Python 3.10+](https://www.python.org/)
 > 3. [UV Package Manager](https://docs.astral.sh/uv/getting-started/installation/)
 
@@ -241,7 +241,7 @@ cp .env.example .env
 uv sync
 uv run fastapi dev
 ```
-> Backend runs on: `http://localhost:8000`  
+> Backend runs on: `http://localhost:8000`
 > Swagger Docs: `http://localhost:8000/docs`
 
 #### 3️⃣ Frontend Setup (Next.js)
@@ -278,13 +278,13 @@ This project leverages [**Docling**](https://github.com/DS4SD/docling) by IBM Re
 
 <br/>
 
-> Livathinos, N., Auer, C., Lysak, M., Nassar, A., Dolfi, M., Vagenas, P., ... & Staar, P. W. J. (2025). *Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion*. arXiv preprint arXiv:2501.17887. 
-> 
+> Livathinos, N., Auer, C., Lysak, M., Nassar, A., Dolfi, M., Vagenas, P., ... & Staar, P. W. J. (2025). *Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion*. arXiv preprint arXiv:2501.17887.
+>
 > 🔗 [https://arxiv.org/abs/2501.17887](https://arxiv.org/abs/2501.17887)
 
 ```bibtex
 @misc{livathinos2025doclingefficientopensourcetoolkit,
-      title={Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion}, 
+      title={Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion},
       author={Nikolaos Livathinos and Christoph Auer and Maksym Lysak and Ahmed Nassar and Michele Dolfi and Panos Vagenas and Cesar Berrospi Ramis and Matteo Omenetti and Kasper Dinkla and Yusik Kim and Shubham Gupta and Rafael Teixeira de Lima and Valery Weber and Lucas Morin and Ingmar Meijer and Viktor Kuropiatnyk and Peter W. J. Staar},
       year={2025},
       eprint={2501.17887},

@@ -18,34 +18,33 @@ class Base(DeclarativeBase):
 
 
 # User models
-from .user import User, UserRole
-
-# Job models
-from .job import Job, Company, JobStatus, JobLevel, LocationType, EmploymentType
-
 # Application models
 from .application import Application, ApplicationStage, ApplicationStatus
 
-# Skill models
-from .skill import Skill
+# Job models
+from .job import Company, EmploymentType, Job, JobLevel, JobStatus, LocationType
 
 # Profile models
 from .profile import (
-    Profile,
-    WorkExperience,
-    EducationRecord,
     Certification,
+    EducationRecord,
+    Profile,
     ProfileSkill,
+    WorkExperience,
 )
 
 # Resume models
 from .resume import (
     Resume,
-    ResumeExperience,
-    ResumeEducation,
     ResumeCertification,
+    ResumeEducation,
+    ResumeExperience,
     ResumeSkill,
 )
+
+# Skill models
+from .skill import Skill
+from .user import User, UserRole
 
 __all__ = [
     # Base

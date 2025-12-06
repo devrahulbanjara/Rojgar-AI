@@ -4,7 +4,7 @@
  */
 
 import { api } from '../lib/api';
-import type { 
+import type {
   Resume,
   ResumeCreateRequest,
   ResumeUpdateRequest,

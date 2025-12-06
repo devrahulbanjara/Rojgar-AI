@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
 from enum import Enum
-from sqlalchemy import String, Integer, DateTime, ForeignKey
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import Base
@@ -26,17 +26,19 @@ class ApplicationStatus(str, Enum):
 
 class Application(Base):
     __tablename__ = "application"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[str] = mapped_column(String, ForeignKey("user.id"), index=True)
-    
+
     job_title: Mapped[str] = mapped_column(String)
     company_name: Mapped[str] = mapped_column(String)
-    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+
     applied_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    stage: Mapped[str] = mapped_column(String, default=ApplicationStage.APPLIED.value, index=True)
-    status: Mapped[str] = mapped_column(String, default=ApplicationStatus.PENDING.value, index=True)
+    stage: Mapped[str] = mapped_column(
+        String, default=ApplicationStage.APPLIED.value, index=True
+    )
+    status: Mapped[str] = mapped_column(
+        String, default=ApplicationStatus.PENDING.value, index=True
+    )
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-

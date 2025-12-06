@@ -15,7 +15,7 @@ const NEURAL_COLORS = {
   // Layer-specific neuron colors
   layers: {
     input: '#3B82F6',    // Electric Blue
-    hidden: '#8B5CF6',   // Royal Purple  
+    hidden: '#8B5CF6',   // Royal Purple
     output: '#EC4899',   // Vibrant Pink
   },
   // Signal colors for different phases
@@ -628,4 +628,3 @@ export function NeuralIntelligenceSection() {
     </section>
   );
 }
-
