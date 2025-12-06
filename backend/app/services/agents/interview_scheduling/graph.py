@@ -5,15 +5,16 @@ LangGraph-based workflow for sending interview scheduling emails
 with optional human-in-the-loop approval.
 """
 
-from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
 
 from app.models.agents.interview_scheduling import InterviewSchedulingState
+
 from .nodes import (
-    load_state,
+    approval_router,
     compose_email_draft,
     human_approval_gate,
-    approval_router,
+    load_state,
     send_email,
     wrap_up,
 )
@@ -58,4 +59,3 @@ def create_workflow() -> StateGraph:
     memory = MemorySaver()
 
     return workflow.compile(checkpointer=memory)
-

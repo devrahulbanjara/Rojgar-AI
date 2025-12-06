@@ -1,32 +1,31 @@
-from typing import Optional
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import select
-from fastapi import HTTPException
 import uuid
+from datetime import UTC, datetime
+
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
-    Profile,
-    WorkExperience,
-    EducationRecord,
     Certification,
+    EducationRecord,
+    Profile,
     ProfileSkill,
+    WorkExperience,
 )
 from app.schemas import (
-    ProfileResponse,
-    WorkExperienceResponse,
-    EducationRecordResponse,
     CertificationResponse,
+    EducationRecordResponse,
+    ProfileResponse,
     ProfileSkillResponse,
+    WorkExperienceResponse,
 )
 
 
 class ProfileService:
-
     def __init__(self, db: Session):
         self.db = db
 
-    def get_profile_by_user_id(self, user_id: str) -> Optional[ProfileResponse]:
+    def get_profile_by_user_id(self, user_id: str) -> ProfileResponse | None:
         stmt = (
             select(Profile)
             .options(
@@ -70,8 +69,9 @@ class ProfileService:
     def _update_user_and_profile_fields(
         self, user_id: str, profile_data: dict, create_profile: bool = False
     ) -> None:
-        from app.models import User
         import time
+
+        from app.models import User
 
         max_retries = 3
         retry_delay = 0.1
@@ -113,7 +113,7 @@ class ProfileService:
                         and value is not None
                     ):
                         setattr(user, field, value)
-                        user.updated_at = datetime.now(timezone.utc)
+                        user.updated_at = datetime.now(UTC)
 
                 if create_profile:
                     profile = Profile(
@@ -137,7 +137,7 @@ class ProfileService:
                             and value is not None
                         ):
                             setattr(profile, field, value)
-                            profile.updated_at = datetime.now(timezone.utc)
+                            profile.updated_at = datetime.now(UTC)
 
                 self.db.commit()
                 self.db.refresh(user)
@@ -243,7 +243,7 @@ class ProfileService:
                     value = datetime.strptime(value, "%Y-%m-%d").date()
                 setattr(experience, field, value)
 
-        experience.updated_at = datetime.now(timezone.utc)
+        experience.updated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(experience)
 
@@ -323,7 +323,7 @@ class ProfileService:
             if hasattr(education, field):
                 setattr(education, field, value)
 
-        education.updated_at = datetime.now(timezone.utc)
+        education.updated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(education)
 
@@ -402,7 +402,7 @@ class ProfileService:
             if hasattr(certification, field):
                 setattr(certification, field, value)
 
-        certification.updated_at = datetime.now(timezone.utc)
+        certification.updated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(certification)
 
@@ -474,7 +474,7 @@ class ProfileService:
             if hasattr(skill, field):
                 setattr(skill, field, value)
 
-        skill.updated_at = datetime.now(timezone.utc)
+        skill.updated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(skill)
 
@@ -604,9 +604,7 @@ class ProfileService:
             "skills": skills,
         }
 
-    def _format_location(
-        self, city: Optional[str], country: Optional[str]
-    ) -> Optional[str]:
+    def _format_location(self, city: str | None, country: str | None) -> str | None:
         if not city and not country:
             return None
         if city and country:

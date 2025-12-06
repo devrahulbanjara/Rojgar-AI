@@ -1,28 +1,29 @@
 import uuid
-import httpx
-from typing import Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import select
 
-from app.core import settings, hash_password, verify_password, create_token
+import httpx
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.core import create_token, hash_password, settings, verify_password
 from app.models import User, UserRole
-from app.schemas import UserResponse, GoogleUserInfo, CreateUserRequest
+from app.schemas import CreateUserRequest, GoogleUserInfo, UserResponse
 
 
 class AuthService:
-    
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
         return UserResponse.model_validate(user)
-    
+
     @staticmethod
-    def get_user_by_email(email: str, db: Session) -> Optional[User]:
+    def get_user_by_email(email: str, db: Session) -> User | None:
         return db.execute(select(User).where(User.email == email)).scalar_one_or_none()
-    
+
     @staticmethod
-    def get_user_by_google_id(google_id: str, db: Session) -> Optional[User]:
-        return db.execute(select(User).where(User.google_id == google_id)).scalar_one_or_none()
-    
+    def get_user_by_google_id(google_id: str, db: Session) -> User | None:
+        return db.execute(
+            select(User).where(User.google_id == google_id)
+        ).scalar_one_or_none()
+
     @staticmethod
     def create_user(user_data: CreateUserRequest, db: Session) -> User:
         new_user = User(
@@ -41,13 +42,13 @@ class AuthService:
         db.commit()
         db.refresh(new_user)
         return new_user
-    
+
     @staticmethod
     def verify_user_password(user: User, password: str) -> bool:
         if not user.password_hash:
             return False
         return verify_password(password, user.password_hash)
-    
+
     @staticmethod
     def create_access_token(user_id: str, remember_me: bool = False) -> tuple[str, int]:
         if remember_me:
@@ -56,13 +57,13 @@ class AuthService:
         else:
             token = create_token(user_id)
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-        
+
         return token, max_age
-    
+
     @staticmethod
     def generate_google_auth_url() -> str:
         from urllib.parse import urlencode
-        
+
         google_auth_url = "https://accounts.google.com/o/oauth2/auth"
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -72,13 +73,13 @@ class AuthService:
             "access_type": "offline",
             "prompt": "consent",
         }
-        
+
         return f"{google_auth_url}?{urlencode(params)}"
-    
+
     @staticmethod
     async def exchange_google_code(code: str) -> GoogleUserInfo:
         from fastapi import HTTPException, status
-        
+
         async with httpx.AsyncClient() as client:
             token_response = await client.post(
                 "https://oauth2.googleapis.com/token",
@@ -90,43 +91,43 @@ class AuthService:
                     "redirect_uri": f"{settings.BACKEND_URL}/api/v1/auth/google/callback",
                 },
             )
-            
+
             if token_response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Failed to get Google token",
                 )
-            
+
             tokens = token_response.json()
             access_token = tokens.get("access_token")
-            
+
             user_response = await client.get(
                 f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
             )
-            
+
             if user_response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Failed to get user info from Google",
                 )
-            
+
             return GoogleUserInfo(**user_response.json())
-    
+
     @staticmethod
     def get_or_create_google_user(google_user: GoogleUserInfo, db: Session) -> User:
         user = AuthService.get_user_by_google_id(google_user.id, db)
-        
+
         if not user:
             create_user_data = CreateUserRequest(
                 email=google_user.email,
                 name=google_user.name,
                 google_id=google_user.id,
-                picture=google_user.picture
+                picture=google_user.picture,
             )
             user = AuthService.create_user(create_user_data, db)
-        
+
         return user
-    
+
     @staticmethod
     def update_user_role(user: User, role: UserRole, db: Session) -> User:
         user.role = role.value
@@ -134,7 +135,7 @@ class AuthService:
         db.commit()
         db.refresh(user)
         return user
-    
+
     @staticmethod
     def get_redirect_url_for_user(user: User) -> str:
         if user.role:

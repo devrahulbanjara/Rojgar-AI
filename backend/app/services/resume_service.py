@@ -1,37 +1,36 @@
-from typing import Optional, List
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import select
-from fastapi import HTTPException
 import uuid
+from datetime import UTC, datetime
+
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
-    Resume,
-    ResumeExperience,
-    ResumeEducation,
-    ResumeCertification,
-    ResumeSkill,
-    Profile,
-    WorkExperience,
-    EducationRecord,
     Certification,
+    EducationRecord,
+    Profile,
     ProfileSkill,
+    Resume,
+    ResumeCertification,
+    ResumeEducation,
+    ResumeExperience,
+    ResumeSkill,
+    WorkExperience,
 )
 from app.schemas import (
-    ResumeResponse,
-    ResumeExperienceResponse,
-    ResumeEducationResponse,
     ResumeCertificationResponse,
+    ResumeEducationResponse,
+    ResumeExperienceResponse,
+    ResumeResponse,
     ResumeSkillResponse,
 )
 
 
 class ResumeService:
-
     def __init__(self, db: Session):
         self.db = db
 
-    def get_resumes_by_user_id(self, user_id: str) -> List[ResumeResponse]:
+    def get_resumes_by_user_id(self, user_id: str) -> list[ResumeResponse]:
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -60,9 +59,7 @@ class ResumeService:
         resumes = self.db.execute(stmt).scalars().all()
         return [ResumeResponse.model_validate(resume) for resume in resumes]
 
-    def get_resume_by_id(
-        self, user_id: str, resume_id: str
-    ) -> Optional[ResumeResponse]:
+    def get_resume_by_id(self, user_id: str, resume_id: str) -> ResumeResponse | None:
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -183,9 +180,7 @@ class ResumeService:
 
         return ResumeResponse.model_validate(resume)
 
-    def _format_location(
-        self, city: Optional[str], country: Optional[str]
-    ) -> Optional[str]:
+    def _format_location(self, city: str | None, country: str | None) -> str | None:
         if not city and not country:
             return None
         if city and country:
@@ -215,7 +210,7 @@ class ResumeService:
             if hasattr(resume, field):
                 setattr(resume, field, value)
 
-        resume.updated_at = datetime.now(timezone.utc)
+        resume.updated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(resume)
 
@@ -362,7 +357,7 @@ class ResumeService:
                 experience_data["end_date"], "%Y-%m-%d"
             ).date()
 
-        resume_experience.updated_at = datetime.now(timezone.utc)
+        resume_experience.updated_at = datetime.now(UTC)
 
         self.db.commit()
         self.db.refresh(resume_experience)
@@ -517,7 +512,7 @@ class ResumeService:
                 education_data["end_date"], "%Y-%m-%d"
             ).date()
 
-        resume_education.updated_at = datetime.now(timezone.utc)
+        resume_education.updated_at = datetime.now(UTC)
 
         self.db.commit()
         self.db.refresh(resume_education)
@@ -670,7 +665,7 @@ class ResumeService:
                 certification_data["expiration_date"], "%Y-%m-%d"
             ).date()
 
-        resume_certification.updated_at = datetime.now(timezone.utc)
+        resume_certification.updated_at = datetime.now(UTC)
 
         self.db.commit()
         self.db.refresh(resume_certification)
@@ -806,7 +801,7 @@ class ResumeService:
         if skill_data.get("years_of_experience") is not None:
             resume_skill.years_of_experience = skill_data["years_of_experience"]
 
-        resume_skill.updated_at = datetime.now(timezone.utc)
+        resume_skill.updated_at = datetime.now(UTC)
 
         self.db.commit()
         self.db.refresh(resume_skill)
@@ -870,8 +865,8 @@ class ResumeService:
             end_date=end_date,
             is_current=experience_data.get("is_current", False),
             master_description=experience_data["master_description"],
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         resume_experience = ResumeExperience(
@@ -880,8 +875,8 @@ class ResumeService:
             work_experience_id=temp_experience.id,
             custom_description=experience_data["master_description"],
             display_order=0,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         self.db.add(temp_experience)
@@ -926,8 +921,8 @@ class ResumeService:
             is_current=education_data.get("is_current", False),
             gpa=education_data.get("gpa"),
             honors=education_data.get("honors"),
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         resume_education = ResumeEducation(
@@ -935,8 +930,8 @@ class ResumeService:
             resume_id=resume_id,
             education_record_id=temp_education.id,
             display_order=0,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         self.db.add(temp_education)
@@ -980,8 +975,8 @@ class ResumeService:
             issue_date=issue_date,
             expiration_date=expiration_date,
             does_not_expire=certification_data.get("does_not_expire", False),
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         resume_certification = ResumeCertification(
@@ -989,8 +984,8 @@ class ResumeService:
             resume_id=resume_id,
             certification_id=temp_certification.id,
             display_order=0,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         self.db.add(temp_certification)
@@ -1018,8 +1013,8 @@ class ResumeService:
             skill_name=skill_data["skill_name"],
             proficiency_level=skill_data.get("proficiency_level", "Intermediate"),
             years_of_experience=skill_data.get("years_of_experience"),
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         resume_skill = ResumeSkill(
@@ -1027,8 +1022,8 @@ class ResumeService:
             resume_id=resume_id,
             profile_skill_id=temp_skill.id,
             display_order=0,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         self.db.add(temp_skill)

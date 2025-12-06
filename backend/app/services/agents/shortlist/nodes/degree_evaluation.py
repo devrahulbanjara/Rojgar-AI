@@ -1,12 +1,13 @@
-from typing import Dict, Any
+from typing import Any
 
-from app.core import settings, logger
+from app.core import logger, settings
 from app.models.agents.shortlist import WorkflowState
+
 from ..llm_service import get_llm
 from ..templates import DEGREE_MAPPER_PROMPT
 
 
-def evaluate_degree(state: WorkflowState) -> Dict[str, Any]:
+def evaluate_degree(state: WorkflowState) -> dict[str, Any]:
     logger.info("Evaluating degrees")
     llm = get_llm()
     chain = DEGREE_MAPPER_PROMPT | llm

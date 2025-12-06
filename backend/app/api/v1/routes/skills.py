@@ -1,8 +1,7 @@
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core import get_db, get_current_user_id
+from app.core import get_current_user_id, get_db
 from app.schemas import SkillCreateRequest, SkillResponse, SkillsListResponse
 from app.services import SkillService
 
@@ -13,7 +12,7 @@ router = APIRouter()
 async def create_skill(
     skill_data: SkillCreateRequest,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new skill for the current user"""
     skill_service = SkillService(db)
@@ -22,8 +21,7 @@ async def create_skill(
 
 @router.get("/", response_model=SkillsListResponse)
 async def get_user_skills(
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)
 ):
     """Get all skills for the current user"""
     skill_service = SkillService(db)
@@ -34,18 +32,17 @@ async def get_user_skills(
 async def get_skill(
     skill_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get a specific skill by ID"""
     skill_service = SkillService(db)
     skill = skill_service.get_skill_by_id(skill_id, user_id)
-    
+
     if not skill:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Skill not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found"
         )
-    
+
     return skill
 
 
@@ -53,23 +50,21 @@ async def get_skill(
 async def delete_skill(
     skill_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete a skill"""
     skill_service = SkillService(db)
     success = skill_service.delete_skill(skill_id, user_id)
-    
+
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Skill not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found"
         )
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_skills(
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)
 ):
     """Delete all skills for the current user"""
     skill_service = SkillService(db)

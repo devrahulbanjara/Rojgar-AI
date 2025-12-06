@@ -1,7 +1,7 @@
-from .llm_service import get_llm, structured_llm
-from .jds import reference_jd
-from .nodes import generator_node, human_node, finalizer_node, router
 from .graph import create_workflow
+from .jds import reference_jd
+from .llm_service import get_llm, structured_llm
+from .nodes import finalizer_node, generator_node, human_node, router
 
 # Create the compiled workflow app
 app = create_workflow()

@@ -16,4 +16,3 @@ def load_state(state: InterviewSchedulingState) -> dict:
         "auto_approved": state.get("auto_approved", False),
         "send_status": None,
     }
-

@@ -3,8 +3,8 @@ Email service for interview scheduling agent.
 """
 
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from app.core.config import settings
 
@@ -51,4 +51,3 @@ def send_interview_email(
 
     except Exception as e:
         return {"send_status": f"failed: {str(e)}"}
-

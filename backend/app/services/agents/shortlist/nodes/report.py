@@ -1,11 +1,12 @@
-from typing import Dict, Any
+from typing import Any
 
-from app.core import settings, logger
+from app.core import logger, settings
 from app.models.agents.shortlist import WorkflowState
+
 from ..file_handler import save_json_report, save_text_report
 
 
-def generate_report(state: WorkflowState) -> Dict[str, Any]:
+def generate_report(state: WorkflowState) -> dict[str, Any]:
     logger.info("Generating final report")
 
     scored = sorted(

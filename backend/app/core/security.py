@@ -1,8 +1,8 @@
 import hashlib
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
+from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
-from fastapi import HTTPException, status, Request
 
 from .config import settings
 
@@ -15,8 +15,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return hash_password(plain_password) == hashed_password
 
 
-def create_token(user_id: str, expires_minutes: Optional[int] = None) -> str:
-    now = datetime.now(timezone.utc)
+def create_token(user_id: str, expires_minutes: int | None = None) -> str:
+    now = datetime.now(UTC)
     if expires_minutes:
         expire = now + timedelta(minutes=expires_minutes)
     else:

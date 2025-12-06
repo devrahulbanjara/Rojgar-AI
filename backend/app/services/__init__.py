@@ -9,15 +9,15 @@ Example:
 """
 
 # Auth service
+from .application_service import ApplicationService
 from .auth.auth_service import AuthService
 
 # Core services
 from .job_service import JobService
-from .user_service import UserService
-from .application_service import ApplicationService
 from .profile_service import ProfileService
 from .resume_service import ResumeService
 from .skill_service import SkillService
+from .user_service import UserService
 from .vector_job_service import VectorJobService
 
 __all__ = [

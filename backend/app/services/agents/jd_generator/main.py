@@ -1,5 +1,6 @@
-from . import app, reference_jd
 from langgraph.types import Command
+
+from . import app, reference_jd
 
 thread_config = {"configurable": {"thread_id": "jd-thread-001"}}
 
@@ -14,25 +15,25 @@ result = app.invoke(initial_state, config=thread_config)
 while "__interrupt__" in result:
     payload = result["__interrupt__"][0].value
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"DRAFT REVIEW - Revision {payload['revision_number']}")
     print("=" * 70)
 
-    print(f"\n## ABOUT THE COMPANY")
+    print("\n## ABOUT THE COMPANY")
     print(payload["about_company"])
 
-    print(f"\n## ROLE OVERVIEW")
+    print("\n## ROLE OVERVIEW")
     print(payload["role"])
 
-    print(f"\n## REQUIRED SKILLS & EXPERIENCE")
+    print("\n## REQUIRED SKILLS & EXPERIENCE")
     for item in payload["requirements"]:
         print(f"  • {item}")
 
-    print(f"\n## NICE TO HAVE")
+    print("\n## NICE TO HAVE")
     for item in payload["nice_to_have"]:
         print(f"  • {item}")
 
-    print(f"\n## WHAT WE OFFER")
+    print("\n## WHAT WE OFFER")
     for item in payload["offers"]:
         print(f"  • {item}")
 

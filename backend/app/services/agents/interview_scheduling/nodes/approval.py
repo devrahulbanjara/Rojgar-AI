@@ -31,9 +31,10 @@ def human_approval_gate(state: InterviewSchedulingState) -> dict:
     return {"approved": approval}
 
 
-def approval_router(state: InterviewSchedulingState) -> Literal["send_email", "wrap_up"]:
+def approval_router(
+    state: InterviewSchedulingState,
+) -> Literal["send_email", "wrap_up"]:
     """Route based on approval status."""
     if state.get("approved", False):
         return "send_email"
     return "wrap_up"
-

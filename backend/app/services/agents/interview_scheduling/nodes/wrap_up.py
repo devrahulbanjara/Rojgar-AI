@@ -15,4 +15,3 @@ def wrap_up(state: InterviewSchedulingState) -> dict:
         "approved": state["approved"],
         "send_status": state.get("send_status", "not_sent"),
     }
-

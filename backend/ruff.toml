@@ -1,0 +1,47 @@
+# Ruff Configuration
+# https://docs.astral.sh/ruff/settings/
+
+# Match the Python version in requires-python
+target-version = "py312"
+
+# Set maximum line length
+line-length = 88
+
+# Exclude common directories
+exclude = [
+    ".venv",
+    "__pycache__",
+    ".pytest_cache",
+    "alembic/versions",
+    "notebooks",
+]
+
+[lint]
+# Enable recommended rules
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort (import sorting)
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+# Allow autofix for all enabled rules
+fixable = ["ALL"]
+
+[format]
+# Use double quotes for strings
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"
+
+# Format code examples in docstrings
+docstring-code-format = true
