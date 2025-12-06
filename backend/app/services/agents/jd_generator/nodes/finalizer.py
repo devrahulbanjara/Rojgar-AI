@@ -23,7 +23,7 @@ def finalizer_node(state: JobState) -> dict:
         {chr(10).join(f"- {item}" for item in draft.what_company_offers)}
         
         ---
-        *Approved after {state.get('revision_count', 0)} revision(s)*
+        *Approved after {state.get("revision_count", 0)} revision(s)*
         """
 
     return {"final_doc": markdown.strip()}

@@ -15,7 +15,7 @@ export default function Login() {
   const { login, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [formState, formActions] = useForm<{
     email: string;
     password: string;
@@ -27,7 +27,7 @@ export default function Login() {
       password: [validatePassword],
     },
   });
-  
+
   const { values, errors } = formState;
   const { handleChange, handleSubmit, setFieldError } = formActions;
 
@@ -115,11 +115,10 @@ export default function Login() {
                     value={values.email}
                     onChange={(e) => handleChange('email', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                      errors.email
+                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.email
                         ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
                         : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
-                    }`}
+                      }`}
                   />
                   {errors.email && (
                     <p className="text-xs text-[#DC2626] flex items-center gap-1">
@@ -143,11 +142,10 @@ export default function Login() {
                       value={values.password}
                       onChange={(e) => handleChange('password', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                        errors.password
+                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.password
                           ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
                           : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
-                      }`}
+                        }`}
                     />
                     <button
                       type="button"
@@ -209,7 +207,7 @@ export default function Login() {
               {/* Sign Up Link */}
               <div className="mt-4 sm:mt-6 text-center">
                 <p className="text-xs sm:text-sm text-[#475569]">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
                     className="font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"

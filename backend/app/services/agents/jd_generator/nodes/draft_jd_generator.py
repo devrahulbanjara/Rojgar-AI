@@ -1,5 +1,7 @@
-from app.models.agents.jd_generator import JobState
 from langchain_core.messages import HumanMessage, SystemMessage
+
+from app.models.agents.jd_generator import JobState
+
 from ..llm_service import structured_llm
 
 

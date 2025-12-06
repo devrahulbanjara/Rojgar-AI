@@ -1,13 +1,14 @@
 import json
-from typing import Dict, Any
+from typing import Any
 
 from app.core import logger
-from app.models.agents.shortlist import WorkflowState, EvaluationScore
+from app.models.agents.shortlist import EvaluationScore, WorkflowState
+
 from ..llm_service import get_llm
 from ..templates import PROJECT_EVALUATION_PROMPT
 
 
-def evaluate_projects(state: WorkflowState) -> Dict[str, Any]:
+def evaluate_projects(state: WorkflowState) -> dict[str, Any]:
     logger.info("Evaluating projects")
     job_desc = state["job_description_text"]
 

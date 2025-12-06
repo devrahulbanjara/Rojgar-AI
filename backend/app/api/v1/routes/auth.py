@@ -1,14 +1,14 @@
-from fastapi import APIRouter, HTTPException, status, Response, Depends
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core import settings, get_db, get_current_user_id
+from app.core import get_current_user_id, get_db, settings
 from app.schemas import (
-    SignupRequest,
+    CreateUserRequest,
     LoginRequest,
     RoleSelectionRequest,
+    SignupRequest,
     TokenResponse,
-    CreateUserRequest,
 )
 from app.services import AuthService
 
@@ -116,7 +116,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
         )
         return response
 
-    except Exception as e:
+    except Exception:
         error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
         return RedirectResponse(url=error_url)
 

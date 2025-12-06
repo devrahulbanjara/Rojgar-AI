@@ -1,14 +1,13 @@
-from typing import Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
 import uuid
+
+from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
 from app.models import Skill
 from app.schemas import SkillCreateRequest, SkillResponse, SkillsListResponse
 
 
 class SkillService:
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -30,7 +29,7 @@ class SkillService:
 
         return SkillsListResponse(skills=skill_responses, total=len(skill_responses))
 
-    def get_skill_by_id(self, skill_id: str, user_id: str) -> Optional[SkillResponse]:
+    def get_skill_by_id(self, skill_id: str, user_id: str) -> SkillResponse | None:
         skill = (
             self.db.query(Skill)
             .filter(and_(Skill.id == skill_id, Skill.user_id == user_id))
