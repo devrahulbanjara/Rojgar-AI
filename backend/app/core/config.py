@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     REPORT_SUMMARY: str = "shortlist_summary.txt"
     JOB_DESCRIPTION_FILE: str = "job_description.txt"
 
+    # Gmail Settings
+    GMAIL_APP_PASSWORD: str
+    GMAIL_USER: str = "convexhire@gmail.com"
+    BOOKING_LINK: str = "https://cal.com/convexhire/interview?overlayCalendar=true"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
