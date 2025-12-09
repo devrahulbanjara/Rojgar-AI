@@ -7,6 +7,7 @@ from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.logging_config import logger
+from app.core.ml_model import ModelManager
 
 
 @asynccontextmanager
@@ -19,6 +20,9 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
     logger.info("Database ready!")
+
+    # Initialize ML Model
+    ModelManager.initialize()
 
     yield
 
