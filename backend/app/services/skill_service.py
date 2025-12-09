@@ -39,7 +39,7 @@ class SkillService:
         skill = Skill(id=str(uuid.uuid4()), user_id=user_id, skill=skill_data.skill)
 
         self.db.add(skill)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(skill)
 
         return SkillResponse.model_validate(skill)
@@ -103,7 +103,7 @@ class SkillService:
             return False
 
         self.db.delete(skill)
-        self.db.commit()
+        self.db.flush()
 
         return True
 
@@ -118,7 +118,7 @@ class SkillService:
             Number of deleted skills
         """
         deleted_count = self.db.query(Skill).filter(Skill.user_id == user_id).delete()
-        self.db.commit()
+        self.db.flush()
 
         return deleted_count
 

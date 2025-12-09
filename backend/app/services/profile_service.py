@@ -94,98 +94,75 @@ class ProfileService:
             profile_data: Dictionary of profile data to update/create
             create_profile: If True, creates a new profile instead of updating
         """
-        import time
-
         from app.models import User
 
-        max_retries = 3
-        retry_delay = 0.1
 
-        for attempt in range(max_retries):
-            try:
-                user = self.db.execute(
-                    select(User).where(User.id == user_id)
-                ).scalar_one_or_none()
 
-                if not user:
-                    raise HTTPException(status_code=404, detail="User not found")
+        user = self.db.execute(
+            select(User).where(User.id == user_id)
+        ).scalar_one_or_none()
 
-                profile = None
-                if not create_profile:
-                    profile = self.db.execute(
-                        select(Profile).where(Profile.user_id == user_id)
-                    ).scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-                    if not profile:
-                        raise HTTPException(status_code=404, detail="Profile not found")
+        profile = None
+        if not create_profile:
+            profile = self.db.execute(
+                select(Profile).where(Profile.user_id == user_id)
+            ).scalar_one_or_none()
 
-                user_fields = {"name", "email", "picture"}
-                profile_fields = {
-                    "phone",
-                    "location_city",
-                    "location_country",
-                    "linkedin_url",
-                    "github_url",
-                    "portfolio_url",
-                    "professional_headline",
-                    "professional_summary",
-                }
+            if not profile:
+                raise HTTPException(status_code=404, detail="Profile not found")
 
-                for field, value in profile_data.items():
-                    if (
-                        field in user_fields
-                        and hasattr(user, field)
-                        and value is not None
-                    ):
-                        setattr(user, field, value)
-                        user.updated_at = datetime.now(UTC)
+        user_fields = {"name", "email", "picture"}
+        profile_fields = {
+            "phone",
+            "location_city",
+            "location_country",
+            "linkedin_url",
+            "github_url",
+            "portfolio_url",
+            "professional_headline",
+            "professional_summary",
+        }
 
-                if create_profile:
-                    profile = Profile(
-                        id=str(uuid.uuid4()),
-                        user_id=user_id,
-                        phone=profile_data.get("phone"),
-                        location_city=profile_data.get("location_city"),
-                        location_country=profile_data.get("location_country"),
-                        linkedin_url=profile_data.get("linkedin_url"),
-                        github_url=profile_data.get("github_url"),
-                        portfolio_url=profile_data.get("portfolio_url"),
-                        professional_headline=profile_data.get("professional_headline"),
-                        professional_summary=profile_data.get("professional_summary"),
-                    )
-                    self.db.add(profile)
-                else:
-                    for field, value in profile_data.items():
-                        if (
-                            field in profile_fields
-                            and hasattr(profile, field)
-                            and value is not None
-                        ):
-                            setattr(profile, field, value)
-                            profile.updated_at = datetime.now(UTC)
+        for field, value in profile_data.items():
+            if (
+                field in user_fields
+                and hasattr(user, field)
+                and value is not None
+            ):
+                setattr(user, field, value)
+                user.updated_at = datetime.now(UTC)
 
-                self.db.commit()
-                self.db.refresh(user)
-                if profile:
-                    self.db.refresh(profile)
+        if create_profile:
+            profile = Profile(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                phone=profile_data.get("phone"),
+                location_city=profile_data.get("location_city"),
+                location_country=profile_data.get("location_country"),
+                linkedin_url=profile_data.get("linkedin_url"),
+                github_url=profile_data.get("github_url"),
+                portfolio_url=profile_data.get("portfolio_url"),
+                professional_headline=profile_data.get("professional_headline"),
+                professional_summary=profile_data.get("professional_summary"),
+            )
+            self.db.add(profile)
+        else:
+            for field, value in profile_data.items():
+                if (
+                    field in profile_fields
+                    and hasattr(profile, field)
+                    and value is not None
+                ):
+                    setattr(profile, field, value)
+                    profile.updated_at = datetime.now(UTC)
 
-                return
-
-            except Exception as e:
-                if "database is locked" in str(e).lower() and attempt < max_retries - 1:
-                    time.sleep(retry_delay * (2**attempt))
-                    self.db.rollback()
-                    continue
-                else:
-                    self.db.rollback()
-                    raise HTTPException(
-                        status_code=500, detail=f"Database error: {str(e)}"
-                    )
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to {'create' if create_profile else 'update'} profile after multiple attempts",
-        )
+        self.db.flush()
+        self.db.refresh(user)
+        if profile:
+            self.db.refresh(profile)
 
     def create_profile(self, user_id: str, profile_data: dict) -> ProfileResponse:
         """
@@ -269,7 +246,7 @@ class ProfileService:
         )
 
         self.db.add(experience)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(experience)
 
         return WorkExperienceResponse.model_validate(experience)
@@ -311,7 +288,7 @@ class ProfileService:
                 setattr(experience, field, value)
 
         experience.updated_at = datetime.now(UTC)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(experience)
 
         return WorkExperienceResponse.model_validate(experience)
@@ -344,7 +321,7 @@ class ProfileService:
             raise HTTPException(status_code=404, detail="Work experience not found")
 
         self.db.delete(experience)
-        self.db.commit()
+        self.db.flush()
         return True
 
 
@@ -383,7 +360,7 @@ class ProfileService:
         )
 
         self.db.add(education)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(education)
 
         return EducationRecordResponse.model_validate(education)
@@ -423,7 +400,7 @@ class ProfileService:
                 setattr(education, field, value)
 
         education.updated_at = datetime.now(UTC)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(education)
 
         return EducationRecordResponse.model_validate(education)
@@ -456,7 +433,7 @@ class ProfileService:
             raise HTTPException(status_code=404, detail="Education record not found")
 
         self.db.delete(education)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def add_certification(
@@ -492,7 +469,7 @@ class ProfileService:
         )
 
         self.db.add(certification)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(certification)
 
         return CertificationResponse.model_validate(certification)
@@ -532,7 +509,7 @@ class ProfileService:
                 setattr(certification, field, value)
 
         certification.updated_at = datetime.now(UTC)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(certification)
 
         return CertificationResponse.model_validate(certification)
@@ -565,7 +542,7 @@ class ProfileService:
             raise HTTPException(status_code=404, detail="Certification not found")
 
         self.db.delete(certification)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def add_skill(self, user_id: str, skill_data: dict) -> ProfileSkillResponse:
@@ -595,7 +572,7 @@ class ProfileService:
         )
 
         self.db.add(skill)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(skill)
 
         return ProfileSkillResponse.model_validate(skill)
@@ -635,7 +612,7 @@ class ProfileService:
                 setattr(skill, field, value)
 
         skill.updated_at = datetime.now(UTC)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(skill)
 
         return ProfileSkillResponse.model_validate(skill)
@@ -668,7 +645,7 @@ class ProfileService:
             raise HTTPException(status_code=404, detail="Skill not found")
 
         self.db.delete(skill)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def get_profile_data_for_autofill(self, user_id: str) -> dict:
