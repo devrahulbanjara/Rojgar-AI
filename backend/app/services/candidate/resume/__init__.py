@@ -5,7 +5,7 @@ Provides the ResumeService class for managing resumes and their sections.
 This refactored version uses a generic section handler to eliminate code duplication.
 
 Example:
-    from app.services.resume import ResumeService
+    from app.services.candidate.resume import ResumeService
 
     service = ResumeService(db)
     resumes = service.get_resumes_by_user_id(user_id)

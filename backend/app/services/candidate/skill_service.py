@@ -7,7 +7,6 @@ from app.models import Skill
 from app.schemas import SkillCreateRequest, SkillResponse, SkillsListResponse
 
 
-
 class SkillService:
     """
     Service for managing user skills.
@@ -121,4 +120,3 @@ class SkillService:
         self.db.flush()
 
         return deleted_count
-
