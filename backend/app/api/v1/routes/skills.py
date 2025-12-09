@@ -16,7 +16,9 @@ async def create_skill(
 ):
     """Create a new skill for the current user"""
     skill_service = SkillService(db)
-    return skill_service.create_skill(user_id, skill_data)
+    skill = skill_service.create_skill(user_id, skill_data)
+    skill_service.db.commit()
+    return skill
 
 
 @router.get("/", response_model=SkillsListResponse)
@@ -60,6 +62,7 @@ async def delete_skill(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found"
         )
+    skill_service.db.commit()
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
@@ -69,3 +72,4 @@ async def delete_all_skills(
     """Delete all skills for the current user"""
     skill_service = SkillService(db)
     skill_service.delete_all_user_skills(user_id)
+    skill_service.db.commit()

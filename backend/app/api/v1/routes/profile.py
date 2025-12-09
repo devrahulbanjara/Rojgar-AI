@@ -31,7 +31,9 @@ async def create_profile(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.create_profile(user_id, profile_data.model_dump())
+    profile = service.create_profile(user_id, profile_data.model_dump())
+    db.commit()
+    return profile
 
 
 @router.put("/", response_model=ProfileResponse)
@@ -41,7 +43,9 @@ async def update_profile(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.update_profile(user_id, profile_data.model_dump(exclude_unset=True))
+    profile = service.update_profile(user_id, profile_data.model_dump(exclude_unset=True))
+    db.commit()
+    return profile
 
 
 # Work Experience Routes
@@ -52,7 +56,9 @@ async def add_work_experience(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.add_work_experience(user_id, experience_data.model_dump())
+    exp = service.add_work_experience(user_id, experience_data.model_dump())
+    db.commit()
+    return exp
 
 
 @router.put("/work-experience/{experience_id}", response_model=WorkExperienceResponse)
@@ -63,9 +69,11 @@ async def update_work_experience(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.update_work_experience(
+    exp = service.update_work_experience(
         user_id, experience_id, experience_data.model_dump(exclude_unset=True)
     )
+    db.commit()
+    return exp
 
 
 @router.delete(
@@ -78,6 +86,7 @@ async def delete_work_experience(
 ):
     service = ProfileService(db)
     service.delete_work_experience(user_id, experience_id)
+    db.commit()
 
 
 # Education Routes
@@ -88,7 +97,9 @@ async def add_education(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.add_education(user_id, education_data.model_dump())
+    edu = service.add_education(user_id, education_data.model_dump())
+    db.commit()
+    return edu
 
 
 @router.put("/education/{education_id}", response_model=EducationRecordResponse)
@@ -99,9 +110,11 @@ async def update_education(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.update_education(
+    edu = service.update_education(
         user_id, education_id, education_data.model_dump(exclude_unset=True)
     )
+    db.commit()
+    return edu
 
 
 @router.delete("/education/{education_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -112,6 +125,7 @@ async def delete_education(
 ):
     service = ProfileService(db)
     service.delete_education(user_id, education_id)
+    db.commit()
 
 
 # Certification Routes
@@ -122,7 +136,9 @@ async def add_certification(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.add_certification(user_id, certification_data.model_dump())
+    cert = service.add_certification(user_id, certification_data.model_dump())
+    db.commit()
+    return cert
 
 
 @router.put("/certifications/{certification_id}", response_model=CertificationResponse)
@@ -133,9 +149,11 @@ async def update_certification(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.update_certification(
+    cert = service.update_certification(
         user_id, certification_id, certification_data.model_dump(exclude_unset=True)
     )
+    db.commit()
+    return cert
 
 
 @router.delete(
@@ -148,6 +166,7 @@ async def delete_certification(
 ):
     service = ProfileService(db)
     service.delete_certification(user_id, certification_id)
+    db.commit()
 
 
 # Skills Routes
@@ -158,7 +177,9 @@ async def add_skill(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.add_skill(user_id, skill_data.model_dump())
+    skill = service.add_skill(user_id, skill_data.model_dump())
+    db.commit()
+    return skill
 
 
 @router.put("/skills/{skill_id}", response_model=ProfileSkillResponse)
@@ -169,9 +190,11 @@ async def update_skill(
     db: Session = Depends(get_db),
 ):
     service = ProfileService(db)
-    return service.update_skill(
+    skill = service.update_skill(
         user_id, skill_id, skill_data.model_dump(exclude_unset=True)
     )
+    db.commit()
+    return skill
 
 
 @router.delete("/skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -182,3 +205,4 @@ async def delete_skill(
 ):
     service = ProfileService(db)
     service.delete_skill(user_id, skill_id)
+    db.commit()

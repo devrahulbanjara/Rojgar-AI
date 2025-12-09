@@ -53,7 +53,9 @@ async def create_resume(
 ):
     """Create a new resume"""
     service = ResumeService(db)
-    return service.create_resume(user_id, resume_data.model_dump())
+    resume = service.create_resume(user_id, resume_data.model_dump())
+    service.db.commit()
+    return resume
 
 
 @router.put("/{resume_id}", response_model=ResumeResponse)
@@ -65,9 +67,11 @@ async def update_resume(
 ):
     """Update a resume"""
     service = ResumeService(db)
-    return service.update_resume(
+    resume = service.update_resume(
         user_id, resume_id, resume_data.model_dump(exclude_unset=True)
     )
+    service.db.commit()
+    return resume
 
 
 @router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -79,6 +83,7 @@ async def delete_resume(
     """Delete a resume"""
     service = ResumeService(db)
     service.delete_resume(user_id, resume_id)
+    service.db.commit()
 
 
 # Experience Management for Resume
@@ -91,12 +96,14 @@ async def add_experience_to_resume(
 ):
     """Add a work experience to a resume with custom description"""
     service = ResumeService(db)
-    return service.add_experience_to_resume(
+    exp = service.add_experience_to_resume(
         user_id,
         resume_id,
         experience_data.work_experience_id,
         experience_data.custom_description,
     )
+    service.db.commit()
+    return exp
 
 
 @router.put(
@@ -112,12 +119,14 @@ async def update_experience_in_resume(
 ):
     """Update an experience in a resume - can update both resume-specific and underlying work experience data"""
     service = ResumeService(db)
-    return service.update_experience_in_resume(
+    exp = service.update_experience_in_resume(
         user_id,
         resume_id,
         resume_experience_id,
         experience_data.model_dump(exclude_unset=True),
     )
+    service.db.commit()
+    return exp
 
 
 @router.delete(
@@ -133,6 +142,7 @@ async def remove_experience_from_resume(
     """Remove an experience from a resume"""
     service = ResumeService(db)
     service.remove_experience_from_resume(user_id, resume_id, resume_experience_id)
+    service.db.commit()
 
 
 # Education Management for Resume
@@ -145,9 +155,11 @@ async def add_education_to_resume(
 ):
     """Add an education record to a resume"""
     service = ResumeService(db)
-    return service.add_education_to_resume(
+    edu = service.add_education_to_resume(
         user_id, resume_id, education_data.education_record_id
     )
+    service.db.commit()
+    return edu
 
 
 @router.put(
@@ -163,12 +175,14 @@ async def update_education_in_resume(
 ):
     """Update an education record in a resume"""
     service = ResumeService(db)
-    return service.update_education_in_resume(
+    edu = service.update_education_in_resume(
         user_id,
         resume_id,
         resume_education_id,
         education_data.model_dump(exclude_unset=True),
     )
+    service.db.commit()
+    return edu
 
 
 @router.delete(
@@ -184,6 +198,7 @@ async def remove_education_from_resume(
     """Remove an education record from a resume"""
     service = ResumeService(db)
     service.remove_education_from_resume(user_id, resume_id, resume_education_id)
+    service.db.commit()
 
 
 # Certification Management for Resume
@@ -196,9 +211,11 @@ async def add_certification_to_resume(
 ):
     """Add a certification to a resume"""
     service = ResumeService(db)
-    return service.add_certification_to_resume(
+    cert = service.add_certification_to_resume(
         user_id, resume_id, certification_data.certification_id
     )
+    service.db.commit()
+    return cert
 
 
 @router.put(
@@ -214,12 +231,14 @@ async def update_certification_in_resume(
 ):
     """Update a certification in a resume"""
     service = ResumeService(db)
-    return service.update_certification_in_resume(
+    cert = service.update_certification_in_resume(
         user_id,
         resume_id,
         resume_certification_id,
         certification_data.model_dump(exclude_unset=True),
     )
+    service.db.commit()
+    return cert
 
 
 @router.delete(
@@ -237,6 +256,7 @@ async def remove_certification_from_resume(
     service.remove_certification_from_resume(
         user_id, resume_id, resume_certification_id
     )
+    service.db.commit()
 
 
 # Skills Management for Resume
@@ -249,7 +269,9 @@ async def add_skill_to_resume(
 ):
     """Add a skill to a resume"""
     service = ResumeService(db)
-    return service.add_skill_to_resume(user_id, resume_id, skill_data.profile_skill_id)
+    skill = service.add_skill_to_resume(user_id, resume_id, skill_data.profile_skill_id)
+    service.db.commit()
+    return skill
 
 
 @router.put("/{resume_id}/skills/{resume_skill_id}", response_model=ResumeSkillResponse)
@@ -262,9 +284,11 @@ async def update_skill_in_resume(
 ):
     """Update a skill in a resume"""
     service = ResumeService(db)
-    return service.update_skill_in_resume(
+    skill = service.update_skill_in_resume(
         user_id, resume_id, resume_skill_id, skill_data.model_dump(exclude_unset=True)
     )
+    service.db.commit()
+    return skill
 
 
 @router.delete(
@@ -279,6 +303,7 @@ async def remove_skill_from_resume(
     """Remove a skill from a resume"""
     service = ResumeService(db)
     service.remove_skill_from_resume(user_id, resume_id, resume_skill_id)
+    service.db.commit()
 
 
 # Resume-specific section creation endpoints (don't affect profile)
@@ -291,9 +316,11 @@ async def create_experience_for_resume(
 ):
     """Create a new work experience directly for this resume (doesn't affect profile)"""
     service = ResumeService(db)
-    return service.create_experience_for_resume(
+    exp = service.create_experience_for_resume(
         user_id, resume_id, experience_data.model_dump()
     )
+    service.db.commit()
+    return exp
 
 
 @router.post("/{resume_id}/education/create", response_model=ResumeEducationResponse)
@@ -305,9 +332,11 @@ async def create_education_for_resume(
 ):
     """Create a new education record directly for this resume (doesn't affect profile)"""
     service = ResumeService(db)
-    return service.create_education_for_resume(
+    edu = service.create_education_for_resume(
         user_id, resume_id, education_data.model_dump()
     )
+    service.db.commit()
+    return edu
 
 
 @router.post(
@@ -321,9 +350,11 @@ async def create_certification_for_resume(
 ):
     """Create a new certification directly for this resume (doesn't affect profile)"""
     service = ResumeService(db)
-    return service.create_certification_for_resume(
+    cert = service.create_certification_for_resume(
         user_id, resume_id, certification_data.model_dump()
     )
+    service.db.commit()
+    return cert
 
 
 @router.post("/{resume_id}/skills/create", response_model=ResumeSkillResponse)
@@ -335,4 +366,6 @@ async def create_skill_for_resume(
 ):
     """Create a new skill directly for this resume (doesn't affect profile)"""
     service = ResumeService(db)
-    return service.create_skill_for_resume(user_id, resume_id, skill_data.model_dump())
+    skill = service.create_skill_for_resume(user_id, resume_id, skill_data.model_dump())
+    service.db.commit()
+    return skill
