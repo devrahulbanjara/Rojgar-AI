@@ -1,8 +1,8 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-from sentence_transformers import SentenceTransformer
 
 from app.core import logger, settings
+from app.core.ml_model import ModelManager
 from app.models import Job
 
 
@@ -19,7 +19,8 @@ class VectorJobService:
         Sets up the embedding model (SentenceTransformer) and the Qdrant client.
         Ensures the collection exists.
         """
-        self.model = SentenceTransformer(settings.EMBEDDING_MODEL)
+        # Get the singleton model instance
+        self.model = ModelManager.get_model()
 
         qdrant_url = settings.QDRANT_URL
         qdrant_api_key = settings.QDRANT_API_KEY
