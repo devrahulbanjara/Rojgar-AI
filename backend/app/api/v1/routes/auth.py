@@ -77,7 +77,7 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
         value=token,
         max_age=max_age,
         httponly=True,
-        secure=False,
+        secure=settings.SECURE,
         samesite="lax",
     )
 
@@ -111,12 +111,14 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
             value=token,
             max_age=max_age,
             httponly=True,
-            secure=False,
+            secure=settings.SECURE,
             samesite="lax",
         )
         return response
 
-    except Exception:
+    except Exception as e:
+        from app.core.logging_config import logger
+        logger.error(f"Google authentication failed: {str(e)}", exc_info=True)
         error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
         return RedirectResponse(url=error_url)
 

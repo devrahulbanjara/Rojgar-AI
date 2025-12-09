@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.core import get_db
+from app.core import get_db, logger
 from app.models import Company, Job, JobStatus, Profile, ProfileSkill, Skill
 from app.schemas import CompanyResponse, JobResponse, JobSearchRequest
 
@@ -306,7 +306,7 @@ class JobService:
         )[:10]
         top_locations = [loc for loc, count in top_locations]
 
-        companies = db.execute(select(Company)).scalars().all()
+        companies = self.db.execute(select(Company)).scalars().all()
         company_map = {c.id: c.name for c in companies}
         company_counts = {}
         for job in all_jobs:
@@ -367,13 +367,13 @@ class JobService:
             vector_success = self.add_job_to_vector_db(job)
 
             if not vector_success:
-                print(f"Warning: Failed to add job {job.id} to vector database")
+                logger.warning(f"Failed to add job {job.id} to vector database")
 
             return job
 
         except Exception as e:
             self.db.rollback()
-            print(f"Error creating job: {e}")
+            logger.error(f"Error creating job: {e}", exc_info=True)
             return None
 
     def get_user_skills(self, user_id: str) -> list[str]:
@@ -474,7 +474,7 @@ class JobService:
                     user_skills, page, limit
                 )
             except Exception as e:
-                print(
+                logger.warning(
                     f"Vector database unavailable, falling back to regular job search: {e}"
                 )
                 jobs = (
@@ -557,7 +557,7 @@ class JobService:
             }
 
         except Exception as e:
-            print(f"Error getting personalized recommendations: {e}")
+            logger.error(f"Error getting personalized recommendations: {e}", exc_info=True)
             return {
                 "jobs": [],
                 "total": 0,

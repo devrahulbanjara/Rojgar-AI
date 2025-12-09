@@ -48,9 +48,7 @@ def update_profile(
             detail="User not found",
         )
 
-    user.name = profile_data.name
-    db.commit()
-    db.refresh(user)
+    user = UserService.update_profile(user, profile_data.name, db)
 
     return UserService.to_user_response(user)
 
@@ -93,5 +91,14 @@ def change_password(
             detail="New password must be at least 8 characters long",
         )
 
-    user.password_hash = hash_password(password_data.new_password)
-    db.commit()
+    try:
+        user.password_hash = hash_password(password_data.new_password)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        from app.core.logging_config import logger
+        logger.error(f"Failed to update password for user {user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update password",
+        )

@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class UserRole(str, Enum):
@@ -15,6 +15,13 @@ class SignupRequest(BaseModel):
     name: str
     role: UserRole
     picture: str | None = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        return v
 
 
 class CreateUserRequest(BaseModel):
