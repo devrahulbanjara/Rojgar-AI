@@ -11,6 +11,7 @@ interface TopbarProps {
     name: string;
     email: string;
     role?: string;
+    picture?: string;
   } | null;
 }
 
@@ -63,8 +64,16 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           <div className="flex items-center gap-3 px-2 py-2 pr-4 rounded-xl bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-all duration-200 hover:scale-[1.02]"
             style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
-            <div className="w-10 h-10 bg-[#3056F5] text-white rounded-full flex items-center justify-center text-sm font-semibold">
-              {user ? getInitials(user.name) : 'U'}
+            <div className="w-10 h-10 bg-[#3056F5] text-white rounded-full flex items-center justify-center text-sm font-semibold overflow-hidden">
+              {user?.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user ? getInitials(user.name) : 'U'
+              )}
             </div>
             <span className="hidden md:block text-[15px] font-medium text-[#0F172A]">
               {user?.name}

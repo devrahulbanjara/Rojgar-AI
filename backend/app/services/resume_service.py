@@ -26,11 +26,33 @@ from app.schemas import (
 )
 
 
+
 class ResumeService:
+    """
+    Service for managing Resume entities and their related components.
+    Handles creation, retrieval, updates, and deletion of resumes,
+    as well as adding/removing detailed sections like experience, education, skills, and certifications.
+    """
+
     def __init__(self, db: Session):
+        """
+        Initialize the ResumeService.
+
+        Args:
+            db: Database session
+        """
         self.db = db
 
     def get_resumes_by_user_id(self, user_id: str) -> list[ResumeResponse]:
+        """
+        Get all resumes belonging to a user.
+
+        Args:
+            user_id: The ID of the user
+
+        Returns:
+            List of ResumeResponse objects
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -60,6 +82,16 @@ class ResumeService:
         return [ResumeResponse.model_validate(resume) for resume in resumes]
 
     def get_resume_by_id(self, user_id: str, resume_id: str) -> ResumeResponse | None:
+        """
+        Get a specific resume by ID.
+
+        Args:
+            user_id: The ID of the user (for ownership verification)
+            resume_id: The ID of the resume
+
+        Returns:
+            ResumeResponse object if found, None otherwise
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -92,6 +124,17 @@ class ResumeService:
         return ResumeResponse.model_validate(resume)
 
     def create_resume(self, user_id: str, resume_data: dict) -> ResumeResponse:
+        """
+        Create a new resume for a user.
+        Copies data from the user's profile to populate the initial resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_data: Dictionary containing initial resume details (name, etc.)
+
+        Returns:
+            The created Resume object formatted as a response
+        """
         profile = self.db.execute(
             select(Profile)
             .options(
@@ -181,6 +224,7 @@ class ResumeService:
         return ResumeResponse.model_validate(resume)
 
     def _format_location(self, city: str | None, country: str | None) -> str | None:
+        """Helper to format city and country into a location string."""
         if not city and not country:
             return None
         if city and country:
@@ -190,6 +234,17 @@ class ResumeService:
     def update_resume(
         self, user_id: str, resume_id: str, resume_data: dict
     ) -> ResumeResponse:
+        """
+        Update basic details of a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_data: Dictionary of fields to update
+
+        Returns:
+            The updated ResumeResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -217,6 +272,16 @@ class ResumeService:
         return ResumeResponse.model_validate(resume)
 
     def delete_resume(self, user_id: str, resume_id: str) -> bool:
+        """
+        Delete a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+
+        Returns:
+            True if deleted successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -244,6 +309,18 @@ class ResumeService:
         work_experience_id: str,
         custom_description: str,
     ) -> ResumeExperienceResponse:
+        """
+        Add a work experience entry to a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            work_experience_id: The ID of the work experience from the profile
+            custom_description: A custom description tailored for this resume
+
+        Returns:
+            The created ResumeExperience object
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -302,6 +379,8 @@ class ResumeService:
 
         return ResumeExperienceResponse.model_validate(resume_experience)
 
+
+
     def update_experience_in_resume(
         self,
         user_id: str,
@@ -309,6 +388,18 @@ class ResumeService:
         resume_experience_id: str,
         experience_data: dict,
     ) -> ResumeExperienceResponse:
+        """
+        Update a resume experience entry.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_experience_id: The ID of the experience entry
+            experience_data: Dictionary of fields to update
+
+        Returns:
+            The updated ResumeExperienceResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -367,6 +458,17 @@ class ResumeService:
     def remove_experience_from_resume(
         self, user_id: str, resume_id: str, resume_experience_id: str
     ) -> bool:
+        """
+        Remove a work experience entry from a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_experience_id: The ID of the experience entry to remove
+
+        Returns:
+            True if removed successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -399,6 +501,17 @@ class ResumeService:
     def add_education_to_resume(
         self, user_id: str, resume_id: str, education_record_id: str
     ) -> ResumeEducationResponse:
+        """
+        Add an education record to a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            education_record_id: The ID of the education record from profile
+
+        Returns:
+            The created ResumeEducationResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -463,6 +576,18 @@ class ResumeService:
         resume_education_id: str,
         education_data: dict,
     ) -> ResumeEducationResponse:
+        """
+        Update a resume education entry.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_education_id: The ID of the education entry
+            education_data: Dictionary of fields to update
+
+        Returns:
+            The updated ResumeEducationResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -522,6 +647,17 @@ class ResumeService:
     def remove_education_from_resume(
         self, user_id: str, resume_id: str, resume_education_id: str
     ) -> bool:
+        """
+        Remove an education record from a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_education_id: The ID of the education entry to remove
+
+        Returns:
+            True if removed successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -554,6 +690,17 @@ class ResumeService:
     def add_certification_to_resume(
         self, user_id: str, resume_id: str, certification_id: str
     ) -> ResumeCertificationResponse:
+        """
+        Add a certification to a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            certification_id: The ID of the certification from profile
+
+        Returns:
+            The created ResumeCertificationResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -618,6 +765,18 @@ class ResumeService:
         resume_certification_id: str,
         certification_data: dict,
     ) -> ResumeCertificationResponse:
+        """
+        Update a resume certification entry.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_certification_id: The ID of the certification entry
+            certification_data: Dictionary of fields to update
+
+        Returns:
+            The updated ResumeCertificationResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -670,11 +829,21 @@ class ResumeService:
         self.db.commit()
         self.db.refresh(resume_certification)
 
-        return ResumeCertificationResponse.model_validate(resume_certification)
 
     def remove_certification_from_resume(
         self, user_id: str, resume_id: str, resume_certification_id: str
     ) -> bool:
+        """
+        Remove a certification from a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_certification_id: The ID of the certification to remove
+
+        Returns:
+            True if removed successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -709,6 +878,17 @@ class ResumeService:
     def add_skill_to_resume(
         self, user_id: str, resume_id: str, profile_skill_id: str
     ) -> ResumeSkillResponse:
+        """
+        Add a skill to a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            profile_skill_id: The ID of the skill from profile
+
+        Returns:
+            The created ResumeSkillResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -769,6 +949,18 @@ class ResumeService:
     def update_skill_in_resume(
         self, user_id: str, resume_id: str, resume_skill_id: str, skill_data: dict
     ) -> ResumeSkillResponse:
+        """
+        Update a resume skill entry.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_skill_id: The ID of the skill entry
+            skill_data: Dictionary of fields to update
+
+        Returns:
+            The updated ResumeSkillResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -811,6 +1003,17 @@ class ResumeService:
     def remove_skill_from_resume(
         self, user_id: str, resume_id: str, resume_skill_id: str
     ) -> bool:
+        """
+        Remove a skill from a resume.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            resume_skill_id: The ID of the skill entry to remove
+
+        Returns:
+            True if removed successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -843,6 +1046,18 @@ class ResumeService:
     def create_experience_for_resume(
         self, user_id: str, resume_id: str, experience_data: dict
     ) -> ResumeExperienceResponse:
+        """
+        Create a new work experience entry for a resume.
+        Also creates a master WorkExperience in the profile.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            experience_data: Dictionary of experience details
+
+        Returns:
+            The created ResumeExperienceResponse
+        """
         resume = self._get_resume_by_id_and_user(resume_id, user_id)
 
         start_date = None
@@ -897,6 +1112,18 @@ class ResumeService:
     def create_education_for_resume(
         self, user_id: str, resume_id: str, education_data: dict
     ) -> ResumeEducationResponse:
+        """
+        Create a new education record for a resume.
+        Also creates a master EducationRecord in the profile.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            education_data: Dictionary of education details
+
+        Returns:
+            The created ResumeEducationResponse
+        """
         resume = self._get_resume_by_id_and_user(resume_id, user_id)
 
         start_date = None
@@ -948,9 +1175,22 @@ class ResumeService:
             education_record=temp_education,
         )
 
+
     def create_certification_for_resume(
         self, user_id: str, resume_id: str, certification_data: dict
     ) -> ResumeCertificationResponse:
+        """
+        Create a new certification entry for a resume.
+        Also creates a master Certification in the profile.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            certification_data: Dictionary of certification details
+
+        Returns:
+            The created ResumeCertificationResponse
+        """
         resume = self._get_resume_by_id_and_user(resume_id, user_id)
 
         issue_date = None
@@ -1005,6 +1245,18 @@ class ResumeService:
     def create_skill_for_resume(
         self, user_id: str, resume_id: str, skill_data: dict
     ) -> ResumeSkillResponse:
+        """
+        Create a new skill entry for a resume.
+        Also creates a master ProfileSkill in the profile.
+
+        Args:
+            user_id: The ID of the user
+            resume_id: The ID of the resume
+            skill_data: Dictionary of skill details
+
+        Returns:
+            The created ResumeSkillResponse
+        """
         resume = self._get_resume_by_id_and_user(resume_id, user_id)
 
         temp_skill = ProfileSkill(
@@ -1041,6 +1293,17 @@ class ResumeService:
         )
 
     def _get_resume_by_id_and_user(self, resume_id: str, user_id: str) -> Resume:
+        """
+        Helper method to retrieve a resume by ID and user ID.
+        Raises HTTPException if not found.
+
+        Args:
+            resume_id: The ID of the resume
+            user_id: The ID of the user
+
+        Returns:
+            Resume object
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -1058,3 +1321,4 @@ class ResumeService:
             raise HTTPException(status_code=404, detail="Resume not found")
 
         return resume
+
