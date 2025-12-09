@@ -218,7 +218,7 @@ class ResumeService:
             )
             self.db.add(resume_skill)
 
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume)
 
         return ResumeResponse.model_validate(resume)
@@ -266,7 +266,7 @@ class ResumeService:
                 setattr(resume, field, value)
 
         resume.updated_at = datetime.now(UTC)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume)
 
         return ResumeResponse.model_validate(resume)
@@ -299,7 +299,7 @@ class ResumeService:
             raise HTTPException(status_code=404, detail="Resume not found")
 
         self.db.delete(resume)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def add_experience_to_resume(
@@ -374,7 +374,7 @@ class ResumeService:
         )
 
         self.db.add(resume_experience)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_experience)
 
         return ResumeExperienceResponse.model_validate(resume_experience)
@@ -450,7 +450,7 @@ class ResumeService:
 
         resume_experience.updated_at = datetime.now(UTC)
 
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_experience)
 
         return ResumeExperienceResponse.model_validate(resume_experience)
@@ -495,7 +495,7 @@ class ResumeService:
             raise HTTPException(status_code=404, detail="Resume experience not found")
 
         self.db.delete(resume_experience)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def add_education_to_resume(
@@ -564,7 +564,7 @@ class ResumeService:
         )
 
         self.db.add(resume_education)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_education)
 
         return ResumeEducationResponse.model_validate(resume_education)
@@ -639,7 +639,7 @@ class ResumeService:
 
         resume_education.updated_at = datetime.now(UTC)
 
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_education)
 
         return ResumeEducationResponse.model_validate(resume_education)
@@ -684,7 +684,7 @@ class ResumeService:
             raise HTTPException(status_code=404, detail="Resume education not found")
 
         self.db.delete(resume_education)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def add_certification_to_resume(
@@ -753,7 +753,7 @@ class ResumeService:
         )
 
         self.db.add(resume_certification)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_certification)
 
         return ResumeCertificationResponse.model_validate(resume_certification)
@@ -826,7 +826,7 @@ class ResumeService:
 
         resume_certification.updated_at = datetime.now(UTC)
 
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_certification)
 
 
@@ -872,7 +872,7 @@ class ResumeService:
             )
 
         self.db.delete(resume_certification)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def add_skill_to_resume(
@@ -941,7 +941,7 @@ class ResumeService:
         )
 
         self.db.add(resume_skill)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_skill)
 
         return ResumeSkillResponse.model_validate(resume_skill)
@@ -995,7 +995,7 @@ class ResumeService:
 
         resume_skill.updated_at = datetime.now(UTC)
 
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(resume_skill)
 
         return ResumeSkillResponse.model_validate(resume_skill)
@@ -1040,7 +1040,7 @@ class ResumeService:
             raise HTTPException(status_code=404, detail="Resume skill not found")
 
         self.db.delete(resume_skill)
-        self.db.commit()
+        self.db.flush()
         return True
 
     def create_experience_for_resume(
@@ -1096,7 +1096,7 @@ class ResumeService:
 
         self.db.add(temp_experience)
         self.db.add(resume_experience)
-        self.db.commit()
+        self.db.flush()
 
         return ResumeExperienceResponse(
             id=resume_experience.id,
@@ -1163,7 +1163,7 @@ class ResumeService:
 
         self.db.add(temp_education)
         self.db.add(resume_education)
-        self.db.commit()
+        self.db.flush()
 
         return ResumeEducationResponse(
             id=resume_education.id,
@@ -1230,7 +1230,7 @@ class ResumeService:
 
         self.db.add(temp_certification)
         self.db.add(resume_certification)
-        self.db.commit()
+        self.db.flush()
 
         return ResumeCertificationResponse(
             id=resume_certification.id,
@@ -1280,7 +1280,7 @@ class ResumeService:
 
         self.db.add(temp_skill)
         self.db.add(resume_skill)
-        self.db.commit()
+        self.db.flush()
 
         return ResumeSkillResponse(
             id=resume_skill.id,

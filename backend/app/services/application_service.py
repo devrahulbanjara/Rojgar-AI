@@ -1,8 +1,10 @@
 from datetime import UTC, datetime
 
+from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core import get_db
 from app.models import Application, ApplicationStage, ApplicationStatus
 
 
@@ -13,26 +15,26 @@ class ApplicationService:
     Handles application lifecycle: creation, status updates, tracking board, and statistics.
     """
 
-    @staticmethod
-    def get_user_applications(user_id: str, db: Session) -> list[Application]:
+    def __init__(self, db: Session = Depends(get_db)):
+        self.db = db
+
+    def get_user_applications(self, user_id: str) -> list[Application]:
         """
         Get all applications for a specific user.
 
         Args:
             user_id: The ID of the user
-            db: Database session
 
         Returns:
             List of Application objects owned by the user
         """
         return (
-            db.execute(select(Application).where(Application.user_id == user_id))
+            self.db.execute(select(Application).where(Application.user_id == user_id))
             .scalars()
             .all()
         )
 
-    @staticmethod
-    def get_tracking_board(user_id: str, db: Session) -> dict[str, list[dict]]:
+    def get_tracking_board(self, user_id: str) -> dict[str, list[dict]]:
         """
         Get applications organized by stage for the Kanban board view.
 
@@ -43,12 +45,11 @@ class ApplicationService:
 
         Args:
             user_id: The ID of the user
-            db: Database session
 
         Returns:
             Dictionary mapping stage categories to lists of application details
         """
-        applications = ApplicationService.get_user_applications(user_id, db)
+        applications = self.get_user_applications(user_id)
 
         board = {
             "applied": [],  # Applied + Screening
@@ -84,8 +85,7 @@ class ApplicationService:
 
         return board
 
-    @staticmethod
-    def get_application_stats(user_id: str, db: Session) -> dict[str, int]:
+    def get_application_stats(self, user_id: str) -> dict[str, int]:
         """
         Get statistical summary of user's applications.
 
@@ -98,12 +98,11 @@ class ApplicationService:
 
         Args:
             user_id: The ID of the user
-            db: Database session
 
         Returns:
             Dictionary of statistical counts
         """
-        applications = ApplicationService.get_user_applications(user_id, db)
+        applications = self.get_user_applications(user_id)
 
         total = len(applications)
         active = sum(
@@ -136,13 +135,12 @@ class ApplicationService:
             "responseRate": response_rate,
         }
 
-    @staticmethod
     def create_application(
+        self,
         user_id: str,
         job_title: str,
         company_name: str,
         description: str | None,
-        db: Session,
     ) -> Application:
         """
         Create a new job application.
@@ -152,7 +150,6 @@ class ApplicationService:
             job_title: Title of the job applied for
             company_name: Name of the company
             description: Optional notes/description
-            db: Database session
 
         Returns:
             The created Application object
@@ -166,35 +163,32 @@ class ApplicationService:
             status=ApplicationStatus.PENDING.value,
         )
 
-        db.add(new_app)
-        db.commit()
-        db.refresh(new_app)
+        self.db.add(new_app)
+        self.db.flush()
+        self.db.refresh(new_app)
 
         return new_app
 
-    @staticmethod
-    def get_application_by_id(application_id: int, db: Session) -> Application | None:
+    def get_application_by_id(self, application_id: int) -> Application | None:
         """
         Get an application by its ID.
 
         Args:
             application_id: The ID of the application
-            db: Database session
 
         Returns:
             Application object if found, None otherwise
         """
-        return db.execute(
+        return self.db.execute(
             select(Application).where(Application.id == application_id)
         ).scalar_one_or_none()
 
-    @staticmethod
     def update_application(
+        self,
         application: Application,
         stage: ApplicationStage | None = None,
         status: ApplicationStatus | None = None,
         description: str | None = None,
-        db: Session = None,
     ) -> Application:
         """
         Update an existing application.
@@ -204,7 +198,6 @@ class ApplicationService:
             stage: New stage (optional)
             status: New status (optional)
             description: New description (optional)
-            db: Database session
 
         Returns:
             The updated Application object
@@ -218,26 +211,23 @@ class ApplicationService:
 
         application.updated_at = datetime.now(UTC)
 
-        db.add(application)
-        db.commit()
-        db.refresh(application)
+        self.db.add(application)
+        self.db.flush()
+        self.db.refresh(application)
 
         return application
 
-    @staticmethod
-    def delete_application(application: Application, db: Session) -> None:
+    def delete_application(self, application: Application) -> None:
         """
         Delete an application.
 
         Args:
             application: The Application object to delete
-            db: Database session
         """
-        db.delete(application)
-        db.commit()
+        self.db.delete(application)
+        self.db.flush()
 
-    @staticmethod
-    def verify_ownership(application: Application, user_id: str) -> bool:
+    def verify_ownership(self, application: Application, user_id: str) -> bool:
         """
         Verify if an application belongs to a specific user.
 
