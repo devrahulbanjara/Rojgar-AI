@@ -6,7 +6,6 @@ from app.core.ml_model import ModelManager
 from app.models import Job
 
 
-
 class VectorJobService:
     """
     Service for managing vector embeddings and semantic search for jobs.
@@ -236,4 +235,3 @@ class VectorJobService:
         except Exception as e:
             logger.error(f"Error getting personalized recommendations: {str(e)}")
             return []
-

@@ -22,7 +22,6 @@ from app.schemas import (
 
 
 class ProfileService:
-
     def __init__(self, db: Session):
         """
         Initialize the ProfileService.
@@ -96,8 +95,6 @@ class ProfileService:
         """
         from app.models import User
 
-
-
         user = self.db.execute(
             select(User).where(User.id == user_id)
         ).scalar_one_or_none()
@@ -127,11 +124,7 @@ class ProfileService:
         }
 
         for field, value in profile_data.items():
-            if (
-                field in user_fields
-                and hasattr(user, field)
-                and value is not None
-            ):
+            if field in user_fields and hasattr(user, field) and value is not None:
                 setattr(user, field, value)
                 user.updated_at = datetime.now(UTC)
 
@@ -323,7 +316,6 @@ class ProfileService:
         self.db.delete(experience)
         self.db.flush()
         return True
-
 
     def add_education(
         self, user_id: str, education_data: dict

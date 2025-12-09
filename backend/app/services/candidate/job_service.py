@@ -9,14 +9,17 @@ from app.schemas import CompanyResponse, JobResponse, JobSearchRequest
 from .vector_job_service import VectorJobService
 
 
-
 class JobService:
     """
     Service for managing jobs and company information.
     Handles job search, recommendations, retrieval, and statistics.
     """
 
-    def __init__(self, db: Session = Depends(get_db), vector_service: VectorJobService = Depends()):
+    def __init__(
+        self,
+        db: Session = Depends(get_db),
+        vector_service: VectorJobService = Depends(),
+    ):
         self.db = db
         self.vector_service = vector_service
 
@@ -104,11 +107,7 @@ class JobService:
             "has_prev": params.page > 1,
         }
 
-    def get_job_by_id(
-        self,
-        job_id: int,
-        increment_view: bool = False
-    ) -> Job | None:
+    def get_job_by_id(self, job_id: int, increment_view: bool = False) -> Job | None:
         """
         Get a job by its ID.
 
@@ -228,7 +227,9 @@ class JobService:
             return None
 
         jobs = (
-            self.db.execute(select(Job).where(Job.company_id == company_id)).scalars().all()
+            self.db.execute(select(Job).where(Job.company_id == company_id))
+            .scalars()
+            .all()
         )
         active_jobs = [j for j in jobs if j.status == JobStatus.ACTIVE.value]
 
@@ -283,7 +284,9 @@ class JobService:
             select(func.count(Job.id)).where(Job.is_remote == True)
         ).scalar_one()
 
-        avg_salary_result = self.db.execute(select(func.avg(Job.salary_min))).scalar_one()
+        avg_salary_result = self.db.execute(
+            select(func.avg(Job.salary_min))
+        ).scalar_one()
         avg_salary = round(avg_salary_result, 2) if avg_salary_result else 0
 
         all_jobs = self.db.execute(select(Job)).scalars().all()
@@ -448,7 +451,9 @@ class JobService:
                 )
 
                 total = self.db.scalar(
-                    select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
+                    select(func.count(Job.id)).where(
+                        Job.status == JobStatus.ACTIVE.value
+                    )
                 )
                 total_pages = max((total + limit - 1) // limit, 1)
 
@@ -470,8 +475,10 @@ class JobService:
 
             try:
                 # Use injected vector service
-                recommendations = self.vector_service.get_personalized_job_recommendations(
-                    user_skills, page, limit
+                recommendations = (
+                    self.vector_service.get_personalized_job_recommendations(
+                        user_skills, page, limit
+                    )
                 )
             except Exception as e:
                 logger.warning(
@@ -557,7 +564,9 @@ class JobService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting personalized recommendations: {e}", exc_info=True)
+            logger.error(
+                f"Error getting personalized recommendations: {e}", exc_info=True
+            )
             return {
                 "jobs": [],
                 "total": 0,

@@ -8,25 +8,29 @@ Example:
     from app.services import AuthService, JobService, UserService
 """
 
-# Auth service
-from .application_service import ApplicationService
+# Auth service (shared - used by both candidates and recruiters)
 from .auth.auth_service import AuthService
 
-# Core services
-from .job_service import JobService
-from .profile_service import ProfileService
-from .resume import ResumeService
-from .skill_service import SkillService
-from .user_service import UserService
-from .vector_job_service import VectorJobService
+# Candidate services
+from .candidate import (
+    ApplicationService,
+    JobService,
+    ProfileService,
+    ResumeService,
+    SkillService,
+    UserService,
+    VectorJobService,
+)
 
 __all__ = [
+    # Auth
     "AuthService",
-    "JobService",
-    "UserService",
+    # Candidate services
     "ApplicationService",
+    "JobService",
     "ProfileService",
     "ResumeService",
     "SkillService",
+    "UserService",
     "VectorJobService",
 ]

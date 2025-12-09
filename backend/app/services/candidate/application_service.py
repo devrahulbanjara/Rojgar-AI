@@ -8,7 +8,6 @@ from app.core import get_db
 from app.models import Application, ApplicationStage, ApplicationStatus
 
 
-
 class ApplicationService:
     """
     Service for managing job applications.
@@ -239,4 +238,3 @@ class ApplicationService:
             True if the application belongs to the user, False otherwise
         """
         return application.user_id == user_id
-
