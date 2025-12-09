@@ -7,17 +7,36 @@ from app.schemas import CompanyResponse, JobResponse, JobSearchRequest
 from .vector_job_service import VectorJobService
 
 
+
 class JobService:
+    """
+    Service for managing jobs and company information.
+    Handles job search, recommendations, retrieval, and statistics.
+    """
+
     @staticmethod
     def to_job_response(job: Job) -> JobResponse:
+        """Convert a Job model to a JobResponse schema."""
         return JobResponse.model_validate(job)
 
     @staticmethod
     def to_company_response(company: Company) -> CompanyResponse:
+        """Convert a Company model to a CompanyResponse schema."""
         return CompanyResponse.model_validate(company)
 
     @staticmethod
     def get_recommended_jobs(db: Session, limit: int = 5) -> dict:
+        """
+        Get recommended jobs for general users (not personalized).
+        Returns active jobs ordered by posting date.
+
+        Args:
+            db: Database session
+            limit: Number of jobs to return
+
+        Returns:
+            Dictionary with job list and total count
+        """
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -36,6 +55,16 @@ class JobService:
 
     @staticmethod
     def search_jobs(db: Session, params: JobSearchRequest) -> dict:
+        """
+        Search for jobs based on criteria (keyword, salary, etc.).
+
+        Args:
+            db: Database session
+            params: Job search parameters (query, page, limit, sort)
+
+        Returns:
+            Dictionary with paginated job results and metadata
+        """
         query = (
             select(Job)
             .join(Company, Job.company_id == Company.id)
@@ -79,6 +108,17 @@ class JobService:
     def get_job_by_id(
         job_id: int, db: Session, increment_view: bool = False
     ) -> Job | None:
+        """
+        Get a job by its ID.
+
+        Args:
+            job_id: ID of the job
+            db: Database session
+            increment_view: Whether to increment the view count (default: False)
+
+        Returns:
+            Job object if found, None otherwise
+        """
         query = select(Job).where(Job.id == job_id).options(selectinload(Job.company))
         job = db.execute(query).scalar_one_or_none()
 
@@ -92,6 +132,16 @@ class JobService:
 
     @staticmethod
     def get_recent_jobs(db: Session, limit: int = 10) -> list[Job]:
+        """
+        Get the most recent active jobs.
+
+        Args:
+            db: Database session
+            limit: Number of jobs to return
+
+        Returns:
+            List of Job objects
+        """
         query = (
             select(Job)
             .where(Job.status == JobStatus.ACTIVE.value)
@@ -104,6 +154,9 @@ class JobService:
 
     @staticmethod
     def increment_job_view(job_id: int, db: Session) -> bool:
+        """
+        Increment the view count for a job.
+        """
         job = db.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job:
             return False
@@ -115,6 +168,9 @@ class JobService:
 
     @staticmethod
     def increment_job_application(job_id: int, db: Session) -> bool:
+        """
+        Increment the applicant count for a job.
+        """
         job = db.execute(select(Job).where(Job.id == job_id)).scalar_one_or_none()
         if not job:
             return False
@@ -128,16 +184,25 @@ class JobService:
 
     @staticmethod
     def get_all_companies(db: Session) -> list[Company]:
+        """
+        Get all companies.
+        """
         return db.execute(select(Company)).scalars().all()
 
     @staticmethod
     def get_company_by_id(company_id: int, db: Session) -> Company | None:
+        """
+        Get a company by its ID.
+        """
         return db.execute(
             select(Company).where(Company.id == company_id)
         ).scalar_one_or_none()
 
     @staticmethod
     def get_company_jobs(company_id: int, db: Session) -> list[Job]:
+        """
+        Get all jobs posted by a specific company.
+        """
         query = (
             select(Job)
             .where(Job.company_id == company_id)
@@ -148,6 +213,23 @@ class JobService:
 
     @staticmethod
     def get_company_info_with_stats(company_id: int, db: Session) -> dict | None:
+        """
+        Get company information along with consolidated statistics.
+
+        Calculates:
+        - Total and active jobs
+        - Total applications received
+        - Total job views
+        - Average salary
+        - Unique skills across jobs
+
+        Args:
+            company_id: ID of the company
+            db: Database session
+
+        Returns:
+            Dictionary with company info, jobs, and statistics
+        """
         company = db.execute(
             select(Company).where(Company.id == company_id)
         ).scalar_one_or_none()
@@ -187,6 +269,22 @@ class JobService:
 
     @staticmethod
     def get_job_statistics(db: Session) -> dict:
+        """
+        Get global job statistics for the platform.
+
+        Include stats on:
+        - Job counts (total, active, featured, remote)
+        - Average salary
+        - Trending skills (top 10)
+        - Top locations (top 10)
+        - Top companies (top 5)
+
+        Args:
+            db: Database session
+
+        Returns:
+            Dictionary containing global job stats
+        """
         total_jobs = db.execute(select(func.count(Job.id))).scalar_one()
         active_jobs = db.execute(
             select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
@@ -244,23 +342,45 @@ class JobService:
             "top_companies": top_companies,
         }
 
+
+
     @staticmethod
     def add_job_to_vector_db(job: Job) -> bool:
+        """
+        Add a job to the vector database for semantic search.
+        """
         vector_service = VectorJobService()
         return vector_service.add_job_to_vector_db(job)
 
     @staticmethod
     def search_similar_jobs(query: str, limit: int = 5) -> list[dict]:
+        """
+        Search for jobs using semantic vector search.
+        """
         vector_service = VectorJobService()
         return vector_service.search_similar_jobs(query, limit)
 
     @staticmethod
     def delete_job_from_vector_db(job_id: int) -> bool:
+        """
+        Remove a job from the vector database.
+        """
         vector_service = VectorJobService()
         return vector_service.delete_job_from_vector_db(job_id)
 
     @staticmethod
     def create_job_with_vector_sync(job_data: dict, db: Session) -> Job | None:
+        """
+        Create a new job and sync it to the vector database.
+        Transactional: rolls back DB creation if anything fails during the process.
+
+        Args:
+            job_data: Dictionary of job fields
+            db: Database session
+
+        Returns:
+            The created Job object if successful, None otherwise
+        """
         try:
             job = Job(**job_data)
             db.add(job)
@@ -281,6 +401,17 @@ class JobService:
 
     @staticmethod
     def get_user_skills(user_id: str, db: Session) -> list[str]:
+        """
+        Get a consolidated list of skills for a user.
+        Combines skills from the Skill table and ProfileSkill table.
+
+        Args:
+            user_id: User ID
+            db: Database session
+
+        Returns:
+            List of unique skill names
+        """
         skills = []
 
         user_skills = (
@@ -311,17 +442,57 @@ class JobService:
     def get_personalized_job_recommendations(
         user_id: str, db: Session, page: int = 1, limit: int = 10
     ) -> dict:
+        """
+        Get personalized job recommendations based on user's skills.
+        Uses vector search to find jobs matching user skills.
+        Falls back to recent jobs if user has no skills or vector DB is down.
+
+        Args:
+            user_id: User ID
+            db: Database session
+            page: Page number
+            limit: Results per page
+
+        Returns:
+            Dictionary with paginated job results and metadata
+        """
         try:
             user_skills = JobService.get_user_skills(user_id, db)
 
             if not user_skills:
+                # Fallback to recent jobs when user has no skills
+                jobs = (
+                    db.execute(
+                        select(Job)
+                        .where(Job.status == JobStatus.ACTIVE.value)
+                        .options(selectinload(Job.company))
+                        .order_by(Job.posted_date.desc())
+                        .offset((page - 1) * limit)
+                        .limit(limit)
+                    )
+                    .scalars()
+                    .all()
+                )
+
+                total = db.scalar(
+                    select(func.count(Job.id)).where(Job.status == JobStatus.ACTIVE.value)
+                )
+                total_pages = max((total + limit - 1) // limit, 1)
+
+                job_responses = []
+                for job in jobs:
+                    job_response = JobService.to_job_response(job)
+                    job_response_dict = job_response.model_dump()
+                    job_response_dict["similarity_score"] = None
+                    job_responses.append(job_response_dict)
+
                 return {
-                    "jobs": [],
-                    "total": 0,
+                    "jobs": job_responses,
+                    "total": total,
                     "page": page,
-                    "total_pages": 0,
-                    "has_next": False,
-                    "has_prev": False,
+                    "total_pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1,
                 }
 
             try:

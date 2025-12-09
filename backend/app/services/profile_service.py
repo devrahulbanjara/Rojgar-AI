@@ -22,10 +22,26 @@ from app.schemas import (
 
 
 class ProfileService:
+
     def __init__(self, db: Session):
+        """
+        Initialize the ProfileService.
+
+        Args:
+            db: Database session
+        """
         self.db = db
 
     def get_profile_by_user_id(self, user_id: str) -> ProfileResponse | None:
+        """
+        Get the full profile for a specific user, including all related entities.
+
+        Args:
+            user_id: The ID of the user
+
+        Returns:
+            ProfileResponse object if found, None otherwise
+        """
         stmt = (
             select(Profile)
             .options(
@@ -69,6 +85,15 @@ class ProfileService:
     def _update_user_and_profile_fields(
         self, user_id: str, profile_data: dict, create_profile: bool = False
     ) -> None:
+        """
+        Helper to update user and profile fields.
+        Handles retry logic for database locking.
+
+        Args:
+            user_id: The ID of the user
+            profile_data: Dictionary of profile data to update/create
+            create_profile: If True, creates a new profile instead of updating
+        """
         import time
 
         from app.models import User
@@ -163,6 +188,16 @@ class ProfileService:
         )
 
     def create_profile(self, user_id: str, profile_data: dict) -> ProfileResponse:
+        """
+        Create a new profile for a user.
+
+        Args:
+            user_id: The ID of the user
+            profile_data: Dictionary of profile data
+
+        Returns:
+            The created ProfileResponse
+        """
         existing = self.get_profile_by_user_id(user_id)
         if existing:
             raise HTTPException(
@@ -174,6 +209,17 @@ class ProfileService:
         return self.get_profile_by_user_id(user_id)
 
     def update_profile(self, user_id: str, profile_data: dict) -> ProfileResponse:
+        """
+        Update an existing profile.
+        Also updates User fields if present in profile_data.
+
+        Args:
+            user_id: The ID of the user
+            profile_data: Dictionary of fields to update
+
+        Returns:
+            The updated ProfileResponse
+        """
         self._update_user_and_profile_fields(
             user_id, profile_data, create_profile=False
         )
@@ -183,6 +229,16 @@ class ProfileService:
     def add_work_experience(
         self, user_id: str, experience_data: dict
     ) -> WorkExperienceResponse:
+        """
+        Add a work experience entry to a user's profile.
+
+        Args:
+            user_id: The ID of the user
+            experience_data: Dictionary of experience details
+
+        Returns:
+            The created WorkExperienceResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -221,6 +277,17 @@ class ProfileService:
     def update_work_experience(
         self, user_id: str, experience_id: str, experience_data: dict
     ) -> WorkExperienceResponse:
+        """
+        Update a work experience entry.
+
+        Args:
+            user_id: The ID of the user
+            experience_id: The ID of the experience entry
+            experience_data: Dictionary of fields to update
+
+        Returns:
+            The updated WorkExperienceResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -250,6 +317,16 @@ class ProfileService:
         return WorkExperienceResponse.model_validate(experience)
 
     def delete_work_experience(self, user_id: str, experience_id: str) -> bool:
+        """
+        Delete a work experience entry.
+
+        Args:
+            user_id: The ID of the user
+            experience_id: The ID of the experience entry to remove
+
+        Returns:
+            True if deleted successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -270,9 +347,20 @@ class ProfileService:
         self.db.commit()
         return True
 
+
     def add_education(
         self, user_id: str, education_data: dict
     ) -> EducationRecordResponse:
+        """
+        Add an education record to a user's profile.
+
+        Args:
+            user_id: The ID of the user
+            education_data: Dictionary of education details
+
+        Returns:
+            The created EducationRecordResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -303,6 +391,17 @@ class ProfileService:
     def update_education(
         self, user_id: str, education_id: str, education_data: dict
     ) -> EducationRecordResponse:
+        """
+        Update an education record.
+
+        Args:
+            user_id: The ID of the user
+            education_id: The ID of the education record
+            education_data: Dictionary of fields to update
+
+        Returns:
+            The updated EducationRecordResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -330,7 +429,16 @@ class ProfileService:
         return EducationRecordResponse.model_validate(education)
 
     def delete_education(self, user_id: str, education_id: str) -> bool:
-        """Delete an education record"""
+        """
+        Delete an education record.
+
+        Args:
+            user_id: The ID of the user
+            education_id: The ID of the education record to remove
+
+        Returns:
+            True if deleted successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -354,6 +462,16 @@ class ProfileService:
     def add_certification(
         self, user_id: str, certification_data: dict
     ) -> CertificationResponse:
+        """
+        Add a certification to a user's profile.
+
+        Args:
+            user_id: The ID of the user
+            certification_data: Dictionary of certification details
+
+        Returns:
+            The created CertificationResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -382,6 +500,17 @@ class ProfileService:
     def update_certification(
         self, user_id: str, certification_id: str, certification_data: dict
     ) -> CertificationResponse:
+        """
+        Update a certification entry.
+
+        Args:
+            user_id: The ID of the user
+            certification_id: The ID of the certification
+            certification_data: Dictionary of fields to update
+
+        Returns:
+            The updated CertificationResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -409,6 +538,16 @@ class ProfileService:
         return CertificationResponse.model_validate(certification)
 
     def delete_certification(self, user_id: str, certification_id: str) -> bool:
+        """
+        Delete a certification entry.
+
+        Args:
+            user_id: The ID of the user
+            certification_id: The ID of the certification to remove
+
+        Returns:
+            True if deleted successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -430,6 +569,16 @@ class ProfileService:
         return True
 
     def add_skill(self, user_id: str, skill_data: dict) -> ProfileSkillResponse:
+        """
+        Add a skill to a user's profile.
+
+        Args:
+            user_id: The ID of the user
+            skill_data: Dictionary of skill details
+
+        Returns:
+            The created ProfileSkillResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -454,6 +603,17 @@ class ProfileService:
     def update_skill(
         self, user_id: str, skill_id: str, skill_data: dict
     ) -> ProfileSkillResponse:
+        """
+        Update a skill entry.
+
+        Args:
+            user_id: The ID of the user
+            skill_id: The ID of the skill
+            skill_data: Dictionary of fields to update
+
+        Returns:
+            The updated ProfileSkillResponse
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -481,6 +641,16 @@ class ProfileService:
         return ProfileSkillResponse.model_validate(skill)
 
     def delete_skill(self, user_id: str, skill_id: str) -> bool:
+        """
+        Delete a skill entry.
+
+        Args:
+            user_id: The ID of the user
+            skill_id: The ID of the skill to remove
+
+        Returns:
+            True if deleted successfully
+        """
         profile = self.db.execute(
             select(Profile).where(Profile.user_id == user_id)
         ).scalar_one_or_none()
@@ -502,6 +672,16 @@ class ProfileService:
         return True
 
     def get_profile_data_for_autofill(self, user_id: str) -> dict:
+        """
+        Get structured profile data suitable for autofilling forms (e.g. resumes).
+        Formats dates and flattens some structures.
+
+        Args:
+            user_id: The ID of the user
+
+        Returns:
+            Dictionary containing formatted profile data
+        """
         profile = self.db.execute(
             select(Profile)
             .options(
@@ -605,6 +785,7 @@ class ProfileService:
         }
 
     def _format_location(self, city: str | None, country: str | None) -> str | None:
+        """Helper to format city and country into a location string."""
         if not city and not country:
             return None
         if city and country:

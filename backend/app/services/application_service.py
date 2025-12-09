@@ -6,9 +6,25 @@ from sqlalchemy.orm import Session
 from app.models import Application, ApplicationStage, ApplicationStatus
 
 
+
 class ApplicationService:
+    """
+    Service for managing job applications.
+    Handles application lifecycle: creation, status updates, tracking board, and statistics.
+    """
+
     @staticmethod
     def get_user_applications(user_id: str, db: Session) -> list[Application]:
+        """
+        Get all applications for a specific user.
+
+        Args:
+            user_id: The ID of the user
+            db: Database session
+
+        Returns:
+            List of Application objects owned by the user
+        """
         return (
             db.execute(select(Application).where(Application.user_id == user_id))
             .scalars()
@@ -17,6 +33,21 @@ class ApplicationService:
 
     @staticmethod
     def get_tracking_board(user_id: str, db: Session) -> dict[str, list[dict]]:
+        """
+        Get applications organized by stage for the Kanban board view.
+
+        Groups applications into:
+        - applied: Applied and Screening stages
+        - interviewing: Interviewing stage
+        - outcome: Offer and Decision stages
+
+        Args:
+            user_id: The ID of the user
+            db: Database session
+
+        Returns:
+            Dictionary mapping stage categories to lists of application details
+        """
         applications = ApplicationService.get_user_applications(user_id, db)
 
         board = {
@@ -55,6 +86,23 @@ class ApplicationService:
 
     @staticmethod
     def get_application_stats(user_id: str, db: Session) -> dict[str, int]:
+        """
+        Get statistical summary of user's applications.
+
+        Calculates:
+        - Total applications
+        - Active applications (not accepted/rejected)
+        - Interviews scheduled
+        - Offers received
+        - Response rate
+
+        Args:
+            user_id: The ID of the user
+            db: Database session
+
+        Returns:
+            Dictionary of statistical counts
+        """
         applications = ApplicationService.get_user_applications(user_id, db)
 
         total = len(applications)
@@ -96,6 +144,19 @@ class ApplicationService:
         description: str | None,
         db: Session,
     ) -> Application:
+        """
+        Create a new job application.
+
+        Args:
+            user_id: The ID of the user creating the application
+            job_title: Title of the job applied for
+            company_name: Name of the company
+            description: Optional notes/description
+            db: Database session
+
+        Returns:
+            The created Application object
+        """
         new_app = Application(
             user_id=user_id,
             job_title=job_title,
@@ -113,6 +174,16 @@ class ApplicationService:
 
     @staticmethod
     def get_application_by_id(application_id: int, db: Session) -> Application | None:
+        """
+        Get an application by its ID.
+
+        Args:
+            application_id: The ID of the application
+            db: Database session
+
+        Returns:
+            Application object if found, None otherwise
+        """
         return db.execute(
             select(Application).where(Application.id == application_id)
         ).scalar_one_or_none()
@@ -125,6 +196,19 @@ class ApplicationService:
         description: str | None = None,
         db: Session = None,
     ) -> Application:
+        """
+        Update an existing application.
+
+        Args:
+            application: The Application object to update
+            stage: New stage (optional)
+            status: New status (optional)
+            description: New description (optional)
+            db: Database session
+
+        Returns:
+            The updated Application object
+        """
         if stage is not None:
             application.stage = stage.value
         if status is not None:
@@ -142,9 +226,27 @@ class ApplicationService:
 
     @staticmethod
     def delete_application(application: Application, db: Session) -> None:
+        """
+        Delete an application.
+
+        Args:
+            application: The Application object to delete
+            db: Database session
+        """
         db.delete(application)
         db.commit()
 
     @staticmethod
     def verify_ownership(application: Application, user_id: str) -> bool:
+        """
+        Verify if an application belongs to a specific user.
+
+        Args:
+            application: The Application object
+            user_id: The ID of the user to check against
+
+        Returns:
+            True if the application belongs to the user, False otherwise
+        """
         return application.user_id == user_id
+
