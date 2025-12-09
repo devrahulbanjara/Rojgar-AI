@@ -5,7 +5,6 @@ from app.models import User
 from app.schemas import UserResponse
 
 
-
 class UserService:
     """
     Service for managing User entities.
@@ -25,6 +24,25 @@ class UserService:
             User object if found, None otherwise
         """
         return db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+
+    @staticmethod
+    def update_profile(user: User, name: str, db: Session) -> User:
+        """
+        Update user profile information.
+
+        Args:
+            user: User object to update
+            name: New name for the user
+            db: Database session
+
+        Returns:
+            Updated User object
+        """
+        user.name = name
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
 
     @staticmethod
     def to_user_response(user: User) -> UserResponse:

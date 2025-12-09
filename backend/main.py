@@ -21,7 +21,6 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("Database ready!")
 
-    # Initialize ML Model
     ModelManager.initialize()
 
     yield
@@ -58,7 +57,39 @@ def root():
 
 @app.get("/health")
 def health_check():
+    """
+    Health check endpoint that verifies critical dependencies.
+    Returns detailed status of database, ML model, and overall health.
+    """
+    from sqlalchemy import text
+    
+    checks = {}
+    overall_healthy = True
+    
+    try:
+        from app.core.database import engine
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        checks["database"] = "healthy"
+    except Exception as e:
+        checks["database"] = f"unhealthy: {str(e)}"
+        overall_healthy = False
+    
+    try:
+        from app.core.ml_model import ModelManager
+        model = ModelManager.get_model()
+        if model is not None:
+            checks["ml_model"] = "healthy"
+        else:
+            checks["ml_model"] = "not initialized"
+            overall_healthy = False
+    except Exception as e:
+        checks["ml_model"] = f"unhealthy: {str(e)}"
+        overall_healthy = False
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if overall_healthy else "unhealthy",
         "environment": settings.ENVIRONMENT,
+        "checks": checks,
     }
+
