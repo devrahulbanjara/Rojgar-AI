@@ -15,7 +15,7 @@ from .auth.auth_service import AuthService
 # Core services
 from .job_service import JobService
 from .profile_service import ProfileService
-from .resume_service import ResumeService
+from .resume import ResumeService
 from .skill_service import SkillService
 from .user_service import UserService
 from .vector_job_service import VectorJobService
