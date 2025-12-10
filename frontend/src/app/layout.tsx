@@ -32,7 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={jakarta.className}>
+      <body
+        className={jakarta.className}
+        suppressHydrationWarning={true}
+      >
         <Providers>
           {children}
           <Toaster position="top-right" richColors />
