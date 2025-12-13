@@ -201,33 +201,28 @@ export const endpoints = {
   },
 
   // Profile endpoints (SSOT - Single Source of Truth)
-  profile: {
-    get: '/api/v1/profile',
-    create: '/api/v1/profile',
-    update: '/api/v1/profile',
-    workExperience: {
-      list: '/api/v1/profile/work-experience',
-      create: '/api/v1/profile/work-experience',
-      update: (id: string) => `/api/v1/profile/work-experience/${id}`,
-      delete: (id: string) => `/api/v1/profile/work-experience/${id}`,
+  // Candidate Profile endpoints (New Implementation)
+  candidate: {
+    me: '/api/v1/candidate/me',
+    experience: {
+      base: '/api/v1/candidate/experience',
+      delete: (id: string) => `/api/v1/candidate/experience/${id}`,
+      update: (id: string) => `/api/v1/candidate/experience/${id}`,
     },
     education: {
-      list: '/api/v1/profile/education',
-      create: '/api/v1/profile/education',
-      update: (id: string) => `/api/v1/profile/education/${id}`,
-      delete: (id: string) => `/api/v1/profile/education/${id}`,
-    },
-    certifications: {
-      list: '/api/v1/profile/certifications',
-      create: '/api/v1/profile/certifications',
-      update: (id: string) => `/api/v1/profile/certifications/${id}`,
-      delete: (id: string) => `/api/v1/profile/certifications/${id}`,
+      base: '/api/v1/candidate/education',
+      delete: (id: string) => `/api/v1/candidate/education/${id}`,
+      update: (id: string) => `/api/v1/candidate/education/${id}`,
     },
     skills: {
-      list: '/api/v1/profile/skills',
-      create: '/api/v1/profile/skills',
-      update: (id: string) => `/api/v1/profile/skills/${id}`,
-      delete: (id: string) => `/api/v1/profile/skills/${id}`,
+      base: '/api/v1/candidate/skills',
+      delete: (id: string) => `/api/v1/candidate/skills/${id}`,
+      update: (id: string) => `/api/v1/candidate/skills/${id}`,
+    },
+    certifications: {
+      base: '/api/v1/candidate/certifications',
+      delete: (id: string) => `/api/v1/candidate/certifications/${id}`,
+      update: (id: string) => `/api/v1/candidate/certifications/${id}`,
     },
   },
 
@@ -321,33 +316,30 @@ export const api = {
   },
 
   // Profile methods (SSOT - Single Source of Truth)
-  profile: {
-    get: () => apiClient.get(endpoints.profile.get),
-    create: (data: any) => apiClient.post(endpoints.profile.create, data),
-    update: (data: any) => apiClient.put(endpoints.profile.update, data),
-    workExperience: {
-      list: () => apiClient.get(endpoints.profile.workExperience.list),
-      create: (data: any) => apiClient.post(endpoints.profile.workExperience.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.workExperience.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.workExperience.delete(id)),
+  // Candidate methods
+  candidate: {
+    getProfile: () => apiClient.get(endpoints.candidate.me),
+    updateProfile: (data: any) => apiClient.patch(endpoints.candidate.me, data),
+
+    experience: {
+      add: (data: any) => apiClient.post(endpoints.candidate.experience.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.experience.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.experience.update(id), data),
     },
     education: {
-      list: () => apiClient.get(endpoints.profile.education.list),
-      create: (data: any) => apiClient.post(endpoints.profile.education.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.education.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.education.delete(id)),
-    },
-    certifications: {
-      list: () => apiClient.get(endpoints.profile.certifications.list),
-      create: (data: any) => apiClient.post(endpoints.profile.certifications.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.certifications.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.certifications.delete(id)),
+      add: (data: any) => apiClient.post(endpoints.candidate.education.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.education.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.education.update(id), data),
     },
     skills: {
-      list: () => apiClient.get(endpoints.profile.skills.list),
-      create: (data: any) => apiClient.post(endpoints.profile.skills.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.skills.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.skills.delete(id)),
+      add: (data: any) => apiClient.post(endpoints.candidate.skills.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.skills.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.skills.update(id), data),
+    },
+    certifications: {
+      add: (data: any) => apiClient.post(endpoints.candidate.certifications.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.certifications.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.certifications.update(id), data),
     },
   },
 

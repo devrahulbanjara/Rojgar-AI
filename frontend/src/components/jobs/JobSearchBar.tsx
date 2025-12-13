@@ -40,8 +40,8 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
     <div className={cn('relative', className)}>
       <div className={cn(
         'relative flex items-center bg-white border-[1.5px] rounded-xl transition-all duration-200',
-        isFocused
-          ? 'border-[#3056F5] ring-4 ring-[#3056F5]/10'
+        isFocused 
+          ? 'border-[#3056F5] ring-4 ring-[#3056F5]/10' 
           : 'border-[#E5E7EB] hover:border-[#CBD5E1]'
       )}>
         {/* Search Icon */}

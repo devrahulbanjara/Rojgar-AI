@@ -10,10 +10,6 @@ export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 export { Input } from './input';
 export { Label } from './label';
 export { Progress } from './progress';
-export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './select';
+export { Select } from './select';
 export { Separator } from './separator';
 export { Textarea } from './textarea';
-export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from './dropdown-menu';
-export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
-export { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from './sheet';
-export { Checkbox } from './checkbox';

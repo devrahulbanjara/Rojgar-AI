@@ -22,7 +22,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   lines = 1
 }) => {
   const baseClasses = 'animate-pulse bg-muted rounded';
-
+  
   const variantClasses = {
     text: 'h-4 w-full',
     circular: 'rounded-full',

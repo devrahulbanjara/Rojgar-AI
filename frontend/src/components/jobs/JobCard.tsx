@@ -97,7 +97,7 @@ export const JobCard = memo<JobCardProps>(({
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
-            <span>{jobUtils.formatPostedDate(job.posted_date)}</span>
+            <span>{jobUtils.formatPostedDate(job.created_at || job.posted_date)}</span>
           </div>
         </div>
 

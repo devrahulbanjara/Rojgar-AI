@@ -24,7 +24,7 @@ export const LoadingSpinner = memo<LoadingSpinnerProps>(({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div
+      <div 
         className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-current border-t-transparent transition-all duration-300`}
         style={{
           animation: 'spin 1s linear infinite, pulse 2s ease-in-out infinite'

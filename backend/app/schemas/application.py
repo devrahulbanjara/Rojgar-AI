@@ -1,47 +1,28 @@
 from datetime import datetime
-from enum import Enum
-
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
-
-
-class ApplicationStage(str, Enum):
-    APPLIED = "applied"
-    SCREENING = "screening"
-    INTERVIEWING = "interviewing"
-    OFFER = "offer"
-    DECISION = "decision"
-
-
-class ApplicationStatus(str, Enum):
-    PENDING = "pending"
-    UNDER_REVIEW = "under_review"
-    INTERVIEW_SCHEDULED = "interview_scheduled"
-    OFFER_EXTENDED = "offer_extended"
-    ACCEPTED = "accepted"
-    REJECTED = "rejected"
-
-
-class CreateApplicationRequest(BaseModel):
-    job_title: str
-    company_name: str
-    description: str | None = None
-
-
-class UpdateApplicationRequest(BaseModel):
-    stage: ApplicationStage | None = None
-    status: ApplicationStatus | None = None
-    description: str | None = None
-
-
-class ApplicationResponse(BaseModel):
+from app.models.application import ApplicationStatus
+class JobSummary(BaseModel):
+    job_id: str
+    title: str
+    location_city: Optional[str]
+    employment_type: Optional[str]
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    user_id: str
-    job_title: str
+class CompanySummary(BaseModel):
+    company_id: str
     company_name: str
-    description: str | None = None
-    applied_date: datetime
-    stage: ApplicationStage
-    status: ApplicationStatus
+    company_logo: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class ApplicationResponse(BaseModel):
+    application_id: str
+    current_status: ApplicationStatus
+    applied_at: datetime
     updated_at: datetime
+    
+    # Nested Objects
+    job: JobSummary
+    company: CompanySummary
+    
+    model_config = ConfigDict(from_attributes=True)

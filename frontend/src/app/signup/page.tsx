@@ -19,7 +19,7 @@ export default function Signup() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  
   const [formState, formActions] = useForm<{
     name: string;
     email: string;
@@ -27,7 +27,7 @@ export default function Signup() {
     confirmPassword: string;
     userType: string;
   }>({
-    initialValues: {
+    initialValues: { 
       name: '',
       email: '',
       password: '',
@@ -40,7 +40,7 @@ export default function Signup() {
       password: [validatePassword],
     },
   });
-
+  
   const { values, errors } = formState;
   const { handleChange, handleSubmit, setFieldError } = formActions;
 
