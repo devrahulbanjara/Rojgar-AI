@@ -1,85 +1,73 @@
-"use client";
-
-import * as React from "react"
-import { cn } from "../../lib/utils"
-import { X } from "lucide-react"
+import React, { useEffect } from 'react';
+import { cn } from '../../lib/utils';
+import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 interface SheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     children: React.ReactNode;
+    hideClose?: boolean;
 }
 
-const SheetContext = React.createContext<{
-    open: boolean
-    setOpen: (open: boolean) => void
-} | null>(null)
+export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
+    // Prevent body scroll when open
+    useEffect(() => {
+        if (open) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [open]);
 
-const Sheet: React.FC<SheetProps> = ({ open, onOpenChange, children }) => {
-    return (
-        <SheetContext.Provider value={{ open, setOpen: onOpenChange }}>
-            {children}
-        </SheetContext.Provider>
-    )
-}
+    if (!open) return null;
 
-const SheetContent: React.FC<{ children: React.ReactNode, className?: string, side?: "left" | "right" | "bottom" }> = ({ children, className, side = "right" }) => {
-    const context = React.useContext(SheetContext)
-    if (!context) throw new Error("SheetContent must be used within Sheet")
-
-    if (!context.open) return null
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end">
+    // Use portal to render at document body level (outside sidebar)
+    const content = (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Very subtle backdrop blur - covers entire viewport */}
             <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-                onClick={() => context.setOpen(false)}
+                className="fixed inset-0 bg-black/5 backdrop-blur-[3px] animate-in fade-in duration-200"
+                onClick={() => onOpenChange(false)}
             />
 
-            <div className={cn(
-                "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out duration-300",
-                side === "right" && "right-0 top-0 w-3/4 border-l sm:max-w-sm h-full",
-                side === "left" && "left-0 top-0 w-3/4 border-r sm:max-w-sm h-full",
-                side === "bottom" && "bottom-0 left-0 right-0 border-t rounded-t-xl",
-                className
-            )}>
-                <button
-                    type="button"
-                    className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
-                    onClick={() => context.setOpen(false)}
-                >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                </button>
+            {/* Centered Panel */}
+            <div className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
+                {!hideClose && (
+                    <button
+                        onClick={() => onOpenChange(false)}
+                        className="absolute right-4 top-4 p-2 rounded-xl hover:bg-gray-100 transition-colors z-50"
+                    >
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                )}
                 {children}
             </div>
         </div>
-    )
+    );
+
+    // Render to document body to escape sidebar container
+    if (typeof document !== 'undefined') {
+        return createPortal(content, document.body);
+    }
+    return content;
 }
 
-const SheetHeader: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-    <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}>
-        {children}
-    </div>
-)
+export function SheetContent({ children, className }: { children: React.ReactNode; className?: string }) {
+    return <div className={cn("h-full flex flex-col overflow-hidden", className)}>{children}</div>;
+}
 
-const SheetTitle: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-    <h2 className={cn("text-lg font-semibold text-foreground", className)}>
-        {children}
-    </h2>
-)
+export function SheetHeader({ children, className }: { children: React.ReactNode; className?: string }) {
+    return <div className={cn("px-8 py-6 border-b bg-gradient-to-b from-gray-50 to-white flex-shrink-0", className)}>{children}</div>;
+}
 
-const SheetDescription: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-    <p className={cn("text-sm text-muted-foreground", className)}>
-        {children}
-    </p>
-)
+export function SheetTitle({ children, className }: { children: React.ReactNode; className?: string }) {
+    return <h2 className={cn("text-xl font-bold text-gray-900", className)}>{children}</h2>;
+}
 
-const SheetFooter: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-    <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-auto", className)}>
-        {children}
-    </div>
-)
-
-
-export { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter }
+export function SheetDescription({ children, className }: { children: React.ReactNode; className?: string }) {
+    return <p className={cn("text-sm text-gray-500 mt-1", className)}>{children}</p>;
+}

@@ -1,29 +1,22 @@
-from datetime import UTC, datetime, timedelta
-
-import bcrypt
-from fastapi import HTTPException, Request, status
+import hashlib
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 from jose import JWTError, jwt
+from fastapi import HTTPException, status, Request
 
 from .config import settings
 
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt."""
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return hashlib.sha256(f"{password}{settings.SECRET_KEY}".encode()).hexdigest()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a bcrypt hash."""
-    try:
-        return bcrypt.checkpw(
-            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-        )
-    except Exception:
-        return False
+    return hash_password(plain_password) == hashed_password
 
 
-def create_token(user_id: str, expires_minutes: int | None = None) -> str:
-    now = datetime.now(UTC)
+def create_token(user_id: str, expires_minutes: Optional[int] = None) -> str:
+    now = datetime.now(timezone.utc)
     if expires_minutes:
         expire = now + timedelta(minutes=expires_minutes)
     else:
@@ -58,7 +51,6 @@ def verify_token(token: str) -> str:
 
 
 def get_current_user_id(request: Request) -> str:
-    # Get token from cookie
     token = request.cookies.get("auth_token")
 
     if not token:

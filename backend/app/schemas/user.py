@@ -1,7 +1,7 @@
+from typing import Optional
 from datetime import datetime
 from enum import Enum
-
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 
 
 class UserRole(str, Enum):
@@ -14,23 +14,16 @@ class SignupRequest(BaseModel):
     password: str
     name: str
     role: UserRole
-    picture: str | None = None
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        return v
+    picture: Optional[str] = None
 
 
 class CreateUserRequest(BaseModel):
     email: str
     name: str
-    password: str | None = None
-    google_id: str | None = None
-    picture: str | None = None
-    role: UserRole | None = None
+    password: Optional[str] = None
+    google_id: Optional[str] = None
+    picture: Optional[str] = None
+    role: Optional[UserRole] = None
 
 
 class LoginRequest(BaseModel):
@@ -43,7 +36,7 @@ class GoogleUserInfo(BaseModel):
     id: str
     email: str
     name: str
-    picture: str | None = None
+    picture: Optional[str] = None
     verified_email: bool
 
 
@@ -56,10 +49,10 @@ class UserResponse(BaseModel):
 
     id: str
     email: str
-    name: str
-    picture: str | None = None
-    google_id: str | None = None
-    role: UserRole | None = None
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    google_id: Optional[str] = None
+    role: Optional[UserRole] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

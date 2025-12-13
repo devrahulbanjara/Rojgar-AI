@@ -1,237 +1,140 @@
+from typing import List, Optional
+from langchain_core.documents import Document
+from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.http import models
+from sqlalchemy.orm import Session
 
-from app.core import logger, settings
-from app.core.ml_model import ModelManager
-from app.models import Job
+from app.core.config import settings
+from app.core.ml import get_embedding_model
+from app.models.job import JobPosting
+import logging
 
+logger = logging.getLogger(__name__)
 
-class VectorJobService:
-    """
-    Service for managing vector embeddings and semantic search for jobs.
-    Uses Qdrant for vector storage and SentenceTransformer for embedding generation.
-    """
-
+class JobVectorService:
     def __init__(self):
-        """
-        Initialize the VectorJobService.
-        Sets up the embedding model (SentenceTransformer) and the Qdrant client.
-        Ensures the collection exists.
-        """
-        # Get the singleton model instance
-        self.model = ModelManager.get_model()
+        self.embedding_model = get_embedding_model()
+        self.collection_name = settings.QDRANT_COLLECTION_JOBS
+        self.vector_store: Optional[QdrantVectorStore] = None
+        
+        try:
+            self.client = QdrantClient(
+                url=settings.QDRANT_URL, 
+                api_key=settings.QDRANT_API_KEY
+            )
+            self._ensure_collection_exists()
+            
+            self.vector_store = QdrantVectorStore(
+                client=self.client,
+                collection_name=self.collection_name,
+                embedding=self.embedding_model,
+            )
+        except Exception as e:
+            logger.error(f"Qdrant Connection Failed: {e}")
+            self.vector_store = None
 
-        qdrant_url = settings.QDRANT_URL
-        qdrant_api_key = settings.QDRANT_API_KEY
-        collection_name = settings.QDRANT_COLLECTION_JOBS
-
-        logger.info(f"Connecting to Qdrant at: {qdrant_url}")
-
-        self.client = QdrantClient(
-            url=qdrant_url,
-            api_key=qdrant_api_key,
-        )
-        self.collection_name = collection_name
-        self._ensure_collection_exists()
+    def _get_embedding_dimension(self) -> int:
+        test_embedding = self.embedding_model.embed_query("test")
+        return len(test_embedding)
 
     def _ensure_collection_exists(self):
-        """
-        Check if the Qdrant collection exists and create it if not.
-        Configures the vector size and distance metric (Cosine).
-        """
-        try:
-            collection_exists = self.client.collection_exists(self.collection_name)
-            logger.info(
-                f"Collection '{self.collection_name}' exists: {collection_exists}"
-            )
-
-            if not collection_exists:
-                logger.info(f"Creating collection: {self.collection_name}")
-                self.client.create_collection(
-                    collection_name=self.collection_name,
-                    vectors_config=VectorParams(
-                        size=self.model.get_sentence_embedding_dimension(),
-                        distance=Distance.COSINE,
-                    ),
+        embedding_dim = self._get_embedding_dimension()
+        
+        if self.client.collection_exists(self.collection_name):
+            collection_info = self.client.get_collection(self.collection_name)
+            existing_dim = collection_info.config.params.vectors.size
+            
+            if existing_dim != embedding_dim:
+                logger.warning(
+                    f"Collection dimension mismatch: existing={existing_dim}, model={embedding_dim}. "
+                    f"Recreating collection..."
                 )
-                logger.info(f"Created collection: {self.collection_name}")
-        except Exception as e:
-            logger.error(f"Error ensuring collection exists: {str(e)}")
-            raise
-
-    def _create_job_text(self, job: Job) -> str:
-        """
-        Create a text representation of a job for embedding generation.
-
-        Args:
-            job: The Job object
-
-        Returns:
-            A string combining title, description, and skills
-        """
-        skills_text = ", ".join(job.skills) if job.skills else ""
-        return f"{job.title}. {job.description}. {skills_text}"
-
-    def _create_job_payload(self, job: Job) -> dict:
-        """
-        Create a metadata payload for storage in Qdrant.
-
-        Args:
-            job: The Job object
-
-        Returns:
-            Dictionary containing job metadata
-        """
-        return {
-            "job_id": job.id,
-            "title": job.title,
-            "department": job.department,
-            "level": job.level,
-            "location": job.location,
-            "location_type": job.location_type,
-            "employment_type": job.employment_type,
-            "salary_min": job.salary_min,
-            "salary_max": job.salary_max,
-            "salary_currency": job.salary_currency,
-            "company_id": job.company_id,
-            "posted_date": job.posted_date.isoformat(),
-            "status": job.status,
-        }
-
-    def add_job_to_vector_db(self, job: Job) -> bool:
-        """
-        Add or update a job in the vector database.
-        Generates an embedding for the job and stores it with metadata.
-
-        Args:
-            job: The Job object to add
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            text = self._create_job_text(job)
-            payload = self._create_job_payload(job)
-
-            vector = self.model.encode([text])[0]
-
-            point = PointStruct(id=job.id, vector=vector.tolist(), payload=payload)
-
-            self.client.upsert(collection_name=self.collection_name, points=[point])
-
-            logger.info(f"Added job {job.id} to vector database")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error adding job {job.id} to vector database: {str(e)}")
-            return False
-
-    def search_similar_jobs(self, query: str, limit: int = 5) -> list[dict]:
-        """
-        Search for jobs similar to a text query.
-
-        Args:
-            query: The search query text
-            limit: Maximum number of results to return
-
-        Returns:
-            List of dictionaries containing job details and similarity scores
-        """
-        try:
-            query_vector = self.model.encode([query])[0]
-
-            search_results = self.client.search(
-                collection_name=self.collection_name,
-                query_vector=query_vector.tolist(),
-                limit=limit,
-            )
-
-            results = []
-            for hit in search_results:
-                results.append(
-                    {
-                        "job_id": hit.payload.get("job_id"),
-                        "title": hit.payload.get("title"),
-                        "score": hit.score,
-                        "payload": hit.payload,
-                    }
-                )
-
-            return results
-
-        except Exception as e:
-            logger.error(f"Error searching similar jobs: {str(e)}")
-            return []
-
-    def delete_job_from_vector_db(self, job_id: int) -> bool:
-        """
-        Delete a job from the vector database.
-
-        Args:
-            job_id: The ID of the job to delete
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            self.client.delete(
-                collection_name=self.collection_name, points_selector=[job_id]
-            )
-            logger.info(f"Deleted job {job_id} from vector database")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error deleting job {job_id} from vector database: {str(e)}")
-            return False
-
-    def get_personalized_job_recommendations(
-        self, user_skills: list[str], page: int = 1, limit: int = 10
-    ) -> list[dict]:
-        """
-        Get job recommendations based on user skills.
-        Uses the skills list to generate a query vector.
-
-        Args:
-            user_skills: List of skill strings
-            page: Page number for pagination (simulated)
-            limit: Number of items per page
-
-        Returns:
-            List of dictionaries containing recommended job details and scores
-        """
-        try:
-            skills_text = ", ".join(user_skills)
-
-            query_vector = self.model.encode([skills_text])[0]
-
-            if page == 1:
-                vector_limit = 10
+                self.client.delete_collection(self.collection_name)
             else:
-                vector_limit = 20
+                logger.info(f"Using existing Qdrant collection: {self.collection_name} (dim={existing_dim})")
+                return
+        
+        self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=models.VectorParams(size=embedding_dim, distance=models.Distance.COSINE)
+        )
+        logger.info(f"Created Qdrant collection: {self.collection_name} (dim={embedding_dim})")
 
-            search_results = self.client.search(
-                collection_name=self.collection_name,
-                query_vector=query_vector.tolist(),
-                limit=vector_limit,
-            )
+    def _construct_job_text(self, job: JobPosting) -> str:
+        skills_txt = ""
+        benefits_txt = ""
+        role_overview = ""
 
-            results = []
-            for hit in search_results:
-                results.append(
-                    {
-                        "job_id": hit.payload.get("job_id"),
-                        "score": hit.score,
-                        "payload": hit.payload,
-                    }
-                )
+        if job.job_description:
+            role_overview = job.job_description.role_overview or ""
+            
+            req = job.job_description.required_skills_experience
+            if isinstance(req, dict):
+                flat_skills = []
+                for v in req.values():
+                    if isinstance(v, list): flat_skills.extend(v)
+                    elif isinstance(v, str): flat_skills.append(v)
+                skills_txt = ", ".join(flat_skills)
+            elif isinstance(req, list):
+                skills_txt = ", ".join(req)
 
-            if page == 1:
-                return results[:10]
-            else:
-                start_idx = 10
-                end_idx = start_idx + limit
-                return results[start_idx:end_idx]
+            offers = job.job_description.offers
+            if isinstance(offers, dict) and "benefits" in offers:
+                benefits_txt = ", ".join(offers["benefits"])
 
-        except Exception as e:
-            logger.error(f"Error getting personalized recommendations: {str(e)}")
+        return (
+            f"Title: {job.title}. "
+            f"Location: {job.location_city}, {job.location_country}. "
+            f"Type: {job.employment_type}, Remote: {job.is_remote}. "
+            f"Description: {role_overview}. "
+            f"Skills: {skills_txt}. "
+            f"Benefits: {benefits_txt}."
+        )
+
+    def index_all_pending_jobs(self, db: Session):
+        if not self.vector_store:
+            return
+
+        pending_jobs = db.query(JobPosting).filter(JobPosting.is_indexed == False).all()
+        if not pending_jobs:
+            logger.info("No new jobs to index.")
+            return
+
+        logger.info(f"Indexing {len(pending_jobs)} new jobs...")
+
+        for job in pending_jobs:
+            try:
+                text_content = self._construct_job_text(job)
+                
+                metadata = {
+                    "job_id": job.job_id,
+                    "company_id": job.company_id,
+                    "title": job.title
+                }
+                
+                doc = Document(page_content=text_content, metadata=metadata)
+                
+                self.vector_store.add_documents([doc], ids=[job.job_id])
+                
+                job.is_indexed = True
+                
+            except Exception as e:
+                logger.error(f"Failed to index job {job.job_id}: {e}")
+
+        db.commit()
+        logger.info("Indexing complete.")
+
+    def search_jobs(self, query: str, limit: int = 10) -> List[str]:
+        if not self.vector_store or not query:
             return []
+        
+        results = self.vector_store.similarity_search(query, k=limit)
+        return [res.metadata["job_id"] for res in results]
+
+    def recommend_jobs_by_skills(self, skills: List[str], limit: int = 10) -> List[str]:
+        if not skills:
+            return []
+        
+        query_text = f"Job suitable for someone with skills: {', '.join(skills)}"
+        return self.search_jobs(query_text, limit)

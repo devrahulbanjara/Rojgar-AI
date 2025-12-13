@@ -14,7 +14,7 @@ export const WelcomeMessage = memo<WelcomeMessageProps>(({
   className = '',
 }) => {
   const displayName = firstName || 'there';
-
+  
   return (
     <div className={`mb-12 ${className}`}>
       <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight">

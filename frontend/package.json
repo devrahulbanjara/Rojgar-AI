@@ -10,11 +10,12 @@
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
-    "clean": "rm -rf .next out dist",
-    "prepare": "husky"
+    "clean": "rm -rf .next out dist"
   },
   "dependencies": {
+    "@radix-ui/react-avatar": "^1.1.11",
     "@tanstack/react-query": "^5.89.0",
+    "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "critters": "^0.0.23",
@@ -37,16 +38,8 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "eslint"
-    ]
   }
 }

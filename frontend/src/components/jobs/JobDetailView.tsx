@@ -1,6 +1,6 @@
 /**
  * JobDetailView Component
- * LinkedIn-inspired job detail view for the right column
+ * Clean, modern job detail view with proper spacing and visual hierarchy
  */
 
 import React from 'react';
@@ -10,17 +10,18 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import {
   MapPin,
-  DollarSign,
-  Calendar,
+  Banknote,
+  CalendarDays,
   Building2,
-  Users,
   Clock,
   ArrowRight,
   ExternalLink,
-  CheckCircle,
-  TrendingUp,
-  Heart,
-  Share2
+  CircleCheck,
+  Bookmark,
+  Share2,
+  Sparkles,
+  Briefcase,
+  Globe
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { jobUtils } from '../../services/jobService';
@@ -52,144 +53,136 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
   };
 
   return (
-    <Card className={cn('h-fit', className)}>
-      <CardHeader className="pb-4">
-        {/* Company Header */}
-        <div className="flex items-start gap-4 mb-4">
-          {job.company?.logo && (
-            <img
-              src={job.company.logo}
-              alt={job.company.name}
-              className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-border"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-foreground mb-1 leading-tight">
+    <Card className={cn('h-fit overflow-hidden', className)}>
+      {/* Header Section */}
+      <CardHeader className="pb-6">
+        <div className="space-y-4">
+          {/* Job Title & Company */}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground mb-2 leading-tight">
               {job.title}
             </h1>
-            <p className="text-lg text-muted-foreground font-medium">
+            <p className="text-base text-muted-foreground font-medium">
               {job.company?.name || 'Company'}
             </p>
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span>{job.location}</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>{jobUtils.formatPostedDate(job.posted_date)}</span>
-              </div>
+          </div>
+
+          {/* Meta Info */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-4 h-4" />
+              <span>{job.location}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              <span>{jobUtils.formatPostedDate(job.created_at || job.posted_date)}</span>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Button
-            onClick={handleApply}
-            disabled={isApplying}
-            className="flex-1 group"
-            size="lg"
-            aria-label={`Apply to ${job.title} at ${job.company?.name || 'Company'}`}
-          >
-            {isApplying ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" aria-hidden="true" />
-                Applying...
-              </>
-            ) : (
-              <>
-                Apply Now
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
-              </>
+          {/* Job Badges */}
+          <div className="flex flex-wrap gap-2">
+            {job.level && (
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'text-sm font-medium px-3 py-1.5',
+                  jobUtils.getJobLevelColor(job.level)
+                )}
+              >
+                {job.level}
+              </Badge>
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleSave}
-            className="px-3"
-            aria-label="Save job"
-          >
-            <Heart className="w-4 h-4" aria-hidden="true" />
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleShare}
-            className="px-3"
-            aria-label="Share job"
-          >
-            <Share2 className="w-4 h-4" aria-hidden="true" />
-          </Button>
+            {job.location_type && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-sm px-3 py-1.5',
+                  jobUtils.getLocationTypeColor(job.location_type)
+                )}
+              >
+                {job.location_type}
+              </Badge>
+            )}
+            {job.employment_type && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-sm px-3 py-1.5',
+                  jobUtils.getEmploymentTypeColor(job.employment_type)
+                )}
+              >
+                {job.employment_type}
+              </Badge>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              onClick={handleApply}
+              disabled={isApplying}
+              className="flex-1 group h-11"
+              size="lg"
+              aria-label={`Apply to ${job.title} at ${job.company?.name || 'Company'}`}
+            >
+              {isApplying ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" aria-hidden="true" />
+                  Applying...
+                </>
+              ) : (
+                <>
+                  Apply Now
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleSave}
+              className="h-11 w-11 p-0"
+              aria-label="Save job"
+            >
+              <Bookmark className="w-5 h-5" aria-hidden="true" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleShare}
+              className="h-11 w-11 p-0"
+              aria-label="Share job"
+            >
+              <Share2 className="w-5 h-5" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        {/* Job Badges */}
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant="secondary"
-            className={cn(
-              'text-sm font-medium px-3 py-1',
-              jobUtils.getJobLevelColor(job.level)
-            )}
-          >
-            {job.level}
-          </Badge>
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-sm px-3 py-1',
-              jobUtils.getLocationTypeColor(job.location_type)
-            )}
-          >
-            {job.location_type}
-          </Badge>
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-sm px-3 py-1',
-              jobUtils.getEmploymentTypeColor(job.employment_type)
-            )}
-          >
-            {job.employment_type}
-          </Badge>
-        </div>
+      <Separator />
 
-        {/* Job Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
+      <CardContent className="pt-6 space-y-8">
+        {/* Salary & Department */}
+        <div className="grid grid-cols-2 gap-6">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+              <Banknote className="w-5 h-5 text-green-600" />
+            </div>
             <div>
-              <p className="font-medium text-foreground">
+              <p className="font-semibold text-foreground">
                 {jobUtils.formatJobSalary(job)}
               </p>
-              <p className="text-xs text-muted-foreground">Salary</p>
+              <p className="text-sm text-muted-foreground">Salary Range</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Building2 className="w-4 h-4 text-muted-foreground" />
-            <div>
-              <p className="font-medium text-foreground">{job.department}</p>
-              <p className="text-xs text-muted-foreground">Department</p>
-            </div>
-          </div>
-          {job.applicant_count !== undefined && (
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium text-foreground">{job.applicant_count}</p>
-                <p className="text-xs text-muted-foreground">Applicants</p>
+          {job.department && (
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <Briefcase className="w-5 h-5 text-blue-600" />
               </div>
-            </div>
-          )}
-          {job.views_count !== undefined && (
-            <div className="flex items-center gap-2 text-sm">
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="font-medium text-foreground">{job.views_count}</p>
-                <p className="text-xs text-muted-foreground">Views</p>
+                <p className="font-semibold text-foreground">{job.department}</p>
+                <p className="text-sm text-muted-foreground">Department</p>
               </div>
             </div>
           )}
@@ -198,38 +191,40 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
         <Separator />
 
         {/* Job Description */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">About this job</h2>
-          <div className="prose prose-sm max-w-none text-muted-foreground">
-            <p className="whitespace-pre-wrap leading-relaxed">{job.description}</p>
-          </div>
-        </section>
+        {job.description && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">About this role</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
+              {job.description}
+            </p>
+          </section>
+        )}
 
         {/* Requirements */}
         {job.requirements && job.requirements.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Requirements</h2>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {job.requirements.map((requirement, index) => (
                 <li key={index} className="flex items-start gap-3">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <CircleCheck className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
                   <span className="text-muted-foreground text-sm leading-relaxed">{requirement}</span>
                 </li>
               ))}
-              </ul>
-            </section>
-          )}
+            </ul>
+          </section>
+        )}
 
         {/* Skills */}
         {job.skills && job.skills.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Required Skills</h2>
             <div className="flex flex-wrap gap-2">
               {job.skills.map((skill, index) => (
                 <Badge
                   key={index}
-                  variant="outline"
-                  className="text-sm px-3 py-1.5 hover:bg-muted/50 transition-colors"
+                  variant="secondary"
+                  className="text-sm px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                 >
                   {skill}
                 </Badge>
@@ -238,65 +233,82 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           </section>
         )}
 
+        {/* Benefits & Offers */}
+        {job.benefits && job.benefits.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Benefits & Perks</h2>
+            <ul className="space-y-3">
+              {job.benefits.map((benefit, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground text-sm leading-relaxed">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <Separator />
+
         {/* Company Information */}
         {job.company && (
-          <>
-            <Separator />
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">About {job.company.name}</h2>
-              {job.company.description && (
-                <p className="text-muted-foreground text-sm leading-relaxed">{job.company.description}</p>
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">About {job.company.name}</h2>
+            {job.company.description && (
+              <p className="text-muted-foreground text-sm leading-relaxed">{job.company.description}</p>
+            )}
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+              {job.company.location && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  <span>{job.company.location}</span>
+                </div>
               )}
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                {job.company.location && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{job.company.location}</span>
-                  </div>
-                )}
-                {job.company.size && (
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    <span>{job.company.size}</span>
-                  </div>
-                )}
-                {job.company.industry && (
-                  <div className="flex items-center gap-1">
-                    <Building2 className="w-4 h-4" />
-                    <span>{job.company.industry}</span>
-                  </div>
-                )}
-                {job.company.website && (
-                  <a
-                    href={job.company.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-primary hover:underline"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>Company Website</span>
-                  </a>
-                )}
-              </div>
-            </section>
-          </>
+              {job.company.industry && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Building2 className="w-4 h-4" />
+                  <span>{job.company.industry}</span>
+                </div>
+              )}
+              {job.company.website && (
+                <a
+                  href={job.company.website.startsWith('http') ? job.company.website : `https://${job.company.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary hover:underline"
+                >
+                  <Globe className="w-4 h-4" />
+                  <span>Website</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </section>
         )}
 
         {/* Application Deadline */}
         {job.application_deadline && (
           <>
             <Separator />
-            <div className="bg-muted/30 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">Application Deadline</h2>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <CalendarDays className="w-5 h-5 text-amber-600" />
+                </div>
                 <div>
-                  <p className="font-medium text-foreground">
-                    Apply by {new Date(job.application_deadline).toLocaleDateString()}
+                  <p className="font-semibold text-foreground">
+                    {new Date(job.application_deadline).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                   </p>
-                  <p className="text-xs text-muted-foreground">Application deadline</p>
+                  <p className="text-sm text-muted-foreground">Don't miss the deadline!</p>
                 </div>
               </div>
-            </div>
+            </section>
           </>
         )}
       </CardContent>

@@ -1,80 +1,49 @@
-"""
-Models package - SQLAlchemy ORM models.
-
-This module provides database models for the application.
-Import from here instead of individual submodules for a cleaner API.
-
-Example:
-    from app.models import User, Job, Application
-"""
-
-from sqlalchemy.orm import DeclarativeBase
-
-
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy models"""
-
-    pass
-
-
-# User models
-# Application models
-from .application import Application, ApplicationStage, ApplicationStatus
-
-# Job models
-from .job import Company, EmploymentType, Job, JobLevel, JobStatus, LocationType
-
-# Profile models
-from .profile import (
-    Certification,
-    EducationRecord,
-    Profile,
-    ProfileSkill,
-    WorkExperience,
+from app.core.database import Base
+from .user import User, UserGoogle, UserRole
+from .candidate import (
+    CandidateProfile,
+    CandidateSocialLink,
+    CandidateWorkExperience,
+    CandidateEducation,
+    CandidateCertification,
+    CandidateSkills
 )
-
-# Resume models
+from .company import CompanyProfile, CompanyActivity
 from .resume import (
     Resume,
-    ResumeCertification,
+    ResumeSocialLink,
+    ResumeWorkExperience,
     ResumeEducation,
-    ResumeExperience,
-    ResumeSkill,
+    ResumeCertification,
+    ResumeSkills
 )
+from .job import JobPosting, JobDescription, JobPostingStats
+from .application import JobApplication, JobApplicationStatusHistory, ApplicationStatus
 
-# Skill models
-from .skill import Skill
-from .user import User, UserRole
 
 __all__ = [
-    # Base
     "Base",
-    # User
     "User",
+    "UserGoogle",
     "UserRole",
-    # Job
-    "Job",
-    "Company",
-    "JobStatus",
-    "JobLevel",
-    "LocationType",
-    "EmploymentType",
-    # Application
-    "Application",
-    "ApplicationStage",
-    "ApplicationStatus",
-    # Skill
-    "Skill",
-    # Profile
-    "Profile",
-    "WorkExperience",
-    "EducationRecord",
-    "Certification",
-    "ProfileSkill",
-    # Resume
+    "CandidateProfile",
+    "CandidateSocialLink",
+    "CandidateWorkExperience",
+    "CandidateEducation",
+    "CandidateCertification",
+    "CandidateSkills",
+    "CompanyProfile",
+    "CompanyActivity",
     "Resume",
-    "ResumeExperience",
+    "ResumeSocialLink",
+    "ResumeWorkExperience",
     "ResumeEducation",
     "ResumeCertification",
-    "ResumeSkill",
+    "ResumeSkills",
+    "JobPosting",
+    "JobDescription",
+    "JobPostingStats",
+    "JobApplication",
+    "JobApplicationStatusHistory",
+    "ApplicationStatus"
 ]

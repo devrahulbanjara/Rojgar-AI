@@ -11,13 +11,13 @@
     "react/self-closing-comp": "error",
     "react/jsx-boolean-value": ["error", "never"],
     "react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
-
+    
     // TypeScript specific rules
-    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/prefer-const": "error",
     "@typescript-eslint/no-non-null-assertion": "warn",
-
+    
     // Import rules
     "import/order": [
       "error",
@@ -39,7 +39,7 @@
     ],
     "import/no-duplicates": "error",
     "import/no-unresolved": "off",
-
+    
     // General rules
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-debugger": "error",
@@ -47,7 +47,7 @@
     "no-var": "error",
     "object-shorthand": "error",
     "prefer-template": "error",
-
+    
     // Next.js specific
     "@next/next/no-img-element": "error",
     "@next/next/no-html-link-for-pages": "error"

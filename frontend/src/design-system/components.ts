@@ -4,14 +4,14 @@
  */
 
 // Utility functions
-export {
-  cn,
-  formatDate,
-  formatCurrency,
-  debounce,
-  generateId,
-  isEmpty,
-  capitalize,
+export { 
+  cn, 
+  formatDate, 
+  formatCurrency, 
+  debounce, 
+  generateId, 
+  isEmpty, 
+  capitalize, 
   truncate,
   formatUserName,
   getDashboardRoute,
