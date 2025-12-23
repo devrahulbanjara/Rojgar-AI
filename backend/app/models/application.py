@@ -1,9 +1,14 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Optional, List
 from sqlalchemy import String, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+
+
+def utc_now():
+    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 class ApplicationStatus(str, Enum):
     APPLIED = "applied"
@@ -27,8 +32,8 @@ class JobApplication(Base):
     
     current_status: Mapped[str] = mapped_column(String, default=ApplicationStatus.APPLIED, nullable=False)
     
-    applied_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    applied_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     job: Mapped["JobPosting"] = relationship("JobPosting")
     company: Mapped["CompanyProfile"] = relationship("CompanyProfile")
@@ -41,6 +46,6 @@ class JobApplicationStatusHistory(Base):
     status_history_id: Mapped[str] = mapped_column(String, primary_key=True)
     application_id: Mapped[str] = mapped_column(String, ForeignKey("job_application.application_id"), nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
-    changed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    changed_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     application: Mapped["JobApplication"] = relationship("JobApplication", back_populates="history")

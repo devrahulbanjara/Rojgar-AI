@@ -162,100 +162,36 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
       <Separator />
 
       <CardContent className="pt-6 space-y-8">
-        {/* Salary & Department */}
-        <div className="grid grid-cols-2 gap-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-              <Banknote className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">
-                {jobUtils.formatJobSalary(job)}
-              </p>
-              <p className="text-sm text-muted-foreground">Salary Range</p>
-            </div>
+        {/* Salary */}
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+            <Banknote className="w-5 h-5 text-green-600" />
           </div>
-          {job.department && (
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <Briefcase className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">{job.department}</p>
-                <p className="text-sm text-muted-foreground">Department</p>
-              </div>
-            </div>
-          )}
+          <div>
+            <p className="font-semibold text-foreground">
+              {jobUtils.formatJobSalary(job)}
+            </p>
+            <p className="text-sm text-muted-foreground">Salary Range</p>
+          </div>
         </div>
 
         <Separator />
 
-        {/* Job Description */}
-        {job.description && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">About this role</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
-              {job.description}
-            </p>
-          </section>
-        )}
-
-        {/* Requirements */}
-        {job.requirements && job.requirements.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Requirements</h2>
-            <ul className="space-y-3">
-              {job.requirements.map((requirement, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <CircleCheck className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground text-sm leading-relaxed">{requirement}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Skills */}
-        {job.skills && job.skills.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Required Skills</h2>
-            <div className="flex flex-wrap gap-2">
-              {job.skills.map((skill, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="text-sm px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                >
-                  {skill}
-                </Badge>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Benefits & Offers */}
-        {job.benefits && job.benefits.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Benefits & Perks</h2>
-            <ul className="space-y-3">
-              {job.benefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-muted-foreground text-sm leading-relaxed">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <Separator />
-
-        {/* Company Information */}
+        {/* About the Company */}
         {job.company && (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">About {job.company.name}</h2>
-            {job.company.description && (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50">
+                <Building2 className="w-4 h-4 text-blue-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">About the Company</h2>
+            </div>
+            {job.company.description ? (
               <p className="text-muted-foreground text-sm leading-relaxed">{job.company.description}</p>
+            ) : (
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {job.company.name} is looking for talented individuals to join their team.
+              </p>
             )}
             <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
               {job.company.location && (
@@ -283,6 +219,78 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
                 </a>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Role Overview */}
+        {job.description && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50">
+                <Briefcase className="w-4 h-4 text-indigo-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">Role Overview</h2>
+            </div>
+            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
+              {job.description}
+            </p>
+          </section>
+        )}
+
+        {/* Required Skills and Experience */}
+        {job.requirements && job.requirements.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50">
+                <CircleCheck className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">Required Skills and Experience</h2>
+            </div>
+            <ul className="space-y-3 list-disc list-inside pl-4">
+              {job.requirements.map((requirement, index) => (
+                <li key={index} className="text-muted-foreground text-sm leading-relaxed">
+                  {requirement}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Nice to Have (Preferred) */}
+        {job.nice_to_have && job.nice_to_have.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50">
+                <Sparkles className="w-4 h-4 text-amber-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">Nice to Have (Preferred)</h2>
+            </div>
+            <ul className="space-y-3 list-disc list-inside pl-4">
+              {job.nice_to_have.map((item, index) => (
+                <li key={index} className="text-muted-foreground text-sm leading-relaxed">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* What We Offer (Benefits) */}
+        {job.benefits && job.benefits.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-violet-50">
+                <Sparkles className="w-4 h-4 text-violet-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">What We Offer</h2>
+            </div>
+            <ul className="space-y-3 list-disc list-inside pl-4">
+              {job.benefits.map((benefit, index) => (
+                <li key={index} className="text-muted-foreground text-sm leading-relaxed">
+                  {benefit}
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

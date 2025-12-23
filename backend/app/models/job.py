@@ -1,9 +1,14 @@
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from sqlalchemy import String, ForeignKey, Integer, Boolean, Date, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
+
+
+def utc_now():
+    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class JobDescription(Base):
@@ -15,8 +20,8 @@ class JobDescription(Base):
     nice_to_have: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     offers: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     job_posting: Mapped[Optional["JobPosting"]] = relationship("JobPosting", back_populates="job_description", uselist=False)
 
@@ -41,14 +46,14 @@ class JobPosting(Base):
     salary_max: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     salary_currency: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
-    status: Mapped[str] = mapped_column(String, default="open", nullable=False)
+    status: Mapped[str] = mapped_column(String, default="active", nullable=False)
     
     is_indexed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     posted_date: Mapped[date] = mapped_column(Date, nullable=False)
     application_deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     company: Mapped["CompanyProfile"] = relationship("CompanyProfile", back_populates="job_postings")
     job_description: Mapped["JobDescription"] = relationship("JobDescription", back_populates="job_posting")
@@ -64,7 +69,7 @@ class JobPostingStats(Base):
     applicant_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     views_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     job_posting: Mapped["JobPosting"] = relationship("JobPosting", back_populates="stats")

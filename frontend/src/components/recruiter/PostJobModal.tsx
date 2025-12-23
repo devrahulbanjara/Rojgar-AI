@@ -71,7 +71,7 @@ export function PostJobModal({ isOpen, onClose, initialMode }: PostJobModalProps
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
+                className="fixed inset-0 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
                 onClick={() => {
                     if (selectedMode && !initialMode) {
                         setSelectedMode(null);
@@ -84,18 +84,18 @@ export function PostJobModal({ isOpen, onClose, initialMode }: PostJobModalProps
             {/* Modal */}
             <div
                 className={cn(
-                    'relative bg-white rounded-2xl shadow-2xl animate-zoom-in',
+                    'relative bg-white rounded-xl shadow-lg animate-zoom-in',
                     'max-h-[90vh] overflow-hidden flex flex-col',
-                    selectedMode ? 'w-[900px] max-w-[95vw]' : 'w-[800px] max-w-[95vw]'
+                    selectedMode ? 'w-[900px] max-w-[95vw]' : 'w-[540px] max-w-[95vw]'
                 )}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-8 py-6 border-b border-[#E5E7EB]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[#F1F5F9]">
                     <div>
-                        <h2 className="text-2xl font-semibold text-[#111827]">
+                        <h2 className="text-lg font-medium text-[#1E293B]">
                             {selectedMode ? 'Create New Job' : 'Post New Job'}
                         </h2>
-                        <p className="text-sm text-[#6B7280] mt-1">
+                        <p className="text-xs text-[#94A3B8] mt-0.5">
                             {selectedMode
                                 ? selectedMode === 'agent'
                                     ? 'Let AI generate your job posting'
@@ -111,9 +111,9 @@ export function PostJobModal({ isOpen, onClose, initialMode }: PostJobModalProps
                                 onClose();
                             }
                         }}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F3F4F6] hover:bg-[#E5E7EB] transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F8FAFC] transition-colors"
                     >
-                        <X className="w-5 h-5 text-[#6B7280]" />
+                        <X className="w-4 h-4 text-[#94A3B8]" />
                     </button>
                 </div>
 
@@ -121,31 +121,31 @@ export function PostJobModal({ isOpen, onClose, initialMode }: PostJobModalProps
                 <div className="flex-1 overflow-y-auto">
                     {!selectedMode ? (
                         /* Mode Selection */
-                        <div className="p-10">
-                            <div className="grid grid-cols-2 gap-6">
+                        <div className="p-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 {/* Agent Mode Card */}
                                 <button
                                     onClick={() => setSelectedMode('agent')}
                                     className={cn(
-                                        'group p-10 border-2 border-[#E5E7EB] rounded-2xl text-center',
-                                        'transition-all duration-300',
-                                        'hover:border-[#3B82F6] hover:scale-[1.02]',
-                                        'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/20'
+                                        'group p-5 border border-[#E2E8F0] rounded-xl text-center',
+                                        'transition-all duration-200 ease-out',
+                                        'hover:border-[#6366F1]/40 hover:shadow-sm hover:scale-[1.02]',
+                                        'focus:outline-none focus:ring-2 focus:ring-[#6366F1]/15'
                                     )}
                                 >
                                     <div
-                                        className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center"
+                                        className="w-11 h-11 mx-auto mb-3 rounded-xl flex items-center justify-center"
                                         style={{
-                                            background: 'linear-gradient(135deg, #3B82F6,  #60A5FA)',
+                                            background: 'linear-gradient(135deg, #6366F1, #818CF8)',
                                         }}
                                     >
-                                        <Sparkles className="w-10 h-10 text-white" />
+                                        <Sparkles className="w-5 h-5 text-white" />
                                     </div>
-                                    <h3 className="text-2xl font-semibold text-[#111827] mb-3 group-hover:text-[#3B82F6] transition-colors">
+                                    <h3 className="text-sm font-medium text-[#1E293B] mb-1.5 group-hover:text-[#6366F1] transition-colors">
                                         Agent Mode
                                     </h3>
-                                    <p className="text-sm text-[#6B7280] leading-relaxed">
-                                        Let AI generate your job posting from reference JDs. Perfect for quick, professional job descriptions.
+                                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                                        Let AI generate your job posting from reference JDs.
                                     </p>
                                 </button>
 
@@ -153,22 +153,22 @@ export function PostJobModal({ isOpen, onClose, initialMode }: PostJobModalProps
                                 <button
                                     onClick={() => setSelectedMode('manual')}
                                     className={cn(
-                                        'group p-10 border-2 border-[#E5E7EB] rounded-2xl text-center',
-                                        'transition-all duration-300',
-                                        'hover:border-[#3B82F6] hover:scale-[1.02]',
-                                        'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/20'
+                                        'group p-5 border border-[#E2E8F0] rounded-xl text-center',
+                                        'transition-all duration-200 ease-out',
+                                        'hover:border-[#6366F1]/40 hover:shadow-sm hover:scale-[1.02]',
+                                        'focus:outline-none focus:ring-2 focus:ring-[#6366F1]/15'
                                     )}
                                 >
                                     <div
-                                        className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-[#6B7280]"
+                                        className="w-11 h-11 mx-auto mb-3 rounded-xl flex items-center justify-center bg-[#64748B]"
                                     >
-                                        <Edit3 className="w-10 h-10 text-white" />
+                                        <Edit3 className="w-5 h-5 text-white" />
                                     </div>
-                                    <h3 className="text-2xl font-semibold text-[#111827] mb-3 group-hover:text-[#3B82F6] transition-colors">
+                                    <h3 className="text-sm font-medium text-[#1E293B] mb-1.5 group-hover:text-[#6366F1] transition-colors">
                                         Manual Mode
                                     </h3>
-                                    <p className="text-sm text-[#6B7280] leading-relaxed">
-                                        Create job posting with full control. Ideal when you have specific requirements and preferences.
+                                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                                        Create job posting with full control.
                                     </p>
                                 </button>
                             </div>

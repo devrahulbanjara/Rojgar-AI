@@ -289,7 +289,7 @@ export function CareerHistoryTab({ experiences: initialExperiences, educations: 
                     id="location"
                     value={experienceForm.location}
                     onChange={(e) => setExperienceForm(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="e.g., San Francisco, CA"
+                    placeholder="e.g., Kathmandu"
                   />
                 </div>
                 <div className="space-y-2">

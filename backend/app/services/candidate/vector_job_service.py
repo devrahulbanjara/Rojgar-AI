@@ -86,7 +86,7 @@ class JobVectorService:
         return (
             f"Title: {job.title}. "
             f"Location: {job.location_city}, {job.location_country}. "
-            f"Type: {job.employment_type}, Remote: {job.is_remote}. "
+            f"Type: {job.employment_type}"
             f"Description: {role_overview}. "
             f"Skills: {skills_txt}. "
             f"Benefits: {benefits_txt}."

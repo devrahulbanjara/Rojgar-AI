@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from typing import Optional
 
 from app.core import get_db, get_current_user_id
 from app.schemas import UserResponse
@@ -26,8 +27,6 @@ def get_current_user(
             detail="User not found",
         )
     
-    return UserService.to_user_response(user)
-
     return UserService.to_user_response(user)
 
 @router.put("/profile", response_model=UserResponse)

@@ -115,24 +115,6 @@ export const JobCard = memo<JobCardProps>(({
           </div>
         </div>
 
-        {/* Skills */}
-        {job.skills && job.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {job.skills.slice(0, 3).map((skill, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-[#F9FAFB] text-[#3056F5] text-xs font-medium rounded-md"
-              >
-                {skill}
-              </span>
-            ))}
-            {job.skills.length > 3 && (
-              <span className="px-2 py-1 bg-[#F9FAFB] text-[#3056F5] text-xs font-medium rounded-md">
-                +{job.skills.length - 3}
-              </span>
-            )}
-          </div>
-        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-[#F1F5F9]">

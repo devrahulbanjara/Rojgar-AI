@@ -98,13 +98,13 @@ export function useJob(id: string) {
   });
 }
 
-export function useJobsByCompany(companyId: string, params?: { page?: number; limit?: number }) {
+export function useJobsByCompany(userId: string, params?: { page?: number; limit?: number }) {
   return useQuery({
-    queryKey: [...jobQueryKeys.byCompany(companyId), params],
+    queryKey: [...jobQueryKeys.byCompany(userId), params],
     queryFn: async () => {
-      return await jobService.getJobsByCompany(companyId, params);
+      return await jobService.getJobsByCompany(userId, params);
     },
-    enabled: !!companyId,
+    enabled: !!userId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -121,6 +121,10 @@ export function useCreateJob() {
     onSuccess: () => {
       // Invalidate and refetch job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+    },
+    onError: (error: any) => {
+      // Log error for debugging (errors are handled in component try/catch)
+      console.error('Job creation error:', error);
     },
   });
 }
