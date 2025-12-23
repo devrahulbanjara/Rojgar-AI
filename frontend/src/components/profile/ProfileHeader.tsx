@@ -1,56 +1,44 @@
+"use client";
+
 import React from 'react';
+import { Mail } from "lucide-react";
 import { User } from '../../types/index';
-import { User as UserIcon, Mail } from 'lucide-react';
+import { CandidateProfile } from '../../types/profile';
+import { UserAvatar } from '../ui/UserAvatar';
 
 interface ProfileHeaderProps {
   user: User;
+  profile?: CandidateProfile | null;
 }
 
-export function ProfileHeader({ user }: ProfileHeaderProps) {
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
+export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
   return (
     <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm">
       <div className="p-8">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-6">
-            {/* Profile Picture */}
-            <div className="w-24 h-24 bg-gradient-to-br from-[#3056F5] to-[#1E40AF] rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
-              {user.picture ? (
-                <img 
-                  src={user.picture} 
-                  alt={user.name}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                getInitials(user.name)
-              )}
-            </div>
+        <div className="flex items-center gap-6">
+          {/* Profile Picture */}
+          <UserAvatar
+            name={user.name}
+            src={user.picture}
+            className="w-24 h-24 text-3xl border-2 border-white shadow-lg"
+          />
 
-            {/* User Info */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-[#0F172A] mb-2">
-                {user.name}
-              </h1>
-              
-              <div className="flex items-center gap-2 text-[#475569] mb-3">
-                <Mail className="w-4 h-4" />
-                <span className="text-lg">{user.email}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#3056F5]/10 text-[#3056F5] rounded-full text-sm font-medium">
-                  <UserIcon className="w-4 h-4" />
-                  {user.role === 'candidate' ? 'Candidate' : 'Recruiter'}
-                </div>
-              </div>
+          {/* User Info */}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-[#0F172A] mb-1">
+              {profile?.full_name || user.name}
+            </h1>
+
+            {/* Professional Headline - Featured Prominently */}
+            {profile?.professional_headline && (
+              <p className="text-xl text-[#3056F5] font-medium mb-2">
+                {profile.professional_headline}
+              </p>
+            )}
+
+            <div className="flex items-center gap-2 text-[#64748B]">
+              <Mail className="w-4 h-4" />
+              <span className="text-base">{user.email}</span>
             </div>
           </div>
         </div>

@@ -125,11 +125,11 @@ export class JobService {
 
 
   /**
-   * Get jobs by company
+   * Get jobs by company (using user_id)
    */
-  static async getJobsByCompany(companyId: string, params?: { page?: number; limit?: number }): Promise<JobListResponse> {
+  static async getJobsByCompany(userId: string, params?: { page?: number; limit?: number }): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
-    queryParams.append('company_id', companyId);
+    queryParams.append('user_id', userId);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     

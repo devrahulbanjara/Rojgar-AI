@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # Environment
     ENVIRONMENT: str = "development"
+    APP_VERSION: str
 
     # Database
     DATABASE_URL: str
@@ -45,6 +46,7 @@ class Settings(BaseSettings):
     REPORT_SUMMARY: str = "shortlist_summary.txt"
     JOB_DESCRIPTION_FILE: str = "job_description.txt"
 
+    GMAIL_APP_PASSWORD: str
     class Config:
         env_file = ".env"
         case_sensitive = True

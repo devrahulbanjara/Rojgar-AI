@@ -5,12 +5,15 @@ import { LogoLink } from '../common/Logo';
 import { authService } from '../../services/authService';
 import { ROUTES } from '../../config/constants';
 
+import { UserAvatar } from '../ui/UserAvatar';
+
 interface TopbarProps {
   onMenuClick: () => void;
   user: {
     name: string;
     email: string;
     role?: string;
+    picture?: string | null;
   } | null;
 }
 
@@ -26,19 +29,10 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   return (
-    <header 
+    <header
       className="fixed top-0 left-0 right-0 z-50 h-[72px] border-b border-[#E5E7EB] transition-all duration-300"
-      style={{ 
+      style={{
         background: 'rgba(255, 255, 255, 0.8)',
         backdropFilter: 'blur(12px)',
       }}
@@ -53,7 +47,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           >
             <Menu className="h-5 w-5 text-[#475569]" />
           </button>
-          
+
           <LogoLink variant="full" size="lg" />
         </div>
 
@@ -63,14 +57,22 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           <div className="flex items-center gap-3 px-2 py-2 pr-4 rounded-xl bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-all duration-200 hover:scale-[1.02]"
             style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
-            <div className="w-10 h-10 bg-[#3056F5] text-white rounded-full flex items-center justify-center text-sm font-semibold">
-              {user ? getInitials(user.name) : 'U'}
-            </div>
+            {user ? (
+              <UserAvatar
+                name={user.name}
+                src={user.picture}
+                className="w-10 h-10 border-[#E2E8F0]"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-[#3056F5] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                U
+              </div>
+            )}
             <span className="hidden md:block text-[15px] font-medium text-[#0F172A]">
               {user?.name}
             </span>
           </div>
-          
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}

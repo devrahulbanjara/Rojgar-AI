@@ -13,7 +13,8 @@ class AuthService:
     
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
-        return UserResponse.model_validate(user)
+        response = UserResponse.model_validate(user)
+        return response
     
     @staticmethod
     def get_user_by_email(email: str, db: Session) -> Optional[User]:
@@ -21,32 +22,62 @@ class AuthService:
     
     @staticmethod
     def get_user_by_google_id(google_id: str, db: Session) -> Optional[User]:
-        return db.execute(select(User).where(User.google_id == google_id)).scalar_one_or_none()
+        from app.models import UserGoogle
+        user_google = db.execute(select(UserGoogle).where(UserGoogle.user_google_id == google_id)).scalar_one_or_none()
+        if user_google:
+            return user_google.user
+        return None
     
     @staticmethod
     def create_user(user_data: CreateUserRequest, db: Session) -> User:
         new_user = User(
-            id=str(uuid.uuid4()),
+            user_id=str(uuid.uuid4()),
             email=user_data.email,
-            name=user_data.name,
+            name=user_data.name if user_data.name else "User", 
             picture=user_data.picture,
-            google_id=user_data.google_id,
-            role=user_data.role.value if user_data.role else None,
+            role=user_data.role.value if user_data.role else None, 
         )
+        
+        db.add(new_user)
+        db.flush() 
+
+        if new_user.role:
+            from app.models import CandidateProfile, CompanyProfile, UserRole
+            
+            if new_user.role == UserRole.CANDIDATE.value:
+                new_profile = CandidateProfile(
+                    profile_id=str(uuid.uuid4()),
+                    user_id=new_user.user_id,
+                )
+                db.add(new_profile)
+                
+            elif new_user.role == UserRole.RECRUITER.value:
+                new_profile = CompanyProfile(
+                    company_id=str(uuid.uuid4()),
+                    user_id=new_user.user_id,
+                )
+                db.add(new_profile)
 
         if user_data.password:
-            new_user.password_hash = hash_password(user_data.password)
+            new_user.password = hash_password(user_data.password)
+        
+        if user_data.google_id:
+            from app.models import UserGoogle
+            new_google_user = UserGoogle(
+                user_google_id=user_data.google_id,
+                user_id=new_user.user_id
+            )
+            db.add(new_google_user)
 
-        db.add(new_user)
         db.commit()
         db.refresh(new_user)
         return new_user
     
     @staticmethod
     def verify_user_password(user: User, password: str) -> bool:
-        if not user.password_hash:
+        if not user.password:
             return False
-        return verify_password(password, user.password_hash)
+        return verify_password(password, user.password)
     
     @staticmethod
     def create_access_token(user_id: str, remember_me: bool = False) -> tuple[str, int]:
@@ -117,27 +148,75 @@ class AuthService:
         user = AuthService.get_user_by_google_id(google_user.id, db)
         
         if not user:
+            existing_user_by_email = AuthService.get_user_by_email(google_user.email, db)
+            if existing_user_by_email:
+                from app.models import UserGoogle
+                new_google_link = UserGoogle(
+                    user_google_id=google_user.id,
+                    user_id=existing_user_by_email.user_id
+                )
+                db.add(new_google_link)
+                if existing_user_by_email.name == "User" and google_user.name:
+                     existing_user_by_email.name = google_user.name
+                     db.add(existing_user_by_email)
+            
+                if not existing_user_by_email.picture and google_user.picture:
+                    existing_user_by_email.picture = google_user.picture
+                    db.add(existing_user_by_email)
+                     
+                db.commit()
+                db.refresh(existing_user_by_email)
+                return existing_user_by_email
+            
             create_user_data = CreateUserRequest(
                 email=google_user.email,
                 name=google_user.name,
                 google_id=google_user.id,
-                picture=google_user.picture
+                picture=google_user.picture,
+                role=None
             )
             user = AuthService.create_user(create_user_data, db)
         
         return user
     
     @staticmethod
-    def update_user_role(user: User, role: UserRole, db: Session) -> User:
+    def assign_role_and_create_profile(user: User, role: UserRole, db: Session) -> User:
+        from fastapi import HTTPException, status
+        from app.models import CandidateProfile, CompanyProfile
+        
+        if user.role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Role already selected",
+            )
+        
         user.role = role.value
         db.add(user)
+        db.flush()
+        
+        if role == UserRole.CANDIDATE:
+            new_profile = CandidateProfile(
+                profile_id=str(uuid.uuid4()),
+                user_id=user.user_id,
+            )
+            db.add(new_profile)
+            
+        elif role == UserRole.RECRUITER:
+            new_profile = CompanyProfile(
+                company_id=str(uuid.uuid4()),
+                user_id=user.user_id,
+            )
+            db.add(new_profile)
+            
         db.commit()
         db.refresh(user)
         return user
     
     @staticmethod
     def get_redirect_url_for_user(user: User) -> str:
-        if user.role:
-            return f"{settings.FRONTEND_URL}/dashboard/{user.role}"
+        if user.role == UserRole.CANDIDATE.value:
+            return f"{settings.FRONTEND_URL}/dashboard/candidate"
+        elif user.role == UserRole.RECRUITER.value:
+            return f"{settings.FRONTEND_URL}/dashboard/recruiter"
         else:
-            return f"{settings.FRONTEND_URL}/select-role"
+            return f"{settings.FRONTEND_URL}/onboarding/select-role"

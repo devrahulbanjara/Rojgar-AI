@@ -51,7 +51,6 @@ def verify_token(token: str) -> str:
 
 
 def get_current_user_id(request: Request) -> str:
-    # Get token from cookie
     token = request.cookies.get("auth_token")
 
     if not token:

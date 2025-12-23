@@ -1,14 +1,15 @@
-from typing import Dict, Any
 from pathlib import Path
+from typing import Any
 
 from app.core import logger
-from app.models.agents.shortlist import WorkflowState, ResumeStructured
-from ..llm_service import get_llm
+from app.models.agents.shortlist import ResumeStructured, WorkflowState
+
 from ..document_processor import DocumentProcessor
+from ..llm_service import get_llm
 from ..templates import RESUME_PARSER_PROMPT
 
 
-def extract_resume_structure(state: WorkflowState) -> Dict[str, Any]:
+def extract_resume_structure(state: WorkflowState) -> dict[str, Any]:
     logger.info("Extracting resume structures")
 
     structured_resumes = []

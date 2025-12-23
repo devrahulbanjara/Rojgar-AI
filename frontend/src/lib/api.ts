@@ -21,6 +21,7 @@ export class ApiError extends Error {
 class ApiClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
+  private onUnauthorized?: () => void;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
@@ -29,12 +30,17 @@ class ApiClient {
     };
   }
 
+  // Set callback for handling unauthorized (401) responses
+  setUnauthorizedHandler(handler: () => void) {
+    this.onUnauthorized = handler;
+  }
+
   async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -46,10 +52,23 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       // Handle 204 No Content responses (like DELETE operations)
       if (response.status === 204) {
         return null as T;
+      }
+
+      // Handle 401 Unauthorized - token expired or invalid
+      if (response.status === 401) {
+        // Call unauthorized handler if set (will clear cache and redirect)
+        if (this.onUnauthorized) {
+          this.onUnauthorized();
+        }
+        throw new ApiError(
+          'Authentication required. Please log in again.',
+          response.status,
+          null
+        );
       }
 
       // Only try to parse JSON if there's content
@@ -161,7 +180,7 @@ export const endpoints = {
     selectRole: '/api/v1/auth/select-role',
     me: '/api/v1/users/me',
   },
-  
+
   // User endpoints
   users: {
     list: '/api/v1/users',
@@ -169,13 +188,13 @@ export const endpoints = {
     update: (id: string) => `/api/v1/users/${id}`,
     delete: (id: string) => `/api/v1/users/${id}`,
   },
-  
+
   // Dashboard endpoints
   dashboard: {
     stats: '/api/v1/dashboard/stats',
     recentActivity: '/api/v1/dashboard/activity',
   },
-  
+
   // Job endpoints
   jobs: {
     list: '/api/v1/jobs',
@@ -186,7 +205,7 @@ export const endpoints = {
     update: (id: string) => `/api/v1/jobs/${id}`,
     delete: (id: string) => `/api/v1/jobs/${id}`,
   },
-  
+
   // Application endpoints
   applications: {
     list: '/api/v1/applications',
@@ -199,38 +218,33 @@ export const endpoints = {
     trackingBoard: '/api/v1/applications/tracking-board',
     stats: '/api/v1/applications/stats',
   },
-  
+
   // Profile endpoints (SSOT - Single Source of Truth)
-  profile: {
-    get: '/api/v1/profile',
-    create: '/api/v1/profile',
-    update: '/api/v1/profile',
-    workExperience: {
-      list: '/api/v1/profile/work-experience',
-      create: '/api/v1/profile/work-experience',
-      update: (id: string) => `/api/v1/profile/work-experience/${id}`,
-      delete: (id: string) => `/api/v1/profile/work-experience/${id}`,
+  // Candidate Profile endpoints (New Implementation)
+  candidate: {
+    me: '/api/v1/candidate/me',
+    experience: {
+      base: '/api/v1/candidate/experience',
+      delete: (id: string) => `/api/v1/candidate/experience/${id}`,
+      update: (id: string) => `/api/v1/candidate/experience/${id}`,
     },
     education: {
-      list: '/api/v1/profile/education',
-      create: '/api/v1/profile/education',
-      update: (id: string) => `/api/v1/profile/education/${id}`,
-      delete: (id: string) => `/api/v1/profile/education/${id}`,
-    },
-    certifications: {
-      list: '/api/v1/profile/certifications',
-      create: '/api/v1/profile/certifications',
-      update: (id: string) => `/api/v1/profile/certifications/${id}`,
-      delete: (id: string) => `/api/v1/profile/certifications/${id}`,
+      base: '/api/v1/candidate/education',
+      delete: (id: string) => `/api/v1/candidate/education/${id}`,
+      update: (id: string) => `/api/v1/candidate/education/${id}`,
     },
     skills: {
-      list: '/api/v1/profile/skills',
-      create: '/api/v1/profile/skills',
-      update: (id: string) => `/api/v1/profile/skills/${id}`,
-      delete: (id: string) => `/api/v1/profile/skills/${id}`,
+      base: '/api/v1/candidate/skills',
+      delete: (id: string) => `/api/v1/candidate/skills/${id}`,
+      update: (id: string) => `/api/v1/candidate/skills/${id}`,
+    },
+    certifications: {
+      base: '/api/v1/candidate/certifications',
+      delete: (id: string) => `/api/v1/candidate/certifications/${id}`,
+      update: (id: string) => `/api/v1/candidate/certifications/${id}`,
     },
   },
-  
+
   // Resume endpoints (Tailored views)
   resumes: {
     list: '/api/v1/resumes',
@@ -276,39 +290,39 @@ export const api = {
     selectRole: (role: string) => apiClient.post(endpoints.auth.selectRole, { role }),
     getCurrentUser: () => apiClient.get(endpoints.auth.me),
   },
-  
+
   // User methods
   users: {
-    list: (params?: Record<string, any>) => 
+    list: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.users.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.users.detail(id)),
     update: (id: string, data: any) => apiClient.put(endpoints.users.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.users.delete(id)),
   },
-  
+
   // Dashboard methods
   dashboard: {
     getStats: () => apiClient.get(endpoints.dashboard.stats),
     getRecentActivity: () => apiClient.get(endpoints.dashboard.recentActivity),
   },
-  
+
   // Job methods
   jobs: {
-    list: (params?: Record<string, any>) => 
+    list: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.jobs.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
-    recommendations: (params?: Record<string, any>) => 
+    recommendations: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.jobs.recommendations}${params ? `?${new URLSearchParams(params)}` : ''}`),
-    search: (params?: Record<string, any>) => 
+    search: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.jobs.search}${params ? `?${new URLSearchParams(params)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.jobs.detail(id)),
     create: (data: any) => apiClient.post(endpoints.jobs.create, data),
     update: (id: string, data: any) => apiClient.put(endpoints.jobs.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
   },
-  
+
   // Application methods
   applications: {
-    list: (params?: Record<string, any>) => 
+    list: (params?: Record<string, any>) =>
       apiClient.get(`${endpoints.applications.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.applications.detail(id)),
     create: (data: any) => apiClient.post(endpoints.applications.create, data),
@@ -319,38 +333,35 @@ export const api = {
     getTrackingBoard: () => apiClient.get(endpoints.applications.trackingBoard),
     getStats: () => apiClient.get(endpoints.applications.stats),
   },
-  
+
   // Profile methods (SSOT - Single Source of Truth)
-  profile: {
-    get: () => apiClient.get(endpoints.profile.get),
-    create: (data: any) => apiClient.post(endpoints.profile.create, data),
-    update: (data: any) => apiClient.put(endpoints.profile.update, data),
-    workExperience: {
-      list: () => apiClient.get(endpoints.profile.workExperience.list),
-      create: (data: any) => apiClient.post(endpoints.profile.workExperience.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.workExperience.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.workExperience.delete(id)),
+  // Candidate methods
+  candidate: {
+    getProfile: () => apiClient.get(endpoints.candidate.me),
+    updateProfile: (data: any) => apiClient.patch(endpoints.candidate.me, data),
+
+    experience: {
+      add: (data: any) => apiClient.post(endpoints.candidate.experience.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.experience.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.experience.update(id), data),
     },
     education: {
-      list: () => apiClient.get(endpoints.profile.education.list),
-      create: (data: any) => apiClient.post(endpoints.profile.education.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.education.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.education.delete(id)),
-    },
-    certifications: {
-      list: () => apiClient.get(endpoints.profile.certifications.list),
-      create: (data: any) => apiClient.post(endpoints.profile.certifications.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.certifications.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.certifications.delete(id)),
+      add: (data: any) => apiClient.post(endpoints.candidate.education.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.education.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.education.update(id), data),
     },
     skills: {
-      list: () => apiClient.get(endpoints.profile.skills.list),
-      create: (data: any) => apiClient.post(endpoints.profile.skills.create, data),
-      update: (id: string, data: any) => apiClient.put(endpoints.profile.skills.update(id), data),
-      delete: (id: string) => apiClient.delete(endpoints.profile.skills.delete(id)),
+      add: (data: any) => apiClient.post(endpoints.candidate.skills.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.skills.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.skills.update(id), data),
+    },
+    certifications: {
+      add: (data: any) => apiClient.post(endpoints.candidate.certifications.base, data),
+      delete: (id: string) => apiClient.delete(endpoints.candidate.certifications.delete(id)),
+      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.certifications.update(id), data),
     },
   },
-  
+
   // Resume methods (Tailored views)
   resumes: {
     list: () => apiClient.get(endpoints.resumes.list),
@@ -391,15 +402,15 @@ export const handleApiError = (error: any): string => {
   if (error instanceof ApiError) {
     return error.message;
   }
-  
+
   if (error?.response?.data?.message) {
     return error.response.data.message;
   }
-  
+
   if (error?.message) {
     return error.message;
   }
-  
+
   return 'An unexpected error occurred';
 };
 
