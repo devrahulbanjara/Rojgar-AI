@@ -1,9 +1,14 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy import String, ForeignKey, Integer, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
+
+
+def utc_now():
+    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class CompanyProfile(Base):
@@ -41,6 +46,6 @@ class CompanyActivity(Base):
     related_resume_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("resume.resume_id"), nullable=True)
     
     details: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
     
     company: Mapped["CompanyProfile"] = relationship("CompanyProfile", back_populates="activities")

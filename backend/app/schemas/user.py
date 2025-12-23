@@ -54,6 +54,7 @@ class UserResponse(BaseModel):
     google_id: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: bool
+    company_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

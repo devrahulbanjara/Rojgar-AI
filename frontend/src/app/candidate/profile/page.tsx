@@ -59,36 +59,19 @@ export default function CandidateProfilePage() {
     );
   }
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, isAuthLoading]);
+
   // Show error state if no user data
   if (!isAuthenticated || !user) {
     return (
       <AppShell>
-        <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-          <div className="space-y-8">
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-8">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-[#0F172A] mb-2">
-                  {!isAuthenticated ? 'Authentication Required' : 'Profile Not Found'}
-                </h1>
-                <p className="text-[#475569] mb-4">
-                  {!isAuthenticated
-                    ? 'Please log in to view your profile.'
-                    : 'Unable to load your profile information. Please try refreshing the page.'
-                  }
-                </p>
-                {!isAuthenticated && (
-                  <div className="mt-4">
-                    <a
-                      href="/login"
-                      className="inline-flex items-center px-4 py-2 bg-[#3056F5] text-white rounded-lg hover:bg-[#1E40AF] transition-colors"
-                    >
-                      Go to Login
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        <PageTransition className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner />
         </PageTransition>
       </AppShell>
     );

@@ -76,7 +76,7 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
         value=token,
         max_age=max_age,
         httponly=True,
-        secure=False,
+        secure=settings.SECURE,
         samesite="lax",
     )
 
@@ -110,7 +110,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
             value=token,
             max_age=max_age,
             httponly=True,
-            secure=False,
+            secure=settings.SECURE,
             samesite="lax",
         )
         return response

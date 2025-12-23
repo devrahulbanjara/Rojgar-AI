@@ -18,6 +18,7 @@ import {
     Edit3,
     Archive,
     Building2,
+    Sparkles,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Job } from '../../types/job';
@@ -166,73 +167,89 @@ export function JobDetailModal({
                     </div>
                 </div>
 
-                {/* Role Overview */}
-                <section className="mb-8">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
-                            <Briefcase className="w-4 h-4 text-[#3B82F6]" />
+                {/* About the Company */}
+                {job.company && (
+                    <section className="mb-8">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#DBEAFE]">
+                                <Building2 className="w-4 h-4 text-[#3B82F6]" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-[#111827]">About the Company</h3>
                         </div>
-                        <h3 className="text-lg font-semibold text-[#111827]">Role Overview</h3>
-                    </div>
-                    <p className="text-[15px] text-[#374151] leading-relaxed">{job.description}</p>
-                </section>
+                        {job.company.description ? (
+                            <p className="text-[15px] text-[#374151] leading-relaxed">{job.company.description}</p>
+                        ) : (
+                            <p className="text-[15px] text-[#374151] leading-relaxed">
+                                {job.company.name} is looking for talented individuals to join their team.
+                            </p>
+                        )}
+                    </section>
+                )}
 
-                {/* Requirements */}
+                {/* Role Overview */}
+                {job.description && (
+                    <section className="mb-8">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
+                                <Briefcase className="w-4 h-4 text-[#3B82F6]" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-[#111827]">Role Overview</h3>
+                        </div>
+                        <p className="text-[15px] text-[#374151] leading-relaxed">{job.description}</p>
+                    </section>
+                )}
+
+                {/* Required Skills and Experience */}
                 {job.requirements && job.requirements.length > 0 && (
                     <section className="mb-8">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FEF3C7]">
-                                <CheckCircle2 className="w-4 h-4 text-[#F59E0B]" />
+                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#D1FAE5]">
+                                <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
                             </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">Requirements</h3>
+                            <h3 className="text-lg font-semibold text-[#111827]">Required Skills and Experience</h3>
                         </div>
-                        <ul className="space-y-3">
+                        <ul className="space-y-3 list-disc list-inside pl-4">
                             {job.requirements.map((req, index) => (
-                                <li key={index} className="flex items-start gap-3 text-[15px] text-[#374151]">
-                                    <CheckCircle2 className="w-5 h-5 text-[#10B981] flex-shrink-0 mt-0.5" />
-                                    <span>{req}</span>
+                                <li key={index} className="text-[15px] text-[#374151]">
+                                    {req}
                                 </li>
                             ))}
                         </ul>
                     </section>
                 )}
 
-                {/* Skills */}
-                {job.skills && job.skills.length > 0 && (
+                {/* Nice to Have (Preferred) */}
+                {job.nice_to_have && job.nice_to_have.length > 0 && (
                     <section className="mb-8">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#DBEAFE]">
-                                <Briefcase className="w-4 h-4 text-[#3B82F6]" />
+                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FEF3C7]">
+                                <Sparkles className="w-4 h-4 text-[#F59E0B]" />
                             </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">Skills</h3>
+                            <h3 className="text-lg font-semibold text-[#111827]">Nice to Have (Preferred)</h3>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {job.skills.map((skill, index) => (
-                                <span
-                                    key={index}
-                                    className="px-4 py-2 bg-[#F3F4F6] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#E5E7EB] transition-colors"
-                                >
-                                    {skill}
-                                </span>
+                        <ul className="space-y-3 list-disc list-inside pl-4">
+                            {job.nice_to_have.map((item, index) => (
+                                <li key={index} className="text-[15px] text-[#374151]">
+                                    {item}
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     </section>
                 )}
 
-                {/* Benefits */}
+                {/* What We Offer (Benefits) */}
                 {job.benefits && job.benefits.length > 0 && (
                     <section className="mb-8">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#D1FAE5]">
-                                <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EDE9FE]">
+                                <Sparkles className="w-4 h-4 text-[#8B5CF6]" />
                             </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">Benefits & Perks</h3>
+                            <h3 className="text-lg font-semibold text-[#111827]">What We Offer</h3>
                         </div>
-                        <ul className="space-y-3">
+                        <ul className="space-y-3 list-disc list-inside pl-4">
                             {job.benefits.map((benefit, index) => (
-                                <li key={index} className="flex items-center gap-3 text-[15px] text-[#374151]">
-                                    <CheckCircle2 className="w-5 h-5 text-[#10B981] flex-shrink-0" />
-                                    <span>{benefit}</span>
+                                <li key={index} className="text-[15px] text-[#374151]">
+                                    {benefit}
                                 </li>
                             ))}
                         </ul>

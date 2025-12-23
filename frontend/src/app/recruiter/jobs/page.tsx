@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Plus, FolderOpen } from 'lucide-react';
 import { AppShell } from '../../../components/layout/AppShell';
-import { PageTransition, AnimatedContainer } from '../../../components/common';
+import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common';
 import {
     RecruiterJobCard,
     JobTabSwitcher,
@@ -14,154 +14,72 @@ import {
 } from '../../../components/recruiter';
 import { referenceJDs, ReferenceJD } from '../../../constants/referenceJDs';
 import type { Job, JobStatus } from '../../../types/job';
-
-// Mock data for demonstration - Enhanced with better descriptions and statuses
-const mockJobs: Job[] = [
-    {
-        id: 1,
-        company_id: 1,
-        company: { id: 1, name: 'ConvexHire' },
-        title: 'Senior Frontend Engineer',
-        department: 'Engineering',
-        level: 'Senior',
-        location: 'San Francisco, CA',
-        location_type: 'Hybrid',
-        employment_type: 'Full-time',
-        salary_min: 150000,
-        salary_max: 200000,
-        salary_currency: 'USD',
-        description: 'We are looking for a Senior Frontend Engineer to join our team and help build the next generation of recruitment tools.',
-        requirements: ['5+ years React experience', 'TypeScript proficiency', 'System design skills'],
-        skills: ['React', 'TypeScript', 'Next.js', 'TailwindCSS', 'GraphQL'],
-        benefits: ['Health insurance', '401k matching', 'Unlimited PTO', 'Remote work options'],
-        posted_date: '2025-12-10',
-        application_deadline: '2025-01-15',
-        status: 'Active' as JobStatus,
-        is_remote: false,
-        is_featured: true,
-        applicant_count: 47,
-        views_count: 342,
-        created_by: 'admin',
-        created_at: '2025-12-10T10:00:00Z',
-        updated_at: '2025-12-10T10:00:00Z',
-    },
-    {
-        id: 2,
-        company_id: 1,
-        company: { id: 1, name: 'ConvexHire' },
-        title: 'Product Designer',
-        department: 'Design',
-        level: 'Mid',
-        location: 'New York, NY',
-        location_type: 'Remote',
-        employment_type: 'Full-time',
-        salary_min: 120000,
-        salary_max: 160000,
-        salary_currency: 'USD',
-        description: 'Join our design team to create beautiful and intuitive user experiences for our recruitment platform.',
-        requirements: ['3+ years design experience', 'Figma expertise', 'Portfolio required'],
-        skills: ['Figma', 'UI/UX', 'Design Systems', 'Prototyping', 'User Research'],
-        benefits: ['Health insurance', 'Stock options', 'Learning budget', 'Gym membership'],
-        posted_date: '2025-12-08',
-        application_deadline: '2025-01-20',
-        status: 'Active' as JobStatus,
-        is_remote: true,
-        is_featured: false,
-        applicant_count: 28,
-        views_count: 189,
-        created_by: 'admin',
-        created_at: '2025-12-08T10:00:00Z',
-        updated_at: '2025-12-08T10:00:00Z',
-    },
-    {
-        id: 3,
-        company_id: 1,
-        company: { id: 1, name: 'ConvexHire' },
-        title: 'Backend Engineer',
-        department: 'Engineering',
-        level: 'Senior',
-        location: 'Austin, TX',
-        location_type: 'On-site',
-        employment_type: 'Full-time',
-        salary_min: 140000,
-        salary_max: 180000,
-        salary_currency: 'USD',
-        description: 'Build scalable backend services and APIs that power our recruitment platform.',
-        requirements: ['5+ years Python/Node.js', 'Database design', 'API development'],
-        skills: ['Python', 'FastAPI', 'PostgreSQL', 'Redis', 'Docker'],
-        benefits: ['Health insurance', '401k', 'Flexible hours', 'Team events'],
-        posted_date: '2025-12-05',
-        application_deadline: '2025-01-10',
-        status: 'Active' as JobStatus,
-        is_remote: false,
-        is_featured: true,
-        applicant_count: 35,
-        views_count: 256,
-        created_by: 'admin',
-        created_at: '2025-12-05T10:00:00Z',
-        updated_at: '2025-12-05T10:00:00Z',
-    },
-    {
-        id: 5,
-        company_id: 1,
-        company: { id: 1, name: 'ConvexHire' },
-        title: 'Data Analyst',
-        department: 'Analytics',
-        level: 'Junior',
-        location: 'Remote',
-        location_type: 'Remote',
-        employment_type: 'Full-time',
-        salary_min: 80000,
-        salary_max: 100000,
-        salary_currency: 'USD',
-        description: 'Analyze recruitment data and provide insights to improve our platform.',
-        requirements: ['1+ years analytics experience', 'SQL proficiency', 'Data visualization'],
-        skills: ['SQL', 'Python', 'Tableau', 'Excel', 'Statistics'],
-        benefits: ['Health insurance', 'Learning stipend', 'Mentorship program'],
-        posted_date: '2025-11-28',
-        application_deadline: '2024-12-31',
-        status: 'Draft' as JobStatus,
-        is_remote: true,
-        is_featured: false,
-        applicant_count: 0,
-        views_count: 0,
-        created_by: 'admin',
-        created_at: '2025-11-28T10:00:00Z',
-        updated_at: '2025-11-28T10:00:00Z',
-    },
-    {
-        id: 6,
-        company_id: 1,
-        company: { id: 1, name: 'ConvexHire' },
-        title: 'Customer Success Manager',
-        department: 'Customer Success',
-        level: 'Mid',
-        location: 'Chicago, IL',
-        location_type: 'Hybrid',
-        employment_type: 'Full-time',
-        salary_min: 90000,
-        salary_max: 120000,
-        salary_currency: 'USD',
-        description: 'Ensure our customers achieve their recruitment goals using our platform.',
-        requirements: ['2+ years customer success', 'SaaS experience', 'Excellent communication'],
-        skills: ['Customer Relations', 'SaaS', 'Communication', 'Problem Solving'],
-        benefits: ['Health insurance', 'Commission', 'Travel opportunities'],
-        posted_date: '2025-11-25',
-        application_deadline: '2024-12-28',
-        status: 'Draft' as JobStatus,
-        is_remote: false,
-        is_featured: false,
-        applicant_count: 0,
-        views_count: 0,
-        created_by: 'admin',
-        created_at: '2025-11-25T10:00:00Z',
-        updated_at: '2025-11-25T10:00:00Z',
-    },
-];
+import { useJobsByCompany } from '../../../hooks/queries/useJobs';
+import { useAuth } from '../../../hooks/useAuth';
 
 type TabType = 'active' | 'drafts' | 'reference-jds';
 
+// Helper function to map backend status to frontend JobStatus
+const mapJobStatus = (status: string): JobStatus => {
+    const statusMap: Record<string, JobStatus> = {
+        'active': 'Active',
+        'draft': 'Draft',
+        'expired': 'Closed',
+        'closed': 'Closed',
+        'inactive': 'Inactive',
+    };
+    return statusMap[status.toLowerCase()] || 'Draft';
+};
+
+// Helper function to transform backend job to frontend Job format
+const transformJob = (job: any): Job => {
+    // Extract requirements and skills from required_skills_experience
+    const requirements = job.requirements || job.required_skills_experience || [];
+    const skills: string[] = []; // Backend doesn't separate skills, so we'll use requirements for both
+    
+    return {
+        id: parseInt(job.job_id || job.id) || 0,
+        company_id: parseInt(job.company_id) || 0,
+        company: job.company ? {
+            id: parseInt(job.company.id || job.company_id) || 0,
+            name: job.company_name || job.company?.name || 'Unknown Company',
+            logo: job.company?.logo,
+            website: job.company?.website,
+            description: job.company?.description,
+            location: job.company?.location,
+            industry: job.company?.industry,
+            founded_year: job.company?.founded_year,
+        } : undefined,
+        title: job.title || '',
+        department: job.department || '',
+        level: (job.level || 'Mid') as Job['level'],
+        location: job.location || `${job.location_city || ''}, ${job.location_country || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Not specified',
+        location_type: (job.location_type || 'On-site') as Job['location_type'],
+        employment_type: (job.employment_type || 'Full-time') as Job['employment_type'],
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        salary_currency: job.salary_currency || 'NPR',
+        salary_range: job.salary_range,
+        description: job.description || job.role_overview || '',
+        requirements: Array.isArray(requirements) ? requirements : [],
+        skills: skills.length > 0 ? skills : requirements, // Use requirements as skills if no separate skills field
+        nice_to_have: job.nice_to_have || [],
+        benefits: job.benefits || [],
+        posted_date: job.posted_date || job.created_at || new Date().toISOString(),
+        application_deadline: job.application_deadline || '',
+        status: mapJobStatus(job.status || 'draft'),
+        is_remote: job.is_remote || job.location_type === 'Remote',
+        is_featured: job.is_featured || false,
+        applicant_count: job.applicant_count || job.stats?.applicant_count || 0,
+        views_count: job.views_count || job.stats?.views_count || 0,
+        created_by: job.created_by || 'system',
+        created_at: job.created_at || new Date().toISOString(),
+        updated_at: job.updated_at || new Date().toISOString(),
+    };
+};
+
 export default function RecruiterJobsPage() {
+    const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [activeTab, setActiveTab] = useState<TabType>('active');
 
     // Components State
@@ -174,9 +92,30 @@ export default function RecruiterJobsPage() {
     const [selectedReferenceJD, setSelectedReferenceJD] = useState<ReferenceJD | null>(null);
     const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
 
-    // Filter jobs based on active tab
+    // Get user_id from user object (before any conditional returns)
+    const userId = user?.id || null;
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!isAuthLoading && !isAuthenticated) {
+            window.location.href = '/login';
+        }
+    }, [isAuthenticated, isAuthLoading]);
+
+    // Fetch jobs by user_id (must be called before any conditional returns)
+    const { data: jobsData, isLoading: isLoadingJobs, refetch: refetchJobs } = useJobsByCompany(
+        userId || '',
+        { page: 1, limit: 100 }
+    );
+
+    // Transform and filter jobs based on active tab
+    const allJobs = useMemo(() => {
+        if (!jobsData?.jobs) return [];
+        return jobsData.jobs.map(transformJob);
+    }, [jobsData]);
+
     const filteredJobs = useMemo(() => {
-        return mockJobs.filter((job) => {
+        return allJobs.filter((job) => {
             if (activeTab === 'active') {
                 return job.status === 'Active';
             }
@@ -185,10 +124,10 @@ export default function RecruiterJobsPage() {
             }
             return false;
         });
-    }, [activeTab]);
+    }, [allJobs, activeTab]);
 
-    const activeCount = useMemo(() => mockJobs.filter((j) => j.status === 'Active').length, []);
-    const draftCount = useMemo(() => mockJobs.filter((j) => j.status === 'Draft').length, []);
+    const activeCount = useMemo(() => allJobs.filter((j) => j.status === 'Active').length, [allJobs]);
+    const draftCount = useMemo(() => allJobs.filter((j) => j.status === 'Draft').length, [allJobs]);
 
     // Handlers
     const handleJobClick = useCallback((job: Job) => {
@@ -209,7 +148,9 @@ export default function RecruiterJobsPage() {
     const handleClosePostJobModal = useCallback(() => {
         setIsPostJobModalOpen(false);
         setTimeout(() => setPostJobMode(null), 300);
-    }, []);
+        // Refetch jobs after creating a new one
+        refetchJobs();
+    }, [refetchJobs]);
 
     // Reference JD Handlers
     const handleReferenceClick = useCallback((jd: ReferenceJD) => {
@@ -239,6 +180,17 @@ export default function RecruiterJobsPage() {
             setIsPostJobModalOpen(true);
         }, 300);
     }, []);
+
+    // Show loading state while checking authentication
+    if (isAuthLoading || !isAuthenticated) {
+        return (
+            <AppShell>
+                <PageTransition className="min-h-screen flex items-center justify-center">
+                    <LoadingSpinner />
+                </PageTransition>
+            </AppShell>
+        );
+    }
 
     return (
         <AppShell>
@@ -275,7 +227,11 @@ export default function RecruiterJobsPage() {
 
                     {/* Content Area */}
                     <AnimatedContainer direction="up" delay={0.2}>
-                        {activeTab === 'reference-jds' ? (
+                        {isLoadingJobs ? (
+                            <div className="flex items-center justify-center py-16">
+                                <LoadingSpinner size="lg" />
+                            </div>
+                        ) : activeTab === 'reference-jds' ? (
                             /* Reference JDs Grid */
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                                 {referenceJDs.map((jd) => (

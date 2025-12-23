@@ -67,7 +67,7 @@ export function ReferenceJDModal({ jd, isOpen, onClose, onUseTemplate }: Referen
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <MapPin className="w-4 h-4 text-gray-400" />
-                                    <span>United States (Remote)</span>
+                                    <span>Nepal (Remote)</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <DollarSign className="w-4 h-4 text-gray-400" />

@@ -1,19 +1,21 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 import math
+from datetime import date, datetime, UTC
+import uuid
 
 from app.core import get_db, get_current_user_id
 from app.services.candidate.vector_job_service import JobVectorService
-from app.models.job import JobPosting
+from app.models.job import JobPosting, JobDescription, JobPostingStats
 from app.models.candidate import CandidateProfile
+from app.models.company import CompanyProfile
 from app.schemas import job as schemas
 
 router = APIRouter()
 vector_service = JobVectorService()
 
-# Valid job statuses that should be visible to candidates
-VISIBLE_STATUSES = ['open', 'active']
+VISIBLE_STATUSES = ['active', 'expired']
 
 @router.post("/admin/reindex")
 def admin_reindex_jobs(db: Session = Depends(get_db)):
@@ -183,18 +185,173 @@ def search_jobs(
         "has_prev": page > 1
     }
 
+@router.post("", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED)
+def create_job(
+    job_data: schemas.JobCreate,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """Create a new job posting"""
+    company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company profile not found for this user"
+        )
+    
+    company_id = company.company_id
+    
+    job_description_id = str(uuid.uuid4())
+    job_id = str(uuid.uuid4())
+    
+    # Handle required skills - allow empty list for drafts
+    required_skills_list = job_data.requiredSkillsAndExperience if job_data.requiredSkillsAndExperience else []
+    required_skills_experience_dict = {
+        "required_skills_experience": required_skills_list
+    }
+    
+    nice_to_have_dict = None
+    if job_data.niceToHave:
+        nice_to_have_dict = {
+            "nice_to_have": job_data.niceToHave
+        }
+    
+    offers_dict = None
+    if job_data.benefits:
+        offers_dict = {
+            "benefits": job_data.benefits
+        }
+    
+    job_description = JobDescription(
+        job_description_id=job_description_id,
+        role_overview=job_data.description or "",  # Allow empty for drafts
+        required_skills_experience=required_skills_experience_dict,
+        nice_to_have=nice_to_have_dict,
+        offers=offers_dict,
+        created_at=datetime.now(UTC).replace(tzinfo=None),
+        updated_at=datetime.now(UTC).replace(tzinfo=None)
+    )
+    
+    db.add(job_description)
+    db.flush()
+    
+    application_deadline = None
+    if job_data.applicationDeadline:
+        try:
+            if 'T' in job_data.applicationDeadline:
+                application_deadline = datetime.fromisoformat(job_data.applicationDeadline.replace('Z', '+00:00')).date()
+            else:
+                application_deadline = datetime.strptime(job_data.applicationDeadline, '%Y-%m-%d').date()
+        except Exception:
+            application_deadline = None
+    
+    # Determine status - use provided status or default to "active"
+    job_status = job_data.status if job_data.status else "active"
+    
+    job_posting = JobPosting(
+        job_id=job_id,
+        company_id=company_id,
+        job_description_id=job_description_id,
+        title=job_data.title,
+        department=job_data.department,
+        level=job_data.level,
+        location_city=job_data.locationCity,
+        location_country=job_data.locationCountry,
+        location_type=job_data.locationType,
+        employment_type=job_data.employmentType,
+        salary_min=job_data.salaryMin,
+        salary_max=job_data.salaryMax,
+        salary_currency=job_data.currency,
+        status=job_status,
+        is_indexed=False,
+        posted_date=date.today(),
+        application_deadline=application_deadline,
+        created_at=datetime.now(UTC).replace(tzinfo=None),
+        updated_at=datetime.now(UTC).replace(tzinfo=None)
+    )
+    
+    db.add(job_posting)
+    
+    job_stats = JobPostingStats(
+        job_stats_id=str(uuid.uuid4()),
+        job_id=job_id,
+        applicant_count=0,
+        views_count=0,
+        created_at=datetime.now(UTC).replace(tzinfo=None),
+        updated_at=datetime.now(UTC).replace(tzinfo=None)
+    )
+    
+    db.add(job_stats)
+    
+    db.commit()
+    db.refresh(job_posting)
+    
+    return map_job_to_response(job_posting)
+
+
 @router.get("", response_model=schemas.JobListResponse)
 def get_jobs(
+    user_id: Optional[str] = None,
+    company_id: Optional[str] = None,  # Keep for backward compatibility
+    status: Optional[str] = None,
     page: int = 1,
     limit: int = 10,
     db: Session = Depends(get_db)
 ):
-    offset = (page - 1) * limit
-    total = db.query(JobPosting).filter(JobPosting.status.in_(VISIBLE_STATUSES)).count()
-    jobs = db.query(JobPosting).filter(JobPosting.status.in_(VISIBLE_STATUSES)).offset(offset).limit(limit).all()
+    """
+    Get list of jobs with optional filtering by user_id (recruiter) or company_id and status.
+    If user_id is provided, looks up the company profile for that user and returns jobs for that company.
+    If company_id is provided, returns jobs for that company directly.
+    If status is provided, filters by status.
+    For recruiters (user_id provided): returns all statuses by default (active, draft, expired).
+    For public views (company_id or neither): shows active/expired by default.
+    """
+    query = db.query(JobPosting)
+    is_recruiter_view = False
     
+    # If user_id is provided, look up the company profile
+    if user_id:
+        is_recruiter_view = True
+        company_profile = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
+        if company_profile:
+            query = query.filter(JobPosting.company_id == company_profile.company_id)
+        else:
+            # User has no company profile, return empty result
+            return {
+                "jobs": [],
+                "total": 0,
+                "page": page,
+                "limit": limit,
+                "total_pages": 0,
+                "has_next": False,
+                "has_prev": False
+            }
+    # Filter by company_id if provided (backward compatibility)
+    elif company_id:
+        query = query.filter(JobPosting.company_id == company_id)
+    
+    # Filter by status
+    # If status is explicitly provided, use it
+    if status:
+        query = query.filter(JobPosting.status == status)
+    # For recruiters viewing their own jobs, return all statuses (active, draft, expired)
+    # For public views, only show active/expired
+    elif not is_recruiter_view:
+        query = query.filter(JobPosting.status.in_(VISIBLE_STATUSES))
+    
+    # Get total count
+    total = query.count()
+    
+    # Apply pagination and eager load relationships
+    from sqlalchemy.orm import selectinload
+    offset = (page - 1) * limit
+    jobs = query.options(
+        selectinload(JobPosting.company),
+        selectinload(JobPosting.job_description),
+        selectinload(JobPosting.stats)
+    ).order_by(JobPosting.posted_date.desc()).offset(offset).limit(limit).all()
     items = [map_job_to_response(job) for job in jobs]
-    total_pages = math.ceil(total / limit)
+    total_pages = math.ceil(total / limit) if limit > 0 else 0
     
     return {
         "jobs": items,
@@ -224,30 +381,13 @@ def map_job_to_response(job: JobPosting):
         location_parts.append(job.location_country)
     location = ", ".join(location_parts) if location_parts else job.location_type or "Not specified"
     
-    # Extract skills and requirements from job description
-    skills = []
     requirements = []
     if job.job_description and job.job_description.required_skills_experience:
-        req = job.job_description.required_skills_experience
-        if isinstance(req, dict):
-            # Extract skills array if present
-            if "skills" in req and isinstance(req["skills"], list):
-                skills = req["skills"]
-            # Extract requirements array if present
-            if "requirements" in req and isinstance(req["requirements"], list):
-                requirements = req["requirements"]
-            
-            # Fallback: if no explicit "skills" key, try other common formats
-            if not skills:
-                for key, val in req.items():
-                    if key != "requirements" and isinstance(val, list):
-                        skills.extend(val)
-                    elif key != "requirements" and isinstance(val, str):
-                        skills.append(val)
-        elif isinstance(req, list):
-            skills = req
+        req_and_skills = job.job_description.required_skills_experience
+        if isinstance(req_and_skills, dict):
+            if isinstance(req_and_skills["required_skills_experience"], list):
+                requirements = req_and_skills["required_skills_experience"]
     
-    # Extract benefits from offers JSON
     benefits = []
     if job.job_description and job.job_description.offers:
         offers = job.job_description.offers
@@ -255,10 +395,19 @@ def map_job_to_response(job: JobPosting):
             if isinstance(offers["benefits"], list):
                 benefits = offers["benefits"]
     
-    # Build company object for frontend with full profile info
+    nice_to_have = []
+    if job.job_description and job.job_description.nice_to_have:
+        nth = job.job_description.nice_to_have
+        if isinstance(nth, list):
+            nice_to_have = nth
+        elif isinstance(nth, dict):
+            for key, val in nth.items():
+                if isinstance(val, list):
+                    nice_to_have = val
+                    break
+    
     company = None
     if job.company:
-        # Build company location string
         company_location_parts = []
         if job.company.location_city:
             company_location_parts.append(job.company.location_city)
@@ -279,7 +428,7 @@ def map_job_to_response(job: JobPosting):
     return {
         # IDs
         "job_id": job.job_id,
-        "id": job.job_id,  # Frontend uses this as key
+        "id": job.job_id,
         "company_id": job.company_id,
         "job_description_id": job.job_description_id,
         
@@ -323,14 +472,14 @@ def map_job_to_response(job: JobPosting):
         "description": job.job_description.role_overview if job.job_description else None,
         "role_overview": job.job_description.role_overview if job.job_description else None,
         
-        # Skills, Requirements, and Benefits - as arrays for frontend
-        "skills": skills,
+        # Skills, Requirements, Benefits, and Nice to Have - as arrays for frontend
         "requirements": requirements,
         "benefits": benefits,
-        "required_skills": job.job_description.required_skills_experience if job.job_description else None,
+        "nice_to_have": nice_to_have,
+        "required_skills_experience": job.job_description.required_skills_experience if job.job_description else None,
         
-        # Placeholder fields the frontend might expect
-        "applicant_count": 0,
-        "views_count": 0,
+        # Stats from JobPostingStats
+        "applicant_count": job.stats.applicant_count if job.stats else 0,
+        "views_count": job.stats.views_count if job.stats else 0,
         "is_featured": False,
     }

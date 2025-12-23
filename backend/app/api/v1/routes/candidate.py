@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.core import get_db, get_current_user_id
 from app.services.candidate import CandidateService

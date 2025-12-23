@@ -1,10 +1,15 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from sqlalchemy import String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
+
+
+def utc_now():
+    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class UserRole(str, Enum):
@@ -25,8 +30,8 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     role: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     # Relationships
     google_account: Mapped[Optional["UserGoogle"]] = relationship("UserGoogle", back_populates="user", uselist=False, cascade="all, delete-orphan")

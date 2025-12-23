@@ -21,12 +21,18 @@ export class ApiError extends Error {
 class ApiClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
+  private onUnauthorized?: () => void;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
+  }
+
+  // Set callback for handling unauthorized (401) responses
+  setUnauthorizedHandler(handler: () => void) {
+    this.onUnauthorized = handler;
   }
 
   async request<T>(
@@ -50,6 +56,19 @@ class ApiClient {
       // Handle 204 No Content responses (like DELETE operations)
       if (response.status === 204) {
         return null as T;
+      }
+
+      // Handle 401 Unauthorized - token expired or invalid
+      if (response.status === 401) {
+        // Call unauthorized handler if set (will clear cache and redirect)
+        if (this.onUnauthorized) {
+          this.onUnauthorized();
+        }
+        throw new ApiError(
+          'Authentication required. Please log in again.',
+          response.status,
+          null
+        );
       }
 
       // Only try to parse JSON if there's content

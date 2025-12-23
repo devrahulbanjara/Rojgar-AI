@@ -1,9 +1,14 @@
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from sqlalchemy import String, ForeignKey, Boolean, Date, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
+
+
+def utc_now():
+    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class CandidateProfile(Base):
@@ -40,8 +45,8 @@ class CandidateSocialLink(Base):
     type: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     profile: Mapped["CandidateProfile"] = relationship("CandidateProfile", back_populates="social_links")
 
@@ -59,8 +64,8 @@ class CandidateWorkExperience(Base):
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     profile: Mapped["CandidateProfile"] = relationship("CandidateProfile", back_populates="work_experiences")
 
@@ -77,8 +82,8 @@ class CandidateEducation(Base):
     end_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     profile: Mapped["CandidateProfile"] = relationship("CandidateProfile", back_populates="educations")
 
@@ -96,8 +101,8 @@ class CandidateCertification(Base):
     expiration_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     does_not_expire: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     profile: Mapped["CandidateProfile"] = relationship("CandidateProfile", back_populates="certifications")
 
@@ -109,7 +114,7 @@ class CandidateSkills(Base):
     profile_id: Mapped[str] = mapped_column(String, ForeignKey("candidate_profile.profile_id"), nullable=False)
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
     profile: Mapped["CandidateProfile"] = relationship("CandidateProfile", back_populates="skills")
