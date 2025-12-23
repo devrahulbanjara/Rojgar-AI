@@ -8,17 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
-import {
-  MapPin,
-  DollarSign,
-  Calendar,
-  Building2,
+import { 
+  MapPin, 
+  DollarSign, 
+  Calendar, 
+  Building2, 
   Users,
   Clock,
   ArrowRight,
   ExternalLink,
   CheckCircle,
-  X
+  X,
+  Briefcase,
+  Sparkles,
+  Globe
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { jobUtils } from '../../services/jobService';
@@ -49,8 +52,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 {job.company?.logo && (
-                  <img
-                    src={job.company.logo}
+                  <img 
+                    src={job.company.logo} 
                     alt={job.company.name}
                     className="w-12 h-12 rounded-lg object-cover"
                   />
@@ -64,10 +67,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   </p>
                 </div>
               </div>
-
+              
               <div className="flex flex-wrap gap-2 mb-4">
-                <Badge
-                  variant="secondary"
+                <Badge 
+                  variant="secondary" 
                   className={cn(
                     'text-sm font-medium',
                     jobUtils.getJobLevelColor(job.level)
@@ -75,8 +78,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 >
                   {job.level}
                 </Badge>
-                <Badge
-                  variant="outline"
+                <Badge 
+                  variant="outline" 
                   className={cn(
                     'text-sm',
                     jobUtils.getLocationTypeColor(job.location_type)
@@ -84,8 +87,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 >
                   {job.location_type}
                 </Badge>
-                <Badge
-                  variant="outline"
+                <Badge 
+                  variant="outline" 
                   className={cn(
                     'text-sm',
                     jobUtils.getEmploymentTypeColor(job.employment_type)
@@ -95,7 +98,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 </Badge>
               </div>
             </div>
-
+            
             <Button
               variant="ghost"
               size="sm"
@@ -121,12 +124,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   {jobUtils.formatJobSalary(job)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Building2 className="w-4 h-4" />
-                <span>{job.department}</span>
-              </div>
             </div>
-
+            
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="w-4 h-4" />
@@ -149,53 +148,21 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
           <Separator />
 
-          {/* Job Description */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">Job Description</h3>
-            <div className="prose prose-sm max-w-none text-muted-foreground">
-              <p className="whitespace-pre-wrap">{job.description}</p>
-            </div>
-          </div>
-
-          {/* Requirements */}
-          {job.requirements && job.requirements.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Requirements</h3>
-              <ul className="space-y-2">
-                {job.requirements.map((requirement, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{requirement}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Skills */}
-          {job.skills && job.skills.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Required Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {job.skills.map((skill, index) => (
-                  <Badge
-                    key={index}
-                    variant="outline"
-                    className="text-sm px-3 py-1"
-                  >
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Company Information */}
+          {/* About the Company */}
           {job.company && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">About {job.company.name}</h3>
-              {job.company.description && (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">About the Company</h3>
+              </div>
+              {job.company.description ? (
                 <p className="text-muted-foreground">{job.company.description}</p>
+              ) : (
+                <p className="text-muted-foreground">
+                  {job.company.name} is looking for talented individuals to join their team.
+                </p>
               )}
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 {job.company.location && (
@@ -217,17 +184,90 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   </div>
                 )}
                 {job.company.website && (
-                  <a
-                    href={job.company.website}
-                    target="_blank"
+                  <a 
+                    href={job.company.website.startsWith('http') ? job.company.website : `https://${job.company.website}`}
+                    target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-primary hover:underline"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>Company Website</span>
+                    <Globe className="w-4 h-4" />
+                    <span>Website</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Role Overview */}
+          {job.description && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50">
+                  <Briefcase className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Role Overview</h3>
+              </div>
+              <div className="prose prose-sm max-w-none text-muted-foreground">
+                <p className="whitespace-pre-wrap">{job.description}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Required Skills and Experience */}
+          {job.requirements && job.requirements.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Required Skills and Experience</h3>
+              </div>
+              <ul className="space-y-2 list-disc list-inside pl-4">
+                {job.requirements.map((requirement, index) => (
+                  <li key={index} className="text-muted-foreground">
+                    {requirement}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Nice to Have (Preferred) */}
+          {job.nice_to_have && job.nice_to_have.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Nice to Have (Preferred)</h3>
+              </div>
+              <ul className="space-y-2 list-disc list-inside pl-4">
+                {job.nice_to_have.map((item, index) => (
+                  <li key={index} className="text-muted-foreground">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* What We Offer (Benefits) */}
+          {job.benefits && job.benefits.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-violet-50">
+                  <Sparkles className="w-4 h-4 text-violet-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">What We Offer</h3>
+              </div>
+              <ul className="space-y-2 list-disc list-inside pl-4">
+                {job.benefits.map((benefit, index) => (
+                  <li key={index} className="text-muted-foreground">
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

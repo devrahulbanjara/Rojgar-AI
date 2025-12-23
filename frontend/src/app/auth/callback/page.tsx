@@ -41,14 +41,14 @@ export default function AuthCallback() {
       }
 
       const data = await response.json();
-
+      
       // Check if user needs to select a role
       if (data.requires_role_selection) {
         router.push(ROUTES.SELECT_ROLE);
       } else {
         // Redirect based on user role
-        const redirectUrl = data.user?.role === 'recruiter'
-          ? ROUTES.RECRUITER_DASHBOARD
+        const redirectUrl = data.user?.role === 'recruiter' 
+          ? ROUTES.RECRUITER_DASHBOARD 
           : ROUTES.CANDIDATE_DASHBOARD;
         router.push(redirectUrl);
       }

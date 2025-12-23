@@ -14,15 +14,15 @@ interface ApplicationTrackingBoardProps {
   onRetry?: () => void;
 }
 
-export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> = ({
-  applications,
-  isLoading,
-  error,
-  onRetry
+export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> = ({ 
+  applications, 
+  isLoading, 
+  error, 
+  onRetry 
 }) => {
-  const isEmpty =
-    applications.applied.length === 0 &&
-    applications.interviewing.length === 0 &&
+  const isEmpty = 
+    applications.applied.length === 0 && 
+    applications.interviewing.length === 0 && 
     applications.outcome.length === 0;
 
   if (isLoading) {
@@ -81,24 +81,24 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
       <div className="block md:hidden">
         <div className="flex gap-4 overflow-x-auto pb-4 px-1" role="list" aria-label="Application columns">
           <div className="flex-shrink-0 w-80" role="listitem">
-            <ApplicationTrackingColumn
-              title="Applied"
+            <ApplicationTrackingColumn 
+              title="Applied" 
               description="Applications submitted and under review"
               applications={applications.applied}
               columnType="applied"
             />
           </div>
           <div className="flex-shrink-0 w-80" role="listitem">
-            <ApplicationTrackingColumn
-              title="Interviewing"
+            <ApplicationTrackingColumn 
+              title="Interviewing" 
               description="Active interview process"
               applications={applications.interviewing}
               columnType="interviewing"
             />
           </div>
           <div className="flex-shrink-0 w-80" role="listitem">
-            <ApplicationTrackingColumn
-              title="Outcome"
+            <ApplicationTrackingColumn 
+              title="Outcome" 
               description="Final results and decisions"
               applications={applications.outcome}
               columnType="outcome"
@@ -110,24 +110,24 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
       {/* Desktop: Full width grid */}
       <div className="hidden md:grid md:grid-cols-3 gap-6" role="list" aria-label="Application columns">
         <div role="listitem">
-          <ApplicationTrackingColumn
-            title="Applied"
+          <ApplicationTrackingColumn 
+            title="Applied" 
             description="Applications submitted and under review"
             applications={applications.applied}
             columnType="applied"
           />
         </div>
         <div role="listitem">
-          <ApplicationTrackingColumn
-            title="Interviewing"
+          <ApplicationTrackingColumn 
+            title="Interviewing" 
             description="Active interview process"
             applications={applications.interviewing}
             columnType="interviewing"
           />
         </div>
         <div role="listitem">
-          <ApplicationTrackingColumn
-            title="Outcome"
+          <ApplicationTrackingColumn 
+            title="Outcome" 
             description="Final results and decisions"
             applications={applications.outcome}
             columnType="outcome"

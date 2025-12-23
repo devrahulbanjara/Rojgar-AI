@@ -9,7 +9,7 @@ describe('MainContentContainer', () => {
         <div data-testid="test-content">Test Content</div>
       </MainContentContainer>
     );
-
+    
     expect(screen.getByTestId('test-content')).toBeInTheDocument();
     expect(screen.getByTestId('test-content')).toHaveTextContent('Test Content');
   });
@@ -20,7 +20,7 @@ describe('MainContentContainer', () => {
         <div>Test</div>
       </MainContentContainer>
     );
-
+    
     const mainContainer = container.firstChild as HTMLElement;
     expect(mainContainer).toHaveClass('container', 'mx-auto', 'max-w-7xl', 'px-12', 'py-12');
   });
@@ -31,7 +31,7 @@ describe('MainContentContainer', () => {
         <div>Test</div>
       </MainContentContainer>
     );
-
+    
     const mainContainer = container.firstChild as HTMLElement;
     expect(mainContainer).toHaveClass('max-w-6xl');
     expect(mainContainer).not.toHaveClass('max-w-7xl');
@@ -43,7 +43,7 @@ describe('MainContentContainer', () => {
         <div>Test</div>
       </MainContentContainer>
     );
-
+    
     const mainContainer = container.firstChild as HTMLElement;
     expect(mainContainer).toHaveClass('px-6', 'py-6');
     expect(mainContainer).not.toHaveClass('px-12', 'py-12');
@@ -55,7 +55,7 @@ describe('MainContentContainer', () => {
         <div>Test</div>
       </MainContentContainer>
     );
-
+    
     const mainContainer = container.firstChild as HTMLElement;
     expect(mainContainer).toHaveClass('custom-class');
   });
@@ -66,7 +66,7 @@ describe('MainContentContainer', () => {
         <div>Test</div>
       </MainContentContainer>
     );
-
+    
     const mainContainer = container.firstChild as HTMLElement;
     expect(mainContainer).toHaveClass('max-lg:px-6', 'max-lg:py-6');
   });

@@ -10,7 +10,7 @@ interface MainContentContainerProps {
 
 const maxWidthClasses = {
   sm: 'max-w-sm',
-  md: 'max-w-md',
+  md: 'max-w-md', 
   lg: 'max-w-lg',
   xl: 'max-w-xl',
   '2xl': 'max-w-2xl',
@@ -22,19 +22,19 @@ const maxWidthClasses = {
 
 const paddingClasses = {
   sm: 'px-4 py-4',
-  md: 'px-6 py-6',
+  md: 'px-6 py-6', 
   lg: 'px-8 py-8',
   xl: 'px-12 py-12'
 };
 
-export function MainContentContainer({
-  children,
+export function MainContentContainer({ 
+  children, 
   className,
   maxWidth = '7xl',
   padding = 'xl'
 }: MainContentContainerProps) {
   return (
-    <div
+    <div 
       className={cn(
         'container mx-auto',
         maxWidthClasses[maxWidth],

@@ -21,13 +21,13 @@ interface AnimatedContainerProps {
 // Optimized animation variants
 const variants: Record<string, Variants> = {
   up: {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       y: 20,
       filter: 'blur(4px)'
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       y: 0,
       filter: 'blur(0px)',
       transition: {
@@ -38,13 +38,13 @@ const variants: Record<string, Variants> = {
     }
   },
   down: {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       y: -20,
       filter: 'blur(4px)'
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       y: 0,
       filter: 'blur(0px)',
       transition: {
@@ -55,13 +55,13 @@ const variants: Record<string, Variants> = {
     }
   },
   left: {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       x: -20,
       filter: 'blur(4px)'
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       x: 0,
       filter: 'blur(0px)',
       transition: {
@@ -72,13 +72,13 @@ const variants: Record<string, Variants> = {
     }
   },
   right: {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       x: 20,
       filter: 'blur(4px)'
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       x: 0,
       filter: 'blur(0px)',
       transition: {
@@ -89,11 +89,11 @@ const variants: Record<string, Variants> = {
     }
   },
   fade: {
-    hidden: {
+    hidden: { 
       opacity: 0,
       filter: 'blur(4px)'
     },
-    visible: {
+    visible: { 
       opacity: 1,
       filter: 'blur(0px)',
       transition: {
@@ -104,13 +104,13 @@ const variants: Record<string, Variants> = {
     }
   },
   scale: {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       scale: 0.95,
       filter: 'blur(4px)'
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       scale: 1,
       filter: 'blur(0px)',
       transition: {
@@ -133,7 +133,7 @@ export const AnimatedContainer = memo<AnimatedContainerProps>(({
   once = true
 }) => {
   const variant = variants[direction];
-
+  
   if (!variant) {
     return <div className={className}>{children}</div>;
   }
@@ -179,13 +179,13 @@ export const StaggerContainer = memo<{
   };
 
   const itemVariants: Variants = {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       y: 20,
       filter: 'blur(4px)'
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       y: 0,
       filter: 'blur(0px)',
       transition: {

@@ -13,6 +13,7 @@ export interface User {
   userType?: UserType; // For compatibility
   role?: UserType; // Backend uses 'role'
   picture?: string; // For Google OAuth profile pictures
+  company_id?: string; // Company ID for recruiters
   createdAt?: string;
   updatedAt?: string;
 }

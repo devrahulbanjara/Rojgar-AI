@@ -1,12 +1,8 @@
-###############
-# PYTHON
-###############
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 
-# Packaging
 build/
 dist/
 .eggs/
@@ -15,16 +11,12 @@ wheels/
 share/python-wheels/
 MANIFEST
 
-# PyInstaller
 *.spec
 
-# Logs
 *.log
 logs/
 **/logs/
 *.out
-
-# Test & coverage
 .tox/
 .nox/
 .pytest_cache/
@@ -33,21 +25,16 @@ htmlcov/
 .hypothesis/
 .cover/
 
-# Django & Flask
 local_settings.py
 instance/
 .webassets-cache
 
-# Databases
 *.db
-convexhire.db
 
-# Jupyter
 .ipynb_checkpoints/
 **/*.ipynb
 **/trial.ipynb
 
-# Virtual environments
 .env
 .envrc
 .venv/
@@ -55,20 +42,14 @@ env/
 venv/
 ENV/
 
-# Type checking / lint caches
 .mypy_cache/
 .dmypy.json
 .pyre/
 .pytype/
 .ruff_cache/
 
-# UV
 uv_cache/
 
-###############
-# PROJECT-SPECIFIC (ConvexHire)
-###############
-# Raw data & dummy assets
 *.txt
 *.jsonl
 *.csv
@@ -78,22 +59,16 @@ datasets/
 samples/
 examples/
 
-# Agent inputs/outputs
 outputs/
 output/
 **/output/
 **/resumes/
 **/job_descriptions/
 
-# Model artifacts
 checkpoints/
-models/
 model_outputs/
 artifacts/
 
-###############
-# FRONTEND (Node / Next.js)
-###############
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -107,17 +82,12 @@ out/
 .storybook-out/
 storybook-static/
 
-# Build output
 dist/
 build/
 
-# Temp
 tmp/
 temp/
 
-###############
-# EDITOR / OS
-###############
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
@@ -125,9 +95,6 @@ temp/
 *.swp
 Thumbs.db
 
-###############
-# MISC
-###############
 .pypirc
 .cursorignore
 .cursorindexingignore
@@ -136,3 +103,5 @@ marimo/_lsp/
 __marimo__/
 
 backend/tests/test_resumes/
+.shared
+.cursorignore

@@ -1,37 +1,46 @@
 from contextlib import asynccontextmanager
-
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
-from app.api.v1 import api_router
 from app.core.config import settings
-from app.core.database import init_db
+from app.core.database import init_db, engine
+from app.api.v1 import api_router
 from app.core.logging_config import logger
-from app.core.ml_model import ModelManager
+from app.services.candidate.vector_job_service import JobVectorService
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Lifespan manager - runs when app starts and shuts down
-    Startup: Create database tables
     """
     logger.info("Starting ConvexHire API...")
-    logger.info("Initializing database...")
+    
+    # 1. Initialize DB Tables
+    logger.info("Initializing database schema...")
     init_db()
-    logger.info("Database ready!")
+    
+    # 2. Index Pending Jobs
+    try:
+        with Session(engine) as db:
+            vector_service = JobVectorService()
+            vector_service.index_all_pending_jobs(db)
+    except Exception as e:
+        logger.error(f"⚠️ Startup indexing warning: {e}")
 
-    ModelManager.initialize()
-
+    logger.info("System Ready!")
+    
     yield
-
+    
     logger.info("Shutting down ConvexHire API...")
 
 
 app = FastAPI(
     title="ConvexHire API",
     description="Backend API for ConvexHire",
-    version="1.0.0",
+    version="📦 " + settings.APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -50,46 +59,14 @@ app.include_router(api_router, prefix="/api/v1")
 def root():
     return {
         "message": "ConvexHire API is running!",
-        "version": "1.0.0",
+        "version": "📦 " + settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
     }
 
 
 @app.get("/health")
 def health_check():
-    """
-    Health check endpoint that verifies critical dependencies.
-    Returns detailed status of database, ML model, and overall health.
-    """
-    from sqlalchemy import text
-    
-    checks = {}
-    overall_healthy = True
-    
-    try:
-        from app.core.database import engine
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        checks["database"] = "healthy"
-    except Exception as e:
-        checks["database"] = f"unhealthy: {str(e)}"
-        overall_healthy = False
-    
-    try:
-        from app.core.ml_model import ModelManager
-        model = ModelManager.get_model()
-        if model is not None:
-            checks["ml_model"] = "healthy"
-        else:
-            checks["ml_model"] = "not initialized"
-            overall_healthy = False
-    except Exception as e:
-        checks["ml_model"] = f"unhealthy: {str(e)}"
-        overall_healthy = False
-    
     return {
-        "status": "healthy" if overall_healthy else "unhealthy",
+        "status": "healthy",
         "environment": settings.ENVIRONMENT,
-        "checks": checks,
     }
-

@@ -45,7 +45,7 @@ export function PasswordChangeForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!validateForm()) {
       return;
     }
@@ -59,7 +59,7 @@ export function PasswordChangeForm() {
         new_password: formData.newPassword,
         confirm_password: formData.confirmPassword,
       });
-
+      
       setMessage({ type: 'success', text: 'Password changed successfully!' });
       setFormData({
         currentPassword: '',
@@ -67,9 +67,9 @@ export function PasswordChangeForm() {
         confirmPassword: '',
       });
     } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.detail || 'Failed to change password. Please try again.'
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.detail || 'Failed to change password. Please try again.' 
       });
     } finally {
       setIsLoading(false);
@@ -82,7 +82,7 @@ export function PasswordChangeForm() {
       ...prev,
       [name]: value
     }));
-
+    
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -105,8 +105,8 @@ export function PasswordChangeForm() {
 
       {message && (
         <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success'
-            ? 'bg-green-50 text-green-700 border-green-200'
+          message.type === 'success' 
+            ? 'bg-green-50 text-green-700 border-green-200' 
             : 'bg-red-50 text-red-700 border-red-200'
         }`}>
           {message.type === 'success' ? (
@@ -125,7 +125,7 @@ export function PasswordChangeForm() {
             <Shield className="w-5 h-5 text-[#3056F5]" />
             <h4 className="text-lg font-semibold text-[#0F172A]">Password Security</h4>
           </div>
-
+          
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="currentPassword" className="text-sm font-medium text-[#374151]">
