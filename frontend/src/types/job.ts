@@ -44,6 +44,7 @@ export interface Job {
   description: string;
   requirements: string[];
   skills: string[];
+  nice_to_have?: string[]; // Preferred qualifications (from AI agent)
   benefits: string[];
   posted_date: string;
   application_deadline: string;
@@ -88,7 +89,8 @@ export interface JobDetailResponse {
 export interface CreateJobRequest {
   title: string;
   company: string;
-  location: string;
+  locationCity: string;
+  locationCountry: string;
   locationType: LocationType;
   employmentType: EmploymentType;
   salaryRange: {
@@ -97,8 +99,8 @@ export interface CreateJobRequest {
     currency: string;
   };
   description: string;
-  requirements: string[];
-  skills: string[];
+  requiredSkillsAndExperience: string[];
+  niceToHave?: string[];
   level: JobLevel;
   department: string;
   deadline?: Date;

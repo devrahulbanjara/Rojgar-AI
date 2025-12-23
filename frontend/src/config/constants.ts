@@ -32,7 +32,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   SIGNUP: '/signup',
-  SELECT_ROLE: '/select-role',
+  SELECT_ROLE: '/onboarding/select-role',
   AUTH_CALLBACK: '/auth/callback',
   RECRUITER_DASHBOARD: '/dashboard/recruiter',
   CANDIDATE_DASHBOARD: '/dashboard/candidate',
@@ -84,7 +84,7 @@ export const LOADING_TIMES = {
 // Feature Highlights (for landing page)
 export const FEATURES = [
   'AI-powered job matching',
-  'Real-time application tracking', 
+  'Real-time application tracking',
   'Automated scheduling',
   'Transparent feedback system',
 ] as const;

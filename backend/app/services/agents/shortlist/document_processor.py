@@ -7,6 +7,7 @@ class DocumentProcessor:
     def __init__(self):
         try:
             from docling.document_converter import DocumentConverter
+
             self.converter = DocumentConverter()
             self.is_available = True
         except ImportError:
@@ -22,14 +23,25 @@ class DocumentProcessor:
         if file_extension == ".txt":
             return file_path.read_text(encoding="utf-8")
 
-        if self.is_available and file_extension in [".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg"]:
+        if self.is_available and file_extension in [
+            ".pdf",
+            ".docx",
+            ".doc",
+            ".png",
+            ".jpg",
+            ".jpeg",
+        ]:
             return self._extract_with_docling(file_path)
 
-        logger.warning(f"Unsupported file format: {file_extension}. Attempting to read as text.")
+        logger.warning(
+            f"Unsupported file format: {file_extension}. Attempting to read as text."
+        )
         try:
             return file_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            raise ValueError(f"Unable to read file {file_path}. Format may not be supported.")
+            raise ValueError(
+                f"Unable to read file {file_path}. Format may not be supported."
+            )
 
     def _extract_with_docling(self, file_path: Path) -> str:
         try:

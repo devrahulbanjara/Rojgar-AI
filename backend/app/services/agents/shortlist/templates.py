@@ -144,7 +144,7 @@ WORK_ALIGNMENT_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are a Senior Technical Recruiter evaluating a candidate's work experience against a specific job description. 
+            """You are a Senior Technical Recruiter evaluating a candidate's work experience against a specific job description.
 
             ### Objective:
             Provide a numeric score (0-10) and a concise justification describing alignment with the job requirements.

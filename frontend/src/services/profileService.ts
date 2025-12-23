@@ -1,110 +1,86 @@
 /**
  * Profile Service
- * API calls for profile management (SSOT - Single Source of Truth)
+ * API calls for Candidate Profile management
  */
 
 import { api } from '../lib/api';
-import type { 
-  Profile,
-  ProfileCreateRequest,
-  ProfileUpdateRequest,
-  WorkExperience,
-  WorkExperienceCreateRequest,
-  WorkExperienceUpdateRequest,
-  EducationRecord,
-  EducationCreateRequest,
-  EducationUpdateRequest,
-  Certification,
-  CertificationCreateRequest,
-  CertificationUpdateRequest,
-  ProfileSkill,
-  ProfileSkillCreateRequest,
-  ProfileSkillUpdateRequest
+import type {
+  CandidateProfile,
+  CandidateProfileUpdate,
+  WorkExperienceCreate,
+  WorkExperienceUpdate,
+  EducationCreate,
+  EducationUpdate,
+  SkillCreate,
+  SkillUpdate,
+  CertificationCreate,
+  CertificationUpdate
 } from '../types/profile';
 
 export const profileService = {
-  // Profile CRUD operations
-  async getProfile(): Promise<Profile> {
-    return api.profile.get();
+  // --- Core Profile (Unified GET) ---
+
+  async getProfile(): Promise<CandidateProfile> {
+    const data = await api.candidate.getProfile();
+    return data as CandidateProfile;
   },
 
-  async createProfile(profileData: ProfileCreateRequest): Promise<Profile> {
-    return api.profile.create(profileData);
+  async updateProfile(data: CandidateProfileUpdate): Promise<CandidateProfile> {
+    const response = await api.candidate.updateProfile(data);
+    return response as CandidateProfile;
   },
 
-  async updateProfile(profileData: ProfileUpdateRequest): Promise<Profile> {
-    return api.profile.update(profileData);
+  // --- Sub-Resources (Atomic Operations) ---
+
+  // Work Experience
+  async addExperience(data: WorkExperienceCreate) {
+    return api.candidate.experience.add(data);
   },
 
-  // Work Experience management
-  async getWorkExperiences(): Promise<WorkExperience[]> {
-    const profile = await this.getProfile();
-    return profile.work_experiences || [];
+  async deleteExperience(id: string) {
+    return api.candidate.experience.delete(id);
   },
 
-  async createWorkExperience(experienceData: WorkExperienceCreateRequest): Promise<WorkExperience> {
-    return api.profile.workExperience.create(experienceData);
+  async updateExperience(id: string, data: WorkExperienceUpdate) {
+    return api.candidate.experience.update(id, data);
   },
 
-  async updateWorkExperience(id: string, experienceData: WorkExperienceUpdateRequest): Promise<WorkExperience> {
-    return api.profile.workExperience.update(id, experienceData);
+  // Education
+  async addEducation(data: EducationCreate) {
+    return api.candidate.education.add(data);
   },
 
-  async deleteWorkExperience(id: string): Promise<void> {
-    return api.profile.workExperience.delete(id);
+  async deleteEducation(id: string) {
+    return api.candidate.education.delete(id);
   },
 
-  // Education management
-  async getEducationRecords(): Promise<EducationRecord[]> {
-    const profile = await this.getProfile();
-    return profile.education_records || [];
+  async updateEducation(id: string, data: EducationUpdate) {
+    return api.candidate.education.update(id, data);
   },
 
-  async createEducationRecord(educationData: EducationCreateRequest): Promise<EducationRecord> {
-    return api.profile.education.create(educationData);
+  // Skills
+  async addSkill(data: SkillCreate) {
+    return api.candidate.skills.add(data);
   },
 
-  async updateEducationRecord(id: string, educationData: EducationUpdateRequest): Promise<EducationRecord> {
-    return api.profile.education.update(id, educationData);
+  async deleteSkill(id: string) {
+    return api.candidate.skills.delete(id);
   },
 
-  async deleteEducationRecord(id: string): Promise<void> {
-    return api.profile.education.delete(id);
+  async updateSkill(id: string, data: SkillUpdate) {
+    return api.candidate.skills.update(id, data);
   },
 
-  // Certification management
-  async getCertifications(): Promise<Certification[]> {
-    const profile = await this.getProfile();
-    return profile.certifications || [];
+  // Certifications
+  async addCertification(data: CertificationCreate) {
+    return api.candidate.certifications.add(data);
   },
 
-  async createCertification(certificationData: CertificationCreateRequest): Promise<Certification> {
-    return api.profile.certifications.create(certificationData);
+  async deleteCertification(id: string) {
+    return api.candidate.certifications.delete(id);
   },
 
-  async updateCertification(id: string, certificationData: CertificationUpdateRequest): Promise<Certification> {
-    return api.profile.certifications.update(id, certificationData);
-  },
-
-  async deleteCertification(id: string): Promise<void> {
-    return api.profile.certifications.delete(id);
-  },
-
-  // Skills management
-  async getProfileSkills(): Promise<ProfileSkill[]> {
-    const profile = await this.getProfile();
-    return profile.skills || [];
-  },
-
-  async createProfileSkill(skillData: ProfileSkillCreateRequest): Promise<ProfileSkill> {
-    return api.profile.skills.create(skillData);
-  },
-
-  async updateProfileSkill(id: string, skillData: ProfileSkillUpdateRequest): Promise<ProfileSkill> {
-    return api.profile.skills.update(id, skillData);
-  },
-
-  async deleteProfileSkill(id: string): Promise<void> {
-    return api.profile.skills.delete(id);
-  },
+  async updateCertification(id: string, data: CertificationUpdate) {
+    return api.candidate.certifications.update(id, data);
+  }
 };

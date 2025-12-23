@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+
 from app.core.logging_config import logger
 
 app = FastAPI()
+
 
 @app.post("/webhook/cal")
 async def cal_webhook_handler(request: Request):
@@ -35,3 +37,9 @@ async def cal_webhook_handler(request: Request):
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
         raise HTTPException(status_code=500, detail="Webhook processing failed")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8080)

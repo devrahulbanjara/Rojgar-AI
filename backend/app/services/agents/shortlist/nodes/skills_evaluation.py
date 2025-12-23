@@ -1,10 +1,10 @@
-from typing import Dict, Any
+from typing import Any
 
 from app.core import logger
 from app.models.agents.shortlist import WorkflowState
 
 
-def evaluate_skills(state: WorkflowState) -> Dict[str, Any]:
+def evaluate_skills(state: WorkflowState) -> dict[str, Any]:
     logger.info("Evaluating skills")
     job_req = state["job_requirements"]
     skills_evaluations = []

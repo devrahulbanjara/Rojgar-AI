@@ -2,23 +2,35 @@
 
 export const dynamic = 'force-dynamic';
 
-import { ApplicationTrackingBoard } from '../../../components/application-tracking/ApplicationTrackingBoard';
+import { useEffect } from 'react';
+import CandidateDashboardComponent from '../../../components/dashboard/CandidateDashboard';
 import { WelcomeMessage, StatsGrid } from '../../../components/dashboard';
-import { SectionHeader, PageTransition, AnimatedContainer, PageHeader } from '../../../components/common';
+import { PageTransition, AnimatedContainer, PageHeader, LoadingSpinner } from '../../../components/common';
 import { AppShell } from '../../../components/layout/AppShell';
 import { useDashboardStats } from '../../../hooks/useDashboardStats';
-import { useApplicationTrackingBoard } from '../../../hooks/useApplicationTrackingBoard';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function CandidateDashboard() {
-  const { user } = useAuth();
+export default function CandidateDashboardPage() {
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: stats } = useDashboardStats();
-  const { 
-    applicationTrackingData, 
-    isLoading: applicationTrackingLoading, 
-    error: applicationTrackingError,
-    refetch: refetchApplications 
-  } = useApplicationTrackingBoard();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, isAuthLoading]);
+
+  // Show loading state while checking authentication
+  if (isAuthLoading || !isAuthenticated) {
+    return (
+      <AppShell>
+        <PageTransition className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner />
+        </PageTransition>
+      </AppShell>
+    );
+  }
 
   // Get first name from user's full name
   const firstName = user?.name?.split(' ')[0];
@@ -32,29 +44,9 @@ export default function CandidateDashboard() {
             <WelcomeMessage firstName={firstName} />
           </AnimatedContainer>
 
-          {/* Stats Grid */}
-          <AnimatedContainer direction="up" delay={0.2}>
-            <StatsGrid 
-              stats={stats || {}} 
-              userType="candidate" 
-            />
-          </AnimatedContainer>
-
-          {/* Application Tracking Section */}
+          {/* New Kanban Dashboard */}
           <AnimatedContainer direction="up" delay={0.3}>
-            <div className="space-y-8">
-              <PageHeader
-                title="Your Applications"
-                subtitle="Track your job application journey"
-              />
-              
-              <ApplicationTrackingBoard 
-                applications={applicationTrackingData} 
-                isLoading={applicationTrackingLoading}
-                error={applicationTrackingError}
-                onRetry={refetchApplications}
-              />
-            </div>
+            <CandidateDashboardComponent />
           </AnimatedContainer>
         </div>
       </PageTransition>

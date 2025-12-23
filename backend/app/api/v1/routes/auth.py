@@ -53,12 +53,11 @@ def signup(
         user=AuthService.create_user_response(new_user),
     )
 
-
 @router.post("/login", response_model=TokenResponse)
 def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
     user = AuthService.get_user_by_email(login_data.email, db)
 
-    if not user or not user.password_hash:
+    if not user or not user.password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -77,7 +76,7 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
         value=token,
         max_age=max_age,
         httponly=True,
-        secure=False,
+        secure=settings.SECURE,
         samesite="lax",
     )
 
@@ -101,7 +100,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
 
         user = AuthService.get_or_create_google_user(google_user, db)
 
-        token, max_age = AuthService.create_access_token(user.id)
+        token, max_age = AuthService.create_access_token(user.id, remember_me=True)
 
         redirect_url = AuthService.get_redirect_url_for_user(user)
 
@@ -111,7 +110,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
             value=token,
             max_age=max_age,
             httponly=True,
-            secure=False,
+            secure=settings.SECURE,
             samesite="lax",
         )
         return response
@@ -135,14 +134,8 @@ def select_role(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-
-    if user.role is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Role already selected",
-        )
-
-    user = AuthService.update_user_role(user, role_data.role, db)
+    
+    user = AuthService.assign_role_and_create_profile(user, role_data.role, db)
 
     return {
         "user": AuthService.create_user_response(user),
