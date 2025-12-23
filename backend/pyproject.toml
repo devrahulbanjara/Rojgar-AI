@@ -26,3 +26,8 @@ dependencies = [
     "starlette>=0.50.0",
     "tqdm>=4.67.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+]
