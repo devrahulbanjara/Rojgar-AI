@@ -18,7 +18,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   centered = false,
 }) => {
   const alignmentClass = centered ? 'text-center' : 'text-center md:text-left';
-
+  
   return (
     <div className={`space-y-2 ${alignmentClass} ${className}`}>
       <h2 className="text-2xl font-bold text-slate-900">

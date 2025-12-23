@@ -26,7 +26,7 @@ export function LandingNavbar() {
     } else {
       document.body.style.overflow = 'unset';
     }
-
+    
     // Cleanup on unmount
     return () => {
       document.body.style.overflow = 'unset';
@@ -146,7 +146,7 @@ export function LandingNavbar() {
               className="fixed inset-0 bg-black/50 z-40 xl:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
-
+            
             {/* Sidebar */}
             <motion.div
               initial={{ x: '100%' }}
@@ -166,7 +166,7 @@ export function LandingNavbar() {
                     <X className="h-5 w-5 text-[#475569]" />
                   </button>
                 </div>
-
+                
                 {/* Navigation Links */}
                 <div className="px-6 py-8">
                   <div className="flex flex-col space-y-6">
@@ -191,7 +191,7 @@ export function LandingNavbar() {
                     >
                       Pricing
                     </a>
-
+                    
                     {/* CTA Buttons - moved here after pricing */}
                     <div className="pt-6 space-y-3">
                       <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
@@ -220,3 +220,4 @@ export function LandingNavbar() {
     </>
   );
 }
+

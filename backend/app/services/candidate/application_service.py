@@ -1,240 +1,34 @@
-from datetime import UTC, datetime
-
-from fastapi import Depends
+import uuid
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
-from app.core import get_db
-from app.models import Application, ApplicationStage, ApplicationStatus
-
+from app.models.application import JobApplication, JobApplicationStatusHistory, ApplicationStatus
+from app.models.candidate import CandidateProfile
+from app.core.logging_config import logger
 
 class ApplicationService:
-    """
-    Service for managing job applications.
-    Handles application lifecycle: creation, status updates, tracking board, and statistics.
-    """
 
-    def __init__(self, db: Session = Depends(get_db)):
-        self.db = db
+    @staticmethod
+    def get_candidate_applications(db: Session, user_id: str):
+        stmt = select(CandidateProfile.profile_id).where(CandidateProfile.user_id == user_id)
+        profile_id = db.execute(stmt).scalar_one_or_none()
+        
+        if not profile_id:
+            return []
 
-    def get_user_applications(self, user_id: str) -> list[Application]:
-        """
-        Get all applications for a specific user.
-
-        Args:
-            user_id: The ID of the user
-
-        Returns:
-            List of Application objects owned by the user
-        """
-        return (
-            self.db.execute(select(Application).where(Application.user_id == user_id))
-            .scalars()
-            .all()
+        stmt = (
+            select(JobApplication)
+            .where(JobApplication.candidate_profile_id == profile_id)
+            .options(
+                selectinload(JobApplication.job),
+                selectinload(JobApplication.company)
+            )
+            .order_by(JobApplication.updated_at.desc())
         )
+        apps = db.execute(stmt).scalars().all()
+        return apps
 
-    def get_tracking_board(self, user_id: str) -> dict[str, list[dict]]:
-        """
-        Get applications organized by stage for the Kanban board view.
-
-        Groups applications into:
-        - applied: Applied and Screening stages
-        - interviewing: Interviewing stage
-        - outcome: Offer and Decision stages
-
-        Args:
-            user_id: The ID of the user
-
-        Returns:
-            Dictionary mapping stage categories to lists of application details
-        """
-        applications = self.get_user_applications(user_id)
-
-        board = {
-            "applied": [],  # Applied + Screening
-            "interviewing": [],  # Interviewing
-            "outcome": [],  # Offer + Decision
-        }
-
-        for app in applications:
-            app_dict = {
-                "id": app.id,
-                "job_title": app.job_title,
-                "company_name": app.company_name,
-                "user_id": app.user_id,
-                "applied_date": app.applied_date.isoformat(),
-                "stage": app.stage,
-                "status": app.status,
-                "description": app.description,
-                "updated_at": app.updated_at.isoformat(),
-            }
-
-            if app.stage in [
-                ApplicationStage.APPLIED.value,
-                ApplicationStage.SCREENING.value,
-            ]:
-                board["applied"].append(app_dict)
-            elif app.stage == ApplicationStage.INTERVIEWING.value:
-                board["interviewing"].append(app_dict)
-            elif app.stage in [
-                ApplicationStage.OFFER.value,
-                ApplicationStage.DECISION.value,
-            ]:
-                board["outcome"].append(app_dict)
-
-        return board
-
-    def get_application_stats(self, user_id: str) -> dict[str, int]:
-        """
-        Get statistical summary of user's applications.
-
-        Calculates:
-        - Total applications
-        - Active applications (not accepted/rejected)
-        - Interviews scheduled
-        - Offers received
-        - Response rate
-
-        Args:
-            user_id: The ID of the user
-
-        Returns:
-            Dictionary of statistical counts
-        """
-        applications = self.get_user_applications(user_id)
-
-        total = len(applications)
-        active = sum(
-            1
-            for app in applications
-            if app.status
-            not in [ApplicationStatus.ACCEPTED.value, ApplicationStatus.REJECTED.value]
-        )
-        interviews = sum(
-            1
-            for app in applications
-            if app.status == ApplicationStatus.INTERVIEW_SCHEDULED.value
-        )
-        offers = sum(
-            1
-            for app in applications
-            if app.status == ApplicationStatus.OFFER_EXTENDED.value
-        )
-
-        responded = sum(
-            1 for app in applications if app.status != ApplicationStatus.PENDING.value
-        )
-        response_rate = int((responded / total) * 100) if total > 0 else 0
-
-        return {
-            "totalApplications": total,
-            "activeApplications": active,
-            "interviewsScheduled": interviews,
-            "offersReceived": offers,
-            "responseRate": response_rate,
-        }
-
-    def create_application(
-        self,
-        user_id: str,
-        job_title: str,
-        company_name: str,
-        description: str | None,
-    ) -> Application:
-        """
-        Create a new job application.
-
-        Args:
-            user_id: The ID of the user creating the application
-            job_title: Title of the job applied for
-            company_name: Name of the company
-            description: Optional notes/description
-
-        Returns:
-            The created Application object
-        """
-        new_app = Application(
-            user_id=user_id,
-            job_title=job_title,
-            company_name=company_name,
-            description=description,
-            stage=ApplicationStage.APPLIED.value,
-            status=ApplicationStatus.PENDING.value,
-        )
-
-        self.db.add(new_app)
-        self.db.flush()
-        self.db.refresh(new_app)
-
-        return new_app
-
-    def get_application_by_id(self, application_id: int) -> Application | None:
-        """
-        Get an application by its ID.
-
-        Args:
-            application_id: The ID of the application
-
-        Returns:
-            Application object if found, None otherwise
-        """
-        return self.db.execute(
-            select(Application).where(Application.id == application_id)
-        ).scalar_one_or_none()
-
-    def update_application(
-        self,
-        application: Application,
-        stage: ApplicationStage | None = None,
-        status: ApplicationStatus | None = None,
-        description: str | None = None,
-    ) -> Application:
-        """
-        Update an existing application.
-
-        Args:
-            application: The Application object to update
-            stage: New stage (optional)
-            status: New status (optional)
-            description: New description (optional)
-
-        Returns:
-            The updated Application object
-        """
-        if stage is not None:
-            application.stage = stage.value
-        if status is not None:
-            application.status = status.value
-        if description is not None:
-            application.description = description
-
-        application.updated_at = datetime.now(UTC)
-
-        self.db.add(application)
-        self.db.flush()
-        self.db.refresh(application)
-
-        return application
-
-    def delete_application(self, application: Application) -> None:
-        """
-        Delete an application.
-
-        Args:
-            application: The Application object to delete
-        """
-        self.db.delete(application)
-        self.db.flush()
-
-    def verify_ownership(self, application: Application, user_id: str) -> bool:
-        """
-        Verify if an application belongs to a specific user.
-
-        Args:
-            application: The Application object
-            user_id: The ID of the user to check against
-
-        Returns:
-            True if the application belongs to the user, False otherwise
-        """
-        return application.user_id == user_id
+    @staticmethod
+    def apply_to_job(db: Session, user_id: str, job_id: str, resume_id: str):
+        pass

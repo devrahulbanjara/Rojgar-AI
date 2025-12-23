@@ -32,7 +32,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   SIGNUP: '/signup',
-  SELECT_ROLE: '/select-role',
+  SELECT_ROLE: '/onboarding/select-role',
   AUTH_CALLBACK: '/auth/callback',
   RECRUITER_DASHBOARD: '/dashboard/recruiter',
   CANDIDATE_DASHBOARD: '/dashboard/candidate',

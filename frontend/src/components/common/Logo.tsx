@@ -9,11 +9,11 @@ interface LogoProps {
   showWordmark?: boolean;
 }
 
-export function Logo({
-  variant = 'full',
-  size = 'md',
+export function Logo({ 
+  variant = 'full', 
+  size = 'md', 
   className = '',
-  showWordmark = true
+  showWordmark = true 
 }: LogoProps) {
   // Size configurations
   const sizes = {
@@ -80,19 +80,19 @@ export function Logo({
       <line x1="16" y1="6" x2="24" y2="16" stroke={colors.icon} strokeWidth="1.5" opacity="0.6" />
       <line x1="8" y1="16" x2="16" y2="26" stroke={colors.icon} strokeWidth="1.5" opacity="0.6" />
       <line x1="24" y1="16" x2="16" y2="26" stroke={colors.icon} strokeWidth="1.5" opacity="0.6" />
-
+      
       {/* Top Node */}
       <circle cx="16" cy="6" r="3" fill={colors.icon} opacity="0.2" />
       <circle cx="16" cy="6" r="3" stroke={colors.icon} strokeWidth="1.5" fill="none" />
-
+      
       {/* Left Node */}
       <circle cx="8" cy="16" r="3" fill={colors.icon} opacity="0.2" />
       <circle cx="8" cy="16" r="3" stroke={colors.icon} strokeWidth="1.5" fill="none" />
-
+      
       {/* Right Node */}
       <circle cx="24" cy="16" r="3" fill={colors.icon} opacity="0.2" />
       <circle cx="24" cy="16" r="3" stroke={colors.icon} strokeWidth="1.5" fill="none" />
-
+      
       {/* Bottom Node */}
       <circle cx="16" cy="26" r="3" fill={colors.icon} opacity="0.2" />
       <circle cx="16" cy="26" r="3" stroke={colors.icon} strokeWidth="1.5" fill="none" />
@@ -119,11 +119,11 @@ export function Logo({
 }
 
 // Convenience component for linking logo to home
-export function LogoLink({
+export function LogoLink({ 
   variant = 'full',
   size = 'md',
   className = '',
-  showWordmark = true
+  showWordmark = true 
 }: LogoProps) {
   return (
     <Link href="/" className={`inline-flex ${className}`}>
@@ -131,3 +131,4 @@ export function LogoLink({
     </Link>
   );
 }
+

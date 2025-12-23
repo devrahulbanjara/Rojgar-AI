@@ -1,44 +1,51 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
+from typing import Optional, List
+from sqlalchemy import String, ForeignKey, DateTime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.core.database import Base
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
 
-from . import Base
-
-
-class ApplicationStage(str, Enum):
-    APPLIED = "applied"
-    SCREENING = "screening"
-    INTERVIEWING = "interviewing"
-    OFFER = "offer"
-    DECISION = "decision"
-
+def utc_now():
+    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
+    return datetime.now(UTC).replace(tzinfo=None)
 
 class ApplicationStatus(str, Enum):
-    PENDING = "pending"
-    UNDER_REVIEW = "under_review"
+    APPLIED = "applied"
+    SHORTLISTING = "shortlisting"
+    SHORTLISTED = "shortlisted"
     INTERVIEW_SCHEDULED = "interview_scheduled"
-    OFFER_EXTENDED = "offer_extended"
-    ACCEPTED = "accepted"
+    INTERVIEW_COMPLETED = "interview_completed"
+    OFFER_MADE = "offer_made"
+    OFFER_ACCEPTED = "offer_accepted"
+    HIRED = "hired"
     REJECTED = "rejected"
 
+class JobApplication(Base):
+    __tablename__ = "job_application"
 
-class Application(Base):
-    __tablename__ = "application"
+    application_id: Mapped[str] = mapped_column(String, primary_key=True)
+    candidate_profile_id: Mapped[str] = mapped_column(String, ForeignKey("candidate_profile.profile_id"), nullable=False)
+    job_id: Mapped[str] = mapped_column(String, ForeignKey("job_posting.job_id"), nullable=False)
+    company_id: Mapped[str] = mapped_column(String, ForeignKey("company_profile.company_id"), nullable=False)
+    resume_id: Mapped[str] = mapped_column(String, ForeignKey("resume.resume_id"), nullable=False)
+    
+    current_status: Mapped[str] = mapped_column(String, default=ApplicationStatus.APPLIED, nullable=False)
+    
+    applied_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("user.id"), index=True)
+    job: Mapped["JobPosting"] = relationship("JobPosting")
+    company: Mapped["CompanyProfile"] = relationship("CompanyProfile")
+    resume: Mapped["Resume"] = relationship("Resume")
+    history: Mapped[List["JobApplicationStatusHistory"]] = relationship("JobApplicationStatusHistory", back_populates="application")
 
-    job_title: Mapped[str] = mapped_column(String)
-    company_name: Mapped[str] = mapped_column(String)
-    description: Mapped[str | None] = mapped_column(String, nullable=True)
+class JobApplicationStatusHistory(Base):
+    __tablename__ = "job_application_status_history"
 
-    applied_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    stage: Mapped[str] = mapped_column(
-        String, default=ApplicationStage.APPLIED.value, index=True
-    )
-    status: Mapped[str] = mapped_column(
-        String, default=ApplicationStatus.PENDING.value, index=True
-    )
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    status_history_id: Mapped[str] = mapped_column(String, primary_key=True)
+    application_id: Mapped[str] = mapped_column(String, ForeignKey("job_application.application_id"), nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False)
+    changed_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+
+    application: Mapped["JobApplication"] = relationship("JobApplication", back_populates="history")

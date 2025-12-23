@@ -11,7 +11,7 @@ import { useCurrentUser, useLogin, useSignup, useLogout, useIsAuthenticated } fr
 export const useAuth = (): UseAuthReturn => {
   const { data: user, refetch: refetchUser } = useCurrentUser();
   const { isAuthenticated, isLoading: authLoading } = useIsAuthenticated();
-
+  
   const loginMutation = useLogin();
   const signupMutation = useSignup();
   const logoutMutation = useLogout();

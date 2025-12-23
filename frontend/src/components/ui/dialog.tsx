@@ -1,16 +1,20 @@
 /**
  * Dialog Component
- * A modal dialog component for overlays and popups
+ * Modern modal dialog with smooth animations using Framer Motion
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  showCloseButton?: boolean;
 }
 
 export interface DialogContentProps {
@@ -38,32 +42,98 @@ export interface DialogFooterProps {
   className?: string;
 }
 
-const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, children, className }) => {
-  if (!isOpen) return null;
+const Dialog: React.FC<DialogProps> = ({
+  isOpen,
+  onClose,
+  children,
+  className,
+  showCloseButton = true
+}) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
 
-      {/* Dialog */}
-      <div className={cn(
-        'relative z-50 w-full max-w-lg mx-4 bg-background rounded-lg shadow-lg',
-        className
-      )}>
-        {children}
-      </div>
-    </div>
+  // Prevent body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  const content = (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/5 backdrop-blur-[3px]"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+
+          {/* Dialog Container */}
+          <motion.div
+            ref={dialogRef}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0 }}
+            className={cn(
+              // Base styles
+              'relative z-50 w-full bg-white rounded-2xl shadow-2xl border border-gray-200',
+              // Default max width
+              'max-w-lg',
+              className
+            )}
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Close button */}
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 z-10"
+                aria-label="Close dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+
+            {children}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
+
+  // Render to document body to escape any container constraints
+  if (typeof document !== 'undefined') {
+    return createPortal(content, document.body);
+  }
+  return null;
 };
 
 const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
   return (
-    <div className={cn('p-6', className)}>
+    <div className={cn('p-8', className)}>
       {children}
     </div>
   );
@@ -71,7 +141,10 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
 
 const DialogHeader: React.FC<DialogHeaderProps> = ({ children, className }) => {
   return (
-    <div className={cn('mb-4', className)}>
+    <div className={cn(
+      'px-8 pt-8 pb-6 border-b border-gray-100',
+      className
+    )}>
       {children}
     </div>
   );
@@ -79,7 +152,10 @@ const DialogHeader: React.FC<DialogHeaderProps> = ({ children, className }) => {
 
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, className }) => {
   return (
-    <h2 className={cn('text-lg font-semibold text-foreground', className)}>
+    <h2 className={cn(
+      'text-xl font-semibold text-gray-900 leading-tight',
+      className
+    )}>
       {children}
     </h2>
   );
@@ -87,7 +163,10 @@ const DialogTitle: React.FC<DialogTitleProps> = ({ children, className }) => {
 
 const DialogDescription: React.FC<DialogDescriptionProps> = ({ children, className }) => {
   return (
-    <p className={cn('text-sm text-muted-foreground', className)}>
+    <p className={cn(
+      'text-sm text-gray-500 mt-1.5',
+      className
+    )}>
       {children}
     </p>
   );
@@ -95,7 +174,10 @@ const DialogDescription: React.FC<DialogDescriptionProps> = ({ children, classNa
 
 const DialogFooter: React.FC<DialogFooterProps> = ({ children, className }) => {
   return (
-    <div className={cn('flex justify-end space-x-2 mt-6', className)}>
+    <div className={cn(
+      'flex justify-end gap-3 px-8 py-6 bg-gray-50 rounded-b-2xl border-t border-gray-100',
+      className
+    )}>
       {children}
     </div>
   );

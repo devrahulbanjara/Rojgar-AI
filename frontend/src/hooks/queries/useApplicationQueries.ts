@@ -18,11 +18,11 @@ export const useApplicationQueries = () => {
         'Content-Type': 'application/json',
       },
     });
-
+    
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
-
+    
     return response.json();
   };
 

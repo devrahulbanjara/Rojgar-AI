@@ -22,7 +22,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, role }: SidebarProps) {
   const pathname = usePathname();
-
+  
   const recruiterItems = [
     { title: 'Dashboard', path: '/dashboard/recruiter', icon: LayoutDashboard },
     { title: 'Jobs', path: '/recruiter/jobs', icon: BriefcaseIcon },
@@ -54,7 +54,7 @@ export function Sidebar({ isOpen, role }: SidebarProps) {
           // Check if current path starts with the item path for nested routes
           const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
           const Icon = item.icon;
-
+          
           return (
             <Link
               key={item.path}

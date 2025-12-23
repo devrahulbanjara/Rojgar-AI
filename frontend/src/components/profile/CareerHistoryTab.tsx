@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { profileService } from '../../services/profileService';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { Briefcase, GraduationCap, Plus, Edit, Trash2, CheckCircle, AlertCircle, Calendar, MapPin, Building } from 'lucide-react';
-import type { WorkExperience, EducationRecord, WorkExperienceCreateRequest, EducationCreateRequest } from '../../types/profile';
+import { Briefcase, GraduationCap, Plus, Trash2, Calendar, MapPin, Building, Pencil } from 'lucide-react';
+import type { WorkExperience, Education, WorkExperienceCreate, EducationCreate } from '../../types/profile';
+import { toast } from 'sonner';
 
-export function CareerHistoryTab() {
-  const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([]);
-  const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface CareerHistoryTabProps {
+  experiences: WorkExperience[];
+  educations: Education[];
+}
+
+export function CareerHistoryTab({ experiences: initialExperiences, educations: initialEducations }: CareerHistoryTabProps) {
+  const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>(initialExperiences);
+  const [educationRecords, setEducationRecords] = useState<Education[]>(initialEducations);
+
   const [isAddingExperience, setIsAddingExperience] = useState(false);
   const [isAddingEducation, setIsAddingEducation] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
+  const [editingEduId, setEditingEduId] = useState<string | null>(null);
 
   const [experienceForm, setExperienceForm] = useState({
     job_title: '',
@@ -23,59 +30,43 @@ export function CareerHistoryTab() {
     start_date: '',
     end_date: '',
     is_current: false,
-    master_description: '',
+    description: '',
   });
 
   const [educationForm, setEducationForm] = useState({
     school_university: '',
     degree: '',
-    field_of_study: '',
     location: '',
     start_date: '',
     end_date: '',
     is_current: false,
-    gpa: '',
-    honors: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      const [experiences, education] = await Promise.all([
-        profileService.getWorkExperiences(),
-        profileService.getEducationRecords()
-      ]);
-      setWorkExperiences(experiences);
-      setEducationRecords(education);
-    } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: 'Failed to load career data. Please try again.'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // --- Experience Handlers ---
 
   const handleAddExperience = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const experienceData: WorkExperienceCreateRequest = {
+      const experienceData: WorkExperienceCreate = {
         job_title: experienceForm.job_title,
         company: experienceForm.company,
         location: experienceForm.location || undefined,
         start_date: experienceForm.start_date,
         end_date: experienceForm.end_date || undefined,
         is_current: experienceForm.is_current,
-        master_description: experienceForm.master_description,
+        description: experienceForm.description || undefined,
       };
 
-      const newExperience = await profileService.createWorkExperience(experienceData);
-      setWorkExperiences(prev => [...prev, newExperience]);
+      if (editingExpId) {
+        const updatedExp = await profileService.updateExperience(editingExpId, experienceData);
+        setWorkExperiences(prev => prev.map(exp => exp.candidate_work_experience_id === editingExpId ? (updatedExp as unknown as WorkExperience) : exp));
+        toast.success('Work experience updated successfully!');
+      } else {
+        const newExperience = await profileService.addExperience(experienceData);
+        setWorkExperiences(prev => [...prev, newExperience as unknown as WorkExperience]);
+        toast.success('Work experience added successfully!');
+      }
+
       setExperienceForm({
         job_title: '',
         company: '',
@@ -83,84 +74,137 @@ export function CareerHistoryTab() {
         start_date: '',
         end_date: '',
         is_current: false,
-        master_description: '',
+        description: '',
       });
       setIsAddingExperience(false);
-      setMessage({ type: 'success', text: 'Work experience added successfully!' });
+      setEditingExpId(null);
     } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.detail || 'Failed to add work experience. Please try again.'
-      });
+      toast.error(error.response?.data?.detail || 'Failed to save work experience.');
     }
   };
 
-  const handleAddEducation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const educationData: EducationCreateRequest = {
-        school_university: educationForm.school_university,
-        degree: educationForm.degree,
-        field_of_study: educationForm.field_of_study,
-        location: educationForm.location || undefined,
-        start_date: educationForm.start_date || undefined,
-        end_date: educationForm.end_date || undefined,
-        is_current: educationForm.is_current,
-        gpa: educationForm.gpa || undefined,
-        honors: educationForm.honors || undefined,
-      };
-
-      const newEducation = await profileService.createEducationRecord(educationData);
-      setEducationRecords(prev => [...prev, newEducation]);
-      setEducationForm({
-        school_university: '',
-        degree: '',
-        field_of_study: '',
-        location: '',
-        start_date: '',
-        end_date: '',
-        is_current: false,
-        gpa: '',
-        honors: '',
-      });
-      setIsAddingEducation(false);
-      setMessage({ type: 'success', text: 'Education record added successfully!' });
-    } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.detail || 'Failed to add education record. Please try again.'
-      });
-    }
+  const handleEditExperience = (exp: WorkExperience) => {
+    setExperienceForm({
+      job_title: exp.job_title,
+      company: exp.company,
+      location: exp.location || '',
+      start_date: exp.start_date ? new Date(exp.start_date).toISOString().split('T')[0] : '',
+      end_date: exp.end_date ? new Date(exp.end_date).toISOString().split('T')[0] : '',
+      is_current: exp.is_current,
+      description: exp.description || '',
+    });
+    setEditingExpId(exp.candidate_work_experience_id);
+    setIsAddingExperience(true);
   };
 
   const handleDeleteExperience = async (id: string) => {
     if (!confirm('Are you sure you want to delete this work experience?')) return;
-
     try {
-      await profileService.deleteWorkExperience(id);
-      setWorkExperiences(prev => prev.filter(exp => exp.id !== id));
-      setMessage({ type: 'success', text: 'Work experience deleted successfully!' });
+      await profileService.deleteExperience(id);
+      setWorkExperiences(prev => prev.filter(exp => exp.candidate_work_experience_id !== id));
+      toast.success('Work experience deleted successfully!');
+      if (editingExpId === id) {
+        setIsAddingExperience(false);
+        setEditingExpId(null);
+      }
     } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.detail || 'Failed to delete work experience.'
-      });
+      toast.error('Failed to delete work experience.');
     }
+  };
+
+  const handleCancelExperience = () => {
+    setIsAddingExperience(false);
+    setEditingExpId(null);
+    setExperienceForm({
+      job_title: '',
+      company: '',
+      location: '',
+      start_date: '',
+      end_date: '',
+      is_current: false,
+      description: '',
+    });
+  };
+
+  // --- Education Handlers ---
+
+  const handleAddEducation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const educationData: EducationCreate = {
+        college_name: educationForm.school_university,
+        degree: educationForm.degree,
+        location: educationForm.location || undefined,
+        start_date: educationForm.start_date || undefined,
+        end_date: educationForm.end_date || undefined,
+        is_current: educationForm.is_current,
+      };
+
+      if (editingEduId) {
+        const updatedEdu = await profileService.updateEducation(editingEduId, educationData);
+        setEducationRecords(prev => prev.map(edu => edu.candidate_education_id === editingEduId ? (updatedEdu as unknown as Education) : edu));
+        toast.success('Education record updated successfully!');
+      } else {
+        const newEducation = await profileService.addEducation(educationData);
+        setEducationRecords(prev => [...prev, newEducation as unknown as Education]);
+        toast.success('Education record added successfully!');
+      }
+
+      setEducationForm({
+        school_university: '',
+        degree: '',
+        location: '',
+        start_date: '',
+        end_date: '',
+        is_current: false,
+        description: '',
+      });
+      setIsAddingEducation(false);
+      setEditingEduId(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to save education record.');
+    }
+  };
+
+  const handleEditEducation = (edu: Education) => {
+    setEducationForm({
+      school_university: edu.college_name,
+      degree: edu.degree,
+      location: edu.location || '',
+      start_date: edu.start_date ? new Date(edu.start_date).toISOString().split('T')[0] : '',
+      end_date: edu.end_date ? new Date(edu.end_date).toISOString().split('T')[0] : '',
+      is_current: edu.is_current,
+    });
+    setEditingEduId(edu.candidate_education_id);
+    setIsAddingEducation(true);
   };
 
   const handleDeleteEducation = async (id: string) => {
     if (!confirm('Are you sure you want to delete this education record?')) return;
-
     try {
-      await profileService.deleteEducationRecord(id);
-      setEducationRecords(prev => prev.filter(edu => edu.id !== id));
-      setMessage({ type: 'success', text: 'Education record deleted successfully!' });
+      await profileService.deleteEducation(id);
+      setEducationRecords(prev => prev.filter(edu => edu.candidate_education_id !== id));
+      toast.success('Education record deleted successfully!');
+      if (editingEduId === id) {
+        setIsAddingEducation(false);
+        setEditingEduId(null);
+      }
     } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.detail || 'Failed to delete education record.'
-      });
+      toast.error('Failed to delete education record.');
     }
+  };
+
+  const handleCancelEducation = () => {
+    setIsAddingEducation(false);
+    setEditingEduId(null);
+    setEducationForm({
+      school_university: '',
+      degree: '',
+      location: '',
+      start_date: '',
+      end_date: '',
+      is_current: false,
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -169,14 +213,6 @@ export function CareerHistoryTab() {
       month: 'short'
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
 
   return (
     <div className="p-8">
@@ -189,21 +225,6 @@ export function CareerHistoryTab() {
         </p>
       </div>
 
-      {message && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success'
-            ? 'bg-green-50 text-green-700 border-green-200'
-            : 'bg-red-50 text-red-700 border-red-200'
-        }`}>
-          {message.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          )}
-          <span className="font-medium">{message.text}</span>
-        </div>
-      )}
-
       <div className="space-y-8">
         {/* Work Experience Section */}
         <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
@@ -212,19 +233,35 @@ export function CareerHistoryTab() {
               <Briefcase className="w-5 h-5 text-[#3056F5]" />
               <h4 className="text-lg font-semibold text-[#0F172A]">Work Experience</h4>
             </div>
-            <Button
-              onClick={() => setIsAddingExperience(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
-            >
-              <Plus className="w-4 h-4" />
-              Add Experience
-            </Button>
+            {!isAddingExperience && (
+              <Button
+                onClick={() => {
+                  setEditingExpId(null);
+                  setExperienceForm({
+                    job_title: '',
+                    company: '',
+                    location: '',
+                    start_date: '',
+                    end_date: '',
+                    is_current: false,
+                    description: '',
+                  });
+                  setIsAddingExperience(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
+              >
+                <Plus className="w-4 h-4" />
+                Add Experience
+              </Button>
+            )}
           </div>
 
-          {/* Add Experience Form */}
+          {/* Add/Edit Experience Form */}
           {isAddingExperience && (
             <form onSubmit={handleAddExperience} className="mb-6 p-4 bg-white rounded-xl border border-[#E5E7EB]">
-              <h5 className="text-lg font-semibold text-[#0F172A] mb-4">Add New Work Experience</h5>
+              <h5 className="text-lg font-semibold text-[#0F172A] mb-4">
+                {editingExpId ? 'Edit Work Experience' : 'Add New Work Experience'}
+              </h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="job_title">Job Title *</Label>
@@ -252,7 +289,7 @@ export function CareerHistoryTab() {
                     id="location"
                     value={experienceForm.location}
                     onChange={(e) => setExperienceForm(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="e.g., San Francisco, CA"
+                    placeholder="e.g., Kathmandu"
                   />
                 </div>
                 <div className="space-y-2">
@@ -280,31 +317,37 @@ export function CareerHistoryTab() {
                     type="checkbox"
                     id="is_current"
                     checked={experienceForm.is_current}
-                    onChange={(e) => setExperienceForm(prev => ({ ...prev, is_current: e.target.checked }))}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setExperienceForm(prev => ({
+                        ...prev,
+                        is_current: isChecked,
+                        end_date: isChecked ? '' : prev.end_date
+                      }));
+                    }}
                     className="mr-2"
                   />
                   <Label htmlFor="is_current">Currently working here</Label>
                 </div>
               </div>
               <div className="mt-4 space-y-2">
-                <Label htmlFor="master_description">Job Description *</Label>
+                <Label htmlFor="description">Job Description</Label>
                 <Textarea
-                  id="master_description"
-                  value={experienceForm.master_description}
-                  onChange={(e) => setExperienceForm(prev => ({ ...prev, master_description: e.target.value }))}
+                  id="description"
+                  value={experienceForm.description}
+                  onChange={(e) => setExperienceForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Describe your responsibilities, achievements, and key projects..."
                   rows={4}
-                  required
                 />
               </div>
               <div className="flex gap-3 mt-4">
                 <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
-                  Add Experience
+                  {editingExpId ? 'Save Changes' : 'Add Experience'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsAddingExperience(false)}
+                  onClick={handleCancelExperience}
                   className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                 >
                   Cancel
@@ -323,7 +366,7 @@ export function CareerHistoryTab() {
           ) : (
             <div className="space-y-4">
               {workExperiences.map((experience) => (
-                <div key={experience.id} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div key={experience.candidate_work_experience_id} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -344,22 +387,23 @@ export function CareerHistoryTab() {
                         )}
                       </div>
                       <p className="text-sm text-[#475569] mt-2 line-clamp-2">
-                        {experience.master_description}
+                        {experience.description}
                       </p>
                     </div>
                     <div className="flex gap-2 ml-4">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="p-2 border-[#D1D5DB] hover:bg-gray-50"
+                        onClick={() => handleEditExperience(experience)}
+                        className="p-2 text-[#6B7280] hover:text-[#3056F5] hover:bg-blue-50"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteExperience(experience.id)}
-                        className="p-2 border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleDeleteExperience(experience.candidate_work_experience_id)}
+                        className="p-2 text-[#6B7280] hover:text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -378,22 +422,37 @@ export function CareerHistoryTab() {
               <GraduationCap className="w-5 h-5 text-[#3056F5]" />
               <h4 className="text-lg font-semibold text-[#0F172A]">Education</h4>
             </div>
-            <Button
-              onClick={() => setIsAddingEducation(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
-            >
-              <Plus className="w-4 h-4" />
-              Add Education
-            </Button>
+            {!isAddingEducation && (
+              <Button
+                onClick={() => {
+                  setEditingEduId(null);
+                  setEducationForm({
+                    school_university: '',
+                    degree: '',
+                    location: '',
+                    start_date: '',
+                    end_date: '',
+                    is_current: false,
+                  });
+                  setIsAddingEducation(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
+              >
+                <Plus className="w-4 h-4" />
+                Add Education
+              </Button>
+            )}
           </div>
 
-          {/* Add Education Form */}
+          {/* Add/Edit Education Form */}
           {isAddingEducation && (
             <form onSubmit={handleAddEducation} className="mb-6 p-4 bg-white rounded-xl border border-[#E5E7EB]">
-              <h5 className="text-lg font-semibold text-[#0F172A] mb-4">Add New Education Record</h5>
+              <h5 className="text-lg font-semibold text-[#0F172A] mb-4">
+                {editingEduId ? 'Edit Education Record' : 'Add New Education Record'}
+              </h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="school_university">School/University *</Label>
+                  <Label htmlFor="school_university">College/University *</Label>
                   <Input
                     id="school_university"
                     value={educationForm.school_university}
@@ -409,16 +468,6 @@ export function CareerHistoryTab() {
                     value={educationForm.degree}
                     onChange={(e) => setEducationForm(prev => ({ ...prev, degree: e.target.value }))}
                     placeholder="e.g., Bachelor of Science"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="field_of_study">Field of Study *</Label>
-                  <Input
-                    id="field_of_study"
-                    value={educationForm.field_of_study}
-                    onChange={(e) => setEducationForm(prev => ({ ...prev, field_of_study: e.target.value }))}
-                    placeholder="e.g., Computer Science"
                     required
                   />
                 </div>
@@ -455,38 +504,27 @@ export function CareerHistoryTab() {
                     type="checkbox"
                     id="is_current_edu"
                     checked={educationForm.is_current}
-                    onChange={(e) => setEducationForm(prev => ({ ...prev, is_current: e.target.checked }))}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setEducationForm(prev => ({
+                        ...prev,
+                        is_current: isChecked,
+                        end_date: isChecked ? '' : prev.end_date
+                      }));
+                    }}
                     className="mr-2"
                   />
                   <Label htmlFor="is_current_edu">Currently studying</Label>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gpa">GPA</Label>
-                  <Input
-                    id="gpa"
-                    value={educationForm.gpa}
-                    onChange={(e) => setEducationForm(prev => ({ ...prev, gpa: e.target.value }))}
-                    placeholder="e.g., 3.8/4.0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="honors">Honors</Label>
-                  <Input
-                    id="honors"
-                    value={educationForm.honors}
-                    onChange={(e) => setEducationForm(prev => ({ ...prev, honors: e.target.value }))}
-                    placeholder="e.g., Magna Cum Laude"
-                  />
-                </div>
               </div>
               <div className="flex gap-3 mt-4">
                 <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
-                  Add Education
+                  {editingEduId ? 'Save Changes' : 'Add Education'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsAddingEducation(false)}
+                  onClick={handleCancelEducation}
                   className="px-6 py-2 border-[#D1D5DB] rounded-xl"
                 >
                   Cancel
@@ -505,15 +543,14 @@ export function CareerHistoryTab() {
           ) : (
             <div className="space-y-4">
               {educationRecords.map((education) => (
-                <div key={education.id} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div key={education.candidate_education_id} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <GraduationCap className="w-4 h-4 text-[#6B7280]" />
                         <h5 className="font-semibold text-[#0F172A]">{education.degree}</h5>
                       </div>
-                      <p className="text-[#475569] font-medium">{education.school_university}</p>
-                      <p className="text-[#475569]">{education.field_of_study}</p>
+                      <p className="text-[#475569] font-medium">{education.college_name}</p>
                       <div className="flex items-center gap-4 mt-2 text-sm text-[#6B7280]">
                         {education.start_date && (
                           <div className="flex items-center gap-1">
@@ -527,27 +564,22 @@ export function CareerHistoryTab() {
                             {education.location}
                           </div>
                         )}
-                        {education.gpa && (
-                          <span>GPA: {education.gpa}</span>
-                        )}
                       </div>
-                      {education.honors && (
-                        <p className="text-sm text-[#3056F5] mt-1 font-medium">{education.honors}</p>
-                      )}
                     </div>
                     <div className="flex gap-2 ml-4">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="p-2 border-[#D1D5DB] hover:bg-gray-50"
+                        onClick={() => handleEditEducation(education)}
+                        className="p-2 text-[#6B7280] hover:text-[#3056F5] hover:bg-blue-50"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteEducation(education.id)}
-                        className="p-2 border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleDeleteEducation(education.candidate_education_id)}
+                        className="p-2 text-[#6B7280] hover:text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

@@ -2,14 +2,35 @@
 
 export const dynamic = 'force-dynamic';
 
-import { DashboardHeader, StatsGrid } from '../../../components/dashboard';
+import { useEffect } from 'react';
+import { WelcomeMessage, StatsGrid } from '../../../components/dashboard';
 import { AppShell } from '../../../components/layout/AppShell';
-import { PageTransition, AnimatedContainer, PageHeader } from '../../../components/common';
+import { PageTransition, AnimatedContainer, PageHeader, LoadingSpinner } from '../../../components/common';
 import { useDashboardStats } from '../../../hooks/useDashboardStats';
+import { useAuth } from '../../../hooks/useAuth';
 import { BriefcaseIcon } from 'lucide-react';
 
 export default function RecruiterDashboard() {
   const { data: stats } = useDashboardStats();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, isAuthLoading]);
+
+  // Show loading state while checking authentication
+  if (isAuthLoading || !isAuthenticated) {
+    return (
+      <AppShell>
+        <PageTransition className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner />
+        </PageTransition>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -17,10 +38,7 @@ export default function RecruiterDashboard() {
         <div className="space-y-8">
           {/* Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <DashboardHeader
-              title="Recruiter Dashboard"
-              subtitle="Manage your recruitment pipeline and find the best candidates"
-            />
+            <WelcomeMessage firstName={user?.name} />
           </AnimatedContainer>
 
           {/* Stats Grid */}

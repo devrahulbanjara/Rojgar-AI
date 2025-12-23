@@ -27,7 +27,7 @@ export const StatCard = memo<StatCardProps>(({
   className,
 }) => {
   return (
-    <div
+    <div 
       className={cn(
         "bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.01]",
         className
@@ -42,7 +42,7 @@ export const StatCard = memo<StatCardProps>(({
     >
       {/* Icon Container */}
       {icon && (
-        <div
+        <div 
           className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
           style={{ background: 'rgba(48, 86, 245, 0.08)' }}
         >

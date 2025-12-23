@@ -10,12 +10,13 @@ interface TokenResponse {
   access_token: string;
   token_type: string;
   user: {
-    id: number;
-    google_id: string;
+    id: string;
+    google_id?: string;
     email: string;
     name: string;
     picture?: string;
     role?: 'candidate' | 'recruiter';
+    company_id?: string;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -68,8 +69,8 @@ class AuthService {
       });
 
       if (response.status === 401) {
-        // Token is invalid, clear it
-        this.logout();
+        // Token is invalid - let the API client handler deal with it
+        // Don't call logout here as it will be handled by the global 401 handler
         return null;
       }
 
