@@ -8,8 +8,8 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from app.core.config import settings
+from app.models.agents.shortlist.schemas import WorkflowState
 from app.services.agents.shortlist.nodes.resume_parsing import extract_resume_structure
-from app.services.agents.shortlist.schemas import WorkflowState
 
 TEST_RESUMES_DIR = Path(__file__).parent / "test_resumes"
 PASS_THRESHOLD = 75

@@ -20,7 +20,7 @@ import {
     Briefcase,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { useCreateJob } from '../../hooks/queries/useJobs';
+import { useCreateJob, useGenerateJobDraft } from '../../hooks/queries/useJobs';
 import { toast } from 'sonner';
 
 interface JobCreationWizardProps {
@@ -29,13 +29,23 @@ interface JobCreationWizardProps {
     onComplete: () => void;
 }
 
-// Wizard steps
-const steps = [
-    { id: 1, title: 'Basic Info', icon: Building2 },
-    { id: 2, title: 'Job Details', icon: FileText },
-    { id: 3, title: 'Requirements', icon: Briefcase },
-    { id: 4, title: 'Compensation', icon: DollarSign },
-];
+// Wizard steps - different order for agent vs manual mode
+const getSteps = (mode: 'agent' | 'manual') => {
+    if (mode === 'agent') {
+        return [
+            { id: 1, title: 'Basic Info', icon: Building2 },
+            { id: 2, title: 'Requirements', icon: Briefcase },
+            { id: 3, title: 'Compensation', icon: DollarSign },
+            { id: 4, title: 'Job Details', icon: FileText },
+        ];
+    }
+    return [
+        { id: 1, title: 'Basic Info', icon: Building2 },
+        { id: 2, title: 'Job Details', icon: FileText },
+        { id: 3, title: 'Requirements', icon: Briefcase },
+        { id: 4, title: 'Compensation', icon: DollarSign },
+    ];
+};
 
 // Skeleton loader component
 function SkeletonLine({ className }: { className?: string }) {
@@ -51,14 +61,53 @@ function SkeletonLine({ className }: { className?: string }) {
     );
 }
 
+// Pre-built revision suggestions
+const revisionSuggestions = [
+    "Make the requirements more specific and detailed",
+    "Add more technical skills and technologies",
+    "Make the tone more professional and formal",
+    "Add more information about the company culture",
+    "Expand the 'What We Offer' section with more benefits",
+    "Make the job description more concise and focused",
+    "Add more details about day-to-day responsibilities",
+    "Include more information about growth opportunities",
+    "Make the requirements less strict, more flexible",
+    "Add more context about the team and work environment",
+];
+
 export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizardProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isGenerated, setIsGenerated] = useState(false);
     const [showRevisionPrompt, setShowRevisionPrompt] = useState(false);
     const [revisionText, setRevisionText] = useState('');
-    
+
     const createJobMutation = useCreateJob();
+    const generateDraftMutation = useGenerateJobDraft();
+
+    // Get steps based on mode
+    const steps = getSteps(mode);
+
+    // Helper function to get the actual content step based on mode and current step
+    const getContentStep = (step: number): number => {
+        if (mode === 'agent') {
+            // Agent mode: 1=Basic, 2=Requirements, 3=Compensation, 4=Job Details
+            const agentMapping: { [key: number]: number } = {
+                1: 1, // Basic Info
+                2: 3, // Requirements
+                3: 4, // Compensation
+                4: 2, // Job Details
+            };
+            return agentMapping[step] || step;
+        }
+        // Manual mode: keep original order
+        return step;
+    };
+
+    // Handle clicking a suggestion
+    const handleSuggestionClick = (suggestion: string) => {
+        setRevisionText(suggestion);
+    };
 
     // Form state
     const [formData, setFormData] = useState({
@@ -85,67 +134,104 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
         applicationDeadline: '',
     });
 
-    // Simulate AI generation
+    // Handle AI generation
     const handleGenerate = async () => {
-        setIsGenerating(true);
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setIsGenerating(false);
-        setIsGenerated(true);
+        if (!formData.title || !formData.keywords) {
+            toast.error('Missing information', {
+                description: 'Please provide a job title and requirements to generate a description.',
+            });
+            return;
+        }
 
-        // Auto-fill ALL fields with comprehensive static data
-        setFormData((prev) => ({
-            ...prev,
-            title: prev.title || 'Senior Software Engineer',
-            department: 'Engineering',
-            level: 'Senior',
-            description: 'We are seeking a talented engineer to join our growing team and build high-impact features for our platform. You will work closely with cross-functional teams to solve challenging problems at scale.',
-            requiredSkillsAndExperience: [
-                'Strong experience with Python for backend development',
-                'Hands-on experience with FastAPI for building and maintaining APIs',
-                'Working knowledge of PyTorch and modern machine learning workflows',
-                'Experience with LLM orchestration frameworks such as LangGraph or LangChain',
-                'Ability to design and manage data pipelines and model inference workflows',
-                'Understanding of production concerns like logging, monitoring, and performance optimization',
-                '5+ years of professional software development experience',
-                'Strong proficiency in TypeScript and React for frontend development',
-                'Experience with PostgreSQL and database design',
-                'Familiarity with AWS cloud services and Docker containerization',
-            ],
-            niceToHave: [
-                'Experience with Kubernetes and container orchestration',
-                'Knowledge of GraphQL and API design best practices',
-                'Contributions to open-source projects',
-                'Experience with CI/CD pipelines and DevOps practices',
-            ],
-            benefits: [
-                'Competitive salary and equity package',
-                'Comprehensive health, dental, and vision insurance',
-                '401(k) with company matching',
-                'Unlimited PTO and flexible work arrangements',
-                'Remote-first culture with optional office access',
-                'Annual learning and development budget',
-                'Home office setup stipend',
-                'Regular team offsites and events',
-            ],
-            locationCity: 'Kathmandu',
-            locationCountry: 'Nepal',
-            locationType: 'On-site',
-            employmentType: 'Full-time',
-            salaryMin: '150000',
-            salaryMax: '200000',
-            applicationDeadline: '2025-02-01',
-        }));
+        setIsGenerating(true);
+
+        try {
+            // Call API to generate job draft (does not save to database)
+            const result = await generateDraftMutation.mutateAsync({
+                title: formData.title,
+                raw_requirements: formData.keywords,
+                reference_jd: formData.referenceJD || undefined,
+            });
+
+            setIsGenerating(false);
+            setIsGenerated(true);
+
+            // Auto-fill form with generated data
+            setFormData((prev) => ({
+                ...prev,
+                title: result.title || prev.title,
+                description: result.description || '',
+                requiredSkillsAndExperience: result.requiredSkillsAndExperience.length > 0
+                    ? result.requiredSkillsAndExperience
+                    : prev.requiredSkillsAndExperience,
+                niceToHave: result.niceToHave.length > 0
+                    ? result.niceToHave
+                    : prev.niceToHave,
+                benefits: result.benefits.length > 0
+                    ? result.benefits
+                    : prev.benefits,
+                // Keep user's other preferences (location, salary, etc.)
+            }));
+
+            toast.success('Job description generated!', {
+                description: 'AI-generated content has been filled in. Review and edit as needed.',
+                duration: 4000,
+            });
+
+        } catch (error: any) {
+            setIsGenerating(false);
+            const errorMessage = error?.data?.detail || error?.data?.message || error?.message || 'Failed to generate job description.';
+            toast.error('Generation failed', {
+                description: errorMessage,
+            });
+        }
     };
 
     // Handle revision request
     const handleRevision = async () => {
         if (!revisionText.trim()) return;
-        setShowRevisionPrompt(false);
+
         setIsGenerating(true);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setIsGenerating(false);
-        setRevisionText('');
+        setShowRevisionPrompt(false);
+
+        try {
+            // Call API to regenerate with revision feedback
+            const result = await generateDraftMutation.mutateAsync({
+                title: formData.title,
+                raw_requirements: `${formData.keywords}\n\nRevision Request: ${revisionText}`,
+                reference_jd: formData.referenceJD || undefined,
+            });
+
+            // Update form with revised content
+            setFormData((prev) => ({
+                ...prev,
+                title: result.title || prev.title,
+                description: result.description || prev.description,
+                requiredSkillsAndExperience: result.requiredSkillsAndExperience.length > 0
+                    ? result.requiredSkillsAndExperience
+                    : prev.requiredSkillsAndExperience,
+                niceToHave: result.niceToHave.length > 0
+                    ? result.niceToHave
+                    : prev.niceToHave,
+                benefits: result.benefits.length > 0
+                    ? result.benefits
+                    : prev.benefits,
+            }));
+
+            setIsGenerating(false);
+            setRevisionText('');
+
+            toast.success('Job description revised!', {
+                description: 'The AI has updated the content based on your feedback.',
+                duration: 4000,
+            });
+        } catch (error: any) {
+            setIsGenerating(false);
+            const errorMessage = error?.data?.detail || error?.data?.message || error?.message || 'Failed to revise job description.';
+            toast.error('Revision failed', {
+                description: errorMessage,
+            });
+        }
     };
 
     // Helper function to prepare job data
@@ -154,7 +240,7 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
         const filteredRequiredSkills = formData.requiredSkillsAndExperience.filter(item => item.trim() !== '');
         const filteredNiceToHave = formData.niceToHave.filter(item => item.trim() !== '');
         const filteredBenefits = formData.benefits.filter(item => item.trim() !== '');
-        
+
         return {
             title: formData.title.trim(),
             department: formData.department.trim() || undefined,
@@ -184,9 +270,9 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
             });
             return;
         }
-        
+
         const jobData = prepareJobData('draft');
-        
+
         try {
             const result = await createJobMutation.mutateAsync(jobData as any);
             toast.success('Draft saved successfully!', {
@@ -200,7 +286,7 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
         } catch (error: any) {
             // Extract error message from various possible error formats
             let errorMessage = 'Failed to save draft. Please try again.';
-            
+
             if (error) {
                 // ApiError format (from apiClient)
                 if (error.data) {
@@ -215,7 +301,7 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                     errorMessage = error.message;
                 }
             }
-            
+
             toast.error('Failed to save draft', {
                 description: errorMessage,
                 duration: 5000,
@@ -245,9 +331,9 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
             });
             return;
         }
-        
+
         const jobData = prepareJobData('active');
-        
+
         try {
             await createJobMutation.mutateAsync(jobData as any);
             toast.success('Job created successfully!', {
@@ -424,15 +510,15 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                         {/* Generate Button - Inside form flow, not at bottom */}
                         <button
                             onClick={handleGenerate}
-                            disabled={isGenerating}
+                            disabled={isGenerating || generateDraftMutation.isPending}
                             className={cn(
                                 'w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-medium transition-all duration-200 text-sm',
-                                !isGenerating
+                                !isGenerating && !generateDraftMutation.isPending
                                     ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
                                     : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                             )}
                         >
-                            {isGenerating ? (
+                            {(isGenerating || generateDraftMutation.isPending) ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Generating...
@@ -478,15 +564,31 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                     <>
                         {/* Step 1: Basic Info - Only show in Manual Mode OR after Agent Mode generation */}
                         {currentStep === 1 && (mode === 'manual' || isGenerated) && (
-                            <div className="space-y-4">
-                                <div className="bg-white rounded-lg p-5 border border-slate-200">
-                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-4">
+                            <div className="space-y-5">
+                                {/* AI Generated Indicator */}
+                                {mode === 'agent' && isGenerated && (
+                                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="flex-shrink-0 mt-0.5">
+                                            <Sparkles className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-indigo-900 mb-1">
+                                                AI-Generated Content
+                                            </p>
+                                            <p className="text-xs text-indigo-700">
+                                                Review and edit the generated content below. Fields with AI-generated content are highlighted.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
                                         <Building2 className="w-4 h-4 text-indigo-500" />
                                         Basic Information
                                     </h4>
-                                    <div className="space-y-4">
+                                    <div className="space-y-5">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
                                                 Job Title *
                                             </label>
                                             <input
@@ -494,18 +596,27 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                                 value={formData.title}
                                                 onChange={(e) => updateField('title', e.target.value)}
                                                 placeholder="e.g. Senior Software Engineer"
-                                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                                className={cn(
+                                                    "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                    "text-base text-slate-800 placeholder:text-slate-400",
+                                                    "transition-colors duration-200",
+                                                    isGenerated && formData.title && "bg-indigo-50/50 border-indigo-200"
+                                                )}
                                             />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     Department *
                                                 </label>
                                                 <select
                                                     value={formData.department}
                                                     onChange={(e) => updateField('department', e.target.value)}
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm"
+                                                    className={cn(
+                                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                                                        "text-base text-slate-800 transition-colors duration-200",
+                                                        isGenerated && formData.department && "bg-indigo-50/50 border-indigo-200"
+                                                    )}
                                                 >
                                                     <option value="">Select department...</option>
                                                     <option value="Engineering">Engineering</option>
@@ -517,13 +628,17 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     Level *
                                                 </label>
                                                 <select
                                                     value={formData.level}
                                                     onChange={(e) => updateField('level', e.target.value)}
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm"
+                                                    className={cn(
+                                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                                                        "text-base text-slate-800 transition-colors duration-200",
+                                                        isGenerated && formData.level && "bg-indigo-50/50 border-indigo-200"
+                                                    )}
                                                 >
                                                     <option value="">Select level...</option>
                                                     <option value="Junior">Junior</option>
@@ -537,18 +652,23 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
 
                                         {/* About the Role */}
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
                                                 About the Role *
                                             </label>
-                                            <p className="text-xs text-slate-400 mb-1.5">
+                                            <p className="text-xs text-slate-500 mb-3">
                                                 Brief 2-3 sentence summary about this position.
                                             </p>
                                             <textarea
                                                 value={formData.description}
                                                 onChange={(e) => updateField('description', e.target.value)}
-                                                rows={3}
+                                                rows={Math.max(4, Math.ceil(formData.description.length / 80))}
                                                 placeholder="Summarize what this role is about..."
-                                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none text-sm"
+                                                className={cn(
+                                                    "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y",
+                                                    "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                                    "min-h-[100px] max-h-[300px] overflow-y-auto",
+                                                    isGenerated && formData.description && "bg-indigo-50/50 border-indigo-200"
+                                                )}
                                             />
                                         </div>
                                     </div>
@@ -556,18 +676,18 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                             </div>
                         )}
 
-                        {/* Step 2: Job Details */}
-                        {currentStep === 2 && (
+                        {/* Step 2: Job Details (Step 4 in agent mode) */}
+                        {getContentStep(currentStep) === 2 && (
                             <div className="space-y-4">
                                 <div className="bg-white rounded-lg p-5 border border-slate-200">
                                     <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-4">
                                         <FileText className="w-4 h-4 text-indigo-500" />
                                         Job Details
                                     </h4>
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-5">
+                                        <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     City *
                                                 </label>
                                                 <input
@@ -575,11 +695,15 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                                     value={formData.locationCity}
                                                     onChange={(e) => updateField('locationCity', e.target.value)}
                                                     placeholder="e.g. "
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                                    className={cn(
+                                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                        "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200",
+                                                        isGenerated && formData.locationCity && "bg-indigo-50/50 border-indigo-200"
+                                                    )}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     Country *
                                                 </label>
                                                 <input
@@ -587,33 +711,45 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                                     value={formData.locationCountry}
                                                     onChange={(e) => updateField('locationCountry', e.target.value)}
                                                     placeholder="e.g. Nepal"
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                                    className={cn(
+                                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                        "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200",
+                                                        isGenerated && formData.locationCountry && "bg-indigo-50/50 border-indigo-200"
+                                                    )}
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
                                                 Location Type *
-                                                </label>
-                                                <select
-                                                    value={formData.locationType}
-                                                    onChange={(e) => updateField('locationType', e.target.value)}
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm"
-                                                >
-                                                    <option value="">Select type...</option>
-                                                    <option value="Remote">Remote</option>
-                                                    <option value="Hybrid">Hybrid</option>
-                                                    <option value="On-site">On-site</option>
-                                                </select>
+                                            </label>
+                                            <select
+                                                value={formData.locationType}
+                                                onChange={(e) => updateField('locationType', e.target.value)}
+                                                className={cn(
+                                                    "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                                                    "text-base text-slate-800 transition-colors duration-200",
+                                                    isGenerated && formData.locationType && "bg-indigo-50/50 border-indigo-200"
+                                                )}
+                                            >
+                                                <option value="">Select type...</option>
+                                                <option value="Remote">Remote</option>
+                                                <option value="Hybrid">Hybrid</option>
+                                                <option value="On-site">On-site</option>
+                                            </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
                                                 Employment Type *
                                             </label>
                                             <select
                                                 value={formData.employmentType}
                                                 onChange={(e) => updateField('employmentType', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm"
+                                                className={cn(
+                                                    "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                                                    "text-base text-slate-800 transition-colors duration-200",
+                                                    isGenerated && formData.employmentType && "bg-indigo-50/50 border-indigo-200"
+                                                )}
                                             >
                                                 <option value="">Select type...</option>
                                                 <option value="Full-time">Full-time</option>
@@ -627,31 +763,40 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                             </div>
                         )}
 
-                        {/* Step 3: Requirements and Skills */}
-                        {currentStep === 3 && (
-                            <div className="space-y-4">
-                                <div className="bg-white rounded-lg p-5 border border-slate-200">
-                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-4">
+                        {/* Step 3: Requirements and Skills (Step 2 in agent mode) */}
+                        {getContentStep(currentStep) === 3 && (
+                            <div className="space-y-5">
+                                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
                                         <Briefcase className="w-4 h-4 text-indigo-500" />
                                         Required Skills and Experience
                                     </h4>
-                                    <p className="text-xs text-slate-400 mb-4">
+                                    <p className="text-xs text-slate-500 mb-5">
                                         Add requirements, skills, and experience needed for this role. Mix requirements (e.g., "5+ years of Python experience") and skills (e.g., "Python", "FastAPI") together.
                                     </p>
-                                    <div className="space-y-2.5">
+                                    <div className="space-y-3">
                                         {formData.requiredSkillsAndExperience.map((item, index) => (
-                                            <div key={index} className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={item}
-                                                    onChange={(e) => updateArrayField('requiredSkillsAndExperience', index, e.target.value)}
-                                                    placeholder="e.g. Strong experience with Python for backend development"
-                                                    className="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                                                />
+                                            <div key={index} className="flex gap-3 items-start">
+                                                <div className="flex-1">
+                                                    <textarea
+                                                        value={item}
+                                                        onChange={(e) => updateArrayField('requiredSkillsAndExperience', index, e.target.value)}
+                                                        placeholder="e.g. Strong experience with Python for backend development"
+                                                        rows={Math.max(2, Math.ceil(item.length / 60))}
+                                                        className={cn(
+                                                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                            "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                                            "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
+                                                            "whitespace-pre-wrap break-words",
+                                                            isGenerated && item && "bg-indigo-50/50 border-indigo-200"
+                                                        )}
+                                                    />
+                                                </div>
                                                 {formData.requiredSkillsAndExperience.length > 1 && (
                                                     <button
                                                         onClick={() => removeArrayItem('requiredSkillsAndExperience', index)}
-                                                        className="px-2.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors text-sm cursor-pointer"
+                                                        className="px-3 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-base cursor-pointer font-medium flex-shrink-0 mt-1"
+                                                        aria-label="Remove requirement"
                                                     >
                                                         ×
                                                     </button>
@@ -667,28 +812,37 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-lg p-5 border border-slate-200">
-                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-4">
+                                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
                                         <Briefcase className="w-4 h-4 text-indigo-500" />
                                         Nice to Have
                                     </h4>
-                                    <p className="text-xs text-slate-400 mb-4">
+                                    <p className="text-xs text-slate-500 mb-5">
                                         Optional qualifications that would be beneficial but not required for this role.
                                     </p>
-                                    <div className="space-y-2.5">
+                                    <div className="space-y-3">
                                         {formData.niceToHave.map((item, index) => (
-                                            <div key={index} className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={item}
-                                                    onChange={(e) => updateArrayField('niceToHave', index, e.target.value)}
-                                                    placeholder="e.g. Experience with Kubernetes and container orchestration"
-                                                    className="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                                                />
+                                            <div key={index} className="flex gap-3 items-start">
+                                                <div className="flex-1">
+                                                    <textarea
+                                                        value={item}
+                                                        onChange={(e) => updateArrayField('niceToHave', index, e.target.value)}
+                                                        placeholder="e.g. Experience with Kubernetes and container orchestration"
+                                                        rows={Math.max(2, Math.ceil(item.length / 60))}
+                                                        className={cn(
+                                                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                            "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                                            "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
+                                                            "whitespace-pre-wrap break-words",
+                                                            isGenerated && item && "bg-indigo-50/50 border-indigo-200"
+                                                        )}
+                                                    />
+                                                </div>
                                                 {formData.niceToHave.length > 1 && (
                                                     <button
                                                         onClick={() => removeArrayItem('niceToHave', index)}
-                                                        className="px-2.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors text-sm cursor-pointer"
+                                                        className="px-3 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-base cursor-pointer font-medium flex-shrink-0 mt-1"
+                                                        aria-label="Remove nice to have"
                                                     >
                                                         ×
                                                     </button>
@@ -706,18 +860,18 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                             </div>
                         )}
 
-                        {/* Step 4: Compensation */}
-                        {currentStep === 4 && (
-                            <div className="space-y-4">
-                                <div className="bg-white rounded-lg p-5 border border-slate-200">
-                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-4">
+                        {/* Step 4: Compensation (Step 3 in agent mode) */}
+                        {getContentStep(currentStep) === 4 && (
+                            <div className="space-y-5">
+                                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+                                    <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
                                         <DollarSign className="w-4 h-4 text-indigo-500" />
                                         Compensation
                                     </h4>
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-3 gap-3">
+                                    <div className="space-y-5">
+                                        <div className="grid grid-cols-3 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     Min Salary
                                                 </label>
                                                 <input
@@ -725,11 +879,14 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                                     value={formData.salaryMin}
                                                     onChange={(e) => updateField('salaryMin', e.target.value)}
                                                     placeholder="80000"
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                                    className={cn(
+                                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                        "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200"
+                                                    )}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     Max Salary
                                                 </label>
                                                 <input
@@ -737,17 +894,20 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                                     value={formData.salaryMax}
                                                     onChange={(e) => updateField('salaryMax', e.target.value)}
                                                     placeholder="120000"
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                                    className={cn(
+                                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                        "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200"
+                                                    )}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     Currency
                                                 </label>
                                                 <select
                                                     value={formData.currency}
                                                     onChange={(e) => updateField('currency', e.target.value)}
-                                                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm"
+                                                    className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-base text-slate-800 transition-colors duration-200"
                                                 >
                                                     <option value="INR">INR</option>
                                                     <option value="USD">USD</option>
@@ -756,35 +916,44 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
                                                 Application Deadline
                                             </label>
                                             <input
                                                 type="date"
                                                 value={formData.applicationDeadline}
                                                 onChange={(e) => updateField('applicationDeadline', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                                                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-lg p-5 border border-slate-200">
-                                    <h4 className="text-sm font-medium text-slate-800 mb-4">What We Offer</h4>
-                                    <div className="space-y-2.5">
+                                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+                                    <h4 className="text-sm font-medium text-slate-800 mb-5">What We Offer</h4>
+                                    <div className="space-y-3">
                                         {formData.benefits.map((benefit, index) => (
-                                            <div key={index} className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={benefit}
-                                                    onChange={(e) => updateArrayField('benefits', index, e.target.value)}
-                                                    placeholder="Add what we offer..."
-                                                    className="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                                                />
+                                            <div key={index} className="flex gap-3 items-start">
+                                                <div className="flex-1">
+                                                    <textarea
+                                                        value={benefit}
+                                                        onChange={(e) => updateArrayField('benefits', index, e.target.value)}
+                                                        placeholder="Add what we offer..."
+                                                        rows={Math.max(2, Math.ceil(benefit.length / 60))}
+                                                        className={cn(
+                                                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                                            "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                                            "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
+                                                            "whitespace-pre-wrap break-words",
+                                                            isGenerated && benefit && "bg-indigo-50/50 border-indigo-200"
+                                                        )}
+                                                    />
+                                                </div>
                                                 {formData.benefits.length > 1 && (
                                                     <button
                                                         onClick={() => removeArrayItem('benefits', index)}
-                                                        className="px-2.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors text-sm cursor-pointer"
+                                                        className="px-3 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-base cursor-pointer font-medium flex-shrink-0 mt-1"
+                                                        aria-label="Remove benefit"
                                                     >
                                                         ×
                                                     </button>
@@ -831,46 +1000,46 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                         {/* Save Draft / Publish */}
                         {currentStep === steps.length ? (
                             <div className="flex gap-2">
-                                    <button 
-                                        onClick={handleSaveDraft}
-                                        className={cn(
-                                            "px-4 py-2 text-slate-500 text-sm font-medium rounded-lg transition-colors",
-                                            createJobMutation.isPending 
-                                                ? "opacity-50 cursor-not-allowed" 
-                                                : "hover:bg-slate-50"
-                                        )}
-                                        disabled={createJobMutation.isPending}
-                                    >
-                                        {createJobMutation.isPending ? (
-                                            <span className="flex items-center gap-2">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Saving...
-                                            </span>
-                                        ) : 'Save Draft'}
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit}
-                                        disabled={createJobMutation.isPending}
-                                        className={cn(
-                                            "flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm",
-                                            createJobMutation.isPending 
-                                                ? "opacity-50 cursor-not-allowed" 
-                                                : "hover:bg-indigo-700"
-                                        )}
-                                    >
-                                        {createJobMutation.isPending ? (
-                                            <>
-                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                Publishing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                Publish Job
-                                                <Check className="w-3.5 h-3.5" />
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={handleSaveDraft}
+                                    className={cn(
+                                        "px-4 py-2 text-slate-500 text-sm font-medium rounded-lg transition-colors",
+                                        createJobMutation.isPending
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : "hover:bg-slate-50"
+                                    )}
+                                    disabled={createJobMutation.isPending}
+                                >
+                                    {createJobMutation.isPending ? (
+                                        <span className="flex items-center gap-2">
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Saving...
+                                        </span>
+                                    ) : 'Save Draft'}
+                                </button>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={createJobMutation.isPending}
+                                    className={cn(
+                                        "flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm",
+                                        createJobMutation.isPending
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : "hover:bg-indigo-700"
+                                    )}
+                                >
+                                    {createJobMutation.isPending ? (
+                                        <>
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            Publishing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Publish Job
+                                            <Check className="w-3.5 h-3.5" />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 onClick={handleNext}
@@ -886,43 +1055,118 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
 
             {/* Revision Prompt Modal */}
             {showRevisionPrompt && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center">
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    {/* Backdrop with blur */}
                     <div
-                        className="fixed inset-0 bg-black/30"
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={() => setShowRevisionPrompt(false)}
                     />
-                    <div className="relative bg-white rounded-xl p-5 w-[420px] max-w-[95vw] shadow-xl">
-                        <h4 className="text-sm font-medium text-slate-800 mb-3">Request Revision</h4>
-                        <textarea
-                            value={revisionText}
-                            onChange={(e) => setRevisionText(e.target.value)}
-                            placeholder="Tell AI what to revise..."
-                            rows={3}
-                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none text-sm mb-2"
-                        />
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-slate-400">{revisionText.length}/500</span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setShowRevisionPrompt(false)}
-                                    className="px-3 py-1.5 text-slate-500 text-sm font-medium hover:bg-slate-50 rounded-lg transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleRevision}
-                                    disabled={!revisionText.trim()}
-                                    className={cn(
-                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                                        revisionText.trim()
-                                            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                    )}
-                                >
-                                    <Sparkles className="w-3.5 h-3.5" />
-                                    Revise
-                                </button>
+
+                    {/* Modal Content */}
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200/50 overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-5 border-b border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900">Request AI Revision</h3>
+                                    <p className="text-xs text-slate-600 mt-0.5">
+                                        Tell the AI what you'd like to change or improve
+                                    </p>
+                                </div>
                             </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6">
+                            {/* Quick Suggestions */}
+                            <div className="mb-5">
+                                <label className="block text-sm font-medium text-slate-700 mb-3">
+                                    Quick Suggestions
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {revisionSuggestions.slice(0, 6).map((suggestion, index) => (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                            className={cn(
+                                                "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200",
+                                                "border border-slate-300 bg-white text-slate-700",
+                                                "hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700",
+                                                "cursor-pointer active:scale-95"
+                                            )}
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Custom Input */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Or Type Your Own Revision Instructions
+                                </label>
+                                <textarea
+                                    value={revisionText}
+                                    onChange={(e) => setRevisionText(e.target.value)}
+                                    placeholder="e.g., Make the requirements more specific, add more technical details, adjust the tone to be more formal..."
+                                    rows={5}
+                                    maxLength={500}
+                                    className={cn(
+                                        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                        "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                        "resize-y min-h-[120px] transition-colors duration-200",
+                                        "border-slate-300 hover:border-slate-400"
+                                    )}
+                                />
+                                <div className="flex justify-between items-center mt-2">
+                                    <p className="text-xs text-slate-500">
+                                        Be specific about what you want changed
+                                    </p>
+                                    <span className={cn(
+                                        "text-xs font-medium",
+                                        revisionText.length > 450 ? "text-amber-600" : "text-slate-400"
+                                    )}>
+                                        {revisionText.length}/500
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowRevisionPrompt(false)}
+                                className="px-4 py-2 text-slate-600 text-sm font-medium hover:bg-white rounded-lg transition-colors duration-200 border border-slate-300 hover:border-slate-400"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRevision}
+                                disabled={!revisionText.trim() || generateDraftMutation.isPending}
+                                className={cn(
+                                    'flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                                    revisionText.trim() && !generateDraftMutation.isPending
+                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md'
+                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                )}
+                            >
+                                {generateDraftMutation.isPending ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Revising...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4" />
+                                        Revise
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
