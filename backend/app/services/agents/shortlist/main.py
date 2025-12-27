@@ -5,7 +5,6 @@ from app.core import configure_file_logging, logger, settings
 from .file_handler import discover_resume_files
 from .graph import create_workflow
 
-# Configure file logging for this service
 configure_file_logging(settings.OUTPUT_DIR, "ats_screening.log")
 
 
@@ -22,8 +21,18 @@ def main():
         logger.info("Initializing workflow")
         app = create_workflow()
         inputs = {"resume_file_paths": resume_paths}
+
+        config = {
+            "run_name": "shortlist_workflow",
+            "tags": ["shortlist", "langgraph", "resume_screening"],
+            "metadata": {
+                "workflow": "shortlist",
+                "resume_count": len(resume_paths),
+            },
+        }
+
         logger.info("Starting evaluation workflow")
-        result = app.invoke(inputs)
+        result = app.invoke(inputs, config=config)
 
         final_report = result.get("final_report")
         if final_report:
