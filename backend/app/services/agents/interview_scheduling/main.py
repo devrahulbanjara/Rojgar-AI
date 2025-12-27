@@ -17,7 +17,17 @@ def run_auto_approved(candidates: list[dict]) -> list[dict]:
     results = []
 
     for idx, candidate in enumerate(candidates):
-        config = {"configurable": {"thread_id": f"auto_candidate_{idx}"}}
+        config = {
+            "configurable": {"thread_id": f"auto_candidate_{idx}"},
+            "run_name": "interview_scheduling_workflow",
+            "tags": ["interview_scheduling", "langgraph", "auto_approved"],
+            "metadata": {
+                "thread_id": f"auto_candidate_{idx}",
+                "workflow": "interview_scheduling",
+                "mode": "auto_approved",
+                "candidate_name": candidate["name"],
+            },
+        }
 
         initial_state = {
             "name": candidate["name"],
@@ -53,7 +63,17 @@ def run_with_approval(candidate: dict, thread_id: str = "hitl_demo") -> dict:
         Final result after approval/rejection.
     """
     app = create_workflow()
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {
+        "configurable": {"thread_id": thread_id},
+        "run_name": "interview_scheduling_workflow",
+        "tags": ["interview_scheduling", "langgraph", "hitl"],
+        "metadata": {
+            "thread_id": thread_id,
+            "workflow": "interview_scheduling",
+            "mode": "hitl",
+            "candidate_name": candidate["name"],
+        },
+    }
 
     initial_state = {
         "name": candidate["name"],
@@ -86,7 +106,15 @@ def run_with_approval(candidate: dict, thread_id: str = "hitl_demo") -> dict:
         )
         approved = user_input == "approve"
 
-        result = app.invoke(Command(resume=approved), config)
+        # Update config with approval decision for tracing
+        revision_config = {
+            **config,
+            "metadata": {
+                **config.get("metadata", {}),
+                "user_decision": "approve" if approved else "reject",
+            },
+        }
+        result = app.invoke(Command(resume=approved), config=revision_config)
 
     print(f"\n{'=' * 60}")
     print("FINAL RESULT")

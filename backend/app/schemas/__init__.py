@@ -10,13 +10,13 @@ Example:
 
 # User schemas
 from .user import (
-    UserResponse,
-    GoogleUserInfo,
     CreateUserRequest,
-    SignupRequest,
+    GoogleUserInfo,
     LoginRequest,
     RoleSelectionRequest,
+    SignupRequest,
     TokenResponse,
+    UserResponse,
 )
 
 __all__ = [

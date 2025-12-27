@@ -30,7 +30,7 @@ export function InsightsSection() {
     // Check on mount and resize
     checkVisibility();
     window.addEventListener('resize', checkVisibility);
-    
+
     return () => window.removeEventListener('resize', checkVisibility);
   }, []);
 
@@ -140,4 +140,3 @@ export function InsightsSection() {
     </section>
   );
 }
-

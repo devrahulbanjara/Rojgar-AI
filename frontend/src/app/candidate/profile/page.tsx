@@ -20,12 +20,6 @@ export default function CandidateProfilePage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProfile();
-    }
-  }, [isAuthenticated]);
-
   const fetchProfile = async () => {
     try {
       setIsLoadingProfile(true);
@@ -37,6 +31,20 @@ export default function CandidateProfilePage() {
       setIsLoadingProfile(false);
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProfile();
+    }
+  }, [isAuthenticated]);
+
+  // Redirect to login if not authenticated
+  // IMPORTANT: All hooks must be called before any early returns
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, isAuthLoading]);
 
   const handleProfileUpdate = async (updatedProfile: CandidateProfile) => {
     setProfile(updatedProfile);
@@ -58,13 +66,6 @@ export default function CandidateProfilePage() {
       </AppShell>
     );
   }
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = '/login';
-    }
-  }, [isAuthenticated, isAuthLoading]);
 
   // Show error state if no user data
   if (!isAuthenticated || !user) {
@@ -100,7 +101,7 @@ export default function CandidateProfilePage() {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() => setActiveTab(tab.id as 'profile' | 'career' | 'skills' | 'password')}
                       className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab.id
                         ? 'bg-[#3056F5] text-white shadow-sm'
                         : 'text-[#475569] hover:bg-[#F9FAFB] hover:text-[#3056F5]'

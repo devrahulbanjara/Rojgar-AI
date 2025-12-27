@@ -1,25 +1,25 @@
 from app.core.database import Base
-from .user import User, UserGoogle, UserRole
+
+from .application import ApplicationStatus, JobApplication, JobApplicationStatusHistory
 from .candidate import (
+    CandidateCertification,
+    CandidateEducation,
     CandidateProfile,
+    CandidateSkills,
     CandidateSocialLink,
     CandidateWorkExperience,
-    CandidateEducation,
-    CandidateCertification,
-    CandidateSkills
 )
-from .company import CompanyProfile, CompanyActivity
+from .company import CompanyActivity, CompanyProfile
+from .job import JobDescription, JobPosting, JobPostingStats
 from .resume import (
     Resume,
+    ResumeCertification,
+    ResumeEducation,
+    ResumeSkills,
     ResumeSocialLink,
     ResumeWorkExperience,
-    ResumeEducation,
-    ResumeCertification,
-    ResumeSkills
 )
-from .job import JobPosting, JobDescription, JobPostingStats
-from .application import JobApplication, JobApplicationStatusHistory, ApplicationStatus
-
+from .user import User, UserGoogle, UserRole
 
 __all__ = [
     "Base",
@@ -45,5 +45,5 @@ __all__ = [
     "JobPostingStats",
     "JobApplication",
     "JobApplicationStatusHistory",
-    "ApplicationStatus"
+    "ApplicationStatus",
 ]

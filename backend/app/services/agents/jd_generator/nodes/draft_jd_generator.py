@@ -1,10 +1,16 @@
 from langchain_core.messages import HumanMessage, SystemMessage
+from langsmith import traceable
 
 from app.models.agents.jd_generator import JobState
 
 from ..llm_service import structured_llm
 
 
+@traceable(
+    name="jd_generator_node",
+    tags=["node:generator", "jd_generation"],
+    metadata={"node_type": "generator", "purpose": "generate_or_revise_jd"},
+)
 def generator_node(state: JobState) -> dict:
     """Generate or revise job description based on requirements and feedback."""
 

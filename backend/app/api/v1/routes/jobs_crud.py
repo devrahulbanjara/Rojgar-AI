@@ -1,53 +1,102 @@
+import uuid
+from datetime import UTC, date, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import date, datetime, UTC
-import uuid
 
-from app.core import get_db, get_current_user_id
-from app.models.job import JobPosting, JobDescription, JobPostingStats
-from app.models.company import CompanyProfile
-from app.schemas import job as schemas
 from app.api.v1.routes.jobs import map_job_to_response
+from app.core import get_current_user_id, get_db
+from app.models.company import CompanyProfile
+from app.models.job import JobDescription, JobPosting, JobPostingStats
+from app.schemas import job as schemas
+from app.services.recruiter.job_generation_service import JobGenerationService
 
 router = APIRouter()
 
 
-@router.post("", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/generate-draft",
+    response_model=schemas.JobDraftResponse,
+    status_code=status.HTTP_200_OK,
+)
+def generate_job_draft(
+    draft_request: schemas.JobDraftGenerateRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Generate a job description draft using the JD generation agent.
+    This endpoint does NOT save the job to the database - it only generates the draft.
+    """
+    if not draft_request.raw_requirements:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="raw_requirements are required",
+        )
+
+    try:
+        # Combine title and requirements for the agent
+        combined_requirements = (
+            f"{draft_request.title}. {draft_request.raw_requirements}"
+        )
+
+        # Generate draft using agent
+        generated_draft = JobGenerationService.generate_job_draft(combined_requirements)
+
+        # Map generated content to response schema
+        return schemas.JobDraftResponse(
+            title=generated_draft.job_title,
+            description=generated_draft.role_overview,
+            requiredSkillsAndExperience=generated_draft.required_skills_and_experience,
+            niceToHave=generated_draft.nice_to_have,
+            benefits=generated_draft.what_company_offers,
+            about_company=generated_draft.about_the_company,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate job description: {str(e)}",
+        )
+
+
+@router.post(
+    "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
+)
 def create_job(
     job_data: schemas.JobCreate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
     if not company:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found for this user"
+            detail="Company profile not found for this user",
         )
-    
+
     company_id = company.company_id
-    
+
     job_description_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())
-    
+
     # Handle required skills - allow empty list for drafts
-    required_skills_list = job_data.requiredSkillsAndExperience if job_data.requiredSkillsAndExperience else []
+    required_skills_list = (
+        job_data.requiredSkillsAndExperience
+        if job_data.requiredSkillsAndExperience
+        else []
+    )
     required_skills_experience_dict = {
         "required_skills_experience": required_skills_list
     }
-    
+
     nice_to_have_dict = None
     if job_data.niceToHave:
-        nice_to_have_dict = {
-            "nice_to_have": job_data.niceToHave
-        }
-    
+        nice_to_have_dict = {"nice_to_have": job_data.niceToHave}
+
     offers_dict = None
     if job_data.benefits:
-        offers_dict = {
-            "benefits": job_data.benefits
-        }
-    
+        offers_dict = {"benefits": job_data.benefits}
+
     job_description = JobDescription(
         job_description_id=job_description_id,
         role_overview=job_data.description or "",  # Allow empty for drafts
@@ -55,25 +104,29 @@ def create_job(
         nice_to_have=nice_to_have_dict,
         offers=offers_dict,
         created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None)
+        updated_at=datetime.now(UTC).replace(tzinfo=None),
     )
-    
+
     db.add(job_description)
     db.flush()
-    
+
     application_deadline = None
     if job_data.applicationDeadline:
         try:
-            if 'T' in job_data.applicationDeadline:
-                application_deadline = datetime.fromisoformat(job_data.applicationDeadline.replace('Z', '+00:00')).date()
+            if "T" in job_data.applicationDeadline:
+                application_deadline = datetime.fromisoformat(
+                    job_data.applicationDeadline.replace("Z", "+00:00")
+                ).date()
             else:
-                application_deadline = datetime.strptime(job_data.applicationDeadline, '%Y-%m-%d').date()
+                application_deadline = datetime.strptime(
+                    job_data.applicationDeadline, "%Y-%m-%d"
+                ).date()
         except Exception:
             application_deadline = None
-    
+
     # Determine status - use provided status or default to "active"
     job_status = job_data.status if job_data.status else "active"
-    
+
     job_posting = JobPosting(
         job_id=job_id,
         company_id=company_id,
@@ -93,23 +146,23 @@ def create_job(
         posted_date=date.today(),
         application_deadline=application_deadline,
         created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None)
+        updated_at=datetime.now(UTC).replace(tzinfo=None),
     )
-    
+
     db.add(job_posting)
-    
+
     job_stats = JobPostingStats(
         job_stats_id=str(uuid.uuid4()),
         job_id=job_id,
         applicant_count=0,
         views_count=0,
         created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None)
+        updated_at=datetime.now(UTC).replace(tzinfo=None),
     )
-    
+
     db.add(job_stats)
-    
+
     db.commit()
     db.refresh(job_posting)
-    
+
     return map_job_to_response(job_posting)

@@ -31,17 +31,67 @@ const mapJobStatus = (status: string): JobStatus => {
     return statusMap[status.toLowerCase()] || 'Draft';
 };
 
+// Backend job response type (partial, as backend may return various formats)
+interface BackendJobResponse {
+    job_id?: string | number;
+    id?: string | number;
+    company_id?: string | number;
+    company?: {
+        id?: string | number;
+        name?: string;
+        logo?: string;
+        website?: string;
+        description?: string;
+        location?: string;
+        industry?: string;
+        founded_year?: number;
+    };
+    company_name?: string;
+    title?: string;
+    department?: string;
+    level?: string;
+    location?: string;
+    location_city?: string;
+    location_country?: string;
+    location_type?: string;
+    employment_type?: string;
+    salary_min?: number;
+    salary_max?: number;
+    salary_currency?: string;
+    salary_range?: { min: number; max: number; currency: string };
+    description?: string;
+    role_overview?: string;
+    requirements?: string[];
+    required_skills_experience?: string[];
+    nice_to_have?: string[];
+    benefits?: string[];
+    posted_date?: string;
+    created_at?: string;
+    application_deadline?: string;
+    status?: string;
+    is_remote?: boolean;
+    is_featured?: boolean;
+    applicant_count?: number;
+    views_count?: number;
+    created_by?: string;
+    updated_at?: string;
+    stats?: {
+        applicant_count?: number;
+        views_count?: number;
+    };
+}
+
 // Helper function to transform backend job to frontend Job format
-const transformJob = (job: any): Job => {
+const transformJob = (job: BackendJobResponse): Job => {
     // Extract requirements and skills from required_skills_experience
     const requirements = job.requirements || job.required_skills_experience || [];
     const skills: string[] = []; // Backend doesn't separate skills, so we'll use requirements for both
-    
+
     return {
-        id: parseInt(job.job_id || job.id) || 0,
-        company_id: parseInt(job.company_id) || 0,
+        id: parseInt(String(job.job_id || job.id || 0)) || 0,
+        company_id: parseInt(String(job.company_id || 0)) || 0,
         company: job.company ? {
-            id: parseInt(job.company.id || job.company_id) || 0,
+            id: parseInt(String(job.company.id || job.company_id || 0)) || 0,
             name: job.company_name || job.company?.name || 'Unknown Company',
             logo: job.company?.logo,
             website: job.company?.website,
@@ -111,7 +161,15 @@ export default function RecruiterJobsPage() {
     // Transform and filter jobs based on active tab
     const allJobs = useMemo(() => {
         if (!jobsData?.jobs) return [];
-        return jobsData.jobs.map(transformJob);
+        return jobsData.jobs.map((job, index) => {
+            const transformed = transformJob(job);
+            // Ensure unique ID - use negative index as fallback if ID is missing or 0
+            // This prevents duplicate keys while maintaining number type
+            if (!transformed.id || transformed.id === 0) {
+                transformed.id = -(index + 1); // Use negative numbers to avoid conflicts
+            }
+            return transformed;
+        });
     }, [jobsData]);
 
     const filteredJobs = useMemo(() => {
@@ -249,9 +307,9 @@ export default function RecruiterJobsPage() {
                         ) : (
                             /* Jobs Grid (Active & Drafts) */
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                                {filteredJobs.map((job) => (
+                                {filteredJobs.map((job, index) => (
                                     <RecruiterJobCard
-                                        key={job.id}
+                                        key={`job-${job.id}-${index}`}
                                         job={job}
                                         onClick={() => handleJobClick(job)}
                                     />

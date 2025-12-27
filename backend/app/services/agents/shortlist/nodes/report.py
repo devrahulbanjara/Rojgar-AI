@@ -1,11 +1,18 @@
 from typing import Any
 
+from langsmith import traceable
+
 from app.core import logger, settings
 from app.models.agents.shortlist import WorkflowState
 
 from ..file_handler import save_json_report, save_text_report
 
 
+@traceable(
+    name="shortlist_generate_report_node",
+    tags=["node:generate_report", "shortlist"],
+    metadata={"node_type": "generate_report", "purpose": "generate_final_report"},
+)
 def generate_report(state: WorkflowState) -> dict[str, Any]:
     logger.info("Generating final report")
 

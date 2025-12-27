@@ -1,4 +1,5 @@
-from typing import List, Optional
+import logging
+
 from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
@@ -8,23 +9,22 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.ml import get_embedding_model
 from app.models.job import JobPosting
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class JobVectorService:
     def __init__(self):
         self.embedding_model = get_embedding_model()
         self.collection_name = settings.QDRANT_COLLECTION_JOBS
-        self.vector_store: Optional[QdrantVectorStore] = None
-        
+        self.vector_store: QdrantVectorStore | None = None
+
         try:
             self.client = QdrantClient(
-                url=settings.QDRANT_URL, 
-                api_key=settings.QDRANT_API_KEY
+                url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY
             )
             self._ensure_collection_exists()
-            
+
             self.vector_store = QdrantVectorStore(
                 client=self.client,
                 collection_name=self.collection_name,
@@ -40,11 +40,11 @@ class JobVectorService:
 
     def _ensure_collection_exists(self):
         embedding_dim = self._get_embedding_dimension()
-        
+
         if self.client.collection_exists(self.collection_name):
             collection_info = self.client.get_collection(self.collection_name)
             existing_dim = collection_info.config.params.vectors.size
-            
+
             if existing_dim != embedding_dim:
                 logger.warning(
                     f"Collection dimension mismatch: existing={existing_dim}, model={embedding_dim}. "
@@ -52,14 +52,20 @@ class JobVectorService:
                 )
                 self.client.delete_collection(self.collection_name)
             else:
-                logger.info(f"Using existing Qdrant collection: {self.collection_name} (dim={existing_dim})")
+                logger.info(
+                    f"Using existing Qdrant collection: {self.collection_name} (dim={existing_dim})"
+                )
                 return
-        
+
         self.client.create_collection(
             collection_name=self.collection_name,
-            vectors_config=models.VectorParams(size=embedding_dim, distance=models.Distance.COSINE)
+            vectors_config=models.VectorParams(
+                size=embedding_dim, distance=models.Distance.COSINE
+            ),
         )
-        logger.info(f"Created Qdrant collection: {self.collection_name} (dim={embedding_dim})")
+        logger.info(
+            f"Created Qdrant collection: {self.collection_name} (dim={embedding_dim})"
+        )
 
     def _construct_job_text(self, job: JobPosting) -> str:
         skills_txt = ""
@@ -68,13 +74,15 @@ class JobVectorService:
 
         if job.job_description:
             role_overview = job.job_description.role_overview or ""
-            
+
             req = job.job_description.required_skills_experience
             if isinstance(req, dict):
                 flat_skills = []
                 for v in req.values():
-                    if isinstance(v, list): flat_skills.extend(v)
-                    elif isinstance(v, str): flat_skills.append(v)
+                    if isinstance(v, list):
+                        flat_skills.extend(v)
+                    elif isinstance(v, str):
+                        flat_skills.append(v)
                 skills_txt = ", ".join(flat_skills)
             elif isinstance(req, list):
                 skills_txt = ", ".join(req)
@@ -106,35 +114,35 @@ class JobVectorService:
         for job in pending_jobs:
             try:
                 text_content = self._construct_job_text(job)
-                
+
                 metadata = {
                     "job_id": job.job_id,
                     "company_id": job.company_id,
-                    "title": job.title
+                    "title": job.title,
                 }
-                
+
                 doc = Document(page_content=text_content, metadata=metadata)
-                
+
                 self.vector_store.add_documents([doc], ids=[job.job_id])
-                
+
                 job.is_indexed = True
-                
+
             except Exception as e:
                 logger.error(f"Failed to index job {job.job_id}: {e}")
 
         db.commit()
         logger.info("Indexing complete.")
 
-    def search_jobs(self, query: str, limit: int = 10) -> List[str]:
+    def search_jobs(self, query: str, limit: int = 10) -> list[str]:
         if not self.vector_store or not query:
             return []
-        
+
         results = self.vector_store.similarity_search(query, k=limit)
         return [res.metadata["job_id"] for res in results]
 
-    def recommend_jobs_by_skills(self, skills: List[str], limit: int = 10) -> List[str]:
+    def recommend_jobs_by_skills(self, skills: list[str], limit: int = 10) -> list[str]:
         if not skills:
             return []
-        
+
         query_text = f"Job suitable for someone with skills: {', '.join(skills)}"
         return self.search_jobs(query_text, limit)

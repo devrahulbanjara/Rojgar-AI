@@ -3,7 +3,7 @@
  */
 
 import React, { memo } from 'react';
-import { MapPin, Briefcase, Calendar, DollarSign, Clock, ChevronRight, Users, Star } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, DollarSign, Clock, ChevronRight, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Job } from '../../types/job';
 
@@ -33,16 +33,34 @@ function formatSalary(job: Job): string {
 
 // Format posted date
 function formatPostedDate(dateStr: string): string {
+    if (!dateStr) return 'Recently';
+
     const date = new Date(dateStr);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return 'Recently';
+
+    // Reset time to midnight for accurate day comparison
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const postedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    const diffTime = today.getTime() - postedDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-    return `${Math.floor(diffDays / 30)}mo ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    }
+    if (diffDays < 365) {
+        const months = Math.floor(diffDays / 30);
+        return `${months} month${months > 1 ? 's' : ''} ago`;
+    }
+    const years = Math.floor(diffDays / 365);
+    return `${years} year${years > 1 ? 's' : ''} ago`;
 }
 
 // Status config
@@ -137,4 +155,3 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(({ job, onClick, cla
 });
 
 RecruiterJobCard.displayName = 'RecruiterJobCard';
-

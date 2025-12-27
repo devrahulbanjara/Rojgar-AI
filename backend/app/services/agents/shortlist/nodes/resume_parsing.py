@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any
 
+from langsmith import traceable
+
 from app.core import logger
 from app.models.agents.shortlist import ResumeStructured, WorkflowState
 
@@ -9,6 +11,11 @@ from ..llm_service import get_llm
 from ..templates import RESUME_PARSER_PROMPT
 
 
+@traceable(
+    name="shortlist_extract_resumes_node",
+    tags=["node:extract_resumes", "shortlist"],
+    metadata={"node_type": "extract_resumes", "purpose": "extract_resume_structure"},
+)
 def extract_resume_structure(state: WorkflowState) -> dict[str, Any]:
     logger.info("Extracting resume structures")
 

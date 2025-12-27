@@ -78,7 +78,8 @@ export function CareerHistoryTab({ experiences: initialExperiences, educations: 
       });
       setIsAddingExperience(false);
       setEditingExpId(null);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to save work experience.');
     }
   };
@@ -107,7 +108,7 @@ export function CareerHistoryTab({ experiences: initialExperiences, educations: 
         setIsAddingExperience(false);
         setEditingExpId(null);
       }
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to delete work experience.');
     }
   };
@@ -157,11 +158,11 @@ export function CareerHistoryTab({ experiences: initialExperiences, educations: 
         start_date: '',
         end_date: '',
         is_current: false,
-        description: '',
       });
       setIsAddingEducation(false);
       setEditingEduId(null);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to save education record.');
     }
   };
@@ -189,7 +190,7 @@ export function CareerHistoryTab({ experiences: initialExperiences, educations: 
         setIsAddingEducation(false);
         setEditingEduId(null);
       }
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to delete education record.');
     }
   };

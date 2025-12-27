@@ -54,7 +54,8 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
       const updatedProfile = await profileService.updateProfile(updateData);
       onUpdate(updatedProfile);
       toast.success('Profile updated successfully!');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to update profile. Please try again.');
     } finally {
       setIsSaving(false);
