@@ -12,7 +12,7 @@ import { ROUTES, VALIDATION } from '../config/constants';
 /**
  * Utility function to merge Tailwind CSS classes
  * Combines clsx for conditional classes and tailwind-merge for Tailwind class deduplication
- * 
+ *
  * @param inputs - Class values to merge
  * @returns Merged class string
  */
@@ -60,7 +60,7 @@ export function formatCurrency(
  * @param wait - Wait time in milliseconds
  * @returns Debounced function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -90,7 +90,7 @@ export function generateId(length: number = 8): string {
  * @param value - Value to check
  * @returns True if value is empty
  */
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
   if (value == null) return true
   if (typeof value === "string") return value.trim() === ""
   if (Array.isArray(value)) return value.length === 0
@@ -138,8 +138,8 @@ export const formatUserName = (name: string): string => {
  * @returns Dashboard route path
  */
 export const getDashboardRoute = (userType: UserType): string => {
-  return userType === 'recruiter' 
-    ? ROUTES.RECRUITER.DASHBOARD 
+  return userType === 'recruiter'
+    ? ROUTES.RECRUITER.DASHBOARD
     : ROUTES.CANDIDATE.DASHBOARD;
 };
 
@@ -176,11 +176,11 @@ export const validateEmail = (email: string): string | undefined => {
   if (!email) {
     return 'Email is required';
   }
-  
+
   if (!VALIDATION.email.pattern.test(email)) {
     return VALIDATION.email.message;
   }
-  
+
   return undefined;
 };
 
@@ -193,11 +193,11 @@ export const validatePassword = (password: string): string | undefined => {
   if (!password) {
     return 'Password is required';
   }
-  
+
   if (password.length < VALIDATION.password.minLength) {
     return VALIDATION.password.message;
   }
-  
+
   return undefined;
 };
 
@@ -210,11 +210,11 @@ export const validateName = (name: string): string | undefined => {
   if (!name) {
     return 'Name is required';
   }
-  
+
   if (name.length < VALIDATION.name.minLength) {
     return VALIDATION.name.message;
   }
-  
+
   return undefined;
 };
 
@@ -228,11 +228,11 @@ export const validateConfirmPassword = (confirmPassword: string, password: strin
   if (!confirmPassword) {
     return 'Please confirm your password';
   }
-  
+
   if (confirmPassword !== password) {
     return 'Passwords do not match';
   }
-  
+
   return undefined;
 };
 
@@ -246,7 +246,7 @@ export const validateRequired = (value: string, fieldName: string): string | und
   if (!value || value.trim() === '') {
     return `${fieldName} is required`;
   }
-  
+
   return undefined;
 };
 
@@ -257,9 +257,8 @@ export const validateRequired = (value: string, fieldName: string): string | und
  * @param fallback - Fallback component to show while loading
  * @returns Dynamic component
  */
-export const createDynamicImport = <T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>,
-  fallback?: React.ComponentType
+export const createDynamicImport = <T extends React.ComponentType<unknown>>(
+  importFn: () => Promise<{ default: T }>
 ) => {
   return React.lazy(importFn);
 };
@@ -268,6 +267,6 @@ export const createDynamicImport = <T extends React.ComponentType<any>>(
  * Preload a component for better performance
  * @param importFn - Function that returns a dynamic import
  */
-export const preloadComponent = (importFn: () => Promise<any>) => {
+export const preloadComponent = (importFn: () => Promise<unknown>) => {
   importFn();
 };

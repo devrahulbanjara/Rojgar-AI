@@ -3,7 +3,7 @@
  */
 
 import React, { memo } from 'react';
-import { MapPin, Briefcase, Calendar, DollarSign, Clock, ChevronRight, Users, Star } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, DollarSign, Clock, ChevronRight, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Job } from '../../types/job';
 

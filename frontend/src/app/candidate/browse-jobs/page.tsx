@@ -7,13 +7,12 @@ export const dynamic = 'force-dynamic';
  * Professional job browsing experience with two-column layout
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { usePersonalizedRecommendations, useCreateApplication } from '../../../hooks/queries/useJobs';
 import { useAuth } from '../../../hooks/useAuth';
-import { JobSearchBar, JobList, JobDetailView } from '../../../components/jobs';
+import { JobList, JobDetailView } from '../../../components/jobs';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
 import { AnimatedContainer, PageHeader, AIPoweredBadge, LoadingSpinner } from '../../../components/common';
 import {
   X,
@@ -22,12 +21,11 @@ import {
 import { cn } from '../../../lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { Job, JobFilters as JobFiltersType } from '../../../types/job';
+import type { Job } from '../../../types/job';
 
 export default function Jobs() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get current user for personalized recommendations
@@ -61,8 +59,8 @@ export default function Jobs() {
           const cacheKey = 'convexhire-query-cache';
           const cached = localStorage.getItem(cacheKey);
           if (cached) {
-            const cacheData = JSON.parse(cached);
-            const newCache: Record<string, any> = {};
+            const cacheData = JSON.parse(cached) as Record<string, unknown>;
+            const newCache: Record<string, unknown> = {};
             // Remove all job-related entries
             Object.entries(cacheData).forEach(([key, value]) => {
               try {
@@ -114,7 +112,7 @@ export default function Jobs() {
         jobId: job.id.toString(),
       });
       // Show success message or redirect
-    } catch (error) {
+    } catch {
       // Handle application error silently
     }
   }, [createApplicationMutation]);

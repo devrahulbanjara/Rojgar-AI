@@ -7,11 +7,11 @@
 
 import { useState, useCallback, useRef } from 'react';
 
-export interface ValidationRule<T = any> {
-  (value: T, allValues?: any): string | undefined;
+export interface ValidationRule<T = unknown> {
+  (value: T, allValues?: Record<string, unknown>): string | undefined;
 }
 
-export interface FormConfig<T extends Record<string, any>> {
+export interface FormConfig<T extends Record<string, unknown>> {
   initialValues: T;
   validationRules?: Partial<Record<keyof T, ValidationRule<T[keyof T]>[]>>;
   onSubmit?: (values: T) => void | Promise<void>;
@@ -19,7 +19,7 @@ export interface FormConfig<T extends Record<string, any>> {
   validateOnBlur?: boolean;
 }
 
-export interface FormState<T extends Record<string, any>> {
+export interface FormState<T extends Record<string, unknown>> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   touched: Partial<Record<keyof T, boolean>>;
@@ -28,7 +28,7 @@ export interface FormState<T extends Record<string, any>> {
   isDirty: boolean;
 }
 
-export interface FormActions<T extends Record<string, any>> {
+export interface FormActions<T extends Record<string, unknown>> {
   setValue: (field: keyof T, value: T[keyof T]) => void;
   setValues: (values: Partial<T>) => void;
   setError: (field: keyof T, error: string) => void;
@@ -38,7 +38,7 @@ export interface FormActions<T extends Record<string, any>> {
   clearFieldError: (field: keyof T) => void;
   clearErrors: () => void;
   reset: () => void;
-  handleChange: (field: string, value: any) => void;
+  handleChange: (field: string, value: unknown) => void;
   handleBlur: (field: string) => void;
   handleSubmit: (
     onSubmit?: (values: T) => void | Promise<void>
@@ -47,7 +47,7 @@ export interface FormActions<T extends Record<string, any>> {
   validateField: (field: keyof T) => string | undefined;
 }
 
-export function useForm<T extends Record<string, any>>(
+export function useForm<T extends Record<string, unknown>>(
   config: FormConfig<T>
 ): [FormState<T>, FormActions<T>] {
   const {
@@ -70,22 +70,22 @@ export function useForm<T extends Record<string, any>>(
 
   // Check if form is valid
   const isValid = Object.keys(validationRules || {}).every((field) => {
-    const fieldRules = (validationRules as any)?.[field];
+    const fieldRules = validationRules?.[field as keyof T];
     if (!fieldRules) return true;
 
     const fieldValue = values[field as keyof T];
-    return fieldRules.every((rule: any) => !rule(fieldValue, values));
+    return fieldRules.every((rule: ValidationRule<T>) => !rule(fieldValue, values as Record<string, unknown>));
   });
 
   // Validate a single field
   const validateField = useCallback(
     (field: keyof T): string | undefined => {
-      const fieldRules = (validationRules as any)?.[field];
+      const fieldRules = validationRules?.[field];
       if (!fieldRules) return undefined;
 
-      const fieldValue = values[field];
+      const fieldValue = values[field] as T[keyof T];
       for (const rule of fieldRules) {
-        const error = (rule as any)(fieldValue, values);
+        const error = rule(fieldValue as T[keyof T], values as Record<string, unknown>);
         if (error) return error;
       }
       return undefined;
@@ -189,8 +189,8 @@ export function useForm<T extends Record<string, any>>(
 
   // Handle field change
   const handleChange = useCallback(
-    (field: string, value: any) => {
-      setValue(field as keyof T, value);
+    (field: string, value: unknown) => {
+      setValue(field as keyof T, value as T[keyof T]);
     },
     [setValue]
   );
@@ -237,7 +237,7 @@ export function useForm<T extends Record<string, any>>(
           if (submitHandler) {
             await submitHandler(values);
           }
-        } catch (error) {
+        } catch {
           // Handle form submission error
         } finally {
           setIsSubmitting(false);

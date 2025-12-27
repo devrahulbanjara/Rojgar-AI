@@ -21,19 +21,19 @@ export interface DashboardStats {
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const response = await apiClient.get<DashboardStats>('/api/v1/applications/stats');
-    
+
     // Handle both response formats: direct data or wrapped in ApiResponse
     if (response && typeof response === 'object') {
       // If it has the stats fields directly
       if ('totalApplications' in response || 'activeApplications' in response) {
-        return response as any as DashboardStats;
+        return response as DashboardStats;
       }
       // If it's wrapped in an ApiResponse structure
-      if ('data' in response && response.data) {
+      if ('data' in response && response.data && typeof response.data === 'object') {
         return response.data as DashboardStats;
       }
     }
-    
+
     return {
       totalApplications: 0,
       activeApplications: 0,
@@ -41,7 +41,7 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       offersReceived: 0,
       responseRate: 0,
     };
-  } catch (error) {
+  } catch {
     // Return default stats on error instead of throwing
     return {
       totalApplications: 0,

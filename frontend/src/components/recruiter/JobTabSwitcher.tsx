@@ -83,4 +83,3 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(({
 });
 
 JobTabSwitcher.displayName = 'JobTabSwitcher';
-

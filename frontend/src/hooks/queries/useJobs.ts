@@ -31,7 +31,7 @@ export const jobQueryKeys = {
 export const applicationQueryKeys = {
   all: ['applications'] as const,
   lists: () => [...applicationQueryKeys.all, 'list'] as const,
-  list: (params?: any) => [...applicationQueryKeys.lists(), params] as const,
+  list: (params?: Record<string, unknown>) => [...applicationQueryKeys.lists(), params] as const,
   details: () => [...applicationQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...applicationQueryKeys.details(), id] as const,
   byJob: (jobId: string) => [...applicationQueryKeys.all, 'job', jobId] as const,
@@ -132,7 +132,7 @@ export function useCreateJob() {
       // Invalidate and refetch job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Log error for debugging (errors are handled in component try/catch)
       console.error('Job creation error:', error);
     },
@@ -233,17 +233,9 @@ export function useCreateApplication() {
     mutationFn: async (data: CreateApplicationRequest) => {
       return await applicationService.createApplication(data);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
-      // Invalidate job-specific applications
-      if (data?.jobId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byJob(data.jobId) });
-      }
-      // Invalidate candidate-specific applications
-      if (data?.candidateId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byCandidate(data.candidateId) });
-      }
     },
   });
 }
@@ -260,12 +252,6 @@ export function useUpdateApplication() {
       queryClient.setQueryData(applicationQueryKeys.detail(variables.id), data);
       // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
-      if (data?.jobId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byJob(data.jobId) });
-      }
-      if (data?.candidateId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byCandidate(data.candidateId) });
-      }
     },
   });
 }
@@ -292,7 +278,7 @@ export function useJobWithApplications(jobId: string) {
   const applicationsQuery = useApplicationsByJob(jobId);
 
   return {
-    job: jobQuery.data?.job,
+    job: jobQuery.data,
     applications: applicationsQuery.data,
     isLoading: jobQuery.isLoading || applicationsQuery.isLoading,
     error: jobQuery.error || applicationsQuery.error,

@@ -313,7 +313,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
                       day: 'numeric'
                     })}
                   </p>
-                  <p className="text-sm text-muted-foreground">Don't miss the deadline!</p>
+                  <p className="text-sm text-muted-foreground">Don&apos;t miss the deadline!</p>
                 </div>
               </div>
             </section>

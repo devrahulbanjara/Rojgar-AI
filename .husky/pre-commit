@@ -1,1 +1,1 @@
-cd frontend && npx lint-staged
+uv run --project backend pre-commit run --config ../.pre-commit-config.yaml --staged

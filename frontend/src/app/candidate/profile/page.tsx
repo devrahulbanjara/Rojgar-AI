@@ -101,7 +101,7 @@ export default function CandidateProfilePage() {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() => setActiveTab(tab.id as 'profile' | 'career' | 'skills' | 'password')}
                       className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab.id
                         ? 'bg-[#3056F5] text-white shadow-sm'
                         : 'text-[#475569] hover:bg-[#F9FAFB] hover:text-[#3056F5]'

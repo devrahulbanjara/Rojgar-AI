@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Bot, PenTool, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, Bot, PenTool, ArrowRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { JobCreationWizard } from './JobCreationWizard';
 

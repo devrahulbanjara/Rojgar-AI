@@ -20,7 +20,6 @@ import {
     Building2,
     Sparkles,
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
 import type { Job } from '../../types/job';
 import { Dialog } from '../../components/ui/dialog';
 

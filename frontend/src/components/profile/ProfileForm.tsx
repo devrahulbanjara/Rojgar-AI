@@ -29,13 +29,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
       await apiClient.put('/api/v1/users/profile', {
         name: formData.name,
       });
-      
+
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       refetchUser?.();
-    } catch (error: any) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update profile. Please try again.' 
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.detail || 'Failed to update profile. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -62,8 +63,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       {message && (
         <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success' 
-            ? 'bg-green-50 text-green-700 border-green-200' 
+          message.type === 'success'
+            ? 'bg-green-50 text-green-700 border-green-200'
             : 'bg-red-50 text-red-700 border-red-200'
         }`}>
           {message.type === 'success' ? (
@@ -82,7 +83,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
             <UserIcon className="w-5 h-5 text-[#3056F5]" />
             <h4 className="text-lg font-semibold text-[#0F172A]">Contact Details</h4>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium text-[#374151]">
