@@ -1,9 +1,16 @@
 from typing import Any
 
+from langsmith import traceable
+
 from app.core import logger
 from app.models.agents.shortlist import WorkflowState
 
 
+@traceable(
+    name="shortlist_evaluate_skills_node",
+    tags=["node:evaluate_skills", "shortlist"],
+    metadata={"node_type": "evaluate_skills", "purpose": "evaluate_candidate_skills"},
+)
 def evaluate_skills(state: WorkflowState) -> dict[str, Any]:
     logger.info("Evaluating skills")
     job_req = state["job_requirements"]

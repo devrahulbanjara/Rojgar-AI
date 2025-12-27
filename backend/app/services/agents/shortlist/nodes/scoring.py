@@ -1,9 +1,16 @@
 from typing import Any
 
+from langsmith import traceable
+
 from app.core import logger, settings
 from app.models.agents.shortlist import CandidateScore, WorkflowState
 
 
+@traceable(
+    name="shortlist_aggregate_scores_node",
+    tags=["node:aggregate_scores", "shortlist"],
+    metadata={"node_type": "aggregate_scores", "purpose": "aggregate_candidate_scores"},
+)
 def aggregate_scores(state: WorkflowState) -> dict[str, Any]:
     logger.info("Aggregating scores")
     scored_candidates = []

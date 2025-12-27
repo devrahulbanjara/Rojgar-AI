@@ -1,6 +1,8 @@
 import json
 from typing import Any
 
+from langsmith import traceable
+
 from app.core import logger
 from app.models.agents.shortlist import EvaluationScore, WorkflowState
 
@@ -8,6 +10,14 @@ from ..llm_service import get_llm
 from ..templates import PROJECT_EVALUATION_PROMPT
 
 
+@traceable(
+    name="shortlist_evaluate_projects_node",
+    tags=["node:evaluate_projects", "shortlist"],
+    metadata={
+        "node_type": "evaluate_projects",
+        "purpose": "evaluate_project_alignment",
+    },
+)
 def evaluate_projects(state: WorkflowState) -> dict[str, Any]:
     logger.info("Evaluating projects")
     job_desc = state["job_description_text"]
