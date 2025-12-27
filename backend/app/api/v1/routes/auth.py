@@ -1,14 +1,14 @@
-from fastapi import APIRouter, HTTPException, status, Response, Depends
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core import settings, get_db, get_current_user_id
+from app.core import get_current_user_id, get_db, settings
 from app.schemas import (
-    SignupRequest,
+    CreateUserRequest,
     LoginRequest,
     RoleSelectionRequest,
+    SignupRequest,
     TokenResponse,
-    CreateUserRequest,
 )
 from app.services import AuthService
 
@@ -52,6 +52,7 @@ def signup(
         token_type="bearer",
         user=AuthService.create_user_response(new_user),
     )
+
 
 @router.post("/login", response_model=TokenResponse)
 def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
@@ -115,7 +116,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
         )
         return response
 
-    except Exception as e:
+    except Exception:
         error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
         return RedirectResponse(url=error_url)
 
@@ -134,7 +135,7 @@ def select_role(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    
+
     user = AuthService.assign_role_and_create_profile(user, role_data.role, db)
 
     return {

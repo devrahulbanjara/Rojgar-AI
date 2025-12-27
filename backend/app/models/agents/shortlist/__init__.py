@@ -11,11 +11,11 @@ Example:
 
 # Schemas (data models for the workflow)
 from .schemas import (
-    ResumeStructured,
-    JobRequirements,
-    EvaluationScore,
     CandidateBreakdown,
     CandidateScore,
+    EvaluationScore,
+    JobRequirements,
+    ResumeStructured,
     WorkflowState,
 )
 
@@ -28,4 +28,3 @@ __all__ = [
     "CandidateScore",
     "WorkflowState",
 ]
-

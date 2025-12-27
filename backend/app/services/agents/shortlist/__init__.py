@@ -9,6 +9,10 @@ Example:
     from app.services.agents.shortlist import WorkflowState, CandidateScore
 """
 
+import os
+
+from app.core import settings
+
 # Schemas (data models for the workflow)
 from app.models.agents.shortlist import (
     CandidateScore,
@@ -54,6 +58,13 @@ from .templates import (
     RESUME_PARSER_PROMPT,
     WORK_ALIGNMENT_PROMPT,
 )
+
+os.environ.setdefault(
+    "LANGCHAIN_TRACING_V2", str(settings.LANGCHAIN_TRACING_V2).lower()
+)
+os.environ.setdefault("LANGCHAIN_API_KEY", settings.LANGCHAIN_API_KEY)
+os.environ.setdefault("LANGCHAIN_ENDPOINT", settings.LANGCHAIN_ENDPOINT)
+os.environ.setdefault("LANGCHAIN_PROJECT", settings.LANGCHAIN_PROJECT)
 
 __all__ = [
     # Schemas

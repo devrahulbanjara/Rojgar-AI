@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
-import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.core.database import init_db, engine
 from app.api.v1 import api_router
+from app.core.config import settings
+from app.core.database import engine, init_db
 from app.core.logging_config import logger
 from app.services.candidate.vector_job_service import JobVectorService
 
@@ -17,11 +17,11 @@ async def lifespan(app: FastAPI):
     Lifespan manager - runs when app starts and shuts down
     """
     logger.info("Starting ConvexHire API...")
-    
+
     # 1. Initialize DB Tables
     logger.info("Initializing database schema...")
     init_db()
-    
+
     # 2. Index Pending Jobs
     try:
         with Session(engine) as db:
@@ -31,9 +31,9 @@ async def lifespan(app: FastAPI):
         logger.error(f"⚠️ Startup indexing warning: {e}")
 
     logger.info("System Ready!")
-    
+
     yield
-    
+
     logger.info("Shutting down ConvexHire API...")
 
 

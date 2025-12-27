@@ -79,7 +79,7 @@ class AuthService {
       }
 
       return await response.json();
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -156,13 +156,13 @@ class AuthService {
           'Content-Type': 'application/json',
         },
       });
-    } catch (error) {
+    } catch {
       // Silently handle logout errors
     }
   }
 
   // Handle Google callback (not needed with cookies)
-  handleGoogleCallback(_token: string): void {
+  handleGoogleCallback(): void {
     // Google authentication completed
   }
 

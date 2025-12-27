@@ -1,6 +1,13 @@
+from langsmith import traceable
+
 from app.models.agents.jd_generator import JobState
 
 
+@traceable(
+    name="jd_finalizer_node",
+    tags=["node:finalizer", "jd_generation"],
+    metadata={"node_type": "finalizer", "purpose": "format_approved_draft"},
+)
 def finalizer_node(state: JobState) -> dict:
     """Convert approved draft to formatted markdown document."""
     draft = state["draft"]

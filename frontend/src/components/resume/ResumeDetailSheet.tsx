@@ -1,9 +1,9 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Pencil, Trash2, Plus, Briefcase, GraduationCap, Code, Award, ExternalLink, Calendar, MapPin, Building, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Briefcase, GraduationCap, Code, Award, ExternalLink, Calendar, MapPin, Building } from "lucide-react";
 import { useState, useEffect } from "react";
 import ExperienceFormDialog from "./forms/ExperienceFormDialog";
 import EducationFormDialog from "./forms/EducationFormDialog";
@@ -12,8 +12,7 @@ import CertificationFormDialog from "./forms/CertificationFormDialog";
 import BasicInfoFormDialog from './forms/BasicInfoFormDialog';
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/constants";
-import { ResumeListResponse, ResumeResponse } from "@/types/resume";
-import { cn } from "@/lib/utils";
+import { ResumeResponse, ResumeWorkExperienceResponse, ResumeEducationResponse, ResumeCertificationResponse } from "@/types/resume";
 
 interface ResumeDetailSheetProps {
     resumeId: string | null;
@@ -30,10 +29,10 @@ export default function ResumeDetailSheet({ resumeId, isOpen, onClose, onUpdate 
 
     // State for managing forms
     const [activeForm, setActiveForm] = useState<FormType>(null);
-    const [editingItem, setEditingItem] = useState<any>(null);
+    const [editingItem, setEditingItem] = useState<ResumeWorkExperienceResponse | ResumeEducationResponse | ResumeCertificationResponse | null>(null);
 
     const [isCertificationOpen, setIsCertificationOpen] = useState(false);
-    const [editingCertification, setEditingCertification] = useState<any>(null);
+    const [editingCertification, setEditingCertification] = useState<ResumeCertificationResponse | null>(null);
 
     const [isBasicInfoOpen, setIsBasicInfoOpen] = useState(false);
 
@@ -70,6 +69,7 @@ export default function ResumeDetailSheet({ resumeId, isOpen, onClose, onUpdate 
             setIsCertificationOpen(false);
             setEditingCertification(null);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, resumeId]);
 
     const handleDelete = async (type: string, id: string) => {
@@ -86,15 +86,20 @@ export default function ResumeDetailSheet({ resumeId, isOpen, onClose, onUpdate 
             toast.success("Item removed");
             fetchResume();
             onUpdate();
-        } catch (e) { toast.error("Failed to delete item"); }
+        } catch {
+            toast.error("Failed to delete item");
+        }
     };
 
-    const handleEdit = (type: FormType, item: any) => {
+    const handleEdit = (type: FormType, item: ResumeWorkExperienceResponse | ResumeEducationResponse | ResumeCertificationResponse) => {
         if (type === "certification") {
-            setEditingCertification(item);
+            setEditingCertification(item as ResumeCertificationResponse);
             setIsCertificationOpen(true);
-        } else {
-            setEditingItem(item);
+        } else if (type === "experience") {
+            setEditingItem(item as ResumeWorkExperienceResponse);
+            setActiveForm(type);
+        } else if (type === "education") {
+            setEditingItem(item as ResumeEducationResponse);
             setActiveForm(type);
         }
     };
@@ -377,28 +382,28 @@ export default function ResumeDetailSheet({ resumeId, isOpen, onClose, onUpdate 
                             open={activeForm === "experience"}
                             onOpenChange={(open) => !open && setActiveForm(null)}
                             resumeId={resume.resume_id}
-                            initialData={editingItem}
+                            initialData={activeForm === "experience" && editingItem ? editingItem as ResumeWorkExperienceResponse : undefined}
                             onSuccess={handleFormSuccess}
                         />
                         <EducationFormDialog
                             open={activeForm === "education"}
                             onOpenChange={(open) => !open && setActiveForm(null)}
                             resumeId={resume.resume_id}
-                            initialData={editingItem}
+                            initialData={activeForm === "education" && editingItem ? editingItem as ResumeEducationResponse : undefined}
                             onSuccess={handleFormSuccess}
                         />
                         <SkillsFormDialog
                             open={activeForm === "skills"}
                             onOpenChange={(open) => !open && setActiveForm(null)}
                             resumeId={resume.resume_id}
-                            initialData={editingItem}
+                            initialData={undefined}
                             onSuccess={handleFormSuccess}
                         />
                         <CertificationFormDialog
                             open={isCertificationOpen}
                             onOpenChange={(open) => !open && setIsCertificationOpen(false)}
                             resumeId={resume.resume_id}
-                            initialData={editingCertification}
+                            initialData={editingCertification || undefined}
                             onSuccess={handleFormSuccess}
                         />
 

@@ -19,20 +19,20 @@ export default function Signup() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [formState, formActions] = useForm<{
     name: string;
     email: string;
     password: string;
     confirmPassword: string;
-    userType: string;
+    userType: UserType;
   }>({
-    initialValues: { 
+    initialValues: {
       name: '',
       email: '',
       password: '',
       confirmPassword: '',
-      userType: USER_TYPES.RECRUITER
+      userType: USER_TYPES.RECRUITER as UserType
     },
     validationRules: {
       name: [validateName],
@@ -40,7 +40,7 @@ export default function Signup() {
       password: [validatePassword],
     },
   });
-  
+
   const { values, errors } = formState;
   const { handleChange, handleSubmit, setFieldError } = formActions;
 
@@ -61,7 +61,7 @@ export default function Signup() {
   const handleSearchParams = (searchParams: URLSearchParams) => {
     const typeParam = searchParams.get('type');
     if (typeParam === 'candidate' || typeParam === 'recruiter') {
-      handleChange('userType', typeParam);
+      handleChange('userType', typeParam as UserType);
     }
 
     const error = searchParams.get('error');
@@ -84,8 +84,8 @@ export default function Signup() {
         confirmPassword: formValues.confirmPassword,
         userType: formValues.userType as UserType,
       });
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Signup failed. Please try again.';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Signup failed. Please try again.';
       setFieldError('email', errorMessage);
     }
   };

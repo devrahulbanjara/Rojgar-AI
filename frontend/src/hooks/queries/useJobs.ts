@@ -7,10 +7,12 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobService, applicationService } from '../../services/jobService';
-import type { 
-  JobSearchParams, 
-  CreateJobRequest, 
+import type {
+  JobSearchParams,
+  CreateJobRequest,
   UpdateJobRequest,
+  JobDraftGenerateRequest,
+  JobDraftResponse,
 } from '../../types/job';
 import type { CreateApplicationRequest, UpdateApplicationRequest } from '../../types/application';
 
@@ -29,7 +31,7 @@ export const jobQueryKeys = {
 export const applicationQueryKeys = {
   all: ['applications'] as const,
   lists: () => [...applicationQueryKeys.all, 'list'] as const,
-  list: (params?: any) => [...applicationQueryKeys.lists(), params] as const,
+  list: (params?: Record<string, unknown>) => [...applicationQueryKeys.lists(), params] as const,
   details: () => [...applicationQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...applicationQueryKeys.details(), id] as const,
   byJob: (jobId: string) => [...applicationQueryKeys.all, 'job', jobId] as const,
@@ -49,8 +51,8 @@ export function useJobs(params?: JobSearchParams) {
 }
 
 export function usePersonalizedRecommendations(
-  userId: string, 
-  page: number = 1, 
+  userId: string,
+  page: number = 1,
   limit: number = 10
 ) {
   return useQuery({
@@ -111,9 +113,17 @@ export function useJobsByCompany(userId: string, params?: { page?: number; limit
 }
 
 // Job Mutation Hooks
+export function useGenerateJobDraft() {
+  return useMutation({
+    mutationFn: async (data: JobDraftGenerateRequest): Promise<JobDraftResponse> => {
+      return await jobService.generateJobDraft(data);
+    },
+  });
+}
+
 export function useCreateJob() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreateJobRequest) => {
       return await jobService.createJob(data);
@@ -122,7 +132,7 @@ export function useCreateJob() {
       // Invalidate and refetch job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Log error for debugging (errors are handled in component try/catch)
       console.error('Job creation error:', error);
     },
@@ -131,7 +141,7 @@ export function useCreateJob() {
 
 export function useUpdateJob() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateJobRequest }) => {
       return await jobService.updateJob(id, data);
@@ -147,7 +157,7 @@ export function useUpdateJob() {
 
 export function useDeleteJob() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       return await jobService.deleteJob(id);
@@ -162,11 +172,11 @@ export function useDeleteJob() {
 }
 
 // Application Query Hooks
-export function useApplications(params?: { 
-  page?: number; 
-  limit?: number; 
-  jobId?: string; 
-  candidateId?: string; 
+export function useApplications(params?: {
+  page?: number;
+  limit?: number;
+  jobId?: string;
+  candidateId?: string;
   status?: string;
 }) {
   return useQuery({
@@ -218,29 +228,21 @@ export function useApplicationsByCandidate(candidateId: string, params?: { page?
 // Application Mutation Hooks
 export function useCreateApplication() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreateApplicationRequest) => {
       return await applicationService.createApplication(data);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
-      // Invalidate job-specific applications
-      if (data?.jobId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byJob(data.jobId) });
-      }
-      // Invalidate candidate-specific applications
-      if (data?.candidateId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byCandidate(data.candidateId) });
-      }
     },
   });
 }
 
 export function useUpdateApplication() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateApplicationRequest }) => {
       return await applicationService.updateApplication(id, data);
@@ -250,19 +252,13 @@ export function useUpdateApplication() {
       queryClient.setQueryData(applicationQueryKeys.detail(variables.id), data);
       // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
-      if (data?.jobId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byJob(data.jobId) });
-      }
-      if (data?.candidateId) {
-        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.byCandidate(data.candidateId) });
-      }
     },
   });
 }
 
 export function useDeleteApplication() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       return await applicationService.deleteApplication(id);
@@ -280,9 +276,9 @@ export function useDeleteApplication() {
 export function useJobWithApplications(jobId: string) {
   const jobQuery = useJob(jobId);
   const applicationsQuery = useApplicationsByJob(jobId);
-  
+
   return {
-    job: jobQuery.data?.job,
+    job: jobQuery.data,
     applications: applicationsQuery.data,
     isLoading: jobQuery.isLoading || applicationsQuery.isLoading,
     error: jobQuery.error || applicationsQuery.error,

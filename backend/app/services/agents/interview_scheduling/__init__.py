@@ -1,3 +1,7 @@
+import os
+
+from app.core import settings
+
 # Schema
 from app.models.agents.interview_scheduling import InterviewSchedulingState
 
@@ -19,6 +23,13 @@ from .nodes import (
 
 # Email template
 from .templates import get_interview_email_template
+
+os.environ.setdefault(
+    "LANGCHAIN_TRACING_V2", str(settings.LANGCHAIN_TRACING_V2).lower()
+)
+os.environ.setdefault("LANGCHAIN_API_KEY", settings.LANGCHAIN_API_KEY)
+os.environ.setdefault("LANGCHAIN_ENDPOINT", settings.LANGCHAIN_ENDPOINT)
+os.environ.setdefault("LANGCHAIN_PROJECT", settings.LANGCHAIN_PROJECT)
 
 # Create the compiled workflow app
 app = create_workflow()

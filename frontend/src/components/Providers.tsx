@@ -22,10 +22,10 @@ export function Providers({ children }: { children: ReactNode }) {
     apiClient.setUnauthorizedHandler(() => {
       // Clear React Query cache
       clearQueryCache();
-      
+
       // Clear user data from React Query
       queryClient.setQueryData(['auth', 'user'], null);
-      
+
       // Redirect to login page
       if (typeof window !== 'undefined') {
         window.location.href = ROUTES.LOGIN;

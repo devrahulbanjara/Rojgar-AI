@@ -9,12 +9,13 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/constants";
 import { Loader2, GraduationCap } from "lucide-react";
+import type { ResumeEducationResponse } from "@/types/resume";
 
 interface EducationFormProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     resumeId: string;
-    initialData?: any;
+    initialData?: ResumeEducationResponse;
     onSuccess: () => void;
 }
 

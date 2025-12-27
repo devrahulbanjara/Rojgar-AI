@@ -29,9 +29,9 @@ export const JobList = memo<JobListProps>(({
   onApply,
   className
 }) => {
-  /* 
+  /*
    * Deduplicate jobs based on ID to prevent "duplicate key" warnings
-   * This handles cases where the backend/recommendation engine might return 
+   * This handles cases where the backend/recommendation engine might return
    * the same job multiple times (e.g. from different vector matches)
    */
   const uniqueJobs = useMemo(() => {

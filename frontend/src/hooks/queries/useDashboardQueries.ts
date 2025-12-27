@@ -8,7 +8,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { DashboardStats, UserType } from '../../types';
 import { queryKeys } from '../../lib/queryClient';
-import { useCurrentUser } from './useAuthQueries';
 
 // Get dashboard stats
 export const useDashboardStats = (userType?: UserType) => {
@@ -18,10 +17,10 @@ export const useDashboardStats = (userType?: UserType) => {
       // TODO: Replace with actual API call when backend is ready
       // const response = await apiService.get(`/dashboard/stats?userType=${userType}`);
       // return response.data;
-      
+
       // Mock implementation for demo
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-      
+
       if (userType === 'recruiter') {
         return {
           totalApplications: 145,
@@ -48,14 +47,14 @@ export const useDashboardStats = (userType?: UserType) => {
 export const useDashboardActivity = (userId?: string) => {
   return useQuery({
     queryKey: [...queryKeys.dashboard.activity, userId || ''],
-    queryFn: async (): Promise<any[]> => {
+    queryFn: async (): Promise<unknown[]> => {
       // TODO: Replace with actual API call when backend is ready
       // const response = await apiService.get(`/dashboard/activity/${userId}`);
       // return response.data;
-      
+
       // Mock implementation for demo
       await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
-      
+
       return [
         {
           id: '1',

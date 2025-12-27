@@ -87,4 +87,3 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
         </div>
     );
 }
-

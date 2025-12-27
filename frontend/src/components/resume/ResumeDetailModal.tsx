@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Loader2, Plus, Trash2, Pencil, Check, X,
-    Briefcase, GraduationCap, Award, Sparkles
+    Loader2, Plus, Trash2, Pencil, Check,
+    Briefcase, GraduationCap, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,10 +29,10 @@ export function ResumeDetailModal({ resumeId, onClose }: ResumeDetailModalProps)
 
     // Sub-Modal States
     const [showAddExperience, setShowAddExperience] = useState(false);
-    const [showAddEducation, setShowAddEducation] = useState(false);
 
     useEffect(() => {
         if (resumeId) loadResume();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [resumeId]);
 
     const loadResume = async () => {
@@ -77,7 +77,7 @@ export function ResumeDetailModal({ resumeId, onClose }: ResumeDetailModalProps)
                 });
             }
             toast.success("Experience removed");
-        } catch (error) {
+        } catch {
             toast.error("Failed to delete experience");
         }
     };
@@ -356,7 +356,7 @@ function AddExperienceDialog({
             toast.success("Experience added successfully");
             onAdded();
             onClose();
-        } catch (error) {
+        } catch {
             toast.error("Failed to add experience");
         } finally {
             setLoading(false);

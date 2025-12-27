@@ -30,6 +30,8 @@ export interface Job {
   department: string;
   level: JobLevel;
   location: string;
+  location_city?: string;
+  location_country?: string;
   location_type: LocationType;
   employment_type: EmploymentType;
   salary_range?: {
@@ -104,10 +106,28 @@ export interface CreateJobRequest {
   level: JobLevel;
   department: string;
   deadline?: Date;
+  mode?: 'manual' | 'agent';
+  raw_requirements?: string;
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
   id: string;
+}
+
+// Job Draft Generation Types
+export interface JobDraftGenerateRequest {
+  title: string;
+  raw_requirements: string;
+  reference_jd?: string;
+}
+
+export interface JobDraftResponse {
+  title: string;
+  description: string;
+  requiredSkillsAndExperience: string[];
+  niceToHave: string[];
+  benefits: string[];
+  about_company?: string;
 }
 
 // Job Component Props Types
