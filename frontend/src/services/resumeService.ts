@@ -47,7 +47,7 @@ export const resumeService = {
 
   // --- Sub-Resources (Example: Experience) ---
 
-  async addExperience(resumeId: string, data: WorkExperienceBase): Promise<any> {
+  async addExperience(resumeId: string, data: WorkExperienceBase): Promise<unknown> {
     const response = await api.post(`/resumes/${resumeId}/experience`, data);
     return response.data;
   },

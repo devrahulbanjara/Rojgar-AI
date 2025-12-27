@@ -1,10 +1,11 @@
-from typing import List, Dict, Any, TypedDict, Optional, Annotated
 from operator import add
+from typing import Annotated, Any, TypedDict
+
 from pydantic import BaseModel, Field
 
 
 class ResumeStructured(BaseModel):
-    skills: List[str] = Field(
+    skills: list[str] = Field(
         ...,
         description=(
             "All technical and professional skills mentioned in the resume, "
@@ -19,7 +20,7 @@ class ResumeStructured(BaseModel):
             "REST APIs",
         ],
     )
-    work_experience: List[Dict[str, Any]] = Field(
+    work_experience: list[dict[str, Any]] = Field(
         ...,
         description=(
             "List of previous jobs with company, position, duration, and key responsibilities. "
@@ -47,7 +48,7 @@ class ResumeStructured(BaseModel):
             },
         ],
     )
-    education: List[Dict[str, Any]] = Field(
+    education: list[dict[str, Any]] = Field(
         ...,
         description=(
             "List of educational qualifications with degree name, institution, and optional year of graduation."
@@ -67,7 +68,7 @@ class ResumeStructured(BaseModel):
         ),
         example=5.0,
     )
-    projects: Optional[List[Dict[str, Any]]] = Field(
+    projects: list[dict[str, Any]] | None = Field(
         default_factory=list,
         description=(
             "List of candidate projects with name, description, and technologies used. "
@@ -84,7 +85,7 @@ class ResumeStructured(BaseModel):
 
 
 class JobRequirements(BaseModel):
-    required_skills: List[str] = Field(
+    required_skills: list[str] = Field(
         ...,
         description=(
             "All technical and professional skills required for the role, "
@@ -108,7 +109,7 @@ class JobRequirements(BaseModel):
         ),
         example=3.0,
     )
-    responsibilities: List[str] = Field(
+    responsibilities: list[str] = Field(
         ...,
         description=(
             "Key responsibilities the candidate will be expected to perform in this role. "
@@ -163,14 +164,13 @@ class WorkflowState(TypedDict):
     """
 
     job_description_text: str
-    resume_file_paths: List[str]
-    job_requirements: Optional[JobRequirements]
-    structured_resumes: Annotated[List[Dict[str, Any]], add]
-    skills_evaluations: Annotated[List[Dict[str, Any]], add]
-    experience_evaluations: Annotated[List[Dict[str, Any]], add]
-    work_alignment_evaluations: Annotated[List[Dict[str, Any]], add]
-    project_evaluations: Annotated[List[Dict[str, Any]], add]
-    degree_evaluations: Annotated[List[Dict[str, Any]], add]
-    scored_candidates: List[CandidateScore]
-    final_report: Optional[Dict[str, Any]]
-
+    resume_file_paths: list[str]
+    job_requirements: JobRequirements | None
+    structured_resumes: Annotated[list[dict[str, Any]], add]
+    skills_evaluations: Annotated[list[dict[str, Any]], add]
+    experience_evaluations: Annotated[list[dict[str, Any]], add]
+    work_alignment_evaluations: Annotated[list[dict[str, Any]], add]
+    project_evaluations: Annotated[list[dict[str, Any]], add]
+    degree_evaluations: Annotated[list[dict[str, Any]], add]
+    scored_candidates: list[CandidateScore]
+    final_report: dict[str, Any] | None

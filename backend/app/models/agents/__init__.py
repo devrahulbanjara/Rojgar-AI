@@ -12,11 +12,9 @@ Example:
     from app.models.agents.interview_scheduling import InterviewSchedulingState
 """
 
-from . import shortlist
-from . import interview_scheduling
+from . import interview_scheduling, shortlist
 
 __all__ = [
     "shortlist",
     "interview_scheduling",
 ]
-

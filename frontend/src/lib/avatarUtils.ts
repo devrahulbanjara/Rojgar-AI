@@ -43,7 +43,7 @@ export function getAvatarColor(name: string | null | undefined): string {
 /**
  * Extracts initials from a full name.
  * e.g., "Rahul Dev Banjara" -> "RB"
- * @param name 
+ * @param name
  * @returns Initials string (max 2 chars)
  */
 export function getInitials(name: string | null | undefined): string {

@@ -30,7 +30,7 @@ export const useCurrentUser = () => {
           };
         }
         return null;
-      } catch (error) {
+      } catch {
         return null;
       }
     },
@@ -60,7 +60,7 @@ export const useLogin = () => {
         router.push(dashboardRoute);
       }
     },
-    onError: (error) => {
+    onError: () => {
       // Clear any existing auth data
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
@@ -87,7 +87,7 @@ export const useSignup = () => {
         router.push(dashboardRoute);
       }
     },
-    onError: (error) => {
+    onError: () => {
       // Clear any existing auth data
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
@@ -110,7 +110,7 @@ export const useLogout = () => {
       // Redirect to home
       router.push(ROUTES.HOME);
     },
-    onError: (error) => {
+    onError: () => {
       // Even if logout fails, clear local data and redirect
       queryClient.clear();
       router.push(ROUTES.HOME);

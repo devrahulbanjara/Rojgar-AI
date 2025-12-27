@@ -89,9 +89,9 @@ export interface UseAuthReturn {
   logout: () => void;
   refetchUser?: () => void;
   // Additional error states for granular control
-  loginError?: any;
-  signupError?: any;
-  logoutError?: any;
+  loginError?: unknown;
+  signupError?: unknown;
+  logoutError?: unknown;
   isLoginPending?: boolean;
   isSignupPending?: boolean;
   isLogoutPending?: boolean;
@@ -101,7 +101,7 @@ export interface UseAuthReturn {
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // Loading States
@@ -111,16 +111,16 @@ export interface LoadingState {
 }
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success?: boolean;
   message?: string;
   data?: T;
-  errors?: Array<{ detail: any }>;
-  meta?: Record<string, any>;
+  errors?: Array<{ detail: unknown }>;
+  meta?: Record<string, unknown>;
 }
 
 // For endpoints that return data directly (standardized format)
-export type DirectApiResponse<T = any> = T;
+export type DirectApiResponse<T = unknown> = T;
 
 // Dashboard Types (for future expansion)
 export interface DashboardStats {
@@ -135,7 +135,7 @@ export interface DashboardStats {
 export interface DashboardData {
   user: User;
   stats: DashboardStats;
-  recentActivity: any[];
+  recentActivity: unknown[];
 }
 
 // Re-export job and application types

@@ -17,9 +17,10 @@ export const queryClient = new QueryClient({
       // Time in milliseconds that unused/inactive cache data remains in memory
       gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
       // Retry failed requests
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors (client errors)
-        if (error?.status >= 400 && error?.status < 500) {
+        const apiError = error as { status?: number };
+        if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
           return false;
         }
         // Retry up to 3 times for other errors
@@ -32,9 +33,10 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       // Retry failed mutations
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors (client errors)
-        if (error?.status >= 400 && error?.status < 500) {
+        const apiError = error as { status?: number };
+        if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
           return false;
         }
         // Retry up to 2 times for other errors
@@ -53,7 +55,7 @@ export function persistQueryCache() {
   const cache = queryClient.getQueryCache();
   const queries = cache.getAll();
 
-  const cacheData: Record<string, { data: any; timestamp: number }> = {};
+  const cacheData: Record<string, { data: unknown; timestamp: number }> = {};
 
   queries.forEach((query) => {
     // Only cache successful queries with data
@@ -84,7 +86,7 @@ export function restoreQueryCache() {
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return;
 
-    const cacheData: Record<string, { data: any; timestamp: number }> = JSON.parse(cached);
+    const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached);
     const maxAge = 30 * 60 * 1000; // 30 minutes max cache age
     const now = Date.now();
 
@@ -95,11 +97,11 @@ export function restoreQueryCache() {
       try {
         const queryKey = JSON.parse(key);
         queryClient.setQueryData(queryKey, data);
-      } catch (e) {
+      } catch {
         // Invalid cache entry
       }
     });
-  } catch (e) {
+  } catch {
     // Invalid cache data, clear it
     localStorage.removeItem(CACHE_KEY);
   }
@@ -135,7 +137,7 @@ export const queryKeys = {
     list: (page: number, limit: number) => ['jobs', 'list', page, limit] as const,
     recommendations: (userId: string, page: number, limit: number) =>
       ['jobs', 'recommendations', userId, page, limit] as const,
-    search: (params: Record<string, any>) => ['jobs', 'search', params] as const,
+    search: (params: Record<string, unknown>) => ['jobs', 'search', params] as const,
     detail: (id: string) => ['jobs', id] as const,
   },
   // Application related queries

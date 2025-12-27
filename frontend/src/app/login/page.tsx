@@ -46,8 +46,8 @@ export default function Login() {
         password: formValues.password,
         rememberMe: formValues.rememberMe === 'true',
       });
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Login failed. Please try again.';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setFieldError('email', errorMessage);
     }
   };
@@ -207,7 +207,7 @@ export default function Login() {
               {/* Sign Up Link */}
               <div className="mt-4 sm:mt-6 text-center">
                 <p className="text-xs sm:text-sm text-[#475569]">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
                     className="font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"

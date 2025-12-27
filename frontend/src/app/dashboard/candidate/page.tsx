@@ -4,15 +4,13 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect } from 'react';
 import CandidateDashboardComponent from '../../../components/dashboard/CandidateDashboard';
-import { WelcomeMessage, StatsGrid } from '../../../components/dashboard';
-import { PageTransition, AnimatedContainer, PageHeader, LoadingSpinner } from '../../../components/common';
+import { WelcomeMessage } from '../../../components/dashboard';
+import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common';
 import { AppShell } from '../../../components/layout/AppShell';
-import { useDashboardStats } from '../../../hooks/useDashboardStats';
 import { useAuth } from '../../../hooks/useAuth';
 
 export default function CandidateDashboardPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { data: stats } = useDashboardStats();
 
   // Redirect to login if not authenticated
   useEffect(() => {

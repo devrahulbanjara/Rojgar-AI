@@ -4,13 +4,12 @@
  */
 
 import { API_BASE_URL } from '../config/constants';
-import type { ApiResponse } from '../types';
 
 export class ApiError extends Error {
   status: number;
-  data?: any;
+  data?: unknown;
 
-  constructor(message: string, status: number, data?: any) {
+  constructor(message: string, status: number, data?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -110,7 +109,7 @@ class ApiClient {
 
   async post<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestInit
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -122,7 +121,7 @@ class ApiClient {
 
   async put<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestInit
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -134,7 +133,7 @@ class ApiClient {
 
   async patch<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestInit
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -285,8 +284,8 @@ export const endpoints = {
 export const api = {
   // Auth methods
   auth: {
-    login: (credentials: any) => apiClient.post(endpoints.auth.login, credentials),
-    signup: (data: any) => apiClient.post(endpoints.auth.signup, data),
+    login: (credentials: unknown) => apiClient.post(endpoints.auth.login, credentials),
+    signup: (data: unknown) => apiClient.post(endpoints.auth.signup, data),
     logout: () => apiClient.post(endpoints.auth.logout),
     selectRole: (role: string) => apiClient.post(endpoints.auth.selectRole, { role }),
     getCurrentUser: () => apiClient.get(endpoints.auth.me),
@@ -294,10 +293,10 @@ export const api = {
 
   // User methods
   users: {
-    list: (params?: Record<string, any>) =>
-      apiClient.get(`${endpoints.users.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
+    list: (params?: Record<string, unknown>) =>
+      apiClient.get(`${endpoints.users.list}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.users.detail(id)),
-    update: (id: string, data: any) => apiClient.put(endpoints.users.update(id), data),
+    update: (id: string, data: unknown) => apiClient.put(endpoints.users.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.users.delete(id)),
   },
 
@@ -309,26 +308,26 @@ export const api = {
 
   // Job methods
   jobs: {
-    list: (params?: Record<string, any>) =>
-      apiClient.get(`${endpoints.jobs.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
-    recommendations: (params?: Record<string, any>) =>
-      apiClient.get(`${endpoints.jobs.recommendations}${params ? `?${new URLSearchParams(params)}` : ''}`),
-    search: (params?: Record<string, any>) =>
-      apiClient.get(`${endpoints.jobs.search}${params ? `?${new URLSearchParams(params)}` : ''}`),
+    list: (params?: Record<string, unknown>) =>
+      apiClient.get(`${endpoints.jobs.list}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
+    recommendations: (params?: Record<string, unknown>) =>
+      apiClient.get(`${endpoints.jobs.recommendations}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
+    search: (params?: Record<string, unknown>) =>
+      apiClient.get(`${endpoints.jobs.search}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.jobs.detail(id)),
-    create: (data: any) => apiClient.post(endpoints.jobs.create, data),
-    generateDraft: (data: any) => apiClient.post(endpoints.jobs.generateDraft, data),
-    update: (id: string, data: any) => apiClient.put(endpoints.jobs.update(id), data),
+    create: (data: unknown) => apiClient.post(endpoints.jobs.create, data),
+    generateDraft: (data: unknown) => apiClient.post(endpoints.jobs.generateDraft, data),
+    update: (id: string, data: unknown) => apiClient.put(endpoints.jobs.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
   },
 
   // Application methods
   applications: {
-    list: (params?: Record<string, any>) =>
-      apiClient.get(`${endpoints.applications.list}${params ? `?${new URLSearchParams(params)}` : ''}`),
+    list: (params?: Record<string, unknown>) =>
+      apiClient.get(`${endpoints.applications.list}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`),
     get: (id: string) => apiClient.get(endpoints.applications.detail(id)),
-    create: (data: any) => apiClient.post(endpoints.applications.create, data),
-    update: (id: string, data: any) => apiClient.put(endpoints.applications.update(id), data),
+    create: (data: unknown) => apiClient.post(endpoints.applications.create, data),
+    update: (id: string, data: unknown) => apiClient.put(endpoints.applications.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.applications.delete(id)),
     getByJob: (jobId: string) => apiClient.get(endpoints.applications.byJob(jobId)),
     getByCandidate: (candidateId: string) => apiClient.get(endpoints.applications.byCandidate(candidateId)),
@@ -340,27 +339,27 @@ export const api = {
   // Candidate methods
   candidate: {
     getProfile: () => apiClient.get(endpoints.candidate.me),
-    updateProfile: (data: any) => apiClient.patch(endpoints.candidate.me, data),
+    updateProfile: (data: unknown) => apiClient.patch(endpoints.candidate.me, data),
 
     experience: {
-      add: (data: any) => apiClient.post(endpoints.candidate.experience.base, data),
+      add: (data: unknown) => apiClient.post(endpoints.candidate.experience.base, data),
       delete: (id: string) => apiClient.delete(endpoints.candidate.experience.delete(id)),
-      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.experience.update(id), data),
+      update: (id: string, data: unknown) => apiClient.patch(endpoints.candidate.experience.update(id), data),
     },
     education: {
-      add: (data: any) => apiClient.post(endpoints.candidate.education.base, data),
+      add: (data: unknown) => apiClient.post(endpoints.candidate.education.base, data),
       delete: (id: string) => apiClient.delete(endpoints.candidate.education.delete(id)),
-      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.education.update(id), data),
+      update: (id: string, data: unknown) => apiClient.patch(endpoints.candidate.education.update(id), data),
     },
     skills: {
-      add: (data: any) => apiClient.post(endpoints.candidate.skills.base, data),
+      add: (data: unknown) => apiClient.post(endpoints.candidate.skills.base, data),
       delete: (id: string) => apiClient.delete(endpoints.candidate.skills.delete(id)),
-      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.skills.update(id), data),
+      update: (id: string, data: unknown) => apiClient.patch(endpoints.candidate.skills.update(id), data),
     },
     certifications: {
-      add: (data: any) => apiClient.post(endpoints.candidate.certifications.base, data),
+      add: (data: unknown) => apiClient.post(endpoints.candidate.certifications.base, data),
       delete: (id: string) => apiClient.delete(endpoints.candidate.certifications.delete(id)),
-      update: (id: string, data: any) => apiClient.patch(endpoints.candidate.certifications.update(id), data),
+      update: (id: string, data: unknown) => apiClient.patch(endpoints.candidate.certifications.update(id), data),
     },
   },
 
@@ -368,49 +367,51 @@ export const api = {
   resumes: {
     list: () => apiClient.get(endpoints.resumes.list),
     get: (id: string) => apiClient.get(endpoints.resumes.detail(id)),
-    create: (data: any) => apiClient.post(endpoints.resumes.create, data),
-    update: (id: string, data: any) => apiClient.put(endpoints.resumes.update(id), data),
+    create: (data: unknown) => apiClient.post(endpoints.resumes.create, data),
+    update: (id: string, data: unknown) => apiClient.put(endpoints.resumes.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.resumes.delete(id)),
     getAutofillData: () => apiClient.get(endpoints.resumes.autofillData),
     experiences: {
-      add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.experiences.add(resumeId), data),
-      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.experiences.create(resumeId), data),
-      update: (resumeId: string, expId: string, data: any) => apiClient.put(endpoints.resumes.experiences.update(resumeId, expId), data),
+      add: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.experiences.add(resumeId), data),
+      create: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.experiences.create(resumeId), data),
+      update: (resumeId: string, expId: string, data: unknown) => apiClient.put(endpoints.resumes.experiences.update(resumeId, expId), data),
       remove: (resumeId: string, expId: string) => apiClient.delete(endpoints.resumes.experiences.remove(resumeId, expId)),
     },
     education: {
-      add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.education.add(resumeId), data),
-      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.education.create(resumeId), data),
-      update: (resumeId: string, eduId: string, data: any) => apiClient.put(endpoints.resumes.education.update(resumeId, eduId), data),
+      add: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.education.add(resumeId), data),
+      create: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.education.create(resumeId), data),
+      update: (resumeId: string, eduId: string, data: unknown) => apiClient.put(endpoints.resumes.education.update(resumeId, eduId), data),
       remove: (resumeId: string, eduId: string) => apiClient.delete(endpoints.resumes.education.remove(resumeId, eduId)),
     },
     certifications: {
-      add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.certifications.add(resumeId), data),
-      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.certifications.create(resumeId), data),
-      update: (resumeId: string, certId: string, data: any) => apiClient.put(endpoints.resumes.certifications.update(resumeId, certId), data),
+      add: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.certifications.add(resumeId), data),
+      create: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.certifications.create(resumeId), data),
+      update: (resumeId: string, certId: string, data: unknown) => apiClient.put(endpoints.resumes.certifications.update(resumeId, certId), data),
       remove: (resumeId: string, certId: string) => apiClient.delete(endpoints.resumes.certifications.remove(resumeId, certId)),
     },
     skills: {
-      add: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.skills.add(resumeId), data),
-      create: (resumeId: string, data: any) => apiClient.post(endpoints.resumes.skills.create(resumeId), data),
-      update: (resumeId: string, skillId: string, data: any) => apiClient.put(endpoints.resumes.skills.update(resumeId, skillId), data),
+      add: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.skills.add(resumeId), data),
+      create: (resumeId: string, data: unknown) => apiClient.post(endpoints.resumes.skills.create(resumeId), data),
+      update: (resumeId: string, skillId: string, data: unknown) => apiClient.put(endpoints.resumes.skills.update(resumeId, skillId), data),
       remove: (resumeId: string, skillId: string) => apiClient.delete(endpoints.resumes.skills.remove(resumeId, skillId)),
     },
   },
 };
 
 // Error handling utilities
-export const handleApiError = (error: any): string => {
+export const handleApiError = (error: unknown): string => {
   if (error instanceof ApiError) {
     return error.message;
   }
 
-  if (error?.response?.data?.message) {
-    return error.response.data.message;
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
+
+  if (err?.response?.data?.message) {
+    return err.response.data.message;
   }
 
-  if (error?.message) {
-    return error.message;
+  if (err?.message) {
+    return err.message;
   }
 
   return 'An unexpected error occurred';

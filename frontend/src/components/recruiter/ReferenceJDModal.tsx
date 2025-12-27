@@ -144,8 +144,8 @@ export function ReferenceJDModal({ jd, isOpen, onClose, onUseTemplate }: Referen
                             <div>
                                 <h4 className="text-base font-semibold text-blue-900 mb-1">AI Generation Tip</h4>
                                 <p className="text-sm text-blue-700 leading-relaxed">
-                                    Use this reference JD as a structural pattern. When you click "Use Pattern for AI",
-                                    we'll copy the key structure keywords to the Agent Mode input, where you can customize them further.
+                                    Use this reference JD as a structural pattern. When you click &quot;Use Pattern for AI&quot;,
+                                    we&apos;ll copy the key structure keywords to the Agent Mode input, where you can customize them further.
                                 </p>
                             </div>
                         </div>

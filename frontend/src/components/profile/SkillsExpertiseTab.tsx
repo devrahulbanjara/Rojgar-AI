@@ -3,10 +3,10 @@ import { profileService } from '../../services/profileService';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Settings, Plus, X, Award, Info, Pencil } from 'lucide-react';
+import { Settings, Plus, X, Award, Pencil } from 'lucide-react';
 import type { Skill, Certification, SkillCreate, CertificationCreate } from '../../types/profile';
 import { toast } from 'sonner';
-import { queryClient, clearQueryCache } from '../../lib/queryClient';
+import { queryClient } from '../../lib/queryClient';
 
 // Helper function to invalidate job recommendations cache when skills change
 const invalidateRecommendationsCache = () => {
@@ -20,7 +20,7 @@ const invalidateRecommendationsCache = () => {
       if (cached) {
         const cacheData = JSON.parse(cached);
         // Remove recommendation-related entries
-        const newCache: Record<string, any> = {};
+        const newCache: Record<string, unknown> = {};
         Object.entries(cacheData).forEach(([key, value]) => {
           if (!key.includes('jobs') && !key.includes('recommendations')) {
             newCache[key] = value;
@@ -28,7 +28,7 @@ const invalidateRecommendationsCache = () => {
         });
         localStorage.setItem(cacheKey, JSON.stringify(newCache));
       }
-    } catch (e) {
+    } catch {
       // Ignore errors
     }
   }
@@ -88,7 +88,8 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
       });
       setIsAddingSkill(false);
       setEditingSkillId(null);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to save skill.');
     }
   };
@@ -110,7 +111,7 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
         setIsAddingSkill(false);
         setEditingSkillId(null);
       }
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to delete skill.');
     }
   };
@@ -157,7 +158,8 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
       });
       setIsAddingCert(false);
       setEditingCertId(null);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to save certification.');
     }
   };
@@ -186,7 +188,7 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
         setIsAddingCert(false);
         setEditingCertId(null);
       }
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to delete certification.');
     }
   };

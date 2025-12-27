@@ -4,11 +4,9 @@
  */
 
 import { apiClient } from '../lib/api';
-import type { ApiResponse as BaseApiResponse } from '../types';
 import type {
   Job,
   JobListResponse,
-  JobDetailResponse,
   JobSearchParams,
   CreateJobRequest,
   UpdateJobRequest,

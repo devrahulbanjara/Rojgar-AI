@@ -12,7 +12,6 @@ import {
     Check,
     Sparkles,
     Building2,
-    MapPin,
     DollarSign,
     FileText,
     Loader2,
@@ -22,6 +21,7 @@ import {
 import { cn } from '../../lib/utils';
 import { useCreateJob, useGenerateJobDraft } from '../../hooks/queries/useJobs';
 import { toast } from 'sonner';
+import type { CreateJobRequest, JobLevel, LocationType, EmploymentType } from '../../types/job';
 
 interface JobCreationWizardProps {
     mode: 'agent' | 'manual';
@@ -178,8 +178,9 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                 duration: 4000,
             });
 
-        } catch (error: any) {
+        } catch (err) {
             setIsGenerating(false);
+            const error = err as { data?: { detail?: string; message?: string }; message?: string };
             const errorMessage = error?.data?.detail || error?.data?.message || error?.message || 'Failed to generate job description.';
             toast.error('Generation failed', {
                 description: errorMessage,
@@ -225,8 +226,9 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                 description: 'The AI has updated the content based on your feedback.',
                 duration: 4000,
             });
-        } catch (error: any) {
+        } catch (err) {
             setIsGenerating(false);
+            const error = err as { data?: { detail?: string; message?: string }; message?: string };
             const errorMessage = error?.data?.detail || error?.data?.message || error?.message || 'Failed to revise job description.';
             toast.error('Revision failed', {
                 description: errorMessage,
@@ -235,29 +237,33 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
     };
 
     // Helper function to prepare job data
-    const prepareJobData = (status: 'active' | 'draft' = 'active') => {
+    const prepareJobData = (): CreateJobRequest => {
         // Filter out empty strings from arrays
         const filteredRequiredSkills = formData.requiredSkillsAndExperience.filter(item => item.trim() !== '');
         const filteredNiceToHave = formData.niceToHave.filter(item => item.trim() !== '');
-        const filteredBenefits = formData.benefits.filter(item => item.trim() !== '');
+
+        const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin, 10) : 0;
+        const salaryMax = formData.salaryMax ? parseInt(formData.salaryMax, 10) : 0;
 
         return {
             title: formData.title.trim(),
-            department: formData.department.trim() || undefined,
-            level: formData.level.trim() || undefined,
+            company: 'Current Company', // TODO: Get from user context/company
+            department: formData.department.trim() || 'General',
+            level: (formData.level.trim() || 'Mid') as JobLevel,
             description: formData.description.trim() || '', // Allow empty for drafts
             requiredSkillsAndExperience: filteredRequiredSkills.length > 0 ? filteredRequiredSkills : [''], // At least one empty string for drafts
             niceToHave: filteredNiceToHave.length > 0 ? filteredNiceToHave : undefined,
-            benefits: filteredBenefits.length > 0 ? filteredBenefits : undefined,
-            locationCity: formData.locationCity.trim() || undefined,
-            locationCountry: formData.locationCountry.trim() || undefined,
-            locationType: formData.locationType || 'On-site',
-            employmentType: formData.employmentType.trim() || undefined,
-            salaryMin: formData.salaryMin ? parseInt(formData.salaryMin, 10) : undefined,
-            salaryMax: formData.salaryMax ? parseInt(formData.salaryMax, 10) : undefined,
-            currency: formData.currency || 'NPR',
-            applicationDeadline: formData.applicationDeadline || undefined,
-            status: status,
+            locationCity: formData.locationCity.trim() || '',
+            locationCountry: formData.locationCountry.trim() || '',
+            locationType: (formData.locationType || 'On-site') as LocationType,
+            employmentType: (formData.employmentType.trim() || 'Full-time') as EmploymentType,
+            salaryRange: {
+                min: salaryMin,
+                max: salaryMax,
+                currency: formData.currency || 'NPR',
+            },
+            deadline: formData.applicationDeadline ? new Date(formData.applicationDeadline) : undefined,
+            mode: mode,
         };
     };
 
@@ -274,7 +280,7 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
         const jobData = prepareJobData('draft');
 
         try {
-            const result = await createJobMutation.mutateAsync(jobData as any);
+            await createJobMutation.mutateAsync(jobData);
             toast.success('Draft saved successfully!', {
                 description: `${formData.title} has been saved as a draft.`,
                 duration: 4000,
@@ -283,18 +289,15 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
             setTimeout(() => {
                 onComplete();
             }, 500);
-        } catch (error: any) {
+        } catch (err) {
             // Extract error message from various possible error formats
             let errorMessage = 'Failed to save draft. Please try again.';
+            const error = err as { data?: { detail?: string; message?: string }; message?: string };
 
             if (error) {
                 // ApiError format (from apiClient)
                 if (error.data) {
                     errorMessage = error.data.detail || error.data.message || error.message || errorMessage;
-                }
-                // Axios-like error format
-                else if (error.response?.data) {
-                    errorMessage = error.response.data.detail || error.response.data.message || errorMessage;
                 }
                 // Direct error message
                 else if (error.message) {
@@ -335,14 +338,15 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
         const jobData = prepareJobData('active');
 
         try {
-            await createJobMutation.mutateAsync(jobData as any);
+            await createJobMutation.mutateAsync(jobData);
             toast.success('Job created successfully!', {
                 description: `${formData.title} has been published and is now live.`,
                 duration: 4000,
             });
             onComplete();
-        } catch (error: any) {
+        } catch (err) {
             // Handle ApiError from apiClient
+            const error = err as { data?: { detail?: string; message?: string }; message?: string };
             const errorMessage = error?.data?.detail || error?.data?.message || error?.message || 'Failed to create job. Please try again.';
             toast.error('Failed to create job', {
                 description: errorMessage,
@@ -772,7 +776,7 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                         Required Skills and Experience
                                     </h4>
                                     <p className="text-xs text-slate-500 mb-5">
-                                        Add requirements, skills, and experience needed for this role. Mix requirements (e.g., "5+ years of Python experience") and skills (e.g., "Python", "FastAPI") together.
+                                        Add requirements, skills, and experience needed for this role. Mix requirements (e.g., &quot;5+ years of Python experience&quot;) and skills (e.g., &quot;Python&quot;, &quot;FastAPI&quot;) together.
                                     </p>
                                     <div className="space-y-3">
                                         {formData.requiredSkillsAndExperience.map((item, index) => (
@@ -1073,7 +1077,7 @@ export function JobCreationWizard({ mode, onBack, onComplete }: JobCreationWizar
                                 <div>
                                     <h3 className="text-lg font-semibold text-slate-900">Request AI Revision</h3>
                                     <p className="text-xs text-slate-600 mt-0.5">
-                                        Tell the AI what you'd like to change or improve
+                                        Tell the AI what you&apos;d like to change or improve
                                     </p>
                                 </div>
                             </div>

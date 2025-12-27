@@ -117,13 +117,13 @@ def test_extract_resume_structure(test_resumes, ground_truths):
         )
         logger.info(f"Reasoning: {score.reasoning}")
 
-        assert (
-            score.overall_quality >= PASS_THRESHOLD
-        ), f"{filename} failed with score {score.overall_quality} (threshold: {PASS_THRESHOLD})"
+        assert score.overall_quality >= PASS_THRESHOLD, (
+            f"{filename} failed with score {score.overall_quality} (threshold: {PASS_THRESHOLD})"
+        )
 
     avg_score = sum(total_scores) / len(total_scores)
     logger.info(f"Average score: {avg_score:.1f}/100")
 
-    assert (
-        avg_score >= PASS_THRESHOLD
-    ), f"Average score {avg_score:.1f} below threshold {PASS_THRESHOLD}"
+    assert avg_score >= PASS_THRESHOLD, (
+        f"Average score {avg_score:.1f} below threshold {PASS_THRESHOLD}"
+    )

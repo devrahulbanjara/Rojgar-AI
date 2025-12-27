@@ -28,18 +28,16 @@ export const JobCard = memo<JobCardProps>(({
   job,
   isSelected = false,
   onSelect,
-  onApply,
-  showApplyButton = false,
+  // onApply and showApplyButton are reserved for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onApply: _onApply,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showApplyButton: _showApplyButton = false,
   className
 }) => {
   const handleClick = useCallback(() => {
     onSelect?.(job);
   }, [onSelect, job]);
-
-  const handleApply = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onApply?.(job);
-  }, [onApply, job]);
 
   return (
     <div

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { resumeService } from '@/services/resumeService';
 import { profileService } from '@/services/profileService';
 import { ResumeListResponse, ResumeCreate } from '@/types/resume';
-import { Loader2, Plus, FileText, Trash2, X, ChevronRight, Briefcase, GraduationCap, Award, Hash } from 'lucide-react';
+import { Loader2, Plus, FileText, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppShell } from '@/components/layout/AppShell';
 import { PageTransition, AnimatedContainer, PageHeader } from '@/components/common';
@@ -45,7 +44,7 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
           resume_name: `${profile.full_name}'s Resume`,
           target_job_title: profile.professional_headline || '',
           custom_summary: profile.professional_summary || '',
-          // We won't pre-fill the arrays here to keep creation fast. 
+          // We won't pre-fill the arrays here to keep creation fast.
           // User can add them in the editor.
           // OR: If requirement is to copy profile data, we should keep mapping.
           // Requirement: "from there to upto he complete creating, like adding... adding..."
@@ -80,7 +79,7 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
           })),
           social_links: profile.social_links.map(l => ({ type: l.type, url: l.url }))
         }));
-      } catch (error) {
+      } catch {
         toast.error('Could not load profile data');
       } finally {
         setLoadingProfile(false);
@@ -190,7 +189,6 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
 }
 
 export default function ResumeListPage() {
-  const router = useRouter();
   const [resumes, setResumes] = useState<ResumeListResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -224,7 +222,7 @@ export default function ResumeListPage() {
       await resumeService.deleteResume(id);
       toast.success('Resume deleted successfully');
       loadResumes(); // Refresh
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete resume');
     }
   };
