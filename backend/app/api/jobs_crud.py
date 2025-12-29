@@ -4,7 +4,7 @@ from datetime import UTC, date, datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.v1.routes.jobs import map_job_to_response
+from app.api.jobs import map_job_to_response
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
 from app.models.company import CompanyProfile
