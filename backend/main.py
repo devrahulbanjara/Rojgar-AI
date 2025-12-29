@@ -7,7 +7,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy.orm import Session
 
-from app.api.v1 import api_router
+from app.api import api_router
 from app.core.config import settings
 from app.core.database import engine, init_db
 from app.core.limiter import limiter
