@@ -1,11 +1,12 @@
 import uuid
 from datetime import UTC, date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.v1.routes.jobs import map_job_to_response
 from app.core import get_current_user_id, get_db
+from app.core.limiter import limiter
 from app.models.company import CompanyProfile
 from app.models.job import JobDescription, JobPosting, JobPostingStats
 from app.schemas import job as schemas
@@ -19,7 +20,9 @@ router = APIRouter()
     response_model=schemas.JobDraftResponse,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("10/minute")
 def generate_job_draft(
+    request: Request,
     draft_request: schemas.JobDraftGenerateRequest,
     user_id: str = Depends(get_current_user_id),
 ):
@@ -62,7 +65,9 @@ def generate_job_draft(
 @router.post(
     "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("5/minute")
 def create_job(
+    request: Request,
     job_data: schemas.JobCreate,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),

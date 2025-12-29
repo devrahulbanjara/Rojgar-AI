@@ -17,7 +17,9 @@ router = APIRouter()
 
 @router.post("/signup", response_model=TokenResponse)
 def signup(
-    signup_data: SignupRequest, response: Response, db: Session = Depends(get_db)
+    signup_data: SignupRequest,
+    response: Response,
+    db: Session = Depends(get_db),
 ):
     existing_user = AuthService.get_user_by_email(signup_data.email, db)
     if existing_user:
@@ -55,7 +57,11 @@ def signup(
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+def login(
+    login_data: LoginRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     user = AuthService.get_user_by_email(login_data.email, db)
 
     if not user or not user.password:

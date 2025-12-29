@@ -2,10 +2,11 @@ import math
 import uuid
 from datetime import UTC, date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
+from app.core.limiter import limiter
 from app.models.candidate import CandidateProfile
 from app.models.company import CompanyProfile
 from app.models.job import JobDescription, JobPosting, JobPostingStats
@@ -19,7 +20,8 @@ VISIBLE_STATUSES = ["active", "expired"]
 
 
 @router.post("/admin/reindex")
-def admin_reindex_jobs(db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def admin_reindex_jobs(request: Request, db: Session = Depends(get_db)):
     """
     Admin endpoint to clear the vector store and re-index all open jobs.
     This fixes duplicate vector entries.
@@ -65,8 +67,13 @@ def admin_reindex_jobs(db: Session = Depends(get_db)):
 
 
 @router.get("/recommendations", response_model=schemas.JobListResponse)
+@limiter.limit("5/minute")
 def get_recommendations(
-    user_id: str, page: int = 1, limit: int = 10, db: Session = Depends(get_db)
+    request: Request,
+    user_id: str,
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
 ):
     # 1. Get Candidate Skills from Postgres
     candidate = (
@@ -154,7 +161,14 @@ def get_recommendations(
 
 
 @router.get("/search", response_model=schemas.JobListResponse)
-def search_jobs(q: str, page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def search_jobs(
+    request: Request,
+    q: str,
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+):
     # Fetch a large number to account for duplicates/closed jobs
     fetch_limit = 200
 
@@ -214,7 +228,9 @@ def search_jobs(q: str, page: int = 1, limit: int = 10, db: Session = Depends(ge
 @router.post(
     "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("5/minute")
 def create_job(
+    request: Request,
     job_data: schemas.JobCreate,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -322,7 +338,9 @@ def create_job(
 
 
 @router.get("", response_model=schemas.JobListResponse)
+@limiter.limit("5/minute")
 def get_jobs(
+    request: Request,
     user_id: str | None = None,
     company_id: str | None = None,  # Keep for backward compatibility
     status: str | None = None,
@@ -406,7 +424,8 @@ def get_jobs(
 
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)
-def get_job_detail(job_id: str, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def get_job_detail(request: Request, job_id: str, db: Session = Depends(get_db)):
     job = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
