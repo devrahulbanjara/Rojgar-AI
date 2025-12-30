@@ -10,15 +10,11 @@ from app.schemas.shared import (
     WorkExperienceBase,
 )
 
-# --- Inputs ---
-
 
 class ResumeCreate(BaseModel):
     resume_name: str
     target_job_title: str | None = None
     custom_summary: str | None = None
-
-    # Optional Custom Data (if provided, overrides profile fetch)
     work_experiences: list[WorkExperienceBase] | None = None
     educations: list[EducationBase] | None = None
     certifications: list[CertificationBase] | None = None
@@ -98,7 +94,6 @@ class ResumeResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    # Nested Lists
     social_links: list[ResumeSocialLinkResponse] = []
     work_experiences: list[ResumeWorkExperienceResponse] = []
     educations: list[ResumeEducationResponse] = []
@@ -109,8 +104,6 @@ class ResumeResponse(BaseModel):
 
 
 class ResumeListResponse(BaseModel):
-    """Lightweight response for list view"""
-
     resume_id: str
     resume_name: str
     target_job_title: str | None = None
