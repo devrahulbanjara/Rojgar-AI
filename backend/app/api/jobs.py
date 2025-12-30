@@ -7,9 +7,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
-from app.models import CandidateProfile
-from app.models import CompanyProfile
-from app.models import JobDescription, JobPosting, JobPostingStats
+from app.models import (
+    CandidateProfile,
+    CompanyProfile,
+    JobDescription,
+    JobPosting,
+    JobPostingStats,
+)
 from app.schemas import job as schemas
 from app.services.candidate.job_service_utils import get_latest_jobs
 from app.services.candidate.vector_job_service import JobVectorService
@@ -83,8 +87,6 @@ def search_jobs(
     limit: int = 10,
     db: Session = Depends(get_db),
 ):
-    """Search jobs semantically using vector search, fallback to latest jobs if no query or no results."""
-
     all_jobs = []
     if q.strip():
         raw_ids = vector_service.search_jobs(q, limit=200)
@@ -131,7 +133,6 @@ def create_job(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Create a new job posting"""
     company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
     if not company:
         raise HTTPException(
@@ -308,13 +309,11 @@ def get_job_detail(request: Request, job_id: str, db: Session = Depends(get_db))
 
 
 def _build_location(city: str | None, country: str | None, location_type: str) -> str:
-    """Build location string from city, country, and type."""
     parts = [p for p in [city, country] if p]
     return ", ".join(parts) if parts else location_type or "Not specified"
 
 
 def _extract_list_from_dict(data: dict | None, key: str) -> list:
-    """Extract list from dict or return empty list."""
     if not data or not isinstance(data, dict):
         return []
     value = data.get(key, [])
@@ -342,11 +341,11 @@ def map_job_to_response(job: JobPosting):
         "employment_type": job.employment_type or "Full-time",
         "salary_min": job.salary_min,
         "salary_max": job.salary_max,
-        "salary_currency": job.salary_currency or "USD",
+        "salary_currency": job.salary_currency or "NPR",
         "salary_range": {
             "min": job.salary_min or 0,
             "max": job.salary_max or 0,
-            "currency": job.salary_currency or "USD",
+            "currency": job.salary_currency or "NPR",
         }
         if (job.salary_min or job.salary_max)
         else None,

@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.jobs import map_job_to_response
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
-from app.models import CompanyProfile
-from app.models import JobDescription, JobPosting, JobPostingStats
+from app.models import CompanyProfile, JobDescription, JobPosting, JobPostingStats
 from app.schemas import job as schemas
 from app.services.recruiter.job_generation_service import JobGenerationService
 
@@ -26,10 +25,6 @@ def generate_job_draft(
     draft_request: schemas.JobDraftGenerateRequest,
     user_id: str = Depends(get_current_user_id),
 ):
-    """
-    Generate a job description draft using the JD generation agent.
-    This endpoint does NOT save the job to the database - it only generates the draft.
-    """
     if not draft_request.raw_requirements:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
