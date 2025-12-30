@@ -7,9 +7,8 @@ from sqlalchemy.orm import Session, selectinload
 from app.core import settings
 from app.core.logging_config import logger
 from app.core.ml import get_embedding_model
+from app.models.company import CompanyProfile
 from app.models.job import JobPosting
-
-EMBEDDING_DIM = 384
 
 
 class JobVectorService:
@@ -32,7 +31,7 @@ class JobVectorService:
             self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=VectorParams(
-                    size=EMBEDDING_DIM, distance=Distance.COSINE
+                    size=settings.EMBEDDING_DIM, distance=Distance.COSINE
                 ),
             )
             logger.trace(f"Created Qdrant collection: {self.collection_name}")
@@ -41,11 +40,15 @@ class JobVectorService:
 
     def _construct_job_text(self, job: JobPosting) -> str:
         if not job.job_description:
-            return f"Title: {job.title}"
+            company_name = self._get_company_name(job)
+            return f"Title: {job.title}\nCompany: {company_name}"
 
         jd = job.job_description
+        company_name = self._get_company_name(job)
+
         parts = [
             f"Title: {job.title}",
+            f"Company: {company_name}",
             f"Role Overview: {jd.role_overview}",
         ]
 
@@ -69,13 +72,25 @@ class JobVectorService:
 
         return "\n".join(parts)
 
+    def _get_company_name(self, job: JobPosting) -> str:
+        if not job.company:
+            return "Unknown Company"
+
+        if job.company.user:
+            return job.company.user.name
+
+        return "Unknown Company"
+
     def index_all_pending_jobs(self, db: Session):
         if not self.qdrant:
             return
 
         pending_jobs = (
             db.query(JobPosting)
-            .options(selectinload(JobPosting.job_description))
+            .options(
+                selectinload(JobPosting.job_description),
+                selectinload(JobPosting.company).selectinload(CompanyProfile.user),
+            )
             .filter(JobPosting.is_indexed == False)
             .all()
         )
@@ -89,10 +104,12 @@ class JobVectorService:
         for job in pending_jobs:
             try:
                 text_content = self._construct_job_text(job)
+                company_name = self._get_company_name(job)
 
                 metadata = {
                     "job_id": job.job_id,
                     "company_id": job.company_id,
+                    "company_name": company_name,
                     "title": job.title,
                     "city": job.location_city,
                     "country": job.location_country,
@@ -102,7 +119,9 @@ class JobVectorService:
                     "salary_max": job.salary_max,
                     "salary_currency": job.salary_currency,
                     "status": job.status,
-                    "posted_date": job.posted_date,
+                    "posted_date": job.posted_date.isoformat()
+                    if job.posted_date
+                    else None,
                 }
 
                 doc = Document(page_content=text_content, metadata=metadata)

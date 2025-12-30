@@ -8,7 +8,6 @@ from app.core.database import Base
 
 
 def utc_now():
-    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
     return datetime.now(UTC).replace(tzinfo=None)
 
 

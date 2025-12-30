@@ -30,7 +30,8 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: str
     QDRANT_COLLECTION_NAME: str
     EMBEDDING_MODEL: str
-
+    EMBEDDING_DIM: int = 384
+    
     # LLM Settings
     FAST_LLM: str = "llama-3.1-8b-instant"
     THINK_LLM: str = "openai/gpt-oss-120b"

@@ -1,7 +1,6 @@
 import os
 
 from app.core import settings
-
 from app.models.agents.shortlist import (
     CandidateScore,
     EvaluationScore,

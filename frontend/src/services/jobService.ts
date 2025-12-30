@@ -80,8 +80,8 @@ export class JobService {
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
 
-    // Only search term
-    if (params?.search) queryParams.append('search', params.search);
+    // Backend expects 'q' parameter, not 'search'
+    if (params?.search) queryParams.append('q', params.search);
 
     const endpoint = `${jobEndpoints.search}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get<JobListResponse>(endpoint);
