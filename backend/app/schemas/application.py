@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.application import ApplicationStatus
+from app.models import ApplicationStatus
 
 
 class JobSummary(BaseModel):
