@@ -8,7 +8,7 @@ import { ROUTES } from '../../config/constants';
 import { UserAvatar } from '../ui/UserAvatar';
 
 interface TopbarProps {
-  onMenuClick: () => void;
+  onMenuClick?: () => void;
   user: {
     name: string;
     email: string;
@@ -40,13 +40,15 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
       <div className="flex items-center justify-between h-full px-8">
         {/* Left: Menu + Logo */}
         <div className="flex items-center gap-6">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-[#F9FAFB] transition-colors"
-            aria-label="Toggle menu"
-          >
-            <Menu className="h-5 w-5 text-[#475569]" />
-          </button>
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden p-2 rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              aria-label="Toggle menu"
+            >
+              <Menu className="h-5 w-5 text-[#475569]" />
+            </button>
+          )}
 
           <LogoLink variant="full" size="lg" />
         </div>

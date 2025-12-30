@@ -1,9 +1,10 @@
 /**
- * RecruiterJobCard - Premium job card with smooth animations and clean design
+ * RecruiterJobCard - Modern card matching candidate browse-jobs design
+ * Includes recruiter-specific fields: status, department, views, applicant count
  */
 
 import React, { memo } from 'react';
-import { MapPin, Briefcase, Calendar, DollarSign, Clock, ChevronRight, Users } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, DollarSign, Clock, Users, Eye } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Job } from '../../types/job';
 
@@ -63,11 +64,12 @@ function formatPostedDate(dateStr: string): string {
     return `${years} year${years > 1 ? 's' : ''} ago`;
 }
 
-// Status config
+// Status config matching candidate design style
 const statusConfig = {
-    Active: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-500' },
-    Draft: { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
-    Closed: { bg: 'bg-red-50', text: 'text-red-500', dot: 'bg-red-500' },
+    Active: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    Draft: { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' },
+    Closed: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
+    Inactive: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
 };
 
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(({ job, onClick, className }) => {
@@ -78,76 +80,95 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(({ job, onClick, cla
         <div
             onClick={onClick}
             className={cn(
-                'group relative bg-white rounded-2xl p-6 cursor-pointer',
-                'border border-gray-100',
-                'transition-all duration-300 ease-out',
-                'hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50',
-                'hover:-translate-y-0.5',
+                'group cursor-pointer transition-all duration-200 w-full bg-white rounded-xl border p-4 lg:p-5',
+                'hover:-translate-y-0.5 active:scale-[0.99]',
+                'border-[#E5E7EB] hover:border-[#CBD5E1]',
                 className
             )}
+            style={{
+                boxShadow: '0 0 0 rgba(0,0,0,0)',
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`View details for ${job.title}`}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick?.();
+                }
+            }}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 0 rgba(0,0,0,0)';
+            }}
         >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex-1 min-w-0 pr-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600">
-                            {job.department}
-                        </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200 line-clamp-1">
+            <div className="space-y-3">
+                {/* Job Title & Department */}
+                <div>
+                    <h3 className="font-semibold text-base text-[#0F172A] group-hover:text-[#3056F5] transition-colors line-clamp-1 mb-1">
                         {job.title}
                     </h3>
+                    <p className="text-sm text-[#475569] font-medium">
+                        {job.department}
+                    </p>
                 </div>
 
-                {/* Status Badge */}
-                <div className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-                    config.bg, config.text
-                )}>
-                    <span className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
-                    {status}
-                </div>
-            </div>
-
-            {/* Meta Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="truncate">{job.location}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Briefcase className="w-4 h-4 text-gray-400" />
-                    <span>{job.employment_type}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                    <DollarSign className="w-4 h-4 text-gray-400" />
-                    <span>{formatSalary(job)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span>{job.location_type}</span>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center gap-1">
+                {/* Location & Posted Date */}
+                <div className="flex items-center gap-4 text-xs text-[#94A3B8]">
+                    <div className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span className="truncate">{job.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        {formatPostedDate(job.posted_date || job.created_at)}
-                    </span>
-                    {job.applicant_count > 0 && (
-                        <span className="flex items-center gap-1 text-blue-600 font-medium">
-                            <Users className="w-3.5 h-3.5" />
-                            {job.applicant_count} applicants
-                        </span>
-                    )}
+                        <span>{formatPostedDate(job.posted_date || job.created_at)}</span>
+                    </div>
                 </div>
 
-                {/* Arrow indicator */}
-                <div className="flex items-center gap-1 text-gray-400 group-hover:text-blue-600 transition-colors">
-                    <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">View</span>
-                    <ChevronRight className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" />
+                {/* Job Details */}
+                <div className="flex items-center gap-4 text-sm text-[#475569]">
+                    <div className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        <span className="font-medium">
+                            {formatSalary(job)}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Briefcase className="w-4 h-4" />
+                        <span>{job.employment_type}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{job.location_type}</span>
+                    </div>
+                </div>
+
+                {/* Footer with Stats & Status */}
+                <div className="flex items-center justify-between pt-3 border-t border-[#F1F5F9]">
+                    <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
+                        {job.applicant_count !== undefined && job.applicant_count > 0 && (
+                            <div className="flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                <span>{job.applicant_count} applicants</span>
+                            </div>
+                        )}
+                        {job.views_count !== undefined && job.views_count > 0 && (
+                            <div className="flex items-center gap-1">
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{job.views_count} views</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Status Badge */}
+                    <span className={cn(
+                        'px-2.5 py-1 text-xs font-semibold rounded-md border',
+                        config.bg, config.text, config.border
+                    )}>
+                        {status}
+                    </span>
                 </div>
             </div>
         </div>

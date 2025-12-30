@@ -8,7 +8,7 @@ import { ArrowRight } from 'lucide-react';
 export function HeroSection() {
   return (
     <section
-      className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center px-6 sm:px-8 lg:px-8 py-8 sm:py-16 lg:py-20"
+      className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center px-6 lg:px-8 py-8 sm:py-16 lg:py-20"
       style={{
         background: 'linear-gradient(180deg, #F9FAFB 0%, #FFFFFF 100%)',
       }}
