@@ -28,7 +28,7 @@ const features = [
 
 export function RecruiterPlatformSection() {
   return (
-    <section id="platform" className="py-16 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-white">
+    <section id="platform" className="py-16 sm:py-24 lg:py-32 px-6 lg:px-8 bg-white">
       <div className="w-full max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

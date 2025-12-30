@@ -5,8 +5,7 @@
 
 import React, { memo, useMemo } from 'react';
 import { JobCard } from './JobCard';
-import { SkeletonJobCard, StaggerContainer } from '../common';
-import { cn } from '../../lib/utils';
+import { SkeletonJobCard } from '../common';
 import type { Job } from '../../types/job';
 import { AlertCircle, Search, Filter } from 'lucide-react';
 
@@ -47,21 +46,21 @@ export const JobList = memo<JobListProps>(({
 
   if (loading) {
     return (
-      <StaggerContainer className="space-y-4" staggerDelay={0.08}>
-        {/* Enhanced Loading Skeletons */}
-        {Array.from({ length: 5 }).map((_, index) => (
+      <>
+        {/* Enhanced Loading Skeletons for Grid */}
+        {Array.from({ length: 8 }).map((_, index) => (
           <SkeletonJobCard
             key={index}
             className="bg-card border border-border rounded-xl"
           />
         ))}
-      </StaggerContainer>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4">
+      <div className="col-span-full flex flex-col items-center justify-center py-16 space-y-4">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{ background: 'rgba(220, 38, 38, 0.1)' }}
@@ -86,7 +85,7 @@ export const JobList = memo<JobListProps>(({
 
   if (!uniqueJobs || uniqueJobs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4">
+      <div className="col-span-full flex flex-col items-center justify-center py-16 space-y-4">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{ background: 'rgba(48, 86, 245, 0.08)' }}
@@ -108,7 +107,7 @@ export const JobList = memo<JobListProps>(({
   }
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <>
       {uniqueJobs.map((job) => (
         <JobCard
           key={job.id}
@@ -119,7 +118,7 @@ export const JobList = memo<JobListProps>(({
           showApplyButton={false} // Apply button is now in the detail view
         />
       ))}
-    </div>
+    </>
   );
 });
 

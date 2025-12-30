@@ -305,8 +305,8 @@ export default function RecruiterJobsPage() {
                                 ))}
                             </div>
                         ) : (
-                            /* Jobs Grid (Active & Drafts) */
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            /* Jobs Grid (Active & Drafts) - 4 columns like candidate */
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {filteredJobs.map((job, index) => (
                                     <RecruiterJobCard
                                         key={`job-${job.id}-${index}`}

@@ -4,19 +4,22 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Jobs Page - LinkedIn-Inspired Design
- * Professional job browsing experience with two-column layout
+ * Professional job browsing experience with grid layout
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { usePersonalizedRecommendations, useCreateApplication, useJobSearch } from '../../../hooks/queries/useJobs';
 import { useAuth } from '../../../hooks/useAuth';
-import { JobList, JobDetailView, JobSearchBar, FilterChips, type FilterType } from '../../../components/jobs';
+import { JobCard, JobSearchBar, FilterChips, type FilterType } from '../../../components/jobs';
+import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Button } from '../../../components/ui/button';
-import { AnimatedContainer, PageHeader, AIPoweredBadge, LoadingSpinner } from '../../../components/common';
+import { AnimatedContainer, PageHeader, AIPoweredBadge, LoadingSpinner, SkeletonJobCard } from '../../../components/common';
 import {
-  X,
-  RefreshCw
+  RefreshCw,
+  AlertCircle,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,6 +28,7 @@ import type { Job } from '../../../types/job';
 
 export default function Jobs() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +49,7 @@ export default function Jobs() {
   const { data: recommendationsData, isLoading: isLoadingRecommendations, error: recommendationsError, refetch: refetchRecommendations } = usePersonalizedRecommendations(
     user?.id || '',
     currentPage,
-    10
+    12
   );
 
   // Use job search when searching
@@ -54,7 +58,7 @@ export default function Jobs() {
     shouldFetchSearch ? {
       search: debouncedSearchQuery.trim(),
       page: currentPage,
-      limit: 10,
+      limit: 12,
     } : undefined
   );
 
@@ -192,6 +196,13 @@ export default function Jobs() {
   // Handle job selection
   const handleJobSelect = useCallback((job: Job) => {
     setSelectedJob(job);
+    setIsDetailModalOpen(true);
+  }, []);
+
+  // Handle modal close
+  const handleCloseModal = useCallback(() => {
+    setIsDetailModalOpen(false);
+    setTimeout(() => setSelectedJob(null), 300);
   }, []);
 
   // Handle job application
@@ -224,7 +235,7 @@ export default function Jobs() {
   
   // Calculate total pages for pagination
   const totalPages = isSearchMode && activeFilters.length > 0
-    ? Math.ceil(filteredJobs.length / 10)
+    ? Math.ceil(filteredJobs.length / 12)
     : (jobsData?.total_pages || 0);
 
   // Show loading state while checking authentication
@@ -288,20 +299,11 @@ export default function Jobs() {
             </div>
           </AnimatedContainer>
 
-          {/* Main Content */}
+          {/* Main Content - Job Cards Grid */}
           <AnimatedContainer direction="up" delay={0.3}>
-            <div className="flex flex-col lg:flex-row gap-6 min-h-0">
-            {/* Job List - Responsive Width */}
-            <div className={`transition-all duration-300 flex-shrink-0 ${
-              selectedJob
-                ? 'lg:w-1/2 w-full'
-                : 'w-full'
-            }`}>
-              <div
-                className="bg-white rounded-2xl border border-[#E5E7EB] h-[calc(100vh-200px)] flex flex-col"
-                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-              >
-                <div className="p-6 border-b border-[#E5E7EB] flex-shrink-0">
+            <div className="w-full">
+                {/* Header Section */}
+                <div className="mb-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-[#0F172A]">
@@ -321,23 +323,77 @@ export default function Jobs() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                  <div className="p-2 lg:p-4">
-                    <JobList
-                      jobs={jobs}
-                      loading={isLoading}
-                      error={error?.message}
-                      selectedJob={selectedJob}
-                      onJobSelect={handleJobSelect}
-                      onApply={handleJobApply}
-                    />
-                  </div>
+                {/* Job Cards Grid */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {isLoading ? (
+                    <>
+                      {Array.from({ length: 8 }).map((_, index) => (
+                        <SkeletonJobCard
+                          key={index}
+                          className="bg-card border border-border rounded-xl"
+                        />
+                      ))}
+                    </>
+                  ) : error ? (
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 space-y-4">
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                        style={{ background: 'rgba(220, 38, 38, 0.1)' }}
+                      >
+                        <AlertCircle className="w-8 h-8 text-[#DC2626]" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold text-[#0F172A] mb-2">Failed to load jobs</h3>
+                        <p className="text-sm text-[#475569] text-center max-w-md mb-4">
+                          {error.message}
+                        </p>
+                        <button
+                          onClick={() => window.location.reload()}
+                          className="text-sm text-[#3056F5] hover:text-[#2B3CF5] hover:underline font-medium"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    </div>
+                  ) : jobs.length === 0 ? (
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 space-y-4">
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                        style={{ background: 'rgba(48, 86, 245, 0.08)' }}
+                      >
+                        <Search className="w-8 h-8 text-[#3056F5]" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold text-[#0F172A] mb-2">No jobs found</h3>
+                        <p className="text-sm text-[#475569] text-center max-w-md mb-4">
+                          Try adjusting your search criteria or check back later for new opportunities.
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
+                          <Filter className="w-4 h-4" />
+                          <span>Try different filters or search terms</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {jobs.map((job) => (
+                        <JobCard
+                          key={job.id}
+                          job={job}
+                          isSelected={selectedJob?.id === job.id}
+                          onSelect={handleJobSelect}
+                          onApply={handleJobApply}
+                          showApplyButton={false}
+                        />
+                      ))}
+                    </>
+                  )}
                 </div>
 
-                {/* Pagination - Bottom Left */}
+                {/* Pagination */}
                 {totalPages > 1 && totalJobs > 0 && (
-                  <div className="p-4 border-t border-[#F1F5F9] bg-[#FAFBFC]">
-                    <div className="flex items-center justify-start">
+                  <div className="mt-8">
+                    <div className="flex items-center justify-center">
                       <div className="flex items-center gap-1 bg-white rounded-lg p-1 shadow-sm border border-[#E5E7EB]">
                         <Button
                           variant="ghost"
@@ -403,40 +459,17 @@ export default function Jobs() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Job Detail Panel - Responsive */}
-            {selectedJob && (
-              <AnimatedContainer
-                direction="right"
-                delay={0.1}
-                className="lg:w-1/2 w-full flex-shrink-0"
-              >
-                <div
-                  className="bg-white rounded-2xl border border-[#E5E7EB] h-[calc(100vh-200px)] relative flex flex-col"
-                  style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-                >
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setSelectedJob(null)}
-                    className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-[#F9FAFB] transition-colors"
-                    aria-label="Close job details"
-                  >
-                    <X className="h-5 w-5 text-[#475569]" />
-                  </button>
-
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                    <JobDetailView
-                      job={selectedJob}
-                      onApply={() => handleJobApply(selectedJob)}
-                    />
-                  </div>
-                </div>
-              </AnimatedContainer>
-            )}
             </div>
           </AnimatedContainer>
+
+          {/* Job Details Modal */}
+          <JobDetailsModal
+            job={selectedJob}
+            isOpen={isDetailModalOpen}
+            onClose={handleCloseModal}
+            onApply={handleJobApply}
+            showApplyButton={true}
+          />
         </div>
     </AppShell>
   );

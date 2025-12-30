@@ -38,7 +38,7 @@ const features = [
 
 export function CandidatePlatformSection() {
   return (
-    <section id="candidates" className="py-16 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-[#F9FAFB]">
+    <section id="candidates" className="py-16 sm:py-24 lg:py-32 px-6 lg:px-8 bg-[#F9FAFB]">
       <div className="w-full max-w-7xl mx-auto">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
           {/* Left: Text Content */}

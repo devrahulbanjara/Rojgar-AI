@@ -46,7 +46,7 @@ export function LandingNavbar() {
             : 'bg-white/60 backdrop-blur-xl'
         }`}
       >
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
