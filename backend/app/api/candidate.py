@@ -1,21 +1,23 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
+from app.core.limiter import limiter
 from app.schemas import candidate as schemas
 from app.services.candidate import CandidateService
 
 router = APIRouter()
 
 
-# 1. GET FULL PROFILE
 @router.get("/me", response_model=schemas.CandidateProfileFullResponse)
+@limiter.limit("5/minute")
 def get_my_profile(
-    user_id: str = Depends(get_current_user_id), db: Session = Depends(get_db)
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
 ):
     profile = CandidateService.get_full_profile(db, user_id)
 
-    # Construct response merging User table data + Profile table data
     return schemas.CandidateProfileFullResponse(
         profile_id=profile.profile_id,
         user_id=profile.user_id,
@@ -37,7 +39,9 @@ def get_my_profile(
 
 # 2. UPDATE BASIC INFO
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
+@limiter.limit("5/minute")
 def update_my_profile(
+    request: Request,
     data: schemas.CandidateProfileUpdate,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -49,7 +53,9 @@ def update_my_profile(
 
 # 3. WORK EXPERIENCE
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
+@limiter.limit("5/minute")
 def add_experience(
+    request: Request,
     data: schemas.WorkExperienceBase,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -58,7 +64,9 @@ def add_experience(
 
 
 @router.delete("/experience/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
 def delete_experience(
+    request: Request,
     item_id: str,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -67,7 +75,9 @@ def delete_experience(
 
 
 @router.patch("/experience/{item_id}", response_model=schemas.WorkExperienceResponse)
+@limiter.limit("5/minute")
 def update_experience(
+    request: Request,
     item_id: str,
     data: schemas.WorkExperienceUpdate,
     user_id: str = Depends(get_current_user_id),
@@ -78,7 +88,9 @@ def update_experience(
 
 # 4. EDUCATION
 @router.post("/education", response_model=schemas.EducationResponse)
+@limiter.limit("5/minute")
 def add_education(
+    request: Request,
     data: schemas.EducationBase,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -87,7 +99,9 @@ def add_education(
 
 
 @router.delete("/education/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
 def delete_education(
+    request: Request,
     item_id: str,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -96,7 +110,9 @@ def delete_education(
 
 
 @router.patch("/education/{item_id}", response_model=schemas.EducationResponse)
+@limiter.limit("5/minute")
 def update_education(
+    request: Request,
     item_id: str,
     data: schemas.EducationUpdate,
     user_id: str = Depends(get_current_user_id),
@@ -107,7 +123,9 @@ def update_education(
 
 # 5. SKILLS
 @router.post("/skills", response_model=schemas.SkillResponse)
+@limiter.limit("5/minute")
 def add_skill(
+    request: Request,
     data: schemas.SkillBase,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -116,7 +134,9 @@ def add_skill(
 
 
 @router.delete("/skills/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
 def delete_skill(
+    request: Request,
     item_id: str,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -125,7 +145,9 @@ def delete_skill(
 
 
 @router.patch("/skills/{item_id}", response_model=schemas.SkillResponse)
+@limiter.limit("5/minute")
 def update_skill(
+    request: Request,
     item_id: str,
     data: schemas.SkillUpdate,
     user_id: str = Depends(get_current_user_id),
@@ -136,7 +158,9 @@ def update_skill(
 
 # 6. CERTIFICATIONS
 @router.post("/certifications", response_model=schemas.CertificationResponse)
+@limiter.limit("5/minute")
 def add_certification(
+    request: Request,
     data: schemas.CertificationBase,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -145,7 +169,9 @@ def add_certification(
 
 
 @router.delete("/certifications/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
 def delete_certification(
+    request: Request,
     item_id: str,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -154,7 +180,9 @@ def delete_certification(
 
 
 @router.patch("/certifications/{item_id}", response_model=schemas.CertificationResponse)
+@limiter.limit("5/minute")
 def update_certification(
+    request: Request,
     item_id: str,
     data: schemas.CertificationUpdate,
     user_id: str = Depends(get_current_user_id),
