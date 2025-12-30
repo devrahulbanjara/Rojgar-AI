@@ -21,9 +21,9 @@ def get_my_profile(
     return schemas.CandidateProfileFullResponse(
         profile_id=profile.profile_id,
         user_id=profile.user_id,
-        full_name=profile.user.name,  # From User Table
-        email=profile.user.email,  # From User Table
-        picture=profile.user.picture,  # From User Table
+        full_name=profile.user.name,
+        email=profile.user.email,
+        picture=profile.user.picture,
         phone=profile.phone,
         location_city=profile.location_city,
         location_country=profile.location_country,
@@ -37,7 +37,6 @@ def get_my_profile(
     )
 
 
-# 2. UPDATE BASIC INFO
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
 @limiter.limit("5/minute")
 def update_my_profile(
@@ -46,12 +45,10 @@ def update_my_profile(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    # Reuse the GET logic to return full object after update
     CandidateService.update_basic_info(db, user_id, data)
     return get_my_profile(user_id, db)
 
 
-# 3. WORK EXPERIENCE
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
 @limiter.limit("5/minute")
 def add_experience(
@@ -86,7 +83,6 @@ def update_experience(
     return CandidateService.update_experience(db, user_id, item_id, data)
 
 
-# 4. EDUCATION
 @router.post("/education", response_model=schemas.EducationResponse)
 @limiter.limit("5/minute")
 def add_education(
@@ -121,7 +117,6 @@ def update_education(
     return CandidateService.update_education(db, user_id, item_id, data)
 
 
-# 5. SKILLS
 @router.post("/skills", response_model=schemas.SkillResponse)
 @limiter.limit("5/minute")
 def add_skill(
@@ -156,7 +151,6 @@ def update_skill(
     return CandidateService.update_skill(db, user_id, item_id, data)
 
 
-# 6. CERTIFICATIONS
 @router.post("/certifications", response_model=schemas.CertificationResponse)
 @limiter.limit("5/minute")
 def add_certification(

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.api.jobs import map_job_to_response
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
-from app.models.company import CompanyProfile
-from app.models.job import JobDescription, JobPosting, JobPostingStats
+from app.models import CompanyProfile
+from app.models import JobDescription, JobPosting, JobPostingStats
 from app.schemas import job as schemas
 from app.services.recruiter.job_generation_service import JobGenerationService
 
@@ -37,15 +37,12 @@ def generate_job_draft(
         )
 
     try:
-        # Combine title and requirements for the agent
         combined_requirements = (
             f"{draft_request.title}. {draft_request.raw_requirements}"
         )
 
-        # Generate draft using agent
         generated_draft = JobGenerationService.generate_job_draft(combined_requirements)
 
-        # Map generated content to response schema
         return schemas.JobDraftResponse(
             title=generated_draft.job_title,
             description=generated_draft.role_overview,
@@ -84,7 +81,6 @@ def create_job(
     job_description_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())
 
-    # Handle required skills - allow empty list for drafts
     required_skills_list = (
         job_data.requiredSkillsAndExperience
         if job_data.requiredSkillsAndExperience
@@ -104,7 +100,7 @@ def create_job(
 
     job_description = JobDescription(
         job_description_id=job_description_id,
-        role_overview=job_data.description or "",  # Allow empty for drafts
+        role_overview=job_data.description or "",
         required_skills_experience=required_skills_experience_dict,
         nice_to_have=nice_to_have_dict,
         offers=offers_dict,
@@ -129,7 +125,6 @@ def create_job(
         except Exception:
             application_deadline = None
 
-    # Determine status - use provided status or default to "active"
     job_status = job_data.status if job_data.status else "active"
 
     job_posting = JobPosting(

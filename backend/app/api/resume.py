@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
-from app.schemas import resume as schemas
-from app.schemas.resume import (
+from app.schemas import (
+    CertificationBase,
+    EducationBase,
     ResumeCertificationResponse,
     ResumeCertificationUpdate,
     ResumeEducationResponse,
@@ -13,13 +14,10 @@ from app.schemas.resume import (
     ResumeSkillUpdate,
     ResumeWorkExperienceResponse,
     ResumeWorkExperienceUpdate,
-)
-from app.schemas.shared import (
-    CertificationBase,
-    EducationBase,
     SkillBase,
     WorkExperienceBase,
 )
+from app.schemas import resume as schemas
 from app.services.candidate.resume_service import ResumeService
 
 router = APIRouter()
@@ -43,7 +41,6 @@ def create_resume(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Triggers the Fork: Copies profile data to new resume"""
     return ResumeService.create_resume_fork(db, user_id, data)
 
 
@@ -79,9 +76,6 @@ def delete_resume(
     db: Session = Depends(get_db),
 ):
     ResumeService.delete_resume(db, user_id, resume_id)
-
-
-# --- Sub-Resources (Example: Experience) ---
 
 
 @router.post(

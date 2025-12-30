@@ -11,7 +11,7 @@ from app.models.candidate import (
     CandidateSkills,
     CandidateWorkExperience,
 )
-from app.schemas.candidate import CandidateProfileUpdate
+from app.schemas import CandidateProfileUpdate
 
 
 class CandidateService:
