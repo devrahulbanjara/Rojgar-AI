@@ -1,12 +1,16 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy.orm import Session
 
-from app.api.v1 import api_router
+from app.api import api_router
 from app.core.config import settings
 from app.core.database import engine, init_db
+from app.core.limiter import limiter
 from app.core.logging_config import logger
 from app.services.candidate.vector_job_service import JobVectorService
 
@@ -44,6 +48,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(status_code=429, content={"detail": "Too many requests"})
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.FRONTEND_URL],
@@ -56,7 +69,8 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")
-def root():
+@limiter.limit("5/minute")
+def root(request: Request):
     return {
         "message": "ConvexHire API is running!",
         "version": "📦 " + settings.APP_VERSION,
