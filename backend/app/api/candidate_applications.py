@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
-from app.schemas.application import ApplicationResponse
+from app.schemas import ApplicationResponse
 from app.services.candidate.application_service import ApplicationService
 
 router = APIRouter()

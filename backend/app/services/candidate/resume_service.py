@@ -13,7 +13,7 @@ from app.models.resume import (
     ResumeSocialLink,
     ResumeWorkExperience,
 )
-from app.schemas.resume import (
+from app.schemas import (
     CertificationBase,
     EducationBase,
     ResumeCertificationUpdate,

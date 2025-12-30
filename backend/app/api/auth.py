@@ -108,9 +108,7 @@ def google_login(request: Request):
 
 @router.get("/google/callback")
 @limiter.limit("5/minute")
-async def google_callback(
-    request: Request, code: str, db: Session = Depends(get_db)
-):
+async def google_callback(request: Request, code: str, db: Session = Depends(get_db)):
     try:
         google_user = await AuthService.exchange_google_code(code)
 

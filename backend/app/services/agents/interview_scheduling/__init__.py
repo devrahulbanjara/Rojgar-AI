@@ -2,16 +2,12 @@ import os
 
 from app.core import settings
 
-# Schema
 from app.models.agents.interview_scheduling import InterviewSchedulingState
 
-# Email service
 from .email_service import send_interview_email
 
-# Workflow
 from .graph import create_workflow
 
-# Node functions (for advanced usage)
 from .nodes import (
     approval_router,
     compose_email_draft,

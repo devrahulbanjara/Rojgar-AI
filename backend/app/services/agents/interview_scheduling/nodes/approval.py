@@ -1,7 +1,3 @@
-"""
-Approval node - Human-in-the-loop approval gate.
-"""
-
 from typing import Literal
 
 from langgraph.types import interrupt

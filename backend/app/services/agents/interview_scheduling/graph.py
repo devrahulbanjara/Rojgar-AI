@@ -1,10 +1,3 @@
-"""
-Interview Scheduling Workflow Graph.
-
-LangGraph-based workflow for sending interview scheduling emails
-with optional human-in-the-loop approval.
-"""
-
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 

@@ -1,7 +1,3 @@
-"""
-Compose email node - Generate the email draft content.
-"""
-
 from langsmith import traceable
 
 from app.core.config import settings
