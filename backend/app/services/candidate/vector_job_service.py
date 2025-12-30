@@ -1,112 +1,87 @@
-import logging
-
 from langchain_core.documents import Document
-from langchain_qdrant import QdrantVectorStore
+from langchain_qdrant import QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
-from qdrant_client.http import models
-from sqlalchemy.orm import Session
+from qdrant_client.http.models import Distance, VectorParams
+from sqlalchemy.orm import Session, selectinload
 
-from app.core.config import settings
+from app.core import settings
+from app.core.logging_config import logger
 from app.core.ml import get_embedding_model
 from app.models.job import JobPosting
 
-logger = logging.getLogger(__name__)
+EMBEDDING_DIM = 384
 
 
 class JobVectorService:
     def __init__(self):
         self.embedding_model = get_embedding_model()
-        self.collection_name = settings.QDRANT_COLLECTION_JOBS
-        self.vector_store: QdrantVectorStore | None = None
-
-        try:
-            self.client = QdrantClient(
-                url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY
-            )
-            self._ensure_collection_exists()
-
-            self.vector_store = QdrantVectorStore(
-                client=self.client,
-                collection_name=self.collection_name,
-                embedding=self.embedding_model,
-            )
-        except Exception as e:
-            logger.error(f"Qdrant Connection Failed: {e}")
-            self.vector_store = None
-
-    def _get_embedding_dimension(self) -> int:
-        test_embedding = self.embedding_model.embed_query("test")
-        return len(test_embedding)
+        self.client = QdrantClient(
+            url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY
+        )
+        self.collection_name = settings.QDRANT_COLLECTION_NAME
+        self._ensure_collection_exists()
+        self.qdrant = QdrantVectorStore(
+            client=self.client,
+            collection_name=self.collection_name,
+            embedding=self.embedding_model,
+            retrieval_mode=RetrievalMode.DENSE,
+        )
 
     def _ensure_collection_exists(self):
-        embedding_dim = self._get_embedding_dimension()
-
-        if self.client.collection_exists(self.collection_name):
-            collection_info = self.client.get_collection(self.collection_name)
-            existing_dim = collection_info.config.params.vectors.size
-
-            if existing_dim != embedding_dim:
-                logger.warning(
-                    f"Collection dimension mismatch: existing={existing_dim}, model={embedding_dim}. "
-                    f"Recreating collection..."
-                )
-                self.client.delete_collection(self.collection_name)
-            else:
-                logger.info(
-                    f"Using existing Qdrant collection: {self.collection_name} (dim={existing_dim})"
-                )
-                return
-
-        self.client.create_collection(
-            collection_name=self.collection_name,
-            vectors_config=models.VectorParams(
-                size=embedding_dim, distance=models.Distance.COSINE
-            ),
-        )
-        logger.info(
-            f"Created Qdrant collection: {self.collection_name} (dim={embedding_dim})"
-        )
+        if not self.client.collection_exists(self.collection_name):
+            self.client.create_collection(
+                collection_name=self.collection_name,
+                vectors_config=VectorParams(
+                    size=EMBEDDING_DIM, distance=Distance.COSINE
+                ),
+            )
+            logger.trace(f"Created Qdrant collection: {self.collection_name}")
+        else:
+            logger.trace(f"Qdrant collection already exists: {self.collection_name}")
 
     def _construct_job_text(self, job: JobPosting) -> str:
-        skills_txt = ""
-        benefits_txt = ""
-        role_overview = ""
+        if not job.job_description:
+            return f"Title: {job.title}"
 
-        if job.job_description:
-            role_overview = job.job_description.role_overview or ""
+        jd = job.job_description
+        parts = [
+            f"Title: {job.title}",
+            f"Role Overview: {jd.role_overview}",
+        ]
 
-            req = job.job_description.required_skills_experience
-            if isinstance(req, dict):
-                flat_skills = []
-                for v in req.values():
-                    if isinstance(v, list):
-                        flat_skills.extend(v)
-                    elif isinstance(v, str):
-                        flat_skills.append(v)
-                skills_txt = ", ".join(flat_skills)
-            elif isinstance(req, list):
-                skills_txt = ", ".join(req)
+        if isinstance(jd.required_skills_experience, dict):
+            skills = jd.required_skills_experience.get("required_skills_experience", [])
+            if skills:
+                parts.append("Required Skills and Experience:")
+                parts.extend(f"- {s}" for s in skills)
 
-            offers = job.job_description.offers
-            if isinstance(offers, dict) and "benefits" in offers:
-                benefits_txt = ", ".join(offers["benefits"])
+        if isinstance(jd.nice_to_have, dict):
+            nice = jd.nice_to_have.get("nice_to_have", [])
+            if nice:
+                parts.append("Nice to Have:")
+                parts.extend(f"- {n}" for n in nice)
 
-        return (
-            f"Title: {job.title}. "
-            f"Location: {job.location_city}, {job.location_country}. "
-            f"Type: {job.employment_type}"
-            f"Description: {role_overview}. "
-            f"Skills: {skills_txt}. "
-            f"Benefits: {benefits_txt}."
-        )
+        if isinstance(jd.offers, dict):
+            benefits = jd.offers.get("benefits", [])
+            if benefits:
+                parts.append("Benefits:")
+                parts.extend(f"- {b}" for b in benefits)
+
+        return "\n".join(parts)
 
     def index_all_pending_jobs(self, db: Session):
-        if not self.vector_store:
+        if not self.qdrant:
             return
 
-        pending_jobs = db.query(JobPosting).filter(JobPosting.is_indexed == False).all()
+        pending_jobs = (
+            db.query(JobPosting)
+            .options(selectinload(JobPosting.job_description))
+            .filter(JobPosting.is_indexed == False)
+            .all()
+        )
+
         if not pending_jobs:
-            logger.info("No new jobs to index.")
+            logger.debug("No new jobs to index.")
             return
 
         logger.info(f"Indexing {len(pending_jobs)} new jobs...")
@@ -119,11 +94,20 @@ class JobVectorService:
                     "job_id": job.job_id,
                     "company_id": job.company_id,
                     "title": job.title,
+                    "city": job.location_city,
+                    "country": job.location_country,
+                    "type": job.location_type,
+                    "employment_type": job.employment_type,
+                    "salary_min": job.salary_min,
+                    "salary_max": job.salary_max,
+                    "salary_currency": job.salary_currency,
+                    "status": job.status,
+                    "posted_date": job.posted_date,
                 }
 
                 doc = Document(page_content=text_content, metadata=metadata)
 
-                self.vector_store.add_documents([doc], ids=[job.job_id])
+                self.qdrant.add_documents([doc], ids=[job.job_id])
 
                 job.is_indexed = True
 
@@ -131,16 +115,13 @@ class JobVectorService:
                 logger.error(f"Failed to index job {job.job_id}: {e}")
 
         db.commit()
-        logger.info("Indexing complete.")
+        logger.success(f"Indexed {len(pending_jobs)} new jobs.")
 
-    def search_jobs(self, query: str, limit: int = 10) -> list[str]:
-        if not self.vector_store or not query:
-            return []
-
-        results = self.vector_store.similarity_search(query, k=limit)
+    def search_jobs(self, query: str, limit: int) -> list[int]:
+        results = self.qdrant.similarity_search(query, k=limit)
         return [res.metadata["job_id"] for res in results]
 
-    def recommend_jobs_by_skills(self, skills: list[str], limit: int = 10) -> list[str]:
+    def recommend_jobs_by_skills(self, skills: list[str], limit: int) -> list[int]:
         if not skills:
             return []
 
