@@ -5,7 +5,6 @@
 
 import React, { useState, memo, useCallback } from 'react';
 import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface FormInputProps {

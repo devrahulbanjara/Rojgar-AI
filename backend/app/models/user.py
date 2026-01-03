@@ -1,14 +1,18 @@
-from typing import Optional, List
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
-from sqlalchemy import String, Boolean, DateTime, ForeignKey
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
 
+if TYPE_CHECKING:
+    from .candidate import CandidateProfile
+    from .company import CompanyProfile
+
 
 def utc_now():
-    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
     return datetime.now(UTC).replace(tzinfo=None)
 
 
@@ -19,25 +23,41 @@ class UserRole(str, Enum):
 
 class User(Base):
     __tablename__ = "user"
-    
+
     user_id: Mapped[str] = mapped_column(String, primary_key=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    picture: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    picture: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    password: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    
+    password: Mapped[str | None] = mapped_column(String, nullable=True)
+
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    role: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
-    
+    role: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+    )
+
     # Relationships
-    google_account: Mapped[Optional["UserGoogle"]] = relationship("UserGoogle", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    candidate_profile: Mapped[Optional["CandidateProfile"]] = relationship("CandidateProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    company_profile: Mapped[Optional["CompanyProfile"]] = relationship("CompanyProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    
+    google_account: Mapped[Optional["UserGoogle"]] = relationship(
+        "UserGoogle", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    candidate_profile: Mapped[Optional["CandidateProfile"]] = relationship(
+        "CandidateProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    company_profile: Mapped[Optional["CompanyProfile"]] = relationship(
+        "CompanyProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
     @property
     def id(self):
         return self.user_id
@@ -49,9 +69,10 @@ class User(Base):
 
 class UserGoogle(Base):
     __tablename__ = "user_google"
-    
-    user_google_id: Mapped[str] = mapped_column(String, primary_key=True)
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("user.user_id"), unique=True, nullable=False)
-    
-    user: Mapped["User"] = relationship("User", back_populates="google_account")
 
+    user_google_id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String, ForeignKey("user.user_id"), unique=True, nullable=False
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="google_account")

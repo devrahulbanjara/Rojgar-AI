@@ -9,12 +9,13 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/constants";
 import { Loader2, Award } from "lucide-react";
+import type { ResumeCertificationResponse } from "@/types/resume";
 
 interface CertificationFormProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     resumeId: string;
-    initialData?: any;
+    initialData?: ResumeCertificationResponse;
     onSuccess: () => void;
 }
 

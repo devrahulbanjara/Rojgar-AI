@@ -10,10 +10,9 @@ import {
 
 const API_URL = `${API_CONFIG.baseUrl}/api/v1`;
 
-// Create axios instance with cookie support
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Send cookies with requests
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -47,7 +46,7 @@ export const resumeService = {
 
   // --- Sub-Resources (Example: Experience) ---
 
-  async addExperience(resumeId: string, data: WorkExperienceBase): Promise<any> {
+  async addExperience(resumeId: string, data: WorkExperienceBase): Promise<unknown> {
     const response = await api.post(`/resumes/${resumeId}/experience`, data);
     return response.data;
   },

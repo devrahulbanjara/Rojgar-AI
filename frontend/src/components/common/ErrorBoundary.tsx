@@ -1,9 +1,5 @@
-/**
- * Error Boundary Component
- * Catches and handles React errors gracefully
- */
-
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import Link from 'next/link';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
@@ -47,12 +43,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
       return (
         <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
           <Card className="w-full max-w-md">
@@ -65,9 +59,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <CardContent className="space-y-4">
               <div className="text-center">
                 <p className="text-muted-foreground">
-                  We're sorry, but something unexpected happened. Please try reloading the page.
+                  We&apos;re sorry, but something unexpected happened. Please try reloading the page.
                 </p>
-                
+
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <details className="mt-4 text-left">
                     <summary className="cursor-pointer text-sm font-medium">
@@ -80,7 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   </details>
                 )}
               </div>
-              
+
               <div className="flex gap-2">
                 <Button onClick={this.handleReload} className="flex-1">
                   <RefreshCw className="h-4 w-4 mr-2" />
@@ -90,14 +84,14 @@ export class ErrorBoundary extends Component<Props, State> {
                   Try Again
                 </Button>
               </div>
-              
+
               <div className="text-center">
-                <a
+                <Link
                   href="/"
                   className="text-sm text-primary hover:underline"
                 >
                   Return to {APP_CONFIG.name} Home
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>

@@ -19,20 +19,20 @@ export default function Signup() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [formState, formActions] = useForm<{
     name: string;
     email: string;
     password: string;
     confirmPassword: string;
-    userType: string;
+    userType: UserType;
   }>({
-    initialValues: { 
+    initialValues: {
       name: '',
       email: '',
       password: '',
       confirmPassword: '',
-      userType: USER_TYPES.RECRUITER
+      userType: USER_TYPES.RECRUITER as UserType
     },
     validationRules: {
       name: [validateName],
@@ -40,11 +40,10 @@ export default function Signup() {
       password: [validatePassword],
     },
   });
-  
+
   const { values, errors } = formState;
   const { handleChange, handleSubmit, setFieldError } = formActions;
 
-  // Manual validation for confirmPassword
   useEffect(() => {
     if (values.confirmPassword) {
       if (!values.confirmPassword) {
@@ -57,11 +56,10 @@ export default function Signup() {
     }
   }, [values.password, values.confirmPassword, setFieldError]);
 
-  // Set user type from URL parameter and check for auth errors
   const handleSearchParams = (searchParams: URLSearchParams) => {
     const typeParam = searchParams.get('type');
     if (typeParam === 'candidate' || typeParam === 'recruiter') {
-      handleChange('userType', typeParam);
+      handleChange('userType', typeParam as UserType);
     }
 
     const error = searchParams.get('error');
@@ -84,14 +82,13 @@ export default function Signup() {
         confirmPassword: formValues.confirmPassword,
         userType: formValues.userType as UserType,
       });
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Signup failed. Please try again.';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Signup failed. Please try again.';
       setFieldError('email', errorMessage);
     }
   };
 
   const handleGoogleSuccess = () => {
-    // Google signup initiated
   };
 
   const handleGoogleError = (error: string) => {
@@ -165,11 +162,10 @@ export default function Signup() {
                     value={values.name}
                     onChange={(e) => handleChange('name', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                      errors.name
+                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.name
                         ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
                         : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
-                    }`}
+                      }`}
                   />
                   {errors.name && (
                     <p className="text-xs text-[#DC2626] flex items-center gap-1">
@@ -192,11 +188,10 @@ export default function Signup() {
                     value={values.email}
                     onChange={(e) => handleChange('email', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                      errors.email
+                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.email
                         ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
                         : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
-                    }`}
+                      }`}
                   />
                   {errors.email && (
                     <p className="text-xs text-[#DC2626] flex items-center gap-1">
@@ -220,11 +215,10 @@ export default function Signup() {
                       value={values.password}
                       onChange={(e) => handleChange('password', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                        errors.password
+                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.password
                           ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
                           : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
-                      }`}
+                        }`}
                     />
                     <button
                       type="button"
@@ -263,11 +257,10 @@ export default function Signup() {
                       value={values.confirmPassword}
                       onChange={(e) => handleChange('confirmPassword', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                        errors.confirmPassword
+                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${errors.confirmPassword
                           ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
                           : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
-                      }`}
+                        }`}
                     />
                     <button
                       type="button"

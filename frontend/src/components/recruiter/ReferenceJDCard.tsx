@@ -1,7 +1,3 @@
-/**
- * ReferenceJDCard - Clean, minimal card for reference job descriptions
- */
-
 import React from 'react';
 import { Sparkles, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -87,4 +83,3 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
         </div>
     );
 }
-

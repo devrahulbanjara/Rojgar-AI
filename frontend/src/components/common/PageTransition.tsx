@@ -1,8 +1,3 @@
-/**
- * PageTransition Component
- * Provides smooth page transitions for navigation
- */
-
 import React, { useEffect, useState, memo } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -20,7 +15,6 @@ export const PageTransition = memo<PageTransitionProps>(({
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Trigger animation on mount
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 50);
@@ -32,8 +26,8 @@ export const PageTransition = memo<PageTransitionProps>(({
     <div
       className={cn(
         'transition-all duration-200 cubic-bezier(0.6, 0, 0.2, 1)',
-        isVisible 
-          ? 'opacity-100 translate-y-0' 
+        isVisible
+          ? 'opacity-100 translate-y-0'
           : 'opacity-0 translate-y-2',
         className
       )}

@@ -1,8 +1,3 @@
-/**
- * SkeletonLoader Component
- * Provides smooth skeleton loading animations for various content types
- */
-
 import React from 'react';
 import { cn } from '../../lib/utils';
 
@@ -22,7 +17,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   lines = 1
 }) => {
   const baseClasses = 'animate-pulse bg-muted rounded';
-  
+
   const variantClasses = {
     text: 'h-4 w-full',
     circular: 'rounded-full',
@@ -44,7 +39,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
             className={cn(
               baseClasses,
               variantClasses[variant],
-              index === lines - 1 && 'w-3/4' // Last line is shorter
+              index === lines - 1 && 'w-3/4'
             )}
             style={index === lines - 1 ? { ...style, width: '75%' } : style}
           />
@@ -65,7 +60,6 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   );
 };
 
-// Pre-built skeleton components for common use cases
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => (
   <div className={cn('p-6 space-y-4', className)}>
     <div className="flex items-center space-x-4">

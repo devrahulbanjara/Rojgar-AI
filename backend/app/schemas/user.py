@@ -1,12 +1,8 @@
-from typing import Optional
 from datetime import datetime
-from enum import Enum
+
 from pydantic import BaseModel, ConfigDict
 
-
-class UserRole(str, Enum):
-    CANDIDATE = "candidate"
-    RECRUITER = "recruiter"
+from app.models.user import UserRole
 
 
 class SignupRequest(BaseModel):
@@ -14,16 +10,16 @@ class SignupRequest(BaseModel):
     password: str
     name: str
     role: UserRole
-    picture: Optional[str] = None
+    picture: str | None = None
 
 
 class CreateUserRequest(BaseModel):
     email: str
     name: str
-    password: Optional[str] = None
-    google_id: Optional[str] = None
-    picture: Optional[str] = None
-    role: Optional[UserRole] = None
+    password: str | None = None
+    google_id: str | None = None
+    picture: str | None = None
+    role: UserRole | None = None
 
 
 class LoginRequest(BaseModel):
@@ -36,7 +32,7 @@ class GoogleUserInfo(BaseModel):
     id: str
     email: str
     name: str
-    picture: Optional[str] = None
+    picture: str | None = None
     verified_email: bool
 
 
@@ -49,12 +45,12 @@ class UserResponse(BaseModel):
 
     id: str
     email: str
-    name: Optional[str] = None
-    picture: Optional[str] = None
-    google_id: Optional[str] = None
-    role: Optional[UserRole] = None
+    name: str | None = None
+    picture: str | None = None
+    google_id: str | None = None
+    role: UserRole | None = None
     is_active: bool
-    company_id: Optional[str] = None
+    company_id: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -10,12 +10,13 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/constants";
 import { Loader2, Briefcase } from "lucide-react";
+import type { ResumeWorkExperienceResponse } from "@/types/resume";
 
 interface ExperienceFormProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     resumeId: string;
-    initialData?: any;
+    initialData?: ResumeWorkExperienceResponse;
     onSuccess: () => void;
 }
 

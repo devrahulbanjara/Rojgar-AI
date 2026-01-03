@@ -11,7 +11,6 @@ interface SheetProps {
 }
 
 export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
-    // Prevent body scroll when open
     useEffect(() => {
         if (open) {
             document.body.style.overflow = 'hidden';
@@ -25,7 +24,6 @@ export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
 
     if (!open) return null;
 
-    // Use portal to render at document body level (outside sidebar)
     const content = (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Very subtle backdrop blur - covers entire viewport */}

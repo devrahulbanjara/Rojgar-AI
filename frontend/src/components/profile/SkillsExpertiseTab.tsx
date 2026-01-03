@@ -3,10 +3,10 @@ import { profileService } from '../../services/profileService';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Settings, Plus, X, Award, Info, Pencil } from 'lucide-react';
+import { Settings, Plus, X, Award, Pencil, CheckCircle2 } from 'lucide-react';
 import type { Skill, Certification, SkillCreate, CertificationCreate } from '../../types/profile';
 import { toast } from 'sonner';
-import { queryClient, clearQueryCache } from '../../lib/queryClient';
+import { queryClient } from '../../lib/queryClient';
 
 // Helper function to invalidate job recommendations cache when skills change
 const invalidateRecommendationsCache = () => {
@@ -20,7 +20,7 @@ const invalidateRecommendationsCache = () => {
       if (cached) {
         const cacheData = JSON.parse(cached);
         // Remove recommendation-related entries
-        const newCache: Record<string, any> = {};
+        const newCache: Record<string, unknown> = {};
         Object.entries(cacheData).forEach(([key, value]) => {
           if (!key.includes('jobs') && !key.includes('recommendations')) {
             newCache[key] = value;
@@ -28,7 +28,7 @@ const invalidateRecommendationsCache = () => {
         });
         localStorage.setItem(cacheKey, JSON.stringify(newCache));
       }
-    } catch (e) {
+    } catch {
       // Ignore errors
     }
   }
@@ -88,7 +88,8 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
       });
       setIsAddingSkill(false);
       setEditingSkillId(null);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to save skill.');
     }
   };
@@ -110,7 +111,7 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
         setIsAddingSkill(false);
         setEditingSkillId(null);
       }
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to delete skill.');
     }
   };
@@ -157,7 +158,8 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
       });
       setIsAddingCert(false);
       setEditingCertId(null);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } } };
       toast.error(error.response?.data?.detail || 'Failed to save certification.');
     }
   };
@@ -186,7 +188,7 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
         setIsAddingCert(false);
         setEditingCertId(null);
       }
-    } catch (error: any) {
+    } catch {
       toast.error('Failed to delete certification.');
     }
   };
@@ -218,11 +220,16 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
 
       <div className="space-y-8">
         {/* Skills Section */}
-        <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#3056F5]" />
-              <h4 className="text-lg font-semibold text-[#0F172A]">Skills</h4>
+        <div className="bg-white rounded-2xl p-8 border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+                <Settings className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-[#0F172A]">Skills</h4>
+                <p className="text-sm text-[#64748B]">Your technical competencies</p>
+              </div>
             </div>
             {!isAddingSkill && (
               <Button
@@ -231,7 +238,7 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
                   setSkillForm({ skill_name: '' });
                   setIsAddingSkill(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 Add Skill
@@ -241,31 +248,33 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
 
           {/* Add/Edit Skill Form */}
           {isAddingSkill && (
-            <form onSubmit={handleAddSkill} className="mb-6 p-4 bg-white rounded-xl border border-[#E5E7EB]">
-              <h5 className="text-lg font-semibold text-[#0F172A] mb-4">
+            <form onSubmit={handleAddSkill} className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300">
+              <h5 className="text-lg font-bold text-[#0F172A] mb-6 flex items-center gap-2">
+                {editingSkillId ? <Pencil className="w-5 h-5 text-blue-600" /> : <Plus className="w-5 h-5 text-blue-600" />}
                 {editingSkillId ? 'Edit Skill' : 'Add New Skill'}
               </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="skill_name">Skill Name *</Label>
+                  <Label htmlFor="skill_name" className="font-semibold text-gray-700">Skill Name *</Label>
                   <Input
                     id="skill_name"
                     value={skillForm.skill_name}
                     onChange={(e) => setSkillForm(prev => ({ ...prev, skill_name: e.target.value }))}
                     placeholder="e.g., React, Python, Project Management"
+                    className="h-11 rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                     required
                   />
                 </div>
               </div>
-              <div className="flex gap-3 mt-4">
-                <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+                <Button type="submit" className="px-6 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl font-medium shadow-sm transition-all">
                   {editingSkillId ? 'Save Changes' : 'Add Skill'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCancelSkill}
-                  className="px-6 py-2 border-[#D1D5DB] rounded-xl"
+                  className="px-6 py-2.5 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-medium transition-all"
                 >
                   Cancel
                 </Button>
@@ -275,33 +284,44 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
 
           {/* Skills List - Pill Layout */}
           {skills.length === 0 ? (
-            <div className="text-center py-8 text-[#6B7280]">
-              <Settings className="w-12 h-12 mx-auto mb-4 text-[#9CA3AF]" />
-              <p className="text-lg font-medium mb-2">No skills added yet</p>
-              <p className="text-sm">Add your first skill to get started!</p>
+            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+                <Settings className="w-8 h-8 text-gray-400" />
+              </div>
+              <h5 className="text-lg font-semibold text-gray-900 mb-2">No skills added yet</h5>
+              <p className="text-gray-500 max-w-sm mx-auto">Add your key skills to help recruiters find you for relevant opportunities.</p>
+              {!isAddingSkill && (
+                <Button
+                  onClick={() => setIsAddingSkill(true)}
+                  variant="outline"
+                  className="mt-6 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 rounded-xl"
+                >
+                  Add Skill
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex flex-wrap gap-3">
               {skills.map((skill) => (
                 <div
                   key={skill.candidate_skill_id}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#F3F4F6] text-[#0F172A] rounded-full border border-[#E5E7EB] hover:bg-[#E5E7EB] transition-colors duration-200 group"
+                  className="group inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
                 >
-                  <span className="text-sm font-medium">{skill.skill_name}</span>
-                  <div className="flex items-center gap-1 border-l border-gray-300 pl-2 ml-2">
+                  <span className="font-semibold">{skill.skill_name}</span>
+                  <div className="flex items-center gap-1 border-l border-indigo-200 pl-2 ml-1 opacity-60 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditSkill(skill)}
-                      className="flex items-center justify-center w-5 h-5 text-[#6B7280] hover:text-[#3056F5] hover:bg-blue-100 rounded-full transition-colors duration-200"
+                      className="flex items-center justify-center w-6 h-6 text-indigo-600 hover:bg-white hover:shadow-sm rounded-lg transition-all duration-200"
                       title="Edit skill"
                     >
-                      <Pencil className="w-3 h-3" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteSkill(skill.candidate_skill_id)}
-                      className="flex items-center justify-center w-5 h-5 text-[#6B7280] hover:text-red-600 hover:bg-red-100 rounded-full transition-colors duration-200"
+                      className="flex items-center justify-center w-6 h-6 text-indigo-600 hover:text-red-600 hover:bg-white hover:shadow-sm rounded-lg transition-all duration-200"
                       title="Delete skill"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -311,11 +331,16 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
         </div>
 
         {/* Certifications Section */}
-        <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-[#3056F5]" />
-              <h4 className="text-lg font-semibold text-[#0F172A]">Certifications</h4>
+        <div className="bg-white rounded-2xl p-8 border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
+                <Award className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-[#0F172A]">Certifications</h4>
+                <p className="text-sm text-[#64748B]">Licenses and professional certifications</p>
+              </div>
             </div>
             {!isAddingCert && (
               <Button
@@ -332,7 +357,7 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
                   });
                   setIsAddingCert(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 Add Certification
@@ -342,96 +367,108 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
 
           {/* Add/Edit Certification Form */}
           {isAddingCert && (
-            <form onSubmit={handleAddCert} className="mb-6 p-4 bg-white rounded-xl border border-[#E5E7EB]">
-              <h5 className="text-lg font-semibold text-[#0F172A] mb-4">
+            <form onSubmit={handleAddCert} className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300">
+              <h5 className="text-lg font-bold text-[#0F172A] mb-6 flex items-center gap-2">
+                {editingCertId ? <Pencil className="w-5 h-5 text-amber-600" /> : <Plus className="w-5 h-5 text-amber-600" />}
                 {editingCertId ? 'Edit Certification' : 'Add New Certification'}
               </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="cert_name">Certification Name *</Label>
+                  <Label htmlFor="cert_name" className="font-semibold text-gray-700">Certification Name *</Label>
                   <Input
                     id="cert_name"
                     value={certForm.certification_name}
                     onChange={(e) => setCertForm(prev => ({ ...prev, certification_name: e.target.value }))}
                     placeholder="e.g., AWS Certified Solutions Architect"
+                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="issuing_body">Issuing Organization *</Label>
+                  <Label htmlFor="issuing_body" className="font-semibold text-gray-700">Issuing Organization *</Label>
                   <Input
                     id="issuing_body"
                     value={certForm.issuing_body}
                     onChange={(e) => setCertForm(prev => ({ ...prev, issuing_body: e.target.value }))}
                     placeholder="e.g., Amazon Web Services"
+                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="issue_date">Issue Date</Label>
+                  <Label htmlFor="issue_date" className="font-semibold text-gray-700">Issue Date</Label>
                   <Input
                     id="issue_date"
                     type="date"
                     value={certForm.issue_date}
                     onChange={(e) => setCertForm(prev => ({ ...prev, issue_date: e.target.value }))}
+                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="expiration_date">Expiration Date</Label>
+                  <Label htmlFor="expiration_date" className="font-semibold text-gray-700">Expiration Date</Label>
                   <Input
                     id="expiration_date"
                     type="date"
                     value={certForm.expiration_date}
                     onChange={(e) => setCertForm(prev => ({ ...prev, expiration_date: e.target.value }))}
+                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
                     disabled={certForm.does_not_expire}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="credential_id">Credential ID</Label>
+                  <Label htmlFor="credential_id" className="font-semibold text-gray-700">Credential ID</Label>
                   <Input
                     id="credential_id"
                     value={certForm.credential_id}
                     onChange={(e) => setCertForm(prev => ({ ...prev, credential_id: e.target.value }))}
                     placeholder="Optional"
+                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="credential_url">Credential URL</Label>
+                  <Label htmlFor="credential_url" className="font-semibold text-gray-700">Credential URL</Label>
                   <Input
                     id="credential_url"
                     value={certForm.credential_url}
                     onChange={(e) => setCertForm(prev => ({ ...prev, credential_url: e.target.value }))}
                     placeholder="Optional (https://...)"
+                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-2 mt-4 map-2">
-                <input
-                  type="checkbox"
-                  id="does_not_expire"
-                  checked={certForm.does_not_expire}
-                  onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    setCertForm(prev => ({
-                      ...prev,
-                      does_not_expire: isChecked,
-                      expiration_date: isChecked ? '' : prev.expiration_date
-                    }));
-                  }}
-                  className="h-4 w-4 text-[#3056F5] border-gray-300 rounded focus:ring-[#3056F5]"
-                />
-                <Label htmlFor="does_not_expire">This certification does not expire</Label>
+                <div className="space-y-2 flex items-center pt-8">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        id="does_not_expire"
+                        checked={certForm.does_not_expire}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setCertForm(prev => ({
+                            ...prev,
+                            does_not_expire: isChecked,
+                            expiration_date: isChecked ? '' : prev.expiration_date
+                          }));
+                        }}
+                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-amber-500 checked:bg-amber-500 hover:border-amber-400"
+                      />
+                      <CheckCircle2 className="pointer-events-none absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                    </div>
+                    <span className="font-medium text-gray-700 group-hover:text-amber-600 transition-colors">This certification does not expire</span>
+                  </label>
+                </div>
               </div>
 
-              <div className="flex gap-3 mt-4">
-                <Button type="submit" className="px-6 py-2 bg-[#3056F5] text-white rounded-xl">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+                <Button type="submit" className="px-6 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl font-medium shadow-sm transition-all">
                   {editingCertId ? 'Save Changes' : 'Add Certification'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCancelCert}
-                  className="px-6 py-2 border-[#D1D5DB] rounded-xl"
+                  className="px-6 py-2.5 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-medium transition-all"
                 >
                   Cancel
                 </Button>
@@ -441,54 +478,68 @@ export function SkillsExpertiseTab({ skills: initialSkills, certifications: init
 
           {/* Certifications List */}
           {certifications.length === 0 ? (
-            <div className="text-center py-8 text-[#6B7280]">
-              <Award className="w-12 h-12 mx-auto mb-4 text-[#9CA3AF]" />
-              <p className="text-lg font-medium mb-2">No certifications added yet</p>
-              <p className="text-sm">Add your licenses and certifications here.</p>
+            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
+                <Award className="w-8 h-8 text-gray-400" />
+              </div>
+              <h5 className="text-lg font-semibold text-gray-900 mb-2">No certifications added yet</h5>
+              <p className="text-gray-500 max-w-sm mx-auto">Add your licenses and certifications to demonstrate your expertise.</p>
+              {!isAddingCert && (
+                <Button
+                  onClick={() => setIsAddingCert(true)}
+                  variant="outline"
+                  className="mt-6 border-amber-200 text-amber-600 hover:bg-amber-50 hover:border-amber-300 rounded-xl"
+                >
+                  Add Certification
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {certifications.map((cert) => (
                 <div
                   key={cert.candidate_certification_id}
-                  className="flex items-start justify-between p-4 bg-white border border-[#E5E7EB] rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
+                  className="group flex items-start justify-between p-5 bg-white border border-[#E5E7EB] rounded-xl hover:border-amber-200 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-[#EFF6FF] text-[#3056F5] rounded-lg">
+                    <div className="p-2 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-100 transition-colors">
                       <Award className="w-6 h-6" />
                     </div>
                     <div>
-                      <h5 className="text-lg font-semibold text-[#0F172A]">{cert.certification_name}</h5>
-                      <p className="text-[#475569]">{cert.issuing_body}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-[#6B7280]">
+                      <h5 className="text-lg font-bold text-[#0F172A]">{cert.certification_name}</h5>
+                      <p className="text-[#475569] font-medium">{cert.issuing_body}</p>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-[#64748B]">
                         {cert.issue_date && (
-                          <span>Issued: {new Date(cert.issue_date).toLocaleDateString()}</span>
+                          <span className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100">Issued: {new Date(cert.issue_date).toLocaleDateString()}</span>
                         )}
                         {cert.expiration_date && (
-                          <span>Expires: {new Date(cert.expiration_date).toLocaleDateString()}</span>
+                          <span className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100">Expires: {new Date(cert.expiration_date).toLocaleDateString()}</span>
                         )}
                         {cert.does_not_expire && (
-                          <span>No Expiration</span>
+                          <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> No Expiration
+                          </span>
                         )}
                       </div>
                       {cert.credential_url && (
-                        <a href={cert.credential_url} target="_blank" rel="noopener noreferrer" className="text-sm text-[#3056F5] hover:underline mt-1 block">
+                        <a href={cert.credential_url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#3056F5] hover:underline mt-2 inline-flex items-center gap-1">
                           Show Credential
+                          <Award className="w-3 h-3" />
                         </a>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
                       onClick={() => handleEditCert(cert)}
-                      className="p-2 text-[#6B7280] hover:text-[#3056F5] hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      className="p-2 text-[#64748B] hover:text-[#3056F5] hover:bg-blue-50 rounded-lg transition-colors duration-200"
                       title="Edit certification"
                     >
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleDeleteCert(cert.candidate_certification_id)}
-                      className="p-2 text-[#6B7280] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      className="p-2 text-[#64748B] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                       title="Delete certification"
                     >
                       <X className="w-5 h-5" />

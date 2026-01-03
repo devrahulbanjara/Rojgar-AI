@@ -104,4 +104,4 @@ __marimo__/
 
 backend/tests/test_resumes/
 .shared
-.cursorignore
+.cursor

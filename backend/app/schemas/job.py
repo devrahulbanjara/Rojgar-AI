@@ -1,69 +1,73 @@
-from typing import List, Optional, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel
+
 
 class CompanyResponse(BaseModel):
     id: str
     name: str
-    description: Optional[str] = None
-    location: Optional[str] = None
-    website: Optional[str] = None
-    industry: Optional[str] = None
-    founded_year: Optional[int] = None
+    description: str | None = None
+    location: str | None = None
+    website: str | None = None
+    industry: str | None = None
+    founded_year: int | None = None
 
     class Config:
         from_attributes = True
+
 
 class JobResponse(BaseModel):
     job_id: str
     id: str
     company_id: str
     job_description_id: str
-    
+
     title: str
-    department: Optional[str] = None
-    level: Optional[str] = None
-    
-    location: Optional[str] = None
-    location_city: Optional[str] = None
-    location_country: Optional[str] = None
+    department: str | None = None
+    level: str | None = None
+
+    location: str | None = None
+    location_city: str | None = None
+    location_country: str | None = None
     is_remote: bool = False
-    location_type: Optional[str] = None
-    
-    employment_type: Optional[str] = "Full-time"
-    
-    salary_min: Optional[int] = None
-    salary_max: Optional[int] = None
-    salary_currency: Optional[str] = "USD"
-    salary_range: Optional[Dict[str, Any]] = None
-    
+    location_type: str | None = None
+
+    employment_type: str | None = "Full-time"
+
+    salary_min: int | None = None
+    salary_max: int | None = None
+    salary_currency: str | None = "USD"
+    salary_range: dict[str, Any] | None = None
+
     status: str = "active"
-    posted_date: Optional[str] = None
-    application_deadline: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    
-    company: Optional[CompanyResponse] = None
-    company_name: Optional[str] = None
-    
-    description: Optional[str] = None
-    role_overview: Optional[str] = None
-    
-    skills: List[str] = []
-    required_skills: Optional[Dict[str, Any]] = None
-    
-    requirements: List[str] = []
-    benefits: List[str] = []
-    nice_to_have: List[str] = []
+    posted_date: str | None = None
+    application_deadline: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+    company: CompanyResponse | None = None
+    company_name: str | None = None
+
+    description: str | None = None
+    role_overview: str | None = None
+
+    skills: list[str] = []
+    required_skills: dict[str, Any] | None = None
+
+    requirements: list[str] = []
+    benefits: list[str] = []
+    nice_to_have: list[str] = []
     applicant_count: int = 0
     views_count: int = 0
     is_featured: bool = False
-    
+
     class Config:
         from_attributes = True
         populate_by_name = True
 
+
 class JobListResponse(BaseModel):
-    jobs: List[JobResponse]
+    jobs: list[JobResponse]
     total: int
     page: int
     limit: int
@@ -73,30 +77,66 @@ class JobListResponse(BaseModel):
 
 
 class JobCreate(BaseModel):
-    """Schema for creating a new job posting"""
     title: str
-    department: Optional[str] = None
-    level: Optional[str] = None
-    
-    # Job Description fields
-    description: Optional[str] = ""  # role_overview - optional for drafts
-    requiredSkillsAndExperience: Optional[List[str]] = []  # Will be stored as {"required_skills_experience": [...]} - optional for drafts
-    niceToHave: Optional[List[str]] = None  # Will be stored as {"nice_to_have": [...]}
-    benefits: Optional[List[str]] = None  # Will be stored as {"benefits": [...]} in offers
-    
-    # Location
-    locationCity: Optional[str] = None
-    locationCountry: Optional[str] = None
-    locationType: str = "On-site"  # Remote, On-site, Hybrid
-    employmentType: Optional[str] = None
-    
-    # Compensation
-    salaryMin: Optional[int] = None
-    salaryMax: Optional[int] = None
-    currency: Optional[str] = "NPR"
-    
-    # Dates
-    applicationDeadline: Optional[str] = None  # ISO date string
-    
-    # Status
-    status: Optional[str] = "active"  # "active", "draft", "expired"
+    department: str | None = None
+    level: str | None = None
+
+    description: str | None = ""
+    requiredSkillsAndExperience: list[str] | None = []
+    niceToHave: list[str] | None = None
+    benefits: list[str] | None = None
+
+    locationCity: str | None = None
+    locationCountry: str | None = None
+    locationType: str = "On-site"
+    employmentType: str | None = None
+
+    salaryMin: int | None = None
+    salaryMax: int | None = None
+    currency: str | None = "NPR"
+
+    applicationDeadline: str | None = None
+
+    status: str | None = "active"
+
+    mode: str = "manual"
+    raw_requirements: str | None = None
+
+
+class JobUpdate(BaseModel):
+    title: str | None = None
+    department: str | None = None
+    level: str | None = None
+
+    description: str | None = None
+    requiredSkillsAndExperience: list[str] | None = None
+    niceToHave: list[str] | None = None
+    benefits: list[str] | None = None
+
+    locationCity: str | None = None
+    locationCountry: str | None = None
+    locationType: str | None = None
+    employmentType: str | None = None
+
+    salaryMin: int | None = None
+    salaryMax: int | None = None
+    currency: str | None = None
+
+    applicationDeadline: str | None = None
+
+    status: str | None = None
+
+
+class JobDraftGenerateRequest(BaseModel):
+    title: str
+    raw_requirements: str
+    reference_jd: str | None = None
+
+
+class JobDraftResponse(BaseModel):
+    title: str
+    description: str
+    requiredSkillsAndExperience: list[str]
+    niceToHave: list[str]
+    benefits: list[str]
+    about_company: str | None = None

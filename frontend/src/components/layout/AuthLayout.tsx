@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { LogoLink } from '../common/Logo';
-import { ROUTES, ANIMATIONS } from '../../config/constants';
+import { ROUTES } from '../../config/constants';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -23,8 +23,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
   subtitle,
 }) => {
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8"
+    <div
+      className="min-h-screen flex items-center justify-center px-6 lg:px-8 py-6 sm:py-8"
       style={{ background: '#F9FAFB' }}
     >
       <motion.div
@@ -51,7 +51,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         </div>
 
         {/* Content Card */}
-        <div 
+        <div
           className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 border border-[#E5E7EB]"
           style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}
         >
@@ -60,8 +60,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
 
         {/* Back to home - Below Card */}
         <div className="text-center mt-4 sm:mt-6">
-          <Link 
-            href={ROUTES.HOME} 
+          <Link
+            href={ROUTES.HOME}
             className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-[#3056F5] hover:text-[#2B3CF5] transition-colors"
           >
             <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />

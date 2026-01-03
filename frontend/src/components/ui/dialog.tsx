@@ -1,8 +1,3 @@
-/**
- * Dialog Component
- * Modern modal dialog with smooth animations using Framer Motion
- */
-
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -84,7 +79,7 @@ const Dialog: React.FC<DialogProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/5 backdrop-blur-[3px]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden="true"
           />
@@ -98,11 +93,16 @@ const Dialog: React.FC<DialogProps> = ({
             transition={{ type: "spring", duration: 0.4, bounce: 0 }}
             className={cn(
               // Base styles
-              'relative z-50 w-full bg-white rounded-2xl shadow-2xl border border-gray-200',
+              'relative z-50 w-full bg-white border border-gray-200',
+              // Enhanced layered shadow - soft and diffused
+              'rounded-[20px]',
               // Default max width
               'max-w-lg',
               className
             )}
+            style={{
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.1)'
+            }}
             role="dialog"
             aria-modal="true"
           >

@@ -52,7 +52,7 @@ const tiers = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-16 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-[#F9FAFB]">
+    <section id="pricing" className="py-16 sm:py-24 lg:py-32 px-6 lg:px-8 bg-[#F9FAFB]">
       <div className="w-full max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -144,4 +144,3 @@ export function PricingSection() {
     </section>
   );
 }
-

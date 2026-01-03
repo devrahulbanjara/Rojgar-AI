@@ -1,5 +1,7 @@
 from typing import Any
 
+from langsmith import traceable
+
 from app.core import logger, settings
 from app.models.agents.shortlist import WorkflowState
 
@@ -7,6 +9,11 @@ from ..llm_service import get_llm
 from ..templates import DEGREE_MAPPER_PROMPT
 
 
+@traceable(
+    name="shortlist_evaluate_degree_node",
+    tags=["node:evaluate_degree", "shortlist"],
+    metadata={"node_type": "evaluate_degree", "purpose": "evaluate_qualification"},
+)
 def evaluate_degree(state: WorkflowState) -> dict[str, Any]:
     logger.info("Evaluating degrees")
     llm = get_llm()
