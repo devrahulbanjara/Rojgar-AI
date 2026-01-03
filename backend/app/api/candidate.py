@@ -18,6 +18,22 @@ def get_my_profile(
 ):
     profile = CandidateService.get_full_profile(db, user_id)
 
+    social_links = [
+        schemas.SocialLinkResponse.model_validate(item) for item in profile.social_links
+    ]
+    work_experiences = [
+        schemas.WorkExperienceResponse.model_validate(item)
+        for item in profile.work_experiences
+    ]
+    educations = [
+        schemas.EducationResponse.model_validate(item) for item in profile.educations
+    ]
+    certifications = [
+        schemas.CertificationResponse.model_validate(item)
+        for item in profile.certifications
+    ]
+    skills = [schemas.SkillResponse.model_validate(item) for item in profile.skills]
+
     return schemas.CandidateProfileFullResponse(
         profile_id=profile.profile_id,
         user_id=profile.user_id,
@@ -29,11 +45,11 @@ def get_my_profile(
         location_country=profile.location_country,
         professional_headline=profile.professional_headline,
         professional_summary=profile.professional_summary,
-        social_links=profile.social_links,
-        work_experiences=profile.work_experiences,
-        educations=profile.educations,
-        certifications=profile.certifications,
-        skills=profile.skills,
+        social_links=social_links,
+        work_experiences=work_experiences,
+        educations=educations,
+        certifications=certifications,
+        skills=skills,
     )
 
 
@@ -46,7 +62,7 @@ def update_my_profile(
     db: Session = Depends(get_db),
 ):
     CandidateService.update_basic_info(db, user_id, data)
-    return get_my_profile(user_id, db)
+    return get_my_profile(request, user_id, db)
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
@@ -183,3 +199,37 @@ def update_certification(
     db: Session = Depends(get_db),
 ):
     return CandidateService.update_certification(db, user_id, item_id, data)
+
+
+@router.post("/social-links", response_model=schemas.SocialLinkResponse)
+@limiter.limit("5/minute")
+def add_social_link(
+    request: Request,
+    data: schemas.SocialLinkBase,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return CandidateService.add_social_link(db, user_id, data)
+
+
+@router.delete("/social-links/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
+def delete_social_link(
+    request: Request,
+    item_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    CandidateService.delete_social_link(db, user_id, item_id)
+
+
+@router.patch("/social-links/{item_id}", response_model=schemas.SocialLinkResponse)
+@limiter.limit("5/minute")
+def update_social_link(
+    request: Request,
+    item_id: str,
+    data: schemas.SocialLinkBase,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return CandidateService.update_social_link(db, user_id, item_id, data)

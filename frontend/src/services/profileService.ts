@@ -3,7 +3,7 @@
  * API calls for Candidate Profile management
  */
 
-import { api } from '../lib/api';
+import { api } from "../lib/api";
 import type {
   CandidateProfile,
   CandidateProfileUpdate,
@@ -14,8 +14,8 @@ import type {
   SkillCreate,
   SkillUpdate,
   CertificationCreate,
-  CertificationUpdate
-} from '../types/profile';
+  CertificationUpdate,
+} from "../types/profile";
 
 export const profileService = {
   // --- Core Profile (Unified GET) ---
@@ -82,5 +82,18 @@ export const profileService = {
 
   async updateCertification(id: string, data: CertificationUpdate) {
     return api.candidate.certifications.update(id, data);
-  }
+  },
+
+  // Social Links
+  async addSocialLink(data: { type: string; url: string }) {
+    return api.candidate.socialLinks.add(data);
+  },
+
+  async deleteSocialLink(id: string) {
+    return api.candidate.socialLinks.delete(id);
+  },
+
+  async updateSocialLink(id: string, data: { type: string; url: string }) {
+    return api.candidate.socialLinks.update(id, data);
+  },
 };

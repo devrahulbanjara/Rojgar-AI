@@ -31,9 +31,11 @@ def get_recommendations(
     user_id: str,
     page: int = 1,
     limit: int = 10,
+    employment_type: str | None = None,
+    location_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-    """Get personalized job recommendations based on user skills, fallback to latest jobs."""
+    """Get personalized job recommendations based on user skill or fallback to latest jobs if user skills is empty."""
     candidate = (
         db.query(CandidateProfile).filter(CandidateProfile.user_id == user_id).first()
     )
@@ -60,6 +62,11 @@ def get_recommendations(
     if not all_jobs:
         all_jobs = get_latest_jobs(db, limit=200)
 
+    if employment_type:
+        all_jobs = [job for job in all_jobs if job.employment_type == employment_type]
+    if location_type:
+        all_jobs = [job for job in all_jobs if job.location_type == location_type]
+
     total = len(all_jobs)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
@@ -85,6 +92,8 @@ def search_jobs(
     q: str = "",
     page: int = 1,
     limit: int = 10,
+    employment_type: str | None = None,
+    location_type: str | None = None,
     db: Session = Depends(get_db),
 ):
     all_jobs = []
@@ -104,6 +113,11 @@ def search_jobs(
 
     if not all_jobs:
         all_jobs = get_latest_jobs(db, limit=200)
+
+    if employment_type:
+        all_jobs = [job for job in all_jobs if job.employment_type == employment_type]
+    if location_type:
+        all_jobs = [job for job in all_jobs if job.location_type == location_type]
 
     total = len(all_jobs)
     start_idx = (page - 1) * limit
@@ -137,7 +151,7 @@ def create_job(
     if not company:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found for this user",
+            detail="Company profile not found",
         )
 
     company_id = company.company_id
@@ -164,7 +178,7 @@ def create_job(
 
     job_description = JobDescription(
         job_description_id=job_description_id,
-        role_overview=job_data.description or "",  # Allow empty for drafts
+        role_overview=job_data.description or "",
         required_skills_experience=required_skills_experience_dict,
         nice_to_have=nice_to_have_dict,
         offers=offers_dict,

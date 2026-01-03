@@ -1,12 +1,8 @@
 from datetime import datetime
-from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
-
-class UserRole(str, Enum):
-    CANDIDATE = "candidate"
-    RECRUITER = "recruiter"
+from app.models.user import UserRole
 
 
 class SignupRequest(BaseModel):
