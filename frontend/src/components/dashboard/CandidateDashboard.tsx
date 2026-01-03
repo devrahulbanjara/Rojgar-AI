@@ -3,7 +3,6 @@ import { formatDistanceToNow } from "date-fns";
 import { STATUS_CONFIG, COLUMN_MAPPING } from "@/utils/statusStyles";
 import { Loader2, Briefcase, Video, Trophy, MapPin, CalendarClock } from "lucide-react";
 
-// Define Types locally
 interface JobSummary {
     job_id: string;
     title: string;
@@ -53,7 +52,6 @@ export default function CandidateDashboard() {
         }
     };
 
-    // Group applications into columns
     const columns: Record<string, ApplicationResponse[]> = {
         Applied: [],
         Interviewing: [],

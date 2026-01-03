@@ -1,8 +1,3 @@
-/**
- * Utility functions for User Avatars
- */
-
-// Paste-like colors for avatars
 const AVATAR_COLORS = [
     'bg-red-100 text-red-700',
     'bg-orange-100 text-orange-700',
@@ -23,11 +18,6 @@ const AVATAR_COLORS = [
     'bg-rose-100 text-rose-700'
 ];
 
-/**
- * Deterministically generates a consistent pastel color based on the input string (name).
- * @param name - The user's name or string to hash.
- * @returns A Tailwind CSS class string for background and text color.
- */
 export function getAvatarColor(name: string | null | undefined): string {
     if (!name) return 'bg-slate-100 text-slate-700'; // Default fallback
 
@@ -40,12 +30,7 @@ export function getAvatarColor(name: string | null | undefined): string {
     return AVATAR_COLORS[index];
 }
 
-/**
- * Extracts initials from a full name.
- * e.g., "Rahul Dev Banjara" -> "RB"
- * @param name
- * @returns Initials string (max 2 chars)
- */
+
 export function getInitials(name: string | null | undefined): string {
     if (!name) return "??";
 
@@ -54,6 +39,5 @@ export function getInitials(name: string | null | undefined): string {
         return parts[0].substring(0, 2).toUpperCase();
     }
 
-    // First and Last name
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }

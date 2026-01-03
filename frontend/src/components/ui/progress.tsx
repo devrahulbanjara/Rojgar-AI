@@ -1,8 +1,3 @@
-/**
- * Progress Component
- * A progress bar component for displaying completion percentages
- */
-
 import * as React from "react"
 import { cn } from "../../lib/utils"
 

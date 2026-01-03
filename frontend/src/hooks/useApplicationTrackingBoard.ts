@@ -1,8 +1,3 @@
-/**
- * Application Tracking Board Hook
- * Manages application tracking data for candidates
- */
-
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
@@ -14,14 +9,12 @@ const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard
   try {
     const response = await apiClient.get<ApplicationTrackingBoard>('/api/v1/applications/tracking-board');
 
-    // Backend now returns data directly as { applied: [], interviewing: [], outcome: [] }
     if (response && typeof response === 'object') {
       if ('applied' in response && 'interviewing' in response && 'outcome' in response) {
         return response as ApplicationTrackingBoard;
       }
     }
 
-    // Fallback to empty board
     return { applied: [], interviewing: [], outcome: [] };
   } catch (error) {
     throw error;

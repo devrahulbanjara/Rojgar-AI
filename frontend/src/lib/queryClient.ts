@@ -1,54 +1,35 @@
-/**
- * React Query Client Configuration
- * Centralized configuration for TanStack Query with localStorage persistence
- */
-
 import { QueryClient } from '@tanstack/react-query';
 
-// Cache key for localStorage
 const CACHE_KEY = 'convexhire-query-cache';
 
-// Create a client with default options
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Time in milliseconds that data remains fresh
-      staleTime: 10 * 60 * 1000, // 10 minutes (increased for better caching)
-      // Time in milliseconds that unused/inactive cache data remains in memory
-      gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
-      // Retry failed requests
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       retry: (failureCount, error: unknown) => {
-        // Don't retry on 4xx errors (client errors)
         const apiError = error as { status?: number };
         if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
           return false;
         }
-        // Retry up to 3 times for other errors
         return failureCount < 3;
       },
-      // Refetch on window focus
       refetchOnWindowFocus: false,
-      // Refetch on reconnect
       refetchOnReconnect: true,
     },
     mutations: {
-      // Retry failed mutations
       retry: (failureCount, error: unknown) => {
-        // Don't retry on 4xx errors (client errors)
         const apiError = error as { status?: number };
         if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
           return false;
         }
-        // Retry up to 2 times for other errors
         return failureCount < 2;
       },
     },
   },
 });
 
-/**
- * Persist cache to localStorage
- */
+
 export function persistQueryCache() {
   if (typeof window === 'undefined') return;
 
@@ -58,7 +39,6 @@ export function persistQueryCache() {
   const cacheData: Record<string, { data: unknown; timestamp: number }> = {};
 
   queries.forEach((query) => {
-    // Only cache successful queries with data
     if (query.state.status === 'success' && query.state.data) {
       const key = JSON.stringify(query.queryKey);
       cacheData[key] = {
@@ -71,14 +51,10 @@ export function persistQueryCache() {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
   } catch (e) {
-    // localStorage might be full or disabled
     console.warn('Failed to persist query cache:', e);
   }
 }
 
-/**
- * Restore cache from localStorage
- */
 export function restoreQueryCache() {
   if (typeof window === 'undefined') return;
 
@@ -91,47 +67,37 @@ export function restoreQueryCache() {
     const now = Date.now();
 
     Object.entries(cacheData).forEach(([key, { data, timestamp }]) => {
-      // Skip expired cache entries
       if (now - timestamp > maxAge) return;
 
       try {
         const queryKey = JSON.parse(key);
         queryClient.setQueryData(queryKey, data);
       } catch {
-        // Invalid cache entry
       }
     });
   } catch {
-    // Invalid cache data, clear it
     localStorage.removeItem(CACHE_KEY);
   }
 }
 
-/**
- * Clear the persisted cache
- */
 export function clearQueryCache() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(CACHE_KEY);
   queryClient.clear();
 }
 
-// Query keys factory for consistent key management
 export const queryKeys = {
-  // Authentication related queries
   auth: {
     user: ['auth', 'user'] as const,
     login: ['auth', 'login'] as const,
     logout: ['auth', 'logout'] as const,
     signup: ['auth', 'signup'] as const,
   },
-  // User related queries
   users: {
     all: ['users'] as const,
     detail: (id: string) => ['users', id] as const,
     profile: (id: string) => ['users', id, 'profile'] as const,
   },
-  // Job related queries
   jobs: {
     all: ['jobs'] as const,
     list: (page: number, limit: number) => ['jobs', 'list', page, limit] as const,
@@ -140,7 +106,6 @@ export const queryKeys = {
     search: (params: Record<string, unknown>) => ['jobs', 'search', params] as const,
     detail: (id: string) => ['jobs', id] as const,
   },
-  // Application related queries
   applications: {
     all: ['applications'] as const,
     detail: (id: string) => ['applications', id] as const,
@@ -148,7 +113,6 @@ export const queryKeys = {
     byJob: (jobId: string) => ['applications', 'job', jobId] as const,
     trackingBoard: ['applications', 'tracking-board'] as const,
   },
-  // Dashboard related queries
   dashboard: {
     stats: ['dashboard', 'stats'] as const,
     activity: ['dashboard', 'activity'] as const,

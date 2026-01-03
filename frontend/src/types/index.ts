@@ -1,24 +1,17 @@
-/**
- * TypeScript Type Definitions
- * Centralized type definitions for type safety and better IDE support
- */
-
-// User Types
-export type UserType = 'recruiter' | 'candidate';
+export type UserType = "recruiter" | "candidate";
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  userType?: UserType; // For compatibility
-  role?: UserType; // Backend uses 'role'
-  picture?: string; // For Google OAuth profile pictures
-  company_id?: string; // Company ID for recruiters
+  userType?: UserType;
+  role?: UserType;
+  picture?: string;
+  company_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Authentication Types
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -39,11 +32,10 @@ export interface AuthResponse {
   refreshToken?: string;
 }
 
-// Form Types
 export interface FormField {
   id: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'select';
+  type: "text" | "email" | "password" | "select";
   placeholder?: string;
   required?: boolean;
   validation?: (value: string) => string | null;
@@ -56,7 +48,6 @@ export interface FormState {
   isValid: boolean;
 }
 
-// Component Props Types
 export interface PageProps {
   className?: string;
   children?: React.ReactNode;
@@ -68,14 +59,15 @@ export interface AuthPageProps extends PageProps {
   redirectTo?: string;
 }
 
-// Hook Return Types
 export interface UseFormReturn {
   values: Record<string, string>;
   errors: Record<string, string>;
   isSubmitting: boolean;
   isValid: boolean;
   handleChange: (name: string, value: string) => void;
-  handleSubmit: (onSubmit: (values: Record<string, string>) => Promise<void>) => (e: React.FormEvent) => void;
+  handleSubmit: (
+    onSubmit: (values: Record<string, string>) => Promise<void>,
+  ) => (e: React.FormEvent) => void;
   reset: () => void;
   setFieldError: (name: string, error: string) => void;
 }
@@ -88,7 +80,6 @@ export interface UseAuthReturn {
   signup: (data: SignupData) => Promise<void>;
   logout: () => void;
   refetchUser?: () => void;
-  // Additional error states for granular control
   loginError?: unknown;
   signupError?: unknown;
   logoutError?: unknown;
@@ -97,20 +88,17 @@ export interface UseAuthReturn {
   isLogoutPending?: boolean;
 }
 
-// Error Types
 export interface AppError {
   code: string;
   message: string;
   details?: unknown;
 }
 
-// Loading States
 export interface LoadingState {
   isLoading: boolean;
   message?: string;
 }
 
-// API Response Types
 export interface ApiResponse<T = unknown> {
   success?: boolean;
   message?: string;
@@ -119,10 +107,8 @@ export interface ApiResponse<T = unknown> {
   meta?: Record<string, unknown>;
 }
 
-// For endpoints that return data directly (standardized format)
 export type DirectApiResponse<T = unknown> = T;
 
-// Dashboard Types (for future expansion)
 export interface DashboardStats {
   totalApplications?: number;
   activeJobs?: number;
@@ -138,10 +124,8 @@ export interface DashboardData {
   recentActivity: unknown[];
 }
 
-// Re-export job and application types
-export * from './job';
-export * from './application';
+export * from "./job";
+export * from "./application";
 
-// Re-export profile and resume types
-export * from './profile';
-export * from './resume';
+export * from "./profile";
+export * from "./resume";

@@ -1,8 +1,3 @@
-/**
- * Dialog Component
- * Modern modal dialog with smooth animations using Framer Motion
- */
-
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';

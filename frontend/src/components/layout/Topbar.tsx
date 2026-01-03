@@ -33,54 +33,64 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
     <header
       className="fixed top-0 left-0 right-0 z-50 h-[72px] border-b border-[#E5E7EB] transition-all duration-300"
       style={{
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 4px 20px -5px rgba(48, 86, 245, 0.05)',
       }}
     >
-      <div className="flex items-center justify-between h-full px-8">
+      <div className="flex items-center justify-between h-full px-8 max-w-[1600px] mx-auto">
         {/* Left: Menu + Logo */}
         <div className="flex items-center gap-6">
           {onMenuClick && (
             <button
               onClick={onMenuClick}
-              className="lg:hidden p-2 rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              className="lg:hidden p-2.5 rounded-xl hover:bg-blue-50 text-[#475569] hover:text-[#3056F5] transition-all duration-200"
               aria-label="Toggle menu"
             >
-              <Menu className="h-5 w-5 text-[#475569]" />
+              <Menu className="h-5 w-5" />
             </button>
           )}
 
-          <LogoLink variant="full" size="lg" />
+          <div className="hover:scale-[1.02] transition-transform duration-200">
+            <LogoLink variant="full" size="lg" />
+          </div>
         </div>
 
         {/* Right: User Profile + Logout */}
-        <div className="flex items-center gap-4">
-          {/* User Profile */}
-          <div className="flex items-center gap-3 px-2 py-2 pr-4 rounded-xl bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-all duration-200 hover:scale-[1.02]"
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-          >
-            {user ? (
-              <UserAvatar
-                name={user.name}
-                src={user.picture}
-                className="w-10 h-10 border-[#E2E8F0]"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-[#3056F5] text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                U
-              </div>
-            )}
-            <span className="hidden md:block text-[15px] font-medium text-[#0F172A]">
+        <div className="flex items-center gap-6">
+          {/* User Profile Pill */}
+          <div className="group flex items-center gap-3 pl-1.5 pr-5 py-1.5 rounded-full bg-white border border-[#E5E7EB] hover:border-[#3056F5]/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
+            <div className="relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-tr from-[#3056F5] to-blue-300 rounded-full opacity-0 group-hover:opacity-20 blur-[2px] transition-opacity duration-300" />
+              {user ? (
+                <UserAvatar
+                  name={user.name}
+                  src={user.picture}
+                  className="w-9 h-9 border-2 border-white shadow-sm"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-gradient-to-br from-[#3056F5] to-[#6366F1] text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
+                  U
+                </div>
+              )}
+            </div>
+
+            <span className="hidden md:block text-[14px] font-bold text-[#0F172A] group-hover:text-[#3056F5] transition-colors duration-200">
               {user?.name}
             </span>
           </div>
 
+          {/* Vertical Divider */}
+          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-sm font-medium text-[#475569] hover:text-[#3056F5] transition-colors pr-2"
+            className="group flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold text-[#475569] hover:text-red-600 hover:bg-red-50 transition-all duration-200"
           >
-            <LogOut className="h-4 w-4" />
+            <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-red-100 transition-colors duration-200">
+              <LogOut className="h-4 w-4" />
+            </div>
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>

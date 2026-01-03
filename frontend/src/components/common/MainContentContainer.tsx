@@ -34,9 +34,8 @@ export function MainContentContainer({
   maxWidth = '7xl',
   padding = 'lg'
 }: MainContentContainerProps) {
-  // When maxWidth is 'full', don't use container class to ensure equal spacing
   const containerClass = maxWidth === 'full' ? 'w-full' : 'container mx-auto';
-  
+
   return (
     <div
       className={cn(

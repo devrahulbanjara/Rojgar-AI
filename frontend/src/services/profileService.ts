@@ -1,8 +1,3 @@
-/**
- * Profile Service
- * API calls for Candidate Profile management
- */
-
 import { api } from "../lib/api";
 import type {
   CandidateProfile,
@@ -18,7 +13,6 @@ import type {
 } from "../types/profile";
 
 export const profileService = {
-  // --- Core Profile (Unified GET) ---
 
   async getProfile(): Promise<CandidateProfile> {
     const data = await api.candidate.getProfile();
@@ -30,9 +24,6 @@ export const profileService = {
     return response as CandidateProfile;
   },
 
-  // --- Sub-Resources (Atomic Operations) ---
-
-  // Work Experience
   async addExperience(data: WorkExperienceCreate) {
     return api.candidate.experience.add(data);
   },
@@ -45,7 +36,6 @@ export const profileService = {
     return api.candidate.experience.update(id, data);
   },
 
-  // Education
   async addEducation(data: EducationCreate) {
     return api.candidate.education.add(data);
   },
@@ -58,7 +48,6 @@ export const profileService = {
     return api.candidate.education.update(id, data);
   },
 
-  // Skills
   async addSkill(data: SkillCreate) {
     return api.candidate.skills.add(data);
   },

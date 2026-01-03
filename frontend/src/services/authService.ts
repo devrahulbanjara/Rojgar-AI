@@ -1,8 +1,3 @@
-/**
- * Authentication Service
- * Integrated with FastAPI backend and Google OAuth
- */
-
 import type { LoginCredentials, SignupData, AuthResponse } from '../types';
 import { API_CONFIG, GOOGLE_CONFIG } from '../config/constants';
 
@@ -26,7 +21,6 @@ interface TokenResponse {
 class AuthService {
   private baseUrl = `${API_CONFIG.baseUrl}/api/v1/auth`;
 
-  // Google OAuth Login
   async initiateGoogleLogin(): Promise<void> {
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', GOOGLE_CONFIG.clientId);
@@ -39,7 +33,6 @@ class AuthService {
     window.location.href = authUrl.toString();
   }
 
-  // Select user role after Google authentication
   async selectRole(role: 'candidate' | 'recruiter'): Promise<{ redirect_url: string }> {
     try {
       const response = await fetch(`${this.baseUrl}/select-role`, {
@@ -47,7 +40,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies
+        credentials: 'include',
         body: JSON.stringify({ role }),
       });
 
@@ -61,16 +54,13 @@ class AuthService {
     }
   }
 
-  // Get current user
   async getCurrentUser(): Promise<TokenResponse['user'] | null> {
     try {
       const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/users/me`, {
-        credentials: 'include', // Include cookies
+        credentials: 'include',
       });
 
       if (response.status === 401) {
-        // Token is invalid - let the API client handler deal with it
-        // Don't call logout here as it will be handled by the global 401 handler
         return null;
       }
 
@@ -84,7 +74,6 @@ class AuthService {
     }
   }
 
-  // Traditional login method
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/login`, {
@@ -114,7 +103,6 @@ class AuthService {
     }
   }
 
-  // Traditional signup method
   async signup(data: SignupData): Promise<AuthResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/signup`, {
@@ -146,7 +134,6 @@ class AuthService {
     }
   }
 
-  // Logout method
   async logout(): Promise<void> {
     try {
       await fetch(`${this.baseUrl}/logout`, {
@@ -157,16 +144,12 @@ class AuthService {
         },
       });
     } catch {
-      // Silently handle logout errors
     }
   }
 
-  // Handle Google callback (not needed with cookies)
   handleGoogleCallback(): void {
-    // Google authentication completed
   }
 
-  // Check if user is authenticated
   async isAuthenticated(): Promise<boolean> {
     try {
       const user = await this.getCurrentUser();
@@ -176,11 +159,9 @@ class AuthService {
     }
   }
 
-  // Refresh token method (placeholder)
   async refreshToken(): Promise<string | null> {
     return null;
   }
 }
 
-// Export singleton instance
 export const authService = new AuthService();

@@ -23,7 +23,7 @@ export interface Application {
   id: number;
   job_title: string;
   company_name: string;
-  user_id: string; // Changed from number to string to match backend UUID
+  user_id: string;
   applied_date: string;
   stage: ApplicationStage;
   status: ApplicationStatus;

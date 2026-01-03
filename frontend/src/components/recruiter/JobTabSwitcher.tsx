@@ -1,24 +1,23 @@
-/**
- * JobTabSwitcher - Premium pill-style tab switcher with icons
- */
-
 import React, { memo } from 'react';
-import { Briefcase, FileEdit, BookOpen } from 'lucide-react';
+import { Briefcase, FileEdit, BookOpen, Archive } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-type TabType = 'active' | 'drafts' | 'reference-jds';
+type TabType = 'active' | 'drafts' | 'expired' | 'reference-jds';
 
 interface JobTabSwitcherProps {
     activeTab: TabType;
     onTabChange: (tab: TabType) => void;
     activeCount: number;
     draftCount: number;
+    expiredCount: number;
+    referenceJDCount: number;
     className?: string;
 }
 
 const tabs = [
     { id: 'active' as TabType, label: 'Active Jobs', icon: Briefcase, color: 'blue' },
     { id: 'drafts' as TabType, label: 'Drafts', icon: FileEdit, color: 'amber' },
+    { id: 'expired' as TabType, label: 'Expired', icon: Archive, color: 'rose' },
     { id: 'reference-jds' as TabType, label: 'Reference JDs', icon: BookOpen, color: 'purple' },
 ];
 
@@ -27,11 +26,15 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(({
     onTabChange,
     activeCount,
     draftCount,
+    expiredCount,
+    referenceJDCount,
     className,
 }) => {
     const getCount = (tabId: TabType) => {
         if (tabId === 'active') return activeCount;
         if (tabId === 'drafts') return draftCount;
+        if (tabId === 'expired') return expiredCount;
+        if (tabId === 'reference-jds') return referenceJDCount;
         return null;
     };
 
@@ -61,6 +64,7 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(({
                             'w-4 h-4 transition-colors duration-300',
                             isActive && tab.color === 'blue' && 'text-blue-600',
                             isActive && tab.color === 'amber' && 'text-amber-600',
+                            isActive && tab.color === 'rose' && 'text-rose-600',
                             isActive && tab.color === 'purple' && 'text-purple-600',
                             !isActive && 'text-gray-400'
                         )} />
@@ -70,6 +74,8 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(({
                                 'px-2 py-0.5 rounded-full text-xs font-semibold transition-all duration-300',
                                 isActive && tab.color === 'blue' && 'bg-blue-100 text-blue-700',
                                 isActive && tab.color === 'amber' && 'bg-amber-100 text-amber-700',
+                                isActive && tab.color === 'rose' && 'bg-rose-100 text-rose-700',
+                                isActive && tab.color === 'purple' && 'bg-purple-100 text-purple-700',
                                 !isActive && 'bg-gray-200/80 text-gray-500'
                             )}>
                                 {count}

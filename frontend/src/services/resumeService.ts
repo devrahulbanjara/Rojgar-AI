@@ -10,10 +10,9 @@ import {
 
 const API_URL = `${API_CONFIG.baseUrl}/api/v1`;
 
-// Create axios instance with cookie support
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Send cookies with requests
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
