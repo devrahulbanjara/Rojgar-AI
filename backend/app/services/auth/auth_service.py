@@ -1,11 +1,12 @@
 import uuid
 
 import httpx
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import create_token, hash_password, settings, verify_password
-from app.models import User, UserRole
+from app.models import CandidateProfile, CompanyProfile, User, UserGoogle, UserRole
 from app.schemas import CreateUserRequest, GoogleUserInfo, UserResponse
 
 
@@ -44,8 +45,6 @@ class AuthService:
         db.flush()
 
         if new_user.role:
-            from app.models import CandidateProfile, CompanyProfile, UserRole
-
             if new_user.role == UserRole.CANDIDATE.value:
                 new_profile = CandidateProfile(
                     profile_id=str(uuid.uuid4()),
@@ -64,8 +63,6 @@ class AuthService:
             new_user.password = hash_password(user_data.password)
 
         if user_data.google_id:
-            from app.models import UserGoogle
-
             new_google_user = UserGoogle(
                 user_google_id=user_data.google_id, user_id=new_user.user_id
             )
@@ -186,10 +183,6 @@ class AuthService:
 
     @staticmethod
     def assign_role_and_create_profile(user: User, role: UserRole, db: Session) -> User:
-        from fastapi import HTTPException, status
-
-        from app.models import CandidateProfile, CompanyProfile
-
         if user.role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

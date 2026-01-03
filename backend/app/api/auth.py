@@ -11,7 +11,7 @@ from app.schemas import (
     SignupRequest,
     TokenResponse,
 )
-from app.services import AuthService
+from app.services import AuthService, UserService
 
 router = APIRouter()
 
@@ -142,8 +142,6 @@ def select_role(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    from app.services import UserService
-
     user = UserService.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(
