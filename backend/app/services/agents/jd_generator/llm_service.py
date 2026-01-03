@@ -5,10 +5,6 @@ from app.models.agents.jd_generator import JDGenNode
 
 
 def get_llm():
-    """Get a structured LLM instance configured for JD generation."""
-    # JD generation requires more tokens than the default (500) to produce
-    # complete job descriptions with all required sections
-
     llm = ChatGroq(
         temperature=settings.LLM_TEMPERATURE,
         model=settings.THINK_LLM,

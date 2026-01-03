@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { LoadingSpinner } from '../common/LoadingSpinner';
-import { Shield, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Shield, Lock, CheckCircle, AlertCircle, KeyRound } from 'lucide-react';
 
 export function PasswordChangeForm() {
   const [formData, setFormData] = useState({
@@ -105,11 +105,10 @@ export function PasswordChangeForm() {
       </div>
 
       {message && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success'
+        <div className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${message.type === 'success'
             ? 'bg-green-50 text-green-700 border-green-200'
             : 'bg-red-50 text-red-700 border-red-200'
-        }`}>
+          }`}>
           {message.type === 'success' ? (
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
           ) : (
@@ -121,19 +120,26 @@ export function PasswordChangeForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Security Section */}
-        <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
-          <div className="flex items-center gap-2 mb-6">
-            <Shield className="w-5 h-5 text-[#3056F5]" />
-            <h4 className="text-lg font-semibold text-[#0F172A]">Password Security</h4>
+        <div className="bg-white rounded-2xl p-8 border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="flex items-center gap-4 mb-8 pb-4 border-b border-gray-100">
+            <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-sm border border-rose-100">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-lg font-bold text-[#0F172A]">Password Security</h4>
+              <p className="text-sm text-[#64748B]">Ensure your account stays protected</p>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword" className="text-sm font-medium text-[#374151]">
+          <div className="space-y-6 max-w-2xl">
+            <div className="space-y-3">
+              <Label htmlFor="currentPassword" className="text-sm font-semibold text-[#374151]">
                 Current Password
               </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-focus-within:bg-rose-50 group-focus-within:text-rose-500 transition-colors duration-200">
+                  <KeyRound className="w-4 h-4" />
+                </div>
                 <Input
                   id="currentPassword"
                   name="currentPassword"
@@ -141,24 +147,27 @@ export function PasswordChangeForm() {
                   value={formData.currentPassword}
                   onChange={handleChange}
                   placeholder="Enter your current password"
-                  className="w-full h-12 pl-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 rounded-xl transition-all duration-200"
+                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${errors.currentPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''
+                    }`}
                   required
                 />
               </div>
               {errors.currentPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
+                <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-left-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.currentPassword}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="newPassword" className="text-sm font-medium text-[#374151]">
+            <div className="space-y-3">
+              <Label htmlFor="newPassword" className="text-sm font-semibold text-[#374151]">
                 New Password
               </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-focus-within:bg-rose-50 group-focus-within:text-rose-500 transition-colors duration-200">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <Input
                   id="newPassword"
                   name="newPassword"
@@ -166,28 +175,31 @@ export function PasswordChangeForm() {
                   value={formData.newPassword}
                   onChange={handleChange}
                   placeholder="Enter your new password"
-                  className="w-full h-12 pl-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 rounded-xl transition-all duration-200"
+                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${errors.newPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''
+                    }`}
                   required
                 />
               </div>
               {errors.newPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
+                <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-left-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.newPassword}
                 </p>
               )}
-              <p className="text-xs text-[#6B7280] flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
+              <p className="text-xs text-[#64748B] flex items-center gap-1.5 ml-1">
+                <Shield className="w-3 h-3" />
                 Password must be at least 8 characters long
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-[#374151]">
+            <div className="space-y-3">
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#374151]">
                 Confirm New Password
               </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-focus-within:bg-rose-50 group-focus-within:text-rose-500 transition-colors duration-200">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -195,12 +207,13 @@ export function PasswordChangeForm() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your new password"
-                  className="w-full h-12 pl-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 rounded-xl transition-all duration-200"
+                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${errors.confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''
+                    }`}
                   required
                 />
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
+                <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-left-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.confirmPassword}
                 </p>
@@ -209,11 +222,11 @@ export function PasswordChangeForm() {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-[#E5E7EB]">
+        <div className="flex justify-end pt-6 border-t border-[#E5E7EB]">
           <Button
             type="submit"
             disabled={isLoading}
-            className="px-8 py-3 bg-[#3056F5] hover:bg-[#1E40AF] text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-4 bg-gradient-to-r from-[#3056F5] to-[#6366F1] hover:from-[#2541B2] hover:to-[#4F46E5] text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
@@ -221,7 +234,10 @@ export function PasswordChangeForm() {
                 Changing Password...
               </div>
             ) : (
-              'Change Password'
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Change Password
+              </div>
             )}
           </Button>
         </div>

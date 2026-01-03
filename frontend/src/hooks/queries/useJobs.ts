@@ -3,39 +3,49 @@
  * Provides data fetching, caching, and state management for jobs
  */
 
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { jobService, applicationService } from '../../services/jobService';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { jobService, applicationService } from "../../services/jobService";
 import type {
   JobSearchParams,
   CreateJobRequest,
   UpdateJobRequest,
   JobDraftGenerateRequest,
   JobDraftResponse,
-} from '../../types/job';
-import type { CreateApplicationRequest, UpdateApplicationRequest } from '../../types/application';
+} from "../../types/job";
+import type {
+  CreateApplicationRequest,
+  UpdateApplicationRequest,
+} from "../../types/application";
 
 // Query keys for consistent caching
 export const jobQueryKeys = {
-  all: ['jobs'] as const,
-  lists: () => [...jobQueryKeys.all, 'list'] as const,
-  list: (params?: JobSearchParams) => [...jobQueryKeys.lists(), params] as const,
-  recommendations: (limit?: number) => [...jobQueryKeys.all, 'recommendations', limit] as const,
-  search: (params?: JobSearchParams) => [...jobQueryKeys.all, 'search', params] as const,
-  details: () => [...jobQueryKeys.all, 'detail'] as const,
+  all: ["jobs"] as const,
+  lists: () => [...jobQueryKeys.all, "list"] as const,
+  list: (params?: JobSearchParams) =>
+    [...jobQueryKeys.lists(), params] as const,
+  recommendations: (limit?: number) =>
+    [...jobQueryKeys.all, "recommendations", limit] as const,
+  search: (params?: JobSearchParams) =>
+    [...jobQueryKeys.all, "search", params] as const,
+  details: () => [...jobQueryKeys.all, "detail"] as const,
   detail: (id: string) => [...jobQueryKeys.details(), id] as const,
-  byCompany: (companyId: string) => [...jobQueryKeys.all, 'company', companyId] as const,
+  byCompany: (companyId: string) =>
+    [...jobQueryKeys.all, "company", companyId] as const,
 };
 
 export const applicationQueryKeys = {
-  all: ['applications'] as const,
-  lists: () => [...applicationQueryKeys.all, 'list'] as const,
-  list: (params?: Record<string, unknown>) => [...applicationQueryKeys.lists(), params] as const,
-  details: () => [...applicationQueryKeys.all, 'detail'] as const,
+  all: ["applications"] as const,
+  lists: () => [...applicationQueryKeys.all, "list"] as const,
+  list: (params?: Record<string, unknown>) =>
+    [...applicationQueryKeys.lists(), params] as const,
+  details: () => [...applicationQueryKeys.all, "detail"] as const,
   detail: (id: string) => [...applicationQueryKeys.details(), id] as const,
-  byJob: (jobId: string) => [...applicationQueryKeys.all, 'job', jobId] as const,
-  byCandidate: (candidateId: string) => [...applicationQueryKeys.all, 'candidate', candidateId] as const,
+  byJob: (jobId: string) =>
+    [...applicationQueryKeys.all, "job", jobId] as const,
+  byCandidate: (candidateId: string) =>
+    [...applicationQueryKeys.all, "candidate", candidateId] as const,
 };
 
 // Job Query Hooks
@@ -53,12 +63,21 @@ export function useJobs(params?: JobSearchParams) {
 export function usePersonalizedRecommendations(
   userId: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  filters?: {
+    employmentType?: string;
+    locationType?: string;
+  },
 ) {
   return useQuery({
-    queryKey: ['jobs', 'personalized', userId, page, limit],
+    queryKey: ["jobs", "personalized", userId, page, limit, filters],
     queryFn: async () => {
-      return await jobService.getPersonalizedRecommendations(userId, page, limit);
+      return await jobService.getPersonalizedRecommendations(
+        userId,
+        page,
+        limit,
+        filters,
+      );
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -77,7 +96,12 @@ export function useRecommendedJobs(limit: number = 5) {
   });
 }
 
-export function useJobSearch(params?: JobSearchParams) {
+export function useJobSearch(
+  params?: JobSearchParams & {
+    employmentType?: string;
+    locationType?: string;
+  },
+) {
   return useQuery({
     queryKey: jobQueryKeys.search(params),
     queryFn: async () => {
@@ -100,7 +124,10 @@ export function useJob(id: string) {
   });
 }
 
-export function useJobsByCompany(userId: string, params?: { page?: number; limit?: number }) {
+export function useJobsByCompany(
+  userId: string,
+  params?: { page?: number; limit?: number },
+) {
   return useQuery({
     queryKey: [...jobQueryKeys.byCompany(userId), params],
     queryFn: async () => {
@@ -115,7 +142,9 @@ export function useJobsByCompany(userId: string, params?: { page?: number; limit
 // Job Mutation Hooks
 export function useGenerateJobDraft() {
   return useMutation({
-    mutationFn: async (data: JobDraftGenerateRequest): Promise<JobDraftResponse> => {
+    mutationFn: async (
+      data: JobDraftGenerateRequest,
+    ): Promise<JobDraftResponse> => {
       return await jobService.generateJobDraft(data);
     },
   });
@@ -134,7 +163,7 @@ export function useCreateJob() {
     },
     onError: (error: unknown) => {
       // Log error for debugging (errors are handled in component try/catch)
-      console.error('Job creation error:', error);
+      console.error("Job creation error:", error);
     },
   });
 }
@@ -143,7 +172,13 @@ export function useUpdateJob() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateJobRequest }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateJobRequest;
+    }) => {
       return await jobService.updateJob(id, data);
     },
     onSuccess: (data, variables) => {
@@ -201,7 +236,10 @@ export function useApplication(id: string) {
   });
 }
 
-export function useApplicationsByJob(jobId: string, params?: { page?: number; limit?: number }) {
+export function useApplicationsByJob(
+  jobId: string,
+  params?: { page?: number; limit?: number },
+) {
   return useQuery({
     queryKey: [...applicationQueryKeys.byJob(jobId), params],
     queryFn: async () => {
@@ -213,11 +251,17 @@ export function useApplicationsByJob(jobId: string, params?: { page?: number; li
   });
 }
 
-export function useApplicationsByCandidate(candidateId: string, params?: { page?: number; limit?: number }) {
+export function useApplicationsByCandidate(
+  candidateId: string,
+  params?: { page?: number; limit?: number },
+) {
   return useQuery({
     queryKey: [...applicationQueryKeys.byCandidate(candidateId), params],
     queryFn: async () => {
-      return await applicationService.getApplicationsByCandidate(candidateId, params);
+      return await applicationService.getApplicationsByCandidate(
+        candidateId,
+        params,
+      );
     },
     enabled: !!candidateId,
     staleTime: 2 * 60 * 1000,
@@ -244,7 +288,13 @@ export function useUpdateApplication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateApplicationRequest }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateApplicationRequest;
+    }) => {
       return await applicationService.updateApplication(id, data);
     },
     onSuccess: (data, variables) => {

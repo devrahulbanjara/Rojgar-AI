@@ -1,7 +1,3 @@
-"""
-API package - Centralized router management
-"""
-
 from fastapi import APIRouter
 
 from app.api import (
@@ -14,10 +10,8 @@ from app.api import (
     users,
 )
 
-# Create master router for API
 api_router = APIRouter()
 
-# Include all route modules
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(candidate.router, prefix="/candidate", tags=["candidate"])

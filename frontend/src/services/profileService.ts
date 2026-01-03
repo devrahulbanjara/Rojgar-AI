@@ -1,9 +1,4 @@
-/**
- * Profile Service
- * API calls for Candidate Profile management
- */
-
-import { api } from '../lib/api';
+import { api } from "../lib/api";
 import type {
   CandidateProfile,
   CandidateProfileUpdate,
@@ -14,11 +9,10 @@ import type {
   SkillCreate,
   SkillUpdate,
   CertificationCreate,
-  CertificationUpdate
-} from '../types/profile';
+  CertificationUpdate,
+} from "../types/profile";
 
 export const profileService = {
-  // --- Core Profile (Unified GET) ---
 
   async getProfile(): Promise<CandidateProfile> {
     const data = await api.candidate.getProfile();
@@ -30,9 +24,6 @@ export const profileService = {
     return response as CandidateProfile;
   },
 
-  // --- Sub-Resources (Atomic Operations) ---
-
-  // Work Experience
   async addExperience(data: WorkExperienceCreate) {
     return api.candidate.experience.add(data);
   },
@@ -45,7 +36,6 @@ export const profileService = {
     return api.candidate.experience.update(id, data);
   },
 
-  // Education
   async addEducation(data: EducationCreate) {
     return api.candidate.education.add(data);
   },
@@ -58,7 +48,6 @@ export const profileService = {
     return api.candidate.education.update(id, data);
   },
 
-  // Skills
   async addSkill(data: SkillCreate) {
     return api.candidate.skills.add(data);
   },
@@ -82,5 +71,18 @@ export const profileService = {
 
   async updateCertification(id: string, data: CertificationUpdate) {
     return api.candidate.certifications.update(id, data);
-  }
+  },
+
+  // Social Links
+  async addSocialLink(data: { type: string; url: string }) {
+    return api.candidate.socialLinks.add(data);
+  },
+
+  async deleteSocialLink(id: string) {
+    return api.candidate.socialLinks.delete(id);
+  },
+
+  async updateSocialLink(id: string, data: { type: string; url: string }) {
+    return api.candidate.socialLinks.update(id, data);
+  },
 };

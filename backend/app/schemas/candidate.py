@@ -11,7 +11,6 @@ from app.schemas.shared import (
 )
 
 
-# --- Inputs ---
 class CandidateProfileUpdate(BaseModel):
     full_name: str | None = None
     phone: str | None = None
@@ -54,7 +53,6 @@ class EducationUpdate(BaseModel):
     is_current: bool | None = None
 
 
-# --- Responses ---
 class SocialLinkResponse(SocialLinkBase):
     social_link_id: str
     model_config = ConfigDict(from_attributes=True)

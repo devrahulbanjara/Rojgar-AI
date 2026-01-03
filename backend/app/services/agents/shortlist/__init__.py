@@ -1,19 +1,6 @@
-"""
-Shortlist Agent package - Resume screening and candidate evaluation.
-
-This module provides the resume shortlisting workflow using LangGraph.
-Import from here instead of individual submodules for a cleaner API.
-
-Example:
-    from app.services.agents.shortlist import create_workflow, discover_resume_files
-    from app.services.agents.shortlist import WorkflowState, CandidateScore
-"""
-
 import os
 
 from app.core import settings
-
-# Schemas (data models for the workflow)
 from app.models.agents.shortlist import (
     CandidateScore,
     EvaluationScore,

@@ -5,7 +5,7 @@ interface MainContentContainerProps {
   children: React.ReactNode;
   className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
-  padding?: 'sm' | 'md' | 'lg' | 'xl';
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const maxWidthClasses = {
@@ -21,25 +21,27 @@ const maxWidthClasses = {
 };
 
 const paddingClasses = {
-  sm: 'px-4 py-4',
-  md: 'px-6 py-6',
-  lg: 'px-8 py-8',
-  xl: 'px-12 py-12'
+  none: 'py-8',
+  sm: 'px-4 py-4 lg:px-4 lg:py-4',
+  md: 'px-6 py-6 lg:px-6 lg:py-6',
+  lg: 'px-6 py-8 lg:px-8 lg:py-8',
+  xl: 'px-6 py-12 lg:px-8 lg:py-12'
 };
 
 export function MainContentContainer({
   children,
   className,
   maxWidth = '7xl',
-  padding = 'xl'
+  padding = 'lg'
 }: MainContentContainerProps) {
+  const containerClass = maxWidth === 'full' ? 'w-full' : 'container mx-auto';
+
   return (
     <div
       className={cn(
-        'container mx-auto',
+        containerClass,
         maxWidthClasses[maxWidth],
         paddingClasses[padding],
-        'max-lg:px-6 max-lg:py-6', // Responsive padding for mobile
         className
       )}
     >

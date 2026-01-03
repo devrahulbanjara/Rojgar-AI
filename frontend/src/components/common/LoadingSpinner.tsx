@@ -1,8 +1,3 @@
-/**
- * Loading Spinner Component
- * Reusable loading indicator
- */
-
 import React, { memo } from 'react';
 
 interface LoadingSpinnerProps {

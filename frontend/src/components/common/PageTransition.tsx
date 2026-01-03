@@ -1,8 +1,3 @@
-/**
- * PageTransition Component
- * Provides smooth page transitions for navigation
- */
-
 import React, { useEffect, useState, memo } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -20,7 +15,6 @@ export const PageTransition = memo<PageTransitionProps>(({
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Trigger animation on mount
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 50);

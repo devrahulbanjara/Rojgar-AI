@@ -1,8 +1,3 @@
-/**
- * Skills Service
- * API calls for skills management
- */
-
 import { apiClient } from '../lib/api';
 import type { Skill, SkillCreateRequest, SkillsListResponse } from '../types/skill';
 

@@ -1,8 +1,3 @@
-/**
- * JobDetailView Component
- * Clean, modern job detail view with proper spacing and visual hierarchy
- */
-
 import React from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
@@ -45,11 +40,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
   };
 
   const handleSave = () => {
-    // TODO: Implement save functionality
   };
 
   const handleShare = () => {
-    // TODO: Implement share functionality
   };
 
   return (

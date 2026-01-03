@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface UserAvatarProps {
     name?: string | null;
     src?: string | null;
-    className?: string; // For passing custom sizes (w-10 h-10 etc.)
+    className?: string;
 }
 
 export function UserAvatar({ name, src, className }: UserAvatarProps) {

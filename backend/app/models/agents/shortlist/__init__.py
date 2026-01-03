@@ -1,15 +1,3 @@
-"""
-Shortlist Agent models package - Pydantic models for resume screening.
-
-This module provides data models used by the resume shortlisting workflow.
-Import from here instead of individual submodules for a cleaner API.
-
-Example:
-    from app.models.agents.shortlist import WorkflowState, CandidateScore
-    from app.models.agents.shortlist import ResumeStructured, JobRequirements
-"""
-
-# Schemas (data models for the workflow)
 from .schemas import (
     CandidateBreakdown,
     CandidateScore,
@@ -20,7 +8,6 @@ from .schemas import (
 )
 
 __all__ = [
-    # Schemas
     "ResumeStructured",
     "JobRequirements",
     "EvaluationScore",

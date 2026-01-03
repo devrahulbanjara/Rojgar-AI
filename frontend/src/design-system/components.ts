@@ -1,9 +1,3 @@
-/**
- * Design System Components
- * Re-export commonly used utilities and components
- */
-
-// Utility functions
 export {
   cn,
   formatDate,

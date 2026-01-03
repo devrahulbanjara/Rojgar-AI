@@ -11,7 +11,7 @@ from app.schemas import (
     SignupRequest,
     TokenResponse,
 )
-from app.services import AuthService
+from app.services import AuthService, UserService
 
 router = APIRouter()
 
@@ -108,9 +108,7 @@ def google_login(request: Request):
 
 @router.get("/google/callback")
 @limiter.limit("5/minute")
-async def google_callback(
-    request: Request, code: str, db: Session = Depends(get_db)
-):
+async def google_callback(request: Request, code: str, db: Session = Depends(get_db)):
     try:
         google_user = await AuthService.exchange_google_code(code)
 
@@ -144,8 +142,6 @@ def select_role(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    from app.services import UserService
-
     user = UserService.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(

@@ -1,18 +1,12 @@
-/**
- * Dashboard Stats Hook
- * Manages dashboard statistics for candidates and recruiters
- */
-
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
 import { apiClient } from '../lib/api';
 
-// Dashboard Stats Interface
 export interface DashboardStats {
   totalApplications?: number;
-  activeApplications?: number; // Changed from activeJobs for candidates
+  activeApplications?: number;
   interviewsScheduled?: number;
   offersReceived?: number;
   responseRate?: number;

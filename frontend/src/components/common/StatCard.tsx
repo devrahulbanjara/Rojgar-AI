@@ -1,8 +1,3 @@
-/**
- * StatCard Component
- * Updated with new premium design system
- */
-
 import React, { memo } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -29,21 +24,26 @@ export const StatCard = memo<StatCardProps>(({
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.01]",
+        "group bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.02] relative overflow-hidden",
         className
       )}
       style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+        e.currentTarget.style.boxShadow = '0 12px 24px -8px rgba(48, 86, 245, 0.15)';
+        e.currentTarget.style.borderColor = 'rgba(48, 86, 245, 0.2)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+        e.currentTarget.style.borderColor = '#E5E7EB';
       }}
     >
+      {/* Hover Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 via-blue-50/0 to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
       {/* Icon Container */}
       {icon && (
         <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+          className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
           style={{ background: 'rgba(48, 86, 245, 0.08)' }}
         >
           {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
@@ -53,7 +53,7 @@ export const StatCard = memo<StatCardProps>(({
       )}
 
       {/* Number */}
-      <p className="text-[40px] max-lg:text-4xl font-bold text-[#0F172A] leading-none mb-2">
+      <p className="text-[40px] max-lg:text-4xl font-bold text-[#0F172A] leading-none mb-2 tracking-tight">
         {value}
       </p>
 
@@ -67,8 +67,10 @@ export const StatCard = memo<StatCardProps>(({
         <div className="flex items-center gap-1 mt-3">
           <span
             className={cn(
-              "text-xs font-medium",
-              trend.isPositive ? "text-[#16A34A]" : "text-[#DC2626]"
+              "text-xs font-medium px-2 py-0.5 rounded-full",
+              trend.isPositive
+                ? "text-green-700 bg-green-50 border border-green-100"
+                : "text-red-700 bg-red-50 border border-red-100"
             )}
           >
             {trend.isPositive ? "+" : ""}{trend.value}%
