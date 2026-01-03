@@ -17,28 +17,22 @@ from app.services.candidate.vector_job_service import JobVectorService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan manager - runs when app starts and shuts down
-    """
-    logger.info("Starting ConvexHire API...")
-
-    # 1. Initialize DB Tables
-    logger.info("Initializing database schema...")
+    logger.trace("Starting ConvexHire API...")
+    logger.trace("Initializing database schema...")
     init_db()
 
-    # 2. Index Pending Jobs
     try:
         with Session(engine) as db:
             vector_service = JobVectorService()
             vector_service.index_all_pending_jobs(db)
     except Exception as e:
-        logger.error(f"⚠️ Startup indexing warning: {e}")
+        logger.error(f"Startup indexing error: {e}")
 
-    logger.info("System Ready!")
+    logger.success("System Ready!")
 
     yield
 
-    logger.info("Shutting down ConvexHire API...")
+    logger.trace("Shutting down ConvexHire API...")
 
 
 app = FastAPI(

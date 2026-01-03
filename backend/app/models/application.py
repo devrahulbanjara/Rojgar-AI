@@ -6,9 +6,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
+from .company import CompanyProfile
+from .job import JobPosting
+from .resume import Resume
+
 
 def utc_now():
-    """Returns a timezone-naive UTC datetime (replacement for deprecated datetime.utcnow())."""
     return datetime.now(UTC).replace(tzinfo=None)
 
 

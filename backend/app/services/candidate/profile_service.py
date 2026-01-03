@@ -9,9 +9,10 @@ from app.models.candidate import (
     CandidateEducation,
     CandidateProfile,
     CandidateSkills,
+    CandidateSocialLink,
     CandidateWorkExperience,
 )
-from app.schemas.candidate import CandidateProfileUpdate
+from app.schemas import CandidateProfileUpdate
 
 
 class CandidateService:
@@ -201,4 +202,22 @@ class CandidateService:
             item_id,
             "candidate_certification_id",
             data,
+        )
+
+    @staticmethod
+    def add_social_link(db: Session, user_id: str, data):
+        return CandidateService._add_item(
+            db, user_id, CandidateSocialLink, data.model_dump(), "social_link_id"
+        )
+
+    @staticmethod
+    def delete_social_link(db: Session, user_id: str, item_id: str):
+        CandidateService._delete_item(
+            db, user_id, CandidateSocialLink, item_id, "social_link_id"
+        )
+
+    @staticmethod
+    def update_social_link(db: Session, user_id: str, item_id: str, data):
+        return CandidateService._update_item(
+            db, user_id, CandidateSocialLink, item_id, "social_link_id", data
         )

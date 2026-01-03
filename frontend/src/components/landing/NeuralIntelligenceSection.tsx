@@ -360,7 +360,7 @@ export function NeuralIntelligenceSection() {
   return (
     <section
       ref={sectionRef}
-      className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-[#F9FAFB]"
+      className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 lg:px-8 bg-[#F9FAFB]"
       aria-label="Neural network visualization showing AI decision-making"
     >
       <div className="w-full max-w-7xl mx-auto">

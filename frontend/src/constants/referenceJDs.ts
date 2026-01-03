@@ -1,8 +1,3 @@
-/**
- * Reference Job Descriptions
- * Department-specific JD examples that can be used as templates for AI-powered job generation
- */
-
 export interface ReferenceJD {
     id: string;
     title: string;
@@ -11,6 +6,7 @@ export interface ReferenceJD {
     description: string;
     requirements: string[];
     skills: string[];
+    benefits?: string[];
     salaryRange: {
         min: number;
         max: number;
@@ -19,7 +15,6 @@ export interface ReferenceJD {
     keywords: string;
 }
 
-// Department color mapping for UI
 export const departmentColors: Record<string, { bg: string; text: string; gradient: string }> = {
     Engineering: {
         bg: '#EFF6FF',
@@ -54,7 +49,6 @@ export const departmentColors: Record<string, { bg: string; text: string; gradie
 };
 
 export const referenceJDs: ReferenceJD[] = [
-    // Engineering - Backend
     {
         id: 'eng-backend-senior',
         title: 'Senior Backend Engineer',
@@ -71,116 +65,14 @@ export const referenceJDs: ReferenceJD[] = [
             'Experience with message queues and event-driven architectures (Kafka, RabbitMQ)',
         ],
         skills: ['Python', 'FastAPI', 'PostgreSQL', 'Redis', 'Docker', 'Kubernetes', 'AWS', 'System Design'],
+        benefits: [
+            'Work on cutting-edge AI projects',
+            'Competitive salary and benefits',
+            'Opportunities for research and publication',
+            'International exposure',
+        ],
         salaryRange: { min: 140000, max: 190000, currency: 'USD' },
         keywords: 'senior backend engineer, python, fastapi, postgresql, redis, kubernetes, aws, microservices',
-    },
-    // Engineering - ML
-    {
-        id: 'eng-ml-senior',
-        title: 'Senior ML Engineer',
-        department: 'Engineering',
-        level: 'Senior',
-        description:
-            'Join our ML team to build and deploy state-of-the-art machine learning models that power intelligent features across our platform. You will work on everything from recommendation systems to natural language processing, taking models from research to production at scale. This role combines deep technical expertise with practical engineering skills.',
-        requirements: [
-            '5+ years of experience in machine learning engineering or data science',
-            'Strong proficiency in Python and ML frameworks (PyTorch, TensorFlow, scikit-learn)',
-            'Experience deploying ML models to production and MLOps best practices',
-            'Solid understanding of deep learning, NLP, and recommendation systems',
-            'Experience with cloud ML platforms (AWS SageMaker, GCP Vertex AI)',
-            'Strong software engineering fundamentals and experience with Git, CI/CD',
-        ],
-        skills: ['Python', 'PyTorch', 'FastAPI', 'AWS', 'MLOps', 'NLP', 'Docker', 'Kubernetes'],
-        salaryRange: { min: 150000, max: 210000, currency: 'USD' },
-        keywords: 'senior ml engineer, pytorch, fastapi, aws, mlops, nlp, kubernetes, 5 years',
-    },
-    // Engineering - Frontend
-    {
-        id: 'eng-frontend-senior',
-        title: 'Senior Frontend Engineer',
-        department: 'Engineering',
-        level: 'Senior',
-        description:
-            'We are looking for a talented Senior Frontend Engineer to craft beautiful, performant, and accessible user interfaces. You will work with React, TypeScript, and modern frontend technologies to create delightful user experiences. Your work will directly impact millions of users and set the standard for frontend excellence in our organization.',
-        requirements: [
-            '5+ years of frontend development experience with React and TypeScript',
-            'Expert knowledge of modern JavaScript, HTML5, and CSS3',
-            'Strong experience with state management (Redux, Zustand, or similar)',
-            'Proficiency with Next.js or similar SSR frameworks',
-            'Deep understanding of web performance optimization and accessibility (WCAG)',
-            'Experience with design systems and component libraries',
-        ],
-        skills: ['React', 'TypeScript', 'Next.js', 'TailwindCSS', 'Redux', 'GraphQL', 'Jest', 'Cypress'],
-        salaryRange: { min: 135000, max: 185000, currency: 'USD' },
-        keywords: 'senior frontend engineer, react, typescript, nextjs, tailwindcss, 5 years',
-    },
-    // Engineering - DevOps
-    {
-        id: 'eng-devops-mid',
-        title: 'DevOps Engineer',
-        department: 'Engineering',
-        level: 'Mid',
-        description:
-            'As a DevOps Engineer, you will be responsible for building and maintaining our cloud infrastructure, CI/CD pipelines, and deployment automation. You will work closely with engineering teams to ensure our systems are reliable, scalable, and secure. This role is perfect for someone passionate about infrastructure as code and automation.',
-        requirements: [
-            '3+ years of experience in DevOps, SRE, or infrastructure engineering',
-            'Strong knowledge of AWS, GCP, or Azure cloud platforms',
-            'Expert with containerization (Docker) and orchestration (Kubernetes)',
-            'Proficiency with infrastructure as code (Terraform, CloudFormation)',
-            'Experience with CI/CD tools (GitHub Actions, Jenkins, GitLab CI)',
-            'Solid understanding of networking, security, and Linux systems administration',
-        ],
-        skills: ['AWS', 'Kubernetes', 'Docker', 'Terraform', 'CI/CD', 'Python', 'Bash', 'Monitoring'],
-        salaryRange: { min: 120000, max: 160000, currency: 'USD' },
-        keywords: 'devops engineer, aws, kubernetes, terraform, cicd, docker, 3 years',
-    },
-    // Product
-    {
-        id: 'product-manager-senior',
-        title: 'Senior Product Manager',
-        department: 'Product',
-        level: 'Senior',
-        description:
-            'We are seeking a strategic Senior Product Manager to lead the development of key product initiatives. You will define product vision, strategy, and roadmap while working cross-functionally with engineering, design, and business teams. The ideal candidate combines strong analytical skills with excellent communication and a customer-centric mindset.',
-        requirements: [
-            '5+ years of product management experience in B2B SaaS or consumer tech',
-            'Proven track record of launching successful products from 0 to 1',
-            'Strong analytical skills and data-driven decision making',
-            'Excellent stakeholder management and communication skills',
-            'Experience with Agile/Scrum methodologies and product development processes',
-            'Deep understanding of user research, A/B testing, and product analytics',
-        ],
-        skills: [
-            'Product Strategy',
-            'Roadmap Planning',
-            'User Research',
-            'A/B Testing',
-            'Analytics',
-            'Agile',
-            'Stakeholder Management',
-        ],
-        salaryRange: { min: 140000, max: 180000, currency: 'USD' },
-        keywords: 'senior product manager, b2b saas, product strategy, analytics, agile, 5 years',
-    },
-    // Design
-    {
-        id: 'design-product-senior',
-        title: 'Senior Product Designer',
-        department: 'Design',
-        level: 'Senior',
-        description:
-            'Join our design team to create beautiful, intuitive, and delightful user experiences. As a Senior Product Designer, you will own the end-to-end design process from research to final implementation. You will collaborate closely with product managers and engineers to solve complex design challenges and elevate our product experience.',
-        requirements: [
-            '5+ years of product design experience in tech companies',
-            'Expert proficiency in Figma, Sketch, or similar design tools',
-            'Strong portfolio demonstrating UX/UI design skills and process',
-            'Experience with user research, user testing, and design thinking methodologies',
-            'Knowledge of design systems and component-based design',
-            'Understanding of frontend technologies (HTML, CSS, React) is a plus',
-        ],
-        skills: ['Figma', 'UI/UX Design', 'User Research', 'Prototyping', 'Design Systems', 'Interaction Design'],
-        salaryRange: { min: 125000, max: 170000, currency: 'USD' },
-        keywords: 'senior product designer, figma, ux ui design, user research, design systems, 5 years',
     },
     // Marketing
     {
@@ -207,30 +99,16 @@ export const referenceJDs: ReferenceJD[] = [
             'Content Marketing',
             'Marketing Automation',
         ],
+        benefits: [
+            'Work on cutting-edge AI projects',
+            'Competitive salary and benefits',
+            'Opportunities for research and publication',
+            'International exposure',
+        ],
         salaryRange: { min: 115000, max: 155000, currency: 'USD' },
         keywords: 'senior growth marketing, b2b saas, seo sem, analytics, ab testing, 5 years',
     },
-    // Data Science
-    {
-        id: 'data-scientist-senior',
-        title: 'Senior Data Scientist',
-        department: 'Data Science',
-        level: 'Senior',
-        description:
-            'As a Senior Data Scientist, you will uncover insights from complex datasets, build predictive models, and drive data-informed decision making across the organization. You will work on diverse problems including customer analytics, forecasting, and experimentation. This role offers the opportunity to have significant impact through data science.',
-        requirements: [
-            '5+ years of experience in data science, analytics, or related field',
-            'Strong proficiency in Python and data science libraries (pandas, scikit-learn, numpy)',
-            'Expertise in statistical modeling, machine learning, and experimental design',
-            'Experience with SQL and working with large-scale datasets',
-            'Strong communication skills and ability to present findings to non-technical stakeholders',
-            'Experience with data visualization tools (Tableau, Looker, or similar)',
-        ],
-        skills: ['Python', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization', 'A/B Testing', 'Tableau'],
-        salaryRange: { min: 135000, max: 180000, currency: 'USD' },
-        keywords: 'senior data scientist, python, sql, machine learning, statistics, tableau, 5 years',
-    },
-    // Sales
+    // Sales (Business)
     {
         id: 'sales-enterprise-senior',
         title: 'Senior Enterprise Sales Executive',
@@ -253,6 +131,12 @@ export const referenceJDs: ReferenceJD[] = [
             'Negotiation',
             'Salesforce',
             'Account Management',
+        ],
+        benefits: [
+            'Work on cutting-edge AI projects',
+            'Competitive salary and benefits',
+            'Opportunities for research and publication',
+            'International exposure',
         ],
         salaryRange: { min: 120000, max: 160000, currency: 'USD' },
         keywords: 'senior enterprise sales, b2b saas, consultative selling, salesforce, 5 years',

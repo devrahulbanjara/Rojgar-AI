@@ -1,7 +1,3 @@
-"""
-Send email node - Send the interview scheduling email.
-"""
-
 from langsmith import traceable
 
 from app.models.agents.interview_scheduling import InterviewSchedulingState

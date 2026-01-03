@@ -1,31 +1,14 @@
-/**
- * Utility Functions
- * Common utility functions for the application
- */
-
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import React from "react"
 import type { UserType } from '../types';
 import { ROUTES, VALIDATION } from '../config/constants';
 
-/**
- * Utility function to merge Tailwind CSS classes
- * Combines clsx for conditional classes and tailwind-merge for Tailwind class deduplication
- *
- * @param inputs - Class values to merge
- * @returns Merged class string
- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Format a date to a readable string
- * @param date - Date to format
- * @param options - Intl.DateTimeFormat options
- * @returns Formatted date string
- */
+
 export function formatDate(
   date: Date | string | number,
   options: Intl.DateTimeFormatOptions = {}
@@ -38,12 +21,6 @@ export function formatDate(
   }).format(new Date(date))
 }
 
-/**
- * Format a number as currency
- * @param amount - Amount to format
- * @param currency - Currency code (default: USD)
- * @returns Formatted currency string
- */
 export function formatCurrency(
   amount: number,
   currency: string = "USD"
@@ -54,12 +31,6 @@ export function formatCurrency(
   }).format(amount)
 }
 
-/**
- * Debounce function to limit the rate of function execution
- * @param func - Function to debounce
- * @param wait - Wait time in milliseconds
- * @returns Debounced function
- */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
@@ -71,11 +42,6 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   }
 }
 
-/**
- * Generate a random ID
- * @param length - Length of the ID (default: 8)
- * @returns Random ID string
- */
 export function generateId(length: number = 8): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   let result = ""
@@ -85,11 +51,7 @@ export function generateId(length: number = 8): string {
   return result
 }
 
-/**
- * Check if a value is empty (null, undefined, empty string, empty array, empty object)
- * @param value - Value to check
- * @returns True if value is empty
- */
+
 export function isEmpty(value: unknown): boolean {
   if (value == null) return true
   if (typeof value === "string") return value.trim() === ""
@@ -98,33 +60,15 @@ export function isEmpty(value: unknown): boolean {
   return false
 }
 
-/**
- * Capitalize the first letter of a string
- * @param str - String to capitalize
- * @returns Capitalized string
- */
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-/**
- * Truncate text to a specified length
- * @param text - Text to truncate
- * @param length - Maximum length
- * @param suffix - Suffix to add when truncated (default: "...")
- * @returns Truncated text
- */
 export function truncate(text: string, length: number, suffix: string = "..."): string {
   if (text.length <= length) return text
   return text.slice(0, length) + suffix
 }
 
-// User-specific utilities
-/**
- * Format user name for display
- * @param name - User name to format
- * @returns Formatted user name
- */
 export const formatUserName = (name: string): string => {
   return name
     .split(' ')
@@ -132,22 +76,13 @@ export const formatUserName = (name: string): string => {
     .join(' ');
 };
 
-/**
- * Get dashboard route based on user type
- * @param userType - User type (recruiter or candidate)
- * @returns Dashboard route path
- */
 export const getDashboardRoute = (userType: UserType): string => {
   return userType === 'recruiter'
     ? ROUTES.RECRUITER.DASHBOARD
     : ROUTES.CANDIDATE.DASHBOARD;
 };
 
-/**
- * Generate user initials
- * @param name - User name
- * @returns User initials (max 2 characters)
- */
+
 export const getUserInitials = (name: string): string => {
   return name
     .split(' ')
@@ -157,21 +92,11 @@ export const getUserInitials = (name: string): string => {
     .slice(0, 2);
 };
 
-/**
- * Delay function for simulating API calls
- * @param ms - Milliseconds to delay
- * @returns Promise that resolves after the delay
- */
+
 export const delay = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-// Validation utilities
-/**
- * Email validation
- * @param email - Email to validate
- * @returns Error message or undefined if valid
- */
 export const validateEmail = (email: string): string | undefined => {
   if (!email) {
     return 'Email is required';
@@ -184,11 +109,6 @@ export const validateEmail = (email: string): string | undefined => {
   return undefined;
 };
 
-/**
- * Password validation
- * @param password - Password to validate
- * @returns Error message or undefined if valid
- */
 export const validatePassword = (password: string): string | undefined => {
   if (!password) {
     return 'Password is required';
@@ -201,11 +121,6 @@ export const validatePassword = (password: string): string | undefined => {
   return undefined;
 };
 
-/**
- * Name validation
- * @param name - Name to validate
- * @returns Error message or undefined if valid
- */
 export const validateName = (name: string): string | undefined => {
   if (!name) {
     return 'Name is required';
@@ -218,12 +133,6 @@ export const validateName = (name: string): string | undefined => {
   return undefined;
 };
 
-/**
- * Confirm password validation
- * @param confirmPassword - Confirmed password
- * @param password - Original password
- * @returns Error message or undefined if valid
- */
 export const validateConfirmPassword = (confirmPassword: string, password: string): string | undefined => {
   if (!confirmPassword) {
     return 'Please confirm your password';
@@ -236,12 +145,6 @@ export const validateConfirmPassword = (confirmPassword: string, password: strin
   return undefined;
 };
 
-/**
- * Required field validation
- * @param value - Value to validate
- * @param fieldName - Name of the field
- * @returns Error message or undefined if valid
- */
 export const validateRequired = (value: string, fieldName: string): string | undefined => {
   if (!value || value.trim() === '') {
     return `${fieldName} is required`;
@@ -250,23 +153,12 @@ export const validateRequired = (value: string, fieldName: string): string | und
   return undefined;
 };
 
-// Dynamic import utilities
-/**
- * Create a dynamic import with loading component
- * @param importFn - Function that returns a dynamic import
- * @param fallback - Fallback component to show while loading
- * @returns Dynamic component
- */
 export const createDynamicImport = <T extends React.ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>
 ) => {
   return React.lazy(importFn);
 };
 
-/**
- * Preload a component for better performance
- * @param importFn - Function that returns a dynamic import
- */
 export const preloadComponent = (importFn: () => Promise<unknown>) => {
   importFn();
 };

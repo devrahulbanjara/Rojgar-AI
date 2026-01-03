@@ -1,280 +1,371 @@
-/**
- * JobDetailModal - Centered overlay modal for job details
- * Features blur backdrop, smooth animations, and sticky header/footer
- * Replaces JobDetailSlideOver
- */
+"use client";
 
-'use client';
-
-import React from 'react';
+import React from "react";
+import Image from "next/image";
 import {
-    MapPin,
-    Briefcase,
-    Calendar,
-    DollarSign,
-    Users,
-    Clock,
-    CheckCircle2,
-    Edit3,
-    Archive,
-    Building2,
-    Sparkles,
-} from 'lucide-react';
-import type { Job } from '../../types/job';
-import { Dialog } from '../../components/ui/dialog';
+  Briefcase,
+  CheckCircle2,
+  Sparkles,
+  X,
+  MapPin,
+  DollarSign,
+  Clock,
+  Building2,
+  Globe,
+  ExternalLink,
+  UserCircle2,
+  MapPinned,
+  ClockIcon,
+  TrendingUp,
+  Edit,
+  ArrowRight,
+} from "lucide-react";
+import type { Job } from "../../types/job";
+import { Dialog } from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { jobUtils } from "../../services/jobService";
+import { cn } from "../../lib/utils";
 
 interface JobDetailModalProps {
-    job: Job | null;
-    isOpen: boolean;
-    onClose: () => void;
-    onEdit?: (job: Job) => void;
-    onArchive?: (job: Job) => void;
+  job: Job | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit?: (job: Job) => void;
 }
-
-// Format salary for display
-function formatSalary(job: Job): string {
-    const min = job.salary_range?.min ?? job.salary_min;
-    const max = job.salary_range?.max ?? job.salary_max;
-    const currency = job.salary_range?.currency ?? job.salary_currency ?? 'USD';
-
-    if (!min && !max) return 'Competitive';
-
-    const formatK = (n: number) => {
-        if (n >= 1000) return `$${Math.round(n / 1000)}k`;
-        return `$${n}`;
-    };
-
-    if (min && max) {
-        return `${formatK(min)} - ${formatK(max)} ${currency}`;
-    }
-    if (min) return `From ${formatK(min)} ${currency}`;
-    if (max) return `Up to ${formatK(max)} ${currency}`;
-    return 'Competitive';
-}
-
-// Format posted date
-function formatPostedDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-// Status badge styles
-const statusStyles: Record<string, { bg: string; text: string }> = {
-    Active: { bg: '#10B981', text: 'white' },
-    Expired: { bg: '#EF4444', text: 'white' },
-    Draft: { bg: '#6B7280', text: 'white' },
-    Inactive: { bg: '#F59E0B', text: 'white' },
-    Closed: { bg: '#EF4444', text: 'white' },
-};
 
 export function JobDetailModal({
-    job,
-    isOpen,
-    onClose,
-    onEdit,
-    onArchive,
+  job,
+  isOpen,
+  onClose,
+  onEdit,
 }: JobDetailModalProps) {
-    if (!job) return null;
+  if (!job) return null;
 
-    const status = job.status || 'Draft';
-    const statusStyle = statusStyles[status] || statusStyles.Draft;
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(job);
+    }
+  };
 
-    return (
-        <Dialog
-            isOpen={isOpen}
-            onClose={onClose}
-            className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0"
-            showCloseButton={true}
-        >
-            {/* Sticky Header */}
-            <div
-                className="flex-shrink-0 px-8 py-6 bg-white/95 backdrop-blur border-b border-[#E5E7EB]"
+  return (
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="max-w-[900px] mx-4 rounded-[20px]"
+      showCloseButton={false}
+    >
+      <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col rounded-[20px] bg-white">
+        {/* Enhanced Header with subtle background */}
+        <div className="bg-gradient-to-b from-gray-50/80 to-white px-12 py-12 border-b border-gray-100 relative">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-gray-100 transition-all duration-200 hover:scale-110 active:scale-95 group"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+          </button>
+
+          {/* Company Logo & Title */}
+          <div className="flex items-start gap-4 mb-6">
+            {job.company?.logo && (
+              <div className="flex-shrink-0">
+                <Image
+                  src={job.company.logo}
+                  alt={job.company.name}
+                  width={64}
+                  height={64}
+                  className="w-16 h-16 rounded-xl object-cover border border-gray-200 shadow-sm"
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0 pt-1">
+              <h2 className="text-[28px] font-bold text-gray-900 leading-tight mb-2">
+                {job.title}
+              </h2>
+              <p className="text-lg text-gray-600 font-medium tracking-[0.3px]">
+                {job.company?.name || "Company"}
+              </p>
+            </div>
+          </div>
+
+          {/* Enhanced Badges with icons */}
+          <div className="flex flex-wrap gap-3">
+            {job.department && (
+              <Badge
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
+                  "bg-blue-50 text-blue-700 hover:bg-blue-100",
+                )}
+              >
+                {job.department}
+              </Badge>
+            )}
+            <Badge
+              className={cn(
+                "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
+                "bg-blue-50 text-blue-700 hover:bg-blue-100",
+              )}
             >
-                <div className="flex-1 min-w-0 pr-8">
-                    <h2 className="text-2xl font-semibold text-[#111827] mb-2 line-clamp-1">
-                        {job.title}
-                    </h2>
-                    <div className="flex items-center gap-3">
-                        <span className="inline-block px-3 py-1 bg-[#EFF6FF] text-[#3B82F6] text-sm font-medium rounded-md">
-                            {job.department}
-                        </span>
-                        <span
-                            className="px-3 py-1 text-xs font-medium rounded-full"
-                            style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
-                        >
-                            {status}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-8 py-8 bg-white">
-                {/* Quick Info */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="flex items-center gap-3 p-4 bg-[#F9FAFB] rounded-xl border border-transparent hover:border-[#E5E7EB] transition-colors">
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
-                            <MapPin className="w-5 h-5 text-[#3B82F6]" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-[#6B7280]">Location</p>
-                            <p className="text-sm font-medium text-[#111827]">{job.location}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-[#F9FAFB] rounded-xl border border-transparent hover:border-[#E5E7EB] transition-colors">
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
-                            <Briefcase className="w-5 h-5 text-[#3B82F6]" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-[#6B7280]">Employment</p>
-                            <p className="text-sm font-medium text-[#111827]">{job.employment_type}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-[#F9FAFB] rounded-xl border border-transparent hover:border-[#E5E7EB] transition-colors">
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
-                            <DollarSign className="w-5 h-5 text-[#3B82F6]" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-[#6B7280]">Salary</p>
-                            <p className="text-sm font-medium text-[#111827]">{formatSalary(job)}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-[#F9FAFB] rounded-xl border border-transparent hover:border-[#E5E7EB] transition-colors">
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
-                            <Building2 className="w-5 h-5 text-[#3B82F6]" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-[#6B7280]">Level</p>
-                            <p className="text-sm font-medium text-[#111827]">{job.level}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stats */}
-                <div className="flex gap-6 mb-8 pb-8 border-b border-[#E5E7EB]">
-                    <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-                        <Users className="w-4 h-4" />
-                        <span><strong className="text-[#111827]">{job.applicant_count}</strong> applicants</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-                        <Clock className="w-4 h-4" />
-                        <span>Posted {formatPostedDate(job.posted_date || job.created_at)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-                        <Calendar className="w-4 h-4" />
-                        <span>Deadline: {formatPostedDate(job.application_deadline)}</span>
-                    </div>
-                </div>
-
-                {/* About the Company */}
-                {job.company && (
-                    <section className="mb-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#DBEAFE]">
-                                <Building2 className="w-4 h-4 text-[#3B82F6]" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">About the Company</h3>
-                        </div>
-                        {job.company.description ? (
-                            <p className="text-[15px] text-[#374151] leading-relaxed">{job.company.description}</p>
-                        ) : (
-                            <p className="text-[15px] text-[#374151] leading-relaxed">
-                                {job.company.name} is looking for talented individuals to join their team.
-                            </p>
-                        )}
-                    </section>
-                )}
-
-                {/* Role Overview */}
-                {job.description && (
-                    <section className="mb-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EFF6FF]">
-                                <Briefcase className="w-4 h-4 text-[#3B82F6]" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">Role Overview</h3>
-                        </div>
-                        <p className="text-[15px] text-[#374151] leading-relaxed">{job.description}</p>
-                    </section>
-                )}
-
-                {/* Required Skills and Experience */}
-                {job.requirements && job.requirements.length > 0 && (
-                    <section className="mb-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#D1FAE5]">
-                                <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">Required Skills and Experience</h3>
-                        </div>
-                        <ul className="space-y-3 list-disc list-inside pl-4">
-                            {job.requirements.map((req, index) => (
-                                <li key={index} className="text-[15px] text-[#374151]">
-                                    {req}
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
-
-                {/* Nice to Have (Preferred) */}
-                {job.nice_to_have && job.nice_to_have.length > 0 && (
-                    <section className="mb-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FEF3C7]">
-                                <Sparkles className="w-4 h-4 text-[#F59E0B]" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">Nice to Have (Preferred)</h3>
-                        </div>
-                        <ul className="space-y-3 list-disc list-inside pl-4">
-                            {job.nice_to_have.map((item, index) => (
-                                <li key={index} className="text-[15px] text-[#374151]">
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
-
-                {/* What We Offer (Benefits) */}
-                {job.benefits && job.benefits.length > 0 && (
-                    <section className="mb-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EDE9FE]">
-                                <Sparkles className="w-4 h-4 text-[#8B5CF6]" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-[#111827]">What We Offer</h3>
-                        </div>
-                        <ul className="space-y-3 list-disc list-inside pl-4">
-                            {job.benefits.map((benefit, index) => (
-                                <li key={index} className="text-[15px] text-[#374151]">
-                                    {benefit}
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
-            </div>
-
-            {/* Sticky Footer */}
-            <div
-                className="flex items-center gap-3 px-8 py-6 bg-white border-t border-[#E5E7EB] mt-auto"
+              <UserCircle2 className="w-4 h-4 mr-1.5" />
+              {job.level}
+            </Badge>
+            <Badge
+              className={cn(
+                "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
+                "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+              )}
             >
-                <button
-                    onClick={() => onEdit?.(job)}
-                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border-2 border-[#E5E7EB] text-[#374151] font-medium rounded-xl hover:bg-[#F9FAFB] transition-colors"
-                >
-                    <Edit3 className="w-4 h-4" />
-                    Edit Job
-                </button>
-                <button
-                    onClick={() => onArchive?.(job)}
-                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-[#EF4444] text-white font-medium rounded-xl hover:bg-[#DC2626] transition-colors"
-                >
-                    <Archive className="w-4 h-4" />
-                    Archive
-                </button>
+              <MapPinned className="w-4 h-4 mr-1.5" />
+              {job.location_type}
+            </Badge>
+            <Badge
+              className={cn(
+                "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
+                "bg-purple-50 text-purple-700 hover:bg-purple-100",
+              )}
+            >
+              <ClockIcon className="w-4 h-4 mr-1.5" />
+              {job.employment_type}
+            </Badge>
+            {job.applicant_count !== undefined && job.applicant_count > 0 && (
+              <Badge
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
+                  "bg-orange-50 text-orange-700 hover:bg-orange-100",
+                )}
+              >
+                <TrendingUp className="w-4 h-4 mr-1.5" />
+                {job.applicant_count} applicants
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-12 py-12">
+          {/* Key Information Grid with dividers */}
+          <div className="grid grid-cols-3 gap-10 mb-12 p-6 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">
+                  Location
+                </p>
+                <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {job.location}
+                </p>
+              </div>
             </div>
-        </Dialog>
-    );
+
+            <div className="flex items-center gap-3 border-l border-gray-200 pl-8 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">
+                  Salary
+                </p>
+                <p className="text-sm font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {jobUtils.formatJobSalary(job)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 border-l border-gray-200 pl-8 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">
+                  Posted
+                </p>
+                <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {jobUtils.formatPostedDate(job.created_at || job.posted_date)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* About the Company - Enhanced */}
+          {job.company && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  About the Company
+                </h3>
+              </div>
+              <div className="pl-14">
+                {job.company.description ? (
+                  <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
+                    {job.company.description}
+                  </p>
+                ) : (
+                  <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
+                    {job.company.name} is looking for talented individuals to
+                    join their team.
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  {job.company.location && (
+                    <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
+                      <MapPin className="w-4 h-4" />
+                      <span className="font-medium">
+                        {job.company.location}
+                      </span>
+                    </button>
+                  )}
+                  {job.company.industry && (
+                    <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
+                      <Building2 className="w-4 h-4" />
+                      <span className="font-medium">
+                        {job.company.industry}
+                      </span>
+                    </button>
+                  )}
+                  {job.company.website && (
+                    <a
+                      href={
+                        job.company.website.startsWith("http")
+                          ? job.company.website
+                          : `https://${job.company.website}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 font-medium"
+                    >
+                      <Globe className="w-4 h-4" />
+                      <span>Visit Website</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Role Overview - Enhanced */}
+          {job.description && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-indigo-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50">
+                  <Briefcase className="w-5 h-5 text-indigo-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Role Overview
+                </h3>
+              </div>
+              <div className="pl-14 prose prose-sm max-w-none">
+                <p className="text-[16px] text-gray-700 leading-[1.8] whitespace-pre-wrap">
+                  {job.description}
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* Required Skills and Experience - Enhanced */}
+          {job.requirements && job.requirements.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-emerald-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Required Skills and Experience
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {job.requirements.map((req, index) => (
+                    <li
+                      key={index}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Nice to Have (Preferred) - Enhanced */}
+          {job.nice_to_have && job.nice_to_have.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50">
+                  <Sparkles className="w-5 h-5 text-amber-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Nice to Have (Preferred)
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {job.nice_to_have.map((item, index) => (
+                    <li
+                      key={index}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* What We Offer (Benefits) - Enhanced */}
+          {job.benefits && job.benefits.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-violet-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50">
+                  <Sparkles className="w-5 h-5 text-violet-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  What We Offer
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {job.benefits.map((benefit, index) => (
+                    <li
+                      key={index}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Sticky Footer with Edit Button */}
+        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-end gap-4 shadow-lg">
+          <Button
+            onClick={handleEdit}
+            size="lg"
+            className="h-12 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group"
+          >
+            <Edit className="w-5 h-5 mr-2" />
+            Edit Job
+            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
+      </div>
+    </Dialog>
+  );
 }

@@ -1,8 +1,3 @@
-/**
- * Textarea Component
- * A styled textarea component
- */
-
 import React from 'react';
 import { cn } from '../../lib/utils';
 

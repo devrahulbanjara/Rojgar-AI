@@ -3,67 +3,25 @@ import uuid
 from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
-from app.models.candidate import CandidateProfile
-from app.models.company import CompanyProfile
-from app.models.job import JobDescription, JobPosting, JobPostingStats
+from app.models import (
+    CandidateProfile,
+    CompanyProfile,
+    JobDescription,
+    JobPosting,
+    JobPostingStats,
+)
 from app.schemas import job as schemas
+from app.services.candidate.job_service_utils import get_latest_jobs
 from app.services.candidate.vector_job_service import JobVectorService
 
 router = APIRouter()
 vector_service = JobVectorService()
 
-VISIBLE_STATUSES = ["active", "expired"]
-
-
-@router.post("/admin/reindex")
-@limiter.limit("5/minute")
-def admin_reindex_jobs(request: Request, db: Session = Depends(get_db)):
-    """
-    Admin endpoint to clear the vector store and re-index all open jobs.
-    This fixes duplicate vector entries.
-    """
-    try:
-        # 1. Clear the Qdrant collection
-        if vector_service.client:
-            try:
-                vector_service.client.delete_collection(vector_service.collection_name)
-                vector_service._ensure_collection_exists()
-
-                # Recreate the vector store connection
-                from langchain_qdrant import QdrantVectorStore
-
-                vector_service.vector_store = QdrantVectorStore(
-                    client=vector_service.client,
-                    collection_name=vector_service.collection_name,
-                    embedding=vector_service.embedding_model,
-                )
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": f"Failed to reset Qdrant collection: {str(e)}",
-                }
-
-        # 2. Reset is_indexed flag on all jobs
-        db.query(JobPosting).update({JobPosting.is_indexed: False})
-        db.commit()
-
-        # 3. Re-index all jobs
-        vector_service.index_all_pending_jobs(db)
-
-        indexed_count = (
-            db.query(JobPosting).filter(JobPosting.is_indexed == True).count()
-        )
-
-        return {
-            "success": True,
-            "message": f"Successfully re-indexed {indexed_count} jobs.",
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+VISIBLE_STATUSES = ["active"]
 
 
 @router.get("/recommendations", response_model=schemas.JobListResponse)
@@ -73,9 +31,11 @@ def get_recommendations(
     user_id: str,
     page: int = 1,
     limit: int = 10,
+    employment_type: str | None = None,
+    location_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-    # 1. Get Candidate Skills from Postgres
+    """Get personalized job recommendations based on user skill or fallback to latest jobs if user skills is empty."""
     candidate = (
         db.query(CandidateProfile).filter(CandidateProfile.user_id == user_id).first()
     )
@@ -84,74 +44,39 @@ def get_recommendations(
     if candidate and candidate.skills:
         user_skills = [s.skill_name for s in candidate.skills]
 
-    # 2. Get Matching Job IDs from Qdrant
-    # Fetch a large number to account for duplicates/closed jobs
-    fetch_limit = 200  # Fetch up to 200 candidates from vector store
-
-    raw_ids = []
+    all_jobs = []
     if user_skills:
-        raw_ids = vector_service.recommend_jobs_by_skills(
-            user_skills, limit=fetch_limit
-        )
+        raw_ids = vector_service.recommend_jobs_by_skills(user_skills, limit=200)
+        if raw_ids:
+            jobs_from_db = (
+                db.query(JobPosting)
+                .filter(
+                    JobPosting.job_id.in_(raw_ids),
+                    JobPosting.status.in_(VISIBLE_STATUSES),
+                )
+                .all()
+            )
+            id_to_job = {job.job_id: job for job in jobs_from_db}
+            all_jobs = [id_to_job[jid] for jid in raw_ids if jid in id_to_job]
 
-    # 3. Fallback: If no skills or no vector results, show recent jobs from DB
-    if not raw_ids:
-        offset = (page - 1) * limit
-        total_recent = (
-            db.query(JobPosting).filter(JobPosting.status.in_(VISIBLE_STATUSES)).count()
-        )
-        recent_jobs = (
-            db.query(JobPosting)
-            .filter(JobPosting.status.in_(VISIBLE_STATUSES))
-            .order_by(JobPosting.posted_date.desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+    if not all_jobs:
+        all_jobs = get_latest_jobs(db, limit=200)
 
-        total_pages = math.ceil(total_recent / limit) if limit > 0 else 0
-        return {
-            "jobs": [map_job_to_response(j) for j in recent_jobs],
-            "total": total_recent,
-            "page": page,
-            "limit": limit,
-            "total_pages": total_pages,
-            "has_next": page < total_pages,
-            "has_prev": page > 1,
-        }
+    if employment_type:
+        all_jobs = [job for job in all_jobs if job.employment_type == employment_type]
+    if location_type:
+        all_jobs = [job for job in all_jobs if job.location_type == location_type]
 
-    # 4. Deduplicate IDs from vector store (preserving order/relevance)
-    seen_ids = set()
-    unique_vector_ids = []
-    for jid in raw_ids:
-        if jid not in seen_ids:
-            seen_ids.add(jid)
-            unique_vector_ids.append(jid)
-
-    # 5. Fetch Full Data from Postgres and Filter Open Jobs
-    # Build a list of valid, unique jobs
-    valid_jobs = []
-    valid_job_ids_seen = set()  # Extra safety to ensure uniqueness in response
-    for jid in unique_vector_ids:
-        if jid in valid_job_ids_seen:
-            continue
-        job = db.query(JobPosting).get(jid)
-        if job and job.status in VISIBLE_STATUSES:
-            valid_jobs.append(map_job_to_response(job))
-            valid_job_ids_seen.add(jid)
-
-    # 6. Apply Pagination to the list of valid unique jobs
-    total_valid = len(valid_jobs)
+    total = len(all_jobs)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
+    paginated_jobs = all_jobs[start_idx:end_idx]
 
-    paginated_jobs = valid_jobs[start_idx:end_idx]
-
-    total_pages = math.ceil(total_valid / limit) if limit > 0 else 0
+    total_pages = math.ceil(total / limit) if limit > 0 else 0
 
     return {
-        "jobs": paginated_jobs,
-        "total": total_valid,
+        "jobs": [map_job_to_response(job) for job in paginated_jobs],
+        "total": total,
         "page": page,
         "limit": limit,
         "total_pages": total_pages,
@@ -164,59 +89,46 @@ def get_recommendations(
 @limiter.limit("5/minute")
 def search_jobs(
     request: Request,
-    q: str,
+    q: str = "",
     page: int = 1,
     limit: int = 10,
+    employment_type: str | None = None,
+    location_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-    # Fetch a large number to account for duplicates/closed jobs
-    fetch_limit = 200
+    all_jobs = []
+    if q.strip():
+        raw_ids = vector_service.search_jobs(q, limit=200)
+        if raw_ids:
+            jobs_from_db = (
+                db.query(JobPosting)
+                .filter(
+                    JobPosting.job_id.in_(raw_ids),
+                    JobPosting.status.in_(VISIBLE_STATUSES),
+                )
+                .all()
+            )
+            id_to_job = {job.job_id: job for job in jobs_from_db}
+            all_jobs = [id_to_job[jid] for jid in raw_ids if jid in id_to_job]
 
-    # 1. Get IDs from Qdrant
-    raw_ids = vector_service.search_jobs(q, limit=fetch_limit)
+    if not all_jobs:
+        all_jobs = get_latest_jobs(db, limit=200)
 
-    if not raw_ids:
-        return {
-            "jobs": [],
-            "total": 0,
-            "page": 1,
-            "limit": limit,
-            "total_pages": 0,
-            "has_next": False,
-            "has_prev": False,
-        }
+    if employment_type:
+        all_jobs = [job for job in all_jobs if job.employment_type == employment_type]
+    if location_type:
+        all_jobs = [job for job in all_jobs if job.location_type == location_type]
 
-    # 2. Deduplicate IDs from vector store (preserving order/relevance)
-    seen_ids = set()
-    unique_vector_ids = []
-    for jid in raw_ids:
-        if jid not in seen_ids:
-            seen_ids.add(jid)
-            unique_vector_ids.append(jid)
-
-    # 3. Fetch Full Data and Filter
-    valid_jobs = []
-    valid_job_ids_seen = set()
-    for jid in unique_vector_ids:
-        if jid in valid_job_ids_seen:
-            continue
-        job = db.query(JobPosting).get(jid)
-        if job and job.status in VISIBLE_STATUSES:
-            valid_jobs.append(map_job_to_response(job))
-            valid_job_ids_seen.add(jid)
-
-    # 4. Apply Pagination
-    total_valid = len(valid_jobs)
+    total = len(all_jobs)
     start_idx = (page - 1) * limit
     end_idx = start_idx + limit
+    paginated_jobs = all_jobs[start_idx:end_idx]
 
-    paginated_jobs = valid_jobs[start_idx:end_idx]
-
-    total_pages = math.ceil(total_valid / limit) if limit > 0 else 0
+    total_pages = math.ceil(total / limit) if limit > 0 else 0
 
     return {
-        "jobs": paginated_jobs,
-        "total": total_valid,
+        "jobs": [map_job_to_response(job) for job in paginated_jobs],
+        "total": total,
         "page": page,
         "limit": limit,
         "total_pages": total_pages,
@@ -235,12 +147,11 @@ def create_job(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Create a new job posting"""
     company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
     if not company:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found for this user",
+            detail="Company profile not found",
         )
 
     company_id = company.company_id
@@ -248,7 +159,6 @@ def create_job(
     job_description_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())
 
-    # Handle required skills - allow empty list for drafts
     required_skills_list = (
         job_data.requiredSkillsAndExperience
         if job_data.requiredSkillsAndExperience
@@ -268,7 +178,7 @@ def create_job(
 
     job_description = JobDescription(
         job_description_id=job_description_id,
-        role_overview=job_data.description or "",  # Allow empty for drafts
+        role_overview=job_data.description or "",
         required_skills_experience=required_skills_experience_dict,
         nice_to_have=nice_to_have_dict,
         offers=offers_dict,
@@ -293,7 +203,6 @@ def create_job(
         except Exception:
             application_deadline = None
 
-    # Determine status - use provided status or default to "active"
     job_status = job_data.status if job_data.status else "active"
 
     job_posting = JobPosting(
@@ -342,24 +251,15 @@ def create_job(
 def get_jobs(
     request: Request,
     user_id: str | None = None,
-    company_id: str | None = None,  # Keep for backward compatibility
+    company_id: str | None = None,
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
     db: Session = Depends(get_db),
 ):
-    """
-    Get list of jobs with optional filtering by user_id (recruiter) or company_id and status.
-    If user_id is provided, looks up the company profile for that user and returns jobs for that company.
-    If company_id is provided, returns jobs for that company directly.
-    If status is provided, filters by status.
-    For recruiters (user_id provided): returns all statuses by default (active, draft, expired).
-    For public views (company_id or neither): shows active/expired by default.
-    """
     query = db.query(JobPosting)
     is_recruiter_view = False
 
-    # If user_id is provided, look up the company profile
     if user_id:
         is_recruiter_view = True
         company_profile = (
@@ -368,7 +268,6 @@ def get_jobs(
         if company_profile:
             query = query.filter(JobPosting.company_id == company_profile.company_id)
         else:
-            # User has no company profile, return empty result
             return {
                 "jobs": [],
                 "total": 0,
@@ -378,24 +277,15 @@ def get_jobs(
                 "has_next": False,
                 "has_prev": False,
             }
-    # Filter by company_id if provided (backward compatibility)
     elif company_id:
         query = query.filter(JobPosting.company_id == company_id)
 
-    # Filter by status
-    # If status is explicitly provided, use it
     if status:
         query = query.filter(JobPosting.status == status)
-    # For recruiters viewing their own jobs, return all statuses (active, draft, expired)
-    # For public views, only show active/expired
     elif not is_recruiter_view:
         query = query.filter(JobPosting.status.in_(VISIBLE_STATUSES))
 
-    # Get total count
     total = query.count()
-
-    # Apply pagination and eager load relationships
-    from sqlalchemy.orm import selectinload
 
     offset = (page - 1) * limit
     jobs = (
@@ -432,98 +322,47 @@ def get_job_detail(request: Request, job_id: str, db: Session = Depends(get_db))
     return map_job_to_response(job)
 
 
+def _build_location(city: str | None, country: str | None, location_type: str) -> str:
+    parts = [p for p in [city, country] if p]
+    return ", ".join(parts) if parts else location_type or "Not specified"
+
+
+def _extract_list_from_dict(data: dict | None, key: str) -> list:
+    if not data or not isinstance(data, dict):
+        return []
+    value = data.get(key, [])
+    return value if isinstance(value, list) else []
+
+
 def map_job_to_response(job: JobPosting):
-    """Map JobPosting model to API response that matches frontend Job type"""
-
-    # Build location string
-    location_parts = []
-    if job.location_city:
-        location_parts.append(job.location_city)
-    if job.location_country:
-        location_parts.append(job.location_country)
-    location = (
-        ", ".join(location_parts)
-        if location_parts
-        else job.location_type or "Not specified"
-    )
-
-    requirements = []
-    if job.job_description and job.job_description.required_skills_experience:
-        req_and_skills = job.job_description.required_skills_experience
-        if isinstance(req_and_skills, dict) and isinstance(
-            req_and_skills.get("required_skills_experience"), list
-        ):
-            requirements = req_and_skills["required_skills_experience"]
-
-    benefits = []
-    if job.job_description and job.job_description.offers:
-        offers = job.job_description.offers
-        if isinstance(offers, dict) and isinstance(offers.get("benefits"), list):
-            benefits = offers["benefits"]
-
-    nice_to_have = []
-    if job.job_description and job.job_description.nice_to_have:
-        nth = job.job_description.nice_to_have
-        if isinstance(nth, list):
-            nice_to_have = nth
-        elif isinstance(nth, dict):
-            for key, val in nth.items():
-                if isinstance(val, list):
-                    nice_to_have = val
-                    break
-
-    company = None
-    if job.company:
-        company_location_parts = []
-        if job.company.location_city:
-            company_location_parts.append(job.company.location_city)
-        if job.company.location_country:
-            company_location_parts.append(job.company.location_country)
-        company_location = (
-            ", ".join(company_location_parts) if company_location_parts else None
-        )
-
-        company = {
-            "id": job.company.company_id,
-            "name": job.company.company_name,
-            "description": job.company.description,
-            "location": company_location,
-            "website": job.company.website,
-            "industry": job.company.industry,
-            "founded_year": job.company.founded_year,
-        }
+    jd = job.job_description
 
     return {
-        # IDs
         "job_id": job.job_id,
         "id": job.job_id,
         "company_id": job.company_id,
         "job_description_id": job.job_description_id,
-        # Core job info
         "title": job.title,
         "department": job.department,
         "level": job.level,
-        # Location - combined for frontend
-        "location": location,
+        "location": _build_location(
+            job.location_city, job.location_country, job.location_type
+        ),
         "location_city": job.location_city,
         "location_country": job.location_country,
-        "is_remote": job.location_type
-        == "Remote",  # Derived for frontend compatibility
+        "is_remote": job.location_type == "Remote",
         "location_type": job.location_type,
-        # Employment
         "employment_type": job.employment_type or "Full-time",
-        # Salary - provide both formats
         "salary_min": job.salary_min,
         "salary_max": job.salary_max,
-        "salary_currency": job.salary_currency or "USD",
+        "salary_currency": job.salary_currency or "NPR",
         "salary_range": {
             "min": job.salary_min or 0,
             "max": job.salary_max or 0,
-            "currency": job.salary_currency or "USD",
+            "currency": job.salary_currency or "NPR",
         }
-        if job.salary_min or job.salary_max
+        if (job.salary_min or job.salary_max)
         else None,
-        # Status and dates
         "status": job.status,
         "posted_date": job.posted_date.isoformat() if job.posted_date else None,
         "application_deadline": job.application_deadline.isoformat()
@@ -531,24 +370,30 @@ def map_job_to_response(job: JobPosting):
         else None,
         "created_at": job.created_at.isoformat() if job.created_at else None,
         "updated_at": job.updated_at.isoformat() if job.updated_at else None,
-        # Company - as object for frontend
-        "company": company,
+        "company": {
+            "id": job.company.company_id,
+            "name": job.company.company_name,
+            "description": job.company.description,
+            "location": _build_location(
+                job.company.location_city, job.company.location_country, ""
+            ),
+            "website": job.company.website,
+            "industry": job.company.industry,
+            "founded_year": job.company.founded_year,
+        }
+        if job.company
+        else None,
         "company_name": job.company.company_name if job.company else "Unknown Company",
-        # Description
-        "description": job.job_description.role_overview
-        if job.job_description
-        else None,
-        "role_overview": job.job_description.role_overview
-        if job.job_description
-        else None,
-        # Skills, Requirements, Benefits, and Nice to Have - as arrays for frontend
-        "requirements": requirements,
-        "benefits": benefits,
-        "nice_to_have": nice_to_have,
-        "required_skills_experience": job.job_description.required_skills_experience
-        if job.job_description
-        else None,
-        # Stats from JobPostingStats
+        "description": jd.role_overview if jd else None,
+        "role_overview": jd.role_overview if jd else None,
+        "requirements": _extract_list_from_dict(
+            jd.required_skills_experience if jd else None, "required_skills_experience"
+        ),
+        "benefits": _extract_list_from_dict(jd.offers if jd else None, "benefits"),
+        "nice_to_have": _extract_list_from_dict(
+            jd.nice_to_have if jd else None, "nice_to_have"
+        ),
+        "required_skills_experience": jd.required_skills_experience if jd else None,
         "applicant_count": job.stats.applicant_count if job.stats else 0,
         "views_count": job.stats.views_count if job.stats else 0,
         "is_featured": False,

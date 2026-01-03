@@ -1,8 +1,3 @@
-/**
- * Skill Types
- * Type definitions for candidate skills
- */
-
 export interface Skill {
   id: string;
   user_id: string;

@@ -15,7 +15,6 @@ export function Logo({
   className = '',
   showWordmark = true
 }: LogoProps) {
-  // Size configurations
   const sizes = {
     sm: {
       icon: 20,

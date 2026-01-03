@@ -2,8 +2,6 @@ from datetime import date
 
 from pydantic import BaseModel
 
-# --- Base Models used by both Profile and Resume ---
-
 
 class SocialLinkBase(BaseModel):
     type: str

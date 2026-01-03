@@ -1,8 +1,3 @@
-/**
- * Enhanced Form Hook
- * Comprehensive form state management with validation
- */
-
 'use client';
 
 import { useState, useCallback, useRef } from 'react';

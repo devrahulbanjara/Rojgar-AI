@@ -8,10 +8,8 @@ interface ApplicationTrackingCardProps {
 }
 
 export const ApplicationTrackingCard: React.FC<ApplicationTrackingCardProps> = ({ application }) => {
-  // Format the date to show as "Applied 1y ago" (shorter format)
   const formattedDate = `Applied ${formatDistanceToNow(new Date(application.applied_date), { addSuffix: true }).replace('about ', '').replace(' ago', '')} ago`;
 
-  // Get status badge styling
   const getStatusInfo = (status: ApplicationStatus) => {
     switch (status) {
       case "pending":

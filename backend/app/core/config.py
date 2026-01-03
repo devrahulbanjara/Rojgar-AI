@@ -10,16 +10,16 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    SECURE: bool = False
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    SECURE: bool
 
     # URLs
     FRONTEND_URL: str
     BACKEND_URL: str
 
     # Environment
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str
     APP_VERSION: str
 
     # Database
@@ -28,8 +28,9 @@ class Settings(BaseSettings):
     # Vector Database
     QDRANT_URL: str
     QDRANT_API_KEY: str
-    QDRANT_COLLECTION_JOBS: str
+    QDRANT_COLLECTION_NAME: str
     EMBEDDING_MODEL: str
+    EMBEDDING_DIM: int = 384
 
     # LLM Settings
     FAST_LLM: str = "llama-3.1-8b-instant"
@@ -38,7 +39,7 @@ class Settings(BaseSettings):
     LLM_MAX_RETRIES: int = 3
     GROQ_API_KEY: str
 
-    LANGCHAIN_TRACING_V2: bool = True
+    LANGCHAIN_TRACING_V2: bool
     LANGCHAIN_ENDPOINT: str
     LANGCHAIN_API_KEY: str
     LANGCHAIN_PROJECT: str

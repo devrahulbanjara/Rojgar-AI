@@ -1,7 +1,3 @@
-"""
-Wrap up node - Finalize the workflow state.
-"""
-
 from langsmith import traceable
 
 from app.models.agents.interview_scheduling import InterviewSchedulingState

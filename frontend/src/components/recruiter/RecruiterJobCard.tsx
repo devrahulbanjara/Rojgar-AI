@@ -1,157 +1,195 @@
-/**
- * RecruiterJobCard - Premium job card with smooth animations and clean design
- */
-
-import React, { memo } from 'react';
-import { MapPin, Briefcase, Calendar, DollarSign, Clock, ChevronRight, Users } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import type { Job } from '../../types/job';
+import React, { memo } from "react";
+import {
+  MapPin,
+  Briefcase,
+  Calendar,
+  DollarSign,
+  Clock,
+  Users,
+  Eye,
+} from "lucide-react";
+import { cn } from "../../lib/utils";
+import type { Job } from "../../types/job";
 
 interface RecruiterJobCardProps {
-    job: Job;
-    onClick?: () => void;
-    className?: string;
+  job: Job;
+  onClick?: () => void;
+  className?: string;
 }
 
-// Format salary for display
 function formatSalary(job: Job): string {
-    const min = job.salary_range?.min ?? job.salary_min;
-    const max = job.salary_range?.max ?? job.salary_max;
+  const min = job.salary_range?.min ?? job.salary_min;
+  const max = job.salary_range?.max ?? job.salary_max;
+  const currency = job.salary_range?.currency ?? job.salary_currency ?? "USD";
 
-    if (!min && !max) return 'Competitive';
+  if (!min && !max) return "Competitive";
 
-    const formatK = (n: number) => {
-        if (n >= 1000) return `$${Math.round(n / 1000)}k`;
-        return `$${n}`;
-    };
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${Math.round(num / 1000)}K`;
+    }
+    return num.toString();
+  };
 
-    if (min && max) return `${formatK(min)} - ${formatK(max)}`;
-    if (min) return `From ${formatK(min)}`;
-    if (max) return `Up to ${formatK(max)}`;
-    return 'Competitive';
+  if (min && max)
+    return `${currency} ${formatNumber(min)} - ${formatNumber(max)}`;
+  if (min) return `${currency} From ${formatNumber(min)}`;
+  if (max) return `${currency} Up to ${formatNumber(max)}`;
+  return "Competitive";
 }
 
-// Format posted date
 function formatPostedDate(dateStr: string): string {
-    if (!dateStr) return 'Recently';
+  if (!dateStr) return "Recently";
 
-    const date = new Date(dateStr);
-    const now = new Date();
+  const date = new Date(dateStr);
+  const now = new Date();
 
-    // Check if date is valid
-    if (isNaN(date.getTime())) return 'Recently';
+  // Check if date is valid
+  if (isNaN(date.getTime())) return "Recently";
 
-    // Reset time to midnight for accurate day comparison
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const postedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  // Reset time to midnight for accurate day comparison
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const postedDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
 
-    const diffTime = today.getTime() - postedDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = today.getTime() - postedDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) {
-        const weeks = Math.floor(diffDays / 7);
-        return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-    }
-    if (diffDays < 365) {
-        const months = Math.floor(diffDays / 30);
-        return `${months} month${months > 1 ? 's' : ''} ago`;
-    }
-    const years = Math.floor(diffDays / 365);
-    return `${years} year${years > 1 ? 's' : ''} ago`;
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  }
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} month${months > 1 ? "s" : ""} ago`;
+  }
+  const years = Math.floor(diffDays / 365);
+  return `${years} year${years > 1 ? "s" : ""} ago`;
 }
 
-// Status config
+// Status config matching candidate design style
 const statusConfig = {
-    Active: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-500' },
-    Draft: { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
-    Closed: { bg: 'bg-red-50', text: 'text-red-500', dot: 'bg-red-500' },
+  Active: {
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+  },
+  Draft: { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200" },
+  Closed: { bg: "bg-rose-50", text: "text-rose-600", border: "border-rose-200" },
+  Inactive: {
+    bg: "bg-amber-50",
+    text: "text-amber-600",
+    border: "border-amber-200",
+  },
 };
 
-export const RecruiterJobCard = memo<RecruiterJobCardProps>(({ job, onClick, className }) => {
-    const status = job.status || 'Draft';
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Draft;
+export const RecruiterJobCard = memo<RecruiterJobCardProps>(
+  ({ job, onClick, className }) => {
+    const status = job.status || "Draft";
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.Draft;
 
     return (
-        <div
-            onClick={onClick}
-            className={cn(
-                'group relative bg-white rounded-2xl p-6 cursor-pointer',
-                'border border-gray-100',
-                'transition-all duration-300 ease-out',
-                'hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50',
-                'hover:-translate-y-0.5',
-                className
+      <div
+        onClick={onClick}
+        className={cn(
+          "group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-5",
+          "hover:-translate-y-1 hover:shadow-lg hover:border-indigo-200",
+          "border-slate-200",
+          className,
+        )}
+        role="button"
+        tabIndex={0}
+        aria-label={`View details for ${job.title}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
+      >
+        <div className="space-y-4">
+          {/* Job Title & Department */}
+          <div>
+            <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1 mb-1">
+              {job.title}
+            </h3>
+            <p className="text-sm text-slate-500 font-medium">
+              {job.department}
+            </p>
+          </div>
+
+          {/* Location & Posted Date */}
+          <div className="flex items-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="truncate">{job.location}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{formatPostedDate(job.posted_date || job.created_at)}</span>
+            </div>
+          </div>
+
+          {/* Job Details */}
+          <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-1.5">
+              <DollarSign className="w-4 h-4 text-slate-400" />
+              <span className="font-medium">{formatSalary(job)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Briefcase className="w-4 h-4 text-slate-400" />
+              <span>{job.employment_type}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-slate-400" />
+              <span>{job.location_type}</span>
+            </div>
+          </div>
+
+          {/* Footer with Stats & Status */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              {job.applicant_count !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{job.applicant_count} applicants</span>
+                </div>
+              )}
+              {job.views_count !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{job.views_count} views</span>
+                </div>
+              )}
+            </div>
+
+            {/* Status Badge - Only show for non-Active statuses */}
+            {status !== 'Active' && (
+              <span
+                className={cn(
+                  "px-2.5 py-1 text-xs font-semibold rounded-full border transition-transform duration-200 group-hover:scale-105",
+                  config.bg,
+                  config.text,
+                  config.border,
+                )}
+              >
+                {status}
+              </span>
             )}
-        >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex-1 min-w-0 pr-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600">
-                            {job.department}
-                        </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200 line-clamp-1">
-                        {job.title}
-                    </h3>
-                </div>
-
-                {/* Status Badge */}
-                <div className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-                    config.bg, config.text
-                )}>
-                    <span className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
-                    {status}
-                </div>
-            </div>
-
-            {/* Meta Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="truncate">{job.location}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Briefcase className="w-4 h-4 text-gray-400" />
-                    <span>{job.employment_type}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                    <DollarSign className="w-4 h-4 text-gray-400" />
-                    <span>{formatSalary(job)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span>{job.location_type}</span>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {formatPostedDate(job.posted_date || job.created_at)}
-                    </span>
-                    {job.applicant_count > 0 && (
-                        <span className="flex items-center gap-1 text-blue-600 font-medium">
-                            <Users className="w-3.5 h-3.5" />
-                            {job.applicant_count} applicants
-                        </span>
-                    )}
-                </div>
-
-                {/* Arrow indicator */}
-                <div className="flex items-center gap-1 text-gray-400 group-hover:text-blue-600 transition-colors">
-                    <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">View</span>
-                    <ChevronRight className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" />
-                </div>
-            </div>
+          </div>
         </div>
+      </div>
     );
-});
+  },
+);
 
-RecruiterJobCard.displayName = 'RecruiterJobCard';
+RecruiterJobCard.displayName = "RecruiterJobCard";
