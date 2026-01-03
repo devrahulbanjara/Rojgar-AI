@@ -7,10 +7,6 @@ interface SectionHeaderProps {
   centered?: boolean;
 }
 
-/**
- * Reusable section header component
- * Provides consistent styling for section headers throughout the app
- */
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   subtitle,

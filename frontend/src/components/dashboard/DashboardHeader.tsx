@@ -6,10 +6,6 @@ interface DashboardHeaderProps {
   className?: string;
 }
 
-/**
- * Reusable dashboard header component
- * Updated with new design system
- */
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   title,
   subtitle,

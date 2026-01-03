@@ -15,10 +15,6 @@ interface RecommendedJobsProps {
   className?: string;
 }
 
-/**
- * Recommended Jobs Component
- * Displays personalized job recommendations using the new recommendations endpoint
- */
 export function RecommendedJobs({
   limit = 5,
   title = "Recommended for You",

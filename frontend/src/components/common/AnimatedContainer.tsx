@@ -1,8 +1,3 @@
-/**
- * AnimatedContainer Component
- * Optimized animation wrapper using Framer Motion for smooth performance
- */
-
 import React, { memo } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -18,7 +13,6 @@ interface AnimatedContainerProps {
   once?: boolean;
 }
 
-// Optimized animation variants
 const variants: Record<string, Variants> = {
   up: {
     hidden: {
@@ -159,7 +153,6 @@ export const AnimatedContainer = memo<AnimatedContainerProps>(({
 
 AnimatedContainer.displayName = 'AnimatedContainer';
 
-// Stagger container for lists
 export const StaggerContainer = memo<{
   children: React.ReactNode;
   className?: string;

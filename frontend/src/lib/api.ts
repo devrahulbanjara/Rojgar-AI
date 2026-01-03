@@ -1,8 +1,3 @@
-/**
- * Enhanced API Service Layer
- * Centralized API client with error handling, interceptors, and type safety
- */
-
 import { API_BASE_URL } from "../config/constants";
 
 export class ApiError extends Error {
@@ -79,8 +74,8 @@ class ApiClient {
       if (!response.ok) {
         throw new ApiError(
           data.message ||
-            data.detail ||
-            `HTTP ${response.status}: ${response.statusText}`,
+          data.detail ||
+          `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           data,
         );

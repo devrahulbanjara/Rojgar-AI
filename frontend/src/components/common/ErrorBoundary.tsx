@@ -1,8 +1,3 @@
-/**
- * Error Boundary Component
- * Catches and handles React errors gracefully
- */
-
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
@@ -48,12 +43,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
       return (
         <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
           <Card className="w-full max-w-md">

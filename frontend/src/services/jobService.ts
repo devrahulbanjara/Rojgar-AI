@@ -1,8 +1,3 @@
-/**
- * Job Service
- * Specialized service for job-related API operations with type safety
- */
-
 import { apiClient } from "../lib/api";
 import type {
   Job,
@@ -19,7 +14,6 @@ import type {
   UpdateApplicationRequest,
 } from "../types/application";
 
-// Job API endpoints
 const jobEndpoints = {
   list: "/api/v1/jobs",
   recommendations: "/api/v1/jobs/recommendations",
@@ -31,7 +25,6 @@ const jobEndpoints = {
   delete: (id: string) => `/api/v1/jobs/${id}`,
 } as const;
 
-// Application API endpoints
 const applicationEndpoints = {
   list: "/api/v1/applications",
   detail: (id: string) => `/api/v1/applications/${id}`,
@@ -43,11 +36,7 @@ const applicationEndpoints = {
     `/api/v1/applications/candidate/${candidateId}`,
 } as const;
 
-// Job Service Class
 export class JobService {
-  /**
-   * Get personalized job recommendations based on user skills
-   */
   static async getPersonalizedRecommendations(
     userId: string,
     page: number = 1,
@@ -73,10 +62,7 @@ export class JobService {
     return apiClient.get<JobListResponse>(endpoint);
   }
 
-  /**
-   * Get recommended jobs for homepage (legacy method)
-   * @deprecated Use getPersonalizedRecommendations for personalized results
-   */
+
   static async getRecommendedJobs(limit: number = 5): Promise<Job[]> {
     const queryParams = new URLSearchParams();
     queryParams.append("limit", limit.toString());
@@ -85,9 +71,6 @@ export class JobService {
     return apiClient.get<Job[]>(endpoint);
   }
 
-  /**
-   * Search jobs with filters and pagination
-   */
   static async searchJobs(
     params?: JobSearchParams & {
       employmentType?: string;
@@ -101,7 +84,6 @@ export class JobService {
     if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
 
-    // Backend expects 'q' parameter, not 'search'
     if (params?.search) queryParams.append("q", params.search);
 
     if (params?.employmentType) {
@@ -115,55 +97,34 @@ export class JobService {
     return apiClient.get<JobListResponse>(endpoint);
   }
 
-  /**
-   * Get list of jobs with optional filters and pagination (legacy method)
-   * @deprecated Use searchJobs for filtered results or getRecommendedJobs for homepage
-   */
   static async getJobs(params?: JobSearchParams): Promise<JobListResponse> {
-    // For backward compatibility, redirect to searchJobs
     return JobService.searchJobs(params);
   }
 
-  /**
-   * Get job details by ID
-   */
+
   static async getJobById(id: string): Promise<Job> {
     return apiClient.get<Job>(jobEndpoints.detail(id));
   }
 
-  /**
-   * Generate a job draft using AI agent (does not save to database)
-   */
   static async generateJobDraft(
     data: JobDraftGenerateRequest,
   ): Promise<JobDraftResponse> {
     return apiClient.post<JobDraftResponse>(jobEndpoints.generateDraft, data);
   }
 
-  /**
-   * Create a new job
-   */
   static async createJob(data: CreateJobRequest): Promise<Job> {
     return apiClient.post<Job>(jobEndpoints.create, data);
   }
 
-  /**
-   * Update an existing job
-   */
   static async updateJob(id: string, data: UpdateJobRequest): Promise<Job> {
     return apiClient.put<Job>(jobEndpoints.update(id), data);
   }
 
-  /**
-   * Delete a job
-   */
   static async deleteJob(id: string): Promise<void> {
     return apiClient.delete<void>(jobEndpoints.delete(id));
   }
 
-  /**
-   * Get jobs by company (using user_id)
-   */
+
   static async getJobsByCompany(
     userId: string,
     params?: { page?: number; limit?: number },
@@ -177,17 +138,9 @@ export class JobService {
     return apiClient.get<JobListResponse>(endpoint);
   }
 
-  /**
-   * Get featured/recommended jobs
-   */
-  // Removed getFeaturedJobs as functionality is deprecated
 }
 
-// Application Service Class
 export class ApplicationService {
-  /**
-   * Get list of applications
-   */
   static async getApplications(params?: {
     page?: number;
     limit?: number;
@@ -208,25 +161,17 @@ export class ApplicationService {
     return apiClient.get<Application[]>(endpoint);
   }
 
-  /**
-   * Get application details by ID
-   */
   static async getApplicationById(id: string): Promise<Application> {
     return apiClient.get<Application>(applicationEndpoints.detail(id));
   }
 
-  /**
-   * Create a new application
-   */
   static async createApplication(
     data: CreateApplicationRequest,
   ): Promise<Application> {
     return apiClient.post<Application>(applicationEndpoints.create, data);
   }
 
-  /**
-   * Update an existing application
-   */
+
   static async updateApplication(
     id: string,
     data: UpdateApplicationRequest,
@@ -234,16 +179,11 @@ export class ApplicationService {
     return apiClient.put<Application>(applicationEndpoints.update(id), data);
   }
 
-  /**
-   * Delete an application
-   */
   static async deleteApplication(id: string): Promise<void> {
     return apiClient.delete<void>(applicationEndpoints.delete(id));
   }
 
-  /**
-   * Get applications for a specific job
-   */
+
   static async getApplicationsByJob(
     jobId: string,
     params?: { page?: number; limit?: number },
@@ -256,9 +196,7 @@ export class ApplicationService {
     return apiClient.get<Application[]>(endpoint);
   }
 
-  /**
-   * Get applications for a specific candidate
-   */
+
   static async getApplicationsByCandidate(
     candidateId: string,
     params?: { page?: number; limit?: number },
@@ -272,11 +210,7 @@ export class ApplicationService {
   }
 }
 
-// Utility functions for job data transformation
 export const jobUtils = {
-  /**
-   * Get salary range from job (handles both computed and raw fields)
-   */
   getSalaryRange: (
     job: Job,
   ): { min: number; max: number; currency: string } | undefined => {
@@ -284,7 +218,6 @@ export const jobUtils = {
       return job.salary_range;
     }
 
-    // Fallback to raw fields if salary_range is not computed
     if (job.salary_min !== undefined && job.salary_max !== undefined) {
       return {
         min: job.salary_min,
@@ -296,9 +229,6 @@ export const jobUtils = {
     return undefined;
   },
 
-  /**
-   * Format salary range for display
-   */
   formatSalaryRange: (salaryRange?: {
     min: number;
     max: number;
@@ -322,17 +252,12 @@ export const jobUtils = {
     return `${currency} ${formatNumber(min)} - ${formatNumber(max)}`;
   },
 
-  /**
-   * Format salary range for a job (convenience method)
-   */
   formatJobSalary: (job: Job): string => {
     const salaryRange = jobUtils.getSalaryRange(job);
     return jobUtils.formatSalaryRange(salaryRange);
   },
 
-  /**
-   * Format posted date for display
-   */
+
   formatPostedDate: (date: string | Date): string => {
     const now = new Date();
     const postedDate = new Date(date);
@@ -354,9 +279,6 @@ export const jobUtils = {
     }
   },
 
-  /**
-   * Get job level color for UI
-   */
   getJobLevelColor: (level: string): string => {
     const colors = {
       Intern: "bg-blue-100 text-blue-800",
@@ -369,9 +291,7 @@ export const jobUtils = {
     return colors[level as keyof typeof colors] || "bg-gray-100 text-gray-800";
   },
 
-  /**
-   * Get location type color for UI
-   */
+
   getLocationTypeColor: (locationType: string): string => {
     const colors = {
       Remote: "bg-green-100 text-green-800",
@@ -383,9 +303,6 @@ export const jobUtils = {
     );
   },
 
-  /**
-   * Get employment type color for UI
-   */
   getEmploymentTypeColor: (employmentType: string): string => {
     const colors = {
       "Full-time": "bg-blue-100 text-blue-800",
@@ -401,6 +318,5 @@ export const jobUtils = {
   },
 };
 
-// Export default instances
 export const jobService = JobService;
 export const applicationService = ApplicationService;

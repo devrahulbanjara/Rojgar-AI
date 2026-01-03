@@ -1,8 +1,3 @@
-/**
- * JobSearchBar Component
- * Enhanced search bar with debouncing and improved UX
- */
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -30,7 +25,6 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounce the search input
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -61,7 +55,6 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
     if (e.key === 'Escape') {
       handleClear();
     } else if (e.key === 'Enter' && onDebouncedChange) {
-      // Trigger immediate search on Enter
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }

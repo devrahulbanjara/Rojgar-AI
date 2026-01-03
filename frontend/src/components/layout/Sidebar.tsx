@@ -33,7 +33,6 @@ export function Sidebar({
   const pathname = usePathname();
   const [showPulse, setShowPulse] = useState(true);
 
-  // Remove pulse animation after initial load
   useEffect(() => {
     const timer = setTimeout(() => setShowPulse(false), 3000);
     return () => clearTimeout(timer);
@@ -71,11 +70,11 @@ export function Sidebar({
     <aside
       className={cn(
         "fixed left-0 top-[72px] z-40 flex h-[calc(100vh-72px)] flex-col",
-        "bg-gradient-to-b from-white via-white to-[#F8FAFC]",
+        "bg-white/80 backdrop-blur-xl",
         "border-r border-[#E2E8F0] shadow-sm",
         !disableAnimation && "transition-all duration-500 ease-in-out",
-        isCollapsed ? "w-16" : "w-[260px]",
-        "max-lg:w-[260px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl",
+        isCollapsed ? "w-20" : "w-[280px]",
+        "max-lg:w-[280px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl",
         isCollapsed
           ? "max-lg:-translate-x-full max-lg:pointer-events-none"
           : "max-lg:translate-x-0 max-lg:pointer-events-auto",
@@ -87,27 +86,27 @@ export function Sidebar({
           : "ease-in-out",
       }}
     >
+      {/* Decorative Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 via-transparent to-indigo-50/30 pointer-events-none" />
+
       {/* Toggle Button - Edge when expanded, Bottom when collapsed */}
       <button
         type="button"
         onClick={onToggle}
         className={cn(
-          "group absolute z-50 hidden h-9 w-9 items-center justify-center rounded-full",
-          "border-2 border-[#E2E8F0] bg-white text-[#64748B]",
-          "shadow-md hover:shadow-lg transition-all duration-200 ease-in-out lg:flex cursor-pointer",
-          "hover:border-[#3056F5] hover:bg-[#3056F5] hover:text-white",
+          "group absolute z-50 hidden h-8 w-8 items-center justify-center rounded-full",
+          "border border-[#E2E8F0] bg-white text-[#64748B]",
+          "shadow-sm hover:shadow-md transition-all duration-200 ease-in-out lg:flex cursor-pointer",
+          "hover:border-[#3056F5] hover:text-[#3056F5]",
           "active:scale-95 active:shadow-sm",
           "focus:outline-none focus:ring-2 focus:ring-[#3056F5] focus:ring-offset-2",
           isCollapsed
             ? "bottom-6 left-1/2 -translate-x-1/2"
-            : "bottom-6 -right-4",
+            : "top-6 -right-4",
         )}
         aria-label={toggleAriaLabel}
         aria-expanded={!isCollapsed}
         title={toggleAriaLabel}
-        style={{
-          backdropFilter: "blur(8px)",
-        }}
       >
         {/* Pulse Ring Animation */}
         {showPulse && (
@@ -117,17 +116,9 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Tooltip - Only show when expanded */}
-        {!isCollapsed && (
-          <span className="pointer-events-none absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-[#0F172A] px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-xl transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 translate-x-2">
-            {toggleAriaLabel}
-            <span className="absolute left-full top-1/2 -translate-y-1/2 -ml-1 border-4 border-transparent border-l-[#0F172A]" />
-          </span>
-        )}
-
         <ToggleIcon
           className={cn(
-            "h-[16px] w-[16px] transition-all duration-500 ease-in-out relative z-10",
+            "h-4 w-4 transition-all duration-500 ease-in-out relative z-10",
             "group-hover:scale-110",
           )}
           style={{
@@ -138,9 +129,9 @@ export function Sidebar({
 
       <nav
         className={cn(
-          "pt-6 flex flex-col space-y-1 transition-all duration-500 max-lg:pt-6 max-lg:space-y-2 overflow-y-auto",
-          isCollapsed ? "items-center px-2" : "px-3",
-          "max-lg:px-6",
+          "relative pt-8 flex flex-col space-y-2 transition-all duration-500 max-lg:pt-6 overflow-y-auto overflow-x-hidden px-4 flex-1",
+          isCollapsed ? "items-center" : "",
+          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
         )}
       >
         {items.map((item) => {
@@ -155,57 +146,47 @@ export function Sidebar({
               aria-label={item.title}
               title={item.title}
               className={cn(
-                "group relative flex h-11 w-full items-center rounded-xl transition-all duration-200 gap-3 px-4 cursor-pointer",
-                isCollapsed && "justify-center gap-0 px-0",
+                "group relative flex items-center rounded-xl transition-all duration-300 cursor-pointer overflow-hidden flex-shrink-0",
+                isCollapsed ? "w-12 h-12 justify-center" : "w-full h-12 px-4 gap-3",
                 isActive
-                  ? "bg-gradient-to-r from-[#3056F5]/10 to-[#3056F5]/5 text-[#3056F5] shadow-sm"
-                  : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#1E293B] active:bg-[#E2E8F0]",
+                  ? "bg-gradient-to-r from-[#3056F5] to-[#6366F1] text-white shadow-md shadow-blue-500/20"
+                  : "text-[#64748B] hover:bg-blue-50/50 hover:text-[#3056F5]",
               )}
             >
-              {isActive && !isCollapsed && (
-                <div className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-[#3056F5] to-[#3B82F6] shadow-sm" />
+              {/* Active Indicator Glow */}
+              {isActive && (
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               )}
+
               <Icon
                 className={cn(
-                  "h-6 w-6 flex-shrink-0 transition-all duration-200",
+                  "flex-shrink-0 transition-all duration-300",
+                  isCollapsed ? "h-6 w-6" : "h-5 w-5",
                   isActive
-                    ? "text-[#3056F5] drop-shadow-sm"
-                    : "text-[#64748B] group-hover:text-[#475569] group-hover:scale-105",
+                    ? "text-white"
+                    : "text-[#64748B] group-hover:text-[#3056F5] group-hover:scale-110",
                 )}
               />
+
               <span
                 className={cn(
-                  "text-base font-semibold whitespace-nowrap block",
+                  "text-[15px] font-medium whitespace-nowrap block transition-all duration-300",
                   isCollapsed
-                    ? "pointer-events-none opacity-0 -translate-x-32"
-                    : "pointer-events-auto translate-x-0 opacity-100",
-                  isActive ? "text-[#3056F5]" : "text-[#1E293B]",
+                    ? "w-0 opacity-0 hidden"
+                    : "w-auto opacity-100",
+                  isActive ? "text-white font-semibold" : "text-[#475569] group-hover:text-[#3056F5]",
                 )}
-                style={{
-                  overflow: "hidden",
-                  width: isCollapsed ? "0px" : "180px",
-                  transitionProperty: disableAnimation
-                    ? "none"
-                    : "width, opacity, transform",
-                  transitionDuration: disableAnimation
-                    ? "0ms"
-                    : isCollapsed
-                      ? "500ms, 350ms, 250ms"
-                      : "500ms, 350ms, 250ms",
-                  transitionDelay: disableAnimation
-                    ? "0ms"
-                    : isCollapsed
-                      ? "0ms, 300ms, 500ms"
-                      : "0ms, 100ms, 0ms",
-                  transitionTimingFunction: disableAnimation
-                    ? undefined
-                    : isCollapsed
-                      ? "cubic-bezier(0.4, 0, 0.2, 1), ease-out, ease-out"
-                      : "cubic-bezier(0.4, 0, 0.2, 1), ease-out, ease-out",
-                }}
               >
                 {item.title}
               </span>
+
+              {/* Tooltip for Collapsed State */}
+              {isCollapsed && (
+                <div className="absolute left-full ml-4 px-3 py-1.5 bg-[#1E293B] text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl z-50">
+                  {item.title}
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 -mr-1 border-4 border-transparent border-r-[#1E293B]" />
+                </div>
+              )}
             </Link>
           );
         })}

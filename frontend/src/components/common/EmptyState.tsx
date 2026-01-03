@@ -8,10 +8,7 @@ interface EmptyStateProps {
   className?: string;
 }
 
-/**
- * Reusable empty state component
- * Displays a consistent empty state with icon, title, and description
- */
+
 export const EmptyState: React.FC<EmptyStateProps> = ({
   icon,
   title,

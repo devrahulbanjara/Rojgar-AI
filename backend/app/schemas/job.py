@@ -77,55 +77,65 @@ class JobListResponse(BaseModel):
 
 
 class JobCreate(BaseModel):
-    """Schema for creating a new job posting"""
-
     title: str
     department: str | None = None
     level: str | None = None
 
-    # Job Description fields
-    description: str | None = ""  # role_overview - optional for drafts
-    requiredSkillsAndExperience: (
-        list[str] | None
-    ) = []  # Will be stored as {"required_skills_experience": [...]} - optional for drafts
-    niceToHave: list[str] | None = None  # Will be stored as {"nice_to_have": [...]}
-    benefits: list[str] | None = None  # Will be stored as {"benefits": [...]} in offers
+    description: str | None = ""
+    requiredSkillsAndExperience: list[str] | None = []
+    niceToHave: list[str] | None = None
+    benefits: list[str] | None = None
 
-    # Location
     locationCity: str | None = None
     locationCountry: str | None = None
-    locationType: str = "On-site"  # Remote, On-site, Hybrid
+    locationType: str = "On-site"
     employmentType: str | None = None
 
-    # Compensation
     salaryMin: int | None = None
     salaryMax: int | None = None
     currency: str | None = "NPR"
 
-    # Dates
-    applicationDeadline: str | None = None  # ISO date string
+    applicationDeadline: str | None = None
 
-    # Status
-    status: str | None = "active"  # "active", "draft", "expired"
+    status: str | None = "active"
 
-    # Creation Mode
-    mode: str = "manual"  # "manual", "agent"
-    raw_requirements: str | None = None  # Required if mode is "agent"
+    mode: str = "manual"
+    raw_requirements: str | None = None
+
+
+class JobUpdate(BaseModel):
+    title: str | None = None
+    department: str | None = None
+    level: str | None = None
+
+    description: str | None = None
+    requiredSkillsAndExperience: list[str] | None = None
+    niceToHave: list[str] | None = None
+    benefits: list[str] | None = None
+
+    locationCity: str | None = None
+    locationCountry: str | None = None
+    locationType: str | None = None
+    employmentType: str | None = None
+
+    salaryMin: int | None = None
+    salaryMax: int | None = None
+    currency: str | None = None
+
+    applicationDeadline: str | None = None
+
+    status: str | None = None
 
 
 class JobDraftGenerateRequest(BaseModel):
-    """Schema for generating a job draft"""
-
     title: str
     raw_requirements: str
     reference_jd: str | None = None
 
 
 class JobDraftResponse(BaseModel):
-    """Schema for the generated job draft response"""
-
     title: str
-    description: str  # role_overview
+    description: str
     requiredSkillsAndExperience: list[str]
     niceToHave: list[str]
     benefits: list[str]

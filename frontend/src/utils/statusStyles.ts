@@ -1,4 +1,3 @@
-// utils/statusStyles.ts
 
 export const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     applied: { label: "Applied", color: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -12,7 +11,6 @@ export const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     rejected: { label: "Rejected", color: "bg-red-50 text-red-700 border-red-200" },
 };
 
-// Map backend status to the 3 Columns
 export const COLUMN_MAPPING: Record<string, string> = {
     applied: "Applied",
     shortlisting: "Applied",

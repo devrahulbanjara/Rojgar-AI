@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Role Selection Page
- * Updated with new design system - matches auth pages
- */
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchParamsWrapper } from '../../../components/common/SearchParamsWrapper';
@@ -22,9 +17,7 @@ export default function RoleSelection() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Handle search params
   const handleSearchParams = (searchParams: URLSearchParams) => {
-    // Remove any token from URL for security
     const token = searchParams.get('token');
     if (token) {
       const newUrl = window.location.pathname;
@@ -33,7 +26,6 @@ export default function RoleSelection() {
   };
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       const isAuth = await authService.isAuthenticated();
       if (!isAuth) {
@@ -115,45 +107,45 @@ export default function RoleSelection() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.4, delay: 0.1 }}
                       className={`w-full p-5 rounded-xl border-[1.5px] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${selectedRole === 'recruiter'
-                          ? 'bg-[#3056F5] border-[#3056F5] shadow-lg'
-                          : 'bg-white border-[#E5E7EB] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
+                        ? 'bg-[#3056F5] border-[#3056F5] shadow-lg'
+                        : 'bg-white border-[#E5E7EB] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
                         }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${selectedRole === 'recruiter'
-                              ? 'bg-white/20'
-                              : 'bg-[#3056F5]/10'
+                            ? 'bg-white/20'
+                            : 'bg-[#3056F5]/10'
                             }`}
                         >
                           <Briefcase
                             className={`h-6 w-6 transition-colors duration-200 ${selectedRole === 'recruiter'
-                                ? 'text-white'
-                                : 'text-[#3056F5]'
+                              ? 'text-white'
+                              : 'text-[#3056F5]'
                               }`}
                           />
                         </div>
                         <div className="flex-1 text-left">
                           <h3
                             className={`text-base font-semibold mb-1 transition-colors duration-200 ${selectedRole === 'recruiter'
-                                ? 'text-white'
-                                : 'text-[#0F172A]'
+                              ? 'text-white'
+                              : 'text-[#0F172A]'
                               }`}
                           >
                             I&apos;m hiring talent
                           </h3>
                           <p
                             className={`text-sm transition-colors duration-200 ${selectedRole === 'recruiter'
-                                ? 'text-white/80'
-                                : 'text-[#475569]'
+                              ? 'text-white/80'
+                              : 'text-[#475569]'
                               }`}
                           >
                             Post jobs and find qualified candidates
                           </p>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${selectedRole === 'recruiter'
-                            ? 'border-white bg-white'
-                            : 'border-[#E5E7EB] bg-white'
+                          ? 'border-white bg-white'
+                          : 'border-[#E5E7EB] bg-white'
                           }`}>
                           {selectedRole === 'recruiter' && (
                             <div className="w-2.5 h-2.5 rounded-full bg-[#3056F5]"></div>
@@ -171,45 +163,45 @@ export default function RoleSelection() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.4, delay: 0.2 }}
                       className={`w-full p-5 rounded-xl border-[1.5px] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${selectedRole === 'candidate'
-                          ? 'bg-[#3056F5] border-[#3056F5] shadow-lg'
-                          : 'bg-white border-[#E5E7EB] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
+                        ? 'bg-[#3056F5] border-[#3056F5] shadow-lg'
+                        : 'bg-white border-[#E5E7EB] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
                         }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${selectedRole === 'candidate'
-                              ? 'bg-white/20'
-                              : 'bg-[#3056F5]/10'
+                            ? 'bg-white/20'
+                            : 'bg-[#3056F5]/10'
                             }`}
                         >
                           <User
                             className={`h-6 w-6 transition-colors duration-200 ${selectedRole === 'candidate'
-                                ? 'text-white'
-                                : 'text-[#3056F5]'
+                              ? 'text-white'
+                              : 'text-[#3056F5]'
                               }`}
                           />
                         </div>
                         <div className="flex-1 text-left">
                           <h3
                             className={`text-base font-semibold mb-1 transition-colors duration-200 ${selectedRole === 'candidate'
-                                ? 'text-white'
-                                : 'text-[#0F172A]'
+                              ? 'text-white'
+                              : 'text-[#0F172A]'
                               }`}
                           >
                             I&apos;m looking for a job
                           </h3>
                           <p
                             className={`text-sm transition-colors duration-200 ${selectedRole === 'candidate'
-                                ? 'text-white/80'
-                                : 'text-[#475569]'
+                              ? 'text-white/80'
+                              : 'text-[#475569]'
                               }`}
                           >
                             Find opportunities and apply to positions
                           </p>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${selectedRole === 'candidate'
-                            ? 'border-white bg-white'
-                            : 'border-[#E5E7EB] bg-white'
+                          ? 'border-white bg-white'
+                          : 'border-[#E5E7EB] bg-white'
                           }`}>
                           {selectedRole === 'candidate' && (
                             <div className="w-2.5 h-2.5 rounded-full bg-[#3056F5]"></div>
