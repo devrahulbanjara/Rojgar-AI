@@ -1,23 +1,28 @@
-from fastapi import APIRouter, HTTPException, status, Response, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core import settings, get_db, get_current_user_id
+from app.core import get_current_user_id, get_db, settings
+from app.core.limiter import limiter
 from app.schemas import (
-    SignupRequest,
+    CreateUserRequest,
     LoginRequest,
     RoleSelectionRequest,
+    SignupRequest,
     TokenResponse,
-    CreateUserRequest,
 )
-from app.services import AuthService
+from app.services import AuthService, UserService
 
 router = APIRouter()
 
 
 @router.post("/signup", response_model=TokenResponse)
+@limiter.limit("5/minute")
 def signup(
-    signup_data: SignupRequest, response: Response, db: Session = Depends(get_db)
+    request: Request,
+    signup_data: SignupRequest,
+    response: Response,
+    db: Session = Depends(get_db),
 ):
     existing_user = AuthService.get_user_by_email(signup_data.email, db)
     if existing_user:
@@ -53,8 +58,15 @@ def signup(
         user=AuthService.create_user_response(new_user),
     )
 
+
 @router.post("/login", response_model=TokenResponse)
-def login(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(
+    request: Request,
+    login_data: LoginRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     user = AuthService.get_user_by_email(login_data.email, db)
 
     if not user or not user.password:
@@ -88,13 +100,15 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
 
 
 @router.get("/google")
-def google_login():
+@limiter.limit("5/minute")
+def google_login(request: Request):
     auth_url = AuthService.generate_google_auth_url()
     return {"auth_url": auth_url}
 
 
 @router.get("/google/callback")
-async def google_callback(code: str, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def google_callback(request: Request, code: str, db: Session = Depends(get_db)):
     try:
         google_user = await AuthService.exchange_google_code(code)
 
@@ -115,26 +129,26 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
         )
         return response
 
-    except Exception as e:
+    except Exception:
         error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
         return RedirectResponse(url=error_url)
 
 
 @router.post("/select-role")
+@limiter.limit("5/minute")
 def select_role(
+    request: Request,
     role_data: RoleSelectionRequest,
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    from app.services import UserService
-
     user = UserService.get_user_by_id(user_id, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    
+
     user = AuthService.assign_role_and_create_profile(user, role_data.role, db)
 
     return {
@@ -144,6 +158,7 @@ def select_role(
 
 
 @router.post("/logout")
-def logout(response: Response):
+@limiter.limit("5/minute")
+def logout(request: Request, response: Response):
     response.delete_cookie(key="auth_token")
     return {"message": "Logged out successfully"}

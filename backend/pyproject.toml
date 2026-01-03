@@ -22,7 +22,15 @@ dependencies = [
     "python-multipart>=0.0.20",
     "qdrant-client>=1.16.2",
     "sentence-transformers>=5.2.0",
+    "slowapi>=0.1.9",
     "sqlalchemy>=2.0.45",
     "starlette>=0.50.0",
     "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "ruff>=0.14.10",
 ]

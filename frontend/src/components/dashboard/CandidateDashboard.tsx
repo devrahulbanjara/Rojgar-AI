@@ -3,7 +3,6 @@ import { formatDistanceToNow } from "date-fns";
 import { STATUS_CONFIG, COLUMN_MAPPING } from "@/utils/statusStyles";
 import { Loader2, Briefcase, Video, Trophy, MapPin, CalendarClock } from "lucide-react";
 
-// Define Types locally
 interface JobSummary {
     job_id: string;
     title: string;
@@ -53,7 +52,6 @@ export default function CandidateDashboard() {
         }
     };
 
-    // Group applications into columns
     const columns: Record<string, ApplicationResponse[]> = {
         Applied: [],
         Interviewing: [],
@@ -159,7 +157,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
 
     // Determine left border color based on specific status.
     // We can map the bg-color from config to a border color roughly, or just use the config's text/border colors.
-    // Let's rely on the config but map it to a border-l color. 
+    // Let's rely on the config but map it to a border-l color.
     // Since STATUS_CONFIG has 'color' class string, we can parse it or just use a lookup.
     // For simplicity and cleanest look, let's use the status color's main hue.
 

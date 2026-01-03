@@ -4,24 +4,20 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect } from 'react';
 import CandidateDashboardComponent from '../../../components/dashboard/CandidateDashboard';
-import { WelcomeMessage, StatsGrid } from '../../../components/dashboard';
-import { PageTransition, AnimatedContainer, PageHeader, LoadingSpinner } from '../../../components/common';
+import { WelcomeMessage } from '../../../components/dashboard';
+import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common';
 import { AppShell } from '../../../components/layout/AppShell';
-import { useDashboardStats } from '../../../hooks/useDashboardStats';
 import { useAuth } from '../../../hooks/useAuth';
 
 export default function CandidateDashboardPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { data: stats } = useDashboardStats();
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
       window.location.href = '/login';
     }
   }, [isAuthenticated, isAuthLoading]);
 
-  // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
       <AppShell>
@@ -38,15 +34,21 @@ export default function CandidateDashboardPage() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-        <div className="space-y-8">
-          {/* Welcome Message */}
+        <div className="space-y-8 pb-12">
+          {/* Welcome Message with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <WelcomeMessage firstName={firstName} />
+            <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <WelcomeMessage firstName={firstName} />
+              </div>
+            </div>
           </AnimatedContainer>
 
           {/* New Kanban Dashboard */}
           <AnimatedContainer direction="up" delay={0.3}>
-            <CandidateDashboardComponent />
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <CandidateDashboardComponent />
+            </div>
           </AnimatedContainer>
         </div>
       </PageTransition>

@@ -30,12 +30,12 @@ export function InsightsSection() {
     // Check on mount and resize
     checkVisibility();
     window.addEventListener('resize', checkVisibility);
-    
+
     return () => window.removeEventListener('resize', checkVisibility);
   }, []);
 
   return (
-    <section id="insights" className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 sm:px-8 lg:px-8 bg-white">
+    <section id="insights" className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 lg:px-8 bg-white">
       <div className="w-full max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -140,4 +140,3 @@ export function InsightsSection() {
     </section>
   );
 }
-

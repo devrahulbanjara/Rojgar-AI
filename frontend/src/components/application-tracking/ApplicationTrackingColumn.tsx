@@ -10,9 +10,9 @@ interface ApplicationTrackingColumnProps {
   columnType: 'applied' | 'interviewing' | 'outcome';
 }
 
-export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps> = ({ 
-  title, 
-  description, 
+export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps> = ({
+  title,
+  description,
   applications,
   columnType
 }) => {
@@ -29,21 +29,19 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
     }
   };
 
-  // Get column-specific border color
   const getBorderColor = () => {
     switch (columnType) {
       case 'applied':
-        return '#94A3B8'; // Slate gray
+        return '#94A3B8';
       case 'interviewing':
-        return '#3056F5'; // Brand blue
+        return '#3056F5';
       case 'outcome':
-        return '#16A34A'; // Success green
+        return '#16A34A';
       default:
         return '#94A3B8';
     }
   };
 
-  // Get column-specific text color
   const getTextColor = () => {
     switch (columnType) {
       case 'applied':
@@ -71,7 +69,7 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
           {description}
         </p>
       </header>
-      
+
       {/* Column Content */}
       <div className="flex-1 space-y-4 min-h-[200px]">
         {applications.length === 0 ? (
@@ -83,14 +81,14 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
           </div>
         ) : (
           applications.map(application => (
-            <ApplicationTrackingCard 
+            <ApplicationTrackingCard
               key={application.id}
               application={application}
             />
           ))
         )}
       </div>
-      
+
       {/* Column Footer - Application Count */}
       {applications.length > 0 && (
         <footer className="mt-4 px-4 py-3 bg-[#F9FAFB] rounded-lg">

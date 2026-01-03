@@ -1,19 +1,18 @@
-import uuid
-from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
-from fastapi import HTTPException
+from sqlalchemy.orm import Session, selectinload
 
-from app.models.application import JobApplication, JobApplicationStatusHistory, ApplicationStatus
+from app.models.application import JobApplication
 from app.models.candidate import CandidateProfile
-from app.core.logging_config import logger
+
 
 class ApplicationService:
-
     @staticmethod
     def get_candidate_applications(db: Session, user_id: str):
-        stmt = select(CandidateProfile.profile_id).where(CandidateProfile.user_id == user_id)
+        stmt = select(CandidateProfile.profile_id).where(
+            CandidateProfile.user_id == user_id
+        )
         profile_id = db.execute(stmt).scalar_one_or_none()
-        
+
         if not profile_id:
             return []
 
@@ -21,8 +20,7 @@ class ApplicationService:
             select(JobApplication)
             .where(JobApplication.candidate_profile_id == profile_id)
             .options(
-                selectinload(JobApplication.job),
-                selectinload(JobApplication.company)
+                selectinload(JobApplication.job), selectinload(JobApplication.company)
             )
             .order_by(JobApplication.updated_at.desc())
         )

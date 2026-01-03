@@ -1,10 +1,3 @@
-/**
- * Profile Types - Single Source of Truth (SSOT)
- * Matches Backend Schemas from app/schemas/candidate.py
- */
-
-// --- Sub-Resources ---
-
 export interface SocialLink {
   social_link_id: string;
   type: string;
@@ -48,25 +41,21 @@ export interface Skill {
   skill_name: string;
 }
 
-// --- Main Profile Response ---
 
 export interface CandidateProfile {
   profile_id: string;
   user_id: string;
 
-  // User Fields
   full_name: string;
   email: string;
   picture?: string;
 
-  // Profile Fields
   phone?: string;
   location_city?: string;
   location_country?: string;
   professional_headline?: string;
   professional_summary?: string;
 
-  // Lists
   social_links: SocialLink[];
   work_experiences: WorkExperience[];
   educations: Education[];
@@ -74,7 +63,6 @@ export interface CandidateProfile {
   skills: Skill[];
 }
 
-// --- Inputs (Create/Update) ---
 
 export interface CandidateProfileUpdate {
   full_name?: string;

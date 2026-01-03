@@ -2,7 +2,16 @@ from langgraph.types import Command
 
 from . import app, reference_jd
 
-thread_config = {"configurable": {"thread_id": "jd-thread-001"}}
+thread_config = {
+    "configurable": {"thread_id": "jd-thread-001"},
+    "run_name": "jd_generation_workflow",
+    "tags": ["jd_generation", "langgraph", "job_description", "demo"],
+    "metadata": {
+        "thread_id": "jd-thread-001",
+        "workflow": "jd_generator",
+        "mode": "demo",
+    },
+}
 
 initial_state = {
     "requirements": "Senior Machine Learning Engineer, 4+ years experience, interest in teaching and mentoring students, 50% engineering work, 50% training students for AWS Certified MLA-C01",
@@ -39,7 +48,16 @@ while "__interrupt__" in result:
 
     user_input = input("\n>>> Type 'approved' to finish, or provide feedback: ").strip()
 
-    result = app.invoke(Command(resume=user_input), config=thread_config)
+    # Update config with revision info for tracing
+    revision_config = {
+        **thread_config,
+        "metadata": {
+            **thread_config.get("metadata", {}),
+            "revision_number": payload["revision_number"],
+            "user_feedback_length": len(user_input),
+        },
+    }
+    result = app.invoke(Command(resume=user_input), config=revision_config)
 
 print("\n" + "=" * 70)
 print("FINAL JOB DESCRIPTION")

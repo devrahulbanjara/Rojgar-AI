@@ -2,7 +2,7 @@
 Schemas for the interview scheduling workflow.
 """
 
-from typing import TypedDict, Optional
+from typing import TypedDict
 
 
 class InterviewSchedulingState(TypedDict):
@@ -22,7 +22,7 @@ class InterviewSchedulingState(TypedDict):
     reason: str
     """Reason for shortlisting the candidate."""
 
-    draft_email: Optional[str]
+    draft_email: str | None
     """HTML email content draft."""
 
     approved: bool
@@ -31,6 +31,5 @@ class InterviewSchedulingState(TypedDict):
     auto_approved: bool
     """If True, skips human approval gate."""
 
-    send_status: Optional[str]
+    send_status: str | None
     """Status of email sending: 'success', 'failed: <reason>', or None."""
-

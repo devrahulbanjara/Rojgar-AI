@@ -1,26 +1,65 @@
-"""
-Schemas package - Pydantic models for API data contracts.
-
-This module provides request/response schemas for the API.
-Import from here instead of individual submodules for a cleaner API.
-
-Example:
-    from app.schemas import UserResponse, JobResponse, ApplicationCreate
-"""
-
-# User schemas
+from .application import (
+    ApplicationResponse,
+    CompanySummary,
+    JobSummary,
+)
+from .candidate import (
+    CandidateProfileFullResponse,
+    CandidateProfileUpdate,
+    CertificationResponse,
+    CertificationUpdate,
+    EducationResponse,
+    EducationUpdate,
+    SkillResponse,
+    SkillUpdate,
+    SocialLinkResponse,
+    WorkExperienceResponse,
+    WorkExperienceUpdate,
+)
+from .job import (
+    CompanyResponse,
+    JobCreate,
+    JobDraftGenerateRequest,
+    JobDraftResponse,
+    JobListResponse,
+    JobResponse,
+)
+from .resume import (
+    ResumeCertificationResponse,
+    ResumeCertificationUpdate,
+    ResumeCreate,
+    ResumeEducationResponse,
+    ResumeEducationUpdate,
+    ResumeListResponse,
+    ResumeResponse,
+    ResumeSkillResponse,
+    ResumeSkillUpdate,
+    ResumeSocialLinkResponse,
+    ResumeUpdate,
+    ResumeWorkExperienceResponse,
+    ResumeWorkExperienceUpdate,
+)
+from .shared import (
+    CertificationBase,
+    EducationBase,
+    SkillBase,
+    SocialLinkBase,
+    WorkExperienceBase,
+)
 from .user import (
-    UserResponse,
-    GoogleUserInfo,
     CreateUserRequest,
-    SignupRequest,
+    GoogleUserInfo,
     LoginRequest,
     RoleSelectionRequest,
+    SignupRequest,
     TokenResponse,
+    UserResponse,
 )
 
 __all__ = [
-    # User
+    "ApplicationResponse",
+    "JobSummary",
+    "CompanySummary",
     "UserResponse",
     "GoogleUserInfo",
     "CreateUserRequest",
@@ -28,4 +67,39 @@ __all__ = [
     "LoginRequest",
     "RoleSelectionRequest",
     "TokenResponse",
+    "CompanyResponse",
+    "JobResponse",
+    "JobListResponse",
+    "JobDraftResponse",
+    "JobCreate",
+    "JobDraftGenerateRequest",
+    "CandidateProfileUpdate",
+    "CertificationUpdate",
+    "EducationUpdate",
+    "SkillUpdate",
+    "WorkExperienceUpdate",
+    "SocialLinkResponse",
+    "WorkExperienceResponse",
+    "EducationResponse",
+    "CertificationResponse",
+    "SkillResponse",
+    "CandidateProfileFullResponse",
+    "ResumeCreate",
+    "ResumeUpdate",
+    "ResumeWorkExperienceUpdate",
+    "ResumeEducationUpdate",
+    "ResumeSkillUpdate",
+    "ResumeCertificationUpdate",
+    "ResumeSocialLinkResponse",
+    "ResumeWorkExperienceResponse",
+    "ResumeEducationResponse",
+    "ResumeCertificationResponse",
+    "ResumeSkillResponse",
+    "ResumeResponse",
+    "ResumeListResponse",
+    "SocialLinkBase",
+    "WorkExperienceBase",
+    "EducationBase",
+    "CertificationBase",
+    "SkillBase",
 ]

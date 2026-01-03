@@ -1,7 +1,3 @@
-/**
- * Simple Authentication Hook for testing
- */
-
 'use client';
 
 export const useAuth = () => {
@@ -15,9 +11,9 @@ export const useAuth = () => {
     },
     isAuthenticated: true,
     isLoading: false,
-    login: async () => {},
-    signup: async () => {},
-    logout: () => {},
-    refetchUser: () => {},
+    login: async () => { },
+    signup: async () => { },
+    logout: () => { },
+    refetchUser: () => { },
   };
 };
