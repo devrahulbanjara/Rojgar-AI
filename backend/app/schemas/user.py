@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict
 
@@ -6,55 +7,55 @@ from app.models.user import UserRole
 
 
 class SignupRequest(BaseModel):
-    email: str
-    password: str
-    name: str
-    picture: str | None = None
+    email: Annotated[str, "User email"]
+    password: Annotated[str, "User password"]
+    name: Annotated[str, "User full name"]
+    picture: Annotated[str | None, "Profile picture URL"] = None
 
 
 class CreateUserRequest(BaseModel):
-    email: str
-    name: str
-    password: str | None = None
-    google_id: str | None = None
-    picture: str | None = None
-    role: UserRole | None = None
-    organization_id: str | None = None
+    email: Annotated[str, "User email"]
+    name: Annotated[str, "User full name"]
+    password: Annotated[str | None, "User password"] = None
+    google_id: Annotated[str | None, "Google account ID"] = None
+    picture: Annotated[str | None, "Profile picture URL"] = None
+    role: Annotated[UserRole | None, "User role"] = None
+    organization_id: Annotated[str | None, "Associated organization ID"] = None
 
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
-    remember_me: bool = False
+    email: Annotated[str, "User email"]
+    password: Annotated[str, "User password"]
+    remember_me: Annotated[bool, "Persist login session"] = False
 
 
 class GoogleUserInfo(BaseModel):
-    id: str
-    email: str
-    name: str
-    picture: str | None = None
-    verified_email: bool
+    id: Annotated[str, "Google user ID"]
+    email: Annotated[str, "Google account email"]
+    name: Annotated[str, "Google account name"]
+    picture: Annotated[str | None, "Google profile picture URL"] = None
+    verified_email: Annotated[bool, "Whether the email is verified by Google"]
 
 
 class RoleSelectionRequest(BaseModel):
-    role: UserRole
+    role: Annotated[UserRole, "Selected user role"]
 
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    email: str
-    name: str | None = None
-    picture: str | None = None
-    google_id: str | None = None
-    role: UserRole | None = None
-    organization_id: str | None = None
-    created_at: datetime
-    updated_at: datetime
+    id: Annotated[str, "User ID"]
+    email: Annotated[str, "User email"]
+    name: Annotated[str | None, "User full name"] = None
+    picture: Annotated[str | None, "Profile picture URL"] = None
+    google_id: Annotated[str | None, "Google account ID"] = None
+    role: Annotated[UserRole | None, "User role"] = None
+    organization_id: Annotated[str | None, "Associated organization ID"] = None
+    created_at: Annotated[datetime, "User creation timestamp"]
+    updated_at: Annotated[datetime, "User last update timestamp"]
 
 
 class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str
-    user: UserResponse
+    access_token: Annotated[str, "JWT access token"]
+    token_type: Annotated[str, "Token type"]
+    user: Annotated[UserResponse, "Authenticated user details"]
