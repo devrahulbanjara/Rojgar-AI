@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    TIMEZONE: str
+
     # Authentication
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str

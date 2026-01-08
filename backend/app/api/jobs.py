@@ -1,18 +1,18 @@
 import math
 import uuid
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session, selectinload
 
-from app.core import get_current_user_id, get_db
+from app.core import get_current_user_id, get_datetime, get_db
 from app.core.limiter import limiter
 from app.models import (
     CandidateProfile,
-    CompanyProfile,
     JobDescription,
     JobPosting,
     JobPostingStats,
+    User,
 )
 from app.schemas import job as schemas
 from app.services.candidate.job_service_utils import get_latest_jobs
@@ -147,14 +147,16 @@ def create_job(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
-    if not company:
+    from app.core.authorization import get_organization_from_user
+
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found",
+            detail="User not found",
         )
 
-    company_id = company.company_id
+    organization_id = get_organization_from_user(user)
 
     job_description_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())
@@ -182,8 +184,8 @@ def create_job(
         required_skills_experience=required_skills_experience_dict,
         nice_to_have=nice_to_have_dict,
         offers=offers_dict,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
+        created_at=get_datetime(),
+        updated_at=get_datetime(),
     )
 
     db.add(job_description)
@@ -207,7 +209,8 @@ def create_job(
 
     job_posting = JobPosting(
         job_id=job_id,
-        company_id=company_id,
+        organization_id=organization_id,
+        created_by_user_id=user_id,
         job_description_id=job_description_id,
         title=job_data.title,
         department=job_data.department,
@@ -223,8 +226,8 @@ def create_job(
         is_indexed=False,
         posted_date=date.today(),
         application_deadline=application_deadline,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
+        created_at=get_datetime(),
+        updated_at=get_datetime(),
     )
 
     db.add(job_posting)
@@ -234,8 +237,8 @@ def create_job(
         job_id=job_id,
         applicant_count=0,
         views_count=0,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
+        created_at=get_datetime(),
+        updated_at=get_datetime(),
     )
 
     db.add(job_stats)
@@ -251,7 +254,7 @@ def create_job(
 def get_jobs(
     request: Request,
     user_id: str | None = None,
-    company_id: str | None = None,
+    organization_id: str | None = None,
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
@@ -262,11 +265,9 @@ def get_jobs(
 
     if user_id:
         is_recruiter_view = True
-        company_profile = (
-            db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
-        )
-        if company_profile:
-            query = query.filter(JobPosting.company_id == company_profile.company_id)
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if user and user.organization_id:
+            query = query.filter(JobPosting.organization_id == user.organization_id)
         else:
             return {
                 "jobs": [],
@@ -277,8 +278,8 @@ def get_jobs(
                 "has_next": False,
                 "has_prev": False,
             }
-    elif company_id:
-        query = query.filter(JobPosting.company_id == company_id)
+    elif organization_id:
+        query = query.filter(JobPosting.organization_id == organization_id)
 
     if status:
         query = query.filter(JobPosting.status == status)
@@ -340,7 +341,7 @@ def map_job_to_response(job: JobPosting):
     return {
         "job_id": job.job_id,
         "id": job.job_id,
-        "company_id": job.company_id,
+        "organization_id": job.organization_id,
         "job_description_id": job.job_description_id,
         "title": job.title,
         "department": job.department,
@@ -370,20 +371,22 @@ def map_job_to_response(job: JobPosting):
         else None,
         "created_at": job.created_at.isoformat() if job.created_at else None,
         "updated_at": job.updated_at.isoformat() if job.updated_at else None,
-        "company": {
-            "id": job.company.company_id,
-            "name": job.company.company_name,
-            "description": job.company.description,
+        "organization": {
+            "id": job.organization.organization_id,
+            "name": job.organization.name,
+            "description": job.organization.description,
             "location": _build_location(
-                job.company.location_city, job.company.location_country, ""
+                job.organization.location_city, job.organization.location_country, ""
             ),
-            "website": job.company.website,
-            "industry": job.company.industry,
-            "founded_year": job.company.founded_year,
+            "website": job.organization.website,
+            "industry": job.organization.industry,
+            "founded_year": job.organization.founded_year,
         }
-        if job.company
+        if job.organization
         else None,
-        "company_name": job.company.company_name if job.company else "Unknown Company",
+        "company_name": job.organization.name
+        if job.organization
+        else "Unknown Company",
         "description": jd.role_overview if jd else None,
         "role_overview": jd.role_overview if jd else None,
         "requirements": _extract_list_from_dict(

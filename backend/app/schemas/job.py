@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel
 
 
-class CompanyResponse(BaseModel):
+class OrganizationResponseInJob(BaseModel):
     id: str
     name: str
     description: str | None = None
@@ -19,7 +19,7 @@ class CompanyResponse(BaseModel):
 class JobResponse(BaseModel):
     job_id: str
     id: str
-    company_id: str
+    organization_id: str
     job_description_id: str
 
     title: str
@@ -45,7 +45,7 @@ class JobResponse(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
 
-    company: CompanyResponse | None = None
+    organization: OrganizationResponseInJob | None = None
     company_name: str | None = None
 
     description: str | None = None

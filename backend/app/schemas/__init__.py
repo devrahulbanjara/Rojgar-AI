@@ -1,7 +1,7 @@
 from .application import (
     ApplicationResponse,
-    CompanySummary,
     JobSummary,
+    OrganizationSummary,
 )
 from .candidate import (
     CandidateProfileFullResponse,
@@ -17,12 +17,22 @@ from .candidate import (
     WorkExperienceUpdate,
 )
 from .job import (
-    CompanyResponse,
     JobCreate,
     JobDraftGenerateRequest,
     JobDraftResponse,
     JobListResponse,
     JobResponse,
+    OrganizationResponseInJob,
+)
+from .organization import (
+    CreateRecruiterRequest,
+    OrganizationLoginRequest,
+    OrganizationResponse,
+    OrganizationSignupRequest,
+    OrganizationTokenResponse,
+    OrganizationUpdateRequest,
+    RecruiterResponse,
+    UpdateRecruiterRequest,
 )
 from .resume import (
     ResumeCertificationResponse,
@@ -59,7 +69,7 @@ from .user import (
 __all__ = [
     "ApplicationResponse",
     "JobSummary",
-    "CompanySummary",
+    "OrganizationSummary",
     "UserResponse",
     "GoogleUserInfo",
     "CreateUserRequest",
@@ -67,12 +77,20 @@ __all__ = [
     "LoginRequest",
     "RoleSelectionRequest",
     "TokenResponse",
-    "CompanyResponse",
+    "OrganizationResponseInJob",
     "JobResponse",
     "JobListResponse",
     "JobDraftResponse",
     "JobCreate",
     "JobDraftGenerateRequest",
+    "OrganizationSignupRequest",
+    "OrganizationLoginRequest",
+    "OrganizationResponse",
+    "OrganizationUpdateRequest",
+    "OrganizationTokenResponse",
+    "CreateRecruiterRequest",
+    "RecruiterResponse",
+    "UpdateRecruiterRequest",
     "CandidateProfileUpdate",
     "CertificationUpdate",
     "EducationUpdate",

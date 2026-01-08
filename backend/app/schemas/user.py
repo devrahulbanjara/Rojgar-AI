@@ -9,7 +9,6 @@ class SignupRequest(BaseModel):
     email: str
     password: str
     name: str
-    role: UserRole
     picture: str | None = None
 
 
@@ -20,6 +19,7 @@ class CreateUserRequest(BaseModel):
     google_id: str | None = None
     picture: str | None = None
     role: UserRole | None = None
+    organization_id: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -49,8 +49,7 @@ class UserResponse(BaseModel):
     picture: str | None = None
     google_id: str | None = None
     role: UserRole | None = None
-    is_active: bool
-    company_id: str | None = None
+    organization_id: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -13,10 +13,10 @@ class JobSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CompanySummary(BaseModel):
-    company_id: str
-    company_name: str
-    company_logo: str | None = None
+class OrganizationSummary(BaseModel):
+    organization_id: str
+    organization_name: str
+    organization_logo: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -28,6 +28,6 @@ class ApplicationResponse(BaseModel):
 
     # Nested Objects
     job: JobSummary
-    company: CompanySummary
+    organization: OrganizationSummary
 
     model_config = ConfigDict(from_attributes=True)
