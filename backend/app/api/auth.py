@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db, settings
+from app.core import get_current_user_id, get_db
+from app.core.config import settings
 from app.core.limiter import limiter
 from app.schemas import (
     CreateUserRequest,
@@ -11,7 +12,13 @@ from app.schemas import (
     SignupRequest,
     TokenResponse,
 )
+from app.schemas.organization import (
+    OrganizationLoginRequest,
+    OrganizationSignupRequest,
+    OrganizationTokenResponse,
+)
 from app.services import AuthService, UserService
+from app.services.auth.organization_auth_service import OrganizationAuthService
 
 router = APIRouter()
 
@@ -31,12 +38,23 @@ def signup(
             detail="Email already registered",
         )
 
+    existing_org = OrganizationAuthService.get_organization_by_email(
+        signup_data.email, db
+    )
+    if existing_org:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+
+    from app.models import UserRole
+
     create_user_data = CreateUserRequest(
         email=signup_data.email,
         name=signup_data.name,
         password=signup_data.password,
         picture=signup_data.picture,
-        role=signup_data.role,
+        role=UserRole.CANDIDATE,
     )
 
     new_user = AuthService.create_user(create_user_data, db)
@@ -162,3 +180,79 @@ def select_role(
 def logout(request: Request, response: Response):
     response.delete_cookie(key="auth_token")
     return {"message": "Logged out successfully"}
+
+
+@router.post("/organization/signup", response_model=OrganizationTokenResponse)
+@limiter.limit("5/minute")
+def organization_signup(
+    request: Request,
+    org_data: OrganizationSignupRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    new_org = OrganizationAuthService.create_organization(org_data, db)
+
+    token, max_age = OrganizationAuthService.create_organization_token(
+        new_org.organization_id
+    )
+
+    response.set_cookie(
+        key="auth_token",
+        value=token,
+        max_age=max_age,
+        httponly=True,
+        secure=settings.SECURE,
+        samesite="lax",
+    )
+
+    return OrganizationTokenResponse(
+        access_token=token,
+        token_type="bearer",
+        organization=OrganizationAuthService.create_organization_response(new_org),
+    )
+
+
+@router.post("/organization/login", response_model=OrganizationTokenResponse)
+@limiter.limit("5/minute")
+def organization_login(
+    request: Request,
+    login_data: OrganizationLoginRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    organization = OrganizationAuthService.get_organization_by_email(
+        login_data.email, db
+    )
+
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+
+    if not OrganizationAuthService.verify_organization_password(
+        organization, login_data.password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+
+    token, max_age = OrganizationAuthService.create_organization_token(
+        organization.organization_id, login_data.remember_me
+    )
+
+    response.set_cookie(
+        key="auth_token",
+        value=token,
+        max_age=max_age,
+        httponly=True,
+        secure=settings.SECURE,
+        samesite="lax",
+    )
+
+    return OrganizationTokenResponse(
+        access_token=token,
+        token_type="bearer",
+        organization=OrganizationAuthService.create_organization_response(organization),
+    )

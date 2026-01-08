@@ -6,6 +6,7 @@ from app.api import (
     candidate_applications,
     jobs,
     jobs_crud,
+    organization,
     resume,
     users,
 )
@@ -21,3 +22,6 @@ api_router.include_router(
 )
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(jobs_crud.router, prefix="/jobs", tags=["jobs"])
+api_router.include_router(
+    organization.router, prefix="/organization", tags=["organization"]
+)

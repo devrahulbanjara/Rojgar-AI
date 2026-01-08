@@ -1,17 +1,15 @@
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core import get_datetime
+
 from . import Base
 
 if TYPE_CHECKING:
     from app.models.candidate import CandidateProfile
-
-
-def utc_now():
-    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class Resume(Base):
@@ -26,10 +24,10 @@ class Resume(Base):
     custom_summary: Mapped[str | None] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     profile: Mapped["CandidateProfile"] = relationship(
@@ -64,10 +62,10 @@ class ResumeSocialLink(Base):
     url: Mapped[str] = mapped_column(String, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     resume: Mapped["Resume"] = relationship("Resume", back_populates="social_links")
@@ -89,10 +87,10 @@ class ResumeWorkExperience(Base):
     description: Mapped[str | None] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     resume: Mapped["Resume"] = relationship("Resume", back_populates="work_experiences")
@@ -113,10 +111,10 @@ class ResumeEducation(Base):
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     resume: Mapped["Resume"] = relationship("Resume", back_populates="educations")
@@ -139,10 +137,10 @@ class ResumeCertification(Base):
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     resume: Mapped["Resume"] = relationship("Resume", back_populates="certifications")
@@ -158,10 +156,10 @@ class ResumeSkills(Base):
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     resume: Mapped["Resume"] = relationship("Resume", back_populates="skills")

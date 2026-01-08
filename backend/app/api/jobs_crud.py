@@ -1,13 +1,14 @@
 import uuid
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.jobs import map_job_to_response
-from app.core import get_current_user_id, get_db
+from app.core import get_current_user_id, get_datetime, get_db
+from app.core.authorization import get_organization_from_user, verify_user_can_edit_job
 from app.core.limiter import limiter
-from app.models import CompanyProfile, JobDescription, JobPosting, JobPostingStats
+from app.models import JobDescription, JobPosting, JobPostingStats, User
 from app.schemas import job as schemas
 from app.services.recruiter.job_generation_service import JobGenerationService
 
@@ -28,7 +29,7 @@ def generate_job_draft(
     if not draft_request.raw_requirements:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="raw_requirements are required",
+            detail="Raw requirements / some keywords are required",
         )
 
     try:
@@ -64,14 +65,14 @@ def create_job(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
-    if not company:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found for this user",
+            detail="User not found",
         )
 
-    company_id = company.company_id
+    organization_id = get_organization_from_user(user)
 
     job_description_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())
@@ -99,8 +100,8 @@ def create_job(
         required_skills_experience=required_skills_experience_dict,
         nice_to_have=nice_to_have_dict,
         offers=offers_dict,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
+        created_at=get_datetime(),
+        updated_at=get_datetime(),
     )
 
     db.add(job_description)
@@ -124,7 +125,8 @@ def create_job(
 
     job_posting = JobPosting(
         job_id=job_id,
-        company_id=company_id,
+        organization_id=organization_id,
+        created_by_user_id=user_id,
         job_description_id=job_description_id,
         title=job_data.title,
         department=job_data.department,
@@ -140,8 +142,8 @@ def create_job(
         is_indexed=False,
         posted_date=date.today(),
         application_deadline=application_deadline,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
+        created_at=get_datetime(),
+        updated_at=get_datetime(),
     )
 
     db.add(job_posting)
@@ -151,8 +153,8 @@ def create_job(
         job_id=job_id,
         applicant_count=0,
         views_count=0,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
+        created_at=get_datetime(),
+        updated_at=get_datetime(),
     )
 
     db.add(job_stats)
@@ -174,11 +176,11 @@ def update_job(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
-    if not company:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found for this user",
+            detail="User not found",
         )
 
     job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
@@ -188,11 +190,7 @@ def update_job(
             detail="Job not found",
         )
 
-    if job_posting.company_id != company.company_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to edit this job",
-        )
+    verify_user_can_edit_job(user, job_posting)
 
     if job_data.title is not None:
         job_posting.title = job_data.title
@@ -230,7 +228,7 @@ def update_job(
         except Exception:
             job_posting.application_deadline = None
 
-    job_posting.updated_at = datetime.now(UTC).replace(tzinfo=None)
+    job_posting.updated_at = get_datetime()
 
     job_description = (
         db.query(JobDescription)
@@ -257,7 +255,7 @@ def update_job(
                 {"benefits": job_data.benefits} if job_data.benefits else None
             )
 
-        job_description.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        job_description.updated_at = get_datetime()
 
     db.commit()
     db.refresh(job_posting)

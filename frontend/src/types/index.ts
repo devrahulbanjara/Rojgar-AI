@@ -1,4 +1,4 @@
-export type UserType = "recruiter" | "candidate";
+export type UserType = "recruiter" | "candidate" | "organization";
 
 export interface User {
   id: string;
