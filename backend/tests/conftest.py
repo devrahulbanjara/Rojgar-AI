@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base
 from app.models import Organization, User, UserRole
+from app.models.candidate import CandidateProfile
 
 
 @pytest.fixture(scope="function")
@@ -77,6 +78,13 @@ def sample_candidate(db_session: Session):
         password="&&Sandeep123#$",
     )
     db_session.add(candidate)
+    db_session.flush()
+
+    profile = CandidateProfile(
+        profile_id=str(uuid.uuid4()),
+        user_id=candidate.user_id,
+    )
+    db_session.add(profile)
     db_session.commit()
     db_session.refresh(candidate)
     return candidate
