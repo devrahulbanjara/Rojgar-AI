@@ -126,4 +126,4 @@ class Settings(BaseSettings):
         return [".pdf", ".docx"]
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]
