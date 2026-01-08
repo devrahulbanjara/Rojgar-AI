@@ -1,0 +1,550 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+unit/
+  __init__.py
+  test_organization_service.py
+  test_recruiter_crud.py
+__init__.py
+conftest.py
+test_resume_parsing.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="unit/__init__.py">
+
+</file>
+
+<file path="unit/test_organization_service.py">
+import pytest
+from fastapi import HTTPException
+
+from app.schemas.organization import OrganizationUpdateRequest
+from app.services.organization import OrganizationService
+
+
+@pytest.mark.unit
+class TestOrganizationService:
+    def test_get_organization_by_id_success(self, db_session, sample_organization):
+        """Test successfully retrieving an organization by ID."""
+        result = OrganizationService.get_organization_by_id(
+            sample_organization.organization_id, db_session
+        )
+        assert result is not None
+        assert result.organization_id == sample_organization.organization_id
+        assert result.name == sample_organization.name
+        assert result.email == sample_organization.email
+
+    def test_get_organization_by_id_not_found(self, db_session):
+        """Test retrieving a non-existent organization returns None."""
+        result = OrganizationService.get_organization_by_id(
+            "nonexistent-id", db_session
+        )
+        assert result is None
+
+    def test_update_organization_success(self, db_session, sample_organization):
+        """Test successfully updating an organization."""
+        update_data = OrganizationUpdateRequest(
+            name="Updated Company",
+            location_city="New York",
+            website="https://updated.com",
+        )
+
+        result = OrganizationService.update_organization(
+            sample_organization.organization_id, update_data, db_session
+        )
+
+        assert result.name == "Updated Company"
+        assert result.location_city == "New York"
+        assert result.website == "https://updated.com"
+        assert result.location_country == sample_organization.location_country
+
+    def test_update_organization_partial(self, db_session, sample_organization):
+        """Test partially updating an organization (only some fields)."""
+        update_data = OrganizationUpdateRequest(name="Partially Updated")
+
+        result = OrganizationService.update_organization(
+            sample_organization.organization_id, update_data, db_session
+        )
+
+        assert result.name == "Partially Updated"
+        assert result.location_city == sample_organization.location_city
+        assert result.email == sample_organization.email
+
+    def test_update_organization_not_found(self, db_session):
+        """Test updating a non-existent organization raises 404."""
+        update_data = OrganizationUpdateRequest(name="Updated")
+
+        with pytest.raises(HTTPException) as exc_info:
+            OrganizationService.update_organization(
+                "nonexistent-id", update_data, db_session
+            )
+
+        assert exc_info.value.status_code == 404
+        assert "not found" in exc_info.value.detail.lower()
+
+    def test_update_organization_all_fields(self, db_session, sample_organization):
+        """Test updating all organization fields."""
+        update_data = OrganizationUpdateRequest(
+            name="Fully Updated Company",
+            location_city="Austin",
+            location_country="USA",
+            website="https://fullyupdated.com",
+            description="A fully updated company",
+            industry="FinTech",
+            founded_year=2021,
+        )
+
+        result = OrganizationService.update_organization(
+            sample_organization.organization_id, update_data, db_session
+        )
+
+        assert result.name == "Fully Updated Company"
+        assert result.location_city == "Austin"
+        assert result.location_country == "USA"
+        assert result.website == "https://fullyupdated.com"
+        assert result.description == "A fully updated company"
+        assert result.industry == "FinTech"
+        assert result.founded_year == 2021
+        assert result.updated_at is not None
+</file>
+
+<file path="unit/test_recruiter_crud.py">
+import pytest
+from fastapi import HTTPException
+
+from app.schemas.organization import UpdateRecruiterRequest
+from app.services.organization import RecruiterCRUD
+
+
+@pytest.mark.unit
+class TestRecruiterCRUD:
+    def test_get_recruiter_by_id_success(self, db_session, sample_recruiter):
+        """Test successfully retrieving a recruiter by ID."""
+        result = RecruiterCRUD.get_recruiter_by_id(sample_recruiter.user_id, db_session)
+        assert result is not None
+        assert result.user_id == sample_recruiter.user_id
+        assert result.name == sample_recruiter.name
+        assert result.email == sample_recruiter.email
+
+    def test_get_recruiter_by_id_not_found(self, db_session):
+        """Test retrieving a non-existent recruiter returns None."""
+        result = RecruiterCRUD.get_recruiter_by_id("nonexistent-id", db_session)
+        assert result is None
+
+    def test_get_recruiters_by_organization(
+        self, db_session, sample_organization, sample_recruiter
+    ):
+        """Test retrieving all recruiters for an organization."""
+        result = RecruiterCRUD.get_recruiters_by_organization(
+            sample_organization.organization_id, db_session
+        )
+        assert len(result) == 1
+        assert result[0].user_id == sample_recruiter.user_id
+        assert result[0].organization_id == sample_organization.organization_id
+
+    def test_get_recruiters_by_organization_empty(
+        self, db_session, sample_organization
+    ):
+        """Test retrieving recruiters for an organization with no recruiters."""
+        result = RecruiterCRUD.get_recruiters_by_organization(
+            sample_organization.organization_id, db_session
+        )
+        assert len(result) == 0
+
+    def test_create_recruiter_success(self, db_session, sample_organization):
+        """Test successfully creating a new recruiter."""
+        result = RecruiterCRUD.create_recruiter(
+            organization_id=sample_organization.organization_id,
+            email="new.recruiter@convexhire.com",
+            name="New Recruiter",
+            password="secure_password",
+            db=db_session,
+        )
+
+        assert result is not None
+        assert result.email == "new.recruiter@convexhire.com"
+        assert result.name == "New Recruiter"
+        assert result.organization_id == sample_organization.organization_id
+        assert result.role == "recruiter"
+        assert result.password != "secure_password"
+
+    def test_create_recruiter_duplicate_email(
+        self, db_session, sample_organization, sample_recruiter
+    ):
+        """Test creating a recruiter with an existing email raises 400."""
+        with pytest.raises(HTTPException) as exc_info:
+            RecruiterCRUD.create_recruiter(
+                organization_id=sample_organization.organization_id,
+                email=sample_recruiter.email,
+                name="Duplicate Recruiter",
+                password="password",
+                db=db_session,
+            )
+
+        assert exc_info.value.status_code == 400
+        assert "already registered" in exc_info.value.detail.lower()
+
+    def test_create_recruiter_organization_email_conflict(
+        self, db_session, sample_organization
+    ):
+        """Test creating a recruiter with organization email raises 400."""
+        with pytest.raises(HTTPException) as exc_info:
+            RecruiterCRUD.create_recruiter(
+                organization_id=sample_organization.organization_id,
+                email=sample_organization.email,
+                name="Conflict Recruiter",
+                password="password",
+                db=db_session,
+            )
+
+        assert exc_info.value.status_code == 400
+        assert "already registered" in exc_info.value.detail.lower()
+
+    def test_update_recruiter_success(self, db_session, sample_recruiter):
+        """Test successfully updating a recruiter."""
+        update_data = UpdateRecruiterRequest(
+            name="Updated Name", email="updated@convexhire.com"
+        )
+
+        result = RecruiterCRUD.update_recruiter(
+            sample_recruiter.user_id, update_data, db_session
+        )
+
+        assert result.name == "Updated Name"
+        assert result.email == "updated@convexhire.com"
+        assert result.updated_at is not None
+
+    def test_update_recruiter_name_only(self, db_session, sample_recruiter):
+        """Test updating only the recruiter name."""
+        update_data = UpdateRecruiterRequest(name="Only Name Updated")
+
+        result = RecruiterCRUD.update_recruiter(
+            sample_recruiter.user_id, update_data, db_session
+        )
+
+        assert result.name == "Only Name Updated"
+        assert result.email == sample_recruiter.email
+
+    def test_update_recruiter_email_only(self, db_session, sample_recruiter):
+        """Test updating only the recruiter email."""
+        update_data = UpdateRecruiterRequest(email="newemail@convexhire.com")
+
+        result = RecruiterCRUD.update_recruiter(
+            sample_recruiter.user_id, update_data, db_session
+        )
+
+        assert result.email == "newemail@convexhire.com"
+        assert result.name == sample_recruiter.name
+
+    def test_update_recruiter_not_found(self, db_session):
+        """Test updating a non-existent recruiter raises 404."""
+        update_data = UpdateRecruiterRequest(name="Updated")
+
+        with pytest.raises(HTTPException) as exc_info:
+            RecruiterCRUD.update_recruiter("nonexistent-id", update_data, db_session)
+
+        assert exc_info.value.status_code == 404
+        assert "not found" in exc_info.value.detail.lower()
+
+    def test_update_recruiter_duplicate_email(
+        self, db_session, sample_organization, sample_recruiter
+    ):
+        """Test updating recruiter email to an existing email raises 400."""
+        other_recruiter = RecruiterCRUD.create_recruiter(
+            organization_id=sample_organization.organization_id,
+            email="other@convexhire.com",
+            name="Other Recruiter",
+            password="password",
+            db=db_session,
+        )
+
+        update_data = UpdateRecruiterRequest(email=other_recruiter.email)
+
+        with pytest.raises(HTTPException) as exc_info:
+            RecruiterCRUD.update_recruiter(
+                sample_recruiter.user_id, update_data, db_session
+            )
+
+        assert exc_info.value.status_code == 400
+        assert "already in use" in exc_info.value.detail.lower()
+
+    def test_delete_recruiter_success(self, db_session, sample_recruiter):
+        """Test successfully deleting a recruiter."""
+        RecruiterCRUD.delete_recruiter(sample_recruiter.user_id, db_session)
+
+        result = RecruiterCRUD.get_recruiter_by_id(sample_recruiter.user_id, db_session)
+        assert result is None
+
+    def test_delete_recruiter_not_found(self, db_session):
+        """Test deleting a non-existent recruiter raises 404."""
+        with pytest.raises(HTTPException) as exc_info:
+            RecruiterCRUD.delete_recruiter("nonexistent-id", db_session)
+
+        assert exc_info.value.status_code == 404
+        assert "not found" in exc_info.value.detail.lower()
+</file>
+
+<file path="__init__.py">
+
+</file>
+
+<file path="conftest.py">
+import uuid
+
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.core.database import Base
+from app.models import Organization, User, UserRole
+
+
+@pytest.fixture(scope="function")
+def db_session():
+    """Create an in-memory SQLite database for testing."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def sample_organization(db_session: Session):
+    """Create a sample organization for testing."""
+    org = Organization(
+        organization_id=str(uuid.uuid4()),
+        email="admin@convexhire.com",
+        password="$$$ConvexHire*789#",
+        name="ConvexHire",
+        location_city="Kathmandu",
+        location_country="Nepal",
+        website="https://convexhire.com",
+        description="ConvexHire is a Final year and Passion project of Rahul Dev Banjara.",
+        industry="Technology",
+        founded_year=2025,
+    )
+    db_session.add(org)
+    db_session.commit()
+    db_session.refresh(org)
+    return org
+
+
+@pytest.fixture
+def sample_recruiter(db_session: Session, sample_organization: Organization):
+    """Create a sample recruiter for testing."""
+    recruiter = User(
+        user_id=str(uuid.uuid4()),
+        organization_id=sample_organization.organization_id,
+        email="recruiter@convexhire.com",
+        name="Shubham Joshi",
+        role=UserRole.RECRUITER.value,
+        password="%%Shubham_hai_ta987$",
+    )
+    db_session.add(recruiter)
+    db_session.commit()
+    db_session.refresh(recruiter)
+    return recruiter
+
+
+@pytest.fixture
+def sample_candidate(db_session: Session):
+    """Create a sample candidate for testing."""
+    candidate = User(
+        user_id=str(uuid.uuid4()),
+        organization_id=None,
+        email="sandeep@gmail.com",
+        name="Sandeep Sharma",
+        role=UserRole.CANDIDATE.value,
+        password="&&Sandeep123#$",
+    )
+    db_session.add(candidate)
+    db_session.commit()
+    db_session.refresh(candidate)
+    return candidate
+</file>
+
+<file path="test_resume_parsing.py">
+import json
+from pathlib import Path
+
+import pytest
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+from loguru import logger
+from pydantic import BaseModel, Field
+
+from app.core.config import settings
+from app.models.agents.shortlist.schemas import WorkflowState
+from app.services.agents.shortlist.nodes.resume_parsing import extract_resume_structure
+
+TEST_RESUMES_DIR = Path(__file__).parent / "test_resumes"
+PASS_THRESHOLD = 75
+MODEL_JUDGE = "llama-3.3-70b-versatile"
+
+
+class EvaluationScore(BaseModel):
+    skills_match_score: int = Field(description="0-100 score.")
+    experience_accuracy: int = Field(description="0-100 score.")
+    overall_quality: int = Field(description="0-100 score.")
+    reasoning: str = Field(description="Detailed explanation of errors.")
+
+
+def load_ground_truth(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def evaluate_extraction(ground_truth: dict, prediction: dict) -> EvaluationScore:
+    judge_llm = ChatGroq(
+        temperature=0, model_name=MODEL_JUDGE, api_key=settings.GROQ_API_KEY
+    )
+
+    eval_prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """You are a QA Auditor. Compare Ground Truth vs AI Prediction.
+        Scoring Rules:
+        - **Skills**: OK if order differs. Match concepts (e.g. 'JS' == 'JavaScript').
+        - **Experience**: Dates/Companies must match. Omissions are critical errors.
+        - **Formatting**: Ignore whitespace differences.
+
+        Provide a strict score (0-100) and detailed reasoning.""",
+            ),
+            ("human", "GROUND TRUTH:\n{ground_truth}\n\nAI PREDICTION:\n{prediction}"),
+        ]
+    )
+
+    grader = eval_prompt | judge_llm.with_structured_output(EvaluationScore)
+    return grader.invoke(
+        {"ground_truth": str(ground_truth), "prediction": str(prediction)}
+    )
+
+
+@pytest.fixture
+def test_resumes():
+    return [
+        TEST_RESUMES_DIR / "1_sita_sharma.md",
+        TEST_RESUMES_DIR / "2_ram_bahadur.md",
+    ]
+
+
+@pytest.fixture
+def ground_truths():
+    return [
+        load_ground_truth(TEST_RESUMES_DIR / "1_sita_sharma.json"),
+        load_ground_truth(TEST_RESUMES_DIR / "2_ram_bahadur.json"),
+    ]
+
+
+def test_extract_resume_structure(test_resumes, ground_truths):
+    logger.info("Starting resume parsing test")
+
+    resume_paths = [str(resume) for resume in test_resumes]
+
+    state: WorkflowState = {
+        "job_description_text": "",
+        "resume_file_paths": resume_paths,
+        "job_requirements": None,
+        "structured_resumes": [],
+        "skills_evaluations": [],
+        "experience_evaluations": [],
+        "work_alignment_evaluations": [],
+        "project_evaluations": [],
+        "degree_evaluations": [],
+        "scored_candidates": [],
+        "final_report": None,
+    }
+
+    result = extract_resume_structure(state)
+    structured_resumes = result["structured_resumes"]
+
+    logger.info(f"Processed {len(structured_resumes)} resumes")
+
+    assert len(structured_resumes) == len(ground_truths)
+
+    total_scores = []
+
+    for idx, (structured, gt) in enumerate(
+        zip(structured_resumes, ground_truths, strict=False)
+    ):
+        resume_data = structured["data"]
+        filename = structured["source_file"]
+
+        logger.info(f"Evaluating {filename}")
+
+        prediction = resume_data.model_dump()
+        score = evaluate_extraction(gt, prediction)
+
+        total_scores.append(score.overall_quality)
+
+        logger.info(
+            f"{filename} - Skills: {score.skills_match_score}, Exp: {score.experience_accuracy}, Overall: {score.overall_quality}"
+        )
+        logger.info(f"Reasoning: {score.reasoning}")
+
+        assert score.overall_quality >= PASS_THRESHOLD, (
+            f"{filename} failed with score {score.overall_quality} (threshold: {PASS_THRESHOLD})"
+        )
+
+    avg_score = sum(total_scores) / len(total_scores)
+    logger.info(f"Average score: {avg_score:.1f}/100")
+
+    assert avg_score >= PASS_THRESHOLD, (
+        f"Average score {avg_score:.1f} below threshold {PASS_THRESHOLD}"
+    )
+</file>
+
+</files>
