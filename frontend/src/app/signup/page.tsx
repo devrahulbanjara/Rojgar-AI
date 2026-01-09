@@ -32,7 +32,7 @@ export default function Signup() {
       email: "",
       password: "",
       confirmPassword: "",
-      userType: USER_TYPES.RECRUITER as UserType,
+      userType: USER_TYPES.CANDIDATE as UserType,
     },
     validationRules: {
       name: [validateName],
@@ -78,13 +78,24 @@ export default function Signup() {
     }
 
     try {
-      await signup({
-        name: formValues.name,
-        email: formValues.email,
-        password: formValues.password,
-        confirmPassword: formValues.confirmPassword,
-        userType: formValues.userType as UserType,
-      });
+      if (formValues.userType === "organization") {
+        const { authService } = await import("../../../services/authService");
+        await authService.organizationSignup({
+          name: formValues.name,
+          email: formValues.email,
+          password: formValues.password,
+          confirmPassword: formValues.confirmPassword,
+        });
+        window.location.href = "/dashboard/organization";
+      } else {
+        await signup({
+          name: formValues.name,
+          email: formValues.email,
+          password: formValues.password,
+          confirmPassword: formValues.confirmPassword,
+          userType: formValues.userType as UserType,
+        });
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Signup failed. Please try again.";
@@ -121,26 +132,30 @@ export default function Signup() {
                 </div>
               )}
 
-              {/* Google OAuth Button */}
-              <div className="mb-4 sm:mb-6">
-                <GoogleOAuthButton
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  disabled={isLoading}
-                />
-              </div>
+              {/* Google OAuth Button - Only for Candidate */}
+              {values.userType === "candidate" && (
+                <div className="mb-4 sm:mb-6">
+                  <GoogleOAuthButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
 
-              {/* Divider */}
-              <div className="relative mb-4 sm:mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E5E7EB]"></div>
+              {/* Divider - Only show for Candidate */}
+              {values.userType === "candidate" && (
+                <div className="relative mb-4 sm:mb-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#E5E7EB]"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs sm:text-sm">
+                    <span className="bg-white px-3 sm:px-4 text-[#94A3B8]">
+                      Or continue with email
+                    </span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-xs sm:text-sm">
-                  <span className="bg-white px-3 sm:px-4 text-[#94A3B8]">
-                    Or continue with email
-                  </span>
-                </div>
-              </div>
+              )}
 
               {/* Signup Form */}
               <form
@@ -159,19 +174,25 @@ export default function Signup() {
                   />
                 </div>
 
-                {/* Full Name Field */}
+                {/* Name Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="name"
                     className="block text-xs sm:text-sm font-medium text-[#0F172A]"
                   >
-                    Full Name
+                    {values.userType === "organization"
+                      ? "Organization Name"
+                      : "Full Name"}
                   </label>
                   <input
                     id="name"
                     name="name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder={
+                      values.userType === "organization"
+                        ? "ABC Corporation"
+                        : "John Doe"
+                    }
                     value={values.name}
                     onChange={(e) => handleChange("name", e.target.value)}
                     disabled={isLoading}
