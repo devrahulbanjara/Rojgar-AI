@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Search, MoreVertical, Mail, CheckCircle2, XCircle, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, MoreVertical, Mail, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { AppShell } from "../../../components/layout/AppShell";
 import {
     PageTransition,
     AnimatedContainer,
 } from "../../../components/common";
 import { RecruiterModal, RecruiterFormData } from "../../../components/organization/RecruiterModal";
-import { cn } from "../../../lib/utils";
+
 
 interface Recruiter {
     id: string;
