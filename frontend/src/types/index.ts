@@ -1,4 +1,4 @@
-export type UserType = "recruiter" | "candidate";
+export type UserType = "recruiter" | "candidate" | "organization";
 
 export interface User {
   id: string;
@@ -7,9 +7,37 @@ export interface User {
   userType?: UserType;
   role?: UserType;
   picture?: string;
-  company_id?: string;
+  organization_id?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface Organization {
+  id: string;
+  email: string;
+  name: string;
+  location_city?: string;
+  location_country?: string;
+  website?: string;
+  description?: string;
+  industry?: string;
+  founded_year?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface OrganizationSignupData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  locationCity?: string;
+  locationCountry?: string;
+}
+
+export interface OrganizationAuthResponse {
+  organization: Organization;
+  token: string;
 }
 
 export interface LoginCredentials {

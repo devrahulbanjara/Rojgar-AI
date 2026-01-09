@@ -62,7 +62,17 @@ export function Sidebar({
     { title: "Profile", path: "/candidate/profile", icon: User },
   ];
 
-  const items = role === "recruiter" ? recruiterItems : candidateItems;
+  const organizationItems = [
+    { title: "Overview", path: "/dashboard/organization", icon: LayoutDashboard },
+    { title: "Recruiters", path: "/organization/recruiters", icon: Users },
+  ];
+
+  const items =
+    role === "organization"
+      ? organizationItems
+      : role === "recruiter"
+        ? recruiterItems
+        : candidateItems;
   const toggleAriaLabel = isCollapsed ? "Expand sidebar" : "Collapse sidebar";
   const ToggleIcon = isCollapsed ? PanelLeftOpen : PanelLeftClose;
 
@@ -89,7 +99,6 @@ export function Sidebar({
       {/* Decorative Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 via-transparent to-indigo-50/30 pointer-events-none" />
 
-      {/* Toggle Button - Edge when expanded, Bottom when collapsed */}
       <button
         type="button"
         onClick={onToggle}
@@ -108,7 +117,6 @@ export function Sidebar({
         aria-expanded={!isCollapsed}
         title={toggleAriaLabel}
       >
-        {/* Pulse Ring Animation */}
         {showPulse && (
           <div className="absolute inset-0 z-40">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3056F5] opacity-20" />
@@ -153,7 +161,6 @@ export function Sidebar({
                   : "text-[#64748B] hover:bg-blue-50/50 hover:text-[#3056F5]",
               )}
             >
-              {/* Active Indicator Glow */}
               {isActive && (
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               )}
@@ -180,7 +187,6 @@ export function Sidebar({
                 {item.title}
               </span>
 
-              {/* Tooltip for Collapsed State */}
               {isCollapsed && (
                 <div className="absolute left-full ml-4 px-3 py-1.5 bg-[#1E293B] text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl z-50">
                   {item.title}
