@@ -1,14 +1,16 @@
-from datetime import UTC, date, datetime
-from typing import Optional
+from datetime import date, datetime
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core import get_datetime
+
 from . import Base
 
-
-def utc_now():
-    return datetime.now(UTC).replace(tzinfo=None)
+if TYPE_CHECKING:
+    from .organization import Organization
+    from .user import User
 
 
 class JobDescription(Base):
@@ -21,10 +23,10 @@ class JobDescription(Base):
     offers: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     job_posting: Mapped[Optional["JobPosting"]] = relationship(
@@ -36,11 +38,18 @@ class JobPosting(Base):
     __tablename__ = "job_posting"
 
     job_id: Mapped[str] = mapped_column(String, primary_key=True)
-    company_id: Mapped[str] = mapped_column(
-        String, ForeignKey("company_profile.company_id"), nullable=False
+
+    organization_id: Mapped[str] = mapped_column(
+        String, ForeignKey("organization.organization_id"), nullable=False
     )
+
     job_description_id: Mapped[str] = mapped_column(
         String, ForeignKey("job_description.job_description_id"), nullable=False
+    )
+
+    # Audit trail: which recruiter created this job (optional)
+    created_by_user_id: Mapped[str | None] = mapped_column(
+        String, ForeignKey("user.user_id"), nullable=True
     )
 
     title: Mapped[str] = mapped_column(String, nullable=False)
@@ -65,17 +74,22 @@ class JobPosting(Base):
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
-    company: Mapped["CompanyProfile"] = relationship(
-        "CompanyProfile", back_populates="job_postings"
+    organization: Mapped["Organization"] = relationship(
+        "Organization", back_populates="jobs"
     )
+
     job_description: Mapped["JobDescription"] = relationship(
         "JobDescription", back_populates="job_posting"
+    )
+
+    created_by: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[created_by_user_id]
     )
     stats: Mapped[Optional["JobPostingStats"]] = relationship(
         "JobPostingStats",
@@ -97,10 +111,10 @@ class JobPostingStats(Base):
     views_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     job_posting: Mapped["JobPosting"] = relationship(

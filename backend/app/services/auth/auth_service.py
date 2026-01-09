@@ -6,15 +6,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import create_token, hash_password, settings, verify_password
-from app.models import CandidateProfile, CompanyProfile, User, UserGoogle, UserRole
+from app.models import CandidateProfile, User, UserGoogle, UserRole
 from app.schemas import CreateUserRequest, GoogleUserInfo, UserResponse
 
 
 class AuthService:
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
-        response = UserResponse.model_validate(user)
-        return response
+        return UserResponse.model_validate(user)
 
     @staticmethod
     def get_user_by_email(email: str, db: Session) -> User | None:
@@ -22,8 +21,6 @@ class AuthService:
 
     @staticmethod
     def get_user_by_google_id(google_id: str, db: Session) -> User | None:
-        from app.models import UserGoogle
-
         user_google = db.execute(
             select(UserGoogle).where(UserGoogle.user_google_id == google_id)
         ).scalar_one_or_none()
@@ -33,8 +30,15 @@ class AuthService:
 
     @staticmethod
     def create_user(user_data: CreateUserRequest, db: Session) -> User:
+        if user_data.role == UserRole.RECRUITER:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Recruiters cannot sign up publicly. Must be created by an organization.",
+            )
+
         new_user = User(
             user_id=str(uuid.uuid4()),
+            organization_id=user_data.organization_id,
             email=user_data.email,
             name=user_data.name if user_data.name else "User",
             picture=user_data.picture,
@@ -44,20 +48,12 @@ class AuthService:
         db.add(new_user)
         db.flush()
 
-        if new_user.role:
-            if new_user.role == UserRole.CANDIDATE.value:
-                new_profile = CandidateProfile(
-                    profile_id=str(uuid.uuid4()),
-                    user_id=new_user.user_id,
-                )
-                db.add(new_profile)
-
-            elif new_user.role == UserRole.RECRUITER.value:
-                new_profile = CompanyProfile(
-                    company_id=str(uuid.uuid4()),
-                    user_id=new_user.user_id,
-                )
-                db.add(new_profile)
+        if new_user.role == UserRole.CANDIDATE.value:
+            new_profile = CandidateProfile(
+                profile_id=str(uuid.uuid4()),
+                user_id=new_user.user_id,
+            )
+            db.add(new_profile)
 
         if user_data.password:
             new_user.password = hash_password(user_data.password)
@@ -81,10 +77,12 @@ class AuthService:
     @staticmethod
     def create_access_token(user_id: str, remember_me: bool = False) -> tuple[str, int]:
         if remember_me:
-            token = create_token(user_id, expires_minutes=30 * 24 * 60)  # 30 days
+            token = create_token(
+                user_id, entity_type="user", expires_minutes=30 * 24 * 60
+            )
             max_age = 30 * 24 * 60 * 60
         else:
-            token = create_token(user_id)
+            token = create_token(user_id, entity_type="user")
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
         return token, max_age
@@ -107,8 +105,6 @@ class AuthService:
 
     @staticmethod
     async def exchange_google_code(code: str) -> GoogleUserInfo:
-        from fastapi import HTTPException, status
-
         async with httpx.AsyncClient() as client:
             token_response = await client.post(
                 "https://oauth2.googleapis.com/token",
@@ -151,13 +147,12 @@ class AuthService:
                 google_user.email, db
             )
             if existing_user_by_email:
-                from app.models import UserGoogle
-
                 new_google_link = UserGoogle(
                     user_google_id=google_user.id,
                     user_id=existing_user_by_email.user_id,
                 )
                 db.add(new_google_link)
+
                 if existing_user_by_email.name == "User" and google_user.name:
                     existing_user_by_email.name = google_user.name
                     db.add(existing_user_by_email)
@@ -175,7 +170,7 @@ class AuthService:
                 name=google_user.name,
                 google_id=google_user.id,
                 picture=google_user.picture,
-                role=None,
+                role=UserRole.CANDIDATE,
             )
             user = AuthService.create_user(create_user_data, db)
 
@@ -189,6 +184,12 @@ class AuthService:
                 detail="Role already selected",
             )
 
+        if role == UserRole.RECRUITER:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Recruiters cannot sign up publicly. Must be created by an organization.",
+            )
+
         user.role = role.value
         db.add(user)
         db.flush()
@@ -196,13 +197,6 @@ class AuthService:
         if role == UserRole.CANDIDATE:
             new_profile = CandidateProfile(
                 profile_id=str(uuid.uuid4()),
-                user_id=user.user_id,
-            )
-            db.add(new_profile)
-
-        elif role == UserRole.RECRUITER:
-            new_profile = CompanyProfile(
-                company_id=str(uuid.uuid4()),
                 user_id=user.user_id,
             )
             db.add(new_profile)
@@ -218,4 +212,4 @@ class AuthService:
         elif user.role == UserRole.RECRUITER.value:
             return f"{settings.FRONTEND_URL}/dashboard/recruiter"
         else:
-            return f"{settings.FRONTEND_URL}/onboarding/select-role"
+            return f"{settings.FRONTEND_URL}/dashboard/candidate"

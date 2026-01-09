@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
@@ -55,7 +55,7 @@ def get_my_profile(
 
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
 @limiter.limit("5/minute")
-def update_my_profile(
+def update_candidate_personal_information(
     request: Request,
     data: schemas.CandidateProfileUpdate,
     user_id: str = Depends(get_current_user_id),
@@ -76,7 +76,7 @@ def add_experience(
     return CandidateService.add_experience(db, user_id, data)
 
 
-@router.delete("/experience/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/experience/{item_id}")
 @limiter.limit("5/minute")
 def delete_experience(
     request: Request,
@@ -85,6 +85,7 @@ def delete_experience(
     db: Session = Depends(get_db),
 ):
     CandidateService.delete_experience(db, user_id, item_id)
+    return {"message": "Experience deleted successfully"}
 
 
 @router.patch("/experience/{item_id}", response_model=schemas.WorkExperienceResponse)
@@ -110,7 +111,7 @@ def add_education(
     return CandidateService.add_education(db, user_id, data)
 
 
-@router.delete("/education/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/education/{item_id}")
 @limiter.limit("5/minute")
 def delete_education(
     request: Request,
@@ -119,6 +120,7 @@ def delete_education(
     db: Session = Depends(get_db),
 ):
     CandidateService.delete_education(db, user_id, item_id)
+    return {"message": "Education deleted successfully"}
 
 
 @router.patch("/education/{item_id}", response_model=schemas.EducationResponse)
@@ -144,7 +146,7 @@ def add_skill(
     return CandidateService.add_skill(db, user_id, data)
 
 
-@router.delete("/skills/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/skills/{item_id}")
 @limiter.limit("5/minute")
 def delete_skill(
     request: Request,
@@ -153,6 +155,7 @@ def delete_skill(
     db: Session = Depends(get_db),
 ):
     CandidateService.delete_skill(db, user_id, item_id)
+    return {"message": "Skill deleted successfully"}
 
 
 @router.patch("/skills/{item_id}", response_model=schemas.SkillResponse)
@@ -178,7 +181,7 @@ def add_certification(
     return CandidateService.add_certification(db, user_id, data)
 
 
-@router.delete("/certifications/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/certifications/{item_id}")
 @limiter.limit("5/minute")
 def delete_certification(
     request: Request,
@@ -187,6 +190,7 @@ def delete_certification(
     db: Session = Depends(get_db),
 ):
     CandidateService.delete_certification(db, user_id, item_id)
+    return {"message": "Certification deleted successfully"}
 
 
 @router.patch("/certifications/{item_id}", response_model=schemas.CertificationResponse)
@@ -212,7 +216,7 @@ def add_social_link(
     return CandidateService.add_social_link(db, user_id, data)
 
 
-@router.delete("/social-links/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/social-links/{item_id}")
 @limiter.limit("5/minute")
 def delete_social_link(
     request: Request,
@@ -221,6 +225,7 @@ def delete_social_link(
     db: Session = Depends(get_db),
 ):
     CandidateService.delete_social_link(db, user_id, item_id)
+    return {"message": "Social link deleted successfully"}
 
 
 @router.patch("/social-links/{item_id}", response_model=schemas.SocialLinkResponse)

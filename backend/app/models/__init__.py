@@ -9,8 +9,8 @@ from .candidate import (
     CandidateSocialLink,
     CandidateWorkExperience,
 )
-from .company import CompanyActivity, CompanyProfile
 from .job import JobDescription, JobPosting, JobPostingStats
+from .organization import Organization
 from .resume import (
     Resume,
     ResumeCertification,
@@ -26,14 +26,13 @@ __all__ = [
     "User",
     "UserGoogle",
     "UserRole",
+    "Organization",
     "CandidateProfile",
     "CandidateSocialLink",
     "CandidateWorkExperience",
     "CandidateEducation",
     "CandidateCertification",
     "CandidateSkills",
-    "CompanyProfile",
-    "CompanyActivity",
     "Resume",
     "ResumeSocialLink",
     "ResumeWorkExperience",

@@ -1,5 +1,5 @@
 "use client";
-
+import { usePathname } from "next/navigation";
 import React from "react";
 import { Topbar } from "./Topbar";
 import { Sidebar } from "./Sidebar";
@@ -14,24 +14,18 @@ interface AppShellProps {
 export function AppShell({ children, hideSidebar = false }: AppShellProps) {
   const { user } = useAuth();
 
-  // Track if component has hydrated to prevent animation flash
   const [isHydrated, setIsHydrated] = React.useState(false);
-  
-  // Track previous collapsed state to determine transition direction
+
   const prevCollapsedRef = React.useRef<boolean | null>(null);
 
-  // Initialize state with consistent default to prevent hydration mismatch
-  // Will be updated in useEffect after hydration
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
 
-  // Initialize sidebar state from localStorage after hydration (only if sidebar is shown)
   React.useEffect(() => {
     if (hideSidebar) {
       setIsHydrated(true);
       return;
     }
 
-    // Read from localStorage and set initial state
     try {
       const storedPreference = window.localStorage.getItem("sidebarCollapsed");
       if (storedPreference !== null) {
@@ -39,28 +33,23 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
         setIsSidebarCollapsed(collapsed);
         prevCollapsedRef.current = collapsed;
       } else {
-        // Default based on screen size
         const collapsed = window.innerWidth < 1024;
         setIsSidebarCollapsed(collapsed);
         prevCollapsedRef.current = collapsed;
       }
     } catch {
-      // ignore read errors, use default based on screen size
       const collapsed = window.innerWidth < 1024;
       setIsSidebarCollapsed(collapsed);
       prevCollapsedRef.current = collapsed;
     }
-    
-    // Delay enabling animations to allow initial state to render first
-    // This prevents the sidebar from animating on page load
+
     const timer = setTimeout(() => {
       setIsHydrated(true);
     }, 50);
-    
+
     return () => clearTimeout(timer);
   }, [hideSidebar]);
 
-  // Track previous state to determine transition direction
   React.useEffect(() => {
     prevCollapsedRef.current = isSidebarCollapsed;
   }, [isSidebarCollapsed]);
@@ -88,7 +77,6 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
         try {
           window.localStorage.setItem("sidebarCollapsed", String(nextState));
         } catch {
-          // ignore write errors
         }
       }
       return nextState;
@@ -103,38 +91,33 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
     [isSidebarCollapsed, hideSidebar],
   );
 
-  // Determine transition duration and easing based on direction
-  // When collapsing (sidebar closing): content expands → slower (700ms), smooth
-  // When expanding (sidebar opening): content shrinks → faster (350ms), smooth (no bounce)
   const getTransitionDuration = React.useCallback(() => {
     if (!isHydrated) {
       return "0ms";
     }
-    
-    // On initial render, prevCollapsedRef.current is null, so use default
+
     if (prevCollapsedRef.current === null) {
       return "500ms";
     }
-    
-    // Compare current state with previous state to determine direction
-    // If transitioning from expanded (false) to collapsed (true): collapsing → slower
-    // If transitioning from collapsed (true) to expanded (false): expanding → faster
+
     const isCollapsing = !prevCollapsedRef.current && isSidebarCollapsed;
     const isExpanding = prevCollapsedRef.current && !isSidebarCollapsed;
-    
+
     if (isCollapsing) {
-      return "700ms"; // Slower when collapsing (content expanding)
+      return "700ms";
     } else if (isExpanding) {
-      return "350ms"; // Faster when expanding (content shrinking)
+      return "350ms";
     }
-    
-    // No transition (same state)
+
     return "500ms";
   }, [isSidebarCollapsed, isHydrated]);
 
+  const pathname = usePathname();
+  const isOrganizationRoute = pathname?.startsWith("/dashboard/organization") || pathname?.startsWith("/organization/");
+
   return (
     <div className="min-h-screen" style={{ background: "#F9FAFB" }}>
-      <Topbar onMenuClick={hideSidebar ? () => {} : handleSidebarToggle} user={user} />
+      <Topbar onMenuClick={hideSidebar ? () => { } : handleSidebarToggle} user={user} />
 
       <div className="flex min-h-[calc(100vh-72px)] pt-[72px]">
         {!hideSidebar && (
@@ -142,7 +125,7 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
             <Sidebar
               isCollapsed={isSidebarCollapsed}
               onToggle={handleSidebarToggle}
-              role={user?.role || "candidate"}
+              role={isOrganizationRoute ? "organization" : (user?.role || "candidate")}
               disableAnimation={!isHydrated}
             />
 
