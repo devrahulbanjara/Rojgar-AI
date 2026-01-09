@@ -1,5 +1,11 @@
-import type { LoginCredentials, SignupData, AuthResponse } from '../types';
-import { API_CONFIG, GOOGLE_CONFIG } from '../config/constants';
+import type {
+  LoginCredentials,
+  SignupData,
+  AuthResponse,
+  OrganizationSignupData,
+  OrganizationAuthResponse,
+} from "../types";
+import { API_CONFIG, GOOGLE_CONFIG } from "../config/constants";
 
 interface TokenResponse {
   access_token: string;
@@ -10,7 +16,7 @@ interface TokenResponse {
     email: string;
     name: string;
     picture?: string;
-    role?: 'candidate' | 'recruiter';
+    role?: "candidate" | "recruiter";
     company_id?: string;
     is_active: boolean;
     created_at: string;
@@ -22,42 +28,24 @@ class AuthService {
   private baseUrl = `${API_CONFIG.baseUrl}/api/v1/auth`;
 
   async initiateGoogleLogin(): Promise<void> {
-    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', GOOGLE_CONFIG.clientId);
-    authUrl.searchParams.set('redirect_uri', `${API_CONFIG.baseUrl}/api/v1/auth/google/callback`);
-    authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', GOOGLE_CONFIG.scope);
-    authUrl.searchParams.set('access_type', 'offline');
-    authUrl.searchParams.set('prompt', 'consent');
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.set("client_id", GOOGLE_CONFIG.clientId);
+    authUrl.searchParams.set(
+      "redirect_uri",
+      `${API_CONFIG.baseUrl}/api/v1/auth/google/callback`,
+    );
+    authUrl.searchParams.set("response_type", "code");
+    authUrl.searchParams.set("scope", GOOGLE_CONFIG.scope);
+    authUrl.searchParams.set("access_type", "offline");
+    authUrl.searchParams.set("prompt", "consent");
 
     window.location.href = authUrl.toString();
   }
 
-  async selectRole(role: 'candidate' | 'recruiter'): Promise<{ redirect_url: string }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/select-role`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ role }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to select role: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async getCurrentUser(): Promise<TokenResponse['user'] | null> {
+  async getCurrentUser(): Promise<TokenResponse["user"] | null> {
     try {
       const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/users/me`, {
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (response.status === 401) {
@@ -77,11 +65,11 @@ class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include', // Include cookies
+        credentials: "include", // Include cookies
         body: JSON.stringify({
           email: credentials.email,
           password: credentials.password,
@@ -90,7 +78,7 @@ class AuthService {
       });
 
       if (!response.ok) {
-        throw new Error('Invalid email or password');
+        throw new Error("Invalid email or password");
       }
 
       const data = await response.json();
@@ -106,22 +94,21 @@ class AuthService {
   async signup(data: SignupData): Promise<AuthResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/signup`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include', // Include cookies
+        credentials: "include",
         body: JSON.stringify({
           name: data.name,
           email: data.email,
           password: data.password,
-          role: data.userType,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Signup failed');
+        throw new Error(errorData.detail || "Signup failed");
       }
 
       const responseData = await response.json();
@@ -134,21 +121,84 @@ class AuthService {
     }
   }
 
-  async logout(): Promise<void> {
+  async organizationSignup(
+    data: OrganizationSignupData,
+  ): Promise<OrganizationAuthResponse> {
     try {
-      await fetch(`${this.baseUrl}/logout`, {
-        method: 'POST',
-        credentials: 'include', // Include cookies
+      const response = await fetch(`${this.baseUrl}/organization/signup`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
+        credentials: "include",
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          name: data.name,
+          location_city: data.locationCity,
+          location_country: data.locationCountry,
+        }),
       });
-    } catch {
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Organization signup failed");
+      }
+
+      const responseData = await response.json();
+      return {
+        organization: responseData.organization,
+        token: responseData.access_token,
+      };
+    } catch (error) {
+      throw error;
     }
   }
 
-  handleGoogleCallback(): void {
+  async organizationLogin(
+    credentials: LoginCredentials,
+  ): Promise<OrganizationAuthResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/organization/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+          remember_me: credentials.rememberMe || false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Invalid email or password");
+      }
+
+      const data = await response.json();
+      return {
+        organization: data.organization,
+        token: data.access_token,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
+
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${this.baseUrl}/logout`, {
+        method: "POST",
+        credentials: "include", // Include cookies
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch {}
+  }
+
+  handleGoogleCallback(): void {}
 
   async isAuthenticated(): Promise<boolean> {
     try {

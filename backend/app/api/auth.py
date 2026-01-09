@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core import get_current_user_id, get_db
 from app.core.config import settings
 from app.core.limiter import limiter
+from app.models import UserRole
 from app.schemas import (
     CreateUserRequest,
     LoginRequest,
@@ -165,6 +166,12 @@ def select_role(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
+        )
+
+    if role_data.role != UserRole.CANDIDATE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only candidate role can be selected",
         )
 
     user = AuthService.assign_role_and_create_profile(user, role_data.role, db)
