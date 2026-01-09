@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { User, Mail, Lock, Plus, Save } from "lucide-react";
-import { cn } from "../../lib/utils";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 
