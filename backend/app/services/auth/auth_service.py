@@ -170,7 +170,7 @@ class AuthService:
                 name=google_user.name,
                 google_id=google_user.id,
                 picture=google_user.picture,
-                role=None,
+                role=UserRole.CANDIDATE,
             )
             user = AuthService.create_user(create_user_data, db)
 
@@ -212,4 +212,4 @@ class AuthService:
         elif user.role == UserRole.RECRUITER.value:
             return f"{settings.FRONTEND_URL}/dashboard/recruiter"
         else:
-            return f"{settings.FRONTEND_URL}/onboarding/select-role"
+            return f"{settings.FRONTEND_URL}/dashboard/candidate"
