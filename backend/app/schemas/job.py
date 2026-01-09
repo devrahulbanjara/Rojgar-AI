@@ -1,65 +1,67 @@
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel
 
 
-class CompanyResponse(BaseModel):
-    id: str
-    name: str
-    description: str | None = None
-    location: str | None = None
-    website: str | None = None
-    industry: str | None = None
-    founded_year: int | None = None
+class OrganizationResponseInJob(BaseModel):
+    id: Annotated[str, "Organization ID"]
+    name: Annotated[str, "Organization name"]
+    description: Annotated[str | None, "Organization description"] = None
+    location: Annotated[str | None, "Organization location"] = None
+    website: Annotated[str | None, "Organization website URL"] = None
+    industry: Annotated[str | None, "Industry domain"] = None
+    founded_year: Annotated[int | None, "Year the organization was founded"] = None
 
     class Config:
         from_attributes = True
 
 
 class JobResponse(BaseModel):
-    job_id: str
-    id: str
-    company_id: str
-    job_description_id: str
+    job_id: Annotated[str, "Job ID"]
+    id: Annotated[str, "Internal job identifier"]
+    organization_id: Annotated[str, "Associated organization ID"]
+    job_description_id: Annotated[str, "Job description ID"]
 
-    title: str
-    department: str | None = None
-    level: str | None = None
+    title: Annotated[str, "Job title"]
+    department: Annotated[str | None, "Department name"] = None
+    level: Annotated[str | None, "Job level (e.g., junior, senior)"] = None
 
-    location: str | None = None
-    location_city: str | None = None
-    location_country: str | None = None
-    is_remote: bool = False
-    location_type: str | None = None
+    location: Annotated[str | None, "General location"] = None
+    location_city: Annotated[str | None, "City of the job"] = None
+    location_country: Annotated[str | None, "Country of the job"] = None
+    is_remote: Annotated[bool, "Whether the job is remote"] = False
+    location_type: Annotated[str | None, "Location type (onsite/remote/hybrid)"] = None
 
-    employment_type: str | None = "Full-time"
+    employment_type: Annotated[str | None, "Employment type"] = "Full-time"
 
-    salary_min: int | None = None
-    salary_max: int | None = None
-    salary_currency: str | None = "USD"
-    salary_range: dict[str, Any] | None = None
+    salary_min: Annotated[int | None, "Minimum salary"] = None
+    salary_max: Annotated[int | None, "Maximum salary"] = None
+    salary_currency: Annotated[str | None, "Salary currency"] = "USD"
+    salary_range: Annotated[dict[str, Any] | None, "Salary range dictionary"] = None
 
-    status: str = "active"
-    posted_date: str | None = None
-    application_deadline: str | None = None
-    created_at: str | None = None
-    updated_at: str | None = None
+    status: Annotated[str, "Job status"] = "active"
+    posted_date: Annotated[str | None, "Job posted date"] = None
+    application_deadline: Annotated[str | None, "Application deadline"] = None
+    created_at: Annotated[str | None, "Job creation timestamp"] = None
+    updated_at: Annotated[str | None, "Job last update timestamp"] = None
 
-    company: CompanyResponse | None = None
-    company_name: str | None = None
+    organization: Annotated[
+        OrganizationResponseInJob | None, "Organization details"
+    ] = None
+    company_name: Annotated[str | None, "Company name"] = None
 
-    description: str | None = None
-    role_overview: str | None = None
+    description: Annotated[str | None, "Job description"] = None
+    role_overview: Annotated[str | None, "Role overview"] = None
 
-    skills: list[str] = []
-    required_skills: dict[str, Any] | None = None
+    skills: Annotated[list[str], "Skills list"] = []
+    required_skills: Annotated[dict[str, Any] | None, "Required skills details"] = None
 
-    requirements: list[str] = []
-    benefits: list[str] = []
-    nice_to_have: list[str] = []
-    applicant_count: int = 0
-    views_count: int = 0
-    is_featured: bool = False
+    requirements: Annotated[list[str], "Job requirements"] = []
+    benefits: Annotated[list[str], "Job benefits"] = []
+    nice_to_have: Annotated[list[str], "Nice-to-have skills"] = []
+    applicant_count: Annotated[int, "Number of applicants"] = 0
+    views_count: Annotated[int, "Number of views"] = 0
+    is_featured: Annotated[bool, "Whether the job is featured"] = False
 
     class Config:
         from_attributes = True
@@ -67,76 +69,80 @@ class JobResponse(BaseModel):
 
 
 class JobListResponse(BaseModel):
-    jobs: list[JobResponse]
-    total: int
-    page: int
-    limit: int
-    total_pages: int
-    has_next: bool
-    has_prev: bool
+    jobs: Annotated[list[JobResponse], "List of jobs"]
+    total: Annotated[int, "Total number of jobs"]
+    page: Annotated[int, "Current page number"]
+    limit: Annotated[int, "Number of items per page"]
+    total_pages: Annotated[int, "Total pages"]
+    has_next: Annotated[bool, "Is there a next page?"]
+    has_prev: Annotated[bool, "Is there a previous page?"]
 
 
 class JobCreate(BaseModel):
-    title: str
-    department: str | None = None
-    level: str | None = None
+    title: Annotated[str, "Job title"]
+    department: Annotated[str | None, "Department name"] = None
+    level: Annotated[str | None, "Job level"] = None
 
-    description: str | None = ""
-    requiredSkillsAndExperience: list[str] | None = []
-    niceToHave: list[str] | None = None
-    benefits: list[str] | None = None
+    description: Annotated[str | None, "Job description"] = ""
+    requiredSkillsAndExperience: Annotated[
+        list[str] | None, "Required skills and experience"
+    ] = []
+    niceToHave: Annotated[list[str] | None, "Nice-to-have skills"] = None
+    benefits: Annotated[list[str] | None, "Job benefits"] = None
 
-    locationCity: str | None = None
-    locationCountry: str | None = None
-    locationType: str = "On-site"
-    employmentType: str | None = None
+    locationCity: Annotated[str | None, "Job city"] = None
+    locationCountry: Annotated[str | None, "Job country"] = None
+    locationType: Annotated[str, "Location type"] = "On-site"
+    employmentType: Annotated[str | None, "Employment type"] = None
 
-    salaryMin: int | None = None
-    salaryMax: int | None = None
-    currency: str | None = "NPR"
+    salaryMin: Annotated[int | None, "Minimum salary"] = None
+    salaryMax: Annotated[int | None, "Maximum salary"] = None
+    currency: Annotated[str | None, "Salary currency"] = "NPR"
 
-    applicationDeadline: str | None = None
+    applicationDeadline: Annotated[str | None, "Application deadline"] = None
 
-    status: str | None = "active"
+    status: Annotated[str | None, "Job status"] = "active"
 
-    mode: str = "manual"
-    raw_requirements: str | None = None
+    mode: Annotated[str, "Creation mode"] = "manual"
+    raw_requirements: Annotated[str | None, "Raw requirements text"] = None
 
 
 class JobUpdate(BaseModel):
-    title: str | None = None
-    department: str | None = None
-    level: str | None = None
+    title: Annotated[str | None, "Job title"] = None
+    department: Annotated[str | None, "Department name"] = None
+    level: Annotated[str | None, "Job level"] = None
 
-    description: str | None = None
-    requiredSkillsAndExperience: list[str] | None = None
-    niceToHave: list[str] | None = None
-    benefits: list[str] | None = None
+    description: Annotated[str | None, "Job description"] = None
+    requiredSkillsAndExperience: Annotated[
+        list[str] | None, "Required skills and experience"
+    ] = None
+    niceToHave: Annotated[list[str] | None, "Nice-to-have skills"] = None
+    benefits: Annotated[list[str] | None, "Job benefits"] = None
 
-    locationCity: str | None = None
-    locationCountry: str | None = None
-    locationType: str | None = None
-    employmentType: str | None = None
+    locationCity: Annotated[str | None, "Job city"] = None
+    locationCountry: Annotated[str | None, "Job country"] = None
+    locationType: Annotated[str | None, "Location type"] = None
+    employmentType: Annotated[str | None, "Employment type"] = None
 
-    salaryMin: int | None = None
-    salaryMax: int | None = None
-    currency: str | None = None
+    salaryMin: Annotated[int | None, "Minimum salary"] = None
+    salaryMax: Annotated[int | None, "Maximum salary"] = None
+    currency: Annotated[str | None, "Salary currency"] = None
 
-    applicationDeadline: str | None = None
+    applicationDeadline: Annotated[str | None, "Application deadline"] = None
 
-    status: str | None = None
+    status: Annotated[str | None, "Job status"] = None
 
 
 class JobDraftGenerateRequest(BaseModel):
-    title: str
-    raw_requirements: str
-    reference_jd: str | None = None
+    title: Annotated[str, "Job title"]
+    raw_requirements: Annotated[str, "Raw requirements text"]
+    reference_jd: Annotated[str | None, "Reference job description"] = None
 
 
 class JobDraftResponse(BaseModel):
-    title: str
-    description: str
-    requiredSkillsAndExperience: list[str]
-    niceToHave: list[str]
-    benefits: list[str]
-    about_company: str | None = None
+    title: Annotated[str, "Job title"]
+    description: Annotated[str, "Job description"]
+    requiredSkillsAndExperience: Annotated[list[str], "Required skills and experience"]
+    niceToHave: Annotated[list[str], "Nice-to-have skills"]
+    benefits: Annotated[list[str], "Job benefits"]
+    about_company: Annotated[str | None, "About the company"] = None

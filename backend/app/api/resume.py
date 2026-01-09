@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
@@ -67,7 +67,7 @@ def update_resume_details(
     return ResumeService.update_resume(db, user_id, resume_id, data)
 
 
-@router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{resume_id}")
 @limiter.limit("10/minute")
 def delete_resume(
     request: Request,
@@ -76,6 +76,7 @@ def delete_resume(
     db: Session = Depends(get_db),
 ):
     ResumeService.delete_resume(db, user_id, resume_id)
+    return {"message": "Resume deleted successfully"}
 
 
 @router.post(
@@ -92,9 +93,7 @@ def add_resume_experience(
     return ResumeService.add_experience(db, user_id, resume_id, data)
 
 
-@router.delete(
-    "/{resume_id}/experience/{item_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{resume_id}/experience/{item_id}")
 @limiter.limit("10/minute")
 def delete_resume_experience(
     request: Request,
@@ -104,6 +103,7 @@ def delete_resume_experience(
     db: Session = Depends(get_db),
 ):
     ResumeService.delete_experience(db, user_id, resume_id, item_id)
+    return {"message": "Resume experience deleted successfully"}
 
 
 @router.post("/{resume_id}/education", response_model=ResumeEducationResponse)
@@ -118,9 +118,7 @@ def add_resume_education(
     return ResumeService.add_education(db, user_id, resume_id, data)
 
 
-@router.delete(
-    "/{resume_id}/education/{item_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{resume_id}/education/{item_id}")
 @limiter.limit("10/minute")
 def delete_resume_education(
     request: Request,
@@ -130,6 +128,7 @@ def delete_resume_education(
     db: Session = Depends(get_db),
 ):
     ResumeService.delete_education(db, user_id, resume_id, item_id)
+    return {"message": "Resume education deleted successfully"}
 
 
 @router.post("/{resume_id}/skills", response_model=ResumeSkillResponse)
@@ -144,7 +143,7 @@ def add_resume_skill(
     return ResumeService.add_skill(db, user_id, resume_id, data)
 
 
-@router.delete("/{resume_id}/skills/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{resume_id}/skills/{item_id}")
 @limiter.limit("10/minute")
 def delete_resume_skill(
     request: Request,
@@ -154,6 +153,7 @@ def delete_resume_skill(
     db: Session = Depends(get_db),
 ):
     ResumeService.delete_skill(db, user_id, resume_id, item_id)
+    return {"message": "Resume skill deleted successfully"}
 
 
 @router.post("/{resume_id}/certifications", response_model=ResumeCertificationResponse)
@@ -168,9 +168,7 @@ def add_resume_certification(
     return ResumeService.add_certification(db, user_id, resume_id, data)
 
 
-@router.delete(
-    "/{resume_id}/certifications/{item_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{resume_id}/certifications/{item_id}")
 @limiter.limit("10/minute")
 def delete_resume_certification(
     request: Request,
@@ -180,6 +178,7 @@ def delete_resume_certification(
     db: Session = Depends(get_db),
 ):
     ResumeService.delete_certification(db, user_id, resume_id, item_id)
+    return {"message": "Resume certification deleted successfully"}
 
 
 @router.patch(

@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    TIMEZONE: str
+
     # Authentication
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
@@ -124,4 +126,4 @@ class Settings(BaseSettings):
         return [".pdf", ".docx"]
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

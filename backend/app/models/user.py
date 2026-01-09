@@ -1,19 +1,17 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core import get_datetime
 
 from . import Base
 
 if TYPE_CHECKING:
     from .candidate import CandidateProfile
-    from .company import CompanyProfile
-
-
-def utc_now():
-    return datetime.now(UTC).replace(tzinfo=None)
+    from .organization import Organization
 
 
 class UserRole(str, Enum):
@@ -25,20 +23,26 @@ class User(Base):
     __tablename__ = "user"
 
     user_id: Mapped[str] = mapped_column(String, primary_key=True)
+    organization_id: Mapped[str | None] = mapped_column(
+        String, ForeignKey("organization.organization_id"), nullable=True
+    )
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     picture: Mapped[str | None] = mapped_column(String, nullable=True)
 
     password: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     role: Mapped[str | None] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
+    )
+
+    organization: Mapped[Optional["Organization"]] = relationship(
+        "Organization", back_populates="recruiters"
     )
 
     # Relationships
@@ -47,12 +51,6 @@ class User(Base):
     )
     candidate_profile: Mapped[Optional["CandidateProfile"]] = relationship(
         "CandidateProfile",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    company_profile: Mapped[Optional["CompanyProfile"]] = relationship(
-        "CompanyProfile",
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
