@@ -72,13 +72,32 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        throw new ApiError(
-          data.message ||
-          data.detail ||
-          `HTTP ${response.status}: ${response.statusText}`,
-          response.status,
-          data,
-        );
+        // Handle error message extraction
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+        if (data) {
+          if (typeof data === "string") {
+            errorMessage = data;
+          } else if (typeof data === "object") {
+            // Try to extract message from various possible formats
+            if (data.message) {
+              errorMessage = data.message;
+            } else if (data.detail) {
+              // If detail is a string, use it directly
+              if (typeof data.detail === "string") {
+                errorMessage = data.detail;
+              } else {
+                // If detail is an object, stringify it
+                errorMessage = JSON.stringify(data.detail);
+              }
+            } else {
+              // Fallback to stringifying the entire error object
+              errorMessage = JSON.stringify(data);
+            }
+          }
+        }
+
+        throw new ApiError(errorMessage, response.status, data);
       }
 
       // Return data directly (standardized format)

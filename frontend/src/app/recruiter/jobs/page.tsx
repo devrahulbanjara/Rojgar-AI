@@ -16,10 +16,14 @@ import {
   ReferenceJDCard,
   ReferenceJDModal,
 } from "../../../components/recruiter";
-import { referenceJDs, ReferenceJD } from "../../../constants/referenceJDs";
 import type { Job, JobStatus } from "../../../types/job";
 import { useJobsByCompany } from "../../../hooks/queries/useJobs";
 import { useAuth } from "../../../hooks/useAuth";
+import {
+  useReferenceJDs,
+  useCreateReferenceJD,
+} from "../../../hooks/queries/useReferenceJDs";
+import { ReferenceJD } from "../../../services/referenceJDService";
 
 type TabType = "active" | "drafts" | "expired" | "reference-jds";
 
@@ -154,6 +158,14 @@ export default function RecruiterJobsPage() {
     useState<ReferenceJD | null>(null);
   const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
 
+  // Fetch reference JDs from API
+  const {
+    data: referenceJDData,
+    isLoading: isLoadingReferenceJDs,
+    refetch: refetchReferenceJDs,
+  } = useReferenceJDs();
+  const createReferenceJD = useCreateReferenceJD();
+
   const userId = user?.id || null;
 
   useEffect(() => {
@@ -230,7 +242,10 @@ export default function RecruiterJobsPage() {
         .length,
     [allJobs],
   );
-  const referenceJDCount = useMemo(() => referenceJDs.length, []);
+  const referenceJDCount = useMemo(
+    () => referenceJDData?.reference_jds?.length || 0,
+    [referenceJDData],
+  );
 
   // Handlers
   const handleJobClick = useCallback((job: Job) => {
@@ -277,9 +292,36 @@ export default function RecruiterJobsPage() {
     setTimeout(() => setSelectedReferenceJD(null), 300);
   }, []);
 
+  const handleConvertToReferenceJD = useCallback(
+    async (job: Job) => {
+      try {
+        const jobData = job as Job & {
+          nice_to_have?: string[];
+          benefits?: string[];
+        };
+
+        const referenceJDData = {
+          role_overview: job.description || "",
+          requiredSkillsAndExperience: job.requirements || [],
+          niceToHave: jobData.nice_to_have || [],
+          benefits: jobData.benefits || [],
+          department: job.department,
+        };
+
+        await createReferenceJD.mutateAsync(referenceJDData);
+        refetchReferenceJDs();
+      } catch (error) {
+        console.error("Error converting job to reference JD:", error);
+      }
+    },
+    [createReferenceJD, refetchReferenceJDs],
+  );
+
   const handleUseTemplate = useCallback((jd: ReferenceJD) => {
+    const templateText = `Role Overview: ${jd.role_overview}\n\nRequired Skills: ${jd.requiredSkillsAndExperience.join(", ")}\n\nNice to Have: ${jd.niceToHave.join(", ")}\n\nBenefits: ${jd.benefits.join(", ")}`;
+
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(jd.keywords);
+      navigator.clipboard.writeText(templateText);
     }
 
     setIsReferenceModalOpen(false);
@@ -308,8 +350,8 @@ export default function RecruiterJobsPage() {
         <div className="space-y-8 pb-12">
           {/* Enhanced Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div>
                     <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight tracking-tight">
@@ -347,14 +389,15 @@ export default function RecruiterJobsPage() {
 
             {/* Content Area */}
             <AnimatedContainer direction="up" delay={0.2}>
-              {isLoadingJobs ? (
+              {isLoadingJobs ||
+              (activeTab === "reference-jds" && isLoadingReferenceJDs) ? (
                 <div className="flex items-center justify-center py-20">
                   <LoadingSpinner size="lg" />
                 </div>
               ) : activeTab === "reference-jds" ? (
                 /* Reference JDs Grid */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {referenceJDs.map((jd) => (
+                  {referenceJDData?.reference_jds?.map((jd) => (
                     <ReferenceJDCard
                       key={jd.id}
                       jd={jd}
@@ -373,12 +416,17 @@ export default function RecruiterJobsPage() {
                       key={`job-${job.id}-${index}`}
                       job={job}
                       onClick={() => handleJobClick(job)}
+                      onConvertToReferenceJD={
+                        activeTab === "active" || activeTab === "expired"
+                          ? () => handleConvertToReferenceJD(job)
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
               )}
 
-              {/* Empty State */}
+              {/* Empty State for Jobs */}
               {activeTab !== "reference-jds" && filteredJobs.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
                   <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
@@ -409,6 +457,24 @@ export default function RecruiterJobsPage() {
                   </button>
                 </div>
               )}
+
+              {/* Empty State for Reference JDs */}
+              {activeTab === "reference-jds" &&
+                (!referenceJDData?.reference_jds ||
+                  referenceJDData.reference_jds.length === 0) && (
+                  <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
+                    <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
+                      <FolderOpen className="w-10 h-10 text-purple-300" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      No reference JDs yet
+                    </h3>
+                    <p className="text-base text-gray-500 max-w-md mb-8">
+                      Convert your existing job postings to reference JDs or
+                      create new ones to streamline your hiring process.
+                    </p>
+                  </div>
+                )}
             </AnimatedContainer>
           </div>
         </div>

@@ -141,8 +141,27 @@ class JobDraftGenerateRequest(BaseModel):
 
 class JobDraftResponse(BaseModel):
     title: Annotated[str, "Job title"]
-    description: Annotated[str, "Job description"]
+    description: Annotated[str, "About the role"]
     requiredSkillsAndExperience: Annotated[list[str], "Required skills and experience"]
     niceToHave: Annotated[list[str], "Nice-to-have skills"]
     benefits: Annotated[list[str], "Job benefits"]
     about_company: Annotated[str | None, "About the company"] = None
+
+
+class CreateReferenceJD(BaseModel):
+    role_overview: Annotated[str, "About the role"]
+    requiredSkillsAndExperience: Annotated[list[str], "Required skills and experience"]
+    niceToHave: Annotated[list[str], "Nice-to-have skills"]
+    benefits: Annotated[list[str], "Job benefits"]
+    department: Annotated[
+        str | None, "Department in the company in which the JD belongs to"
+    ] = None
+
+
+class ReferenceJDResponse(CreateReferenceJD):
+    id: Annotated[str, "Reference JD ID"]
+    about_the_company: Annotated[str | None, "About the company"] = None
+
+
+class ReferenceJDListResponse(BaseModel):
+    reference_jds: Annotated[list[ReferenceJDResponse], "List of reference JDs"]

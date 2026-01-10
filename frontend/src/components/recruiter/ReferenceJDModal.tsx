@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { X, Briefcase, Sparkles, CheckCircle2 } from "lucide-react";
-import { ReferenceJD } from "../../constants/referenceJDs";
+import { X, Briefcase, Sparkles, CheckCircle2, Gift } from "lucide-react";
+import { ReferenceJD } from "../../services/referenceJDService";
 
 interface ReferenceJDModalProps {
   jd: ReferenceJD | null;
@@ -43,14 +43,14 @@ export function ReferenceJDModal({
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-3">
               <span className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-semibold rounded-lg border border-blue-200">
-                {jd.department}
+                Reference JD
               </span>
               <span className="px-3 py-1.5 text-sm font-semibold rounded-lg border bg-gray-50 text-gray-600 border-gray-200">
-                Reference Template
+                Template
               </span>
             </div>
             <h2 className="text-[28px] font-bold text-gray-900 leading-tight tracking-[0.3px]">
-              {jd.title}
+              Reference Job Description
             </h2>
           </div>
         </div>
@@ -70,7 +70,7 @@ export function ReferenceJDModal({
             </div>
             <div className="pl-14">
               <p className="text-[16px] text-gray-700 leading-[1.8]">
-                {jd.description}
+                {jd.role_overview}
               </p>
             </div>
           </section>
@@ -88,7 +88,7 @@ export function ReferenceJDModal({
             </div>
             <div className="pl-14">
               <ul className="space-y-3 list-disc list-inside">
-                {jd.requirements.map((req, i) => (
+                {jd.requiredSkillsAndExperience.map((req, i) => (
                   <li
                     key={i}
                     className="text-[15px] text-gray-700 leading-relaxed pl-2"
@@ -101,37 +101,39 @@ export function ReferenceJDModal({
           </section>
 
           {/* Nice to Have (Preferred) */}
-          <section className="mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
-              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50">
-                <Sparkles className="w-5 h-5 text-amber-600" />
+          {jd.niceToHave && jd.niceToHave.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50">
+                  <Sparkles className="w-5 h-5 text-amber-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Nice to Have (Preferred)
+                </h3>
               </div>
-              <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                Nice to Have (Preferred)
-              </h3>
-            </div>
-            <div className="pl-14">
-              <ul className="space-y-3 list-disc list-inside">
-                {jd.skills.map((skill, i) => (
-                  <li
-                    key={i}
-                    className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                  >
-                    {skill}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {jd.niceToHave.map((skill, i) => (
+                    <li
+                      key={i}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
 
-          {/* What We Offer */}
+          {/* What We Offer / Benefits */}
           {jd.benefits && jd.benefits.length > 0 && (
-            <section className="mb-8">
+            <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 bg-violet-600 rounded-full"></div>
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50">
-                  <Sparkles className="w-5 h-5 text-violet-600" />
+                  <Gift className="w-5 h-5 text-violet-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
                   What We Offer
@@ -151,16 +153,42 @@ export function ReferenceJDModal({
               </div>
             </section>
           )}
+
+          {/* About the Company */}
+          {jd.about_the_company && (
+            <section className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  About the Company
+                </h3>
+              </div>
+              <div className="pl-14">
+                <p className="text-[16px] text-gray-700 leading-[1.8]">
+                  {jd.about_the_company}
+                </p>
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Sticky Footer */}
         <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-end gap-4 shadow-lg rounded-b-[20px]">
           <button
+            onClick={onClose}
+            className="h-12 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200"
+          >
+            Close
+          </button>
+          <button
             onClick={() => onUseTemplate(jd)}
             className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2"
           >
             <Sparkles className="w-5 h-5" />
-            Use Pattern for AI
+            Use Template
           </button>
         </div>
       </div>
