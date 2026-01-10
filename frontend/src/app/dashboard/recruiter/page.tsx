@@ -43,9 +43,12 @@ export default function RecruiterDashboard() {
         <div className="space-y-8 pb-12">
           {/* Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
+            <div className="relative py-8 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-6 transition-all duration-300 ease-out">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <WelcomeMessage firstName={user?.name} />
+                <WelcomeMessage
+                  firstName={user?.name}
+                  organizationName={user?.organization?.name}
+                />
               </div>
             </div>
           </AnimatedContainer>

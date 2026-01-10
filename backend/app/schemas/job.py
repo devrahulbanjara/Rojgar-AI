@@ -36,7 +36,7 @@ class JobResponse(BaseModel):
 
     salary_min: Annotated[int | None, "Minimum salary"] = None
     salary_max: Annotated[int | None, "Maximum salary"] = None
-    salary_currency: Annotated[str | None, "Salary currency"] = "USD"
+    salary_currency: Annotated[str | None, "Salary currency"] = "NPR"
     salary_range: Annotated[dict[str, Any] | None, "Salary range dictionary"] = None
 
     status: Annotated[str, "Job status"] = "active"
@@ -48,13 +48,8 @@ class JobResponse(BaseModel):
     organization: Annotated[
         OrganizationResponseInJob | None, "Organization details"
     ] = None
-    company_name: Annotated[str | None, "Company name"] = None
 
-    description: Annotated[str | None, "Job description"] = None
     role_overview: Annotated[str | None, "Role overview"] = None
-
-    skills: Annotated[list[str], "Skills list"] = []
-    required_skills: Annotated[dict[str, Any] | None, "Required skills details"] = None
 
     requirements: Annotated[list[str], "Job requirements"] = []
     benefits: Annotated[list[str], "Job benefits"] = []

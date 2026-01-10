@@ -42,7 +42,18 @@ interface BackendJobResponse {
   job_id?: string | number;
   id?: string | number;
   company_id?: string | number;
+  organization_id?: string | number;
   company?: {
+    id?: string | number;
+    name?: string;
+    logo?: string;
+    website?: string;
+    description?: string;
+    location?: string;
+    industry?: string;
+    founded_year?: number;
+  };
+  organization?: {
     id?: string | number;
     name?: string;
     logo?: string;
@@ -95,18 +106,34 @@ const transformJob = (job: BackendJobResponse): Job => {
     id: parseInt(String(job.job_id || job.id || 0)) || 0,
     job_id: String(job.job_id || job.id || ""),
     company_id: parseInt(String(job.company_id || 0)) || 0,
-    company: job.company
-      ? {
-          id: parseInt(String(job.company.id || job.company_id || 0)) || 0,
-          name: job.company_name || job.company?.name || "Unknown Company",
-          logo: job.company?.logo,
-          website: job.company?.website,
-          description: job.company?.description,
-          location: job.company?.location,
-          industry: job.company?.industry,
-          founded_year: job.company?.founded_year,
-        }
-      : undefined,
+    company:
+      job.organization || job.company
+        ? {
+            id:
+              parseInt(
+                String(
+                  job.organization?.id ||
+                    job.company?.id ||
+                    job.company_id ||
+                    job.organization_id ||
+                    0,
+                ),
+              ) || 0,
+            name:
+              job.organization?.name ||
+              job.company?.name ||
+              job.company_name ||
+              "Unknown Company",
+            logo: job.organization?.logo || job.company?.logo,
+            website: job.organization?.website || job.company?.website,
+            description:
+              job.organization?.description || job.company?.description,
+            location: job.organization?.location || job.company?.location,
+            industry: job.organization?.industry || job.company?.industry,
+            founded_year:
+              job.organization?.founded_year || job.company?.founded_year,
+          }
+        : undefined,
     title: job.title || "",
     department: job.department || "",
     level: (job.level || "Mid") as Job["level"],

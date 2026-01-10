@@ -65,7 +65,7 @@ export function useCreateReferenceJD() {
       console.error("Error creating reference JD:", error);
       console.error("Error details:", {
         message: error.message,
-        data: (error as any).data,
+        data: apiError.data,
       });
     },
   });
@@ -114,7 +114,7 @@ export function useConvertJobToReferenceJD() {
       console.error("Error converting job to reference JD:", error);
       console.error("Error details:", {
         message: error.message,
-        data: (error as any).data,
+        data: apiError.data,
       });
     },
   });
