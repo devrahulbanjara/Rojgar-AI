@@ -97,7 +97,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 {job.title}
               </h2>
               <p className="text-lg text-gray-600 font-medium tracking-[0.3px]">
-                {job.company?.name || "Company"}
+                {job.company?.name ||
+                  (job as unknown as { organization?: { name?: string } })
+                    .organization?.name ||
+                  "Company"}
               </p>
             </div>
           </div>
