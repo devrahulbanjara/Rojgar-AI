@@ -79,6 +79,11 @@ class JobService:
             if raw_ids:
                 jobs_from_db = (
                     db.query(JobPosting)
+                    .options(
+                        selectinload(JobPosting.organization),
+                        selectinload(JobPosting.job_description),
+                        selectinload(JobPosting.stats),
+                    )
                     .filter(
                         JobPosting.job_id.in_(raw_ids),
                         JobPosting.status.in_(VISIBLE_STATUSES),
@@ -426,7 +431,6 @@ def _build_organization_data(job: JobPosting) -> dict | None:
 def _build_job_description_data(job: JobPosting) -> dict:
     jd = job.job_description
 
-    description = jd.role_overview if jd else None
     role_overview = jd.role_overview if jd else None
     required_skills_exp_data = jd.required_skills_experience if jd else None
     requirements = extract_list_from_dict(
@@ -438,12 +442,10 @@ def _build_job_description_data(job: JobPosting) -> dict:
     )
 
     return {
-        "description": description,
         "role_overview": role_overview,
         "requirements": requirements,
         "benefits": benefits,
         "nice_to_have": nice_to_have,
-        "required_skills_experience": required_skills_exp_data,
     }
 
 
@@ -459,7 +461,6 @@ def map_job_to_response(job: JobPosting):
     location = build_location(
         job.location_city, job.location_country, job.location_type
     )
-    company_name = job.organization.name if job.organization else "Unknown Company"
 
     job_data = {
         "job_id": job.job_id,
@@ -487,7 +488,6 @@ def map_job_to_response(job: JobPosting):
         "created_at": (job.created_at.isoformat() if job.created_at else None),
         "updated_at": (job.updated_at.isoformat() if job.updated_at else None),
         "organization": _build_organization_data(job),
-        "company_name": company_name,
     }
 
     job_data.update(_build_job_description_data(job))
