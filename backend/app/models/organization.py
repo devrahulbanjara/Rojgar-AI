@@ -21,7 +21,6 @@ class Organization(Base):
     password: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
 
-    # Profile fields
     location_city: Mapped[str | None] = mapped_column(String, nullable=True)
     location_country: Mapped[str | None] = mapped_column(String, nullable=True)
     website: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -36,7 +35,6 @@ class Organization(Base):
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
-    # Relationships
     recruiters: Mapped[list["User"]] = relationship(
         "User", back_populates="organization", cascade="all, delete-orphan"
     )

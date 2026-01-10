@@ -7,6 +7,7 @@ import {
   Clock,
   Users,
   Eye,
+  BookmarkPlus,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Job } from "../../types/job";
@@ -14,6 +15,7 @@ import type { Job } from "../../types/job";
 interface RecruiterJobCardProps {
   job: Job;
   onClick?: () => void;
+  onConvertToReferenceJD?: () => void;
   className?: string;
 }
 
@@ -82,8 +84,16 @@ const statusConfig = {
     text: "text-emerald-700",
     border: "border-emerald-200",
   },
-  Draft: { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200" },
-  Closed: { bg: "bg-rose-50", text: "text-rose-600", border: "border-rose-200" },
+  Draft: {
+    bg: "bg-slate-50",
+    text: "text-slate-600",
+    border: "border-slate-200",
+  },
+  Closed: {
+    bg: "bg-rose-50",
+    text: "text-rose-600",
+    border: "border-rose-200",
+  },
   Inactive: {
     bg: "bg-amber-50",
     text: "text-amber-600",
@@ -92,10 +102,15 @@ const statusConfig = {
 };
 
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
-  ({ job, onClick, className }) => {
+  ({ job, onClick, onConvertToReferenceJD, className }) => {
     const status = job.status || "Draft";
     const config =
       statusConfig[status as keyof typeof statusConfig] || statusConfig.Draft;
+
+    const handleConvertClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onConvertToReferenceJD?.();
+    };
 
     return (
       <div
@@ -155,7 +170,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
             </div>
           </div>
 
-          {/* Footer with Stats & Status */}
+          {/* Footer with Stats, Status & Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
             <div className="flex items-center gap-4 text-xs text-slate-500">
               {job.applicant_count !== undefined && (
@@ -172,19 +187,33 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               )}
             </div>
 
-            {/* Status Badge - Only show for non-Active statuses */}
-            {status !== 'Active' && (
-              <span
-                className={cn(
-                  "px-2.5 py-1 text-xs font-semibold rounded-full border transition-transform duration-200 group-hover:scale-105",
-                  config.bg,
-                  config.text,
-                  config.border,
-                )}
-              >
-                {status}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Convert to Reference JD Button */}
+              {onConvertToReferenceJD && (
+                <button
+                  onClick={handleConvertClick}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all duration-200 border border-purple-200"
+                  title="Convert to Reference JD"
+                >
+                  <BookmarkPlus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Save as Template</span>
+                </button>
+              )}
+
+              {/* Status Badge - Only show for non-Active statuses */}
+              {status !== "Active" && (
+                <span
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-semibold rounded-full border transition-transform duration-200 group-hover:scale-105",
+                    config.bg,
+                    config.text,
+                    config.border,
+                  )}
+                >
+                  {status}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
