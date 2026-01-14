@@ -111,22 +111,56 @@ export function useForm<T extends Record<string, unknown>>(
   // Set a single value
   const setValue = useCallback(
     (field: keyof T, value: T[keyof T]) => {
-      setValues((prev) => ({ ...prev, [field]: value }));
-
-      // Clear error when value changes
-      if (errors[field]) {
-        setErrors((prev) => ({ ...prev, [field]: undefined }));
-      }
-
-      // Validate on change if enabled
-      if (validateOnChange) {
-        const error = validateField(field);
-        if (error) {
-          setErrors((prev) => ({ ...prev, [field]: error }));
+      // Calculate new values for validation context
+      setValues((prev) => {
+        const newValues = { ...prev, [field]: value };
+        
+        // Validate on change if enabled, using the new value directly
+        if (validateOnChange) {
+          const fieldRules = validationRules?.[field];
+          if (fieldRules) {
+            // Validate with the new value and new values context
+            let validationError: string | undefined;
+            for (const rule of fieldRules) {
+              const error = rule(value as T[keyof T], newValues as Record<string, unknown>);
+              if (error) {
+                validationError = error;
+                break;
+              }
+            }
+            // Update errors based on validation result
+            // React 18+ batches these updates automatically
+            setErrors((prev) => {
+              if (validationError) {
+                return { ...prev, [field]: validationError };
+              } else {
+                // Clear error if validation passes
+                const { [field]: _, ...rest } = prev;
+                return rest;
+              }
+            });
+          } else {
+            // Clear error if no validation rules
+            setErrors((prev) => {
+              const { [field]: _, ...rest } = prev;
+              return rest;
+            });
+          }
+        } else {
+          // Clear error when value changes if validation on change is disabled
+          setErrors((prev) => {
+            if (prev[field]) {
+              const { [field]: _, ...rest } = prev;
+              return rest;
+            }
+            return prev;
+          });
         }
-      }
+        
+        return newValues;
+      });
     },
-    [errors, validateField, validateOnChange]
+    [validateOnChange, validationRules]
   );
 
   // Set multiple values
