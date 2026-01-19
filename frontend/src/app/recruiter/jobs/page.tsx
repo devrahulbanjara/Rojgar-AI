@@ -290,7 +290,7 @@ export default function RecruiterJobsPage() {
     setTimeout(() => {
       setSelectedJob(null);
       setJobToEdit(job);
-      setPostJobMode("manual");
+      setPostJobMode(null); // Let user choose mode (agent or manual)
       setIsPostJobModalOpen(true);
     }, 300);
   }, []);

@@ -35,15 +35,8 @@ interface JobCreationWizardProps {
   jobToEdit?: Job;
 }
 
-const getSteps = (mode: "agent" | "manual") => {
-  if (mode === "agent") {
-    return [
-      { id: 1, title: "Basic Info", icon: Building2 },
-      { id: 2, title: "Requirements", icon: Briefcase },
-      { id: 3, title: "Compensation", icon: DollarSign },
-      { id: 4, title: "Job Details", icon: FileText },
-    ];
-  }
+const getSteps = () => {
+  // Unified steps - same order for all modes
   return [
     { id: 1, title: "Basic Info", icon: Building2 },
     { id: 2, title: "Job Details", icon: FileText },
@@ -90,22 +83,21 @@ export function JobCreationWizard({
   const [showRevisionPrompt, setShowRevisionPrompt] = useState(false);
   const [revisionText, setRevisionText] = useState("");
 
+  // Reset step when editing
+  useEffect(() => {
+    if (jobToEdit) {
+      setCurrentStep(1);
+    }
+  }, [jobToEdit]);
+
   const createJobMutation = useCreateJob();
   const updateJobMutation = useUpdateJob();
   const generateDraftMutation = useGenerateJobDraft();
 
-  const steps = getSteps(mode);
+  const steps = getSteps();
 
   const getContentStep = (step: number): number => {
-    if (mode === "agent") {
-      const agentMapping: { [key: number]: number } = {
-        1: 1,
-        2: 3,
-        3: 4,
-        4: 2,
-      };
-      return agentMapping[step] || step;
-    }
+    // Unified step mapping - same for all modes
     return step;
   };
 
@@ -135,11 +127,16 @@ export function JobCreationWizard({
 
   useEffect(() => {
     if (jobToEdit) {
+      // Pre-populate keywords with existing requirements for AI revision
+      const existingRequirements = jobToEdit.requirements && jobToEdit.requirements.length > 0
+        ? jobToEdit.requirements.join(", ")
+        : "";
+      
       setFormData({
         title: jobToEdit.title || "",
         department: jobToEdit.department || "",
         level: jobToEdit.level || "",
-        keywords: "",
+        keywords: existingRequirements, // Pre-fill for AI revision
         referenceJD: "",
         description: jobToEdit.description || "",
         locationCity: jobToEdit.location_city || "",
@@ -163,8 +160,13 @@ export function JobCreationWizard({
             : [""],
         applicationDeadline: jobToEdit.application_deadline || "",
       });
+      
+      // If editing and mode is agent, mark as generated so revision button shows
+      if (mode === "agent" && jobToEdit.description) {
+        setIsGenerated(true);
+      }
     }
-  }, [jobToEdit]);
+  }, [jobToEdit, mode]);
 
   const handleGenerate = async () => {
     if (!formData.title || !formData.keywords) {
@@ -322,16 +324,16 @@ export function JobCreationWizard({
       return;
     }
 
-    const jobData = prepareJobData();
+    const jobData = { ...prepareJobData(), status: "draft" as const };
 
     try {
       if (jobToEdit) {
         await updateJobMutation.mutateAsync({
           id: jobToEdit.job_id || jobToEdit.id.toString(),
-          data: { ...jobData, id: jobToEdit.job_id || jobToEdit.id.toString() },
+          data: { ...jobData, id: jobToEdit.job_id || jobToEdit.id.toString(), status: "draft" },
         });
-        toast.success("Job updated successfully!", {
-          description: `${formData.title} has been updated.`,
+        toast.success("Draft updated successfully!", {
+          description: `${formData.title} has been saved as a draft.`,
           duration: 4000,
         });
       } else {
@@ -346,7 +348,7 @@ export function JobCreationWizard({
       }, 500);
     } catch (err) {
       let errorMessage = jobToEdit
-        ? "Failed to update job. Please try again."
+        ? "Failed to update draft. Please try again."
         : "Failed to save draft. Please try again.";
       const error = err as {
         data?: { detail?: string; message?: string };
@@ -365,7 +367,7 @@ export function JobCreationWizard({
         }
       }
 
-      toast.error(jobToEdit ? "Failed to update job" : "Failed to save draft", {
+      toast.error(jobToEdit ? "Failed to update draft" : "Failed to save draft", {
         description: errorMessage,
         duration: 5000,
       });
@@ -395,16 +397,16 @@ export function JobCreationWizard({
       return;
     }
 
-    const jobData = prepareJobData();
+    const jobData = { ...prepareJobData(), status: "active" as const };
 
     try {
       if (jobToEdit) {
         await updateJobMutation.mutateAsync({
           id: jobToEdit.job_id || jobToEdit.id.toString(),
-          data: { ...jobData, id: jobToEdit.job_id || jobToEdit.id.toString() },
+          data: { ...jobData, id: jobToEdit.job_id || jobToEdit.id.toString(), status: "active" },
         });
-        toast.success("Job updated successfully!", {
-          description: `${formData.title} has been updated and is now live.`,
+        toast.success("Job published successfully!", {
+          description: `${formData.title} has been published and is now live.`,
           duration: 4000,
         });
       } else {
@@ -425,9 +427,9 @@ export function JobCreationWizard({
         error?.data?.message ||
         error?.message ||
         (jobToEdit
-          ? "Failed to update job. Please try again."
+          ? "Failed to publish job. Please try again."
           : "Failed to create job. Please try again.");
-      toast.error(jobToEdit ? "Failed to update job" : "Failed to create job", {
+      toast.error(jobToEdit ? "Failed to publish job" : "Failed to create job", {
         description: errorMessage,
         duration: 5000,
       });
@@ -535,113 +537,97 @@ export function JobCreationWizard({
       </div>
 
       {/* Form Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {/* Agent Mode: AI Generation */}
-        {mode === "agent" && currentStep === 1 && !isGenerated && (
-          <div className="space-y-5">
-            {/* Clean Form Card */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-5">
-              {/* Job Title */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Job Title <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => updateField("title", e.target.value)}
-                  placeholder="e.g. Senior ML Engineer"
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-sm"
-                />
-              </div>
-
-              {/* Reference JD Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Reference JD (Structure){" "}
-                  <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={formData.referenceJD}
-                  onChange={(e) => updateField("referenceJD", e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 transition-all appearance-none cursor-pointer text-sm"
-                >
-                  <option value="">Select a reference JD...</option>
-                  <option value="eng-backend-senior">
-                    Senior Backend Engineer
-                  </option>
-                  <option value="eng-ml-senior">Senior ML Engineer</option>
-                  <option value="eng-frontend-senior">
-                    Senior Frontend Engineer
-                  </option>
-                  <option value="eng-devops-mid">DevOps Engineer</option>
-                  <option value="product-manager-senior">
-                    Senior Product Manager
-                  </option>
-                  <option value="design-product-senior">
-                    Senior Product Designer
-                  </option>
-                  <option value="marketing-growth-senior">
-                    Senior Growth Marketing Manager
-                  </option>
-                  <option value="data-scientist-senior">
-                    Senior Data Scientist
-                  </option>
-                  <option value="sales-enterprise-senior">
-                    Senior Enterprise Sales Executive
-                  </option>
-                </select>
-                <p className="mt-1.5 text-xs text-slate-400">
-                  Determines the structure of the generated JD
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        {/* AI Generation Option - Always available on step 1 if not generated yet */}
+        {currentStep === 1 && !isGenerated && (
+          <div className="space-y-8 mb-8">
+            {/* Optional AI Generation Card */}
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
+              {/* Header Section */}
+              <div className="px-8 py-6 border-b border-slate-100">
+                <h3 className="text-xl font-bold text-slate-900 leading-tight mb-2">
+                  {jobToEdit ? "AI-Powered Revision" : "AI-Powered Generation"}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {jobToEdit
+                    ? "Use AI to revise your job description based on feedback, or continue editing manually below."
+                    : "Optionally use AI to generate a job description, or fill it out manually below."}
                 </p>
               </div>
 
-              {/* Keywords */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Keywords & Requirements{" "}
-                  <span className="text-red-400">*</span>
-                </label>
-                <textarea
-                  value={formData.keywords || ""}
-                  onChange={(e) => updateField("keywords", e.target.value)}
-                  placeholder="e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience..."
-                  rows={3}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all resize-none text-sm"
-                />
+              {/* Form Fields Section */}
+              <div className="px-8 py-6 space-y-6">
+                {/* Job Title */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-3">
+                    Job Title <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => updateField("title", e.target.value)}
+                    placeholder="e.g. Senior ML Engineer"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-base"
+                  />
+                </div>
+
+                {/* Keywords */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-3">
+                    Keywords & Requirements{" "}
+                    <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    value={formData.keywords || ""}
+                    onChange={(e) => updateField("keywords", e.target.value)}
+                    placeholder={jobToEdit ? "Describe what you'd like to change or improve..." : "e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience..."}
+                    rows={4}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all resize-none text-base"
+                  />
+                </div>
+
+                {/* Generate Button - Matching Continue button style */}
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || generateDraftMutation.isPending || !formData.title.trim() || !formData.keywords.trim()}
+                  className={cn(
+                    "group relative w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg overflow-hidden",
+                    !isGenerating && !generateDraftMutation.isPending && formData.title.trim() && formData.keywords.trim()
+                      ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-indigo-500/25 hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
+                      : "bg-slate-100 text-slate-400 cursor-not-allowed",
+                  )}
+                >
+                  {/* Subtle shine effect on hover */}
+                  {!isGenerating && !generateDraftMutation.isPending && formData.title.trim() && formData.keywords.trim() && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  )}
+
+                  <div className="relative flex items-center gap-2">
+                    {isGenerating || generateDraftMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200" />
+                        <span>{jobToEdit ? "Revise with AI" : "Generate with AI"}</span>
+                      </>
+                    )}
+                  </div>
+                </button>
               </div>
             </div>
 
-            {/* Generate Button - Inside form flow, not at bottom */}
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || generateDraftMutation.isPending}
-              className={cn(
-                "group relative w-full flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-medium transition-all duration-200 text-sm overflow-hidden",
-                !isGenerating && !generateDraftMutation.isPending
-                  ? "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm hover:shadow-md active:scale-[0.99]"
-                  : "bg-slate-100 text-slate-400 cursor-not-allowed",
-              )}
-            >
-              {/* Subtle shine effect on hover */}
-              {!isGenerating && !generateDraftMutation.isPending && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              )}
-
-              <div className="relative flex items-center gap-2.5">
-                {isGenerating || generateDraftMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200" />
-                    <span>Generate with AI</span>
-                  </>
-                )}
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
               </div>
-            </button>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-slate-50 px-2 text-slate-500">Or continue manually</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -674,17 +660,17 @@ export function JobCreationWizard({
         {/* Form Steps */}
         {!isGenerating && (
           <>
-            {/* Step 1: Basic Info - Only show in Manual Mode OR after Agent Mode generation */}
-            {currentStep === 1 && (mode === "manual" || isGenerated) && (
-              <div className="space-y-5">
+            {/* Step 1: Basic Info - Always show, AI generation is optional above */}
+            {currentStep === 1 && (
+              <div className="space-y-8">
                 {/* AI Generated Indicator */}
-                {mode === "agent" && isGenerated && (
-                  <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
+                {isGenerated && (
+                  <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl px-8 py-6 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-indigo-100">
                       <Sparkles className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-base font-bold text-indigo-900 mb-1">
+                      <h4 className="text-xl font-bold text-indigo-900 mb-2">
                         AI Magic Applied!
                       </h4>
                       <p className="text-sm text-indigo-700 leading-relaxed">
@@ -695,14 +681,15 @@ export function JobCreationWizard({
                     </div>
                   </div>
                 )}
-                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
-                  <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
-                    <Building2 className="w-4 h-4 text-indigo-500" />
-                    Basic Information
-                  </h4>
-                  <div className="space-y-5">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="px-8 py-6 border-b border-slate-100">
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Basic Information
+                    </h4>
+                  </div>
+                  <div className="px-8 py-6 space-y-6">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Job Title *
                       </label>
                       <input
@@ -711,7 +698,7 @@ export function JobCreationWizard({
                         onChange={(e) => updateField("title", e.target.value)}
                         placeholder="e.g. Senior Software Engineer"
                         className={cn(
-                          "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                          "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                           "text-base text-slate-800 placeholder:text-slate-400",
                           "transition-colors duration-200",
                           isGenerated &&
@@ -720,9 +707,9 @@ export function JobCreationWizard({
                         )}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Department *
                         </label>
                         <select
@@ -731,11 +718,13 @@ export function JobCreationWizard({
                             updateField("department", e.target.value)
                           }
                           className={cn(
-                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                            "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 transition-colors duration-200",
+                            "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
+                            "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
                             isGenerated &&
                             formData.department &&
-                            "bg-indigo-50/50 border-indigo-200",
+                            "!bg-indigo-50/50 border-indigo-200",
                           )}
                         >
                           <option value="">Select department...</option>
@@ -748,18 +737,20 @@ export function JobCreationWizard({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Level *
                         </label>
                         <select
                           value={formData.level}
                           onChange={(e) => updateField("level", e.target.value)}
                           className={cn(
-                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                            "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 transition-colors duration-200",
+                            "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
+                            "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
                             isGenerated &&
                             formData.level &&
-                            "bg-indigo-50/50 border-indigo-200",
+                            "!bg-indigo-50/50 border-indigo-200",
                           )}
                         >
                           <option value="">Select level...</option>
@@ -774,10 +765,10 @@ export function JobCreationWizard({
 
                     {/* About the Role */}
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
                         About the Role *
                       </label>
-                      <p className="text-xs text-slate-500 mb-3">
+                      <p className="text-sm text-slate-500 mb-3">
                         Brief 2-3 sentence summary about this position.
                       </p>
                       <textarea
@@ -791,7 +782,7 @@ export function JobCreationWizard({
                         )}
                         placeholder="Summarize what this role is about..."
                         className={cn(
-                          "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y",
+                          "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y",
                           "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
                           "min-h-[100px] max-h-[300px] overflow-y-auto",
                           isGenerated &&
@@ -805,18 +796,19 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 2: Job Details (Step 4 in agent mode) */}
+            {/* Step 2: Job Details */}
             {getContentStep(currentStep) === 2 && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-lg p-5 border border-slate-200">
-                  <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-4">
-                    <FileText className="w-4 h-4 text-indigo-500" />
-                    Job Details
-                  </h4>
-                  <div className="space-y-5">
-                    <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-8">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="px-8 py-6 border-b border-slate-100">
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Job Details
+                    </h4>
+                  </div>
+                  <div className="px-8 py-6 space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           City *
                         </label>
                         <input
@@ -827,7 +819,7 @@ export function JobCreationWizard({
                           }
                           placeholder="e.g. "
                           className={cn(
-                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                            "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200",
                             isGenerated &&
                             formData.locationCity &&
@@ -836,7 +828,7 @@ export function JobCreationWizard({
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Country *
                         </label>
                         <input
@@ -847,7 +839,7 @@ export function JobCreationWizard({
                           }
                           placeholder="e.g. Nepal"
                           className={cn(
-                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                            "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200",
                             isGenerated &&
                             formData.locationCountry &&
@@ -857,7 +849,7 @@ export function JobCreationWizard({
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Location Type *
                       </label>
                       <select
@@ -866,11 +858,13 @@ export function JobCreationWizard({
                           updateField("locationType", e.target.value)
                         }
                         className={cn(
-                          "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                          "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                           "text-base text-slate-800 transition-colors duration-200",
+                          "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
+                          "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
                           isGenerated &&
                           formData.locationType &&
-                          "bg-indigo-50/50 border-indigo-200",
+                          "!bg-indigo-50/50 border-indigo-200",
                         )}
                       >
                         <option value="">Select type...</option>
@@ -880,7 +874,7 @@ export function JobCreationWizard({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Employment Type *
                       </label>
                       <select
@@ -889,11 +883,13 @@ export function JobCreationWizard({
                           updateField("employmentType", e.target.value)
                         }
                         className={cn(
-                          "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white",
+                          "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                           "text-base text-slate-800 transition-colors duration-200",
+                          "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
+                          "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
                           isGenerated &&
                           formData.employmentType &&
-                          "bg-indigo-50/50 border-indigo-200",
+                          "!bg-indigo-50/50 border-indigo-200",
                         )}
                       >
                         <option value="">Select type...</option>
@@ -908,21 +904,19 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 3: Requirements and Skills (Step 2 in agent mode) */}
+            {/* Step 3: Requirements and Skills */}
             {getContentStep(currentStep) === 3 && (
-              <div className="space-y-5">
-                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
-                  <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
-                    <Briefcase className="w-4 h-4 text-indigo-500" />
-                    Required Skills and Experience
-                  </h4>
-                  <p className="text-xs text-slate-500 mb-5">
-                    Add requirements, skills, and experience needed for this
-                    role. Mix requirements (e.g., &quot;5+ years of Python
-                    experience&quot;) and skills (e.g., &quot;Python&quot;,
-                    &quot;FastAPI&quot;) together.
-                  </p>
-                  <div className="space-y-3">
+              <div className="space-y-8">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="px-8 py-6 border-b border-slate-100">
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Required Skills and Experience
+                    </h4>
+                    <p className="text-sm text-slate-500 mt-2">
+                      Add requirements, skills, and education  here.
+                    </p>
+                  </div>
+                  <div className="px-8 py-6 space-y-4">
                     {formData.requiredSkillsAndExperience.map((item, index) => (
                       <div key={index} className="flex gap-3 items-start">
                         <div className="flex-1">
@@ -938,7 +932,7 @@ export function JobCreationWizard({
                             placeholder="e.g. Strong experience with Python for backend development"
                             rows={Math.max(2, Math.ceil(item.length / 60))}
                             className={cn(
-                              "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                              "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                               "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
                               "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
                               "whitespace-pre-wrap break-words",
@@ -968,23 +962,24 @@ export function JobCreationWizard({
                       onClick={() =>
                         addArrayItem("requiredSkillsAndExperience")
                       }
-                      className="text-xs text-indigo-500 font-medium hover:underline cursor-pointer"
+                      className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
                     >
-                      + Add requirement or skill
+                      + Add requirements
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
-                  <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
-                    <Briefcase className="w-4 h-4 text-indigo-500" />
-                    Nice to Have
-                  </h4>
-                  <p className="text-xs text-slate-500 mb-5">
-                    Optional qualifications that would be beneficial but not
-                    required for this role.
-                  </p>
-                  <div className="space-y-3">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="px-8 py-6 border-b border-slate-100">
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Nice to Have
+                    </h4>
+                    <p className="text-sm text-slate-500 mt-2">
+                      Optional experiences, qualities that would be beneficial but not
+                      strictly required for this role.
+                    </p>
+                  </div>
+                  <div className="px-8 py-6 space-y-4">
                     {formData.niceToHave.map((item, index) => (
                       <div key={index} className="flex gap-3 items-start">
                         <div className="flex-1">
@@ -1000,7 +995,7 @@ export function JobCreationWizard({
                             placeholder="e.g. Experience with Kubernetes and container orchestration"
                             rows={Math.max(2, Math.ceil(item.length / 60))}
                             className={cn(
-                              "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                              "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                               "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
                               "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
                               "whitespace-pre-wrap break-words",
@@ -1023,7 +1018,7 @@ export function JobCreationWizard({
                     ))}
                     <button
                       onClick={() => addArrayItem("niceToHave")}
-                      className="text-xs text-indigo-500 font-medium hover:underline cursor-pointer"
+                      className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
                     >
                       + Add nice to have
                     </button>
@@ -1032,18 +1027,19 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 4: Compensation (Step 3 in agent mode) */}
+            {/* Step 4: Compensation */}
             {getContentStep(currentStep) === 4 && (
-              <div className="space-y-5">
-                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
-                  <h4 className="flex items-center gap-2 text-sm font-medium text-slate-800 mb-5">
-                    <DollarSign className="w-4 h-4 text-indigo-500" />
-                    Compensation
-                  </h4>
-                  <div className="space-y-5">
-                    <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-8">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="px-8 py-6 border-b border-slate-100">
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Compensation
+                    </h4>
+                  </div>
+                  <div className="px-8 py-6 space-y-6">
+                    <div className="grid grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Min Salary
                         </label>
                         <input
@@ -1054,13 +1050,13 @@ export function JobCreationWizard({
                           }
                           placeholder="80000"
                           className={cn(
-                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                            "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200",
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Max Salary
                         </label>
                         <input
@@ -1071,13 +1067,13 @@ export function JobCreationWizard({
                           }
                           placeholder="120000"
                           className={cn(
-                            "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                            "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200",
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Currency
                         </label>
                         <select
@@ -1085,7 +1081,7 @@ export function JobCreationWizard({
                           onChange={(e) =>
                             updateField("currency", e.target.value)
                           }
-                          className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-base text-slate-800 transition-colors duration-200"
+                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] text-base text-slate-800 transition-colors duration-200"
                         >
                           <option value="INR">INR</option>
                           <option value="USD">USD</option>
@@ -1094,7 +1090,7 @@ export function JobCreationWizard({
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Application Deadline
                       </label>
                       <input
@@ -1103,17 +1099,19 @@ export function JobCreationWizard({
                         onChange={(e) =>
                           updateField("applicationDeadline", e.target.value)
                         }
-                        className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200"
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
-                  <h4 className="text-sm font-medium text-slate-800 mb-5">
-                    What We Offer
-                  </h4>
-                  <div className="space-y-3">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="px-8 py-6 border-b border-slate-100">
+                    <h4 className="text-xl font-bold text-slate-900">
+                      What We Offer
+                    </h4>
+                  </div>
+                  <div className="px-8 py-6 space-y-4">
                     {formData.benefits.map((benefit, index) => (
                       <div key={index} className="flex gap-3 items-start">
                         <div className="flex-1">
@@ -1129,7 +1127,7 @@ export function JobCreationWizard({
                             placeholder="Add what we offer..."
                             rows={Math.max(2, Math.ceil(benefit.length / 60))}
                             className={cn(
-                              "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                              "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                               "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
                               "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
                               "whitespace-pre-wrap break-words",
@@ -1152,7 +1150,7 @@ export function JobCreationWizard({
                     ))}
                     <button
                       onClick={() => addArrayItem("benefits")}
-                      className="text-xs text-indigo-500 font-medium hover:underline cursor-pointer"
+                      className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
                     >
                       + Add offering
                     </button>
@@ -1176,8 +1174,8 @@ export function JobCreationWizard({
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Agent Mode: Revision Button */}
-            {mode === "agent" && isGenerated && (
+            {/* Revision Button - Always available if content exists */}
+            {isGenerated && (
               <button
                 onClick={() => setShowRevisionPrompt(true)}
                 className="flex items-center gap-2 px-5 py-2.5 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100"
@@ -1194,39 +1192,39 @@ export function JobCreationWizard({
                   onClick={handleSaveDraft}
                   className={cn(
                     "px-5 py-2.5 text-slate-600 text-sm font-semibold rounded-xl transition-all duration-200 border border-slate-200",
-                    createJobMutation.isPending
+                    createJobMutation.isPending || updateJobMutation.isPending
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900",
                   )}
-                  disabled={createJobMutation.isPending}
+                  disabled={createJobMutation.isPending || updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending ? (
+                  {createJobMutation.isPending || updateJobMutation.isPending ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Saving...
                     </span>
                   ) : (
-                    "Save Draft"
+                    jobToEdit ? "Save as Draft" : "Save Draft"
                   )}
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={createJobMutation.isPending}
+                  disabled={createJobMutation.isPending || updateJobMutation.isPending}
                   className={cn(
                     "flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25",
-                    createJobMutation.isPending
+                    createJobMutation.isPending || updateJobMutation.isPending
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5",
                   )}
                 >
-                  {createJobMutation.isPending ? (
+                  {createJobMutation.isPending || updateJobMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Publishing...
                     </>
                   ) : (
                     <>
-                      Publish Job
+                      {jobToEdit && jobToEdit.status === "Draft" ? "Publish Job" : jobToEdit ? "Update & Publish" : "Publish Job"}
                       <Check className="w-4 h-4" />
                     </>
                   )}
@@ -1311,7 +1309,7 @@ export function JobCreationWizard({
                   rows={5}
                   maxLength={500}
                   className={cn(
-                    "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                    "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                     "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
                     "resize-y min-h-[120px] transition-colors duration-200",
                     "border-slate-300 hover:border-slate-400",
