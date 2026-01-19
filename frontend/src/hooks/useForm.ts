@@ -135,6 +135,7 @@ export function useForm<T extends Record<string, unknown>>(
                 return { ...prev, [field]: validationError };
               } else {
                 // Clear error if validation passes
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [field]: _, ...rest } = prev;
                 return rest;
               }
@@ -142,6 +143,7 @@ export function useForm<T extends Record<string, unknown>>(
           } else {
             // Clear error if no validation rules
             setErrors((prev) => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { [field]: _, ...rest } = prev;
               return rest;
             });
@@ -150,6 +152,7 @@ export function useForm<T extends Record<string, unknown>>(
           // Clear error when value changes if validation on change is disabled
           setErrors((prev) => {
             if (prev[field]) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { [field]: _, ...rest } = prev;
               return rest;
             }

@@ -1,7 +1,10 @@
 import uuid
 from typing import cast
+
 from langgraph.types import Command
+
 from app.models.agents.jd_generator import JobState
+
 from . import app, reference_jd
 
 print("--- LangGraph Persistence Test ---")
