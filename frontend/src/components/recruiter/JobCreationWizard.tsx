@@ -720,8 +720,7 @@ export function JobCreationWizard({
                           className={cn(
                             "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 transition-colors duration-200",
-                            "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
-                            "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
+                            "select-arrow bg-white",
                             isGenerated &&
                             formData.department &&
                             "!bg-indigo-50/50 border-indigo-200",
@@ -746,8 +745,7 @@ export function JobCreationWizard({
                           className={cn(
                             "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                             "text-base text-slate-800 transition-colors duration-200",
-                            "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
-                            "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
+                            "select-arrow bg-white",
                             isGenerated &&
                             formData.level &&
                             "!bg-indigo-50/50 border-indigo-200",
@@ -861,7 +859,7 @@ export function JobCreationWizard({
                           "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                           "text-base text-slate-800 transition-colors duration-200",
                           "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
-                          "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
+                          "select-arrow bg-white",
                           isGenerated &&
                           formData.locationType &&
                           "!bg-indigo-50/50 border-indigo-200",
@@ -886,7 +884,7 @@ export function JobCreationWizard({
                           "w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                           "text-base text-slate-800 transition-colors duration-200",
                           "appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat",
-                          "bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
+                          "select-arrow bg-white",
                           isGenerated &&
                           formData.employmentType &&
                           "!bg-indigo-50/50 border-indigo-200",
@@ -1081,7 +1079,7 @@ export function JobCreationWizard({
                           onChange={(e) =>
                             updateField("currency", e.target.value)
                           }
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364758b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] text-base text-slate-800 transition-colors duration-200"
+                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 select-arrow bg-white text-base text-slate-800 transition-colors duration-200"
                         >
                           <option value="INR">INR</option>
                           <option value="USD">USD</option>
@@ -1174,20 +1172,19 @@ export function JobCreationWizard({
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Revision Button - Always available if content exists */}
-            {isGenerated && (
-              <button
-                onClick={() => setShowRevisionPrompt(true)}
-                className="flex items-center gap-2 px-5 py-2.5 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Revise with AI
-              </button>
-            )}
-
             {/* Save Draft / Publish */}
             {currentStep === steps.length ? (
               <div className="flex gap-3">
+                {/* Revision Button - Show when editing a draft job or when AI content exists */}
+                {(jobToEdit || isGenerated) && (
+                  <button
+                    onClick={() => setShowRevisionPrompt(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Revise with AI
+                  </button>
+                )}
                 <button
                   onClick={handleSaveDraft}
                   className={cn(
@@ -1231,13 +1228,46 @@ export function JobCreationWizard({
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleNext}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold rounded-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
-              >
-                Continue
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex gap-3">
+                {/* Revision Button - Show when editing a draft job */}
+                {jobToEdit && (
+                  <button
+                    onClick={() => setShowRevisionPrompt(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Revise with AI
+                  </button>
+                )}
+                {/* Save as Draft button - Available from Step 1 */}
+                <button
+                  onClick={handleSaveDraft}
+                  className={cn(
+                    "px-5 py-2.5 text-slate-600 text-sm font-semibold rounded-xl transition-all duration-200 border border-slate-200",
+                    createJobMutation.isPending || updateJobMutation.isPending
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900",
+                  )}
+                  disabled={createJobMutation.isPending || updateJobMutation.isPending}
+                >
+                  {createJobMutation.isPending || updateJobMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    jobToEdit ? "Save as Draft" : "Save Draft"
+                  )}
+                </button>
+                {/* Continue button */}
+                <button
+                  onClick={handleNext}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold rounded-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
+                >
+                  Continue
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1253,40 +1283,33 @@ export function JobCreationWizard({
           />
 
           {/* Modal Content */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200/50 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-lg border border-slate-200/50 overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-5 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    Request AI Revision
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Tell the AI what you&apos;d like to change or improve
-                  </p>
-                </div>
-              </div>
+            <div className="bg-white px-10 py-8 border-b border-slate-100">
+              <h3 className="text-3xl font-bold text-slate-900 leading-tight tracking-tight">
+                Request AI Revision
+              </h3>
+              <p className="text-slate-500 mt-2 font-medium text-lg">
+                Tell the AI what you&apos;d like to change or improve
+              </p>
             </div>
 
             {/* Body */}
-            <div className="p-6">
+            <div className="px-10 py-8 space-y-8">
               {/* Quick Suggestions */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-slate-700 mb-3">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-4">
                   Quick Suggestions
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {revisionSuggestions.slice(0, 6).map((suggestion, index) => (
+                <div className="flex flex-wrap gap-3 max-h-32 overflow-y-auto pr-2">
+                  {revisionSuggestions.slice(0, 4).map((suggestion, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => handleSuggestionClick(suggestion)}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200",
-                        "border border-slate-300 bg-white text-slate-700",
+                        "px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
+                        "border border-slate-200 bg-white text-slate-700",
                         "hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700",
                         "cursor-pointer active:scale-95",
                       )}
@@ -1298,8 +1321,8 @@ export function JobCreationWizard({
               </div>
 
               {/* Custom Input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
                   Or Type Your Own Revision Instructions
                 </label>
                 <textarea
@@ -1309,19 +1332,18 @@ export function JobCreationWizard({
                   rows={5}
                   maxLength={500}
                   className={cn(
-                    "w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                    "w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
                     "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
                     "resize-y min-h-[120px] transition-colors duration-200",
-                    "border-slate-300 hover:border-slate-400",
                   )}
                 />
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-xs text-slate-500">
+                <div className="flex justify-between items-center mt-3">
+                  <p className="text-sm text-slate-500">
                     Be specific about what you want changed
                   </p>
                   <span
                     className={cn(
-                      "text-xs font-medium",
+                      "text-sm font-medium",
                       revisionText.length > 450
                         ? "text-amber-600"
                         : "text-slate-400",
@@ -1334,10 +1356,10 @@ export function JobCreationWizard({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex justify-end gap-3">
+            <div className="px-10 py-6 bg-white border-t border-slate-100 flex justify-end gap-3">
               <button
                 onClick={() => setShowRevisionPrompt(false)}
-                className="px-4 py-2 text-slate-600 text-sm font-medium hover:bg-white rounded-lg transition-colors duration-200 border border-slate-300 hover:border-slate-400"
+                className="px-5 py-2.5 text-slate-600 text-sm font-semibold hover:bg-slate-100 rounded-xl transition-all duration-200 border border-slate-200 hover:border-slate-300"
               >
                 Cancel
               </button>
@@ -1347,9 +1369,9 @@ export function JobCreationWizard({
                   !revisionText.trim() || generateDraftMutation.isPending
                 }
                 className={cn(
-                  "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25",
                   revisionText.trim() && !generateDraftMutation.isPending
-                    ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md"
+                    ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed",
                 )}
               >
