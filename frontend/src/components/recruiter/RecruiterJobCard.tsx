@@ -132,17 +132,21 @@ const departmentColors: Record<
   },
 };
 
-// Status indicator styles - only show for non-Active statuses
+// Status indicator styles
 const statusStyles = {
+  Active: {
+    bg: "bg-emerald-500",
+    label: "Active",
+  },
   Draft: {
     bg: "bg-slate-400",
     label: "Draft",
   },
-  Closed: {
-    bg: "bg-rose-500",
-    label: "Closed",
-  },
   Expired: {
+    bg: "bg-amber-500",
+    label: "Expired",
+  },
+  Closed: {
     bg: "bg-amber-500",
     label: "Expired",
   },
@@ -155,9 +159,10 @@ const statusStyles = {
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
   ({ job, onClick, onConvertToReferenceJD, className }) => {
     const status = job.status || "Draft";
-    const showStatus = status !== "Active";
+    // Normalize status: map "Closed" to "Expired" for display
+    const displayStatus = status === "Closed" ? "Expired" : status;
     const statusStyle =
-      statusStyles[status as keyof typeof statusStyles] || statusStyles.Draft;
+      statusStyles[displayStatus as keyof typeof statusStyles] || statusStyles.Draft;
     const deptColor =
       departmentColors[job.department || ""] || departmentColors.Default;
 
@@ -196,7 +201,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Header Row: Department Badge + Status Indicator (only for non-Active) */}
+          {/* Header Row: Department Badge + Status Indicator */}
           <div className="flex items-start justify-between mb-5">
             {job.department && (
               <span
@@ -210,17 +215,15 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                 {job.department}
               </span>
             )}
-            {showStatus && (
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn("w-2 h-2 rounded-full", statusStyle.bg)}
-                  title={statusStyle.label}
-                />
-                <span className="text-[11px] font-medium text-slate-500">
-                  {statusStyle.label}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <div
+                className={cn("w-2 h-2 rounded-full", statusStyle.bg)}
+                title={statusStyle.label}
+              />
+              <span className="text-[11px] font-medium text-slate-500">
+                {statusStyle.label}
+              </span>
+            </div>
           </div>
 
           {/* Job Title - Refined Size */}
