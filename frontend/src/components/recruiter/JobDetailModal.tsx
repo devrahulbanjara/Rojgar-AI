@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Edit,
   ArrowRight,
+  Ban,
 } from "lucide-react";
 import type { Job } from "../../types/job";
 import { Dialog } from "../../components/ui/dialog";
@@ -32,6 +33,7 @@ interface JobDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit?: (job: Job) => void;
+  onExpire?: (job: Job) => void;
 }
 
 export function JobDetailModal({
@@ -39,6 +41,7 @@ export function JobDetailModal({
   isOpen,
   onClose,
   onEdit,
+  onExpire,
 }: JobDetailModalProps) {
   if (!job) return null;
 
@@ -47,6 +50,14 @@ export function JobDetailModal({
       onEdit(job);
     }
   };
+
+  const handleExpire = () => {
+    if (onExpire) {
+      onExpire(job);
+    }
+  };
+
+  const isActive = job.status === "Active" || job.status === "active";
 
   return (
     <Dialog
@@ -358,8 +369,19 @@ export function JobDetailModal({
           )}
         </div>
 
-        {/* Sticky Footer with Edit Button */}
+        {/* Sticky Footer with Edit and Expire Buttons */}
         <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-end gap-4 shadow-lg">
+          {isActive && onExpire && (
+            <Button
+              onClick={handleExpire}
+              size="lg"
+              variant="outline"
+              className="h-12 px-8 text-base font-semibold border-amber-300 text-amber-700 hover:bg-amber-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+            >
+              <Ban className="w-5 h-5 mr-2" />
+              Expire Job
+            </Button>
+          )}
           <Button
             onClick={handleEdit}
             size="lg"

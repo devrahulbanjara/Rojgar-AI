@@ -17,7 +17,7 @@ import {
   ReferenceJDModal,
 } from "../../../components/recruiter";
 import type { Job, JobStatus } from "../../../types/job";
-import { useJobsByCompany } from "../../../hooks/queries/useJobs";
+import { useJobsByCompany, useExpireJob } from "../../../hooks/queries/useJobs";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   useReferenceJDs,
@@ -305,6 +305,8 @@ export default function RecruiterJobsPage() {
     setTimeout(() => setSelectedJob(null), 300);
   }, []);
 
+  const expireJobMutation = useExpireJob();
+
   const handleEditJob = useCallback((job: Job) => {
     setIsDetailOpen(false);
     setTimeout(() => {
@@ -314,6 +316,26 @@ export default function RecruiterJobsPage() {
       setIsPostJobModalOpen(true);
     }, 300);
   }, []);
+
+  const handleExpireJob = useCallback(
+    async (job: Job) => {
+      // Use job_id (UUID string) instead of id (parsed integer) for API calls
+      const jobId = job.job_id || job.id;
+      if (!jobId) return;
+
+      try {
+        await expireJobMutation.mutateAsync(String(jobId));
+        setIsDetailOpen(false);
+        setTimeout(() => {
+          setSelectedJob(null);
+        }, 300);
+        refetchJobs();
+      } catch (error) {
+        console.error("Failed to expire job:", error);
+      }
+    },
+    [expireJobMutation, refetchJobs],
+  );
 
   const handlePostNewJob = useCallback(() => {
     setPostJobMode(null);
@@ -541,6 +563,7 @@ export default function RecruiterJobsPage() {
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
         onEdit={handleEditJob}
+        onExpire={handleExpireJob}
       />
 
       <PostJobModal

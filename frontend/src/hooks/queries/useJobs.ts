@@ -190,6 +190,22 @@ export function useUpdateJob() {
   });
 }
 
+export function useExpireJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return await jobService.expireJob(id);
+    },
+    onSuccess: (data, jobId) => {
+      // Update the specific job in cache
+      queryClient.setQueryData(jobQueryKeys.detail(jobId), data);
+      // Invalidate job lists
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+    },
+  });
+}
+
 export function useDeleteJob() {
   const queryClient = useQueryClient();
 
