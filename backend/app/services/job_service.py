@@ -2,9 +2,11 @@ import math
 import uuid
 from datetime import date, datetime
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 
 from app.core import get_datetime
+from app.core.authorization import verify_user_can_edit_job
 from app.models import (
     CandidateProfile,
     JobDescription,
@@ -192,6 +194,32 @@ class JobService:
     @staticmethod
     def get_job_by_id(db: Session, job_id: str):
         return db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+
+    @staticmethod
+    def expire_job(db: Session, job_id: str, user_id: str):
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        if not job_posting:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found",
+            )
+
+        verify_user_can_edit_job(user, job_posting)
+
+        job_posting.status = "expired"
+        job_posting.updated_at = get_datetime()
+
+        db.commit()
+        db.refresh(job_posting)
+
+        return job_posting
 
     @staticmethod
     def update_job(db: Session, job_posting: JobPosting, job_data):

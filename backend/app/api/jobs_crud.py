@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core import get_current_user_id, get_db
 from app.core.authorization import get_organization_from_user, verify_user_can_edit_job
 from app.core.limiter import limiter
-from app.models import JobPosting, User
+from app.models import User
 from app.schemas import job as schemas
 from app.services.job_service import JobService, map_job_to_response
 from app.services.recruiter.job_generation_service import JobGenerationService
@@ -115,3 +115,27 @@ def update_job(
     )
 
     return map_job_to_response(updated_job)
+
+
+@router.post(
+    "/{job_id}/expire",
+    response_model=schemas.JobResponse,
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("5/minute")
+def expire_job(
+    request: Request,
+    job_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        updated_job = JobService.expire_job(db=db, job_id=job_id, user_id=user_id)
+        return map_job_to_response(updated_job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to expire job: {str(e)}",
+        )
