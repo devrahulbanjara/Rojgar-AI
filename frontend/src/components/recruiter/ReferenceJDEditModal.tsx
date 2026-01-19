@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Pencil } from "lucide-react";
 import { ReferenceJD, CreateReferenceJDRequest } from "../../services/referenceJDService";
 import { cn } from "../../lib/utils";
 
@@ -27,6 +27,11 @@ export function ReferenceJDEditModal({
     department: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [editingField, setEditingField] = useState<{
+    field: string;
+    index: number;
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   useEffect(() => {
     if (jd) {
@@ -96,6 +101,27 @@ export function ReferenceJDEditModal({
       );
       return { ...prev, [field]: arr.length ? arr : [""] };
     });
+    if (editingField?.field === field && editingField.index === index) {
+      setEditingField(null);
+    }
+  };
+
+  const startEditing = (field: string, index: number, currentValue: string) => {
+    setEditingField({ field, index });
+    setEditValue(currentValue);
+  };
+
+  const saveEdit = () => {
+    if (editingField) {
+      updateArrayField(editingField.field, editingField.index, editValue);
+      setEditingField(null);
+      setEditValue("");
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValue("");
   };
 
   if (!isOpen || !jd) return null;
@@ -181,31 +207,81 @@ export function ReferenceJDEditModal({
                 </p>
               </div>
               <div className="px-8 py-6 space-y-4">
-                {formData.requiredSkillsAndExperience.map((item, index) => (
-                  <div key={index} className="flex gap-3 items-start">
-                    <div className="flex-1">
-                      <textarea
-                        value={item}
-                        onChange={(e) =>
-                          updateArrayField("requiredSkillsAndExperience", index, e.target.value)
-                        }
-                        placeholder="e.g. 5+ years of experience with Python for backend development"
-                        rows={Math.max(2, Math.ceil(item.length / 60))}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
-                      />
+                {formData.requiredSkillsAndExperience.map((item, index) => {
+                  const isEditing =
+                    editingField?.field === "requiredSkillsAndExperience" &&
+                    editingField.index === index;
+                  return (
+                    <div key={index} className="relative">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <textarea
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            placeholder="e.g. 5+ years of experience with Python for backend development"
+                            rows={Math.max(2, Math.ceil(editValue.length / 60))}
+                            className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                            autoFocus
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={saveEdit}
+                              className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <textarea
+                            value={item}
+                            onChange={(e) =>
+                              updateArrayField("requiredSkillsAndExperience", index, e.target.value)
+                            }
+                            placeholder="e.g. 5+ years of experience with Python for backend development"
+                            rows={Math.max(2, Math.ceil(item.length / 60))}
+                            className="w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                          />
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                startEditing("requiredSkillsAndExperience", index, item)
+                              }
+                              className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                              style={{ right: "40px", top: "50%", transform: "translateY(-50%)" }}
+                              aria-label="Edit requirement"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            {formData.requiredSkillsAndExperience.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeArrayItem("requiredSkillsAndExperience", index)
+                                }
+                                className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                style={{ right: "12px", top: "50%", transform: "translateY(-50%)" }}
+                                aria-label="Remove requirement"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {formData.requiredSkillsAndExperience.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem("requiredSkillsAndExperience", index)}
-                        className="px-3 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-base cursor-pointer font-medium flex-shrink-0 mt-1"
-                        aria-label="Remove requirement"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => addArrayItem("requiredSkillsAndExperience")}
@@ -228,31 +304,77 @@ export function ReferenceJDEditModal({
                 </p>
               </div>
               <div className="px-8 py-6 space-y-4">
-                {formData.niceToHave.map((item, index) => (
-                  <div key={index} className="flex gap-3 items-start">
-                    <div className="flex-1">
-                      <textarea
-                        value={item}
-                        onChange={(e) =>
-                          updateArrayField("niceToHave", index, e.target.value)
-                        }
-                        placeholder="e.g. Experience with Kubernetes and container orchestration"
-                        rows={Math.max(2, Math.ceil(item.length / 60))}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
-                      />
+                {formData.niceToHave.map((item, index) => {
+                  const isEditing =
+                    editingField?.field === "niceToHave" &&
+                    editingField.index === index;
+                  return (
+                    <div key={index} className="relative">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <textarea
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            placeholder="e.g. Experience with Kubernetes and container orchestration"
+                            rows={Math.max(2, Math.ceil(editValue.length / 60))}
+                            className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                            autoFocus
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={saveEdit}
+                              className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <textarea
+                            value={item}
+                            onChange={(e) =>
+                              updateArrayField("niceToHave", index, e.target.value)
+                            }
+                            placeholder="e.g. Experience with Kubernetes and container orchestration"
+                            rows={Math.max(2, Math.ceil(item.length / 60))}
+                            className="w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                          />
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                            <button
+                              type="button"
+                              onClick={() => startEditing("niceToHave", index, item)}
+                              className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                              style={{ right: "40px", top: "50%", transform: "translateY(-50%)" }}
+                              aria-label="Edit nice to have"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            {formData.niceToHave.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeArrayItem("niceToHave", index)}
+                                className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                style={{ right: "12px", top: "50%", transform: "translateY(-50%)" }}
+                                aria-label="Remove nice to have"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {formData.niceToHave.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem("niceToHave", index)}
-                        className="px-3 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-base cursor-pointer font-medium flex-shrink-0 mt-1"
-                        aria-label="Remove nice to have"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => addArrayItem("niceToHave")}
@@ -271,31 +393,77 @@ export function ReferenceJDEditModal({
                 </h4>
               </div>
               <div className="px-8 py-6 space-y-4">
-                {formData.benefits.map((item, index) => (
-                  <div key={index} className="flex gap-3 items-start">
-                    <div className="flex-1">
-                      <textarea
-                        value={item}
-                        onChange={(e) =>
-                          updateArrayField("benefits", index, e.target.value)
-                        }
-                        placeholder="Add what we offer..."
-                        rows={Math.max(2, Math.ceil(item.length / 60))}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
-                      />
+                {formData.benefits.map((item, index) => {
+                  const isEditing =
+                    editingField?.field === "benefits" &&
+                    editingField.index === index;
+                  return (
+                    <div key={index} className="relative">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <textarea
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            placeholder="Add what we offer..."
+                            rows={Math.max(2, Math.ceil(editValue.length / 60))}
+                            className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                            autoFocus
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={saveEdit}
+                              className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <textarea
+                            value={item}
+                            onChange={(e) =>
+                              updateArrayField("benefits", index, e.target.value)
+                            }
+                            placeholder="Add what we offer..."
+                            rows={Math.max(2, Math.ceil(item.length / 60))}
+                            className="w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                          />
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                            <button
+                              type="button"
+                              onClick={() => startEditing("benefits", index, item)}
+                              className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                              style={{ right: "40px", top: "50%", transform: "translateY(-50%)" }}
+                              aria-label="Edit benefit"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            {formData.benefits.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeArrayItem("benefits", index)}
+                                className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                style={{ right: "12px", top: "50%", transform: "translateY(-50%)" }}
+                                aria-label="Remove benefit"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {formData.benefits.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem("benefits", index)}
-                        className="px-3 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-base cursor-pointer font-medium flex-shrink-0 mt-1"
-                        aria-label="Remove benefit"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => addArrayItem("benefits")}
