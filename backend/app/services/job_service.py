@@ -222,6 +222,27 @@ class JobService:
         return job_posting
 
     @staticmethod
+    def delete_job(db: Session, job_id: str, user_id: str):
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        if not job_posting:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found",
+            )
+
+        verify_user_can_edit_job(user, job_posting)
+
+        db.delete(job_posting)
+        db.commit()
+
+    @staticmethod
     def update_job(db: Session, job_posting: JobPosting, job_data):
         if job_data.title is not None:
             job_posting.title = job_data.title

@@ -6,6 +6,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { jobService, applicationService } from "../../services/jobService";
 import type {
   JobSearchParams,
@@ -218,6 +219,19 @@ export function useDeleteJob() {
       queryClient.removeQueries({ queryKey: jobQueryKeys.detail(id) });
       // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+      toast.success("Job deleted successfully");
+    },
+    onError: (error: Error) => {
+      const errorMessage =
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.detail ||
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.message ||
+        error.message ||
+        "Failed to delete job";
+      toast.error("Failed to delete job", {
+        description: errorMessage,
+      });
     },
   });
 }

@@ -19,6 +19,7 @@ import {
   useGenerateJobDraft,
   useUpdateJob,
 } from "../../hooks/queries/useJobs";
+import { useReferenceJDs } from "../../hooks/queries/useReferenceJDs";
 import { toast } from "sonner";
 import type {
   CreateJobRequest,
@@ -33,6 +34,7 @@ interface JobCreationWizardProps {
   onBack: () => void;
   onComplete: () => void;
   jobToEdit?: Job;
+  initialReferenceJdId?: string;
 }
 
 const getSteps = () => {
@@ -76,12 +78,21 @@ export function JobCreationWizard({
   onBack,
   onComplete,
   jobToEdit,
+  initialReferenceJdId,
 }: JobCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [showRevisionPrompt, setShowRevisionPrompt] = useState(false);
   const [revisionText, setRevisionText] = useState("");
+  const [activeTab, setActiveTab] = useState<"agent" | "manual">("agent");
+
+  // Switch to agent tab if reference JD ID is provided
+  useEffect(() => {
+    if (initialReferenceJdId && activeTab !== "agent") {
+      setActiveTab("agent");
+    }
+  }, [initialReferenceJdId]);
 
   // Reset step when editing
   useEffect(() => {
@@ -110,7 +121,7 @@ export function JobCreationWizard({
     department: "",
     level: "",
     keywords: "",
-    referenceJD: "",
+    reference_jd_id: initialReferenceJdId || "",
     description: "",
     locationCity: "",
     locationCountry: "",
@@ -125,19 +136,33 @@ export function JobCreationWizard({
     applicationDeadline: "",
   });
 
+  // Update reference_jd_id when initialReferenceJdId changes
+  useEffect(() => {
+    if (initialReferenceJdId) {
+      setFormData((prev) => ({
+        ...prev,
+        reference_jd_id: initialReferenceJdId,
+      }));
+    }
+  }, [initialReferenceJdId]);
+
+  // Fetch reference JDs for Agent Mode
+  const { data: referenceJDsData, isLoading: isLoadingReferenceJDs } =
+    useReferenceJDs();
+
   useEffect(() => {
     if (jobToEdit) {
       // Pre-populate keywords with existing requirements for AI revision
       const existingRequirements = jobToEdit.requirements && jobToEdit.requirements.length > 0
         ? jobToEdit.requirements.join(", ")
         : "";
-      
+
       setFormData({
         title: jobToEdit.title || "",
         department: jobToEdit.department || "",
         level: jobToEdit.level || "",
         keywords: existingRequirements, // Pre-fill for AI revision
-        referenceJD: "",
+        reference_jd_id: "",
         description: jobToEdit.description || "",
         locationCity: jobToEdit.location_city || "",
         locationCountry: jobToEdit.location_country || "",
@@ -160,7 +185,7 @@ export function JobCreationWizard({
             : [""],
         applicationDeadline: jobToEdit.application_deadline || "",
       });
-      
+
       // If editing and mode is agent, mark as generated so revision button shows
       if (mode === "agent" && jobToEdit.description) {
         setIsGenerated(true);
@@ -169,10 +194,10 @@ export function JobCreationWizard({
   }, [jobToEdit, mode]);
 
   const handleGenerate = async () => {
-    if (!formData.title || !formData.keywords) {
+    if (!formData.title || !formData.keywords || !formData.reference_jd_id) {
       toast.error("Missing information", {
         description:
-          "Please provide a job title and requirements to generate a description.",
+          "Please provide a job title, requirements, and select a reference JD to generate a description.",
       });
       return;
     }
@@ -183,7 +208,7 @@ export function JobCreationWizard({
       const result = await generateDraftMutation.mutateAsync({
         title: formData.title,
         raw_requirements: formData.keywords,
-        reference_jd: formData.referenceJD || undefined,
+        reference_jd_id: formData.reference_jd_id,
       });
 
       setIsGenerating(false);
@@ -234,7 +259,7 @@ export function JobCreationWizard({
       const result = await generateDraftMutation.mutateAsync({
         title: formData.title,
         raw_requirements: `${formData.keywords}\n\nRevision Request: ${revisionText}`,
-        reference_jd: formData.referenceJD || undefined,
+        reference_jd_id: formData.reference_jd_id,
       });
 
       setFormData((prev) => ({
@@ -538,96 +563,211 @@ export function JobCreationWizard({
 
       {/* Form Content - Scrollable */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
-        {/* AI Generation Option - Always available on step 1 if not generated yet */}
-        {currentStep === 1 && !isGenerated && (
-          <div className="space-y-8 mb-8">
-            {/* Optional AI Generation Card */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
-              {/* Header Section */}
-              <div className="px-8 py-6 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-900 leading-tight mb-2">
-                  {jobToEdit ? "AI-Powered Revision" : "AI-Powered Generation"}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {jobToEdit
-                    ? "Use AI to revise your job description based on feedback, or continue editing manually below."
-                    : "Optionally use AI to generate a job description, or fill it out manually below."}
-                </p>
-              </div>
-
-              {/* Form Fields Section */}
-              <div className="px-8 py-6 space-y-6">
-                {/* Job Title */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    Job Title <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => updateField("title", e.target.value)}
-                    placeholder="e.g. Senior ML Engineer"
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-base"
-                  />
-                </div>
-
-                {/* Keywords */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    Keywords & Requirements{" "}
-                    <span className="text-red-400">*</span>
-                  </label>
-                  <textarea
-                    value={formData.keywords || ""}
-                    onChange={(e) => updateField("keywords", e.target.value)}
-                    placeholder={jobToEdit ? "Describe what you'd like to change or improve..." : "e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience..."}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all resize-none text-base"
-                  />
-                </div>
-
-                {/* Generate Button - Matching Continue button style */}
-                <button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || generateDraftMutation.isPending || !formData.title.trim() || !formData.keywords.trim()}
-                  className={cn(
-                    "group relative w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg overflow-hidden",
-                    !isGenerating && !generateDraftMutation.isPending && formData.title.trim() && formData.keywords.trim()
-                      ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-indigo-500/25 hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
-                      : "bg-slate-100 text-slate-400 cursor-not-allowed",
-                  )}
-                >
-                  {/* Subtle shine effect on hover */}
-                  {!isGenerating && !generateDraftMutation.isPending && formData.title.trim() && formData.keywords.trim() && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  )}
-
-                  <div className="relative flex items-center gap-2">
-                    {isGenerating || generateDraftMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200" />
-                        <span>{jobToEdit ? "Revise with AI" : "Generate with AI"}</span>
-                      </>
+        {/* Step 1: Basic Info with Tabs for Agent/Manual Mode */}
+        {currentStep === 1 && (
+          <div className="space-y-8">
+            {/* Tabs for Agent Mode and Manual Mode */}
+            {!isGenerated && (
+              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="flex">
+                  <button
+                    onClick={() => setActiveTab("agent")}
+                    className={cn(
+                      "flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 relative",
+                      activeTab === "agent"
+                        ? "text-indigo-700 border-b-[3px] border-indigo-600"
+                        : "text-slate-600 hover:text-slate-900 border-b-[3px] border-transparent",
                     )}
-                  </div>
-                </button>
-              </div>
-            </div>
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Agent Mode</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("manual")}
+                    className={cn(
+                      "flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 relative",
+                      activeTab === "manual"
+                        ? "text-indigo-700 border-b-[3px] border-indigo-600"
+                        : "text-slate-600 hover:text-slate-900 border-b-[3px] border-transparent",
+                    )}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      <span>Manual Mode</span>
+                    </div>
+                  </button>
+                </div>
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
+                {/* Agent Mode Content */}
+                {activeTab === "agent" && (
+                  <div className="px-8 py-6 space-y-6">
+                    {/* Job Title */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Job Title <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => updateField("title", e.target.value)}
+                        placeholder="e.g. Senior ML Engineer"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-base"
+                      />
+                    </div>
+
+                    {/* Reference JD Selector */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Reference Job Description <span className="text-red-400">*</span>
+                      </label>
+                      <select
+                        value={formData.reference_jd_id}
+                        onChange={(e) => updateField("reference_jd_id", e.target.value)}
+                        className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
+                      >
+                        <option value="">Select a reference JD...</option>
+                        {isLoadingReferenceJDs ? (
+                          <option disabled>Loading reference JDs...</option>
+                        ) : referenceJDsData?.reference_jds && referenceJDsData.reference_jds.length > 0 ? (
+                          referenceJDsData.reference_jds.map((refJD) => (
+                            <option key={refJD.id} value={refJD.id}>
+                              {refJD.department
+                                ? `${refJD.department} - ${refJD.role_overview.slice(0, 50)}...`
+                                : refJD.role_overview.slice(0, 80)}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>No reference JDs available</option>
+                        )}
+                      </select>
+                      <p className="text-xs text-slate-500 mt-2">
+                        {referenceJDsData?.reference_jds && referenceJDsData.reference_jds.length > 0
+                          ? "Select a reference JD to guide the AI in generating a similar job description."
+                          : "Create reference JDs in your organization to use them as templates for AI generation."}
+                      </p>
+                    </div>
+
+                    {/* Keywords */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Keywords & Requirements{" "}
+                        <span className="text-red-400">*</span>
+                      </label>
+                      <textarea
+                        value={formData.keywords || ""}
+                        onChange={(e) => updateField("keywords", e.target.value)}
+                        placeholder={jobToEdit ? "Describe what you'd like to change or improve..." : "e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience..."}
+                        rows={4}
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all resize-none text-base"
+                      />
+                    </div>
+
+                    {/* Generate Button */}
+                    <button
+                      onClick={handleGenerate}
+                      disabled={isGenerating || generateDraftMutation.isPending || !formData.title.trim() || !formData.keywords.trim() || !formData.reference_jd_id}
+                      className={cn(
+                        "group relative w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg overflow-hidden",
+                        !isGenerating && !generateDraftMutation.isPending && formData.title.trim() && formData.keywords.trim() && formData.reference_jd_id
+                          ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-indigo-500/25 hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed",
+                      )}
+                    >
+                      {!isGenerating && !generateDraftMutation.isPending && formData.title.trim() && formData.keywords.trim() && formData.reference_jd_id && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                      )}
+                      <div className="relative flex items-center gap-2">
+                        {isGenerating || generateDraftMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200" />
+                            <span>{jobToEdit ? "Revise with AI" : "Generate with AI"}</span>
+                          </>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* Manual Mode Content */}
+                {activeTab === "manual" && (
+                  <div className="px-8 py-6 space-y-6">
+                    {/* Job Title */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Job Title <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => updateField("title", e.target.value)}
+                        placeholder="e.g. Senior Software Engineer"
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-base"
+                      />
+                    </div>
+
+                    {/* Department and Level */}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                          Department <span className="text-red-400">*</span>
+                        </label>
+                        <select
+                          value={formData.department}
+                          onChange={(e) => updateField("department", e.target.value)}
+                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
+                        >
+                          <option value="">Select department...</option>
+                          <option value="Engineering">Engineering</option>
+                          <option value="Design">Design</option>
+                          <option value="Product">Product</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="Sales">Sales</option>
+                          <option value="Operations">Operations</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                          Level <span className="text-red-400">*</span>
+                        </label>
+                        <select
+                          value={formData.level}
+                          onChange={(e) => updateField("level", e.target.value)}
+                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
+                        >
+                          <option value="">Select level...</option>
+                          <option value="Junior">Junior</option>
+                          <option value="Mid">Mid-Level</option>
+                          <option value="Senior">Senior</option>
+                          <option value="Lead">Lead</option>
+                          <option value="Principal">Principal</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* About the Role */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        About the Role <span className="text-red-400">*</span>
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => updateField("description", e.target.value)}
+                        rows={Math.max(4, Math.ceil(formData.description.length / 80))}
+                        placeholder="Summarize what this role is about..."
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y text-base leading-relaxed text-slate-800 placeholder:text-slate-400 min-h-[100px] max-h-[300px] overflow-y-auto"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-slate-50 px-2 text-slate-500">Or continue manually</span>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -660,8 +800,8 @@ export function JobCreationWizard({
         {/* Form Steps */}
         {!isGenerating && (
           <>
-            {/* Step 1: Basic Info - Always show, AI generation is optional above */}
-            {currentStep === 1 && (
+            {/* Step 1: Basic Info - Show form only if content is generated (for editing) */}
+            {currentStep === 1 && isGenerated && (
               <div className="space-y-8">
                 {/* AI Generated Indicator */}
                 {isGenerated && (

@@ -20,6 +20,7 @@ import {
   Edit,
   ArrowRight,
   Ban,
+  Trash2,
 } from "lucide-react";
 import type { Job } from "../../types/job";
 import { Dialog } from "../../components/ui/dialog";
@@ -34,6 +35,7 @@ interface JobDetailModalProps {
   onClose: () => void;
   onEdit?: (job: Job) => void;
   onExpire?: (job: Job) => void;
+  onDelete?: (job: Job) => void;
 }
 
 export function JobDetailModal({
@@ -42,6 +44,7 @@ export function JobDetailModal({
   onClose,
   onEdit,
   onExpire,
+  onDelete,
 }: JobDetailModalProps) {
   if (!job) return null;
 
@@ -54,6 +57,12 @@ export function JobDetailModal({
   const handleExpire = () => {
     if (onExpire) {
       onExpire(job);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(job);
     }
   };
 
@@ -369,28 +378,41 @@ export function JobDetailModal({
           )}
         </div>
 
-        {/* Sticky Footer with Edit and Expire Buttons */}
-        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-end gap-4 shadow-lg">
-          {isActive && onExpire && (
+        {/* Sticky Footer with Edit, Expire, and Delete Buttons */}
+        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
+          {onDelete && (
             <Button
-              onClick={handleExpire}
+              onClick={handleDelete}
               size="lg"
               variant="outline"
-              className="h-12 px-8 text-base font-semibold border-amber-300 text-amber-700 hover:bg-amber-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+              className="h-12 px-8 text-base font-semibold border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
             >
-              <Ban className="w-5 h-5 mr-2" />
-              Expire Job
+              <Trash2 className="w-5 h-5 mr-2" />
+              Delete Job
             </Button>
           )}
-          <Button
-            onClick={handleEdit}
-            size="lg"
-            className="h-12 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group"
-          >
-            <Edit className="w-5 h-5 mr-2" />
-            Edit Job
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          <div className="flex items-center gap-4 ml-auto">
+            {isActive && onExpire && (
+              <Button
+                onClick={handleExpire}
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base font-semibold border-amber-300 text-amber-700 hover:bg-amber-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+              >
+                <Ban className="w-5 h-5 mr-2" />
+                Expire Job
+              </Button>
+            )}
+            <Button
+              onClick={handleEdit}
+              size="lg"
+              className="h-12 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group"
+            >
+              <Edit className="w-5 h-5 mr-2" />
+              Edit Job
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
         </div>
       </div>
     </Dialog>

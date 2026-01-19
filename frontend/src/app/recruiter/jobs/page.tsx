@@ -15,15 +15,18 @@ import {
   PostJobModal,
   ReferenceJDCard,
   ReferenceJDModal,
+  ReferenceJDEditModal,
 } from "../../../components/recruiter";
 import type { Job, JobStatus } from "../../../types/job";
-import { useJobsByCompany, useExpireJob } from "../../../hooks/queries/useJobs";
+import { useJobsByCompany, useExpireJob, useDeleteJob } from "../../../hooks/queries/useJobs";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   useReferenceJDs,
   useCreateReferenceJD,
+  useUpdateReferenceJD,
+  useDeleteReferenceJD,
 } from "../../../hooks/queries/useReferenceJDs";
-import { ReferenceJD } from "../../../services/referenceJDService";
+import { ReferenceJD, CreateReferenceJDRequest } from "../../../services/referenceJDService";
 
 type TabType = "active" | "drafts" | "expired" | "reference-jds";
 
@@ -214,10 +217,13 @@ export default function RecruiterJobsPage() {
     null,
   );
   const [jobToEdit, setJobToEdit] = useState<Job | null>(null);
+  const [initialReferenceJdId, setInitialReferenceJdId] = useState<string | undefined>(undefined);
 
   const [selectedReferenceJD, setSelectedReferenceJD] =
     useState<ReferenceJD | null>(null);
   const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [referenceJDToEdit, setReferenceJDToEdit] = useState<ReferenceJD | null>(null);
 
   // Fetch reference JDs from API
   const {
@@ -226,6 +232,8 @@ export default function RecruiterJobsPage() {
     refetch: refetchReferenceJDs,
   } = useReferenceJDs();
   const createReferenceJD = useCreateReferenceJD();
+  const updateReferenceJDMutation = useUpdateReferenceJD();
+  const deleteReferenceJDMutation = useDeleteReferenceJD();
 
   const userId = user?.id || null;
 
@@ -306,6 +314,7 @@ export default function RecruiterJobsPage() {
   }, []);
 
   const expireJobMutation = useExpireJob();
+  const deleteJobMutation = useDeleteJob();
 
   const handleEditJob = useCallback((job: Job) => {
     setIsDetailOpen(false);
@@ -337,6 +346,31 @@ export default function RecruiterJobsPage() {
     [expireJobMutation, refetchJobs],
   );
 
+  const handleDeleteJob = useCallback(
+    async (job: Job) => {
+      // Use job_id (UUID string) instead of id (parsed integer) for API calls
+      const jobId = job.job_id || job.id;
+      if (!jobId) return;
+
+      if (!confirm(`Are you sure you want to delete "${job.title}"? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        await deleteJobMutation.mutateAsync(String(jobId));
+        setIsDetailOpen(false);
+        setTimeout(() => {
+          setSelectedJob(null);
+        }, 300);
+        refetchJobs();
+        // Toast notification will be handled by the mutation hook
+      } catch (error) {
+        console.error("Failed to delete job:", error);
+      }
+    },
+    [deleteJobMutation, refetchJobs],
+  );
+
   const handlePostNewJob = useCallback(() => {
     setPostJobMode(null);
     setIsPostJobModalOpen(true);
@@ -347,6 +381,7 @@ export default function RecruiterJobsPage() {
     setTimeout(() => {
       setPostJobMode(null);
       setJobToEdit(null);
+      setInitialReferenceJdId(undefined);
     }, 300);
     refetchJobs();
   }, [refetchJobs]);
@@ -387,18 +422,60 @@ export default function RecruiterJobsPage() {
   );
 
   const handleUseTemplate = useCallback((jd: ReferenceJD) => {
-    const templateText = `Role Overview: ${jd.role_overview}\n\nRequired Skills: ${jd.requiredSkillsAndExperience.join(", ")}\n\nNice to Have: ${jd.niceToHave.join(", ")}\n\nBenefits: ${jd.benefits.join(", ")}`;
-
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(templateText);
-    }
-
     setIsReferenceModalOpen(false);
     setTimeout(() => {
+      setInitialReferenceJdId(jd.id);
       setPostJobMode("agent");
       setIsPostJobModalOpen(true);
     }, 300);
   }, []);
+
+  const handleEditReferenceJD = useCallback((jd: ReferenceJD) => {
+    setIsReferenceModalOpen(false);
+    setTimeout(() => {
+      setReferenceJDToEdit(jd);
+      setIsEditModalOpen(true);
+    }, 300);
+  }, []);
+
+  const handleCloseEditModal = useCallback(() => {
+    setIsEditModalOpen(false);
+    setTimeout(() => {
+      setReferenceJDToEdit(null);
+    }, 300);
+    refetchReferenceJDs();
+  }, [refetchReferenceJDs]);
+
+  const handleSaveReferenceJD = useCallback(
+    async (id: string, data: CreateReferenceJDRequest) => {
+      await updateReferenceJDMutation.mutateAsync({ id, data });
+    },
+    [updateReferenceJDMutation],
+  );
+
+  const handleDeleteReferenceJD = useCallback(
+    async (jd: ReferenceJD) => {
+      if (
+        !confirm(
+          `Are you sure you want to delete this reference JD? This action cannot be undone.`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await deleteReferenceJDMutation.mutateAsync(jd.id);
+        setIsReferenceModalOpen(false);
+        setTimeout(() => {
+          setSelectedReferenceJD(null);
+        }, 300);
+        refetchReferenceJDs();
+      } catch (error) {
+        console.error("Failed to delete reference JD:", error);
+      }
+    },
+    [deleteReferenceJDMutation, refetchReferenceJDs],
+  );
 
   if (isAuthLoading || !isAuthenticated) {
     return (
@@ -564,6 +641,7 @@ export default function RecruiterJobsPage() {
         onClose={handleCloseDetail}
         onEdit={handleEditJob}
         onExpire={handleExpireJob}
+        onDelete={handleDeleteJob}
       />
 
       <PostJobModal
@@ -571,6 +649,7 @@ export default function RecruiterJobsPage() {
         onClose={handleClosePostJobModal}
         initialMode={postJobMode || undefined}
         jobToEdit={jobToEdit || undefined}
+        initialReferenceJdId={initialReferenceJdId}
       />
 
       <ReferenceJDModal
@@ -578,6 +657,15 @@ export default function RecruiterJobsPage() {
         onClose={handleCloseReferenceModal}
         jd={selectedReferenceJD}
         onUseTemplate={handleUseTemplate}
+        onDelete={handleDeleteReferenceJD}
+        onEdit={handleEditReferenceJD}
+      />
+
+      <ReferenceJDEditModal
+        jd={referenceJDToEdit}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveReferenceJD}
       />
     </AppShell>
   );

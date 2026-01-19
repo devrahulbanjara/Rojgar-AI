@@ -27,6 +27,8 @@ const referenceJDEndpoints = {
   list: "/api/v1/jobs/reference-jd",
   detail: (id: string) => `/api/v1/jobs/reference-jd/${id}`,
   create: "/api/v1/jobs/reference-jd",
+  update: (id: string) => `/api/v1/jobs/reference-jd/${id}`,
+  delete: (id: string) => `/api/v1/jobs/reference-jd/${id}`,
 } as const;
 
 export class ReferenceJDService {
@@ -51,6 +53,23 @@ export class ReferenceJDService {
     data: CreateReferenceJDRequest,
   ): Promise<ReferenceJD> {
     return apiClient.post<ReferenceJD>(referenceJDEndpoints.create, data);
+  }
+
+  /**
+   * Update an existing reference JD
+   */
+  static async updateReferenceJD(
+    id: string,
+    data: CreateReferenceJDRequest,
+  ): Promise<ReferenceJD> {
+    return apiClient.put<ReferenceJD>(referenceJDEndpoints.update(id), data);
+  }
+
+  /**
+   * Delete a reference JD by ID
+   */
+  static async deleteReferenceJD(id: string): Promise<void> {
+    return apiClient.delete<void>(referenceJDEndpoints.delete(id));
   }
 
   /**
