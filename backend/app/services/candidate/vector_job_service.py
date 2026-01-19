@@ -86,7 +86,7 @@ class JobVectorService:
                 selectinload(JobPosting.job_description),
                 selectinload(JobPosting.organization),
             )
-            .filter(JobPosting.is_indexed == False)
+            .filter(JobPosting.is_indexed == False and JobPosting.status == "active")
             .all()
         )
 

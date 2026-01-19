@@ -36,7 +36,7 @@ class JobResponse(BaseModel):
 
     salary_min: Annotated[int | None, "Minimum salary"] = None
     salary_max: Annotated[int | None, "Maximum salary"] = None
-    salary_currency: Annotated[str | None, "Salary currency"] = "USD"
+    salary_currency: Annotated[str | None, "Salary currency"] = "NPR"
     salary_range: Annotated[dict[str, Any] | None, "Salary range dictionary"] = None
 
     status: Annotated[str, "Job status"] = "active"
@@ -48,13 +48,8 @@ class JobResponse(BaseModel):
     organization: Annotated[
         OrganizationResponseInJob | None, "Organization details"
     ] = None
-    company_name: Annotated[str | None, "Company name"] = None
 
-    description: Annotated[str | None, "Job description"] = None
     role_overview: Annotated[str | None, "Role overview"] = None
-
-    skills: Annotated[list[str], "Skills list"] = []
-    required_skills: Annotated[dict[str, Any] | None, "Required skills details"] = None
 
     requirements: Annotated[list[str], "Job requirements"] = []
     benefits: Annotated[list[str], "Job benefits"] = []
@@ -136,13 +131,32 @@ class JobUpdate(BaseModel):
 class JobDraftGenerateRequest(BaseModel):
     title: Annotated[str, "Job title"]
     raw_requirements: Annotated[str, "Raw requirements text"]
-    reference_jd: Annotated[str | None, "Reference job description"] = None
+    reference_jd_id: Annotated[str, "Reference job description ID"]
 
 
 class JobDraftResponse(BaseModel):
     title: Annotated[str, "Job title"]
-    description: Annotated[str, "Job description"]
+    description: Annotated[str, "About the role"]
     requiredSkillsAndExperience: Annotated[list[str], "Required skills and experience"]
     niceToHave: Annotated[list[str], "Nice-to-have skills"]
     benefits: Annotated[list[str], "Job benefits"]
     about_company: Annotated[str | None, "About the company"] = None
+
+
+class CreateReferenceJD(BaseModel):
+    role_overview: Annotated[str, "About the role"]
+    requiredSkillsAndExperience: Annotated[list[str], "Required skills and experience"]
+    niceToHave: Annotated[list[str], "Nice-to-have skills"]
+    benefits: Annotated[list[str], "Job benefits"]
+    department: Annotated[
+        str | None, "Department in the company in which the JD belongs to"
+    ] = None
+
+
+class ReferenceJDResponse(CreateReferenceJD):
+    id: Annotated[str, "Reference JD ID"]
+    about_the_company: Annotated[str | None, "About the company"] = None
+
+
+class ReferenceJDListResponse(BaseModel):
+    reference_jds: Annotated[list[ReferenceJDResponse], "List of reference JDs"]

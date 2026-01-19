@@ -22,11 +22,18 @@ def generate_job_draft(
     request: Request,
     draft_request: schemas.JobDraftGenerateRequest,
     user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
 ):
     if not draft_request.raw_requirements:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Raw requirements / some keywords are required",
+        )
+    
+    if not draft_request.reference_jd_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reference job description ID is required",
         )
 
     try:
@@ -34,7 +41,21 @@ def generate_job_draft(
             f"{draft_request.title}. {draft_request.raw_requirements}"
         )
 
-        generated_draft = JobGenerationService.generate_job_draft(combined_requirements)
+        # Get organization_id from user
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+        organization_id = get_organization_from_user(user)
+
+        generated_draft = JobGenerationService.generate_job_draft(
+            requirements=combined_requirements,
+            db=db,
+            reference_jd_id=draft_request.reference_jd_id,
+            organization_id=organization_id,
+        )
 
         return schemas.JobDraftResponse(
             title=generated_draft.job_title,
@@ -115,3 +136,49 @@ def update_job(
     )
 
     return map_job_to_response(updated_job)
+
+
+@router.delete(
+    "/{job_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@limiter.limit("5/minute")
+def delete_job(
+    request: Request,
+    job_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        JobService.delete_job(db=db, job_id=job_id, user_id=user_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete job: {str(e)}",
+        )
+
+
+@router.post(
+    "/{job_id}/expire",
+    response_model=schemas.JobResponse,
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("5/minute")
+def expire_job(
+    request: Request,
+    job_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    try:
+        updated_job = JobService.expire_job(db=db, job_id=job_id, user_id=user_id)
+        return map_job_to_response(updated_job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to expire job: {str(e)}",
+        )

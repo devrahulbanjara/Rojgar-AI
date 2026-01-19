@@ -2,11 +2,12 @@ import React, { memo } from "react";
 import {
   MapPin,
   Briefcase,
-  Calendar,
   DollarSign,
   Clock,
   Users,
   Eye,
+  BookmarkPlus,
+  Building2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Job } from "../../types/job";
@@ -14,6 +15,7 @@ import type { Job } from "../../types/job";
 interface RecruiterJobCardProps {
   job: Job;
   onClick?: () => void;
+  onConvertToReferenceJD?: () => void;
   className?: string;
 }
 
@@ -46,10 +48,8 @@ function formatPostedDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
 
-  // Check if date is valid
   if (isNaN(date.getTime())) return "Recently";
 
-  // Reset time to midnight for accurate day comparison
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const postedDate = new Date(
     date.getFullYear(),
@@ -62,50 +62,134 @@ function formatPostedDate(dateStr: string): string {
 
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
   if (diffDays < 30) {
     const weeks = Math.floor(diffDays / 7);
-    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    return `${weeks}w ago`;
   }
   if (diffDays < 365) {
     const months = Math.floor(diffDays / 30);
-    return `${months} month${months > 1 ? "s" : ""} ago`;
+    return `${months}mo ago`;
   }
   const years = Math.floor(diffDays / 365);
-  return `${years} year${years > 1 ? "s" : ""} ago`;
+  return `${years}y ago`;
 }
 
-// Status config matching candidate design style
-const statusConfig = {
-  Active: {
-    bg: "bg-emerald-50",
+// Department color schemes matching Reference JD cards
+const departmentColors: Record<
+  string,
+  { bg: string; text: string; border: string }
+> = {
+  Engineering: {
+    bg: "bg-blue-50/80",
+    text: "text-blue-700",
+    border: "border-blue-200",
+  },
+  Sales: {
+    bg: "bg-green-50/80",
+    text: "text-green-700",
+    border: "border-green-200",
+  },
+  Marketing: {
+    bg: "bg-orange-50/80",
+    text: "text-orange-700",
+    border: "border-orange-200",
+  },
+  Product: {
+    bg: "bg-purple-50/80",
+    text: "text-purple-700",
+    border: "border-purple-200",
+  },
+  Design: {
+    bg: "bg-pink-50/80",
+    text: "text-pink-700",
+    border: "border-pink-200",
+  },
+  "Data Science": {
+    bg: "bg-cyan-50/80",
+    text: "text-cyan-700",
+    border: "border-cyan-200",
+  },
+  HR: {
+    bg: "bg-rose-50/80",
+    text: "text-rose-700",
+    border: "border-rose-200",
+  },
+  Finance: {
+    bg: "bg-emerald-50/80",
     text: "text-emerald-700",
     border: "border-emerald-200",
   },
-  Draft: { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200" },
-  Closed: { bg: "bg-rose-50", text: "text-rose-600", border: "border-rose-200" },
-  Inactive: {
-    bg: "bg-amber-50",
-    text: "text-amber-600",
+  Operations: {
+    bg: "bg-amber-50/80",
+    text: "text-amber-700",
     border: "border-amber-200",
+  },
+  Default: {
+    bg: "bg-slate-50/80",
+    text: "text-slate-700",
+    border: "border-slate-200",
+  },
+};
+
+// Status indicator styles
+const statusStyles = {
+  Active: {
+    bg: "bg-emerald-500",
+    label: "Active",
+  },
+  Draft: {
+    bg: "bg-slate-400",
+    label: "Draft",
+  },
+  Expired: {
+    bg: "bg-amber-500",
+    label: "Expired",
+  },
+  Closed: {
+    bg: "bg-amber-500",
+    label: "Expired",
+  },
+  Inactive: {
+    bg: "bg-gray-400",
+    label: "Inactive",
   },
 };
 
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
-  ({ job, onClick, className }) => {
+  ({ job, onClick, onConvertToReferenceJD, className }) => {
     const status = job.status || "Draft";
-    const config =
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.Draft;
+    // Normalize status: map "Closed" to "Expired" for display
+    const displayStatus = status === "Closed" ? "Expired" : status;
+    const statusStyle =
+      statusStyles[displayStatus as keyof typeof statusStyles] || statusStyles.Draft;
+    const deptColor =
+      departmentColors[job.department || ""] || departmentColors.Default;
+
+    const handleConvertClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onConvertToReferenceJD?.();
+    };
 
     return (
       <div
         onClick={onClick}
         className={cn(
-          "group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-5",
-          "hover:-translate-y-1 hover:shadow-lg hover:border-indigo-200",
+          "group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-6",
+          "hover:-translate-y-1 hover:border-indigo-200",
           "border-slate-200",
           className,
         )}
+        style={{
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.12)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+        }}
         role="button"
         tabIndex={0}
         aria-label={`View details for ${job.title}`}
@@ -116,74 +200,113 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
           }
         }}
       >
-        <div className="space-y-4">
-          {/* Job Title & Department */}
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1 mb-1">
+        <div className="flex flex-col h-full">
+          {/* Header Row: Department Badge + Status Indicator */}
+          <div className="flex items-start justify-between mb-5">
+            {job.department && (
+              <span
+                className={cn(
+                  "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                  deptColor.bg,
+                  deptColor.text,
+                  deptColor.border,
+                )}
+              >
+                {job.department}
+              </span>
+            )}
+            <div className="flex items-center gap-2">
+              <div
+                className={cn("w-2 h-2 rounded-full", statusStyle.bg)}
+                title={statusStyle.label}
+              />
+              <span className="text-[11px] font-medium text-slate-500">
+                {statusStyle.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Job Title - Refined Size */}
+          <div className="mb-5">
+            <h3 className="font-semibold text-[19px] leading-tight text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
               {job.title}
             </h3>
-            <p className="text-sm text-slate-500 font-medium">
-              {job.department}
-            </p>
           </div>
 
-          {/* Location & Posted Date */}
-          <div className="flex items-center gap-4 text-xs text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" />
-              <span className="truncate">{job.location}</span>
+          {/* Metadata - Cleanly Organized */}
+          <div className="space-y-2.5 text-sm text-slate-600 mb-6">
+            {/* Row 1: Location + Time */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-[14px] h-[14px] text-slate-400" />
+                <span className="truncate">{job.location}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-[14px] h-[14px] text-slate-400" />
+                <span>
+                  {formatPostedDate(job.posted_date || job.created_at)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{formatPostedDate(job.posted_date || job.created_at)}</span>
+
+            {/* Row 2: Salary + Type + Work Mode */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <DollarSign className="w-[14px] h-[14px] text-slate-400" />
+                <span className="font-medium">{formatSalary(job)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Briefcase className="w-[14px] h-[14px] text-slate-400" />
+                <span>{job.employment_type}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Building2 className="w-[14px] h-[14px] text-slate-400" />
+                <span>{job.location_type || "On-site"}</span>
+              </div>
             </div>
           </div>
 
-          {/* Job Details */}
-          <div className="flex items-center gap-4 text-sm text-slate-600">
-            <div className="flex items-center gap-1.5">
-              <DollarSign className="w-4 h-4 text-slate-400" />
-              <span className="font-medium">{formatSalary(job)}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Briefcase className="w-4 h-4 text-slate-400" />
-              <span>{job.employment_type}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <span>{job.location_type}</span>
-            </div>
-          </div>
+          {/* Spacer */}
+          <div className="flex-1" />
 
-          {/* Footer with Stats & Status */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-4 text-xs text-slate-500">
+          {/* Bottom Action Row - Colored Badges + Button */}
+          <div className="flex items-center justify-between pt-6 border-t border-slate-100">
+            {/* Statistics - Colored Badges */}
+            <div className="flex items-center gap-3">
               {job.applicant_count !== undefined && (
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>{job.applicant_count} applicants</span>
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50/80 text-purple-700 rounded-lg border border-purple-200">
+                  <Users className="w-4 h-4" />
+                  <span className="text-xs font-semibold">
+                    {job.applicant_count}
+                  </span>
                 </div>
               )}
               {job.views_count !== undefined && (
-                <div className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{job.views_count} views</span>
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50/80 text-blue-700 rounded-lg border border-blue-200">
+                  <Eye className="w-4 h-4" />
+                  <span className="text-xs font-semibold">
+                    {job.views_count}
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Status Badge - Only show for non-Active statuses */}
-            {status !== 'Active' && (
-              <span
+            {/* Save as Template Button */}
+            {onConvertToReferenceJD && (
+              <button
+                onClick={handleConvertClick}
                 className={cn(
-                  "px-2.5 py-1 text-xs font-semibold rounded-full border transition-transform duration-200 group-hover:scale-105",
-                  config.bg,
-                  config.text,
-                  config.border,
+                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                  "text-indigo-600 hover:text-white",
+                  "border border-indigo-200 hover:border-indigo-600",
+                  "hover:bg-indigo-600",
+                  "group-hover:shadow-sm",
                 )}
+                title="Save as Reference JD Template"
               >
-                {status}
-              </span>
+                <BookmarkPlus className="w-4 h-4" />
+                <span className="hidden sm:inline">Save as Template</span>
+              </button>
             )}
           </div>
         </div>
