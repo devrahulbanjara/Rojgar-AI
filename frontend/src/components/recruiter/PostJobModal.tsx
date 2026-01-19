@@ -12,6 +12,7 @@ interface PostJobModalProps {
   onClose: () => void;
   initialMode?: "agent" | "manual";
   jobToEdit?: Job;
+  initialReferenceJdId?: string;
 }
 
 export function PostJobModal({
@@ -19,6 +20,7 @@ export function PostJobModal({
   onClose,
   initialMode,
   jobToEdit,
+  initialReferenceJdId,
 }: PostJobModalProps) {
   // Prevent body scroll when open
   useEffect(() => {
@@ -95,12 +97,13 @@ export function PostJobModal({
         {/* Content - Always show wizard directly */}
         <div className="flex-1 overflow-y-auto bg-slate-50">
           <JobCreationWizard
-            mode={initialMode || "manual"}
+            mode={initialMode || "agent"}
             onBack={onClose}
             onComplete={() => {
               onClose();
             }}
             jobToEdit={jobToEdit}
+            initialReferenceJdId={initialReferenceJdId}
           />
         </div>
       </div>

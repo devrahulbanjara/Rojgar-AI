@@ -266,6 +266,90 @@ def get_reference_jd_by_id(
         )
 
 
+@router.put(
+    "/reference-jd/{reference_jd_id}",
+    response_model=schemas.ReferenceJDResponse,
+)
+@limiter.limit("5/minute")
+def update_reference_jd(
+    request: Request,
+    reference_jd_id: str,
+    data: schemas.CreateReferenceJD,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Update a reference JD"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+
+    try:
+        reference_jd, about_the_company = ReferenceJDService.update_reference_jd(
+            db=db,
+            reference_jd_id=reference_jd_id,
+            organization_id=organization_id,
+            data=data,
+        )
+
+        return schemas.ReferenceJDResponse(
+            id=reference_jd.referncejd_id,
+            department=reference_jd.department,
+            role_overview=reference_jd.role_overview,
+            requiredSkillsAndExperience=reference_jd.required_skills_experience,
+            niceToHave=reference_jd.nice_to_have or [],
+            benefits=reference_jd.offers or [],
+            about_the_company=about_the_company,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update reference JD: {str(e)}",
+        )
+
+
+@router.delete(
+    "/reference-jd/{reference_jd_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@limiter.limit("5/minute")
+def delete_reference_jd(
+    request: Request,
+    reference_jd_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete a reference JD"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+
+    try:
+        ReferenceJDService.delete_reference_jd(
+            db=db,
+            reference_jd_id=reference_jd_id,
+            organization_id=organization_id,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete reference JD: {str(e)}",
+        )
+
+
 @router.get("/{job_id}", response_model=schemas.JobResponse)
 @limiter.limit("5/minute")
 def get_job_detail(request: Request, job_id: str, db: Session = Depends(get_db)):

@@ -131,7 +131,7 @@ class JobUpdate(BaseModel):
 class JobDraftGenerateRequest(BaseModel):
     title: Annotated[str, "Job title"]
     raw_requirements: Annotated[str, "Raw requirements text"]
-    reference_jd: Annotated[str | None, "Reference job description"] = None
+    reference_jd_id: Annotated[str, "Reference job description ID"]
 
 
 class JobDraftResponse(BaseModel):

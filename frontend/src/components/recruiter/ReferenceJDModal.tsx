@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { X, Briefcase, Sparkles, CheckCircle2, Gift } from "lucide-react";
+import { X, Briefcase, Sparkles, CheckCircle2, Gift, Trash2, Edit } from "lucide-react";
 import { ReferenceJD } from "../../services/referenceJDService";
 
 interface ReferenceJDModalProps {
@@ -8,6 +8,8 @@ interface ReferenceJDModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUseTemplate: (jd: ReferenceJD) => void;
+  onDelete?: (jd: ReferenceJD) => void;
+  onEdit?: (jd: ReferenceJD) => void;
 }
 
 export function ReferenceJDModal({
@@ -15,8 +17,22 @@ export function ReferenceJDModal({
   isOpen,
   onClose,
   onUseTemplate,
+  onDelete,
+  onEdit,
 }: ReferenceJDModalProps) {
   if (!isOpen || !jd) return null;
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(jd);
+    }
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(jd);
+    }
+  };
 
   const content = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -176,20 +192,42 @@ export function ReferenceJDModal({
         </div>
 
         {/* Sticky Footer */}
-        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-end gap-4 shadow-lg rounded-b-[20px]">
-          <button
-            onClick={onClose}
-            className="h-12 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => onUseTemplate(jd)}
-            className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <Sparkles className="w-5 h-5" />
-            Use Template
-          </button>
+        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-between gap-4 shadow-lg rounded-b-[20px]">
+          <div className="flex items-center gap-4">
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="h-12 px-6 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2 border border-indigo-200"
+              >
+                <Edit className="w-5 h-5" />
+                Edit
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                className="h-12 px-6 bg-red-50 hover:bg-red-100 text-red-700 font-semibold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2 border border-red-200"
+              >
+                <Trash2 className="w-5 h-5" />
+                Delete
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-4 ml-auto">
+            <button
+              onClick={onClose}
+              className="h-12 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => onUseTemplate(jd)}
+              className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2"
+            >
+              <Sparkles className="w-5 h-5" />
+              Use Template
+            </button>
+          </div>
         </div>
       </div>
     </div>
