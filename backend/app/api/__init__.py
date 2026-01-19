@@ -8,6 +8,7 @@ from app.api import (
     jobs_crud,
     organization,
     resume,
+    stats,
     users,
 )
 
@@ -25,3 +26,4 @@ api_router.include_router(jobs_crud.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(
     organization.router, prefix="/organization", tags=["organization"]
 )
+api_router.include_router(stats.router, prefix="/stats", tags=["stats"])
