@@ -7,6 +7,7 @@ import {
   Clock,
   Briefcase,
   Eye,
+  Calendar,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { jobUtils } from "../../services/jobService";
@@ -129,6 +130,34 @@ export const JobCard = memo<JobCardProps>(
     const deptColor =
       departmentColors[job.department || ""] || departmentColors.Default;
     const levelColor = levelColors[job.level || ""] || levelColors.Default;
+
+    // Format deadline
+    const formatDeadline = (deadline: string): string => {
+      if (!deadline) return "";
+      try {
+        const deadlineDate = new Date(deadline);
+        const now = new Date();
+        const diffInMs = deadlineDate.getTime() - now.getTime();
+        const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+        if (diffInDays < 0) {
+          return "Expired";
+        } else if (diffInDays === 0) {
+          return "Today";
+        } else if (diffInDays === 1) {
+          return "Tomorrow";
+        } else if (diffInDays <= 7) {
+          return `${diffInDays} days`;
+        } else {
+          return deadlineDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        }
+      } catch {
+        return "";
+      }
+    };
 
     return (
       <div
@@ -253,19 +282,29 @@ export const JobCard = memo<JobCardProps>(
           <div className="flex-1" />
 
           {/* Bottom Stats Row - Colored Badges */}
-          <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
-            {job.applicant_count !== undefined && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50/80 text-purple-700 rounded-lg border border-purple-200">
-                <Users className="w-4 h-4" />
+          <div className="flex items-center justify-between gap-3 pt-6 border-t border-slate-100">
+            <div className="flex items-center gap-3">
+              {job.applicant_count !== undefined && (
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50/80 text-purple-700 rounded-lg border border-purple-200">
+                  <Users className="w-4 h-4" />
+                  <span className="text-xs font-semibold">
+                    {job.applicant_count}
+                  </span>
+                </div>
+              )}
+              {job.views_count !== undefined && (
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50/80 text-blue-700 rounded-lg border border-blue-200">
+                  <Eye className="w-4 h-4" />
+                  <span className="text-xs font-semibold">{job.views_count}</span>
+                </div>
+              )}
+            </div>
+            {job.application_deadline && (
+              <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50/80 text-amber-700 rounded-lg border border-amber-200">
+                <Calendar className="w-4 h-4" />
                 <span className="text-xs font-semibold">
-                  {job.applicant_count}
+                  {formatDeadline(job.application_deadline)}
                 </span>
-              </div>
-            )}
-            {job.views_count !== undefined && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50/80 text-blue-700 rounded-lg border border-blue-200">
-                <Eye className="w-4 h-4" />
-                <span className="text-xs font-semibold">{job.views_count}</span>
               </div>
             )}
           </div>

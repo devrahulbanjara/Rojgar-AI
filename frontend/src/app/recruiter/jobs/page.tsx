@@ -137,12 +137,46 @@ const transformJob = (job: BackendJobResponse): Job => {
     title: job.title || "",
     department: job.department || "",
     level: (job.level || "Mid") as Job["level"],
-    location:
-      job.location ||
-      `${job.location_city || ""}, ${job.location_country || ""}`
-        .trim()
-        .replace(/^,\s*|,\s*$/g, "") ||
-      "Not specified",
+    location: (() => {
+      // Prioritize location_city and location_country - they are the source of truth
+      const city = job.location_city?.trim();
+      const country = job.location_country?.trim();
+      
+      // Check if city/country are actually set (not empty strings or null)
+      if (city && city.length > 0 && country && country.length > 0) {
+        return `${city}, ${country}`;
+      }
+      if (city && city.length > 0) {
+        return city;
+      }
+      if (country && country.length > 0) {
+        return country;
+      }
+      
+      // Fallback: Check if job.location contains a valid city/country format
+      // (e.g., "Kathmandu, Nepal") and doesn't match location_type
+      const jobLocation = (job.location || "").trim();
+      const locationType = (job.location_type || "").toLowerCase();
+      const jobLocationLower = jobLocation.toLowerCase();
+      
+      // Check if location matches location_type keywords (these should not be shown as location)
+      const locationTypeKeywords = ["remote", "hybrid", "on-site", "onsite"];
+      const isLocationType = locationTypeKeywords.includes(jobLocationLower);
+      
+      // If location doesn't match location_type keywords and is different from location_type, use it
+      if (jobLocation && !isLocationType && jobLocationLower !== locationType) {
+        // If it contains a comma, it's likely "City, Country" format - use it
+        if (jobLocation.includes(",")) {
+          return jobLocation;
+        }
+        // Otherwise, only use if it's clearly not a location type
+        return jobLocation;
+      }
+      
+      return "Not specified";
+    })(),
+    location_city: job.location_city || undefined,
+    location_country: job.location_country || undefined,
     location_type: (job.location_type || "On-site") as Job["location_type"],
     employment_type: (job.employment_type ||
       "Full-time") as Job["employment_type"],
@@ -207,20 +241,6 @@ export default function RecruiterJobsPage() {
     refetch: refetchJobs,
   } = useJobsByCompany(userId || "", { page: 1, limit: 100 });
 
-  useEffect(() => {
-    if (jobsData?.jobs) {
-      const jobWithBenefits = jobsData.jobs.find(
-        (j: Job) => j.benefits && j.benefits.length > 0,
-      );
-      if (jobWithBenefits) {
-        console.log(
-          "Found job with benefits:",
-          jobWithBenefits.title,
-          jobWithBenefits.benefits,
-        );
-      }
-    }
-  }, [jobsData]);
 
   const allJobs = useMemo(() => {
     if (!jobsData?.jobs) return [];
@@ -456,32 +476,40 @@ export default function RecruiterJobsPage() {
               {/* Empty State for Jobs */}
               {activeTab !== "reference-jds" && filteredJobs.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
-                  <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                    <FolderOpen className="w-10 h-10 text-indigo-300" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    No{" "}
-                    {activeTab === "active"
-                      ? "active"
-                      : activeTab === "drafts"
-                        ? "draft"
-                        : "expired"}{" "}
-                    jobs
-                  </h3>
-                  <p className="text-base text-gray-500 max-w-md mb-8">
-                    {activeTab === "active"
-                      ? "Create a new job posting to start receiving applications."
-                      : activeTab === "drafts"
-                        ? "Save a job as draft to continue editing later."
-                        : "Expired or closed jobs will appear here."}
-                  </p>
-                  <button
-                    onClick={handlePostNewJob}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-200 shadow-sm"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Create Job
-                  </button>
+                  {activeTab === "expired" ? (
+                    <h3 className="text-xl font-bold text-gray-900">
+                      No job has expired
+                    </h3>
+                  ) : (
+                    <>
+                      <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
+                        <FolderOpen className="w-10 h-10 text-indigo-300" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        No{" "}
+                        {activeTab === "active"
+                          ? "active"
+                          : activeTab === "drafts"
+                            ? "draft"
+                            : "expired"}{" "}
+                        jobs
+                      </h3>
+                      <p className="text-base text-gray-500 max-w-md mb-8">
+                        {activeTab === "active"
+                          ? "Create a new job posting to start receiving applications."
+                          : activeTab === "drafts"
+                            ? "Save a job as draft to continue editing later."
+                            : "Expired or closed jobs will appear here."}
+                      </p>
+                      <button
+                        onClick={handlePostNewJob}
+                        className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-200 shadow-sm"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Create Job
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -518,7 +546,7 @@ export default function RecruiterJobsPage() {
       <PostJobModal
         isOpen={isPostJobModalOpen}
         onClose={handleClosePostJobModal}
-        initialMode={postJobMode}
+        initialMode={postJobMode || undefined}
         jobToEdit={jobToEdit || undefined}
       />
 

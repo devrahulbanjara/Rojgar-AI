@@ -159,7 +159,9 @@ export function JobDetailModal({
                   Location
                 </p>
                 <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {job.location}
+                  {job.location_city && job.location_country
+                    ? `${job.location_city}, ${job.location_country}`
+                    : job.location_city || job.location_country || job.location || "Not specified"}
                 </p>
               </div>
             </div>
