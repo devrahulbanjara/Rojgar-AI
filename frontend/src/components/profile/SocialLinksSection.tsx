@@ -139,7 +139,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="w-full h-10 px-3 border border-[#D1D5DB] rounded-lg focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 transition-all duration-200"
+                      className="w-full h-10 pl-3 pr-10 border border-[#D1D5DB] rounded-lg focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 transition-all duration-200 select-arrow bg-white"
                     >
                       <option value="">Select type</option>
                       <option value="GitHub">GitHub</option>
@@ -236,7 +236,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full h-10 px-3 border border-[#D1D5DB] rounded-lg focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 transition-all duration-200"
+                  className="w-full h-10 pl-3 pr-10 border border-[#D1D5DB] rounded-lg focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 transition-all duration-200 select-arrow bg-white"
                 >
                   <option value="">Select type</option>
                   <option value="GitHub">GitHub</option>

@@ -5,3 +5,4 @@ export * from './PostJobModal';
 export * from './RecruiterJobCard';
 export * from './ReferenceJDCard';
 export * from './ReferenceJDModal';
+export * from './ReferenceJDEditModal';

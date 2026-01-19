@@ -6,6 +6,17 @@ from pydantic import BaseModel, ConfigDict
 from app.models.user import UserRole
 
 
+class OrganizationInUserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: Annotated[str, "Organization ID"]
+    name: Annotated[str, "Organization name"]
+    location_city: Annotated[str | None, "City"] = None
+    location_country: Annotated[str | None, "Country"] = None
+    website: Annotated[str | None, "Website URL"] = None
+    industry: Annotated[str | None, "Industry"] = None
+
+
 class SignupRequest(BaseModel):
     email: Annotated[str, "User email"]
     password: Annotated[str, "User password"]
@@ -51,6 +62,9 @@ class UserResponse(BaseModel):
     google_id: Annotated[str | None, "Google account ID"] = None
     role: Annotated[UserRole | None, "User role"] = None
     organization_id: Annotated[str | None, "Associated organization ID"] = None
+    organization: Annotated[
+        OrganizationInUserResponse | None, "Organization details"
+    ] = None
     created_at: Annotated[datetime, "User creation timestamp"]
     updated_at: Annotated[datetime, "User last update timestamp"]
 

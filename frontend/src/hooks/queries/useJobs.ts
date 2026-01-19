@@ -6,6 +6,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { jobService, applicationService } from "../../services/jobService";
 import type {
   JobSearchParams,
@@ -190,6 +191,22 @@ export function useUpdateJob() {
   });
 }
 
+export function useExpireJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return await jobService.expireJob(id);
+    },
+    onSuccess: (data, jobId) => {
+      // Update the specific job in cache
+      queryClient.setQueryData(jobQueryKeys.detail(jobId), data);
+      // Invalidate job lists
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+    },
+  });
+}
+
 export function useDeleteJob() {
   const queryClient = useQueryClient();
 
@@ -202,6 +219,19 @@ export function useDeleteJob() {
       queryClient.removeQueries({ queryKey: jobQueryKeys.detail(id) });
       // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+      toast.success("Job deleted successfully");
+    },
+    onError: (error: Error) => {
+      const errorMessage =
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.detail ||
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.message ||
+        error.message ||
+        "Failed to delete job";
+      toast.error("Failed to delete job", {
+        description: errorMessage,
+      });
     },
   });
 }
