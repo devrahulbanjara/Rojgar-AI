@@ -76,20 +76,16 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
       if (typeof window !== "undefined") {
         try {
           window.localStorage.setItem("sidebarCollapsed", String(nextState));
-        } catch {
-        }
+        } catch {}
       }
       return nextState;
     });
   }, []);
 
-  const sidebarMarginClass = React.useMemo(
-    () => {
-      if (hideSidebar) return "";
-      return isSidebarCollapsed ? "lg:ml-16" : "lg:ml-[260px]";
-    },
-    [isSidebarCollapsed, hideSidebar],
-  );
+  const sidebarMarginClass = React.useMemo(() => {
+    if (hideSidebar) return "";
+    return isSidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[252px]";
+  }, [isSidebarCollapsed, hideSidebar]);
 
   const getTransitionDuration = React.useCallback(() => {
     if (!isHydrated) {
@@ -113,11 +109,16 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
   }, [isSidebarCollapsed, isHydrated]);
 
   const pathname = usePathname();
-  const isOrganizationRoute = pathname?.startsWith("/dashboard/organization") || pathname?.startsWith("/organization/");
+  const isOrganizationRoute =
+    pathname?.startsWith("/dashboard/organization") ||
+    pathname?.startsWith("/organization/");
 
   return (
     <div className="min-h-screen" style={{ background: "#F9FAFB" }}>
-      <Topbar onMenuClick={hideSidebar ? () => { } : handleSidebarToggle} user={user} />
+      <Topbar
+        onMenuClick={hideSidebar ? () => {} : handleSidebarToggle}
+        user={user}
+      />
 
       <div className="flex min-h-[calc(100vh-72px)] pt-[72px]">
         {!hideSidebar && (
@@ -125,7 +126,9 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
             <Sidebar
               isCollapsed={isSidebarCollapsed}
               onToggle={handleSidebarToggle}
-              role={isOrganizationRoute ? "organization" : (user?.role || "candidate")}
+              role={
+                isOrganizationRoute ? "organization" : user?.role || "candidate"
+              }
               disableAnimation={!isHydrated}
             />
 
@@ -140,7 +143,7 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
         )}
 
         <main
-          className={`flex-1 ${isHydrated ? "transition-all" : ""} ${sidebarMarginClass} max-lg:ml-0 px-6 lg:px-8`}
+          className={`flex-1 ${isHydrated ? "transition-all" : ""} ${sidebarMarginClass} max-lg:ml-0`}
           style={{
             transitionDuration: getTransitionDuration(),
             transitionTimingFunction: "ease-in-out",

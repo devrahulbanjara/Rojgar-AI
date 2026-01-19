@@ -1,5 +1,7 @@
 import os
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from app.core import settings
 
 from .graph import create_workflow
@@ -14,8 +16,11 @@ os.environ.setdefault("LANGCHAIN_API_KEY", settings.LANGCHAIN_API_KEY)
 os.environ.setdefault("LANGCHAIN_ENDPOINT", settings.LANGCHAIN_ENDPOINT)
 os.environ.setdefault("LANGCHAIN_PROJECT", settings.LANGCHAIN_PROJECT)
 
-# Create the compiled workflow app
-app = create_workflow()
+checkpointer = InMemorySaver()
+
+builder = create_workflow()
+app = builder.compile(checkpointer=checkpointer)
+
 
 __all__ = [
     "create_workflow",

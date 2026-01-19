@@ -60,7 +60,7 @@ class JobPosting(Base):
     location_country: Mapped[str | None] = mapped_column(String, nullable=True)
     location_type: Mapped[str] = mapped_column(
         String, default="On-site", nullable=False
-    )  # Remote, On-site, Hybrid
+    )
 
     employment_type: Mapped[str | None] = mapped_column(String, nullable=True)
     salary_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -120,3 +120,14 @@ class JobPostingStats(Base):
     job_posting: Mapped["JobPosting"] = relationship(
         "JobPosting", back_populates="stats"
     )
+
+
+class ReferenceJobDescriptions(Base):
+    __tablename__ = "reference_job_description"
+    referncejd_id: Mapped[str] = mapped_column(String, primary_key=True)
+    organization_id: Mapped[str] = mapped_column(String, nullable=False)
+    department: Mapped[str] = mapped_column(String, nullable=False)
+    role_overview: Mapped[str] = mapped_column(String, nullable=False)
+    required_skills_experience: Mapped[list] = mapped_column(JSON, nullable=False)
+    nice_to_have: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    offers: Mapped[list | None] = mapped_column(JSON, nullable=True)

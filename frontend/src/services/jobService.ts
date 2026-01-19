@@ -118,6 +118,10 @@ export class JobService {
     return apiClient.put<Job>(jobEndpoints.update(id), data);
   }
 
+  static async expireJob(id: string): Promise<Job> {
+    return apiClient.post<Job>(`${jobEndpoints.detail(id)}/expire`, {});
+  }
+
   static async deleteJob(id: string): Promise<void> {
     return apiClient.delete<void>(jobEndpoints.delete(id));
   }

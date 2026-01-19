@@ -103,6 +103,7 @@ export interface CreateJobRequest {
   applicationDeadline?: string;
   mode?: "manual" | "agent";
   raw_requirements?: string;
+  status?: "draft" | "active";
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
@@ -112,7 +113,7 @@ export interface UpdateJobRequest extends Partial<CreateJobRequest> {
 export interface JobDraftGenerateRequest {
   title: string;
   raw_requirements: string;
-  reference_jd?: string;
+  reference_jd_id: string;
 }
 
 export interface JobDraftResponse {

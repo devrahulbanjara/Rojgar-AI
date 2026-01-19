@@ -1,4 +1,3 @@
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from app.models.agents.jd_generator import JobState
@@ -19,6 +18,4 @@ def create_workflow() -> StateGraph:
     )
     workflow.add_edge("finalizer", END)
 
-    memory = MemorySaver()
-
-    return workflow.compile(checkpointer=memory)
+    return workflow

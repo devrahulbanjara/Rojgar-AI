@@ -2,9 +2,11 @@ import math
 import uuid
 from datetime import date, datetime
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 
 from app.core import get_datetime
+from app.core.authorization import verify_user_can_edit_job
 from app.models import (
     CandidateProfile,
     JobDescription,
@@ -79,6 +81,11 @@ class JobService:
             if raw_ids:
                 jobs_from_db = (
                     db.query(JobPosting)
+                    .options(
+                        selectinload(JobPosting.organization),
+                        selectinload(JobPosting.job_description),
+                        selectinload(JobPosting.stats),
+                    )
                     .filter(
                         JobPosting.job_id.in_(raw_ids),
                         JobPosting.status.in_(VISIBLE_STATUSES),
@@ -187,6 +194,53 @@ class JobService:
     @staticmethod
     def get_job_by_id(db: Session, job_id: str):
         return db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+
+    @staticmethod
+    def expire_job(db: Session, job_id: str, user_id: str):
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        if not job_posting:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found",
+            )
+
+        verify_user_can_edit_job(user, job_posting)
+
+        job_posting.status = "expired"
+        job_posting.updated_at = get_datetime()
+
+        db.commit()
+        db.refresh(job_posting)
+
+        return job_posting
+
+    @staticmethod
+    def delete_job(db: Session, job_id: str, user_id: str):
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        if not job_posting:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found",
+            )
+
+        verify_user_can_edit_job(user, job_posting)
+
+        db.delete(job_posting)
+        db.commit()
 
     @staticmethod
     def update_job(db: Session, job_posting: JobPosting, job_data):
@@ -426,7 +480,6 @@ def _build_organization_data(job: JobPosting) -> dict | None:
 def _build_job_description_data(job: JobPosting) -> dict:
     jd = job.job_description
 
-    description = jd.role_overview if jd else None
     role_overview = jd.role_overview if jd else None
     required_skills_exp_data = jd.required_skills_experience if jd else None
     requirements = extract_list_from_dict(
@@ -438,12 +491,10 @@ def _build_job_description_data(job: JobPosting) -> dict:
     )
 
     return {
-        "description": description,
         "role_overview": role_overview,
         "requirements": requirements,
         "benefits": benefits,
         "nice_to_have": nice_to_have,
-        "required_skills_experience": required_skills_exp_data,
     }
 
 
@@ -459,7 +510,6 @@ def map_job_to_response(job: JobPosting):
     location = build_location(
         job.location_city, job.location_country, job.location_type
     )
-    company_name = job.organization.name if job.organization else "Unknown Company"
 
     job_data = {
         "job_id": job.job_id,
@@ -487,7 +537,6 @@ def map_job_to_response(job: JobPosting):
         "created_at": (job.created_at.isoformat() if job.created_at else None),
         "updated_at": (job.updated_at.isoformat() if job.updated_at else None),
         "organization": _build_organization_data(job),
-        "company_name": company_name,
     }
 
     job_data.update(_build_job_description_data(job))
