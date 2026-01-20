@@ -29,10 +29,13 @@ def evaluate_work_alignment(state: WorkflowState) -> dict[str, Any]:
 
     for item in state["structured_resumes"]:
         resume = item["data"]
+        # Convert the list of objects into a list of dictionaries so json.dumps works
+        work_exp_dicts = [exp.model_dump() for exp in resume.work_experience]
+        
         result = chain.invoke(
             {
                 "job_desc": job_desc,
-                "work_exp": json.dumps(resume.work_experience, indent=2),
+                "work_exp": json.dumps(work_exp_dicts, indent=2),
             }
         )
 
