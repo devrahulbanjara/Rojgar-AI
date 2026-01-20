@@ -46,9 +46,9 @@ def run_shortlist_workflow(jd_string: str, resume_file_path: str) -> dict | None
 if __name__ == "__main__":
     jd_string = """
     Machine Learning Engineer (Mid-Level)
-    
+
     We are seeking a Machine Learning Engineer to join our AI team. The ideal candidate will have experience in developing and deploying machine learning models, with knowledge of deep learning, NLP, and ML workflows.
-    
+
     Requirements:
     - 2-4 years of professional experience in machine learning and data science
     - Strong proficiency in Python and ML frameworks (TensorFlow, PyTorch, scikit-learn)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     - Good understanding of statistics, linear algebra, and basic calculus
     - Experience with data preprocessing and feature engineering
     - Knowledge of version control (Git) and software engineering practices
-    
+
     Responsibilities:
     - Develop and deploy machine learning models for production use
     - Fine-tune pre-trained models for specific use cases
@@ -69,11 +69,11 @@ if __name__ == "__main__":
     - Conduct experiments to validate model improvements
     - Document models, experiments, and deployment processes
     - Learn and stay updated with latest ML research and industry trends
-    
+
     Education:
     - Bachelor's degree in Computer Science, Machine Learning, Data Science, Mathematics, or related field
     - Master's degree preferred but not required
-    
+
     Preferred Qualifications:
     - Experience with LLMs (Large Language Models) and prompt engineering
     - Knowledge of computer vision basics
