@@ -14,17 +14,19 @@ from .document_processor import DocumentProcessor
 
 # File utilities
 from .file_handler import (
-    discover_resume_files,
     read_job_description,
     save_json_report,
     save_text_report,
+    validate_resume_path,
 )
+
+# Main entry point
+from .main import run_shortlist_workflow
 
 # Workflow
 from .graph import create_workflow
 from .llm_service import get_llm
 
-# Node functions (for advanced usage)
 from .nodes import (
     aggregate_scores,
     evaluate_degree,
@@ -83,7 +85,9 @@ __all__ = [
     "generate_report",
     # File utilities
     "read_job_description",
-    "discover_resume_files",
+    "validate_resume_path",
     "save_json_report",
     "save_text_report",
+    # Main entry point
+    "run_shortlist_workflow",
 ]

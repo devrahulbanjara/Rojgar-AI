@@ -4,19 +4,7 @@ JOB_DESCRIPTION_PARSER_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are an experienced Technical Recruiter with 10+ years of experience in technology hiring. Your task is to extract structured job requirements from a job description exactly as per the JSON schema below.
-
-            ### Schema to Follow:
-            {{
-                "required_skills": ["Python", "FastAPI", "Docker", "AWS"],
-                "min_degree": "BSc Computer Science",
-                "years_required": 3.0,
-                "responsibilities": [
-                    "Design and implement REST APIs using Python and FastAPI",
-                    "Maintain and optimize PostgreSQL databases",
-                    "Deploy and monitor applications on AWS"
-                ]
-            }}
+            """You are an experienced Technical Recruiter with 10+ years of experience in technology hiring. Your task is to extract structured job requirements from a job description exactly as per the JSON schema given to you.
 
             ### Task Instructions:
             1. Extract ALL required technical and professional skills mentioned (programming languages, frameworks, tools, platforms, domain-specific skills).
@@ -55,38 +43,7 @@ RESUME_PARSER_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are an expert Resume Parser for an Applicant Tracking System (ATS). Your task is to extract structured, privacy-safe information from resumes exactly according to the schema below:
-
-            ### Schema to Follow:
-            {{
-                "skills": ["Python", "FastAPI", "PostgreSQL"],
-                "work_experience": [
-                    {{
-                        "company": "Company Name",
-                        "position": "Job Title",
-                        "duration": "Jan 2020 - Dec 2023",
-                        "responsibilities": [
-                            "Responsibility 1",
-                            "Responsibility 2"
-                        ]
-                    }}
-                ],
-                "education": [
-                    {{
-                        "degree": "BSc Computer Science",
-                        "institution": "University Name",
-                        "year": 2018  # optional
-                    }}
-                ],
-                "years_experience": 5.0,
-                "projects": [
-                    {{
-                        "name": "Project Name",
-                        "description": "Brief summary of the project",
-                        "technologies": ["Python", "FastAPI"]
-                    }}
-                ]
-            }}
+            """You are an expert Resume Parser for an Applicant Tracking System (ATS). Your task is to extract structured, privacy-safe information from resumes exactly according to the schema provided to you.
 
             ### Task Instructions:
             1. **Skills**: Extract ALL technical skills, programming languages, frameworks, tools, platforms, and methodologies mentioned.
@@ -155,13 +112,6 @@ WORK_ALIGNMENT_PROMPT = ChatPromptTemplate.from_messages(
             3. Technical Depth (25%): Are required technologies demonstrated in past roles?
             4. Career Progression (15%): Does the career trajectory show growth and responsibility?
 
-            ### Output Requirements:
-            Return JSON matching the EvaluationScore model:
-            {{
-                "score": <float between 0 and 10>,
-                "justification": "<concise explanation citing specific experience>"
-            }}
-
             ### Notes:
             - Be thorough but do not invent experience.
             - Mention specific skills, roles, and responsibilities that support the score.
@@ -189,13 +139,6 @@ PROJECT_EVALUATION_PROMPT = ChatPromptTemplate.from_messages(
             2. Complexity & Scope (30%): Level of sophistication and completeness.
             3. Problem-Solving Alignment (20%): Do projects address similar problems as the role?
             4. Impact & Scale (10%): Real-world impact, user metrics, or business outcomes.
-
-            ### Output Requirements:
-            Return JSON matching the EvaluationScore model:
-            {{
-                "score": <float between 0 and 10>,
-                "justification": "<concise explanation citing specific projects>"
-            }}
 
             ### Notes:
             - If no projects are listed, assign score 0 and justification: "No projects listed".
