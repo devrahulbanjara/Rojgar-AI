@@ -1,17 +1,15 @@
 from pathlib import Path
 
 from app.core import logger
-
+from docling.document_converter import DocumentConverter
 
 class DocumentProcessor:
     def __init__(self):
         try:
-            from docling.document_converter import DocumentConverter
-
             self.converter = DocumentConverter()
             self.is_available = True
         except ImportError:
-            logger.warning("Docling not installed. Install with: pip install docling")
+            logger.warning("Docling not installed")
             self.is_available = False
 
     def extract_text(self, file_path: Path) -> str:

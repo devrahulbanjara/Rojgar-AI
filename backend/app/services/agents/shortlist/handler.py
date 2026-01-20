@@ -19,21 +19,32 @@ def read_job_description() -> str:
     return jd_path.read_text(encoding="utf-8")
 
 
-def discover_resume_files() -> list[Path]:
-    resume_files = []
-    for ext in settings.SUPPORTED_RESUME_FORMATS:
-        resume_files.extend(settings.RESUMES_DIR.glob(f"*{ext}"))
+def validate_resume_path(resume_path: str) -> Path:
+    """Validate that a resume file path exists and has a supported format.
 
-    resume_files = [f for f in resume_files if f.name != settings.JOB_DESCRIPTION_FILE]
+    Args:
+        resume_path: Path or URL to a single resume file.
 
-    if not resume_files:
+    Returns:
+        Path object for the validated resume file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        ValueError: If the file format is not supported.
+    """
+    path = Path(resume_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Resume file not found: {resume_path}")
+
+    if path.suffix.lower() not in settings.SUPPORTED_RESUME_FORMATS:
         raise ValueError(
-            f"No resume files found in {settings.RESUMES_DIR}. "
+            f"Unsupported resume format: {path.suffix}. "
             f"Supported formats: {', '.join(settings.SUPPORTED_RESUME_FORMATS)}"
         )
 
-    logger.info(f"Found {len(resume_files)} resume files to process")
-    return sorted(resume_files)
+    logger.info(f"Validated resume file: {path.name}")
+    return path
 
 
 def save_json_report(report: dict[str, Any], filename: str) -> Path:

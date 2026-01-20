@@ -159,12 +159,8 @@ class CandidateScore(BaseModel):
 
 
 class WorkflowState(TypedDict):
-    """
-    Represents the state  of the entire workflow.
-    """
-
     job_description_text: str
-    resume_file_paths: list[str]
+    resume_file_path: str
     job_requirements: JobRequirements | None
     structured_resumes: Annotated[list[dict[str, Any]], add]
     skills_evaluations: Annotated[list[dict[str, Any]], add]
