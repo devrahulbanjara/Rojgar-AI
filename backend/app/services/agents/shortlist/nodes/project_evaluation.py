@@ -41,7 +41,7 @@ def evaluate_projects(state: WorkflowState) -> dict[str, Any]:
             continue
 
         project_dicts = [p.model_dump() for p in resume.projects]
-        
+
         result = chain.invoke(
             {
                 "job_desc": job_desc,
