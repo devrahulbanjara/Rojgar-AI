@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic_settings import BaseSettings
 
 
@@ -46,84 +44,15 @@ class Settings(BaseSettings):
     LANGCHAIN_API_KEY: str
     LANGCHAIN_PROJECT: str
 
-    # Scoring Configuration
-    SHORTLIST_THRESHOLD: float = 70.0
-
     # Report Files
     REPORT_JSON: str = "shortlist_report.json"
     REPORT_SUMMARY: str = "shortlist_summary.txt"
-    JOB_DESCRIPTION_FILE: str = "job_description.txt"
 
     GMAIL_APP_PASSWORD: str
 
     class Config:
         env_file = ".env"
         case_sensitive = True
-
-    # Shortlist agent directories - relative to the shortlist module
-    @property
-    def BASE_DIR(self) -> Path:
-        """Points to app/services/agents/shortlist/"""
-        # Get the backend directory (parent of app/)
-        backend_dir = Path(__file__).parent.parent.parent
-        return backend_dir / "app" / "services" / "agents" / "shortlist"
-
-    @property
-    def RESUMES_DIR(self) -> Path:
-        """app/services/agents/shortlist/resumes/"""
-        path = self.BASE_DIR / "resumes"
-        path.mkdir(parents=True, exist_ok=True)
-        return path
-
-    @property
-    def JD_DIR(self) -> Path:
-        """app/services/agents/shortlist/job_descriptions/"""
-        path = self.BASE_DIR / "job_descriptions"
-        path.mkdir(parents=True, exist_ok=True)
-        return path
-
-    @property
-    def OUTPUT_DIR(self) -> Path:
-        """app/services/agents/shortlist/output/"""
-        path = self.BASE_DIR / "output"
-        path.mkdir(parents=True, exist_ok=True)
-        return path
-
-    @property
-    def SCORE_WEIGHTS(self) -> dict[str, float]:
-        return {
-            "skills": 0.20,
-            "experience_years": 0.20,
-            "work_alignment": 0.30,
-            "projects": 0.20,
-            "qualification": 0.10,
-        }
-
-    @property
-    def DEGREE_WEIGHTS(self) -> dict[str, int]:
-        return {
-            "Computer Engineering": 10,
-            "CSIT": 9,
-            "BIT": 8,
-            "STEM": 6,
-            "Management": 3,
-            "Others": 1,
-        }
-
-    @property
-    def DEGREE_CATEGORIES(self) -> list[str]:
-        return [
-            "Computer Engineering",
-            "CSIT",
-            "BIT",
-            "STEM",
-            "Management",
-            "Others",
-        ]
-
-    @property
-    def SUPPORTED_RESUME_FORMATS(self) -> list[str]:
-        return [".pdf", ".docx"]
 
 
 settings = Settings()  # type: ignore[call-arg]

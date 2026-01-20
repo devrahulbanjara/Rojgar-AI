@@ -40,10 +40,12 @@ def evaluate_projects(state: WorkflowState) -> dict[str, Any]:
             )
             continue
 
+        project_dicts = [p.model_dump() for p in resume.projects]
+        
         result = chain.invoke(
             {
                 "job_desc": job_desc,
-                "projects": json.dumps(resume.projects, indent=2),
+                "projects": json.dumps(project_dicts, indent=2),
             }
         )
 
