@@ -87,8 +87,8 @@ class JobGenerationService:
                     initial_state["requirements"] = parts[0].strip()
                     initial_state["feedback"] = parts[1].strip()
             except Exception as e:
-
                 import logging
+
                 logging.warning(f"Failed to convert current_draft to JDGenNode: {e}")
                 pass
 

@@ -2,10 +2,10 @@ from typing import Any
 
 from langsmith import traceable
 
-from app.core import logger, settings
+from app.core import logger
 from app.models.agents.shortlist import WorkflowState
 
-from ..file_handler import save_json_report, save_text_report
+from ..constants import SHORTLIST_THRESHOLD
 
 
 @traceable(
@@ -20,22 +20,20 @@ def generate_report(state: WorkflowState) -> dict[str, Any]:
         state["scored_candidates"], key=lambda x: x.final_score, reverse=True
     )
 
-    shortlisted = [c for c in scored if c.final_score >= settings.SHORTLIST_THRESHOLD]
-    rejected = [c for c in scored if c.final_score < settings.SHORTLIST_THRESHOLD]
+    shortlisted = [c for c in scored if c.final_score >= SHORTLIST_THRESHOLD]
+    rejected = [c for c in scored if c.final_score < SHORTLIST_THRESHOLD]
 
-    # Build JSON report
     report = {
         "evaluation_summary": {
             "total_candidates": len(scored),
             "shortlisted_count": len(shortlisted),
             "rejected_count": len(rejected),
-            "threshold_score": settings.SHORTLIST_THRESHOLD,
+            "threshold_score": SHORTLIST_THRESHOLD,
         },
         "shortlisted_candidates": [c.model_dump() for c in shortlisted],
         "rejected_candidates": [c.model_dump() for c in rejected],
     }
 
-    # Build text summary
     lines = [
         "CANDIDATE EVALUATION REPORT",
         f"Total Candidates: {len(scored)}",
@@ -64,8 +62,9 @@ def generate_report(state: WorkflowState) -> dict[str, Any]:
 
     summary_text = "\n".join(lines)
 
-    save_json_report(report, "shortlist_report.json")
-    save_text_report(summary_text, "shortlist_summary.txt")
+    logger.info("\n" + "=" * 70)
+    logger.info(summary_text)
+    logger.info("=" * 70)
 
     logger.success("Report generation complete")
 

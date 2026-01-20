@@ -2,8 +2,10 @@ from typing import Any
 
 from langsmith import traceable
 
-from app.core import logger, settings
+from app.core import logger
 from app.models.agents.shortlist import CandidateScore, WorkflowState
+
+from ..constants import SCORE_WEIGHTS
 
 
 @traceable(
@@ -29,11 +31,11 @@ def aggregate_scores(state: WorkflowState) -> dict[str, Any]:
         deg = next(x for x in state["degree_evaluations"] if x["source_file"] == src)
 
         final = (
-            skills["score"] * settings.SCORE_WEIGHTS["skills"]
-            + exp["score"] * settings.SCORE_WEIGHTS["experience_years"]
-            + work["score"] * settings.SCORE_WEIGHTS["work_alignment"]
-            + proj["score"] * settings.SCORE_WEIGHTS["projects"]
-            + deg["score"] * settings.SCORE_WEIGHTS["qualification"]
+            skills["score"] * SCORE_WEIGHTS["skills"]
+            + exp["score"] * SCORE_WEIGHTS["experience_years"]
+            + work["score"] * SCORE_WEIGHTS["work_alignment"]
+            + proj["score"] * SCORE_WEIGHTS["projects"]
+            + deg["score"] * SCORE_WEIGHTS["qualification"]
         ) * 10
 
         scored = CandidateScore(
