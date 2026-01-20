@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from docling.document_converter import DocumentConverter
 from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import TransformersNlpEngine
@@ -6,7 +7,9 @@ from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 
 from app.core import logger
+
 from .constants import PII_ALLOW_LIST
+
 
 class DocumentProcessor:
     def __init__(self):
@@ -16,7 +19,7 @@ class DocumentProcessor:
         except ImportError:
             logger.warning("Docling not installed")
             self.is_available = False
-        
+
         try:
             model_config = [
                 {
@@ -31,8 +34,13 @@ class DocumentProcessor:
             self.analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
             self.anonymizer = AnonymizerEngine()
             self.pii_redaction_available = True
-            
-            self.target_entities = ["PERSON", "PHONE_NUMBER", "EMAIL_ADDRESS", "LOCATION"]
+
+            self.target_entities = [
+                "PERSON",
+                "PHONE_NUMBER",
+                "EMAIL_ADDRESS",
+                "LOCATION",
+            ]
             self.allow_list = PII_ALLOW_LIST
         except Exception as e:
             logger.warning(f"Presidio PII redaction not available: {e}")
@@ -47,28 +55,37 @@ class DocumentProcessor:
         if file_extension == ".txt":
             return file_path.read_text(encoding="utf-8")
 
-        if self.is_available and file_extension in [".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg"]:
+        if self.is_available and file_extension in [
+            ".pdf",
+            ".docx",
+            ".doc",
+            ".png",
+            ".jpg",
+            ".jpeg",
+        ]:
             return self._extract_with_docling(file_path)
 
         try:
             return file_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            raise ValueError(f"Unable to read file {file_path}. Format may not be supported.")
+            raise ValueError(
+                f"Unable to read file {file_path}. Format may not be supported."
+            )
 
     def _redact_pii(self, text: str) -> str:
         if not self.pii_redaction_available:
             return text
-        
+
         try:
             logger.info("Redacting PII from extracted text")
             results = self.analyzer.analyze(
-                text=text, 
+                text=text,
                 language="en",
                 entities=self.target_entities,
                 score_threshold=0.4,
-                allow_list=self.allow_list
+                allow_list=self.allow_list,
             )
-            
+
             operators = {
                 "PERSON": OperatorConfig("replace", {"new_value": "[NAME]"}),
                 "PHONE_NUMBER": OperatorConfig("replace", {"new_value": "[PHONE]"}),
@@ -77,9 +94,7 @@ class DocumentProcessor:
             }
 
             anonymized = self.anonymizer.anonymize(
-                text=text, 
-                analyzer_results=results,
-                operators=operators
+                text=text, analyzer_results=results, operators=operators
             )
             logger.success("PII redaction complete")
             return anonymized.text
