@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from app.core import logger
@@ -26,9 +27,9 @@ def run_shortlist_workflow(jd_string: str, resume_file_path: str) -> dict | None
 
         final_report = result.get("final_report")
         if final_report:
-            summary = final_report["evaluation_summary"]
+            status = "SHORTLISTED" if final_report["is_shortlisted"] else "REJECTED"
             logger.success(
-                f"Workflow completed: {summary['total_candidates']} candidates, {summary['shortlisted_count']} shortlisted, {summary['rejected_count']} rejected"
+                f"Workflow completed: {final_report['source_file']} - Score: {final_report['final_score']:.1f} - {status}"
             )
 
         return final_report
@@ -84,4 +85,4 @@ if __name__ == "__main__":
 
     resume_file_path = "rahuldevbanjara_resume.pdf"
     result = run_shortlist_workflow(jd_string, resume_file_path)
-    print(result)
+    print(json.dumps(result, indent=2))
