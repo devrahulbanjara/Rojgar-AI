@@ -1,61 +1,52 @@
 from pathlib import Path
 
 from app.core import logger
+from app.core.config import settings
+from .constants import PII_ENTITIES
+from llm_guard.input_scanners import Anonymize
+from llm_guard.vault import Vault
+import nest_asyncio
+from llama_parse import LlamaParse
 
+nest_asyncio.apply()
 
 class DocumentProcessor:
     def __init__(self):
-        try:
-            from docling.document_converter import DocumentConverter
-
-            self.converter = DocumentConverter()
-            self.is_available = True
-        except ImportError:
-            logger.warning("Docling not installed. Install with: pip install docling")
-            self.is_available = False
+        self.parser = LlamaParse(
+            api_key=settings.LLAMA_CLOUD_API_KEY,
+            result_type="markdown",
+            language="en"
+        )
+        self.vault = Vault()
+        self.scanner = Anonymize(self.vault, entity_types=PII_ENTITIES, preamble="Redacted: ")
 
     def extract_text(self, file_path: Path) -> str:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        file_extension = file_path.suffix.lower()
+        return self._extract_with_llamaparse(file_path)
 
-        if file_extension == ".txt":
-            return file_path.read_text(encoding="utf-8")
-
-        if self.is_available and file_extension in [
-            ".pdf",
-            ".docx",
-            ".doc",
-            ".png",
-            ".jpg",
-            ".jpeg",
-        ]:
-            return self._extract_with_docling(file_path)
-
-        logger.warning(
-            f"Unsupported file format: {file_extension}. Attempting to read as text."
-        )
+    def _redact_pii(self, text: str) -> str:
         try:
-            return file_path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            raise ValueError(
-                f"Unable to read file {file_path}. Format may not be supported."
-            )
+            sanitized_text, is_valid, risk_score = self.scanner.scan(text)
+            return sanitized_text
+        except Exception as e:
+            logger.warning(f"PII redaction failed, using original text: {e}")
+            return text
 
-    def _extract_with_docling(self, file_path: Path) -> str:
+    def _extract_with_llamaparse(self, file_path: Path) -> str:
         try:
-            logger.info(f"Processing {file_path.name} with Docling")
-            result = self.converter.convert(str(file_path))
-            markdown_text = result.document.export_to_markdown()
-            logger.success(f"Successfully extracted text from {file_path.name}")
+            logger.info(f"Processing {file_path.name} with llama-parse")
+
+            documents = self.parser.load_data(str(file_path))
+
+            markdown_text = "\n".join(doc.text for doc in documents)
             return markdown_text
         except Exception as e:
-            logger.error(f"Docling extraction failed for {file_path}: {e}")
-            if file_path.suffix.lower() == ".txt":
-                return file_path.read_text(encoding="utf-8")
+            logger.error(f"LlamaParse extraction failed for {file_path}: {e}")
             raise ValueError(f"Failed to extract text from {file_path}: {e}")
 
     def process_resume(self, file_path: Path) -> tuple[str, str]:
         text = self.extract_text(file_path)
+        text = self._redact_pii(text)
         return file_path.name, text

@@ -29,12 +29,6 @@ def generate_job_draft(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Raw requirements / some keywords are required",
         )
-    
-    if not draft_request.reference_jd_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Reference job description ID is required",
-        )
 
     try:
         combined_requirements = (
@@ -55,6 +49,7 @@ def generate_job_draft(
             db=db,
             reference_jd_id=draft_request.reference_jd_id,
             organization_id=organization_id,
+            current_draft=draft_request.current_draft,
         )
 
         return schemas.JobDraftResponse(

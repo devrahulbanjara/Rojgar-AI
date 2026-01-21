@@ -91,35 +91,6 @@ class JobPosting(Base):
     created_by: Mapped[Optional["User"]] = relationship(
         "User", foreign_keys=[created_by_user_id]
     )
-    stats: Mapped[Optional["JobPostingStats"]] = relationship(
-        "JobPostingStats",
-        back_populates="job_posting",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-
-
-class JobPostingStats(Base):
-    __tablename__ = "job_posting_stats"
-
-    job_stats_id: Mapped[str] = mapped_column(String, primary_key=True)
-    job_id: Mapped[str] = mapped_column(
-        String, ForeignKey("job_posting.job_id"), unique=True, nullable=False
-    )
-
-    applicant_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    views_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=get_datetime, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
-    )
-
-    job_posting: Mapped["JobPosting"] = relationship(
-        "JobPosting", back_populates="stats"
-    )
 
 
 class ReferenceJobDescriptions(Base):
