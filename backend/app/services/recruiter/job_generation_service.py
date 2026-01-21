@@ -1,11 +1,10 @@
 import os
 import uuid
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from app.core import settings
-from app.models.agents.jd_generator import JDGenNode
+from app.models.agents.jd_generator import JDGenNode, JobState
 from app.services.agents.jd_generator import app as jd_agent
 from app.services.agents.jd_generator import reference_jd
 from app.services.recruiter.reference_jd_formatter import ReferenceJDFormatter
@@ -26,9 +25,10 @@ class JobGenerationService:
     @staticmethod
     def generate_job_draft(
         requirements: str,
-        db: Optional[Session] = None,
-        reference_jd_id: Optional[str] = None,
-        organization_id: Optional[str] = None,
+        db: Session | None = None,
+        reference_jd_id: str | None = None,
+        organization_id: str | None = None,
+        current_draft: dict | None = None,
     ) -> JDGenNode:
         thread_id = str(uuid.uuid4())
         thread_config = {
@@ -42,7 +42,6 @@ class JobGenerationService:
             },
         }
 
-        # Fetch reference job from database if reference_jd_id is provided
         format_reference = reference_jd  # Default fallback
         if reference_jd_id and db and organization_id:
             try:
@@ -58,14 +57,40 @@ class JobGenerationService:
                         reference_jd_obj, about_the_company
                     )
             except Exception:
-                # If fetching fails, fall back to static reference_jd
                 pass
 
-        initial_state = {
+        # Build initial state
+        initial_state: JobState = {
             "requirements": requirements,
             "format_reference": format_reference,
             "revision_count": 0,
+            "draft": None,
+            "feedback": "",
+            "final_doc": None,
         }
+
+        if current_draft:
+            try:
+                draft_node = JDGenNode(
+                    about_the_company=current_draft.get("about_company", ""),
+                    job_title=current_draft.get("title", ""),
+                    role_overview=current_draft.get("description", ""),
+                    required_skills_and_experience=current_draft.get(
+                        "requiredSkillsAndExperience", []
+                    ),
+                    nice_to_have=current_draft.get("niceToHave", []),
+                    what_company_offers=current_draft.get("benefits", []),
+                )
+                initial_state["draft"] = draft_node
+                if "Revision Request:" in requirements:
+                    parts = requirements.split("Revision Request:", 1)
+                    initial_state["requirements"] = parts[0].strip()
+                    initial_state["feedback"] = parts[1].strip()
+            except Exception as e:
+                import logging
+
+                logging.warning(f"Failed to convert current_draft to JDGenNode: {e}")
+                pass
 
         result = jd_agent.invoke(initial_state, config=thread_config)
 

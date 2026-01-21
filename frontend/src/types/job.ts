@@ -113,7 +113,15 @@ export interface UpdateJobRequest extends Partial<CreateJobRequest> {
 export interface JobDraftGenerateRequest {
   title: string;
   raw_requirements: string;
-  reference_jd_id: string;
+  reference_jd_id: string | null;
+  current_draft?: {
+    title: string;
+    description: string;
+    requiredSkillsAndExperience: string[];
+    niceToHave: string[];
+    benefits: string[];
+    about_company?: string;
+  } | null;
 }
 
 export interface JobDraftResponse {

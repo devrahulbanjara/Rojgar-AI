@@ -11,7 +11,6 @@ from app.models import (
     CandidateProfile,
     JobDescription,
     JobPosting,
-    JobPostingStats,
     User,
 )
 from app.services.candidate.job_service_utils import get_latest_jobs
@@ -84,7 +83,6 @@ class JobService:
                     .options(
                         selectinload(JobPosting.organization),
                         selectinload(JobPosting.job_description),
-                        selectinload(JobPosting.stats),
                     )
                     .filter(
                         JobPosting.job_id.in_(raw_ids),
@@ -129,9 +127,6 @@ class JobService:
         )
         db.add(job_posting)
 
-        job_stats = JobService._create_job_stats(job_id)
-        db.add(job_stats)
-
         db.commit()
         db.refresh(job_posting)
 
@@ -171,7 +166,6 @@ class JobService:
             query.options(
                 selectinload(JobPosting.organization),
                 selectinload(JobPosting.job_description),
-                selectinload(JobPosting.stats),
             )
             .order_by(JobPosting.posted_date.desc())
             .offset(offset)
@@ -415,17 +409,6 @@ class JobService:
         )
 
     @staticmethod
-    def _create_job_stats(job_id: str):
-        return JobPostingStats(
-            job_stats_id=str(uuid.uuid4()),
-            job_id=job_id,
-            applicant_count=0,
-            views_count=0,
-            created_at=get_datetime(),
-            updated_at=get_datetime(),
-        )
-
-    @staticmethod
     def _empty_pagination_response(page: int, limit: int):
         return {
             "jobs": [],
@@ -500,8 +483,8 @@ def _build_job_description_data(job: JobPosting) -> dict:
 
 def _build_stats_data(job: JobPosting) -> dict:
     return {
-        "applicant_count": job.stats.applicant_count if job.stats else 0,
-        "views_count": job.stats.views_count if job.stats else 0,
+        "applicant_count": 0,
+        "views_count": 0,
         "is_featured": False,
     }
 

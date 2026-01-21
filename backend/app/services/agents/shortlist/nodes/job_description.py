@@ -5,7 +5,6 @@ from langsmith import traceable
 from app.core import logger
 from app.models.agents.shortlist import JobRequirements, WorkflowState
 
-from ..file_handler import read_job_description
 from ..llm_service import get_llm
 from ..templates import JOB_DESCRIPTION_PARSER_PROMPT
 
@@ -17,7 +16,10 @@ from ..templates import JOB_DESCRIPTION_PARSER_PROMPT
 )
 def parse_job_description(state: WorkflowState) -> dict[str, Any]:
     logger.info("Parsing job description")
-    jd_text = read_job_description()
+    jd_text = state.get("job_description_text", "")
+
+    if not jd_text:
+        raise ValueError("Job description text is required in workflow state")
 
     llm = get_llm()
     chain = JOB_DESCRIPTION_PARSER_PROMPT | llm.with_structured_output(JobRequirements)

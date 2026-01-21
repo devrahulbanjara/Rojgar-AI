@@ -12,7 +12,6 @@ def get_latest_jobs(db: Session, limit: int = 200) -> list[JobPosting]:
         .options(
             selectinload(JobPosting.organization),
             selectinload(JobPosting.job_description),
-            selectinload(JobPosting.stats),
         )
         .filter(JobPosting.status.in_(VISIBLE_STATUSES))
         .order_by(JobPosting.posted_date.desc())
