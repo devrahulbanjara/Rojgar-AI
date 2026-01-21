@@ -16,49 +16,45 @@ from ..constants import SHORTLIST_THRESHOLD
 def generate_report(state: WorkflowState) -> dict[str, Any]:
     logger.info("Generating final report")
 
-    scored = sorted(
-        state["scored_candidates"], key=lambda x: x.final_score, reverse=True
-    )
+    scored = state["scored_candidates"]
 
-    shortlisted = [c for c in scored if c.final_score >= SHORTLIST_THRESHOLD]
-    rejected = [c for c in scored if c.final_score < SHORTLIST_THRESHOLD]
+    if not scored:
+        logger.warning("No candidate to evaluate")
+        return {"final_report": None}
+
+    candidate = scored[0]
+    is_shortlisted = candidate.final_score >= SHORTLIST_THRESHOLD
 
     report = {
-        "evaluation_summary": {
-            "total_candidates": len(scored),
-            "shortlisted_count": len(shortlisted),
-            "rejected_count": len(rejected),
-            "threshold_score": SHORTLIST_THRESHOLD,
-        },
-        "shortlisted_candidates": [c.model_dump() for c in shortlisted],
-        "rejected_candidates": [c.model_dump() for c in rejected],
+        "source_file": candidate.source_file,
+        "final_score": candidate.final_score,
+        "threshold": SHORTLIST_THRESHOLD,
+        "is_shortlisted": is_shortlisted,
+        "breakdown": candidate.breakdown.model_dump() if candidate.breakdown else None,
     }
+
+    status = "SHORTLISTED" if is_shortlisted else "REJECTED"
 
     lines = [
         "CANDIDATE EVALUATION REPORT",
-        f"Total Candidates: {len(scored)}",
-        f"Shortlisted: {len(shortlisted)}",
-        f"Rejected: {len(rejected)}",
-        "",
+        f"File: {candidate.source_file}",
+        f"Final Score: {candidate.final_score:.1f} / 100",
+        f"Threshold: {SHORTLIST_THRESHOLD}",
+        f"Status: {status}",
     ]
 
-    for i, cand in enumerate(shortlisted, 1):
+    if candidate.breakdown:
         lines.extend(
             [
-                f"{i}. {cand.source_file}",
-                f"   Final Score: {cand.final_score}",
+                "",
+                "SCORE BREAKDOWN:",
+                f"  Skills: {candidate.breakdown.skills.score:.1f}",
+                f"  Experience Years: {candidate.breakdown.experience_years.score:.1f}",
+                f"  Work Alignment: {candidate.breakdown.work_experience_alignment.score:.1f}",
+                f"  Projects: {candidate.breakdown.project_alignment.score:.1f}",
+                f"  Qualification: {candidate.breakdown.qualification.score:.1f}",
             ]
         )
-
-    if rejected:
-        lines.append("\nREJECTED CANDIDATES:\n")
-        for i, cand in enumerate(rejected, 1):
-            lines.extend(
-                [
-                    f"{i}. {cand.source_file}",
-                    f"   Final Score: {cand.final_score}",
-                ]
-            )
 
     summary_text = "\n".join(lines)
 
@@ -66,6 +62,6 @@ def generate_report(state: WorkflowState) -> dict[str, Any]:
     logger.info(summary_text)
     logger.info("=" * 70)
 
-    logger.success("Report generation complete")
+    logger.success(f"Report generation complete - {status}")
 
     return {"final_report": report}
