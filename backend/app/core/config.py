@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     TIMEZONE: str
+    LLAMA_CLOUD_API_KEY: str
 
     # Authentication
     GOOGLE_CLIENT_ID: str

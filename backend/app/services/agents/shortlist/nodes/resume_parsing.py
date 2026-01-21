@@ -22,7 +22,9 @@ def extract_resume_structure(state: WorkflowState) -> dict[str, Any]:
     structured_resumes = []
 
     llm = get_llm()
-    chain = RESUME_PARSER_PROMPT | llm.with_structured_output(ResumeStructured)
+    chain = RESUME_PARSER_PROMPT | llm.with_structured_output(
+        ResumeStructured, method="json_mode"
+    )
     document_processor = DocumentProcessor()
 
     file_path = Path(state["resume_file_path"])
