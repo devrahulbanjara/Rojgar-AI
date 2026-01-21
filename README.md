@@ -63,9 +63,9 @@ Traditional ATS platforms rely on opaque keyword matching, often disqualifying q
 <td width="50%">
 
 **Advanced Document Processing**
-- Multi-column CV parsing with Docling
-- Layout-preserving OCR
-- Support for scanned documents
+- Multi-column CV parsing with LlamaParse
+- Layout-preserving markdown extraction
+- PII redaction with llm-guard
 - High accuracy text extraction
 
 </td>
@@ -192,7 +192,8 @@ Application runs on `http://localhost:3000`
 ![Google Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-DC244C?style=for-the-badge)
 ![Hugging Face](https://img.shields.io/badge/Hugging_Face-Embeddings-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
-![Docling](https://img.shields.io/badge/Docling-OCR-052FAD?style=for-the-badge)
+![LlamaParse](https://img.shields.io/badge/LlamaParse-Document_AI-7C3AED?style=for-the-badge)
+![LLM Guard](https://img.shields.io/badge/LLM_Guard-PII_Redaction-DC2626?style=for-the-badge)
 
 </div>
 
@@ -209,29 +210,16 @@ Application runs on `http://localhost:3000`
 | **Multimodal AI** | Google Gemini | Complex reasoning tasks |
 | **Vector Store** | Qdrant | Semantic search and matching |
 | **Embeddings** | Hugging Face | Text vectorization models |
-| **Document Processing** | Docling | OCR and layout-preserving parsing |
+| **Document Processing** | LlamaParse | AI-powered document parsing |
+| **Privacy** | llm-guard | PII detection and redaction |
 | **Database** | Supabase | PostgreSQL database with real-time features |
 | **Integration** | Gmail / Google Calendar | Communication and scheduling |
 
 ## Acknowledgements
 
-This project leverages **Docling** by IBM Research for efficient document conversion and OCR processing.
-
-**Citation:**
-
-> Livathinos, N., Auer, C., Lysak, M., Nassar, A., Dolfi, M., Vagenas, P., Berrospi Ramis, C., Omenetti, M., Dinkla, K., Kim, Y., Gupta, S., de Lima, R. T., Weber, V., Morin, L., Meijer, I., Kuropiatnyk, V., & Staar, P. W. J. (2025). *Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion*. arXiv preprint arXiv:2501.17887. https://arxiv.org/abs/2501.17887
-
-```bibtex
-@misc{livathinos2025docling,
-      title={Docling: An Efficient Open-Source Toolkit for AI-driven Document Conversion},
-      author={Nikolaos Livathinos and Christoph Auer and Maksym Lysak and Ahmed Nassar and Michele Dolfi and Panos Vagenas and Cesar Berrospi Ramis and Matteo Omenetti and Kasper Dinkla and Yusik Kim and Shubham Gupta and Rafael Teixeira de Lima and Valery Weber and Lucas Morin and Ingmar Meijer and Viktor Kuropiatnyk and Peter W. J. Staar},
-      year={2025},
-      eprint={2501.17887},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2501.17887}
-}
-```
+This project leverages:
+- **[LlamaParse](https://github.com/run-llama/llama_parse)** by LlamaIndex for AI-powered document parsing and text extraction
+- **[llm-guard](https://github.com/protectai/llm-guard)** by Protect AI for PII detection and redaction
 
 ## Star History
 

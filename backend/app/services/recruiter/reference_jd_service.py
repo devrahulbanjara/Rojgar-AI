@@ -77,9 +77,7 @@ class ReferenceJDService:
         return reference_jd, organization_description
 
     @staticmethod
-    def delete_reference_jd(
-        db: Session, reference_jd_id: str, organization_id: str
-    ):
+    def delete_reference_jd(db: Session, reference_jd_id: str, organization_id: str):
         reference_jd = (
             db.query(ReferenceJobDescriptions)
             .filter(

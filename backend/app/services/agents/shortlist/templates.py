@@ -134,9 +134,11 @@ RESUME_PARSER_PROMPT = ChatPromptTemplate.from_messages(
             }}
 
             Follow this structure strictly when extracting information from resumes.
+
+            You MUST respond with valid JSON only. No explanations, no markdown, just the JSON object.
             """,
         ),
-        ("human", "Resume Text:\n###\n{resume_text}\n###"),
+        ("human", "Resume Text:\n###\n{resume_text}\n###\n\nRespond with JSON:"),
     ]
 )
 
