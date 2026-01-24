@@ -143,11 +143,11 @@ const statusStyles = {
     label: "Draft",
   },
   Expired: {
-    bg: "bg-amber-500",
+    bg: "bg-red-500",
     label: "Expired",
   },
   Closed: {
-    bg: "bg-amber-500",
+    bg: "bg-red-500",
     label: "Expired",
   },
   Inactive: {

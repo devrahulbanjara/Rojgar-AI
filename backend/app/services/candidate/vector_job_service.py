@@ -6,16 +6,14 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core import settings
 from app.core.logging_config import logger
-from app.core.ml import get_embedding_model
+from app.core.model_provider import get_embedding_model
 from app.models.job import JobPosting
 
 
 class JobVectorService:
     def __init__(self):
         self.embedding_model = get_embedding_model()
-        self.client = QdrantClient(
-            url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY
-        )
+        self.client = QdrantClient(url=settings.QDRANT_URL)
         self.collection_name = settings.QDRANT_COLLECTION_NAME
         self._ensure_collection_exists()
         self.qdrant = QdrantVectorStore(
@@ -48,26 +46,12 @@ class JobVectorService:
         parts = [
             f"Title: {job.title}",
             f"Organization: {org_name}",
-            f"Role Overview: {jd.role_overview}",
+            f"Job Summary: {jd.job_summary}",
+            f"Job Responsibilities: {jd.job_responsibilities}",
+            f"Required Qualifications: {jd.required_qualifications}",
+            f"Preferred: {jd.preferred}",
+            f"Compensation and Benefits: {jd.compensation_and_benefits}",
         ]
-
-        if isinstance(jd.required_skills_experience, dict):
-            skills = jd.required_skills_experience.get("required_skills_experience", [])
-            if skills:
-                parts.append("Required Skills and Experience:")
-                parts.extend(f"- {s}" for s in skills)
-
-        if isinstance(jd.nice_to_have, dict):
-            nice = jd.nice_to_have.get("nice_to_have", [])
-            if nice:
-                parts.append("Nice to Have:")
-                parts.extend(f"- {n}" for n in nice)
-
-        if isinstance(jd.offers, dict):
-            benefits = jd.offers.get("benefits", [])
-            if benefits:
-                parts.append("Benefits:")
-                parts.extend(f"- {b}" for b in benefits)
 
         return "\n".join(parts)
 
@@ -114,9 +98,9 @@ class JobVectorService:
                     "salary_max": job.salary_max,
                     "salary_currency": job.salary_currency,
                     "status": job.status,
-                    "posted_date": job.posted_date.isoformat()
-                    if job.posted_date
-                    else None,
+                    "posted_date": (
+                        job.posted_date.isoformat() if job.posted_date else None
+                    ),
                 }
 
                 doc = Document(page_content=text_content, metadata=metadata)

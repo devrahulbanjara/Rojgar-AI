@@ -73,51 +73,84 @@ export function ReferenceJDModal({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-12 py-12">
-          {/* Role Overview */}
-          <section className="mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-8 bg-indigo-600 rounded-full"></div>
-              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50">
-                <Briefcase className="w-5 h-5 text-indigo-600" />
+          {/* Job Summary */}
+          {(jd.job_summary || jd.role_overview) && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-indigo-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50">
+                  <Briefcase className="w-5 h-5 text-indigo-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Job Summary
+                </h3>
               </div>
-              <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                Role Overview
-              </h3>
-            </div>
-            <div className="pl-14">
-              <p className="text-[16px] text-gray-700 leading-[1.8]">
-                {jd.role_overview}
-              </p>
-            </div>
-          </section>
-
-          {/* Required Skills and Experience */}
-          <section className="mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-8 bg-emerald-600 rounded-full"></div>
-              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <div className="pl-14">
+                <p className="text-[16px] text-gray-700 leading-[1.8]">
+                  {jd.job_summary || jd.role_overview}
+                </p>
               </div>
-              <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                Required Skills and Experience
-              </h3>
-            </div>
-            <div className="pl-14">
-              <ul className="space-y-3 list-disc list-inside">
-                {jd.requiredSkillsAndExperience.map((req, i) => (
-                  <li
-                    key={i}
-                    className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                  >
-                    {req}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
+            </section>
+          )}
 
-          {/* Nice to Have (Preferred) */}
-          {jd.niceToHave && jd.niceToHave.length > 0 && (
+          {/* Job Responsibilities */}
+          {jd.job_responsibilities && jd.job_responsibilities.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Job Responsibilities
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {jd.job_responsibilities.map((resp, i) => (
+                    <li
+                      key={i}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {resp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Required Qualifications */}
+          {(jd.required_qualifications || jd.requiredSkillsAndExperience) && 
+           (jd.required_qualifications?.length > 0 || jd.requiredSkillsAndExperience?.length > 0) && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-emerald-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Required Qualifications
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {(jd.required_qualifications || jd.requiredSkillsAndExperience || []).map((req, i) => (
+                    <li
+                      key={i}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Preferred */}
+          {(jd.preferred || jd.niceToHave) && 
+           ((jd.preferred?.length > 0) || (jd.niceToHave?.length > 0)) && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
@@ -125,12 +158,12 @@ export function ReferenceJDModal({
                   <Sparkles className="w-5 h-5 text-amber-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Nice to Have (Preferred)
+                  Preferred
                 </h3>
               </div>
               <div className="pl-14">
                 <ul className="space-y-3 list-disc list-inside">
-                  {jd.niceToHave.map((skill, i) => (
+                  {(jd.preferred || jd.niceToHave || []).map((skill, i) => (
                     <li
                       key={i}
                       className="text-[15px] text-gray-700 leading-relaxed pl-2"
@@ -143,8 +176,9 @@ export function ReferenceJDModal({
             </section>
           )}
 
-          {/* What We Offer / Benefits */}
-          {jd.benefits && jd.benefits.length > 0 && (
+          {/* Compensation & Benefits */}
+          {(jd.compensation_and_benefits || jd.benefits) && 
+           ((jd.compensation_and_benefits?.length > 0) || (jd.benefits?.length > 0)) && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 bg-violet-600 rounded-full"></div>
@@ -152,12 +186,12 @@ export function ReferenceJDModal({
                   <Gift className="w-5 h-5 text-violet-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  What We Offer
+                  Compensation & Benefits
                 </h3>
               </div>
               <div className="pl-14">
                 <ul className="space-y-3 list-disc list-inside">
-                  {jd.benefits.map((benefit, i) => (
+                  {(jd.compensation_and_benefits || jd.benefits || []).map((benefit, i) => (
                     <li
                       key={i}
                       className="text-[15px] text-gray-700 leading-relaxed pl-2"

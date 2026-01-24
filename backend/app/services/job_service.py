@@ -105,15 +105,25 @@ class JobService:
         job_description_id = str(uuid.uuid4())
         job_id = str(uuid.uuid4())
 
-        job_description = JobService._build_job_description(
-            job_data, job_description_id
+        job_description = JobDescription(
+            job_description_id=job_description_id,
+            job_summary=job_data.job_summary,
+            job_responsibilities=job_data.job_responsibilities,
+            required_qualifications=job_data.required_qualifications,
+            preferred=job_data.preferred,
+            compensation_and_benefits=job_data.compensation_and_benefits,
+            created_at=get_datetime(),
+            updated_at=get_datetime(),
         )
+
         db.add(job_description)
         db.flush()
 
-        application_deadline = JobService._parse_application_deadline(
-            job_data.applicationDeadline
-        )
+        application_deadline = None
+        if job_data.application_deadline:
+            application_deadline = datetime.strptime(
+                job_data.application_deadline, "%Y-%m-%d"
+            ).date()
         job_status = job_data.status if job_data.status else "active"
 
         job_posting = JobService._build_job_posting(
@@ -244,27 +254,27 @@ class JobService:
             job_posting.department = job_data.department
         if job_data.level is not None:
             job_posting.level = job_data.level
-        if job_data.locationCity is not None:
-            job_posting.location_city = job_data.locationCity
-        if job_data.locationCountry is not None:
-            job_posting.location_country = job_data.locationCountry
-        if job_data.locationType is not None:
-            job_posting.location_type = job_data.locationType
-        if job_data.employmentType is not None:
-            job_posting.employment_type = job_data.employmentType
-        if job_data.salaryMin is not None:
-            job_posting.salary_min = job_data.salaryMin
-        if job_data.salaryMax is not None:
-            job_posting.salary_max = job_data.salaryMax
-        if job_data.currency is not None:
-            job_posting.salary_currency = job_data.currency
+        if job_data.location_city is not None:
+            job_posting.location_city = job_data.location_city
+        if job_data.location_country is not None:
+            job_posting.location_country = job_data.location_country
+        if job_data.location_type is not None:
+            job_posting.location_type = job_data.location_type
+        if job_data.employment_type is not None:
+            job_posting.employment_type = job_data.employment_type
+        if job_data.salary_min is not None:
+            job_posting.salary_min = job_data.salary_min
+        if job_data.salary_max is not None:
+            job_posting.salary_max = job_data.salary_max
+        if job_data.salary_currency is not None:
+            job_posting.salary_currency = job_data.salary_currency
         if job_data.status is not None:
             job_posting.status = job_data.status
 
-        if job_data.applicationDeadline is not None:
-            job_posting.application_deadline = JobService._parse_application_deadline(
-                job_data.applicationDeadline
-            )
+        if job_data.application_deadline is not None:
+            job_posting.application_deadline = datetime.strptime(
+                job_data.application_deadline, "%Y-%m-%d"
+            ).date()
 
         job_posting.updated_at = get_datetime()
 
@@ -275,25 +285,20 @@ class JobService:
         )
 
         if job_description:
-            if job_data.description is not None:
-                job_description.role_overview = job_data.description
+            if job_data.job_summary is not None:
+                job_description.job_summary = job_data.job_summary
 
-            if job_data.requiredSkillsAndExperience is not None:
-                job_description.required_skills_experience = {
-                    "required_skills_experience": job_data.requiredSkillsAndExperience
-                }
+            if job_data.job_responsibilities is not None:
+                job_description.job_responsibilities = job_data.job_responsibilities
 
-            if job_data.niceToHave is not None:
-                job_description.nice_to_have = (
-                    {"nice_to_have": job_data.niceToHave}
-                    if job_data.niceToHave
-                    else None
-                )
+            if job_data.required_qualifications is not None:
+                job_description.required_qualifications = job_data.required_qualifications
 
-            if job_data.benefits is not None:
-                job_description.offers = (
-                    {"benefits": job_data.benefits} if job_data.benefits else None
-                )
+            if job_data.preferred is not None:
+                job_description.preferred = job_data.preferred
+
+            if job_data.compensation_and_benefits is not None:
+                job_description.compensation_and_benefits = job_data.compensation_and_benefits
 
             job_description.updated_at = get_datetime()
 
@@ -332,50 +337,6 @@ class JobService:
         }
 
     @staticmethod
-    def _build_job_description(job_data, job_description_id: str):
-        required_skills_list = (
-            job_data.requiredSkillsAndExperience
-            if job_data.requiredSkillsAndExperience
-            else []
-        )
-        required_skills_experience_dict = {
-            "required_skills_experience": required_skills_list
-        }
-
-        nice_to_have_dict = None
-        if job_data.niceToHave:
-            nice_to_have_dict = {"nice_to_have": job_data.niceToHave}
-
-        offers_dict = None
-        if job_data.benefits:
-            offers_dict = {"benefits": job_data.benefits}
-
-        return JobDescription(
-            job_description_id=job_description_id,
-            role_overview=job_data.description or "",
-            required_skills_experience=required_skills_experience_dict,
-            nice_to_have=nice_to_have_dict,
-            offers=offers_dict,
-            created_at=get_datetime(),
-            updated_at=get_datetime(),
-        )
-
-    @staticmethod
-    def _parse_application_deadline(deadline_str: str | None):
-        if not deadline_str:
-            return None
-
-        try:
-            if "T" in deadline_str:
-                return datetime.fromisoformat(
-                    deadline_str.replace("Z", "+00:00")
-                ).date()
-            else:
-                return datetime.strptime(deadline_str, "%Y-%m-%d").date()
-        except Exception:
-            return None
-
-    @staticmethod
     def _build_job_posting(
         job_id: str,
         organization_id: str,
@@ -393,13 +354,13 @@ class JobService:
             title=job_data.title,
             department=job_data.department,
             level=job_data.level,
-            location_city=job_data.locationCity,
-            location_country=job_data.locationCountry,
-            location_type=job_data.locationType,
-            employment_type=job_data.employmentType,
-            salary_min=job_data.salaryMin,
-            salary_max=job_data.salaryMax,
-            salary_currency=job_data.currency,
+            location_city=job_data.location_city,
+            location_country=job_data.location_country,
+            location_type=job_data.location_type,
+            employment_type=job_data.employment_type,
+            salary_min=job_data.salary_min,
+            salary_max=job_data.salary_max,
+            salary_currency=job_data.salary_currency,
             status=job_status,
             is_indexed=False,
             posted_date=date.today(),
@@ -453,39 +414,11 @@ def _build_organization_data(job: JobPosting) -> dict | None:
         "id": org.organization_id,
         "name": org.name,
         "description": org.description,
-        "location": build_location(org.location_city, org.location_country, ""),
+        "location_city": org.location_city,
+        "location_country": org.location_country,
         "website": org.website,
         "industry": org.industry,
         "founded_year": org.founded_year,
-    }
-
-
-def _build_job_description_data(job: JobPosting) -> dict:
-    jd = job.job_description
-
-    role_overview = jd.role_overview if jd else None
-    required_skills_exp_data = jd.required_skills_experience if jd else None
-    requirements = extract_list_from_dict(
-        required_skills_exp_data, "required_skills_experience"
-    )
-    benefits = extract_list_from_dict(jd.offers if jd else None, "benefits")
-    nice_to_have = extract_list_from_dict(
-        jd.nice_to_have if jd else None, "nice_to_have"
-    )
-
-    return {
-        "role_overview": role_overview,
-        "requirements": requirements,
-        "benefits": benefits,
-        "nice_to_have": nice_to_have,
-    }
-
-
-def _build_stats_data(job: JobPosting) -> dict:
-    return {
-        "applicant_count": 0,
-        "views_count": 0,
-        "is_featured": False,
     }
 
 
@@ -522,7 +455,13 @@ def map_job_to_response(job: JobPosting):
         "organization": _build_organization_data(job),
     }
 
-    job_data.update(_build_job_description_data(job))
-    job_data.update(_build_stats_data(job))
+    jd = job.job_description
+    job_data.update({
+        "job_summary": jd.job_summary,
+        "job_responsibilities": jd.job_responsibilities,
+        "required_qualifications": jd.required_qualifications,
+        "preferred": jd.preferred,
+        "compensation_and_benefits": jd.compensation_and_benefits,
+    })
 
     return job_data
