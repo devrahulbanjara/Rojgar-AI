@@ -105,14 +105,22 @@ class JobService:
         job_description_id = str(uuid.uuid4())
         job_id = str(uuid.uuid4())
 
-        job_description = JobService._build_job_description(
-            job_data, job_description_id
+        job_description = JobDescription(
+            job_description_id=job_description_id,
+            job_summary=job_data.job_summary,
+            job_responsibilities=job_data.job_responsibilities,
+            required_qualifications=job_data.required_qualifications,
+            preferred=job_data.preferred,
+            compensation_and_benefits=job_data.compensation_and_benefits,
+            created_at=get_datetime(),
+            updated_at=get_datetime(),
         )
+
         db.add(job_description)
         db.flush()
 
         application_deadline = JobService._parse_application_deadline(
-            job_data.applicationDeadline
+            job_data.application_deadline
         )
         job_status = job_data.status if job_data.status else "active"
 
@@ -332,35 +340,6 @@ class JobService:
         }
 
     @staticmethod
-    def _build_job_description(job_data, job_description_id: str):
-        required_skills_list = (
-            job_data.requiredSkillsAndExperience
-            if job_data.requiredSkillsAndExperience
-            else []
-        )
-        required_skills_experience_dict = {
-            "required_skills_experience": required_skills_list
-        }
-
-        nice_to_have_dict = None
-        if job_data.niceToHave:
-            nice_to_have_dict = {"nice_to_have": job_data.niceToHave}
-
-        offers_dict = None
-        if job_data.benefits:
-            offers_dict = {"benefits": job_data.benefits}
-
-        return JobDescription(
-            job_description_id=job_description_id,
-            role_overview=job_data.description or "",
-            required_skills_experience=required_skills_experience_dict,
-            nice_to_have=nice_to_have_dict,
-            offers=offers_dict,
-            created_at=get_datetime(),
-            updated_at=get_datetime(),
-        )
-
-    @staticmethod
     def _parse_application_deadline(deadline_str: str | None):
         if not deadline_str:
             return None
@@ -393,13 +372,13 @@ class JobService:
             title=job_data.title,
             department=job_data.department,
             level=job_data.level,
-            location_city=job_data.locationCity,
-            location_country=job_data.locationCountry,
-            location_type=job_data.locationType,
-            employment_type=job_data.employmentType,
-            salary_min=job_data.salaryMin,
-            salary_max=job_data.salaryMax,
-            salary_currency=job_data.currency,
+            location_city=job_data.location_city,
+            location_country=job_data.location_country,
+            location_type=job_data.location_type,
+            employment_type=job_data.employment_type,
+            salary_min=job_data.salary_min,
+            salary_max=job_data.salary_max,
+            salary_currency=job_data.salary_currency,
             status=job_status,
             is_indexed=False,
             posted_date=date.today(),
