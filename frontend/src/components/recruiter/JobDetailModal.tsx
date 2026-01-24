@@ -276,7 +276,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Role Overview - Enhanced */}
+          {/* Job Summary - Enhanced */}
           {job.description && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -285,7 +285,7 @@ export function JobDetailModal({
                   <Briefcase className="w-5 h-5 text-indigo-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Role Overview
+                  Job Summary
                 </h3>
               </div>
               <div className="pl-14 prose prose-sm max-w-none">
@@ -296,7 +296,34 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Required Skills and Experience - Enhanced */}
+          {/* Job Responsibilities - Enhanced */}
+          {(job as any).job_responsibilities && (job as any).job_responsibilities.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Job Responsibilities
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {(job as any).job_responsibilities.map((resp: string, index: number) => (
+                    <li
+                      key={index}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {resp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Required Qualifications - Enhanced */}
           {job.requirements && job.requirements.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -305,7 +332,7 @@ export function JobDetailModal({
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Required Skills and Experience
+                  Required Qualifications
                 </h3>
               </div>
               <div className="pl-14">
@@ -323,7 +350,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Nice to Have (Preferred) - Enhanced */}
+          {/* Preferred - Enhanced */}
           {job.nice_to_have && job.nice_to_have.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -332,7 +359,7 @@ export function JobDetailModal({
                   <Sparkles className="w-5 h-5 text-amber-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Nice to Have (Preferred)
+                  Preferred
                 </h3>
               </div>
               <div className="pl-14">
@@ -350,7 +377,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* What We Offer (Benefits) - Enhanced */}
+          {/* Compensation & Benefits - Enhanced */}
           {job.benefits && job.benefits.length > 0 && (
             <section className="mb-8">
               <div className="flex items-center gap-3 mb-6">
@@ -359,7 +386,7 @@ export function JobDetailModal({
                   <Sparkles className="w-5 h-5 text-violet-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  What We Offer
+                  Compensation & Benefits
                 </h3>
               </div>
               <div className="pl-14">

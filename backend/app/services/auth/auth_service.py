@@ -13,7 +13,8 @@ from app.schemas import CreateUserRequest, GoogleUserInfo, UserResponse
 class AuthService:
     @staticmethod
     def create_user_response(user: User) -> UserResponse:
-        return UserResponse.model_validate(user)
+        from app.services import UserService
+        return UserService.to_user_response(user)
 
     @staticmethod
     def get_user_by_email(email: str, db: Session) -> User | None:
@@ -75,14 +76,16 @@ class AuthService:
         return verify_password(password, user.password)
 
     @staticmethod
-    def create_access_token(user_id: str, remember_me: bool = False) -> tuple[str, int]:
+    def create_access_token(user_id: str | uuid.UUID, remember_me: bool = False) -> tuple[str, int]:
+        user_id_str = str(user_id) if isinstance(user_id, uuid.UUID) else user_id
+        
         if remember_me:
             token = create_token(
-                user_id, entity_type="user", expires_minutes=30 * 24 * 60
+                user_id_str, entity_type="user", expires_minutes=30 * 24 * 60
             )
             max_age = 30 * 24 * 60 * 60
         else:
-            token = create_token(user_id, entity_type="user")
+            token = create_token(user_id_str, entity_type="user")
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
         return token, max_age

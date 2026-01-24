@@ -2,19 +2,27 @@ import { apiClient } from "../lib/api";
 
 export interface ReferenceJD {
   id: string;
-  role_overview: string;
-  requiredSkillsAndExperience: string[];
-  niceToHave: string[];
-  benefits: string[];
+  // New backend fields
+  job_summary?: string;
+  job_responsibilities?: string[];
+  required_qualifications?: string[];
+  preferred?: string[];
+  compensation_and_benefits?: string[];
+  // Legacy fields (for backward compatibility)
+  role_overview?: string;
+  requiredSkillsAndExperience?: string[];
+  niceToHave?: string[];
+  benefits?: string[];
   about_the_company?: string | null;
   department?: string | null;
 }
 
 export interface CreateReferenceJDRequest {
-  role_overview: string;
-  requiredSkillsAndExperience: string[];
-  niceToHave: string[];
-  benefits: string[];
+  job_summary: string;
+  job_responsibilities: string[];
+  required_qualifications: string[];
+  preferred: string[];
+  compensation_and_benefits: string[];
   department?: string;
 }
 
@@ -77,22 +85,29 @@ export class ReferenceJDService {
    */
   static convertJobToReferenceJD(job: {
     description?: string;
+    job_summary?: string;
     role_overview?: string;
+    job_responsibilities?: string[];
+    required_qualifications?: string[];
     required_skills_and_experience?: string[];
     requiredSkillsAndExperience?: string[];
+    preferred?: string[];
     nice_to_have?: string[];
     niceToHave?: string[];
+    compensation_and_benefits?: string[];
     benefits?: string[];
     department?: string;
   }): CreateReferenceJDRequest {
     return {
-      role_overview: job.description || job.role_overview || "",
-      requiredSkillsAndExperience:
+      job_summary: job.job_summary || job.description || job.role_overview || "",
+      job_responsibilities: job.job_responsibilities || [],
+      required_qualifications:
+        job.required_qualifications ||
         job.required_skills_and_experience ||
         job.requiredSkillsAndExperience ||
         [],
-      niceToHave: job.nice_to_have || job.niceToHave || [],
-      benefits: job.benefits || [],
+      preferred: job.preferred || job.nice_to_have || job.niceToHave || [],
+      compensation_and_benefits: job.compensation_and_benefits || job.benefits || [],
       department: job.department,
     };
   }
