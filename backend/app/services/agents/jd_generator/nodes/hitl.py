@@ -2,6 +2,7 @@ from langgraph.types import interrupt
 
 from app.schemas.agents.jd_generator import JobState
 
+
 def human_node(state: JobState) -> dict:
     draft_job_description = state["draft"]
 

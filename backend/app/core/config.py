@@ -40,11 +40,6 @@ class Settings(BaseSettings):
     LLM_MAX_RETRIES: int = 3
     GROQ_API_KEY: str
 
-    LANGCHAIN_TRACING_V2: bool
-    LANGCHAIN_ENDPOINT: str
-    LANGCHAIN_API_KEY: str
-    LANGCHAIN_PROJECT: str
-
     # Report Files
     REPORT_JSON: str = "shortlist_report.json"
     REPORT_SUMMARY: str = "shortlist_summary.txt"
