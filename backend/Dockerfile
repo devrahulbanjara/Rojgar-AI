@@ -17,5 +17,5 @@ COPY app ./app
 # Expose port (optional)
 EXPOSE 8000
 
-# Run FastAPI in dev mode
+# Run FastAPI in prod mode
 CMD ["uv", "run", "fastapi", "run"]

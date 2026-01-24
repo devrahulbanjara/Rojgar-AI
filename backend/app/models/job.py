@@ -1,30 +1,40 @@
-from datetime import UTC, date, datetime
-from typing import Optional
+from datetime import date, datetime
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core import get_datetime
 
 from . import Base
 
-
-def utc_now():
-    return datetime.now(UTC).replace(tzinfo=None)
+if TYPE_CHECKING:
+    from .organization import Organization
+    from .user import User
 
 
 class JobDescription(Base):
     __tablename__ = "job_description"
 
-    job_description_id: Mapped[str] = mapped_column(String, primary_key=True)
-    role_overview: Mapped[str] = mapped_column(String, nullable=False)
-    required_skills_experience: Mapped[dict] = mapped_column(JSON, nullable=False)
-    nice_to_have: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    offers: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    job_description_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    job_summary: Mapped[str] = mapped_column(String, nullable=False)
+    job_responsibilities: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False
+    )
+    required_qualifications: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
+    preferred: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
     job_posting: Mapped[Optional["JobPosting"]] = relationship(
@@ -35,12 +45,18 @@ class JobDescription(Base):
 class JobPosting(Base):
     __tablename__ = "job_posting"
 
-    job_id: Mapped[str] = mapped_column(String, primary_key=True)
-    company_id: Mapped[str] = mapped_column(
-        String, ForeignKey("company_profile.company_id"), nullable=False
+    job_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+
+    organization_id: Mapped[str] = mapped_column(
+        Uuid, ForeignKey("organization.organization_id"), nullable=False
     )
+
     job_description_id: Mapped[str] = mapped_column(
-        String, ForeignKey("job_description.job_description_id"), nullable=False
+        Uuid, ForeignKey("job_description.job_description_id"), nullable=False
+    )
+
+    created_by_user_id: Mapped[str | None] = mapped_column(
+        Uuid, ForeignKey("user.user_id"), nullable=True
     )
 
     title: Mapped[str] = mapped_column(String, nullable=False)
@@ -51,7 +67,7 @@ class JobPosting(Base):
     location_country: Mapped[str | None] = mapped_column(String, nullable=True)
     location_type: Mapped[str] = mapped_column(
         String, default="On-site", nullable=False
-    )  # Remote, On-site, Hybrid
+    )
 
     employment_type: Mapped[str | None] = mapped_column(String, nullable=True)
     salary_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -65,44 +81,38 @@ class JobPosting(Base):
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+        DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
+        DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
 
-    company: Mapped["CompanyProfile"] = relationship(
-        "CompanyProfile", back_populates="job_postings"
+    organization: Mapped["Organization"] = relationship(
+        "Organization", back_populates="jobs"
     )
+
     job_description: Mapped["JobDescription"] = relationship(
         "JobDescription", back_populates="job_posting"
     )
-    stats: Mapped[Optional["JobPostingStats"]] = relationship(
-        "JobPostingStats",
-        back_populates="job_posting",
-        uselist=False,
-        cascade="all, delete-orphan",
+
+    created_by: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[created_by_user_id]
     )
 
 
-class JobPostingStats(Base):
-    __tablename__ = "job_posting_stats"
-
-    job_stats_id: Mapped[str] = mapped_column(String, primary_key=True)
-    job_id: Mapped[str] = mapped_column(
-        String, ForeignKey("job_posting.job_id"), unique=True, nullable=False
+class ReferenceJobDescriptions(Base):
+    __tablename__ = "reference_job_description"
+    referncejd_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    organization_id: Mapped[str] = mapped_column(Uuid, nullable=False)
+    department: Mapped[str] = mapped_column(String, nullable=False)
+    job_summary: Mapped[str] = mapped_column(String, nullable=False)
+    job_responsibilities: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False
     )
-
-    applicant_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    views_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, nullable=False
+    required_qualifications: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
     )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=utc_now, onupdate=utc_now, nullable=False
-    )
-
-    job_posting: Mapped["JobPosting"] = relationship(
-        "JobPosting", back_populates="stats"
+    preferred: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+    compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
     )

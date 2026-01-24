@@ -1,45 +1,77 @@
-import os
 import uuid
 
-from app.core import settings
-from app.models.agents.jd_generator import JDGenNode
-from app.services.agents.jd_generator import app as jd_agent
-from app.services.agents.jd_generator import reference_jd
+from sqlalchemy.orm import Session
 
-os.environ.setdefault(
-    "LANGCHAIN_TRACING_V2", str(settings.LANGCHAIN_TRACING_V2).lower()
-)
-if settings.LANGCHAIN_API_KEY:
-    os.environ.setdefault("LANGCHAIN_API_KEY", settings.LANGCHAIN_API_KEY)
-if settings.LANGCHAIN_ENDPOINT:
-    os.environ.setdefault("LANGCHAIN_ENDPOINT", settings.LANGCHAIN_ENDPOINT)
-if settings.LANGCHAIN_PROJECT:
-    os.environ.setdefault("LANGCHAIN_PROJECT", settings.LANGCHAIN_PROJECT)
+from app.core.logging_config import logger
+from app.schemas.agents.jd_generator import JobDescription, JobState
+from app.services.agents.jd_generator import app as jd_agent
+from app.services.recruiter.reference_jd_formatter import ReferenceJDFormatter
+from app.services.recruiter.reference_jd_service import ReferenceJDService
 
 
 class JobGenerationService:
     @staticmethod
-    def generate_job_draft(requirements: str) -> JDGenNode:
+    def generate_job_draft(
+        title: str,
+        raw_requirements: str,
+        db: Session | None = None,
+        reference_jd_id: str | None = None,
+        organization_id: str | None = None,
+        current_draft: dict | None = None,
+    ) -> JobDescription:
         thread_id = str(uuid.uuid4())
+
         thread_config = {
             "configurable": {"thread_id": thread_id},
-            "run_name": "jd_generation_workflow",
-            "tags": ["jd_generation", "langgraph", "job_description"],
-            "metadata": {
-                "requirements_length": len(requirements),
-                "thread_id": thread_id,
-                "workflow": "jd_generator",
-            },
         }
 
-        initial_state = {
-            "requirements": requirements,
-            "format_reference": reference_jd,
+        reference_jd = ""
+
+        if reference_jd_id and db and organization_id:
+            try:
+                reference_jd_obj, about_the_company = (
+                    ReferenceJDService.get_reference_jd_by_id(
+                        db=db,
+                        reference_jd_id=reference_jd_id,
+                        organization_id=organization_id,
+                    )
+                )
+                if reference_jd_obj:
+                    reference_jd = ReferenceJDFormatter.format_reference_jd(
+                        reference_jd_obj, about_the_company
+                    )
+            except Exception:
+                pass
+
+        # Build initial state
+        initial_state: JobState = {
+            "title": title,
+            "raw_requirements": raw_requirements,
+            "reference_jd": reference_jd,
             "revision_count": 0,
+            "draft": None,
+            "feedback": "",
         }
+
+        # Runs only if it is a revision
+        if current_draft:
+            try:
+                draft: JobDescription = JobDescription(
+                    job_summary=current_draft.get("job_summary", ""),
+                    job_responsibilities=current_draft.get("job_responsibilities", []),
+                    required_qualifications=current_draft.get(
+                        "required_qualifications", []
+                    ),
+                    preferred=current_draft.get("preferred", []),
+                    compensation_and_benefits=current_draft.get(
+                        "compensation_and_benefits", []
+                    ),
+                )
+                initial_state["feedback"] = current_draft.get("feedback", "")
+                initial_state["draft"] = draft
+
+            except Exception as e:
+                logger.error(f"Failed to convert current_draft to JobDescription: {e}")
 
         result = jd_agent.invoke(initial_state, config=thread_config)
-
-        if "draft" in result and result["draft"]:
-            return result["draft"]
-        raise ValueError("Agent failed to generate a draft job description.")
+        return result

@@ -62,7 +62,21 @@ export function Sidebar({
     { title: "Profile", path: "/candidate/profile", icon: User },
   ];
 
-  const items = role === "recruiter" ? recruiterItems : candidateItems;
+  const organizationItems = [
+    {
+      title: "Overview",
+      path: "/dashboard/organization",
+      icon: LayoutDashboard,
+    },
+    { title: "Recruiters", path: "/organization/recruiters", icon: Users },
+  ];
+
+  const items =
+    role === "organization"
+      ? organizationItems
+      : role === "recruiter"
+        ? recruiterItems
+        : candidateItems;
   const toggleAriaLabel = isCollapsed ? "Expand sidebar" : "Collapse sidebar";
   const ToggleIcon = isCollapsed ? PanelLeftOpen : PanelLeftClose;
 
@@ -73,23 +87,20 @@ export function Sidebar({
         "bg-white/80 backdrop-blur-xl",
         "border-r border-[#E2E8F0] shadow-sm",
         !disableAnimation && "transition-all duration-500 ease-in-out",
-        isCollapsed ? "w-20" : "w-[280px]",
-        "max-lg:w-[280px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl",
+        isCollapsed ? "w-[72px]" : "w-[252px]",
+        "max-lg:w-[252px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl",
         isCollapsed
           ? "max-lg:-translate-x-full max-lg:pointer-events-none"
           : "max-lg:translate-x-0 max-lg:pointer-events-auto",
       )}
       style={{
         transitionDuration: disableAnimation ? "0ms" : "500ms",
-        transitionTimingFunction: disableAnimation
-          ? undefined
-          : "ease-in-out",
+        transitionTimingFunction: disableAnimation ? undefined : "ease-in-out",
       }}
     >
       {/* Decorative Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 via-transparent to-indigo-50/30 pointer-events-none" />
 
-      {/* Toggle Button - Edge when expanded, Bottom when collapsed */}
       <button
         type="button"
         onClick={onToggle}
@@ -100,15 +111,12 @@ export function Sidebar({
           "hover:border-[#3056F5] hover:text-[#3056F5]",
           "active:scale-95 active:shadow-sm",
           "focus:outline-none focus:ring-2 focus:ring-[#3056F5] focus:ring-offset-2",
-          isCollapsed
-            ? "bottom-6 left-1/2 -translate-x-1/2"
-            : "top-6 -right-4",
+          isCollapsed ? "bottom-6 left-1/2 -translate-x-1/2" : "top-6 -right-4",
         )}
         aria-label={toggleAriaLabel}
         aria-expanded={!isCollapsed}
         title={toggleAriaLabel}
       >
-        {/* Pulse Ring Animation */}
         {showPulse && (
           <div className="absolute inset-0 z-40">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3056F5] opacity-20" />
@@ -131,7 +139,7 @@ export function Sidebar({
         className={cn(
           "relative pt-8 flex flex-col space-y-2 transition-all duration-500 max-lg:pt-6 overflow-y-auto overflow-x-hidden px-4 flex-1",
           isCollapsed ? "items-center" : "",
-          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']",
         )}
       >
         {items.map((item) => {
@@ -147,13 +155,14 @@ export function Sidebar({
               title={item.title}
               className={cn(
                 "group relative flex items-center rounded-xl transition-all duration-300 cursor-pointer overflow-hidden flex-shrink-0",
-                isCollapsed ? "w-12 h-12 justify-center" : "w-full h-12 px-4 gap-3",
+                isCollapsed
+                  ? "w-12 h-12 justify-center"
+                  : "w-full h-12 px-4 gap-3",
                 isActive
                   ? "bg-gradient-to-r from-[#3056F5] to-[#6366F1] text-white shadow-md shadow-blue-500/20"
                   : "text-[#64748B] hover:bg-blue-50/50 hover:text-[#3056F5]",
               )}
             >
-              {/* Active Indicator Glow */}
               {isActive && (
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               )}
@@ -171,16 +180,15 @@ export function Sidebar({
               <span
                 className={cn(
                   "text-[15px] font-medium whitespace-nowrap block transition-all duration-300",
-                  isCollapsed
-                    ? "w-0 opacity-0 hidden"
-                    : "w-auto opacity-100",
-                  isActive ? "text-white font-semibold" : "text-[#475569] group-hover:text-[#3056F5]",
+                  isCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100",
+                  isActive
+                    ? "text-white font-semibold"
+                    : "text-[#475569] group-hover:text-[#3056F5]",
                 )}
               >
                 {item.title}
               </span>
 
-              {/* Tooltip for Collapsed State */}
               {isCollapsed && (
                 <div className="absolute left-full ml-4 px-3 py-1.5 bg-[#1E293B] text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl z-50">
                   {item.title}

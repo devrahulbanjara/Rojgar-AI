@@ -1,27 +1,15 @@
-import math
-import uuid
-from datetime import UTC, date, datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
+from app.core.authorization import get_organization_from_user
 from app.core.limiter import limiter
-from app.models import (
-    CandidateProfile,
-    CompanyProfile,
-    JobDescription,
-    JobPosting,
-    JobPostingStats,
-)
+from app.models import User
 from app.schemas import job as schemas
-from app.services.candidate.job_service_utils import get_latest_jobs
-from app.services.candidate.vector_job_service import JobVectorService
+from app.services.job_service import JobService, map_job_to_response
+from app.services.recruiter.reference_jd_service import ReferenceJDService
 
 router = APIRouter()
-vector_service = JobVectorService()
-
-VISIBLE_STATUSES = ["active"]
 
 
 @router.get("/recommendations", response_model=schemas.JobListResponse)
@@ -35,53 +23,23 @@ def get_recommendations(
     location_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-    """Get personalized job recommendations based on user skill or fallback to latest jobs if user skills is empty."""
-    candidate = (
-        db.query(CandidateProfile).filter(CandidateProfile.user_id == user_id).first()
+    result = JobService.get_recommendations(
+        db=db,
+        user_id=user_id,
+        page=page,
+        limit=limit,
+        employment_type=employment_type,
+        location_type=location_type,
     )
 
-    user_skills = []
-    if candidate and candidate.skills:
-        user_skills = [s.skill_name for s in candidate.skills]
-
-    all_jobs = []
-    if user_skills:
-        raw_ids = vector_service.recommend_jobs_by_skills(user_skills, limit=200)
-        if raw_ids:
-            jobs_from_db = (
-                db.query(JobPosting)
-                .filter(
-                    JobPosting.job_id.in_(raw_ids),
-                    JobPosting.status.in_(VISIBLE_STATUSES),
-                )
-                .all()
-            )
-            id_to_job = {job.job_id: job for job in jobs_from_db}
-            all_jobs = [id_to_job[jid] for jid in raw_ids if jid in id_to_job]
-
-    if not all_jobs:
-        all_jobs = get_latest_jobs(db, limit=200)
-
-    if employment_type:
-        all_jobs = [job for job in all_jobs if job.employment_type == employment_type]
-    if location_type:
-        all_jobs = [job for job in all_jobs if job.location_type == location_type]
-
-    total = len(all_jobs)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    paginated_jobs = all_jobs[start_idx:end_idx]
-
-    total_pages = math.ceil(total / limit) if limit > 0 else 0
-
     return {
-        "jobs": [map_job_to_response(job) for job in paginated_jobs],
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "total_pages": total_pages,
-        "has_next": page < total_pages,
-        "has_prev": page > 1,
+        "jobs": [map_job_to_response(job) for job in result["jobs"]],
+        "total": result["total"],
+        "page": result["page"],
+        "limit": result["limit"],
+        "total_pages": result["total_pages"],
+        "has_next": result["has_next"],
+        "has_prev": result["has_prev"],
     }
 
 
@@ -96,44 +54,23 @@ def search_jobs(
     location_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-    all_jobs = []
-    if q.strip():
-        raw_ids = vector_service.search_jobs(q, limit=200)
-        if raw_ids:
-            jobs_from_db = (
-                db.query(JobPosting)
-                .filter(
-                    JobPosting.job_id.in_(raw_ids),
-                    JobPosting.status.in_(VISIBLE_STATUSES),
-                )
-                .all()
-            )
-            id_to_job = {job.job_id: job for job in jobs_from_db}
-            all_jobs = [id_to_job[jid] for jid in raw_ids if jid in id_to_job]
-
-    if not all_jobs:
-        all_jobs = get_latest_jobs(db, limit=200)
-
-    if employment_type:
-        all_jobs = [job for job in all_jobs if job.employment_type == employment_type]
-    if location_type:
-        all_jobs = [job for job in all_jobs if job.location_type == location_type]
-
-    total = len(all_jobs)
-    start_idx = (page - 1) * limit
-    end_idx = start_idx + limit
-    paginated_jobs = all_jobs[start_idx:end_idx]
-
-    total_pages = math.ceil(total / limit) if limit > 0 else 0
+    result = JobService.search_jobs(
+        db=db,
+        query=q,
+        page=page,
+        limit=limit,
+        employment_type=employment_type,
+        location_type=location_type,
+    )
 
     return {
-        "jobs": [map_job_to_response(job) for job in paginated_jobs],
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "total_pages": total_pages,
-        "has_next": page < total_pages,
-        "has_prev": page > 1,
+        "jobs": [map_job_to_response(job) for job in result["jobs"]],
+        "total": result["total"],
+        "page": result["page"],
+        "limit": result["limit"],
+        "total_pages": result["total_pages"],
+        "has_next": result["has_next"],
+        "has_prev": result["has_prev"],
     }
 
 
@@ -147,101 +84,21 @@ def create_job(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    company = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
-    if not company:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company profile not found",
+            detail="User not found",
         )
 
-    company_id = company.company_id
+    organization_id = get_organization_from_user(user)
 
-    job_description_id = str(uuid.uuid4())
-    job_id = str(uuid.uuid4())
-
-    required_skills_list = (
-        job_data.requiredSkillsAndExperience
-        if job_data.requiredSkillsAndExperience
-        else []
+    job_posting = JobService.create_job(
+        db=db,
+        job_data=job_data,
+        user_id=user_id,
+        organization_id=organization_id,
     )
-    required_skills_experience_dict = {
-        "required_skills_experience": required_skills_list
-    }
-
-    nice_to_have_dict = None
-    if job_data.niceToHave:
-        nice_to_have_dict = {"nice_to_have": job_data.niceToHave}
-
-    offers_dict = None
-    if job_data.benefits:
-        offers_dict = {"benefits": job_data.benefits}
-
-    job_description = JobDescription(
-        job_description_id=job_description_id,
-        role_overview=job_data.description or "",
-        required_skills_experience=required_skills_experience_dict,
-        nice_to_have=nice_to_have_dict,
-        offers=offers_dict,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
-    )
-
-    db.add(job_description)
-    db.flush()
-
-    application_deadline = None
-    if job_data.applicationDeadline:
-        try:
-            if "T" in job_data.applicationDeadline:
-                application_deadline = datetime.fromisoformat(
-                    job_data.applicationDeadline.replace("Z", "+00:00")
-                ).date()
-            else:
-                application_deadline = datetime.strptime(
-                    job_data.applicationDeadline, "%Y-%m-%d"
-                ).date()
-        except Exception:
-            application_deadline = None
-
-    job_status = job_data.status if job_data.status else "active"
-
-    job_posting = JobPosting(
-        job_id=job_id,
-        company_id=company_id,
-        job_description_id=job_description_id,
-        title=job_data.title,
-        department=job_data.department,
-        level=job_data.level,
-        location_city=job_data.locationCity,
-        location_country=job_data.locationCountry,
-        location_type=job_data.locationType,
-        employment_type=job_data.employmentType,
-        salary_min=job_data.salaryMin,
-        salary_max=job_data.salaryMax,
-        salary_currency=job_data.currency,
-        status=job_status,
-        is_indexed=False,
-        posted_date=date.today(),
-        application_deadline=application_deadline,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
-    )
-
-    db.add(job_posting)
-
-    job_stats = JobPostingStats(
-        job_stats_id=str(uuid.uuid4()),
-        job_id=job_id,
-        applicant_count=0,
-        views_count=0,
-        created_at=datetime.now(UTC).replace(tzinfo=None),
-        updated_at=datetime.now(UTC).replace(tzinfo=None),
-    )
-
-    db.add(job_stats)
-
-    db.commit()
-    db.refresh(job_posting)
 
     return map_job_to_response(job_posting)
 
@@ -251,150 +108,263 @@ def create_job(
 def get_jobs(
     request: Request,
     user_id: str | None = None,
-    company_id: str | None = None,
+    organization_id: str | None = None,
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
     db: Session = Depends(get_db),
 ):
-    query = db.query(JobPosting)
-    is_recruiter_view = False
-
-    if user_id:
-        is_recruiter_view = True
-        company_profile = (
-            db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
-        )
-        if company_profile:
-            query = query.filter(JobPosting.company_id == company_profile.company_id)
-        else:
-            return {
-                "jobs": [],
-                "total": 0,
-                "page": page,
-                "limit": limit,
-                "total_pages": 0,
-                "has_next": False,
-                "has_prev": False,
-            }
-    elif company_id:
-        query = query.filter(JobPosting.company_id == company_id)
-
-    if status:
-        query = query.filter(JobPosting.status == status)
-    elif not is_recruiter_view:
-        query = query.filter(JobPosting.status.in_(VISIBLE_STATUSES))
-
-    total = query.count()
-
-    offset = (page - 1) * limit
-    jobs = (
-        query.options(
-            selectinload(JobPosting.company),
-            selectinload(JobPosting.job_description),
-            selectinload(JobPosting.stats),
-        )
-        .order_by(JobPosting.posted_date.desc())
-        .offset(offset)
-        .limit(limit)
-        .all()
+    result = JobService.get_jobs(
+        db=db,
+        user_id=user_id,
+        organization_id=organization_id,
+        status=status,
+        page=page,
+        limit=limit,
     )
-    items = [map_job_to_response(job) for job in jobs]
-    total_pages = math.ceil(total / limit) if limit > 0 else 0
 
     return {
-        "jobs": items,
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "total_pages": total_pages,
-        "has_next": page < total_pages,
-        "has_prev": page > 1,
+        "jobs": [map_job_to_response(job) for job in result["jobs"]],
+        "total": result["total"],
+        "page": result["page"],
+        "limit": result["limit"],
+        "total_pages": result["total_pages"],
+        "has_next": result["has_next"],
+        "has_prev": result["has_prev"],
     }
+
+
+@router.post("/reference-jd", response_model=schemas.ReferenceJDResponse)
+@limiter.limit("5/minute")
+def create_reference_jd(
+    request: Request,
+    data: schemas.CreateReferenceJD,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+    try:
+        reference_jd, about_the_company = ReferenceJDService.create_reference_jd(
+            db=db, organization_id=organization_id, data=data
+        )
+
+        return schemas.ReferenceJDResponse(
+            id=reference_jd.referncejd_id,
+            department=reference_jd.department,
+            job_summary=reference_jd.job_summary,
+            job_responsibilities=reference_jd.job_responsibilities,
+            required_qualifications=reference_jd.required_qualifications,
+            preferred=reference_jd.preferred,
+            compensation_and_benefits=reference_jd.compensation_and_benefits,
+            about_the_company=about_the_company,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@router.get("/reference-jd", response_model=schemas.ReferenceJDListResponse)
+@limiter.limit("5/minute")
+def get_reference_jds(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Get all reference JDs for the authenticated user's organization"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+
+    try:
+        reference_jds, about_the_company = ReferenceJDService.get_reference_jds(
+            db=db, organization_id=organization_id
+        )
+
+        total = len(reference_jds)
+        return schemas.ReferenceJDListResponse(
+            reference_jds=[
+                schemas.ReferenceJDResponse(
+                    id=ref_jd.referncejd_id,
+                    department=ref_jd.department,
+                    job_summary=ref_jd.job_summary,
+                    job_responsibilities=ref_jd.job_responsibilities,
+                    required_qualifications=ref_jd.required_qualifications,
+                    preferred=ref_jd.preferred,
+                    compensation_and_benefits=ref_jd.compensation_and_benefits,
+                    about_the_company=about_the_company,
+                )
+                for ref_jd in reference_jds
+            ],
+            total=total,
+            page=1,
+            limit=total if total > 0 else 1,
+            total_pages=1,
+            has_next=False,
+            has_prev=False,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/reference-jd/{reference_jd_id}", response_model=schemas.ReferenceJDResponse
+)
+@limiter.limit("5/minute")
+def get_reference_jd_by_id(
+    request: Request,
+    reference_jd_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Get a specific reference JD by ID"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+
+    try:
+        reference_jd, about_the_company = ReferenceJDService.get_reference_jd_by_id(
+            db=db, reference_jd_id=reference_jd_id, organization_id=organization_id
+        )
+
+        if not reference_jd:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Reference JD not found",
+            )
+
+        return schemas.ReferenceJDResponse(
+            id=reference_jd.referncejd_id,
+            department=reference_jd.department,
+            job_summary=reference_jd.job_summary,
+            job_responsibilities=reference_jd.job_responsibilities,
+            required_qualifications=reference_jd.required_qualifications,
+            preferred=reference_jd.preferred,
+            compensation_and_benefits=reference_jd.compensation_and_benefits,
+            about_the_company=about_the_company,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@router.put(
+    "/reference-jd/{reference_jd_id}",
+    response_model=schemas.ReferenceJDResponse,
+)
+@limiter.limit("5/minute")
+def update_reference_jd(
+    request: Request,
+    reference_jd_id: str,
+    data: schemas.CreateReferenceJD,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Update a reference JD"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+
+    try:
+        reference_jd, about_the_company = ReferenceJDService.update_reference_jd(
+            db=db,
+            reference_jd_id=reference_jd_id,
+            organization_id=organization_id,
+            data=data,
+        )
+
+        return schemas.ReferenceJDResponse(
+            id=reference_jd.referncejd_id,
+            department=reference_jd.department,
+            job_summary=reference_jd.job_summary,
+            job_responsibilities=reference_jd.job_responsibilities,
+            required_qualifications=reference_jd.required_qualifications,
+            preferred=reference_jd.preferred,
+            compensation_and_benefits=reference_jd.compensation_and_benefits,
+            about_the_company=about_the_company,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update reference JD: {str(e)}",
+        )
+
+
+@router.delete(
+    "/reference-jd/{reference_jd_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@limiter.limit("5/minute")
+def delete_reference_jd(
+    request: Request,
+    reference_jd_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Delete a reference JD"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    organization_id = get_organization_from_user(user)
+
+    try:
+        ReferenceJDService.delete_reference_jd(
+            db=db,
+            reference_jd_id=reference_jd_id,
+            organization_id=organization_id,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete reference JD: {str(e)}",
+        )
 
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)
 @limiter.limit("5/minute")
 def get_job_detail(request: Request, job_id: str, db: Session = Depends(get_db)):
-    job = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+    job = JobService.get_job_by_id(db=db, job_id=job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return map_job_to_response(job)
-
-
-def _build_location(city: str | None, country: str | None, location_type: str) -> str:
-    parts = [p for p in [city, country] if p]
-    return ", ".join(parts) if parts else location_type or "Not specified"
-
-
-def _extract_list_from_dict(data: dict | None, key: str) -> list:
-    if not data or not isinstance(data, dict):
-        return []
-    value = data.get(key, [])
-    return value if isinstance(value, list) else []
-
-
-def map_job_to_response(job: JobPosting):
-    jd = job.job_description
-
-    return {
-        "job_id": job.job_id,
-        "id": job.job_id,
-        "company_id": job.company_id,
-        "job_description_id": job.job_description_id,
-        "title": job.title,
-        "department": job.department,
-        "level": job.level,
-        "location": _build_location(
-            job.location_city, job.location_country, job.location_type
-        ),
-        "location_city": job.location_city,
-        "location_country": job.location_country,
-        "is_remote": job.location_type == "Remote",
-        "location_type": job.location_type,
-        "employment_type": job.employment_type or "Full-time",
-        "salary_min": job.salary_min,
-        "salary_max": job.salary_max,
-        "salary_currency": job.salary_currency or "NPR",
-        "salary_range": {
-            "min": job.salary_min or 0,
-            "max": job.salary_max or 0,
-            "currency": job.salary_currency or "NPR",
-        }
-        if (job.salary_min or job.salary_max)
-        else None,
-        "status": job.status,
-        "posted_date": job.posted_date.isoformat() if job.posted_date else None,
-        "application_deadline": job.application_deadline.isoformat()
-        if job.application_deadline
-        else None,
-        "created_at": job.created_at.isoformat() if job.created_at else None,
-        "updated_at": job.updated_at.isoformat() if job.updated_at else None,
-        "company": {
-            "id": job.company.company_id,
-            "name": job.company.company_name,
-            "description": job.company.description,
-            "location": _build_location(
-                job.company.location_city, job.company.location_country, ""
-            ),
-            "website": job.company.website,
-            "industry": job.company.industry,
-            "founded_year": job.company.founded_year,
-        }
-        if job.company
-        else None,
-        "company_name": job.company.company_name if job.company else "Unknown Company",
-        "description": jd.role_overview if jd else None,
-        "role_overview": jd.role_overview if jd else None,
-        "requirements": _extract_list_from_dict(
-            jd.required_skills_experience if jd else None, "required_skills_experience"
-        ),
-        "benefits": _extract_list_from_dict(jd.offers if jd else None, "benefits"),
-        "nice_to_have": _extract_list_from_dict(
-            jd.nice_to_have if jd else None, "nice_to_have"
-        ),
-        "required_skills_experience": jd.required_skills_experience if jd else None,
-        "applicant_count": job.stats.applicant_count if job.stats else 0,
-        "views_count": job.stats.views_count if job.stats else 0,
-        "is_featured": False,
-    }
