@@ -1,8 +1,8 @@
 import os
 from functools import lru_cache
 
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from app.core.config import settings
 from app.core.logging_config import logger
@@ -16,6 +16,7 @@ def get_embedding_model():
     return HuggingFaceEmbeddings(
         model_name=f"sentence-transformers/{settings.EMBEDDING_MODEL}"
     )
+
 
 def get_llm(model: str):
     return ChatGroq(

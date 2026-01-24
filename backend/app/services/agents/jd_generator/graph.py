@@ -1,6 +1,9 @@
 from langgraph.graph import END, START, StateGraph
+
 from app.schemas.agents.jd_generator import JobState
-from .nodes import generator_node, human_node, router 
+
+from .nodes import generator_node, human_node, router
+
 
 def create_workflow() -> StateGraph:
     workflow = StateGraph(JobState)
@@ -9,14 +12,9 @@ def create_workflow() -> StateGraph:
 
     workflow.add_edge(START, "generator")
     workflow.add_edge("generator", "human_review")
-    
+
     workflow.add_conditional_edges(
-        "human_review", 
-        router, 
-        {
-            "finalize": END,
-            "revise": "generator"
-        }
+        "human_review", router, {"finalize": END, "revise": "generator"}
     )
 
     return workflow

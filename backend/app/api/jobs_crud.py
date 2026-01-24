@@ -31,10 +31,6 @@ def generate_job_draft(
         )
 
     try:
-        combined_requirements = (
-            f"{draft_request.title}. {draft_request.raw_requirements}"
-        )
-
         # Get organization_id from user
         user = db.query(User).filter(User.user_id == user_id).first()
         if not user:
@@ -45,20 +41,27 @@ def generate_job_draft(
         organization_id = get_organization_from_user(user)
 
         generated_draft = JobGenerationService.generate_job_draft(
-            requirements=combined_requirements,
+            title=draft_request.title,
+            raw_requirements=draft_request.raw_requirements,
             db=db,
             reference_jd_id=draft_request.reference_jd_id,
             organization_id=organization_id,
             current_draft=draft_request.current_draft,
         )
 
+        if not generated_draft or not generated_draft.get("draft"):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate job description",
+            )
+
+        draft = generated_draft["draft"]
         return schemas.JobDraftResponse(
-            title=generated_draft.job_title,
-            description=generated_draft.role_overview,
-            requiredSkillsAndExperience=generated_draft.required_skills_and_experience,
-            niceToHave=generated_draft.nice_to_have,
-            benefits=generated_draft.what_company_offers,
-            about_company=generated_draft.about_the_company,
+            job_summary=draft.job_summary,
+            job_responsibilities=draft.job_responsibilities,
+            required_qualifications=draft.required_qualifications,
+            preferred=draft.preferred,
+            compensation_and_benefits=draft.compensation_and_benefits,
         )
 
     except Exception as e:

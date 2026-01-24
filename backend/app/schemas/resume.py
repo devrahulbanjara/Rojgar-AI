@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.shared import (
     CertificationBase,
@@ -93,13 +94,13 @@ class ResumeSkillResponse(SkillBase):
 
 
 class ResumeResponse(BaseModel):
-    resume_id: Annotated[str, "Resume ID"]
-    profile_id: Annotated[str, "Associated profile ID"]
+    resume_id: UUID
+    profile_id: UUID
     resume_name: Annotated[str, "Resume name"]
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
-    created_at: Annotated[datetime, "Resume creation timestamp"]
-    updated_at: Annotated[datetime, "Resume last update timestamp"]
+    created_at: Annotated[datetime, Field(description="Resume creation timestamp")]
+    updated_at: Annotated[datetime, Field(description="Resume last update timestamp")]
 
     social_links: Annotated[list[ResumeSocialLinkResponse], "Social links"] = []
     work_experiences: Annotated[
@@ -115,8 +116,8 @@ class ResumeResponse(BaseModel):
 
 
 class ResumeListResponse(BaseModel):
-    resume_id: Annotated[str, "Resume ID"]
+    resume_id: UUID
     resume_name: Annotated[str, "Resume name"]
     target_job_title: Annotated[str | None, "Target job title"] = None
-    updated_at: Annotated[datetime, "Last update timestamp"]
+    updated_at: datetime
     model_config = ConfigDict(from_attributes=True)

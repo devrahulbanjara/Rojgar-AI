@@ -15,6 +15,6 @@ Update relevant sections while preserving quality of unchanged parts. Strictly d
 
 FIRST_GENERATION_USER_PROMPT = """
 Create a complete job description matching the requirements and style reference. The job title which the recruiter you are generating is {title}.
-Requirements: {requirements}
-Style Reference: {format_reference}
+Requirements: {raw_requirements}
+Style Reference: {reference_jd}
 """
