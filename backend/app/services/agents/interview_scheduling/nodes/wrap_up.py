@@ -1,6 +1,5 @@
-from langsmith import traceable
-
 from app.models.agents.interview_scheduling import InterviewSchedulingState
+from langsmith import traceable
 
 
 @traceable(
