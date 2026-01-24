@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.user import UserRole
 
@@ -9,7 +10,7 @@ from app.models.user import UserRole
 class OrganizationInUserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Annotated[str, "Organization ID"]
+    id: Annotated[UUID, "Organization ID"]
     name: Annotated[str, "Organization name"]
     location_city: Annotated[str | None, "City"] = None
     location_country: Annotated[str | None, "Country"] = None
@@ -31,7 +32,7 @@ class CreateUserRequest(BaseModel):
     google_id: Annotated[str | None, "Google account ID"] = None
     picture: Annotated[str | None, "Profile picture URL"] = None
     role: Annotated[UserRole | None, "User role"] = None
-    organization_id: Annotated[str | None, "Associated organization ID"] = None
+    organization_id: Annotated[UUID | None, "Associated organization ID"] = None
 
 
 class LoginRequest(BaseModel):
@@ -55,18 +56,18 @@ class RoleSelectionRequest(BaseModel):
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Annotated[str, "User ID"]
+    id: Annotated[UUID, "User ID"]
     email: Annotated[str, "User email"]
     name: Annotated[str | None, "User full name"] = None
     picture: Annotated[str | None, "Profile picture URL"] = None
     google_id: Annotated[str | None, "Google account ID"] = None
     role: Annotated[UserRole | None, "User role"] = None
-    organization_id: Annotated[str | None, "Associated organization ID"] = None
+    organization_id: Annotated[UUID | None, "Associated organization ID"] = None
     organization: Annotated[
         OrganizationInUserResponse | None, "Organization details"
     ] = None
-    created_at: Annotated[datetime, "User creation timestamp"]
-    updated_at: Annotated[datetime, "User last update timestamp"]
+    created_at: Annotated[datetime, Field(description="User creation timestamp")]
+    updated_at: Annotated[datetime, Field(description="User last update timestamp")]
 
 
 class TokenResponse(BaseModel):

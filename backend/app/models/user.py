@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -22,9 +22,9 @@ class UserRole(str, Enum):
 class User(Base):
     __tablename__ = "user"
 
-    user_id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
     organization_id: Mapped[str | None] = mapped_column(
-        String, ForeignKey("organization.organization_id"), nullable=True
+        Uuid, ForeignKey("organization.organization_id"), nullable=True
     )
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
@@ -70,7 +70,7 @@ class UserGoogle(Base):
 
     user_google_id: Mapped[str] = mapped_column(String, primary_key=True)
     user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), unique=True, nullable=False
+        Uuid, ForeignKey("user.user_id"), unique=True, nullable=False
     )
 
     user: Mapped["User"] = relationship("User", back_populates="google_account")

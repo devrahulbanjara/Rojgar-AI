@@ -75,6 +75,11 @@ export function ReferenceJDCard({
 }: ReferenceJDCardProps) {
   const deptColor =
     departmentColors[jd.department || ""] || departmentColors.Default;
+  
+  // Map new backend fields to display fields (with backward compatibility)
+  const requiredQualifications = jd.required_qualifications || jd.requiredSkillsAndExperience || [];
+  const preferred = jd.preferred || jd.niceToHave || [];
+  const benefits = jd.compensation_and_benefits || jd.benefits || [];
 
   return (
     <div
@@ -128,7 +133,7 @@ export function ReferenceJDCard({
         {/* Skill Pills - First 2 + Counter */}
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
-            {jd.requiredSkillsAndExperience.slice(0, 2).map((skill, index) => (
+            {requiredQualifications.slice(0, 2).map((skill, index) => (
               <span
                 key={index}
                 className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-md"
@@ -136,9 +141,9 @@ export function ReferenceJDCard({
                 {skill.length > 30 ? skill.substring(0, 30) + "..." : skill}
               </span>
             ))}
-            {jd.requiredSkillsAndExperience.length > 2 && (
+            {requiredQualifications.length > 2 && (
               <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50/50 rounded-md">
-                +{jd.requiredSkillsAndExperience.length - 2} more
+                +{requiredQualifications.length - 2} more
               </span>
             )}
           </div>
@@ -149,24 +154,24 @@ export function ReferenceJDCard({
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50/50 text-purple-700 rounded-lg">
             <CheckCircle2 className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {jd.requiredSkillsAndExperience.length} Required
+              {requiredQualifications.length} Required
             </span>
           </div>
 
-          {jd.niceToHave.length > 0 && (
+          {preferred.length > 0 && (
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50/50 text-blue-700 rounded-lg">
               <Star className="w-4 h-4" />
               <span className="text-sm font-medium">
-                {jd.niceToHave.length} Nice-to-Have
+                {preferred.length} Nice-to-Have
               </span>
             </div>
           )}
 
-          {jd.benefits.length > 0 && (
+          {benefits.length > 0 && (
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50/50 text-green-700 rounded-lg">
               <Gift className="w-4 h-4" />
               <span className="text-sm font-medium">
-                {jd.benefits.length} Benefits
+                {benefits.length} Benefits
               </span>
             </div>
           )}

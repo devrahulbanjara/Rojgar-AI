@@ -117,4 +117,10 @@ export const queryKeys = {
     stats: ['dashboard', 'stats'] as const,
     activity: ['dashboard', 'activity'] as const,
   },
+  organization: {
+    recruiters: {
+      all: ['organization', 'recruiters'] as const,
+      detail: (id: string) => ['organization', 'recruiters', id] as const,
+    },
+  },
 } as const;
