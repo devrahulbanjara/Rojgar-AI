@@ -48,26 +48,12 @@ class JobVectorService:
         parts = [
             f"Title: {job.title}",
             f"Organization: {org_name}",
-            f"Role Overview: {jd.role_overview}",
+            f"Job Summary: {jd.job_summary}",
+            f"Job Responsibilities: {jd.job_responsibilities}",
+            f"Required Qualifications: {jd.required_qualifications}",
+            f"Preferred: {jd.preferred}",
+            f"Compensation and Benefits: {jd.compensation_and_benefits}",
         ]
-
-        if isinstance(jd.required_skills_experience, dict):
-            skills = jd.required_skills_experience.get("required_skills_experience", [])
-            if skills:
-                parts.append("Required Skills and Experience:")
-                parts.extend(f"- {s}" for s in skills)
-
-        if isinstance(jd.nice_to_have, dict):
-            nice = jd.nice_to_have.get("nice_to_have", [])
-            if nice:
-                parts.append("Nice to Have:")
-                parts.extend(f"- {n}" for n in nice)
-
-        if isinstance(jd.offers, dict):
-            benefits = jd.offers.get("benefits", [])
-            if benefits:
-                parts.append("Benefits:")
-                parts.extend(f"- {b}" for b in benefits)
 
         return "\n".join(parts)
 

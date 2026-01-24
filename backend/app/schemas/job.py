@@ -49,16 +49,11 @@ class JobDatesBase(BaseModel):
 
 
 class JobContentBase(BaseModel):
-    role_overview: Annotated[str | None, "Role overview"] = None
-    requirements: Annotated[list[str], "Job requirements"] = []
-    benefits: Annotated[list[str], "Job benefits"] = []
-    nice_to_have: Annotated[list[str], "Nice-to-have skills"] = []
-
-
-class JobStatsBase(BaseModel):
-    applicant_count: Annotated[int, "Number of applicants"] = 0
-    views_count: Annotated[int, "Number of views"] = 0
-    is_featured: Annotated[bool, "Whether the job is featured"] = False
+    job_summary: Annotated[str, "Job summary"]
+    job_responsibilities: Annotated[list[str], "Job responsibilities"]
+    required_qualifications: Annotated[list[str], "Required qualifications"]
+    preferred: Annotated[list[str], "Preferred skills"]
+    compensation_and_benefits: Annotated[list[str], "Compensation and benefits"]
 
 
 class OrganizationBase(BaseModel):
@@ -78,7 +73,7 @@ class OrganizationResponseInJob(OrganizationBase):
 
 class JobCore(BaseModel):
     job_id: UUID
-    id: str
+    id: UUID
     organization_id: UUID
     job_description_id: UUID
 
@@ -90,7 +85,6 @@ class JobResponse(
     SalaryBase,
     JobDatesBase,
     JobContentBase,
-    JobStatsBase,
     TimestampMixin,
 ):
     organization: Annotated[
@@ -129,12 +123,17 @@ class JobUpdate(JobCreateUpdateBase):
     title: Annotated[str | None, "Job title"] = None
     locationType: Annotated[str | None, "Location type"] = None
     currency: Annotated[str | None, "Salary currency"] = None
+    job_summary: Annotated[str | None, "Job summary"] = None
+    job_responsibilities: Annotated[list[str] | None, "Job responsibilities"] = None
+    required_qualifications: Annotated[list[str] | None, "Required qualifications"] = None
+    preferred: Annotated[list[str] | None, "Preferred skills"] = None
+    compensation_and_benefits: Annotated[list[str] | None, "Compensation and benefits"] = None
 
 
 class JobDraftGenerateRequest(BaseModel):
     title: Annotated[str, "Job title"]
     raw_requirements: Annotated[str, "Raw requirements text"]
-    reference_jd_id: Annotated[str | None, "Reference job description ID"] = None
+    reference_jd_id: Annotated[UUID | None, "Reference job description ID"] = None
     current_draft: Annotated[dict[str, Any] | None, "Current draft state"] = None
 
 
