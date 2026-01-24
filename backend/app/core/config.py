@@ -28,10 +28,9 @@ class Settings(BaseSettings):
 
     # Vector Database
     QDRANT_URL: str
-    QDRANT_API_KEY: str
     QDRANT_COLLECTION_NAME: str
     EMBEDDING_MODEL: str
-    EMBEDDING_DIM: int = 384
+    EMBEDDING_DIM: int = 3072
 
     # LLM Settings
     FAST_LLM: str = "llama-3.1-8b-instant"
@@ -40,11 +39,9 @@ class Settings(BaseSettings):
     LLM_MAX_RETRIES: int = 3
     GROQ_API_KEY: str
 
-    # Report Files
-    REPORT_JSON: str = "shortlist_report.json"
-    REPORT_SUMMARY: str = "shortlist_summary.txt"
-
     GMAIL_APP_PASSWORD: str
+
+    GOOGLE_API_KEY: str
 
     class Config:
         env_file = ".env"

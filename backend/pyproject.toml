@@ -9,7 +9,6 @@ dependencies = [
     "fastapi[standard]>=0.124.4",
     "httpx>=0.28.1",
     "langchain-groq>=1.1.1",
-    "langchain-huggingface>=1.2.0",
     "langchain-qdrant>=1.1.0",
     "langgraph>=1.0.5",
     "llama-parse>=0.6.90",
@@ -23,11 +22,11 @@ dependencies = [
     "python-jose>=3.5.0",
     "python-multipart>=0.0.20",
     "qdrant-client>=1.16.2",
-    "sentence-transformers>=5.2.0",
     "slowapi>=0.1.9",
     "sqlalchemy>=2.0.45",
     "starlette>=0.50.0",
     "tqdm>=4.67.1",
+    "langchain-google-genai>=4.2.0",
 ]
 
 [dependency-groups]
