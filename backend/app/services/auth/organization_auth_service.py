@@ -66,19 +66,21 @@ class OrganizationAuthService:
 
     @staticmethod
     def create_organization_token(
-        organization_id: str, remember_me: bool = False
+        organization_id: str | uuid.UUID, remember_me: bool = False
     ) -> tuple[str, int]:
         from app.core.config import settings
 
+        org_id_str = str(organization_id) if isinstance(organization_id, uuid.UUID) else organization_id
+
         if remember_me:
             token = create_token(
-                organization_id,
+                org_id_str,
                 entity_type="organization",
                 expires_minutes=30 * 24 * 60,
             )
             max_age = 30 * 24 * 60 * 60
         else:
-            token = create_token(organization_id, entity_type="organization")
+            token = create_token(org_id_str, entity_type="organization")
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
         return token, max_age
@@ -87,16 +89,4 @@ class OrganizationAuthService:
     def create_organization_response(
         organization: Organization,
     ) -> OrganizationResponse:
-        return OrganizationResponse(
-            id=organization.organization_id,
-            email=organization.email,
-            name=organization.name,
-            location_city=organization.location_city,
-            location_country=organization.location_country,
-            website=organization.website,
-            description=organization.description,
-            industry=organization.industry,
-            founded_year=organization.founded_year,
-            created_at=organization.created_at,
-            updated_at=organization.updated_at,
-        )
+        return OrganizationResponse.model_validate(organization)

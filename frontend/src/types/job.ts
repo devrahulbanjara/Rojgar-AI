@@ -86,20 +86,36 @@ export interface JobDetailResponse {
 
 export interface CreateJobRequest {
   title: string;
-  company: string;
-  locationCity: string;
-  locationCountry: string;
-  locationType: LocationType;
-  employmentType: EmploymentType;
+  company?: string; // Not used by backend, kept for compatibility
+  // New backend fields (required)
+  job_summary: string;
+  job_responsibilities: string[];
+  required_qualifications: string[];
+  preferred: string[];
+  compensation_and_benefits: string[];
+  // Location fields (snake_case for backend)
+  location_city?: string;
+  location_country?: string;
+  location_type?: string;
+  employment_type?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_currency?: string;
+  application_deadline?: string;
+  // Legacy fields (for backward compatibility)
+  locationCity?: string;
+  locationCountry?: string;
+  locationType?: LocationType;
+  employmentType?: EmploymentType;
   salaryMin?: number;
   salaryMax?: number;
   currency?: string;
-  description: string;
-  requiredSkillsAndExperience: string[];
+  description?: string;
+  requiredSkillsAndExperience?: string[];
   niceToHave?: string[];
   benefits?: string[];
-  level: JobLevel;
-  department: string;
+  level?: JobLevel;
+  department?: string;
   applicationDeadline?: string;
   mode?: "manual" | "agent";
   raw_requirements?: string;
@@ -125,11 +141,18 @@ export interface JobDraftGenerateRequest {
 }
 
 export interface JobDraftResponse {
-  title: string;
-  description: string;
-  requiredSkillsAndExperience: string[];
-  niceToHave: string[];
-  benefits: string[];
+  // New backend fields
+  job_summary?: string;
+  job_responsibilities?: string[];
+  required_qualifications?: string[];
+  preferred?: string[];
+  compensation_and_benefits?: string[];
+  // Legacy fields (for backward compatibility)
+  title?: string;
+  description?: string;
+  requiredSkillsAndExperience?: string[];
+  niceToHave?: string[];
+  benefits?: string[];
   about_company?: string;
 }
 

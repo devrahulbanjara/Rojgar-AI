@@ -6,39 +6,35 @@ class ReferenceJDFormatter:
     def format_reference_jd(
         reference_jd: ReferenceJobDescriptions, about_the_company: str | None = None
     ) -> str:
-        """
-        Convert a ReferenceJobDescriptions model to a formatted string
-        that can be used as a reference for the JD generator agent.
-        """
+
         formatted_lines = []
 
-        # Department
         if reference_jd.department:
             formatted_lines.append(f"Department: {reference_jd.department}")
 
-        # About the Company (if available)
         if about_the_company:
             formatted_lines.append(f"\nAbout the Company:\n{about_the_company}")
 
-        # Role Overview
-        formatted_lines.append(f"\nRole Overview:\n{reference_jd.role_overview}")
+        formatted_lines.append(f"\nJob Summary:\n{reference_jd.job_summary}")
 
-        # Required Skills & Experience
-        if reference_jd.required_skills_experience:
-            formatted_lines.append("\nRequired Skills & Experience:")
-            for skill in reference_jd.required_skills_experience:
-                formatted_lines.append(f"- {skill}")
+        if reference_jd.job_responsibilities:
+            formatted_lines.append("\nJob Responsibilities:")
+            for responsibility in reference_jd.job_responsibilities:
+                formatted_lines.append(f"- {responsibility}")
 
-        # Nice to Have
-        if reference_jd.nice_to_have:
-            formatted_lines.append("\nNice to Have:")
-            for item in reference_jd.nice_to_have:
-                formatted_lines.append(f"- {item}")
+        if reference_jd.required_qualifications:
+            formatted_lines.append("\nRequired Qualifications:")
+            for qualification in reference_jd.required_qualifications:
+                formatted_lines.append(f"- {qualification}")
 
-        # What We Offer (Benefits)
-        if reference_jd.offers:
-            formatted_lines.append("\nWhat We Offer:")
-            for offer in reference_jd.offers:
-                formatted_lines.append(f"- {offer}")
+        if reference_jd.preferred:
+            formatted_lines.append("\nPreferred Skills:")
+            for preferred in reference_jd.preferred:
+                formatted_lines.append(f"- {preferred}")
+
+        if reference_jd.compensation_and_benefits:
+            formatted_lines.append("\nCompensation and Benefits:")
+            for benefit in reference_jd.compensation_and_benefits:
+                formatted_lines.append(f"- {benefit}")
 
         return "\n".join(formatted_lines)

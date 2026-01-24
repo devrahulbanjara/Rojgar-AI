@@ -17,10 +17,11 @@ class ReferenceJDService:
             referncejd_id=id,
             organization_id=organization_id,
             department=data.department,
-            role_overview=data.role_overview,
-            required_skills_experience=data.requiredSkillsAndExperience,
-            nice_to_have=data.niceToHave,
-            offers=data.benefits,
+            job_summary=data.job_summary,
+            job_responsibilities=data.job_responsibilities,
+            required_qualifications=data.required_qualifications,
+            preferred=data.preferred,
+            compensation_and_benefits=data.compensation_and_benefits,
         )
         db.add(reference_jd)
         db.commit()
@@ -119,10 +120,11 @@ class ReferenceJDService:
             )
 
         reference_jd.department = data.department
-        reference_jd.role_overview = data.role_overview
-        reference_jd.required_skills_experience = data.requiredSkillsAndExperience
-        reference_jd.nice_to_have = data.niceToHave
-        reference_jd.offers = data.benefits
+        reference_jd.job_summary = data.job_summary
+        reference_jd.job_responsibilities = data.job_responsibilities
+        reference_jd.required_qualifications = data.required_qualifications
+        reference_jd.preferred = data.preferred
+        reference_jd.compensation_and_benefits = data.compensation_and_benefits
 
         db.commit()
         db.refresh(reference_jd)

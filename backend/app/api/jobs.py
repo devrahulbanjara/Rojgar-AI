@@ -158,10 +158,11 @@ def create_reference_jd(
         return schemas.ReferenceJDResponse(
             id=reference_jd.referncejd_id,
             department=reference_jd.department,
-            role_overview=reference_jd.role_overview,
-            requiredSkillsAndExperience=reference_jd.required_skills_experience,
-            niceToHave=reference_jd.nice_to_have or [],
-            benefits=reference_jd.offers or [],
+            job_summary=reference_jd.job_summary,
+            job_responsibilities=reference_jd.job_responsibilities,
+            required_qualifications=reference_jd.required_qualifications,
+            preferred=reference_jd.preferred,
+            compensation_and_benefits=reference_jd.compensation_and_benefits,
             about_the_company=about_the_company,
         )
 
@@ -194,19 +195,27 @@ def get_reference_jds(
             db=db, organization_id=organization_id
         )
 
+        total = len(reference_jds)
         return schemas.ReferenceJDListResponse(
             reference_jds=[
                 schemas.ReferenceJDResponse(
                     id=ref_jd.referncejd_id,
                     department=ref_jd.department,
-                    role_overview=ref_jd.role_overview,
-                    requiredSkillsAndExperience=ref_jd.required_skills_experience,
-                    niceToHave=ref_jd.nice_to_have or [],
-                    benefits=ref_jd.offers or [],
+                    job_summary=ref_jd.job_summary,
+                    job_responsibilities=ref_jd.job_responsibilities,
+                    required_qualifications=ref_jd.required_qualifications,
+                    preferred=ref_jd.preferred,
+                    compensation_and_benefits=ref_jd.compensation_and_benefits,
                     about_the_company=about_the_company,
                 )
                 for ref_jd in reference_jds
             ],
+            total=total,
+            page=1,
+            limit=total if total > 0 else 1,
+            total_pages=1,
+            has_next=False,
+            has_prev=False,
         )
 
     except Exception as e:
@@ -250,10 +259,11 @@ def get_reference_jd_by_id(
         return schemas.ReferenceJDResponse(
             id=reference_jd.referncejd_id,
             department=reference_jd.department,
-            role_overview=reference_jd.role_overview,
-            requiredSkillsAndExperience=reference_jd.required_skills_experience,
-            niceToHave=reference_jd.nice_to_have or [],
-            benefits=reference_jd.offers or [],
+            job_summary=reference_jd.job_summary,
+            job_responsibilities=reference_jd.job_responsibilities,
+            required_qualifications=reference_jd.required_qualifications,
+            preferred=reference_jd.preferred,
+            compensation_and_benefits=reference_jd.compensation_and_benefits,
             about_the_company=about_the_company,
         )
 
@@ -299,10 +309,11 @@ def update_reference_jd(
         return schemas.ReferenceJDResponse(
             id=reference_jd.referncejd_id,
             department=reference_jd.department,
-            role_overview=reference_jd.role_overview,
-            requiredSkillsAndExperience=reference_jd.required_skills_experience,
-            niceToHave=reference_jd.nice_to_have or [],
-            benefits=reference_jd.offers or [],
+            job_summary=reference_jd.job_summary,
+            job_responsibilities=reference_jd.job_responsibilities,
+            required_qualifications=reference_jd.required_qualifications,
+            preferred=reference_jd.preferred,
+            compensation_and_benefits=reference_jd.compensation_and_benefits,
             about_the_company=about_the_company,
         )
     except HTTPException:

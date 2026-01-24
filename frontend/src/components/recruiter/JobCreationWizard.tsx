@@ -130,6 +130,7 @@ export function JobCreationWizard({
     keywords: "",
     reference_jd_id: initialReferenceJdId || "",
     description: "",
+    jobResponsibilities: [""],
     locationCity: "",
     locationCountry: "",
     locationType: "",
@@ -171,6 +172,9 @@ export function JobCreationWizard({
         keywords: existingRequirements, // Pre-fill for AI revision
         reference_jd_id: "",
         description: jobToEdit.description || "",
+        jobResponsibilities: (jobToEdit as any).job_responsibilities && (jobToEdit as any).job_responsibilities.length > 0
+          ? (jobToEdit as any).job_responsibilities
+          : [""],
         locationCity: jobToEdit.location_city || "",
         locationCountry: jobToEdit.location_country || "",
         locationType: jobToEdit.location_type || "",
@@ -221,17 +225,22 @@ export function JobCreationWizard({
       setIsGenerating(false);
       setIsGenerated(true);
 
+      // Map new backend fields to form fields (with fallback to legacy fields)
+      const description = result.job_summary || result.description || "";
+      const jobResponsibilities = result.job_responsibilities || [];
+      const requiredSkills = result.required_qualifications || result.requiredSkillsAndExperience || [];
+      const niceToHave = result.preferred || result.niceToHave || [];
+      const benefits = result.compensation_and_benefits || result.benefits || [];
+
       setFormData((prev) => ({
         ...prev,
         title: result.title || prev.title,
-        description: result.description || "",
+        description: description,
+        jobResponsibilities: jobResponsibilities.length > 0 ? jobResponsibilities : prev.jobResponsibilities,
         requiredSkillsAndExperience:
-          result.requiredSkillsAndExperience.length > 0
-            ? result.requiredSkillsAndExperience
-            : prev.requiredSkillsAndExperience,
-        niceToHave:
-          result.niceToHave.length > 0 ? result.niceToHave : prev.niceToHave,
-        benefits: result.benefits.length > 0 ? result.benefits : prev.benefits,
+          requiredSkills.length > 0 ? requiredSkills : prev.requiredSkillsAndExperience,
+        niceToHave: niceToHave.length > 0 ? niceToHave : prev.niceToHave,
+        benefits: benefits.length > 0 ? benefits : prev.benefits,
       }));
 
       toast.success("Job description generated!", {
@@ -263,15 +272,17 @@ export function JobCreationWizard({
     setShowRevisionPrompt(false);
 
     try {
-      // Build current draft state to preserve edits
+      // Build current draft state to preserve edits (using new backend field names)
       const currentDraft = {
-        title: formData.title,
-        description: formData.description || "",
-        requiredSkillsAndExperience: formData.requiredSkillsAndExperience.filter(
+        job_summary: formData.description || "",
+        job_responsibilities: formData.jobResponsibilities.filter(
           (item) => item.trim() !== "",
         ),
-        niceToHave: formData.niceToHave.filter((item) => item.trim() !== ""),
-        benefits: formData.benefits.filter((item) => item.trim() !== ""),
+        required_qualifications: formData.requiredSkillsAndExperience.filter(
+          (item) => item.trim() !== "",
+        ),
+        preferred: formData.niceToHave.filter((item) => item.trim() !== ""),
+        compensation_and_benefits: formData.benefits.filter((item) => item.trim() !== ""),
       };
 
       const result = await generateDraftMutation.mutateAsync({
@@ -281,17 +292,22 @@ export function JobCreationWizard({
         current_draft: currentDraft,
       });
 
+      // Map new backend fields to form fields (with fallback to legacy fields)
+      const description = result.job_summary || result.description || prev.description;
+      const jobResponsibilities = result.job_responsibilities || [];
+      const requiredSkills = result.required_qualifications || result.requiredSkillsAndExperience || [];
+      const niceToHave = result.preferred || result.niceToHave || [];
+      const benefits = result.compensation_and_benefits || result.benefits || [];
+
       setFormData((prev) => ({
         ...prev,
         title: result.title || prev.title,
-        description: result.description || prev.description,
+        description: description,
+        jobResponsibilities: jobResponsibilities.length > 0 ? jobResponsibilities : prev.jobResponsibilities,
         requiredSkillsAndExperience:
-          result.requiredSkillsAndExperience.length > 0
-            ? result.requiredSkillsAndExperience
-            : prev.requiredSkillsAndExperience,
-        niceToHave:
-          result.niceToHave.length > 0 ? result.niceToHave : prev.niceToHave,
-        benefits: result.benefits.length > 0 ? result.benefits : prev.benefits,
+          requiredSkills.length > 0 ? requiredSkills : prev.requiredSkillsAndExperience,
+        niceToHave: niceToHave.length > 0 ? niceToHave : prev.niceToHave,
+        benefits: benefits.length > 0 ? benefits : prev.benefits,
       }));
 
       setIsGenerating(false);
@@ -336,28 +352,36 @@ export function JobCreationWizard({
       ? parseInt(formData.salaryMax, 10)
       : undefined;
 
+    // Map form data to new backend field names (snake_case)
+    const filteredJobResponsibilities = formData.jobResponsibilities.filter(
+      (item) => item.trim() !== "",
+    );
+
     return {
       title: formData.title.trim(),
-      company: "Current Company", // TODO: Get from user context/company
       department: formData.department.trim() || "General",
-      level: (formData.level.trim() || "Mid") as JobLevel,
-      description: formData.description.trim() || "", // Allow empty for drafts
-      requiredSkillsAndExperience:
-        filteredRequiredSkills.length > 0 ? filteredRequiredSkills : [""], // At least one empty string for drafts
-      niceToHave:
-        filteredNiceToHave.length > 0 ? filteredNiceToHave : undefined,
-      benefits: filteredBenefits.length > 0 ? filteredBenefits : undefined,
-      locationCity: formData.locationCity.trim() || "",
-      locationCountry: formData.locationCountry.trim() || "",
-      locationType: (formData.locationType || "On-site") as LocationType,
-      employmentType: (formData.employmentType.trim() ||
-        "Full-time") as EmploymentType,
-      salaryMin: salaryMin,
-      salaryMax: salaryMax,
-      currency: formData.currency || "NPR",
-      applicationDeadline: formData.applicationDeadline || undefined,
+      level: formData.level.trim() || "Mid",
+      // New backend fields (required by JobDescription schema)
+      job_summary: formData.description.trim() || "",
+      job_responsibilities: filteredJobResponsibilities,
+      required_qualifications:
+        filteredRequiredSkills.length > 0 ? filteredRequiredSkills : [],
+      preferred: filteredNiceToHave.length > 0 ? filteredNiceToHave : [],
+      compensation_and_benefits: filteredBenefits.length > 0 ? filteredBenefits : [],
+      // Backend expects snake_case for these fields
+      location_city: formData.locationCity.trim() || undefined,
+      location_country: formData.locationCountry.trim() || undefined,
+      location_type: formData.locationType || "On-site",
+      employment_type: formData.employmentType.trim() || "Full-time",
+      salary_min: salaryMin,
+      salary_max: salaryMax,
+      salary_currency: formData.currency || "NPR",
+      application_deadline: formData.applicationDeadline || undefined,
       mode: mode,
-    };
+      status: "active",
+      // Include raw_requirements if available (for agent mode)
+      raw_requirements: formData.keywords.trim() || undefined,
+    } as any; // Type assertion needed due to interface mismatch
   };
 
   const handleSaveDraft = async () => {
@@ -671,13 +695,16 @@ export function JobCreationWizard({
                         {isLoadingReferenceJDs ? (
                           <option disabled>Loading reference JDs...</option>
                         ) : referenceJDsData?.reference_jds && referenceJDsData.reference_jds.length > 0 ? (
-                          referenceJDsData.reference_jds.map((refJD) => (
-                            <option key={refJD.id} value={refJD.id}>
-                              {refJD.department
-                                ? `${refJD.department} - ${refJD.role_overview.slice(0, 50)}...`
-                                : refJD.role_overview.slice(0, 80)}
-                            </option>
-                          ))
+                          referenceJDsData.reference_jds.map((refJD) => {
+                            const jobSummary = refJD.job_summary || refJD.role_overview || "";
+                            return (
+                              <option key={refJD.id} value={refJD.id}>
+                                {refJD.department
+                                  ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
+                                  : jobSummary.slice(0, 80)}
+                              </option>
+                            );
+                          })
                         ) : (
                           <option disabled>No reference JDs available</option>
                         )}
@@ -791,10 +818,10 @@ export function JobCreationWizard({
                       </div>
                     </div>
 
-                    {/* About the Role */}
+                    {/* Job Summary */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        About the Role <span className="text-red-400">*</span>
+                        Job Summary <span className="text-red-400">*</span>
                       </label>
                       <textarea
                         value={formData.description}
@@ -803,6 +830,106 @@ export function JobCreationWizard({
                         placeholder="Summarize what this role is about..."
                         className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y text-base leading-relaxed text-slate-800 placeholder:text-slate-400 min-h-[100px] max-h-[300px] overflow-y-auto"
                       />
+                    </div>
+
+                    {/* Job Responsibilities */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Job Responsibilities
+                      </label>
+                      <p className="text-sm text-slate-500 mb-3">
+                        Add key responsibilities and duties for this role.
+                      </p>
+                      <div className="space-y-4">
+                        {formData.jobResponsibilities.map((item, index) => {
+                          const isEditing =
+                            editingField?.field === "jobResponsibilities" &&
+                            editingField.index === index;
+                          return (
+                            <div key={index} className="relative">
+                              {isEditing ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    placeholder="e.g. Design and implement scalable backend services"
+                                    rows={Math.max(2, Math.ceil(editValue.length / 60))}
+                                    className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                                    autoFocus
+                                  />
+                                  <div className="flex gap-2 justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={cancelEdit}
+                                      className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={saveEdit}
+                                      className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="relative">
+                                  <textarea
+                                    value={item}
+                                    onChange={(e) =>
+                                      updateArrayField("jobResponsibilities", index, e.target.value)
+                                    }
+                                    placeholder="e.g. Design and implement scalable backend services"
+                                    rows={Math.max(2, Math.ceil(item.length / 60))}
+                                    className={cn(
+                                      "w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                      "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                      "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
+                                      "whitespace-pre-wrap break-words",
+                                      isGenerated && item && "bg-indigo-50/50 border-indigo-200",
+                                    )}
+                                  />
+                                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        startEditing("jobResponsibilities", index, item)
+                                      }
+                                      className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                      style={{ right: "40px", top: "50%", transform: "translateY(-50%)" }}
+                                      aria-label="Edit responsibility"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+                                    {formData.jobResponsibilities.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          removeArrayItem("jobResponsibilities", index)
+                                        }
+                                        className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                        style={{ right: "12px", top: "50%", transform: "translateY(-50%)" }}
+                                        aria-label="Remove responsibility"
+                                      >
+                                        <XIcon className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => addArrayItem("jobResponsibilities")}
+                          className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                        >
+                          + Add responsibility
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -941,10 +1068,10 @@ export function JobCreationWizard({
                       </div>
                     </div>
 
-                    {/* About the Role */}
+                    {/* Job Summary */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        About the Role *
+                        Job Summary *
                       </label>
                       <p className="text-sm text-slate-500 mb-3">
                         Brief 2-3 sentence summary about this position.
@@ -968,6 +1095,106 @@ export function JobCreationWizard({
                           "bg-indigo-50/50 border-indigo-200",
                         )}
                       />
+                    </div>
+
+                    {/* Job Responsibilities */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        Job Responsibilities
+                      </label>
+                      <p className="text-sm text-slate-500 mb-3">
+                        Add key responsibilities and duties for this role.
+                      </p>
+                      <div className="space-y-4">
+                        {formData.jobResponsibilities.map((item, index) => {
+                          const isEditing =
+                            editingField?.field === "jobResponsibilities" &&
+                            editingField.index === index;
+                          return (
+                            <div key={index} className="relative">
+                              {isEditing ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    placeholder="e.g. Design and implement scalable backend services"
+                                    rows={Math.max(2, Math.ceil(editValue.length / 60))}
+                                    className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                                    autoFocus
+                                  />
+                                  <div className="flex gap-2 justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={cancelEdit}
+                                      className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={saveEdit}
+                                      className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="relative">
+                                  <textarea
+                                    value={item}
+                                    onChange={(e) =>
+                                      updateArrayField("jobResponsibilities", index, e.target.value)
+                                    }
+                                    placeholder="e.g. Design and implement scalable backend services"
+                                    rows={Math.max(2, Math.ceil(item.length / 60))}
+                                    className={cn(
+                                      "w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500",
+                                      "text-base leading-relaxed text-slate-800 placeholder:text-slate-400",
+                                      "transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto",
+                                      "whitespace-pre-wrap break-words",
+                                      isGenerated && item && "bg-indigo-50/50 border-indigo-200",
+                                    )}
+                                  />
+                                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        startEditing("jobResponsibilities", index, item)
+                                      }
+                                      className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                      style={{ right: "40px", top: "50%", transform: "translateY(-50%)" }}
+                                      aria-label="Edit responsibility"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+                                    {formData.jobResponsibilities.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          removeArrayItem("jobResponsibilities", index)
+                                        }
+                                        className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                        style={{ right: "12px", top: "50%", transform: "translateY(-50%)" }}
+                                        aria-label="Remove responsibility"
+                                      >
+                                        <XIcon className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => addArrayItem("jobResponsibilities")}
+                          className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                        >
+                          + Add responsibility
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1088,7 +1315,7 @@ export function JobCreationWizard({
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="px-8 py-6 border-b border-slate-100">
                     <h4 className="text-xl font-bold text-slate-900">
-                      Required Skills and Experience
+                      Required Qualifications
                     </h4>
                     <p className="text-sm text-slate-500 mt-2">
                       Add requirements, skills, and education  here.
@@ -1204,7 +1431,7 @@ export function JobCreationWizard({
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="px-8 py-6 border-b border-slate-100">
                     <h4 className="text-xl font-bold text-slate-900">
-                      Nice to Have
+                      Preferred
                     </h4>
                     <p className="text-sm text-slate-500 mt-2">
                       Optional experiences, qualities that would be beneficial but not
@@ -1388,7 +1615,7 @@ export function JobCreationWizard({
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="px-8 py-6 border-b border-slate-100">
                     <h4 className="text-xl font-bold text-slate-900">
-                      What We Offer
+                      Compensation & Benefits
                     </h4>
                   </div>
                   <div className="px-8 py-6 space-y-4">
