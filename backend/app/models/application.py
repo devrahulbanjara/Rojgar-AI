@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -32,10 +32,10 @@ class JobApplication(Base):
         String, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     job_id: Mapped[str] = mapped_column(
-        String, ForeignKey("job_posting.job_id"), nullable=False
+        Uuid, ForeignKey("job_posting.job_id"), nullable=False
     )
     organization_id: Mapped[str] = mapped_column(
-        String, ForeignKey("organization.organization_id"), nullable=False
+        Uuid, ForeignKey("organization.organization_id"), nullable=False
     )
 
     resume_id: Mapped[str] = mapped_column(

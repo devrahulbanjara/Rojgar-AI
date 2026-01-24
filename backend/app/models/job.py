@@ -20,8 +20,7 @@ class JobDescription(Base):
     job_description_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
     job_summary: Mapped[str] = mapped_column(String, nullable=False)
     job_responsibilities: Mapped[list[str]] = mapped_column(
-        ARRAY(String), 
-        nullable=False
+        ARRAY(String), nullable=False
     )
     required_qualifications: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
@@ -108,15 +107,12 @@ class ReferenceJobDescriptions(Base):
     department: Mapped[str] = mapped_column(String, nullable=False)
     job_summary: Mapped[str] = mapped_column(String, nullable=False)
     job_responsibilities: Mapped[list[str]] = mapped_column(
-        ARRAY(String), 
-        nullable=False
+        ARRAY(String), nullable=False
     )
     required_qualifications: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )
-    preferred: Mapped[list[str] | None] = mapped_column(
-        ARRAY(String), nullable=True
-    )
+    preferred: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )
