@@ -1,6 +1,8 @@
 from datetime import date
+from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.schemas.shared import (
     CertificationBase,
@@ -12,88 +14,94 @@ from app.schemas.shared import (
 
 
 class CandidateProfileUpdate(BaseModel):
-    full_name: str | None = None
-    phone: str | None = None
-    location_city: str | None = None
-    location_country: str | None = None
-    professional_headline: str | None = None
-    professional_summary: str | None = None
+    full_name: Annotated[str | None, "Candidate full name"] = None
+    phone: Annotated[str | None, "Phone number"] = None
+    location_city: Annotated[str | None, "City of residence"] = None
+    location_country: Annotated[str | None, "Country of residence"] = None
+    professional_headline: Annotated[str | None, "Professional headline/title"] = None
+    professional_summary: Annotated[str | None, "Professional summary/about"] = None
 
 
 class CertificationUpdate(BaseModel):
-    certification_name: str | None = None
-    issuing_body: str | None = None
-    credential_id: str | None = None
-    credential_url: str | None = None
-    issue_date: date | None = None
-    expiration_date: date | None = None
-    does_not_expire: bool | None = None
+    certification_name: Annotated[str | None, "Certification name"] = None
+    issuing_body: Annotated[str | None, "Issuing organization"] = None
+    credential_id: Annotated[UUID | None, Field(description="Credential ID")] = None
+    credential_url: Annotated[str | None, "Credential verification URL"] = None
+    issue_date: Annotated[date | None, "Date issued"] = None
+    expiration_date: Annotated[date | None, "Expiration date"] = None
+    does_not_expire: Annotated[bool | None, "Whether certification does not expire"] = (
+        None
+    )
 
 
 class SkillUpdate(BaseModel):
-    skill_name: str | None = None
+    skill_name: Annotated[str | None, "Skill name"] = None
 
 
 class WorkExperienceUpdate(BaseModel):
-    job_title: str | None = None
-    company: str | None = None
-    location: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-    is_current: bool | None = None
-    description: str | None = None
+    job_title: Annotated[str | None, "Job title"] = None
+    company: Annotated[str | None, "Company name"] = None
+    location: Annotated[str | None, "Job location"] = None
+    start_date: Annotated[date | None, "Start date"] = None
+    end_date: Annotated[date | None, "End date"] = None
+    is_current: Annotated[bool | None, "Whether this is the current role"] = None
+    description: Annotated[str | None, "Role description"] = None
 
 
 class EducationUpdate(BaseModel):
-    college_name: str | None = None
-    degree: str | None = None
-    location: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-    is_current: bool | None = None
+    college_name: Annotated[str | None, "College/university name"] = None
+    degree: Annotated[str | None, "Degree or program"] = None
+    location: Annotated[str | None, "Education location"] = None
+    start_date: Annotated[date | None, "Start date"] = None
+    end_date: Annotated[date | None, "End date"] = None
+    is_current: Annotated[bool | None, "Whether this education is ongoing"] = None
 
 
 class SocialLinkResponse(SocialLinkBase):
-    social_link_id: str
+    social_link_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class WorkExperienceResponse(WorkExperienceBase):
-    candidate_work_experience_id: str
+    candidate_work_experience_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class EducationResponse(EducationBase):
-    candidate_education_id: str
+    candidate_education_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class CertificationResponse(CertificationBase):
-    candidate_certification_id: str
+    candidate_certification_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class SkillResponse(SkillBase):
-    candidate_skill_id: str
+    candidate_skill_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class CandidateProfileFullResponse(BaseModel):
-    profile_id: str
-    user_id: str
-    full_name: str
-    email: str
-    picture: str | None = None
-    phone: str | None = None
-    location_city: str | None = None
-    location_country: str | None = None
-    professional_headline: str | None = None
-    professional_summary: str | None = None
+    profile_id: UUID
+    user_id: UUID
+    full_name: Annotated[str, "Candidate full name"]
+    email: EmailStr
+    picture: Annotated[str | None, "Profile picture URL"] = None
+    phone: Annotated[str | None, "Phone number"] = None
+    location_city: Annotated[str | None, "City of residence"] = None
+    location_country: Annotated[str | None, "Country of residence"] = None
+    professional_headline: Annotated[str | None, "Professional headline/title"] = None
+    professional_summary: Annotated[str | None, "Professional summary/about"] = None
 
-    social_links: list[SocialLinkResponse] = []
-    work_experiences: list[WorkExperienceResponse] = []
-    educations: list[EducationResponse] = []
-    certifications: list[CertificationResponse] = []
-    skills: list[SkillResponse] = []
+    social_links: Annotated[list[SocialLinkResponse], "Candidate social links"] = []
+    work_experiences: Annotated[
+        list[WorkExperienceResponse], "Candidate work experiences"
+    ] = []
+    educations: Annotated[list[EducationResponse], "Candidate education entries"] = []
+    certifications: Annotated[
+        list[CertificationResponse], "Candidate certifications"
+    ] = []
+    skills: Annotated[list[SkillResponse], "Candidate skills"] = []
 
     model_config = ConfigDict(from_attributes=True)

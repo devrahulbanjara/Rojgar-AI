@@ -215,14 +215,14 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           </section>
         )}
 
-        {/* Role Overview */}
+        {/* Job Summary */}
         {job.description && (
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50">
                 <Briefcase className="w-4 h-4 text-indigo-600" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">Role Overview</h2>
+              <h2 className="text-lg font-semibold text-foreground">Job Summary</h2>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
               {job.description}
@@ -230,14 +230,14 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           </section>
         )}
 
-        {/* Required Skills and Experience */}
+        {/* Required Qualifications */}
         {job.requirements && job.requirements.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50">
                 <CircleCheck className="w-4 h-4 text-emerald-600" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">Required Skills and Experience</h2>
+              <h2 className="text-lg font-semibold text-foreground">Required Qualifications</h2>
             </div>
             <ul className="space-y-3 list-disc list-inside pl-4">
               {job.requirements.map((requirement, index) => (
@@ -249,14 +249,14 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           </section>
         )}
 
-        {/* Nice to Have (Preferred) */}
+        {/* Preferred */}
         {job.nice_to_have && job.nice_to_have.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50">
                 <Sparkles className="w-4 h-4 text-amber-600" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">Nice to Have (Preferred)</h2>
+              <h2 className="text-lg font-semibold text-foreground">Preferred</h2>
             </div>
             <ul className="space-y-3 list-disc list-inside pl-4">
               {job.nice_to_have.map((item, index) => (
@@ -268,14 +268,14 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           </section>
         )}
 
-        {/* What We Offer (Benefits) */}
+        {/* Compensation & Benefits */}
         {job.benefits && job.benefits.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-violet-50">
                 <Sparkles className="w-4 h-4 text-violet-600" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">What We Offer</h2>
+              <h2 className="text-lg font-semibold text-foreground">Compensation & Benefits</h2>
             </div>
             <ul className="space-y-3 list-disc list-inside pl-4">
               {job.benefits.map((benefit, index) => (

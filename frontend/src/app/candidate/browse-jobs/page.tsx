@@ -249,8 +249,8 @@ export default function Jobs() {
       <div className="space-y-8 pb-12">
         {/* Enhanced Header with Gradient */}
         <AnimatedContainer direction="up" delay={0.1}>
-          <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 transition-all duration-300 ease-out">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold text-slate-900 tracking-tight">

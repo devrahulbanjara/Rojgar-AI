@@ -42,7 +42,7 @@ export const StatsGrid = memo<StatsGridProps>(({
   const recruiterStats = [
     {
       title: 'Active Jobs',
-      value: stats.activeApplications || 0, // Using activeApplications as proxy for activeJobs
+      value: stats.activeJobs || 0,
       icon: <BriefcaseIcon />,
       description: 'Jobs currently posted',
     },

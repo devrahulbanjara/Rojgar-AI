@@ -256,8 +256,8 @@ export default function ResumeListPage() {
         <div className="space-y-8 pb-12">
           {/* Enhanced Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
                 <PageHeader
                   title="Resume Builder"
                   subtitle="Create and manage tailored resumes from your profile data"
