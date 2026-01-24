@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Plus,
   Search,
@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Pencil,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { AppShell } from "../../../components/layout/AppShell";
 import { PageTransition, AnimatedContainer } from "../../../components/common";
@@ -16,6 +17,13 @@ import {
   RecruiterModal,
   RecruiterFormData,
 } from "../../../components/organization/RecruiterModal";
+import {
+  useRecruiters,
+  useCreateRecruiter,
+  useUpdateRecruiter,
+  useDeleteRecruiter,
+} from "../../../hooks/queries/useRecruiters";
+import type { Recruiter as BackendRecruiter } from "../../../services/organizationService";
 
 interface Recruiter {
   id: string;
@@ -27,47 +35,29 @@ interface Recruiter {
   avatar: string;
 }
 
-const initialRecruiters: Recruiter[] = [
-  {
-    id: "1",
-    name: "Rahul Banjara",
-    email: "rahul.banjara@techcorp.com",
-    status: "Active",
-    activeJobs: 8,
-    joinedDate: "Jan 15, 2024",
-    avatar: "https://ui-avatars.com/api/?name=Sarah+Wilson&background=random",
-  },
-  {
-    id: "2",
-    name: "Some recruiter",
-    email: "some.recruiter@techcorp.com",
-    status: "Active",
-    activeJobs: 5,
-    joinedDate: "Feb 03, 2024",
-    avatar: "https://ui-avatars.com/api/?name=Michael+Chen&background=random",
-  },
-  {
-    id: "3",
-    name: "Some recruiter2",
-    email: "some.recruiter2@techcorp.com",
-    status: "Inactive",
-    activeJobs: 0,
-    joinedDate: "Mar 10, 2024",
-    avatar: "https://ui-avatars.com/api/?name=Emily+Davis&background=random",
-  },
-  {
-    id: "4",
-    name: "Some recruiter3",
-    email: "some.recruiter3@techcorp.com",
-    status: "Active",
-    activeJobs: 12,
-    joinedDate: "Dec 12, 2023",
-    avatar: "https://ui-avatars.com/api/?name=David+Miller&background=random",
-  },
-];
+// Helper function to convert backend recruiter to frontend format
+const transformRecruiter = (backendRecruiter: BackendRecruiter): Recruiter => {
+  const joinedDate = new Date(backendRecruiter.created_at).toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    },
+  );
+
+  return {
+    id: backendRecruiter.id,
+    name: backendRecruiter.name,
+    email: backendRecruiter.email,
+    status: "Active", // Backend doesn't have status, defaulting to Active
+    activeJobs: 0, // Backend doesn't provide this, defaulting to 0
+    joinedDate,
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(backendRecruiter.name)}&background=random`,
+  };
+};
 
 export default function RecruitersPage() {
-  const [recruiters, setRecruiters] = useState<Recruiter[]>(initialRecruiters);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
@@ -75,6 +65,22 @@ export default function RecruitersPage() {
     null,
   );
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  // Fetch recruiters from API
+  const {
+    data: backendRecruiters,
+    isLoading,
+    error,
+  } = useRecruiters();
+  const createRecruiterMutation = useCreateRecruiter();
+  const updateRecruiterMutation = useUpdateRecruiter();
+  const deleteRecruiterMutation = useDeleteRecruiter();
+
+  // Transform backend data to frontend format
+  const recruiters = useMemo(() => {
+    if (!backendRecruiters) return [];
+    return backendRecruiters.map(transformRecruiter);
+  }, [backendRecruiters]);
 
   const filteredRecruiters = recruiters.filter(
     (recruiter) =>
@@ -95,39 +101,48 @@ export default function RecruitersPage() {
     setActiveMenuId(null);
   };
 
-  const handleDeleteRecruiter = (id: string) => {
+  const handleDeleteRecruiter = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this recruiter?")) {
-      setRecruiters(recruiters.filter((r) => r.id !== id));
-    }
-    setActiveMenuId(null);
-  };
-
-  const handleModalSubmit = (data: RecruiterFormData) => {
-    if (modalMode === "add") {
-      const newRecruiter: Recruiter = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: data.name,
-        email: data.email,
-        status: "Active",
-        activeJobs: 0,
-        joinedDate: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-        }),
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
-      };
-      setRecruiters([...recruiters, newRecruiter]);
-    } else {
-      if (selectedRecruiter) {
-        setRecruiters(
-          recruiters.map((r) =>
-            r.id === selectedRecruiter.id ? { ...r, ...data } : r,
-          ),
-        );
+      try {
+        await deleteRecruiterMutation.mutateAsync(id);
+        setActiveMenuId(null);
+      } catch (error) {
+        console.error("Failed to delete recruiter:", error);
+        alert("Failed to delete recruiter. Please try again.");
       }
     }
-    setIsModalOpen(false);
+  };
+
+  const handleModalSubmit = async (data: RecruiterFormData) => {
+    try {
+      if (modalMode === "add") {
+        if (!data.password) {
+          alert("Password is required when creating a new recruiter.");
+          return;
+        }
+        await createRecruiterMutation.mutateAsync({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        });
+      } else {
+        if (selectedRecruiter) {
+          await updateRecruiterMutation.mutateAsync({
+            id: selectedRecruiter.id,
+            data: {
+              name: data.name,
+              email: data.email,
+              ...(data.password && data.password.trim() && { password: data.password }),
+            },
+          });
+        }
+      }
+      setIsModalOpen(false);
+      setSelectedRecruiter(null);
+    } catch (error) {
+      console.error("Failed to save recruiter:", error);
+      alert("Failed to save recruiter. Please try again.");
+    }
   };
 
   return (
@@ -151,7 +166,13 @@ export default function RecruitersPage() {
                   </div>
                   <button
                     onClick={handleAddRecruiter}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                    disabled={
+                      isLoading ||
+                      createRecruiterMutation.isPending ||
+                      updateRecruiterMutation.isPending ||
+                      deleteRecruiterMutation.isPending
+                    }
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                   >
                     <Plus className="w-5 h-5" />
                     Add Recruiter
@@ -188,8 +209,33 @@ export default function RecruitersPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredRecruiters.map((recruiter) => (
+                {isLoading && (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
+                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                    </div>
+                    <h3 className="text-lg font-medium text-slate-900">
+                      Loading recruiters...
+                    </h3>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center shadow-sm">
+                    <h3 className="text-lg font-medium text-red-900 mb-2">
+                      Failed to load recruiters
+                    </h3>
+                    <p className="text-red-700 text-sm">
+                      {error instanceof Error
+                        ? error.message
+                        : "An error occurred. Please try again."}
+                    </p>
+                  </div>
+                )}
+
+                {!isLoading && !error && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredRecruiters.map((recruiter) => (
                     <div
                       key={recruiter.id}
                       className="group relative bg-white rounded-[24px] border border-slate-200 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] hover:border-indigo-200"
@@ -279,10 +325,11 @@ export default function RecruitersPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
-                {filteredRecruiters.length === 0 && (
+                {!isLoading && !error && filteredRecruiters.length === 0 && (
                   <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Search className="w-8 h-8 text-slate-400" />
@@ -303,9 +350,19 @@ export default function RecruitersPage() {
 
       <RecruiterModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedRecruiter(null);
+        }}
         onSubmit={handleModalSubmit}
-        initialData={selectedRecruiter || undefined}
+        initialData={
+          selectedRecruiter
+            ? {
+                name: selectedRecruiter.name,
+                email: selectedRecruiter.email,
+              }
+            : undefined
+        }
         mode={modalMode}
       />
     </AppShell>
