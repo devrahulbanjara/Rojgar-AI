@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -16,11 +17,18 @@ if TYPE_CHECKING:
 class JobDescription(Base):
     __tablename__ = "job_description"
 
-    job_description_id: Mapped[str] = mapped_column(String, primary_key=True)
-    role_overview: Mapped[str] = mapped_column(String, nullable=False)
-    required_skills_experience: Mapped[dict] = mapped_column(JSON, nullable=False)
-    nice_to_have: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    offers: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    job_description_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    job_summary: Mapped[str] = mapped_column(String, nullable=False)
+    job_responsibilities: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False
+    )
+    required_qualifications: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
+    preferred: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
@@ -37,19 +45,18 @@ class JobDescription(Base):
 class JobPosting(Base):
     __tablename__ = "job_posting"
 
-    job_id: Mapped[str] = mapped_column(String, primary_key=True)
+    job_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
 
     organization_id: Mapped[str] = mapped_column(
-        String, ForeignKey("organization.organization_id"), nullable=False
+        Uuid, ForeignKey("organization.organization_id"), nullable=False
     )
 
     job_description_id: Mapped[str] = mapped_column(
-        String, ForeignKey("job_description.job_description_id"), nullable=False
+        Uuid, ForeignKey("job_description.job_description_id"), nullable=False
     )
 
-    # Audit trail: which recruiter created this job (optional)
     created_by_user_id: Mapped[str | None] = mapped_column(
-        String, ForeignKey("user.user_id"), nullable=True
+        Uuid, ForeignKey("user.user_id"), nullable=True
     )
 
     title: Mapped[str] = mapped_column(String, nullable=False)
@@ -95,10 +102,17 @@ class JobPosting(Base):
 
 class ReferenceJobDescriptions(Base):
     __tablename__ = "reference_job_description"
-    referncejd_id: Mapped[str] = mapped_column(String, primary_key=True)
-    organization_id: Mapped[str] = mapped_column(String, nullable=False)
+    referncejd_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    organization_id: Mapped[str] = mapped_column(Uuid, nullable=False)
     department: Mapped[str] = mapped_column(String, nullable=False)
-    role_overview: Mapped[str] = mapped_column(String, nullable=False)
-    required_skills_experience: Mapped[list] = mapped_column(JSON, nullable=False)
-    nice_to_have: Mapped[list | None] = mapped_column(JSON, nullable=True)
-    offers: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    job_summary: Mapped[str] = mapped_column(String, nullable=False)
+    job_responsibilities: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False
+    )
+    required_qualifications: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
+    preferred: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+    compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )

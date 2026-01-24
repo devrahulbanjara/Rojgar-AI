@@ -42,6 +42,13 @@ const mapJobStatus = (status: string): JobStatus => {
 };
 
 interface BackendJobResponse {
+  // New backend fields
+  job_summary?: string;
+  job_responsibilities?: string[];
+  required_qualifications?: string[];
+  preferred?: string[];
+  compensation_and_benefits?: string[];
+  // Legacy fields (for backward compatibility)
   job_id?: string | number;
   id?: string | number;
   company_id?: string | number;
@@ -79,6 +86,13 @@ interface BackendJobResponse {
   salary_max?: number;
   salary_currency?: string;
   salary_range?: { min: number; max: number; currency: string };
+  // New backend fields
+  job_summary?: string;
+  job_responsibilities?: string[];
+  required_qualifications?: string[];
+  preferred?: string[];
+  compensation_and_benefits?: string[];
+  // Legacy fields (for backward compatibility)
   description?: string;
   role_overview?: string;
   requirements?: string[];
@@ -102,10 +116,14 @@ interface BackendJobResponse {
 }
 
 const transformJob = (job: BackendJobResponse): Job => {
-  const requirements = job.requirements || job.required_skills_experience || [];
+  // Map new backend fields to frontend fields
+  const requirements = job.required_qualifications || job.requirements || job.required_skills_experience || [];
+  const preferred = job.preferred || job.nice_to_have || [];
+  const benefits = job.compensation_and_benefits || job.benefits || [];
+  const description = job.job_summary || job.description || job.role_overview || "";
   const skills: string[] = [];
 
-  return {
+  const transformedJob = {
     id: parseInt(String(job.job_id || job.id || 0)) || 0,
     job_id: String(job.job_id || job.id || ""),
     company_id: parseInt(String(job.company_id || 0)) || 0,
@@ -187,12 +205,14 @@ const transformJob = (job: BackendJobResponse): Job => {
     salary_max: job.salary_max,
     salary_currency: job.salary_currency || "NPR",
     salary_range: job.salary_range,
-    description: job.description || job.role_overview || "",
+    description: description,
     requirements: Array.isArray(requirements) ? requirements : [],
     skills: skills.length > 0 ? skills : requirements,
-    nice_to_have: Array.isArray(job.nice_to_have) ? job.nice_to_have : [],
-    benefits: Array.isArray(job.benefits) ? job.benefits : [],
+    nice_to_have: Array.isArray(preferred) ? preferred : [],
+    benefits: Array.isArray(benefits) ? benefits : [],
     posted_date: job.posted_date || job.created_at || new Date().toISOString(),
+    // Add new backend fields for access via type casting
+    job_responsibilities: job.job_responsibilities || [],
     application_deadline: job.application_deadline || "",
     status: mapJobStatus(job.status || "draft"),
     is_remote: job.is_remote || job.location_type === "Remote",
@@ -202,7 +222,9 @@ const transformJob = (job: BackendJobResponse): Job => {
     created_by: job.created_by || "system",
     created_at: job.created_at || new Date().toISOString(),
     updated_at: job.updated_at || new Date().toISOString(),
-  };
+  } as Job & { job_responsibilities?: string[] };
+
+  return transformedJob;
 };
 
 export default function RecruiterJobsPage() {
@@ -400,17 +422,27 @@ export default function RecruiterJobsPage() {
     async (job: Job) => {
       try {
         const jobData = job as Job & {
+          job_summary?: string;
+          job_responsibilities?: string[];
+          required_qualifications?: string[];
+          preferred?: string[];
+          compensation_and_benefits?: string[];
           nice_to_have?: string[];
           benefits?: string[];
         };
 
-        const referenceJDData = {
-          role_overview: job.description || "",
-          requiredSkillsAndExperience: job.requirements || [],
-          niceToHave: jobData.nice_to_have || [],
-          benefits: jobData.benefits || [],
+        const referenceJDData = ReferenceJDService.convertJobToReferenceJD({
+          job_summary: jobData.job_summary,
+          description: job.description,
+          job_responsibilities: jobData.job_responsibilities,
+          required_qualifications: jobData.required_qualifications,
+          requirements: job.requirements,
+          preferred: jobData.preferred,
+          nice_to_have: jobData.nice_to_have || job.nice_to_have,
+          compensation_and_benefits: jobData.compensation_and_benefits,
+          benefits: jobData.benefits || job.benefits,
           department: job.department,
-        };
+        });
 
         await createReferenceJD.mutateAsync(referenceJDData);
         refetchReferenceJDs();

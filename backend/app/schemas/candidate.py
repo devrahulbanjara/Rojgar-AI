@@ -1,7 +1,8 @@
 from datetime import date
 from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.schemas.shared import (
     CertificationBase,
@@ -24,7 +25,7 @@ class CandidateProfileUpdate(BaseModel):
 class CertificationUpdate(BaseModel):
     certification_name: Annotated[str | None, "Certification name"] = None
     issuing_body: Annotated[str | None, "Issuing organization"] = None
-    credential_id: Annotated[str | None, "Credential ID"] = None
+    credential_id: Annotated[UUID | None, Field(description="Credential ID")] = None
     credential_url: Annotated[str | None, "Credential verification URL"] = None
     issue_date: Annotated[date | None, "Date issued"] = None
     expiration_date: Annotated[date | None, "Expiration date"] = None
@@ -57,35 +58,35 @@ class EducationUpdate(BaseModel):
 
 
 class SocialLinkResponse(SocialLinkBase):
-    social_link_id: Annotated[str, "Social link ID"]
+    social_link_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class WorkExperienceResponse(WorkExperienceBase):
-    candidate_work_experience_id: Annotated[str, "Candidate work experience ID"]
+    candidate_work_experience_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class EducationResponse(EducationBase):
-    candidate_education_id: Annotated[str, "Candidate education ID"]
+    candidate_education_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class CertificationResponse(CertificationBase):
-    candidate_certification_id: Annotated[str, "Candidate certification ID"]
+    candidate_certification_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class SkillResponse(SkillBase):
-    candidate_skill_id: Annotated[str, "Candidate skill ID"]
+    candidate_skill_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class CandidateProfileFullResponse(BaseModel):
-    profile_id: Annotated[str, "Candidate profile ID"]
-    user_id: Annotated[str, "Associated user ID"]
+    profile_id: UUID
+    user_id: UUID
     full_name: Annotated[str, "Candidate full name"]
-    email: Annotated[str, "Candidate email"]
+    email: EmailStr
     picture: Annotated[str | None, "Profile picture URL"] = None
     phone: Annotated[str | None, "Phone number"] = None
     location_city: Annotated[str | None, "City of residence"] = None

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -7,7 +8,7 @@ from app.models import ApplicationStatus
 
 
 class JobSummary(BaseModel):
-    job_id: Annotated[str, "Job ID"]
+    job_id: UUID
     title: Annotated[str, "Job title"]
     location_city: Annotated[str | None, "City of the job"] = None
     employment_type: Annotated[
@@ -18,7 +19,7 @@ class JobSummary(BaseModel):
 
 
 class OrganizationSummary(BaseModel):
-    organization_id: Annotated[str, "Organization ID"]
+    organization_id: UUID
     organization_name: Annotated[str, "Organization name"]
     organization_logo: Annotated[str | None, "URL of organization logo"] = None
 
@@ -26,12 +27,11 @@ class OrganizationSummary(BaseModel):
 
 
 class ApplicationResponse(BaseModel):
-    application_id: Annotated[str, "Application ID"]
+    application_id: UUID
     current_status: Annotated[ApplicationStatus, "Current application status"]
-    applied_at: Annotated[datetime, "Application submission timestamp"]
-    updated_at: Annotated[datetime, "Last update timestamp"]
+    applied_at: datetime
+    updated_at: datetime
 
-    # Nested objects
     job: Annotated[JobSummary, "Job details"]
     organization: Annotated[OrganizationSummary, "Organization details"]
 

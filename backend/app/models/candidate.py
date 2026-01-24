@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -18,7 +18,7 @@ class CandidateProfile(Base):
 
     profile_id: Mapped[str] = mapped_column(String, primary_key=True)
     user_id: Mapped[str] = mapped_column(
-        String, ForeignKey("user.user_id"), unique=True, nullable=False
+        Uuid, ForeignKey("user.user_id"), unique=True, nullable=False
     )
 
     phone: Mapped[str | None] = mapped_column(String, nullable=True)

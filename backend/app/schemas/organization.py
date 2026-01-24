@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class OrganizationSignupRequest(BaseModel):
-    email: Annotated[str, "Organization email"]
+    email: Annotated[EmailStr, "Organization email"]
     password: Annotated[str, "Organization password"]
     name: Annotated[str, "Organization name"]
     location_city: Annotated[str | None, "City where the organization is located"] = (
@@ -21,7 +22,7 @@ class OrganizationSignupRequest(BaseModel):
 
 
 class OrganizationLoginRequest(BaseModel):
-    email: Annotated[str, "Organization email"]
+    email: Annotated[EmailStr, "Organization email"]
     password: Annotated[str, "Organization password"]
     remember_me: Annotated[bool, "Persist login session"] = False
 
@@ -29,8 +30,8 @@ class OrganizationLoginRequest(BaseModel):
 class OrganizationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Annotated[str, "Organization ID"]
-    email: Annotated[str, "Organization email"]
+    id: Annotated[UUID, Field(description="Organization ID")]
+    email: Annotated[EmailStr, "Organization email"]
     name: Annotated[str, "Organization name"]
     location_city: Annotated[str | None, "City where the organization is located"] = (
         None
@@ -42,8 +43,12 @@ class OrganizationResponse(BaseModel):
     description: Annotated[str | None, "Organization description"] = None
     industry: Annotated[str | None, "Industry domain"] = None
     founded_year: Annotated[int | None, "Year the organization was founded"] = None
-    created_at: Annotated[datetime, "Organization creation timestamp"]
-    updated_at: Annotated[datetime, "Organization last update timestamp"]
+    created_at: Annotated[
+        datetime, Field(description="Organization creation timestamp")
+    ]
+    updated_at: Annotated[
+        datetime, Field(description="Organization last update timestamp")
+    ]
 
 
 class OrganizationUpdateRequest(BaseModel):
@@ -61,13 +66,13 @@ class OrganizationUpdateRequest(BaseModel):
 
 
 class CreateRecruiterRequest(BaseModel):
-    email: Annotated[str, "Recruiter email"]
+    email: Annotated[EmailStr, "Recruiter email"]
     name: Annotated[str, "Recruiter name"]
     password: Annotated[str, "Recruiter password"]
 
 
 class UpdateRecruiterRequest(BaseModel):
-    email: Annotated[str | None, "Recruiter email"] = None
+    email: Annotated[EmailStr | None, "Recruiter email"] = None
     name: Annotated[str | None, "Recruiter name"] = None
     password: Annotated[str | None, "Recruiter password"] = None
 
@@ -75,12 +80,14 @@ class UpdateRecruiterRequest(BaseModel):
 class RecruiterResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: Annotated[str, "Recruiter ID"]
-    email: Annotated[str, "Recruiter email"]
+    id: UUID
+    email: Annotated[EmailStr, "Recruiter email"]
     name: Annotated[str, "Recruiter name"]
-    organization_id: Annotated[str | None, "Associated organization ID"] = None
-    created_at: Annotated[datetime, "Recruiter creation timestamp"]
-    updated_at: Annotated[datetime, "Recruiter last update timestamp"]
+    organization_id: UUID | None = None
+    created_at: Annotated[datetime, Field(description="Recruiter creation timestamp")]
+    updated_at: Annotated[
+        datetime, Field(description="Recruiter last update timestamp")
+    ]
 
 
 class OrganizationTokenResponse(BaseModel):
