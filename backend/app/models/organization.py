@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Integer, String
+from sqlalchemy import DateTime, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class Organization(Base):
     __tablename__ = "organization"
 
-    organization_id: Mapped[str] = mapped_column(String, primary_key=True)
+    organization_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)

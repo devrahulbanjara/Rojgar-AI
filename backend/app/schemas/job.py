@@ -110,12 +110,12 @@ class JobCreateUpdateBase(JobDescription):
     level: Annotated[str | None, "Job level"] = None
     location_city: Annotated[str | None, "Job city"] = None
     location_country: Annotated[str | None, "Job country"] = None
-    locationType: Annotated[str, "Location type"] = "On-site"
-    employmentType: Annotated[str | None, "Employment type"] = None
-    salaryMin: Annotated[int | None, "Minimum salary"] = None
-    salaryMax: Annotated[int | None, "Maximum salary"] = None
-    currency: Annotated[str | None, "Salary currency"] = "NPR"
-    applicationDeadline: Annotated[str | None, "Application deadline"] = None
+    location_type: Annotated[str, "Location type"] = "On-site"
+    employment_type: Annotated[str | None, "Employment type"] = None
+    salary_min: Annotated[int | None, "Minimum salary"] = None
+    salary_max: Annotated[int | None, "Maximum salary"] = None
+    salary_currency: Annotated[str | None, "Salary currency"] = "NPR"
+    application_deadline: Annotated[str | None, "Application deadline"] = None
     status: Annotated[str | None, "Job status"] = "active"
 
 
