@@ -1,6 +1,5 @@
-from . import interview_scheduling, shortlist
+from . import interview_scheduling
 
 __all__ = [
-    "shortlist",
     "interview_scheduling",
 ]

@@ -7,6 +7,7 @@ class JobDescription(BaseModel):
     """
     Output Schema for the Job Description Generation LLM
     """
+
     job_summary: str
     job_responsibilities: list[str]
     required_qualifications: list[str]
@@ -16,8 +17,8 @@ class JobDescription(BaseModel):
 
 class JobState(TypedDict):
     title: str
-    requirements: str
-    format_reference: str
+    raw_requirements: str
+    reference_jd: str
     draft: JobDescription | None
     feedback: str
     revision_count: int

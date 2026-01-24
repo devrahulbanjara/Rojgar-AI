@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.user import UserRole
 
@@ -65,8 +65,8 @@ class UserResponse(BaseModel):
     organization: Annotated[
         OrganizationInUserResponse | None, "Organization details"
     ] = None
-    created_at: Annotated[datetime, "User creation timestamp"]
-    updated_at: Annotated[datetime, "User last update timestamp"]
+    created_at: Annotated[datetime, Field(description="User creation timestamp")]
+    updated_at: Annotated[datetime, Field(description="User last update timestamp")]
 
 
 class TokenResponse(BaseModel):
