@@ -1,7 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.core import settings
-from app.core.ml import get_llm
+from app.core.model_provider import get_llm
 from app.schemas.agents.jd_generator import JobDescription, JobState
 from app.services.agents.jd_generator.prompts import (
     FIRST_GENERATION_USER_PROMPT,

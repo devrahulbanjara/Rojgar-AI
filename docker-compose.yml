@@ -1,18 +1,7 @@
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+  qdrant:
+    image: qdrant/qdrant:latest
     ports:
-      - "8000:8000"
-    env_file:
-      - ./backend/.env
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./frontend/.env
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/data

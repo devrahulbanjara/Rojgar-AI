@@ -6,16 +6,14 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core import settings
 from app.core.logging_config import logger
-from app.core.ml import get_embedding_model
+from app.core.model_provider import get_embedding_model
 from app.models.job import JobPosting
 
 
 class JobVectorService:
     def __init__(self):
         self.embedding_model = get_embedding_model()
-        self.client = QdrantClient(
-            url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY
-        )
+        self.client = QdrantClient(url=settings.QDRANT_URL)
         self.collection_name = settings.QDRANT_COLLECTION_NAME
         self._ensure_collection_exists()
         self.qdrant = QdrantVectorStore(
@@ -100,9 +98,9 @@ class JobVectorService:
                     "salary_max": job.salary_max,
                     "salary_currency": job.salary_currency,
                     "status": job.status,
-                    "posted_date": job.posted_date.isoformat()
-                    if job.posted_date
-                    else None,
+                    "posted_date": (
+                        job.posted_date.isoformat() if job.posted_date else None
+                    ),
                 }
 
                 doc = Document(page_content=text_content, metadata=metadata)
