@@ -1,7 +1,7 @@
+from app.models.agents.interview_scheduling import InterviewSchedulingState
 from langsmith import traceable
 
 from app.core.config import settings
-from app.models.agents.interview_scheduling import InterviewSchedulingState
 
 from ..templates import get_interview_email_template
 

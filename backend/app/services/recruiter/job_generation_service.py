@@ -1,12 +1,11 @@
 import os
 import uuid
 
+from app.models.agents.jd_generator import JDGenNode, JobState
 from sqlalchemy.orm import Session
 
 from app.core import settings
-from app.models.agents.jd_generator import JDGenNode, JobState
 from app.services.agents.jd_generator import app as jd_agent
-from app.services.agents.jd_generator import reference_jd
 from app.services.recruiter.reference_jd_formatter import ReferenceJDFormatter
 from app.services.recruiter.reference_jd_service import ReferenceJDService
 
@@ -42,7 +41,6 @@ class JobGenerationService:
             },
         }
 
-        format_reference = reference_jd  # Default fallback
         if reference_jd_id and db and organization_id:
             try:
                 reference_jd_obj, about_the_company = (
@@ -66,7 +64,6 @@ class JobGenerationService:
             "revision_count": 0,
             "draft": None,
             "feedback": "",
-            "final_doc": None,
         }
 
         if current_draft:

@@ -1,50 +1,32 @@
 from langchain_core.messages import HumanMessage, SystemMessage
-from langsmith import traceable
 
-from app.models.agents.jd_generator import JobState
+from app.services.agents.jd_generator.prompts import SYSTEM_PROMPT, REVISION_USER_PROMPT, FIRST_GENERATION_USER_PROMPT
+from app.schemas.agents.jd_generator import JobState
+from app.core import settings
+from app.core.ml import get_llm
+from app.schemas.agents.jd_generator import JobDescription
 
-from ..llm_service import structured_llm
-
-
-@traceable(
-    name="jd_generator_node",
-    tags=["node:generator", "jd_generation"],
-    metadata={"node_type": "generator", "purpose": "generate_or_revise_jd"},
-)
 def generator_node(state: JobState) -> dict:
-    """Generate or revise job description based on requirements and feedback."""
 
-    reqs = state["requirements"]
-    fmt = state["format_reference"]
-    feedback = state.get("feedback")
-    is_revision = feedback and state.get("draft")
+    title = state["title"]
+    short_requirements = state["requirements"]
+    
+    format_reference = state["format_reference"]
+    feedback = state.get("feedback", "")
+    is_revision = bool(feedback) and state.get("draft") is not None
 
-    system_prompt = """
-            You are an expert technical recruiter who writes compelling job descriptions.
-            Your job descriptions are:
-            - Honest and realistic (no buzzwords or marketing fluff)
-            - Well-structured and scannable
-            - Focused on what makes the role and company unique
-
-            Output only valid JSON matching the schema. No markdown, no explanations.
-            """
+    llm = get_llm(settings.THINK_LLM)
+    structured_llm = llm.with_structured_output(JobDescription)
 
     if is_revision:
         current_draft = state["draft"].model_dump_json(indent=2)
-        user_prompt = (
-            f"Current Draft:\n{current_draft}\n\n"
-            f"Revision Request:\n{feedback}\n\n"
-            "Update relevant sections while preserving quality of unchanged parts."
-        )
+        user_prompt = REVISION_USER_PROMPT.format(title=title, current_draft=current_draft, feedback=feedback)
+
     else:
-        user_prompt = (
-            f"Requirements:\n{reqs}\n\n"
-            f"Style Reference:\n{fmt}\n\n"
-            "Create a complete job description matching the requirements and style reference."
-        )
+        user_prompt = FIRST_GENERATION_USER_PROMPT.format(title=title, requirements=short_requirements, format_reference=format_reference)
 
     messages = [
-        SystemMessage(content=system_prompt),
+        SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(content=user_prompt),
     ]
 
