@@ -1,9 +1,8 @@
 from typing import Literal
 
+from app.models.agents.interview_scheduling import InterviewSchedulingState
 from langgraph.types import interrupt
 from langsmith import traceable
-
-from app.models.agents.interview_scheduling import InterviewSchedulingState
 
 
 @traceable(

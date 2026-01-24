@@ -7,7 +7,7 @@ from app.core import settings
 from .graph import create_workflow
 from .jds import reference_jd
 from .llm_service import get_llm, structured_llm
-from .nodes import finalizer_node, generator_node, human_node, router
+from .nodes import generator_node, human_node, router
 
 os.environ.setdefault(
     "LANGCHAIN_TRACING_V2", str(settings.LANGCHAIN_TRACING_V2).lower()
@@ -29,7 +29,6 @@ __all__ = [
     "structured_llm",
     "generator_node",
     "human_node",
-    "finalizer_node",
     "router",
     "reference_jd",
 ]
