@@ -61,23 +61,6 @@ export const StatCard = memo<StatCardProps>(({
       <p className="text-sm font-medium text-[#475569]">
         {description || title}
       </p>
-
-      {/* Trend (optional) */}
-      {trend && (
-        <div className="flex items-center gap-1 mt-3">
-          <span
-            className={cn(
-              "text-xs font-medium px-2 py-0.5 rounded-full",
-              trend.isPositive
-                ? "text-green-700 bg-green-50 border border-green-100"
-                : "text-red-700 bg-red-50 border border-red-100"
-            )}
-          >
-            {trend.isPositive ? "+" : ""}{trend.value}%
-          </span>
-          <span className="text-xs text-[#94A3B8]">vs last month</span>
-        </div>
-      )}
     </div>
   );
 });
