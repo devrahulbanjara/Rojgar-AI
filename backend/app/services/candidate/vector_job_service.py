@@ -6,17 +6,14 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core import settings
 from app.core.logging_config import logger
-from app.core.ml import get_embedding_model
-from app.models.company import CompanyProfile
+from app.core.model_provider import get_embedding_model
 from app.models.job import JobPosting
 
 
 class JobVectorService:
     def __init__(self):
         self.embedding_model = get_embedding_model()
-        self.client = QdrantClient(
-            url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY
-        )
+        self.client = QdrantClient(url=settings.QDRANT_URL)
         self.collection_name = settings.QDRANT_COLLECTION_NAME
         self._ensure_collection_exists()
         self.qdrant = QdrantVectorStore(
@@ -40,46 +37,28 @@ class JobVectorService:
 
     def _construct_job_text(self, job: JobPosting) -> str:
         if not job.job_description:
-            company_name = self._get_company_name(job)
-            return f"Title: {job.title}\nCompany: {company_name}"
+            org_name = self._get_organization_name(job)
+            return f"Title: {job.title}\nOrganization: {org_name}"
 
         jd = job.job_description
-        company_name = self._get_company_name(job)
+        org_name = self._get_organization_name(job)
 
         parts = [
             f"Title: {job.title}",
-            f"Company: {company_name}",
-            f"Role Overview: {jd.role_overview}",
+            f"Organization: {org_name}",
+            f"Job Summary: {jd.job_summary}",
+            f"Job Responsibilities: {jd.job_responsibilities}",
+            f"Required Qualifications: {jd.required_qualifications}",
+            f"Preferred: {jd.preferred}",
+            f"Compensation and Benefits: {jd.compensation_and_benefits}",
         ]
-
-        if isinstance(jd.required_skills_experience, dict):
-            skills = jd.required_skills_experience.get("required_skills_experience", [])
-            if skills:
-                parts.append("Required Skills and Experience:")
-                parts.extend(f"- {s}" for s in skills)
-
-        if isinstance(jd.nice_to_have, dict):
-            nice = jd.nice_to_have.get("nice_to_have", [])
-            if nice:
-                parts.append("Nice to Have:")
-                parts.extend(f"- {n}" for n in nice)
-
-        if isinstance(jd.offers, dict):
-            benefits = jd.offers.get("benefits", [])
-            if benefits:
-                parts.append("Benefits:")
-                parts.extend(f"- {b}" for b in benefits)
 
         return "\n".join(parts)
 
-    def _get_company_name(self, job: JobPosting) -> str:
-        if not job.company:
-            return "Unknown Company"
-
-        if job.company.user:
-            return job.company.user.name
-
-        return "Unknown Company"
+    def _get_organization_name(self, job: JobPosting) -> str:
+        if not job.organization:
+            return "Unknown Organization"
+        return job.organization.name
 
     def index_all_pending_jobs(self, db: Session):
         if not self.qdrant:
@@ -89,9 +68,9 @@ class JobVectorService:
             db.query(JobPosting)
             .options(
                 selectinload(JobPosting.job_description),
-                selectinload(JobPosting.company).selectinload(CompanyProfile.user),
+                selectinload(JobPosting.organization),
             )
-            .filter(JobPosting.is_indexed == False)
+            .filter(JobPosting.is_indexed == False and JobPosting.status == "active")
             .all()
         )
 
@@ -104,12 +83,12 @@ class JobVectorService:
         for job in pending_jobs:
             try:
                 text_content = self._construct_job_text(job)
-                company_name = self._get_company_name(job)
+                org_name = self._get_organization_name(job)
 
                 metadata = {
                     "job_id": job.job_id,
-                    "company_id": job.company_id,
-                    "company_name": company_name,
+                    "organization_id": job.organization_id,
+                    "organization_name": org_name,
                     "title": job.title,
                     "city": job.location_city,
                     "country": job.location_country,
@@ -119,9 +98,9 @@ class JobVectorService:
                     "salary_max": job.salary_max,
                     "salary_currency": job.salary_currency,
                     "status": job.status,
-                    "posted_date": job.posted_date.isoformat()
-                    if job.posted_date
-                    else None,
+                    "posted_date": (
+                        job.posted_date.isoformat() if job.posted_date else None
+                    ),
                 }
 
                 doc = Document(page_content=text_content, metadata=metadata)

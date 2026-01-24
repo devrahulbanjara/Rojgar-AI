@@ -62,7 +62,6 @@ export class JobService {
     return apiClient.get<JobListResponse>(endpoint);
   }
 
-
   static async getRecommendedJobs(limit: number = 5): Promise<Job[]> {
     const queryParams = new URLSearchParams();
     queryParams.append("limit", limit.toString());
@@ -101,7 +100,6 @@ export class JobService {
     return JobService.searchJobs(params);
   }
 
-
   static async getJobById(id: string): Promise<Job> {
     return apiClient.get<Job>(jobEndpoints.detail(id));
   }
@@ -120,10 +118,13 @@ export class JobService {
     return apiClient.put<Job>(jobEndpoints.update(id), data);
   }
 
+  static async expireJob(id: string): Promise<Job> {
+    return apiClient.post<Job>(`${jobEndpoints.detail(id)}/expire`, {});
+  }
+
   static async deleteJob(id: string): Promise<void> {
     return apiClient.delete<void>(jobEndpoints.delete(id));
   }
-
 
   static async getJobsByCompany(
     userId: string,
@@ -137,7 +138,6 @@ export class JobService {
     const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`;
     return apiClient.get<JobListResponse>(endpoint);
   }
-
 }
 
 export class ApplicationService {
@@ -171,7 +171,6 @@ export class ApplicationService {
     return apiClient.post<Application>(applicationEndpoints.create, data);
   }
 
-
   static async updateApplication(
     id: string,
     data: UpdateApplicationRequest,
@@ -182,7 +181,6 @@ export class ApplicationService {
   static async deleteApplication(id: string): Promise<void> {
     return apiClient.delete<void>(applicationEndpoints.delete(id));
   }
-
 
   static async getApplicationsByJob(
     jobId: string,
@@ -195,7 +193,6 @@ export class ApplicationService {
     const endpoint = `${applicationEndpoints.byJob(jobId)}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
     return apiClient.get<Application[]>(endpoint);
   }
-
 
   static async getApplicationsByCandidate(
     candidateId: string,
@@ -257,11 +254,22 @@ export const jobUtils = {
     return jobUtils.formatSalaryRange(salaryRange);
   },
 
-
   formatPostedDate: (date: string | Date): string => {
-    const now = new Date();
+    if (!date) return "Recently";
+
     const postedDate = new Date(date);
-    const diffInMs = now.getTime() - postedDate.getTime();
+    const now = new Date();
+
+    if (isNaN(postedDate.getTime())) return "Recently";
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const posted = new Date(
+      postedDate.getFullYear(),
+      postedDate.getMonth(),
+      postedDate.getDate(),
+    );
+
+    const diffInMs = today.getTime() - posted.getTime();
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
     if (diffInDays === 0) {
@@ -273,9 +281,12 @@ export const jobUtils = {
     } else if (diffInDays < 30) {
       const weeks = Math.floor(diffInDays / 7);
       return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    } else {
+    } else if (diffInDays < 365) {
       const months = Math.floor(diffInDays / 30);
       return `${months} month${months > 1 ? "s" : ""} ago`;
+    } else {
+      const years = Math.floor(diffInDays / 365);
+      return `${years} year${years > 1 ? "s" : ""} ago`;
     }
   },
 
@@ -290,7 +301,6 @@ export const jobUtils = {
     };
     return colors[level as keyof typeof colors] || "bg-gray-100 text-gray-800";
   },
-
 
   getLocationTypeColor: (locationType: string): string => {
     const colors = {

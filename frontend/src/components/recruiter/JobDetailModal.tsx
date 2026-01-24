@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Edit,
   ArrowRight,
+  Ban,
+  Trash2,
 } from "lucide-react";
 import type { Job } from "../../types/job";
 import { Dialog } from "../../components/ui/dialog";
@@ -32,6 +34,8 @@ interface JobDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit?: (job: Job) => void;
+  onExpire?: (job: Job) => void;
+  onDelete?: (job: Job) => void;
 }
 
 export function JobDetailModal({
@@ -39,6 +43,8 @@ export function JobDetailModal({
   isOpen,
   onClose,
   onEdit,
+  onExpire,
+  onDelete,
 }: JobDetailModalProps) {
   if (!job) return null;
 
@@ -47,6 +53,20 @@ export function JobDetailModal({
       onEdit(job);
     }
   };
+
+  const handleExpire = () => {
+    if (onExpire) {
+      onExpire(job);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(job);
+    }
+  };
+
+  const isActive = job.status === "Active" || job.status === "active";
 
   return (
     <Dialog
@@ -85,7 +105,10 @@ export function JobDetailModal({
                 {job.title}
               </h2>
               <p className="text-lg text-gray-600 font-medium tracking-[0.3px]">
-                {job.company?.name || "Company"}
+                {job.company?.name ||
+                  (job as unknown as { organization?: { name?: string } })
+                    .organization?.name ||
+                  "Company"}
               </p>
             </div>
           </div>
@@ -156,7 +179,9 @@ export function JobDetailModal({
                   Location
                 </p>
                 <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {job.location}
+                  {job.location_city && job.location_country
+                    ? `${job.location_city}, ${job.location_country}`
+                    : job.location_city || job.location_country || job.location || "Not specified"}
                 </p>
               </div>
             </div>
@@ -251,7 +276,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Role Overview - Enhanced */}
+          {/* Job Summary - Enhanced */}
           {job.description && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -260,7 +285,7 @@ export function JobDetailModal({
                   <Briefcase className="w-5 h-5 text-indigo-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Role Overview
+                  Job Summary
                 </h3>
               </div>
               <div className="pl-14 prose prose-sm max-w-none">
@@ -271,7 +296,34 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Required Skills and Experience - Enhanced */}
+          {/* Job Responsibilities - Enhanced */}
+          {(job as any).job_responsibilities && (job as any).job_responsibilities.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                  Job Responsibilities
+                </h3>
+              </div>
+              <div className="pl-14">
+                <ul className="space-y-3 list-disc list-inside">
+                  {(job as any).job_responsibilities.map((resp: string, index: number) => (
+                    <li
+                      key={index}
+                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                    >
+                      {resp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Required Qualifications - Enhanced */}
           {job.requirements && job.requirements.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -280,7 +332,7 @@ export function JobDetailModal({
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Required Skills and Experience
+                  Required Qualifications
                 </h3>
               </div>
               <div className="pl-14">
@@ -298,7 +350,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Nice to Have (Preferred) - Enhanced */}
+          {/* Preferred - Enhanced */}
           {job.nice_to_have && job.nice_to_have.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -307,7 +359,7 @@ export function JobDetailModal({
                   <Sparkles className="w-5 h-5 text-amber-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Nice to Have (Preferred)
+                  Preferred
                 </h3>
               </div>
               <div className="pl-14">
@@ -325,7 +377,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* What We Offer (Benefits) - Enhanced */}
+          {/* Compensation & Benefits - Enhanced */}
           {job.benefits && job.benefits.length > 0 && (
             <section className="mb-8">
               <div className="flex items-center gap-3 mb-6">
@@ -334,7 +386,7 @@ export function JobDetailModal({
                   <Sparkles className="w-5 h-5 text-violet-600" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  What We Offer
+                  Compensation & Benefits
                 </h3>
               </div>
               <div className="pl-14">
@@ -353,17 +405,41 @@ export function JobDetailModal({
           )}
         </div>
 
-        {/* Sticky Footer with Edit Button */}
-        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-end gap-4 shadow-lg">
-          <Button
-            onClick={handleEdit}
-            size="lg"
-            className="h-12 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group"
-          >
-            <Edit className="w-5 h-5 mr-2" />
-            Edit Job
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
+        {/* Sticky Footer with Edit, Expire, and Delete Buttons */}
+        <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
+          {onDelete && (
+            <Button
+              onClick={handleDelete}
+              size="lg"
+              variant="outline"
+              className="h-12 px-8 text-base font-semibold border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+            >
+              <Trash2 className="w-5 h-5 mr-2" />
+              Delete Job
+            </Button>
+          )}
+          <div className="flex items-center gap-4 ml-auto">
+            {isActive && onExpire && (
+              <Button
+                onClick={handleExpire}
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base font-semibold border-amber-300 text-amber-700 hover:bg-amber-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+              >
+                <Ban className="w-5 h-5 mr-2" />
+                Expire Job
+              </Button>
+            )}
+            <Button
+              onClick={handleEdit}
+              size="lg"
+              className="h-12 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group"
+            >
+              <Edit className="w-5 h-5 mr-2" />
+              Edit Job
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
         </div>
       </div>
     </Dialog>

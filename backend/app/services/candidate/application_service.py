@@ -20,7 +20,8 @@ class ApplicationService:
             select(JobApplication)
             .where(JobApplication.candidate_profile_id == profile_id)
             .options(
-                selectinload(JobApplication.job), selectinload(JobApplication.company)
+                selectinload(JobApplication.job),
+                selectinload(JobApplication.organization),
             )
             .order_by(JobApplication.updated_at.desc())
         )

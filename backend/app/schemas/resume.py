@@ -1,6 +1,8 @@
 from datetime import date, datetime
+from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.shared import (
     CertificationBase,
@@ -12,100 +14,110 @@ from app.schemas.shared import (
 
 
 class ResumeCreate(BaseModel):
-    resume_name: str
-    target_job_title: str | None = None
-    custom_summary: str | None = None
-    work_experiences: list[WorkExperienceBase] | None = None
-    educations: list[EducationBase] | None = None
-    certifications: list[CertificationBase] | None = None
-    skills: list[SkillBase] | None = None
-    social_links: list[SocialLinkBase] | None = None
+    resume_name: Annotated[str, "Resume name"]
+    target_job_title: Annotated[str | None, "Target job title"] = None
+    custom_summary: Annotated[str | None, "Custom resume summary"] = None
+    work_experiences: Annotated[
+        list[WorkExperienceBase] | None, "Work experience entries"
+    ] = None
+    educations: Annotated[list[EducationBase] | None, "Education entries"] = None
+    certifications: Annotated[
+        list[CertificationBase] | None, "Certification entries"
+    ] = None
+    skills: Annotated[list[SkillBase] | None, "Skill entries"] = None
+    social_links: Annotated[list[SocialLinkBase] | None, "Social profile links"] = None
 
 
 class ResumeUpdate(BaseModel):
-    resume_name: str | None = None
-    target_job_title: str | None = None
-    custom_summary: str | None = None
+    resume_name: Annotated[str | None, "Resume name"] = None
+    target_job_title: Annotated[str | None, "Target job title"] = None
+    custom_summary: Annotated[str | None, "Custom resume summary"] = None
 
 
 class ResumeWorkExperienceUpdate(BaseModel):
-    job_title: str | None = None
-    company: str | None = None
-    location: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-    is_current: bool | None = None
-    description: str | None = None
+    job_title: Annotated[str | None, "Job title"] = None
+    company: Annotated[str | None, "Company name"] = None
+    location: Annotated[str | None, "Job location"] = None
+    start_date: Annotated[date | None, "Employment start date"] = None
+    end_date: Annotated[date | None, "Employment end date"] = None
+    is_current: Annotated[bool | None, "Whether this is the current role"] = None
+    description: Annotated[str | None, "Role description"] = None
 
 
 class ResumeEducationUpdate(BaseModel):
-    college_name: str | None = None
-    degree: str | None = None
-    location: str | None = None
-    start_date: date | None = None
-    end_date: date | None = None
-    is_current: bool | None = None
+    college_name: Annotated[str | None, "College or university name"] = None
+    degree: Annotated[str | None, "Degree or program name"] = None
+    location: Annotated[str | None, "Education location"] = None
+    start_date: Annotated[date | None, "Education start date"] = None
+    end_date: Annotated[date | None, "Education end date"] = None
+    is_current: Annotated[bool | None, "Whether this education is ongoing"] = None
 
 
 class ResumeSkillUpdate(BaseModel):
-    skill_name: str | None = None
+    skill_name: Annotated[str | None, "Skill name"] = None
 
 
 class ResumeCertificationUpdate(BaseModel):
-    certification_name: str | None = None
-    issuing_body: str | None = None
-    credential_url: str | None = None
-    issue_date: date | None = None
-    expiration_date: date | None = None
-    does_not_expire: bool | None = None
+    certification_name: Annotated[str | None, "Certification name"] = None
+    issuing_body: Annotated[str | None, "Issuing organization"] = None
+    credential_url: Annotated[str | None, "Credential verification URL"] = None
+    issue_date: Annotated[date | None, "Certification issue date"] = None
+    expiration_date: Annotated[date | None, "Certification expiration date"] = None
+    does_not_expire: Annotated[
+        bool | None, "Whether the certification does not expire"
+    ] = None
 
 
 class ResumeSocialLinkResponse(SocialLinkBase):
-    resume_social_link_id: str
+    resume_social_link_id: Annotated[str, "Resume social link ID"]
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeWorkExperienceResponse(WorkExperienceBase):
-    resume_work_experience_id: str
+    resume_work_experience_id: Annotated[str, "Resume work experience ID"]
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeEducationResponse(EducationBase):
-    resume_education_id: str
+    resume_education_id: Annotated[str, "Resume education ID"]
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeCertificationResponse(CertificationBase):
-    resume_certification_id: str
+    resume_certification_id: Annotated[str, "Resume certification ID"]
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeSkillResponse(SkillBase):
-    resume_skill_id: str
+    resume_skill_id: Annotated[str, "Resume skill ID"]
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeResponse(BaseModel):
-    resume_id: str
-    profile_id: str
-    resume_name: str
-    target_job_title: str | None = None
-    custom_summary: str | None = None
-    created_at: datetime
-    updated_at: datetime
+    resume_id: UUID
+    profile_id: UUID
+    resume_name: Annotated[str, "Resume name"]
+    target_job_title: Annotated[str | None, "Target job title"] = None
+    custom_summary: Annotated[str | None, "Custom resume summary"] = None
+    created_at: Annotated[datetime, Field(description="Resume creation timestamp")]
+    updated_at: Annotated[datetime, Field(description="Resume last update timestamp")]
 
-    social_links: list[ResumeSocialLinkResponse] = []
-    work_experiences: list[ResumeWorkExperienceResponse] = []
-    educations: list[ResumeEducationResponse] = []
-    certifications: list[ResumeCertificationResponse] = []
-    skills: list[ResumeSkillResponse] = []
+    social_links: Annotated[list[ResumeSocialLinkResponse], "Social links"] = []
+    work_experiences: Annotated[
+        list[ResumeWorkExperienceResponse], "Work experiences"
+    ] = []
+    educations: Annotated[list[ResumeEducationResponse], "Education entries"] = []
+    certifications: Annotated[
+        list[ResumeCertificationResponse], "Certification entries"
+    ] = []
+    skills: Annotated[list[ResumeSkillResponse], "Skill entries"] = []
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeListResponse(BaseModel):
-    resume_id: str
-    resume_name: str
-    target_job_title: str | None = None
+    resume_id: UUID
+    resume_name: Annotated[str, "Resume name"]
+    target_job_title: Annotated[str | None, "Target job title"] = None
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
