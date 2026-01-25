@@ -1,10 +1,12 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import get_current_active_user, get_db
 from app.core.limiter import limiter
+from app.models.user import User
 from app.schemas import ApplicationCreate, ApplicationResponse
 from app.services.candidate.application_service import ApplicationService
 
@@ -20,34 +22,36 @@ router = APIRouter()
 def get_my_applications(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """List all applications for the current candidate."""
-    return ApplicationService.get_candidate_applications(db, user_id)
+    return ApplicationService.get_candidate_applications(db, current_user.user_id)
 
 
 @router.get("/applications/{application_id}", response_model=ApplicationResponse)
 @limiter.limit("50/minute")
 def get_application_detail(
     request: Request,
-    application_id: str,
+    application_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get detailed information about a specific application."""
-    return ApplicationService.get_application_by_id(db, user_id, application_id)
+    return ApplicationService.get_application_by_id(
+        db, current_user.user_id, application_id
+    )
 
 
 @router.get("/applications/job/{job_id}", response_model=ApplicationResponse | None)
 @limiter.limit("50/minute")
 def get_application_by_job(
     request: Request,
-    job_id: str,
+    job_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get application for a specific job if it exists."""
-    return ApplicationService.get_application_by_job(db, user_id, job_id)
+    return ApplicationService.get_application_by_job(db, current_user.user_id, job_id)
 
 
 @router.post(
@@ -60,8 +64,8 @@ def create_application(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: ApplicationCreate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     return ApplicationService.apply_to_job(
-        db, user_id, str(data.job_id), str(data.resume_id)
+        db, current_user.user_id, data.job_id, data.resume_id
     )

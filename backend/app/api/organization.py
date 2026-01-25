@@ -1,9 +1,10 @@
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
-from app.core import get_db
+from app.core import NotFoundError, get_db
 from app.core.authorization import verify_recruiter_belongs_to_organization
 from app.core.limiter import limiter
 from app.core.security import get_current_organization_id
@@ -25,15 +26,12 @@ router = APIRouter()
 def get_organization_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    organization_id: str = Depends(get_current_organization_id),
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
     organization = OrganizationService.get_organization_by_id(organization_id, db)
     if not organization:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found",
-        )
-    return OrganizationAuthService.create_organization_response(organization)
+        raise NotFoundError("Organization not found")
+    return organization
 
 
 @router.put("/me", response_model=OrganizationResponse)
@@ -42,7 +40,7 @@ def update_organization_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     update_data: OrganizationUpdateRequest,
-    organization_id: str = Depends(get_current_organization_id),
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
     organization = OrganizationService.update_organization(
         organization_id, update_data, db
@@ -55,20 +53,9 @@ def update_organization_profile(
 def get_organization_recruiters(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    organization_id: str = Depends(get_current_organization_id),
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
-    recruiters = RecruiterCRUD.get_recruiters_by_organization(organization_id, db)
-    return [
-        RecruiterResponse(
-            id=recruiter.user_id,
-            email=recruiter.email,
-            name=recruiter.name,
-            organization_id=recruiter.organization_id,
-            created_at=recruiter.created_at,
-            updated_at=recruiter.updated_at,
-        )
-        for recruiter in recruiters
-    ]
+    return RecruiterCRUD.get_recruiters_by_organization(organization_id, db)
 
 
 @router.post(
@@ -81,22 +68,14 @@ def create_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     recruiter_data: CreateRecruiterRequest,
-    organization_id: str = Depends(get_current_organization_id),
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
-    recruiter = RecruiterCRUD.create_recruiter(
+    return RecruiterCRUD.create_recruiter(
         organization_id=organization_id,
         email=recruiter_data.email,
         name=recruiter_data.name,
         password=recruiter_data.password,
         db=db,
-    )
-    return RecruiterResponse(
-        id=recruiter.user_id,
-        email=recruiter.email,
-        name=recruiter.name,
-        organization_id=recruiter.organization_id,
-        created_at=recruiter.created_at,
-        updated_at=recruiter.updated_at,
     )
 
 
@@ -105,24 +84,14 @@ def create_recruiter(
 def get_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    recruiter_id: str,
-    organization_id: str = Depends(get_current_organization_id),
+    recruiter_id: uuid.UUID,
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
     recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recruiter not found",
-        )
+        raise NotFoundError("Recruiter not found")
     verify_recruiter_belongs_to_organization(recruiter, organization_id)
-    return RecruiterResponse(
-        id=recruiter.user_id,
-        email=recruiter.email,
-        name=recruiter.name,
-        organization_id=recruiter.organization_id,
-        created_at=recruiter.created_at,
-        updated_at=recruiter.updated_at,
-    )
+    return recruiter
 
 
 @router.put("/recruiters/{recruiter_id}", response_model=RecruiterResponse)
@@ -130,26 +99,15 @@ def get_recruiter(
 def update_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    recruiter_id: str,
+    recruiter_id: uuid.UUID,
     update_data: UpdateRecruiterRequest,
-    organization_id: str = Depends(get_current_organization_id),
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
     recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recruiter not found",
-        )
+        raise NotFoundError("Recruiter not found")
     verify_recruiter_belongs_to_organization(recruiter, organization_id)
-    updated_recruiter = RecruiterCRUD.update_recruiter(recruiter_id, update_data, db)
-    return RecruiterResponse(
-        id=updated_recruiter.user_id,
-        email=updated_recruiter.email,
-        name=updated_recruiter.name,
-        organization_id=updated_recruiter.organization_id,
-        created_at=updated_recruiter.created_at,
-        updated_at=updated_recruiter.updated_at,
-    )
+    return RecruiterCRUD.update_recruiter(recruiter_id, update_data, db)
 
 
 @router.delete(
@@ -160,15 +118,12 @@ def update_recruiter(
 def remove_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    recruiter_id: str,
-    organization_id: str = Depends(get_current_organization_id),
+    recruiter_id: uuid.UUID,
+    organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
     recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recruiter not found",
-        )
+        raise NotFoundError("Recruiter not found")
     verify_recruiter_belongs_to_organization(recruiter, organization_id)
     RecruiterCRUD.delete_recruiter(recruiter_id, db)
     return {"message": "Recruiter removed successfully"}

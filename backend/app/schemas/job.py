@@ -156,7 +156,10 @@ class CreateReferenceJD(ReferenceJDBase):
 
 
 class ReferenceJDResponse(ReferenceJDBase):
-    id: UUID
+    model_config = ConfigDict(from_attributes=True)
+
+    referncejd_id: Annotated[UUID, Field(alias="id")]
+    organization_id: UUID
     about_the_company: Annotated[str | None, "About the company"] = None
 
 

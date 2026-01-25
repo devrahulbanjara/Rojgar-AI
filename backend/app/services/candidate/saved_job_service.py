@@ -1,3 +1,7 @@
+import math
+import uuid
+from typing import Any
+
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -7,7 +11,7 @@ from app.models.job import JobPosting
 
 class SavedJobService:
     @staticmethod
-    def toggle_save_job(db: Session, user_id: str, job_id: str) -> dict:
+    def toggle_save_job(db: Session, user_id: uuid.UUID, job_id: uuid.UUID) -> dict:
         # Get profile_id
         profile_stmt = select(CandidateProfile.profile_id).where(
             CandidateProfile.user_id == user_id
@@ -40,7 +44,9 @@ class SavedJobService:
             return {"status": "Job saved successfully"}
 
     @staticmethod
-    def get_my_saved_jobs(db: Session, user_id: str) -> list[JobPosting]:
+    def get_my_saved_jobs(
+        db: Session, user_id: uuid.UUID, page: int = 1, limit: int = 10
+    ) -> dict[str, Any]:
         stmt = (
             select(JobPosting)
             .join(CandidateSavedJob, JobPosting.job_id == CandidateSavedJob.job_id)
@@ -49,16 +55,43 @@ class SavedJobService:
                 CandidateSavedJob.candidate_profile_id == CandidateProfile.profile_id,
             )
             .where(CandidateProfile.user_id == user_id)
-            .options(
+        )
+
+        # Count total
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = db.execute(count_stmt).scalar_one() or 0
+
+        # Paginate and Load
+        offset = (page - 1) * limit
+        jobs_stmt = (
+            stmt.options(
                 selectinload(JobPosting.organization),
                 selectinload(JobPosting.job_description),
             )
             .order_by(CandidateSavedJob.saved_at.desc())
+            .offset(offset)
+            .limit(limit)
         )
-        return list(db.execute(stmt).scalars().all())
+        jobs = list(db.execute(jobs_stmt).scalars().all())
+
+        total_pages = math.ceil(total / limit) if limit > 0 else 0
+
+        # Inject is_saved (always True for saved jobs)
+        for job in jobs:
+            job.is_saved = True
+
+        return {
+            "jobs": jobs,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
 
     @staticmethod
-    def get_saved_job_ids(db: Session, user_id: str) -> set[str]:
+    def get_saved_job_ids(db: Session, user_id: uuid.UUID) -> set[uuid.UUID]:
         stmt = (
             select(CandidateSavedJob.job_id)
             .join(
@@ -67,10 +100,10 @@ class SavedJobService:
             )
             .where(CandidateProfile.user_id == user_id)
         )
-        return set(str(job_id) for job_id in db.execute(stmt).scalars().all())
+        return set(job_id for job_id in db.execute(stmt).scalars().all())
 
     @staticmethod
-    def is_job_saved(db: Session, user_id: str, job_id: str) -> bool:
+    def is_job_saved(db: Session, user_id: uuid.UUID, job_id: uuid.UUID) -> bool:
         """Check if a specific job is saved by the candidate."""
         stmt = (
             select(CandidateSavedJob)

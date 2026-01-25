@@ -1,60 +1,25 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from sqlalchemy.orm import Session
 
 from app.api import api_router
 from app.core.config import settings
-from app.core.database import engine, init_db
+from app.core.exceptions import setup_exception_handlers
+from app.core.lifespan import lifespan
 from app.core.limiter import limiter
-from app.core.logging_config import logger
-from app.services.candidate.vector_job_service import JobVectorService
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.trace("Starting ConvexHire API...")
-    logger.trace("Initializing database schema...")
-    init_db()
-
-    try:
-        logger.trace(
-            "Indexing pending active jobs (is_indexed=False, status=active)..."
-        )
-        with Session(engine) as db:
-            vector_service = JobVectorService()
-            vector_service.index_all_pending_jobs(db)
-        logger.trace("Completed startup job indexing")
-    except Exception as e:
-        logger.error(f"Startup indexing error: {e}")
-
-    logger.success("System Ready!")
-
-    yield
-
-    logger.trace("Shutting down ConvexHire API...")
-
 
 app = FastAPI(
     title="ConvexHire API",
     description="Backend API for ConvexHire",
-    version="📦 " + settings.APP_VERSION,
+    version=f"📦 {settings.APP_VERSION}",
     lifespan=lifespan,
 )
 
+setup_exception_handlers(app)
+
+# 2. Setup Middleware
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
-
-
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(status_code=429, content={"detail": "Too many requests"})
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.FRONTEND_URL],
@@ -63,6 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 3. Include Routers
 app.include_router(api_router, prefix="/api/v1")
 
 
@@ -71,14 +37,11 @@ app.include_router(api_router, prefix="/api/v1")
 def root(request: Request):
     return {
         "message": "ConvexHire API is running!",
-        "version": "📦 " + settings.APP_VERSION,
+        "version": f"📦 {settings.APP_VERSION}",
         "environment": settings.ENVIRONMENT,
     }
 
 
 @app.get("/health")
 def health_check():
-    return {
-        "status": "healthy",
-        "environment": settings.ENVIRONMENT,
-    }
+    return {"status": "healthy", "environment": settings.ENVIRONMENT}
