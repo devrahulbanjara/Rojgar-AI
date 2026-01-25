@@ -65,6 +65,14 @@ class CandidateProfile(Base):
     def full_name(self) -> str:
         return self.user.name if self.user else ""
 
+    @property
+    def email(self) -> str:
+        return self.user.email if self.user else ""
+
+    @property
+    def picture(self) -> str | None:
+        return self.user.picture if self.user else None
+
 
 class CandidateSocialLink(Base):
     __tablename__ = "candidate_social_links"
