@@ -18,7 +18,6 @@ export const StatCard = memo<StatCardProps>(({
   value,
   icon,
   description,
-  trend,
   className,
 }) => {
   return (

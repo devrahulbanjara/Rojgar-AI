@@ -25,9 +25,6 @@ import { useReferenceJDs } from "../../hooks/queries/useReferenceJDs";
 import { toast } from "sonner";
 import type {
   CreateJobRequest,
-  JobLevel,
-  LocationType,
-  EmploymentType,
   Job,
 } from "../../types/job";
 
@@ -99,6 +96,7 @@ export function JobCreationWizard({
     if (initialReferenceJdId && activeTab !== "agent") {
       setActiveTab("agent");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialReferenceJdId]);
 
   // Reset step when editing
@@ -172,9 +170,15 @@ export function JobCreationWizard({
         keywords: existingRequirements, // Pre-fill for AI revision
         reference_jd_id: "",
         description: jobToEdit.description || "",
-        jobResponsibilities: (jobToEdit as any).job_responsibilities && (jobToEdit as any).job_responsibilities.length > 0
-          ? (jobToEdit as any).job_responsibilities
-          : [""],
+        jobResponsibilities: (() => {
+          interface JobWithExtras extends Job {
+            job_responsibilities?: string[];
+          }
+          const jobWithExtras = jobToEdit as JobWithExtras;
+          return jobWithExtras.job_responsibilities && jobWithExtras.job_responsibilities.length > 0
+            ? jobWithExtras.job_responsibilities
+            : [""];
+        })(),
         locationCity: jobToEdit.location_city || "",
         locationCountry: jobToEdit.location_country || "",
         locationType: jobToEdit.location_type || "",
@@ -379,9 +383,8 @@ export function JobCreationWizard({
       application_deadline: formData.applicationDeadline || undefined,
       mode: mode,
       status: "active",
-      // Include raw_requirements if available (for agent mode)
       raw_requirements: formData.keywords.trim() || undefined,
-    } as any; // Type assertion needed due to interface mismatch
+    } as CreateJobRequest;
   };
 
   const handleSaveDraft = async () => {

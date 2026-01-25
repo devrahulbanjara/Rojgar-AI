@@ -34,6 +34,9 @@ export const jobQueryKeys = {
   detail: (id: string) => [...jobQueryKeys.details(), id] as const,
   byCompany: (companyId: string) =>
     [...jobQueryKeys.all, "company", companyId] as const,
+  savedJobs: () => [...jobQueryKeys.all, "saved"] as const,
+  savedJobsList: (page?: number, limit?: number) =>
+    [...jobQueryKeys.savedJobs(), page, limit] as const,
 };
 
 export const applicationQueryKeys = {
@@ -80,8 +83,8 @@ export function usePersonalizedRecommendations(
         filters,
       );
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Always refetch to show immediate changes
+    gcTime: 0, // No caching - always fetch fresh data
     enabled: !!userId, // Only run if userId is provided
   });
 }
@@ -101,6 +104,7 @@ export function useJobSearch(
   params?: JobSearchParams & {
     employmentType?: string;
     locationType?: string;
+    userId?: string;
   },
 ) {
   return useQuery({
@@ -108,8 +112,8 @@ export function useJobSearch(
     queryFn: async () => {
       return await jobService.searchJobs(params);
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes (shorter for search results)
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always refetch to show immediate changes
+    gcTime: 0, // No caching - always fetch fresh data
   });
 }
 
@@ -371,4 +375,94 @@ export function useJobWithApplications(jobId: string) {
 
 export function useCandidateApplications(candidateId: string) {
   return useApplicationsByCandidate(candidateId);
+}
+
+// Saved Jobs Hooks
+export function useToggleSaveJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (jobId: string) => {
+      return await jobService.toggleSaveJob(jobId);
+    },
+    onSuccess: (data, jobId) => {
+      const isNowSaved = data.status === "Job saved successfully";
+
+      // Immediately update all job lists in cache
+      queryClient.setQueriesData(
+        { queryKey: ["jobs"] },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+
+          // Handle JobListResponse format
+          if (oldData.jobs && Array.isArray(oldData.jobs)) {
+            return {
+              ...oldData,
+              jobs: oldData.jobs.map((job: any) =>
+                (job.job_id || job.id) === jobId
+                  ? { ...job, is_saved: isNowSaved }
+                  : job,
+              ),
+            };
+          }
+
+          // Handle array format
+          if (Array.isArray(oldData)) {
+            return oldData.map((job: any) =>
+              (job.job_id || job.id) === jobId
+                ? { ...job, is_saved: isNowSaved }
+                : job,
+            );
+          }
+
+          return oldData;
+        },
+      );
+
+      // Update specific job detail cache
+      queryClient.setQueriesData(
+        { queryKey: jobQueryKeys.detail(jobId) },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return { ...oldData, is_saved: isNowSaved };
+        },
+      );
+
+      // Refetch to ensure consistency (but UI updates immediately)
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.savedJobs() });
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.search() });
+      queryClient.invalidateQueries({
+        queryKey: jobQueryKeys.recommendations(),
+      });
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.detail(jobId) });
+
+      // Show toast notification
+      const message = isNowSaved ? "Job saved successfully" : "Job unsaved";
+      toast.success(message);
+    },
+    onError: (error: unknown) => {
+      const errorMessage =
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.detail ||
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.message ||
+        (error as Error)?.message ||
+        "Failed to save job";
+      toast.error("Failed to save job", {
+        description: errorMessage,
+      });
+    },
+  });
+}
+
+export function useSavedJobs(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: jobQueryKeys.savedJobsList(page, limit),
+    queryFn: async () => {
+      return await jobService.getSavedJobs(page, limit);
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
 }

@@ -26,7 +26,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[schemas.ResumeListResponse])
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def list_resumes(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -38,7 +38,7 @@ def list_resumes(
 @router.post(
     "/", response_model=schemas.ResumeResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def create_resume(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -49,7 +49,7 @@ def create_resume(
 
 
 @router.get("/{resume_id}", response_model=schemas.ResumeResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def get_resume(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -60,7 +60,7 @@ def get_resume(
 
 
 @router.patch("/{resume_id}", response_model=schemas.ResumeResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_resume_details(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -75,7 +75,7 @@ def update_resume_details(
     "/{resume_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def delete_resume(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -89,7 +89,7 @@ def delete_resume(
 @router.post(
     "/{resume_id}/experience", response_model=schemas.ResumeWorkExperienceResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def add_resume_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -101,7 +101,7 @@ def add_resume_experience(
 
 
 @router.delete("/{resume_id}/experience/{item_id}")
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def delete_resume_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -118,7 +118,7 @@ def delete_resume_experience(
     response_model=ResumeEducationResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def add_resume_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -133,7 +133,7 @@ def add_resume_education(
     "/{resume_id}/education/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def delete_resume_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -150,7 +150,7 @@ def delete_resume_education(
     response_model=ResumeSkillResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def add_resume_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -165,7 +165,7 @@ def add_resume_skill(
     "/{resume_id}/skills/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def delete_resume_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -182,7 +182,7 @@ def delete_resume_skill(
     response_model=ResumeCertificationResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def add_resume_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -197,7 +197,7 @@ def add_resume_certification(
     "/{resume_id}/certifications/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def delete_resume_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -212,7 +212,7 @@ def delete_resume_certification(
 @router.patch(
     "/{resume_id}/experience/{item_id}", response_model=ResumeWorkExperienceResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_resume_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -227,7 +227,7 @@ def update_resume_experience(
 @router.patch(
     "/{resume_id}/education/{item_id}", response_model=ResumeEducationResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_resume_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -240,7 +240,7 @@ def update_resume_education(
 
 
 @router.patch("/{resume_id}/skills/{item_id}", response_model=ResumeSkillResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_resume_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -255,7 +255,7 @@ def update_resume_skill(
 @router.patch(
     "/{resume_id}/certifications/{item_id}", response_model=ResumeCertificationResponse
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_resume_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

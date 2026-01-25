@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,7 +25,7 @@ class JobDescription(Base):
     required_qualifications: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )
-    preferred: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    preferred: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )

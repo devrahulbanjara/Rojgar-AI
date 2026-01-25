@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/active-jobs", status_code=status.HTTP_200_OK)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def get_active_jobs_count(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

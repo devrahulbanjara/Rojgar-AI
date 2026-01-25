@@ -26,7 +26,7 @@ import {
   useUpdateReferenceJD,
   useDeleteReferenceJD,
 } from "../../../hooks/queries/useReferenceJDs";
-import { ReferenceJD, CreateReferenceJDRequest } from "../../../services/referenceJDService";
+import { ReferenceJD, CreateReferenceJDRequest, ReferenceJDService } from "../../../services/referenceJDService";
 
 type TabType = "active" | "drafts" | "expired" | "reference-jds";
 
@@ -271,6 +271,25 @@ export default function RecruiterJobsPage() {
     refetch: refetchJobs,
   } = useJobsByCompany(userId || "", { page: 1, limit: 100 });
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.key === "R"
+      ) {
+        event.preventDefault();
+        refetchJobs();
+        refetchReferenceJDs();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [refetchJobs, refetchReferenceJDs]);
+
 
   const allJobs = useMemo(() => {
     if (!jobsData?.jobs) return [];
@@ -350,7 +369,6 @@ export default function RecruiterJobsPage() {
 
   const handleExpireJob = useCallback(
     async (job: Job) => {
-      // Use job_id (UUID string) instead of id (parsed integer) for API calls
       const jobId = job.job_id || job.id;
       if (!jobId) return;
 
@@ -370,7 +388,6 @@ export default function RecruiterJobsPage() {
 
   const handleDeleteJob = useCallback(
     async (job: Job) => {
-      // Use job_id (UUID string) instead of id (parsed integer) for API calls
       const jobId = job.job_id || job.id;
       if (!jobId) return;
 
@@ -385,7 +402,6 @@ export default function RecruiterJobsPage() {
           setSelectedJob(null);
         }, 300);
         refetchJobs();
-        // Toast notification will be handled by the mutation hook
       } catch (error) {
         console.error("Failed to delete job:", error);
       }
@@ -421,26 +437,24 @@ export default function RecruiterJobsPage() {
   const handleConvertToReferenceJD = useCallback(
     async (job: Job) => {
       try {
-        const jobData = job as Job & {
-          job_summary?: string;
+        interface JobWithExtras extends Job {
           job_responsibilities?: string[];
-          required_qualifications?: string[];
+          job_summary?: string;
           preferred?: string[];
           compensation_and_benefits?: string[];
-          nice_to_have?: string[];
-          benefits?: string[];
-        };
-
+        }
+        const jobWithExtras = job as JobWithExtras;
+        const jobResponsibilities = jobWithExtras.job_responsibilities || [];
+        
         const referenceJDData = ReferenceJDService.convertJobToReferenceJD({
-          job_summary: jobData.job_summary,
+          job_summary: jobWithExtras.job_summary,
           description: job.description,
-          job_responsibilities: jobData.job_responsibilities,
-          required_qualifications: jobData.required_qualifications,
-          requirements: job.requirements,
-          preferred: jobData.preferred,
-          nice_to_have: jobData.nice_to_have || job.nice_to_have,
-          compensation_and_benefits: jobData.compensation_and_benefits,
-          benefits: jobData.benefits || job.benefits,
+          job_responsibilities: jobResponsibilities,
+          required_qualifications: job.requirements || [],
+          preferred: jobWithExtras.preferred || job.nice_to_have || [],
+          nice_to_have: job.nice_to_have || [],
+          compensation_and_benefits: jobWithExtras.compensation_and_benefits || job.benefits || [],
+          benefits: job.benefits || [],
           department: job.department,
         });
 

@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
@@ -19,7 +20,7 @@ router = APIRouter()
     response_model=schemas.JobDraftResponse,
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def generate_job_draft(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -34,7 +35,8 @@ def generate_job_draft(
 
     try:
         # Get organization_id from user
-        user = db.query(User).filter(User.user_id == user_id).first()
+        user_stmt = select(User).where(User.user_id == user_id)
+        user = db.execute(user_stmt).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -76,7 +78,7 @@ def generate_job_draft(
 @router.post(
     "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def create_job(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -105,7 +107,7 @@ def create_job(
 @router.put(
     "/{job_id}", response_model=schemas.JobResponse, status_code=status.HTTP_200_OK
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_job(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -120,7 +122,8 @@ def update_job(
             detail="User not found",
         )
 
-    job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+    job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
+    job_posting = db.execute(job_stmt).scalar_one_or_none()
     if not job_posting:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -142,7 +145,7 @@ def update_job(
     "/{job_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_job(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -165,7 +168,7 @@ def delete_job(
     response_model=schemas.JobResponse,
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def expire_job(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

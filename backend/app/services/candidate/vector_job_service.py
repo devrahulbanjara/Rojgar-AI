@@ -2,6 +2,7 @@ from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core import settings
@@ -60,60 +61,92 @@ class JobVectorService:
             return "Unknown Organization"
         return job.organization.name
 
+    def index_job(self, db: Session, job: JobPosting) -> bool:
+        if not self.qdrant:
+            logger.warning("Qdrant vector store not initialized")
+            return False
+
+        if job.status != "active":
+            logger.debug(
+                f"Skipping indexing for job {job.job_id}: status is not 'active'"
+            )
+            return False
+
+        try:
+            text_content = self._construct_job_text(job)
+            org_name = self._get_organization_name(job)
+
+            metadata = {
+                "job_id": job.job_id,
+                "organization_id": job.organization_id,
+                "organization_name": org_name,
+                "title": job.title,
+                "city": job.location_city,
+                "country": job.location_country,
+                "type": job.location_type,
+                "employment_type": job.employment_type,
+                "salary_min": job.salary_min,
+                "salary_max": job.salary_max,
+                "salary_currency": job.salary_currency,
+                "status": job.status,
+                "posted_date": (
+                    job.posted_date.isoformat() if job.posted_date else None
+                ),
+            }
+
+            doc = Document(page_content=text_content, metadata=metadata)
+            self.qdrant.add_documents([doc], ids=[job.job_id])
+
+            job.is_indexed = True
+            db.commit()
+
+            logger.info(f"Successfully indexed job {job.job_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to index job {job.job_id}: {e}")
+            return False
+
     def index_all_pending_jobs(self, db: Session):
         if not self.qdrant:
+            logger.warning("Qdrant vector store not initialized, skipping job indexing")
             return
 
-        pending_jobs = (
-            db.query(JobPosting)
+        stmt = (
+            select(JobPosting)
             .options(
                 selectinload(JobPosting.job_description),
                 selectinload(JobPosting.organization),
             )
-            .filter(JobPosting.is_indexed == False and JobPosting.status == "active")
-            .all()
+            .where(
+                JobPosting.is_indexed == False,
+                JobPosting.status == "active",
+            )
         )
+        pending_jobs = db.execute(stmt).scalars().all()
 
         if not pending_jobs:
-            logger.debug("No new jobs to index.")
+            logger.debug(
+                "No pending active jobs to index (is_indexed=False, status=active)"
+            )
             return
 
-        logger.info(f"Indexing {len(pending_jobs)} new jobs...")
+        logger.info(
+            f"Found {len(pending_jobs)} pending active jobs to index (is_indexed=False, status=active)"
+        )
+
+        successful = 0
+        failed = 0
 
         for job in pending_jobs:
-            try:
-                text_content = self._construct_job_text(job)
-                org_name = self._get_organization_name(job)
+            if self.index_job(db, job):
+                successful += 1
+            else:
+                failed += 1
 
-                metadata = {
-                    "job_id": job.job_id,
-                    "organization_id": job.organization_id,
-                    "organization_name": org_name,
-                    "title": job.title,
-                    "city": job.location_city,
-                    "country": job.location_country,
-                    "type": job.location_type,
-                    "employment_type": job.employment_type,
-                    "salary_min": job.salary_min,
-                    "salary_max": job.salary_max,
-                    "salary_currency": job.salary_currency,
-                    "status": job.status,
-                    "posted_date": (
-                        job.posted_date.isoformat() if job.posted_date else None
-                    ),
-                }
-
-                doc = Document(page_content=text_content, metadata=metadata)
-
-                self.qdrant.add_documents([doc], ids=[job.job_id])
-
-                job.is_indexed = True
-
-            except Exception as e:
-                logger.error(f"Failed to index job {job.job_id}: {e}")
-
-        db.commit()
-        logger.success(f"Indexed {len(pending_jobs)} new jobs.")
+        logger.success(
+            f"Completed indexing: {successful} successful, {failed} failed out of {len(pending_jobs)} total jobs"
+        )
 
     def search_jobs(self, query: str, limit: int) -> list[int]:
         results = self.qdrant.similarity_search(query, k=limit)
