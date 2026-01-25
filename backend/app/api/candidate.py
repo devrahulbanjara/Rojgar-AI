@@ -21,41 +21,7 @@ def get_my_profile(
     db: Annotated[Session, Depends(get_db)],
     user_id: str = Depends(get_current_user_id),
 ):
-    profile = CandidateService.get_full_profile(db, user_id)
-
-    social_links = [
-        schemas.SocialLinkResponse.model_validate(item) for item in profile.social_links
-    ]
-    work_experiences = [
-        schemas.WorkExperienceResponse.model_validate(item)
-        for item in profile.work_experiences
-    ]
-    educations = [
-        schemas.EducationResponse.model_validate(item) for item in profile.educations
-    ]
-    certifications = [
-        schemas.CertificationResponse.model_validate(item)
-        for item in profile.certifications
-    ]
-    skills = [schemas.SkillResponse.model_validate(item) for item in profile.skills]
-
-    return schemas.CandidateProfileFullResponse(
-        profile_id=profile.profile_id,
-        user_id=profile.user_id,
-        full_name=profile.user.name,
-        email=profile.user.email,
-        picture=profile.user.picture,
-        phone=profile.phone,
-        location_city=profile.location_city,
-        location_country=profile.location_country,
-        professional_headline=profile.professional_headline,
-        professional_summary=profile.professional_summary,
-        social_links=social_links,
-        work_experiences=work_experiences,
-        educations=educations,
-        certifications=certifications,
-        skills=skills,
-    )
+    return CandidateService.get_full_profile(db, user_id)
 
 
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
@@ -66,8 +32,7 @@ def update_candidate_personal_information(
     data: schemas.CandidateProfileUpdate,
     user_id: str = Depends(get_current_user_id),
 ):
-    CandidateService.update_basic_info(db, user_id, data)
-    return get_my_profile(request, db, user_id)
+    return CandidateService.update_basic_info(db, user_id, data)
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
