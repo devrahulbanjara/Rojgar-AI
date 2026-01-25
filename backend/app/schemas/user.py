@@ -7,6 +7,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.user import UserRole
 
 
+class ProfileUpdateRequest(BaseModel):
+    name: str
+
+
 class OrganizationInUserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -47,10 +51,6 @@ class GoogleUserInfo(BaseModel):
     name: Annotated[str, "Google account name"]
     picture: Annotated[str | None, "Google profile picture URL"] = None
     verified_email: Annotated[bool, "Whether the email is verified by Google"]
-
-
-class RoleSelectionRequest(BaseModel):
-    role: Annotated[UserRole, "Selected user role"]
 
 
 class UserResponse(BaseModel):

@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
@@ -13,7 +15,7 @@ router = APIRouter()
 @limiter.limit("10/minute")
 def get_my_applications(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return ApplicationService.get_candidate_applications(db, user_id)

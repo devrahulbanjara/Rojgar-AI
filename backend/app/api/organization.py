@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -22,8 +24,8 @@ router = APIRouter()
 @limiter.limit("10/minute")
 def get_organization_profile(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     organization = OrganizationService.get_organization_by_id(organization_id, db)
     if not organization:
@@ -38,9 +40,9 @@ def get_organization_profile(
 @limiter.limit("10/minute")
 def update_organization_profile(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     update_data: OrganizationUpdateRequest,
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     organization = OrganizationService.update_organization(
         organization_id, update_data, db
@@ -52,8 +54,8 @@ def update_organization_profile(
 @limiter.limit("10/minute")
 def get_organization_recruiters(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     recruiters = RecruiterCRUD.get_recruiters_by_organization(organization_id, db)
     return [
@@ -69,13 +71,17 @@ def get_organization_recruiters(
     ]
 
 
-@router.post("/recruiters", response_model=RecruiterResponse)
+@router.post(
+    "/recruiters",
+    response_model=RecruiterResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("5/minute")
 def create_recruiter(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     recruiter_data: CreateRecruiterRequest,
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     recruiter = RecruiterCRUD.create_recruiter(
         organization_id=organization_id,
@@ -98,9 +104,9 @@ def create_recruiter(
 @limiter.limit("10/minute")
 def get_recruiter(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     recruiter_id: str,
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
@@ -123,10 +129,10 @@ def get_recruiter(
 @limiter.limit("10/minute")
 def update_recruiter(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     recruiter_id: str,
     update_data: UpdateRecruiterRequest,
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
@@ -146,13 +152,16 @@ def update_recruiter(
     )
 
 
-@router.delete("/recruiters/{recruiter_id}")
+@router.delete(
+    "/recruiters/{recruiter_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 @limiter.limit("10/minute")
 def remove_recruiter(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     recruiter_id: str,
     organization_id: str = Depends(get_current_organization_id),
-    db: Session = Depends(get_db),
 ):
     recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:

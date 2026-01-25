@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -12,8 +14,8 @@ router = APIRouter()
 @limiter.limit("10/minute")
 def get_active_jobs_count(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     try:
         count = RecruiterStatsService.get_active_jobs_count(db=db, user_id=user_id)

@@ -292,13 +292,17 @@ class JobService:
                 job_description.job_responsibilities = job_data.job_responsibilities
 
             if job_data.required_qualifications is not None:
-                job_description.required_qualifications = job_data.required_qualifications
+                job_description.required_qualifications = (
+                    job_data.required_qualifications
+                )
 
             if job_data.preferred is not None:
                 job_description.preferred = job_data.preferred
 
             if job_data.compensation_and_benefits is not None:
-                job_description.compensation_and_benefits = job_data.compensation_and_benefits
+                job_description.compensation_and_benefits = (
+                    job_data.compensation_and_benefits
+                )
 
             job_description.updated_at = get_datetime()
 
@@ -456,12 +460,14 @@ def map_job_to_response(job: JobPosting):
     }
 
     jd = job.job_description
-    job_data.update({
-        "job_summary": jd.job_summary,
-        "job_responsibilities": jd.job_responsibilities,
-        "required_qualifications": jd.required_qualifications,
-        "preferred": jd.preferred,
-        "compensation_and_benefits": jd.compensation_and_benefits,
-    })
+    job_data.update(
+        {
+            "job_summary": jd.job_summary,
+            "job_responsibilities": jd.job_responsibilities,
+            "required_qualifications": jd.required_qualifications,
+            "preferred": jd.preferred,
+            "compensation_and_benefits": jd.compensation_and_benefits,
+        }
+    )
 
     return job_data

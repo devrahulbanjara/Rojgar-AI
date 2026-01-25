@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -20,9 +22,9 @@ router = APIRouter()
 @limiter.limit("10/minute")
 def generate_job_draft(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     draft_request: schemas.JobDraftGenerateRequest,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     if not draft_request.raw_requirements:
         raise HTTPException(
@@ -77,9 +79,9 @@ def generate_job_draft(
 @limiter.limit("5/minute")
 def create_job(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     job_data: schemas.JobCreate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -106,10 +108,10 @@ def create_job(
 @limiter.limit("5/minute")
 def update_job(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     job_id: str,
     job_data: schemas.JobUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -143,9 +145,9 @@ def update_job(
 @limiter.limit("5/minute")
 def delete_job(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     job_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     try:
         JobService.delete_job(db=db, job_id=job_id, user_id=user_id)
@@ -166,9 +168,9 @@ def delete_job(
 @limiter.limit("5/minute")
 def expire_job(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     job_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     try:
         updated_job = JobService.expire_job(db=db, job_id=job_id, user_id=user_id)
