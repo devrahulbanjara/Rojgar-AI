@@ -96,6 +96,7 @@ export default function Jobs() {
           page: currentPage,
           limit: 9,
           ...backendFilters,
+          userId: user?.id,
         }
       : undefined,
   );
@@ -229,6 +230,43 @@ export default function Jobs() {
       window.location.href = "/login";
     }
   }, [isAuthenticated, isAuthLoading]);
+
+  // Sync selectedJob with cache updates (for immediate is_saved updates)
+  useEffect(() => {
+    if (selectedJob && jobsData?.jobs) {
+      const updatedJob = jobsData.jobs.find(
+        (job) => (job.job_id || job.id) === (selectedJob.job_id || selectedJob.id),
+      );
+      if (updatedJob && updatedJob.is_saved !== selectedJob.is_saved) {
+        setSelectedJob(updatedJob);
+      }
+    }
+  }, [jobsData, selectedJob]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.key === "R"
+      ) {
+        event.preventDefault();
+        if (isSearchMode) {
+          queryClient.invalidateQueries({
+            queryKey: ["jobs", "search"],
+            refetchType: "active",
+          });
+        } else {
+          refetchRecommendations();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSearchMode, refetchRecommendations, queryClient]);
 
   const jobs = jobsData?.jobs || [];
   const totalJobs = jobsData?.total || 0;
@@ -372,14 +410,16 @@ export default function Jobs() {
                       We couldn&apos;t find any jobs matching your criteria. Try
                       adjusting your filters or search terms.
                     </p>
-                    <Button
-                      variant="outline"
-                      onClick={handleClearFilters}
-                      className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300"
-                    >
-                      <Filter className="w-4 h-4" />
-                      Clear all filters
-                    </Button>
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={handleClearFilters}
+                        className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300"
+                      >
+                        <Filter className="w-4 h-4" />
+                        Clear all filters
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : (

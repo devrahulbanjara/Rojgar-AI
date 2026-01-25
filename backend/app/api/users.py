@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/me", response_model=UserResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_current_user(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -30,7 +30,7 @@ def get_current_user(
 
 
 @router.put("/profile", response_model=UserResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

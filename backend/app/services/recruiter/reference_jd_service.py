@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm.session import Session
 
 from app.models import Organization, ReferenceJobDescriptions
@@ -35,21 +36,19 @@ class ReferenceJDService:
 
     @staticmethod
     def _get_organization_description(db: Session, organization_id: str) -> str | None:
-        organization = (
-            db.query(Organization)
-            .filter(Organization.organization_id == organization_id)
-            .first()
+        stmt = select(Organization).where(
+            Organization.organization_id == organization_id
         )
+        organization = db.execute(stmt).scalar_one_or_none()
 
         return organization.description if organization else None
 
     @staticmethod
     def get_reference_jds(db: Session, organization_id: str):
-        reference_jds = (
-            db.query(ReferenceJobDescriptions)
-            .filter(ReferenceJobDescriptions.organization_id == organization_id)
-            .all()
+        stmt = select(ReferenceJobDescriptions).where(
+            ReferenceJobDescriptions.organization_id == organization_id
         )
+        reference_jds = db.execute(stmt).scalars().all()
 
         organization_description = ReferenceJDService._get_organization_description(
             db, organization_id
@@ -59,14 +58,11 @@ class ReferenceJDService:
 
     @staticmethod
     def get_reference_jd_by_id(db: Session, reference_jd_id: str, organization_id: str):
-        reference_jd = (
-            db.query(ReferenceJobDescriptions)
-            .filter(
-                ReferenceJobDescriptions.referncejd_id == reference_jd_id,
-                ReferenceJobDescriptions.organization_id == organization_id,
-            )
-            .first()
+        stmt = select(ReferenceJobDescriptions).where(
+            ReferenceJobDescriptions.referncejd_id == reference_jd_id,
+            ReferenceJobDescriptions.organization_id == organization_id,
         )
+        reference_jd = db.execute(stmt).scalar_one_or_none()
 
         if not reference_jd:
             return None, None
@@ -79,14 +75,11 @@ class ReferenceJDService:
 
     @staticmethod
     def delete_reference_jd(db: Session, reference_jd_id: str, organization_id: str):
-        reference_jd = (
-            db.query(ReferenceJobDescriptions)
-            .filter(
-                ReferenceJobDescriptions.referncejd_id == reference_jd_id,
-                ReferenceJobDescriptions.organization_id == organization_id,
-            )
-            .first()
+        stmt = select(ReferenceJobDescriptions).where(
+            ReferenceJobDescriptions.referncejd_id == reference_jd_id,
+            ReferenceJobDescriptions.organization_id == organization_id,
         )
+        reference_jd = db.execute(stmt).scalar_one_or_none()
 
         if not reference_jd:
             raise HTTPException(
@@ -104,14 +97,11 @@ class ReferenceJDService:
         organization_id: str,
         data: schemas.CreateReferenceJD,
     ):
-        reference_jd = (
-            db.query(ReferenceJobDescriptions)
-            .filter(
-                ReferenceJobDescriptions.referncejd_id == reference_jd_id,
-                ReferenceJobDescriptions.organization_id == organization_id,
-            )
-            .first()
+        stmt = select(ReferenceJobDescriptions).where(
+            ReferenceJobDescriptions.referncejd_id == reference_jd_id,
+            ReferenceJobDescriptions.organization_id == organization_id,
         )
+        reference_jd = db.execute(stmt).scalar_one_or_none()
 
         if not reference_jd:
             raise HTTPException(

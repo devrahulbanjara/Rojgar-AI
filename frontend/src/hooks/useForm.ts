@@ -59,11 +59,9 @@ export function useForm<T extends Record<string, unknown>>(
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initialValuesRef = useRef(initialValues);
 
-  // Check if form is dirty
   const isDirty =
     JSON.stringify(values) !== JSON.stringify(initialValuesRef.current);
 
-  // Check if form is valid
   const isValid = Object.keys(validationRules || {}).every((field) => {
     const fieldRules = validationRules?.[field as keyof T];
     if (!fieldRules) return true;
@@ -72,7 +70,6 @@ export function useForm<T extends Record<string, unknown>>(
     return fieldRules.every((rule: ValidationRule<T>) => !rule(fieldValue, values as Record<string, unknown>));
   });
 
-  // Validate a single field
   const validateField = useCallback(
     (field: keyof T): string | undefined => {
       const fieldRules = validationRules?.[field];
@@ -88,7 +85,6 @@ export function useForm<T extends Record<string, unknown>>(
     [values, validationRules]
   );
 
-  // Validate all fields
   const validate = useCallback((): boolean => {
     const newErrors: Partial<Record<keyof T, string>> = {};
     let hasErrors = false;
@@ -108,18 +104,14 @@ export function useForm<T extends Record<string, unknown>>(
     return !hasErrors;
   }, [validateField, validationRules]);
 
-  // Set a single value
   const setValue = useCallback(
     (field: keyof T, value: T[keyof T]) => {
-      // Calculate new values for validation context
       setValues((prev) => {
         const newValues = { ...prev, [field]: value };
         
-        // Validate on change if enabled, using the new value directly
         if (validateOnChange) {
           const fieldRules = validationRules?.[field];
           if (fieldRules) {
-            // Validate with the new value and new values context
             let validationError: string | undefined;
             for (const rule of fieldRules) {
               const error = rule(value as T[keyof T], newValues as Record<string, unknown>);
@@ -128,31 +120,23 @@ export function useForm<T extends Record<string, unknown>>(
                 break;
               }
             }
-            // Update errors based on validation result
-            // React 18+ batches these updates automatically
             setErrors((prev) => {
               if (validationError) {
                 return { ...prev, [field]: validationError };
               } else {
-                // Clear error if validation passes
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [field]: _, ...rest } = prev;
                 return rest;
               }
             });
           } else {
-            // Clear error if no validation rules
             setErrors((prev) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { [field]: _, ...rest } = prev;
               return rest;
             });
           }
         } else {
-          // Clear error when value changes if validation on change is disabled
           setErrors((prev) => {
             if (prev[field]) {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { [field]: _, ...rest } = prev;
               return rest;
             }
@@ -166,17 +150,14 @@ export function useForm<T extends Record<string, unknown>>(
     [validateOnChange, validationRules]
   );
 
-  // Set multiple values
   const setValuesAction = useCallback((newValues: Partial<T>) => {
     setValues((prev) => ({ ...prev, ...newValues }));
   }, []);
 
-  // Set a single error
   const setError = useCallback((field: keyof T, error: string) => {
     setErrors((prev) => ({ ...prev, [field]: error }));
   }, []);
 
-  // Set multiple errors
   const setErrorsAction = useCallback(
     (newErrors: Partial<Record<keyof T, string>>) => {
       setErrors((prev) => ({ ...prev, ...newErrors }));
@@ -184,7 +165,6 @@ export function useForm<T extends Record<string, unknown>>(
     []
   );
 
-  // Set touched state
   const setTouchedField = useCallback(
     (field: keyof T, touchedValue: boolean) => {
       setTouched((prev) => ({ ...prev, [field]: touchedValue }));
@@ -192,7 +172,6 @@ export function useForm<T extends Record<string, unknown>>(
     []
   );
 
-  // Set field error (alias for setError)
   const setFieldError = useCallback(
     (field: keyof T, error: string) => {
       setError(field, error);
@@ -200,17 +179,14 @@ export function useForm<T extends Record<string, unknown>>(
     [setError]
   );
 
-  // Clear field error
   const clearFieldError = useCallback((field: keyof T) => {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }, []);
 
-  // Clear all errors
   const clearErrors = useCallback(() => {
     setErrors({});
   }, []);
 
-  // Reset form
   const reset = useCallback(() => {
     setValues(initialValues);
     setErrors({});
@@ -219,7 +195,6 @@ export function useForm<T extends Record<string, unknown>>(
     initialValuesRef.current = initialValues;
   }, [initialValues]);
 
-  // Handle field change
   const handleChange = useCallback(
     (field: string, value: unknown) => {
       setValue(field as keyof T, value as T[keyof T]);
@@ -227,7 +202,6 @@ export function useForm<T extends Record<string, unknown>>(
     [setValue]
   );
 
-  // Handle field blur
   const handleBlur = useCallback(
     (field: string) => {
       setTouched((prev) => ({ ...prev, [field]: true }));
@@ -242,7 +216,6 @@ export function useForm<T extends Record<string, unknown>>(
     [validateField, validateOnBlur]
   );
 
-  // Handle form submit
   const handleSubmit = useCallback(
     (customOnSubmit?: (values: T) => void | Promise<void>) => {
       return async (e?: React.FormEvent) => {
@@ -250,14 +223,12 @@ export function useForm<T extends Record<string, unknown>>(
           e.preventDefault();
         }
 
-        // Mark all fields as touched
         const allTouched = Object.keys(initialValues).reduce((acc, key) => {
           acc[key as keyof T] = true;
           return acc;
         }, {} as Partial<Record<keyof T, boolean>>);
         setTouched(allTouched);
 
-        // Validate form
         const isFormValid = validate();
         if (!isFormValid) {
           return;
@@ -270,7 +241,6 @@ export function useForm<T extends Record<string, unknown>>(
             await submitHandler(values);
           }
         } catch {
-          // Handle form submission error
         } finally {
           setIsSubmitting(false);
         }

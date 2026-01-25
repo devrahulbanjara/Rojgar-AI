@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
@@ -8,6 +9,7 @@ from app.core.authorization import get_organization_from_user
 from app.core.limiter import limiter
 from app.models import User
 from app.schemas import job as schemas
+from app.services.candidate.saved_job_service import SavedJobService
 from app.services.job_service import JobService, map_job_to_response
 from app.services.recruiter.reference_jd_service import ReferenceJDService
 
@@ -15,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/recommendations", response_model=schemas.JobListResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_recommendations(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -34,8 +36,14 @@ def get_recommendations(
         location_type=location_type,
     )
 
+    # Fetch saved job IDs for the user
+    saved_job_ids = SavedJobService.get_saved_job_ids(db, user_id)
+
     return {
-        "jobs": [map_job_to_response(job) for job in result["jobs"]],
+        "jobs": [
+            map_job_to_response(job, saved_job_ids=saved_job_ids)
+            for job in result["jobs"]
+        ],
         "total": result["total"],
         "page": result["page"],
         "limit": result["limit"],
@@ -46,7 +54,7 @@ def get_recommendations(
 
 
 @router.get("/search", response_model=schemas.JobListResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def search_jobs(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -55,6 +63,7 @@ def search_jobs(
     limit: int = 10,
     employment_type: str | None = None,
     location_type: str | None = None,
+    user_id: str | None = None,
 ):
     result = JobService.search_jobs(
         db=db,
@@ -65,8 +74,16 @@ def search_jobs(
         location_type=location_type,
     )
 
+    # Fetch saved job IDs if user_id is provided
+    saved_job_ids = None
+    if user_id:
+        saved_job_ids = SavedJobService.get_saved_job_ids(db, user_id)
+
     return {
-        "jobs": [map_job_to_response(job) for job in result["jobs"]],
+        "jobs": [
+            map_job_to_response(job, saved_job_ids=saved_job_ids)
+            for job in result["jobs"]
+        ],
         "total": result["total"],
         "page": result["page"],
         "limit": result["limit"],
@@ -79,14 +96,15 @@ def search_jobs(
 @router.post(
     "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def create_job(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     job_data: schemas.JobCreate,
     user_id: str = Depends(get_current_user_id),
 ):
-    user = db.query(User).filter(User.user_id == user_id).first()
+    user_stmt = select(User).where(User.user_id == user_id)
+    user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -106,7 +124,7 @@ def create_job(
 
 
 @router.get("", response_model=schemas.JobListResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_jobs(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -141,14 +159,15 @@ def get_jobs(
     response_model=schemas.ReferenceJDResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def create_reference_jd(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.CreateReferenceJD,
     user_id: str = Depends(get_current_user_id),
 ):
-    user = db.query(User).filter(User.user_id == user_id).first()
+    user_stmt = select(User).where(User.user_id == user_id)
+    user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -180,14 +199,15 @@ def create_reference_jd(
 
 
 @router.get("/reference-jd", response_model=schemas.ReferenceJDListResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_reference_jds(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     user_id: str = Depends(get_current_user_id),
 ):
     """Get all reference JDs for the authenticated user's organization"""
-    user = db.query(User).filter(User.user_id == user_id).first()
+    user_stmt = select(User).where(User.user_id == user_id)
+    user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -234,7 +254,7 @@ def get_reference_jds(
 @router.get(
     "/reference-jd/{reference_jd_id}", response_model=schemas.ReferenceJDResponse
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_reference_jd_by_id(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -242,7 +262,8 @@ def get_reference_jd_by_id(
     user_id: str = Depends(get_current_user_id),
 ):
     """Get a specific reference JD by ID"""
-    user = db.query(User).filter(User.user_id == user_id).first()
+    user_stmt = select(User).where(User.user_id == user_id)
+    user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -286,7 +307,7 @@ def get_reference_jd_by_id(
     "/reference-jd/{reference_jd_id}",
     response_model=schemas.ReferenceJDResponse,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_reference_jd(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -295,7 +316,8 @@ def update_reference_jd(
     user_id: str = Depends(get_current_user_id),
 ):
     """Update a reference JD"""
-    user = db.query(User).filter(User.user_id == user_id).first()
+    user_stmt = select(User).where(User.user_id == user_id)
+    user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -335,7 +357,7 @@ def update_reference_jd(
     "/reference-jd/{reference_jd_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_reference_jd(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -343,7 +365,8 @@ def delete_reference_jd(
     user_id: str = Depends(get_current_user_id),
 ):
     """Delete a reference JD"""
-    user = db.query(User).filter(User.user_id == user_id).first()
+    user_stmt = select(User).where(User.user_id == user_id)
+    user = db.execute(user_stmt).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -368,11 +391,20 @@ def delete_reference_jd(
 
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_job_detail(
-    request: Request, db: Annotated[Session, Depends(get_db)], job_id: str
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    job_id: str,
+    user_id: str | None = None,
 ):
     job = JobService.get_job_by_id(db=db, job_id=job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return map_job_to_response(job)
+
+    # Fetch saved job IDs if user_id is provided
+    saved_job_ids = None
+    if user_id:
+        saved_job_ids = SavedJobService.get_saved_job_ids(db, user_id)
+
+    return map_job_to_response(job, saved_job_ids=saved_job_ids)

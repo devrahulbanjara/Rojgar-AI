@@ -26,7 +26,7 @@ router = APIRouter()
 
 
 @router.post("/signup", response_model=TokenResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def signup(
     request: Request,
     signup_data: SignupRequest,
@@ -78,7 +78,7 @@ def signup(
 
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def login(
     request: Request,
     login_data: LoginRequest,
@@ -118,14 +118,14 @@ def login(
 
 
 @router.get("/google")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def google_login(request: Request):
     auth_url = AuthService.generate_google_auth_url()
     return {"auth_url": auth_url}
 
 
 @router.get("/google/callback")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 async def google_callback(
     request: Request, db: Annotated[Session, Depends(get_db)], code: str
 ):
@@ -155,14 +155,14 @@ async def google_callback(
 
 
 @router.post("/logout")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def logout(request: Request, response: Response):
     response.delete_cookie(key="auth_token")
     return {"message": "Logged out successfully"}
 
 
 @router.post("/organization/signup", response_model=OrganizationTokenResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def organization_signup(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -192,7 +192,7 @@ def organization_signup(
 
 
 @router.post("/organization/login", response_model=OrganizationTokenResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def organization_login(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

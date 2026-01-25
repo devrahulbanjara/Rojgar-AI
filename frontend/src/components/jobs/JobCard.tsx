@@ -8,6 +8,7 @@ import {
   Briefcase,
   Eye,
   Calendar,
+  BookmarkCheck,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { jobUtils } from "../../services/jobService";
@@ -197,31 +198,36 @@ export const JobCard = memo<JobCardProps>(
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Header Row: Department Badge + Level Badge */}
+          {/* Header Row: Department Badge + Level Badge + Saved Indicator */}
           <div className="flex items-start justify-between mb-5">
-            {job.department && (
-              <span
-                className={cn(
-                  "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border",
-                  deptColor.bg,
-                  deptColor.text,
-                  deptColor.border,
-                )}
-              >
-                {job.department}
-              </span>
-            )}
-            {job.level && (
-              <span
-                className={cn(
-                  "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border",
-                  levelColor.bg,
-                  levelColor.text,
-                  levelColor.border,
-                )}
-              >
-                {job.level}
-              </span>
+            <div className="flex items-center gap-2">
+              {job.department && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                    deptColor.bg,
+                    deptColor.text,
+                    deptColor.border,
+                  )}
+                >
+                  {job.department}
+                </span>
+              )}
+              {job.level && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                    levelColor.bg,
+                    levelColor.text,
+                    levelColor.border,
+                  )}
+                >
+                  {job.level}
+                </span>
+              )}
+            </div>
+            {job.is_saved && (
+              <BookmarkCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
             )}
           </div>
 

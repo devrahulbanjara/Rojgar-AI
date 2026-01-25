@@ -15,13 +15,11 @@ export interface DashboardStats {
 
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
-    // Fetch both application stats and active jobs count
     const [appStatsResponse, activeJobsResponse] = await Promise.all([
       apiClient.get<DashboardStats>('/api/v1/applications/stats').catch(() => null),
       apiClient.get<{ count: number }>('/api/v1/stats/active-jobs').catch(() => null),
     ]);
 
-    // Handle application stats response
     let appStats: DashboardStats = {
       totalApplications: 0,
       activeApplications: 0,
@@ -38,7 +36,6 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       }
     }
 
-    // Get active jobs count
     const activeJobs = activeJobsResponse?.count ?? 0;
 
     return {
@@ -46,7 +43,6 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       activeJobs,
     };
   } catch {
-    // Return default stats on error instead of throwing
     return {
       totalApplications: 0,
       activeApplications: 0,
@@ -62,10 +58,10 @@ export const useDashboardStats = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.stats,
     queryFn: fetchDashboardStats,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 2, // Retry failed requests
-    retryDelay: 1000, // 1 second delay between retries
-    refetchOnMount: true, // Always refetch on mount
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: 1000,
+    refetchOnMount: true,
   });
 };
