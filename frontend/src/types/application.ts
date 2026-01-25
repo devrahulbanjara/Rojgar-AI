@@ -39,9 +39,9 @@ export interface ApplicationTrackingBoard {
 
 // Application Form Types
 export interface CreateApplicationRequest {
-  jobId: string;
-  resumeUrl?: string;
-  coverLetter?: string;
+  job_id: string;
+  resume_id: string;
+  cover_letter?: string;
 }
 
 export interface UpdateApplicationRequest {

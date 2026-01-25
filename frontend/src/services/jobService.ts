@@ -26,14 +26,14 @@ const jobEndpoints = {
 } as const;
 
 const applicationEndpoints = {
-  list: "/api/v1/applications",
-  detail: (id: string) => `/api/v1/applications/${id}`,
-  create: "/api/v1/applications",
-  update: (id: string) => `/api/v1/applications/${id}`,
-  delete: (id: string) => `/api/v1/applications/${id}`,
-  byJob: (jobId: string) => `/api/v1/applications/job/${jobId}`,
+  list: "/api/v1/candidate/applications",
+  detail: (id: string) => `/api/v1/candidate/applications/${id}`,
+  create: "/api/v1/candidate/applications",
+  update: (id: string) => `/api/v1/candidate/applications/${id}`,
+  delete: (id: string) => `/api/v1/candidate/applications/${id}`,
+  byJob: (jobId: string) => `/api/v1/candidate/applications/job/${jobId}`,
   byCandidate: (candidateId: string) =>
-    `/api/v1/applications/candidate/${candidateId}`,
+    `/api/v1/candidate/applications/candidate/${candidateId}`,
 } as const;
 
 const savedJobEndpoints = {
