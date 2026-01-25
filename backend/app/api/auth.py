@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core import get_db
+from app.core import BusinessLogicError, UnauthorizedError, get_db
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.models import UserRole
@@ -35,19 +35,13 @@ def signup(
 ):
     existing_user = AuthService.get_user_by_email(signup_data.email, db)
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
+        raise BusinessLogicError("Email already registered")
 
     existing_org = OrganizationAuthService.get_organization_by_email(
         signup_data.email, db
     )
     if existing_org:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization already registered",
-        )
+        raise BusinessLogicError("Organization already registered")
 
     create_user_data = CreateUserRequest(
         email=signup_data.email,
@@ -73,7 +67,7 @@ def signup(
     return TokenResponse(
         access_token=token,
         token_type="bearer",
-        user=AuthService.create_user_response(new_user),
+        user=new_user,
     )
 
 
@@ -88,16 +82,10 @@ def login(
     user = AuthService.get_user_by_email(login_data.email, db)
 
     if not user or not user.password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+        raise UnauthorizedError("Invalid email or password")
 
     if not AuthService.verify_user_password(user, login_data.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+        raise UnauthorizedError("Invalid email or password")
 
     token, max_age = AuthService.create_access_token(user.id, login_data.remember_me)
 
@@ -113,7 +101,7 @@ def login(
     return TokenResponse(
         access_token=token,
         token_type="bearer",
-        user=AuthService.create_user_response(user),
+        user=user,
     )
 
 
@@ -187,7 +175,7 @@ def organization_signup(
     return OrganizationTokenResponse(
         access_token=token,
         token_type="bearer",
-        organization=OrganizationAuthService.create_organization_response(new_org),
+        organization=new_org,
     )
 
 
@@ -204,18 +192,12 @@ def organization_login(
     )
 
     if not organization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+        raise UnauthorizedError("Invalid email or password")
 
     if not OrganizationAuthService.verify_organization_password(
         organization, login_data.password
     ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+        raise UnauthorizedError("Invalid email or password")
 
     token, max_age = OrganizationAuthService.create_organization_token(
         organization.organization_id, login_data.remember_me
@@ -233,5 +215,5 @@ def organization_login(
     return OrganizationTokenResponse(
         access_token=token,
         token_type="bearer",
-        organization=OrganizationAuthService.create_organization_response(organization),
+        organization=organization,
     )

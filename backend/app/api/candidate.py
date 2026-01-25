@@ -1,15 +1,16 @@
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import get_current_active_user, get_db
 from app.core.limiter import limiter
+from app.models.user import User
 from app.schemas import candidate as schemas
 from app.schemas import job as job_schemas
 from app.services.candidate import CandidateService
 from app.services.candidate.saved_job_service import SavedJobService
-from app.services.job_service import map_job_to_response
 
 router = APIRouter()
 
@@ -19,9 +20,9 @@ router = APIRouter()
 def get_my_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.get_full_profile(db, user_id)
+    return CandidateService.get_full_profile(db, current_user)
 
 
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
@@ -30,9 +31,9 @@ def update_candidate_personal_information(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.CandidateProfileUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_basic_info(db, user_id, data)
+    return CandidateService.update_basic_info(db, current_user, data)
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
@@ -41,9 +42,9 @@ def add_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.WorkExperienceBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_experience(db, user_id, data)
+    return CandidateService.add_experience(db, current_user, data)
 
 
 @router.delete("/experience/{item_id}")
@@ -51,10 +52,10 @@ def add_experience(
 def delete_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_experience(db, user_id, item_id)
+    CandidateService.delete_experience(db, current_user, item_id)
     return {"message": "Experience deleted successfully"}
 
 
@@ -63,11 +64,11 @@ def delete_experience(
 def update_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
+    item_id: uuid.UUID,
     data: schemas.WorkExperienceUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_experience(db, user_id, item_id, data)
+    return CandidateService.update_experience(db, current_user, item_id, data)
 
 
 @router.post("/education", response_model=schemas.EducationResponse)
@@ -76,9 +77,9 @@ def add_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.EducationBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_education(db, user_id, data)
+    return CandidateService.add_education(db, current_user, data)
 
 
 @router.delete("/education/{item_id}")
@@ -86,10 +87,10 @@ def add_education(
 def delete_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_education(db, user_id, item_id)
+    CandidateService.delete_education(db, current_user, item_id)
     return {"message": "Education deleted successfully"}
 
 
@@ -98,11 +99,11 @@ def delete_education(
 def update_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
+    item_id: uuid.UUID,
     data: schemas.EducationUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_education(db, user_id, item_id, data)
+    return CandidateService.update_education(db, current_user, item_id, data)
 
 
 @router.post("/skills", response_model=schemas.SkillResponse)
@@ -111,9 +112,9 @@ def add_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.SkillBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_skill(db, user_id, data)
+    return CandidateService.add_skill(db, current_user, data)
 
 
 @router.delete("/skills/{item_id}")
@@ -121,10 +122,10 @@ def add_skill(
 def delete_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_skill(db, user_id, item_id)
+    CandidateService.delete_skill(db, current_user, item_id)
     return {"message": "Skill deleted successfully"}
 
 
@@ -133,11 +134,11 @@ def delete_skill(
 def update_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
+    item_id: uuid.UUID,
     data: schemas.SkillUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_skill(db, user_id, item_id, data)
+    return CandidateService.update_skill(db, current_user, item_id, data)
 
 
 @router.post("/certifications", response_model=schemas.CertificationResponse)
@@ -146,9 +147,9 @@ def add_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.CertificationBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_certification(db, user_id, data)
+    return CandidateService.add_certification(db, current_user, data)
 
 
 @router.delete("/certifications/{item_id}")
@@ -156,10 +157,10 @@ def add_certification(
 def delete_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_certification(db, user_id, item_id)
+    CandidateService.delete_certification(db, current_user, item_id)
     return {"message": "Certification deleted successfully"}
 
 
@@ -168,11 +169,11 @@ def delete_certification(
 def update_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
+    item_id: uuid.UUID,
     data: schemas.CertificationUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_certification(db, user_id, item_id, data)
+    return CandidateService.update_certification(db, current_user, item_id, data)
 
 
 @router.post("/social-links", response_model=schemas.SocialLinkResponse)
@@ -181,9 +182,9 @@ def add_social_link(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.SocialLinkBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_social_link(db, user_id, data)
+    return CandidateService.add_social_link(db, current_user, data)
 
 
 @router.delete("/social-links/{item_id}")
@@ -191,10 +192,10 @@ def add_social_link(
 def delete_social_link(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_social_link(db, user_id, item_id)
+    CandidateService.delete_social_link(db, current_user, item_id)
     return {"message": "Social link deleted successfully"}
 
 
@@ -203,11 +204,11 @@ def delete_social_link(
 def update_social_link(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    item_id: str,
+    item_id: uuid.UUID,
     data: schemas.SocialLinkBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_social_link(db, user_id, item_id, data)
+    return CandidateService.update_social_link(db, current_user, item_id, data)
 
 
 @router.post("/jobs/{job_id}/save")
@@ -215,19 +216,10 @@ def update_social_link(
 def toggle_save_job(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    job_id: str,
-    user_id: str = Depends(get_current_user_id),
+    job_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    try:
-        result = SavedJobService.toggle_save_job(db, user_id, job_id)
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to toggle save status: {str(e)}",
-        )
+    return SavedJobService.toggle_save_job(db, current_user.user_id, job_id)
 
 
 @router.get("/saved-jobs", response_model=job_schemas.JobListResponse)
@@ -235,30 +227,10 @@ def toggle_save_job(
 def get_saved_jobs(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
     page: int = 1,
     limit: int = 10,
 ):
-    try:
-        saved_jobs = SavedJobService.get_my_saved_jobs(db, user_id)
-
-        total = len(saved_jobs)
-        start = (page - 1) * limit
-        end = start + limit
-        paginated_jobs = saved_jobs[start:end]
-        total_pages = (total + limit - 1) // limit if total > 0 else 1
-
-        return {
-            "jobs": [map_job_to_response(job) for job in paginated_jobs],
-            "total": total,
-            "page": page,
-            "limit": limit,
-            "total_pages": total_pages,
-            "has_next": end < total,
-            "has_prev": page > 1,
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve saved jobs: {str(e)}",
-        )
+    return SavedJobService.get_my_saved_jobs(
+        db, current_user.user_id, page=page, limit=limit
+    )

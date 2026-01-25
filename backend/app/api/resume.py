@@ -1,10 +1,12 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import get_current_active_user, get_db
 from app.core.limiter import limiter
+from app.models.user import User
 from app.schemas import (
     CertificationBase,
     EducationBase,
@@ -30,9 +32,9 @@ router = APIRouter()
 def list_resumes(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.list_resumes(db, user_id)
+    return ResumeService.list_resumes(db, current_user)
 
 
 @router.post(
@@ -43,9 +45,9 @@ def create_resume(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     data: schemas.ResumeCreate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.create_resume_fork(db, user_id, data)
+    return ResumeService.create_resume_fork(db, current_user, data)
 
 
 @router.get("/{resume_id}", response_model=schemas.ResumeResponse)
@@ -53,10 +55,10 @@ def create_resume(
 def get_resume(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    user_id: str = Depends(get_current_user_id),
+    resume_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.get_resume(db, user_id, resume_id)
+    return ResumeService.get_resume(db, current_user, resume_id)
 
 
 @router.patch("/{resume_id}", response_model=schemas.ResumeResponse)
@@ -64,11 +66,11 @@ def get_resume(
 def update_resume_details(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
+    resume_id: uuid.UUID,
     data: schemas.ResumeUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.update_resume(db, user_id, resume_id, data)
+    return ResumeService.update_resume(db, current_user, resume_id, data)
 
 
 @router.delete(
@@ -79,10 +81,10 @@ def update_resume_details(
 def delete_resume(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    user_id: str = Depends(get_current_user_id),
+    resume_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    ResumeService.delete_resume(db, user_id, resume_id)
+    ResumeService.delete_resume(db, current_user, resume_id)
     return {"message": "Resume deleted successfully"}
 
 
@@ -93,11 +95,11 @@ def delete_resume(
 def add_resume_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
+    resume_id: uuid.UUID,
     data: WorkExperienceBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.add_experience(db, user_id, resume_id, data)
+    return ResumeService.add_experience(db, current_user, resume_id, data)
 
 
 @router.delete("/{resume_id}/experience/{item_id}")
@@ -105,11 +107,11 @@ def add_resume_experience(
 def delete_resume_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    ResumeService.delete_experience(db, user_id, resume_id, item_id)
+    ResumeService.delete_experience(db, current_user, resume_id, item_id)
     return {"message": "Resume experience deleted successfully"}
 
 
@@ -122,11 +124,11 @@ def delete_resume_experience(
 def add_resume_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
+    resume_id: uuid.UUID,
     data: EducationBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.add_education(db, user_id, resume_id, data)
+    return ResumeService.add_education(db, current_user, resume_id, data)
 
 
 @router.delete(
@@ -137,11 +139,11 @@ def add_resume_education(
 def delete_resume_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    ResumeService.delete_education(db, user_id, resume_id, item_id)
+    ResumeService.delete_education(db, current_user, resume_id, item_id)
     return {"message": "Resume education deleted successfully"}
 
 
@@ -154,11 +156,11 @@ def delete_resume_education(
 def add_resume_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
+    resume_id: uuid.UUID,
     data: SkillBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.add_skill(db, user_id, resume_id, data)
+    return ResumeService.add_skill(db, current_user, resume_id, data)
 
 
 @router.delete(
@@ -169,11 +171,11 @@ def add_resume_skill(
 def delete_resume_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    ResumeService.delete_skill(db, user_id, resume_id, item_id)
+    ResumeService.delete_skill(db, current_user, resume_id, item_id)
     return {"message": "Resume skill deleted successfully"}
 
 
@@ -186,11 +188,11 @@ def delete_resume_skill(
 def add_resume_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
+    resume_id: uuid.UUID,
     data: CertificationBase,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.add_certification(db, user_id, resume_id, data)
+    return ResumeService.add_certification(db, current_user, resume_id, data)
 
 
 @router.delete(
@@ -201,11 +203,11 @@ def add_resume_certification(
 def delete_resume_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    ResumeService.delete_certification(db, user_id, resume_id, item_id)
+    ResumeService.delete_certification(db, current_user, resume_id, item_id)
     return {"message": "Resume certification deleted successfully"}
 
 
@@ -216,12 +218,12 @@ def delete_resume_certification(
 def update_resume_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
     data: ResumeWorkExperienceUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.update_experience(db, user_id, resume_id, item_id, data)
+    return ResumeService.update_experience(db, current_user, resume_id, item_id, data)
 
 
 @router.patch(
@@ -231,12 +233,12 @@ def update_resume_experience(
 def update_resume_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
     data: ResumeEducationUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.update_education(db, user_id, resume_id, item_id, data)
+    return ResumeService.update_education(db, current_user, resume_id, item_id, data)
 
 
 @router.patch("/{resume_id}/skills/{item_id}", response_model=ResumeSkillResponse)
@@ -244,12 +246,12 @@ def update_resume_education(
 def update_resume_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
     data: ResumeSkillUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.update_skill(db, user_id, resume_id, item_id, data)
+    return ResumeService.update_skill(db, current_user, resume_id, item_id, data)
 
 
 @router.patch(
@@ -259,9 +261,11 @@ def update_resume_skill(
 def update_resume_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
-    resume_id: str,
-    item_id: str,
+    resume_id: uuid.UUID,
+    item_id: uuid.UUID,
     data: ResumeCertificationUpdate,
-    user_id: str = Depends(get_current_user_id),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ResumeService.update_certification(db, user_id, resume_id, item_id, data)
+    return ResumeService.update_certification(
+        db, current_user, resume_id, item_id, data
+    )

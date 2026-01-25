@@ -1,3 +1,5 @@
+import uuid
+
 from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
@@ -95,7 +97,7 @@ class JobVectorService:
             }
 
             doc = Document(page_content=text_content, metadata=metadata)
-            self.qdrant.add_documents([doc], ids=[job.job_id])
+            self.qdrant.add_documents([doc], ids=[str(job.job_id)])
 
             job.is_indexed = True
             db.commit()
@@ -148,11 +150,13 @@ class JobVectorService:
             f"Completed indexing: {successful} successful, {failed} failed out of {len(pending_jobs)} total jobs"
         )
 
-    def search_jobs(self, query: str, limit: int) -> list[int]:
+    def search_jobs(self, query: str, limit: int) -> list[uuid.UUID]:
         results = self.qdrant.similarity_search(query, k=limit)
-        return [res.metadata["job_id"] for res in results]
+        return [uuid.UUID(res.metadata["job_id"]) for res in results]
 
-    def recommend_jobs_by_skills(self, skills: list[str], limit: int) -> list[int]:
+    def recommend_jobs_by_skills(
+        self, skills: list[str], limit: int
+    ) -> list[uuid.UUID]:
         if not skills:
             return []
 

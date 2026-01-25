@@ -1,8 +1,14 @@
 import uuid
-from sqlalchemy import select, delete
-from sqlalchemy.orm import Session, selectinload
-from fastapi import HTTPException, status
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
+
+from app.core import (
+    BusinessLogicError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+)
 from app.models.application import (
     ApplicationStatus,
     JobApplication,
@@ -14,9 +20,8 @@ from app.models.resume import Resume
 
 
 class ApplicationService:
-
     @staticmethod
-    def _get_profile_id(db: Session, user_id: str) -> str:
+    def _get_profile_id(db: Session, user_id: uuid.UUID) -> uuid.UUID:
         """Internal helper to fetch profile_id or raise 404."""
         profile_id = db.scalar(
             select(CandidateProfile.profile_id).where(
@@ -24,14 +29,13 @@ class ApplicationService:
             )
         )
         if not profile_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Candidate profile not found",
-            )
+            raise NotFoundError("Candidate profile not found")
         return profile_id
 
     @staticmethod
-    def get_candidate_applications(db: Session, user_id: str) -> list[JobApplication]:
+    def get_candidate_applications(
+        db: Session, user_id: uuid.UUID
+    ) -> list[JobApplication]:
         profile_id = ApplicationService._get_profile_id(db, user_id)
 
         stmt = (
@@ -47,7 +51,7 @@ class ApplicationService:
 
     @staticmethod
     def get_application_by_id(
-        db: Session, user_id: str, application_id: str
+        db: Session, user_id: uuid.UUID, application_id: uuid.UUID
     ) -> JobApplication:
         profile_id = ApplicationService._get_profile_id(db, user_id)
 
@@ -66,15 +70,12 @@ class ApplicationService:
         )
         application = db.execute(stmt).scalar_one_or_none()
         if not application:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Application not found",
-            )
+            raise NotFoundError("Application not found")
         return application
 
     @staticmethod
     def get_application_by_job(
-        db: Session, user_id: str, job_id: str
+        db: Session, user_id: uuid.UUID, job_id: uuid.UUID
     ) -> JobApplication | None:
         profile_id = ApplicationService._get_profile_id(db, user_id)
 
@@ -93,7 +94,7 @@ class ApplicationService:
 
     @staticmethod
     def apply_to_job(
-        db: Session, user_id: str, job_id: str, resume_id: str
+        db: Session, user_id: uuid.UUID, job_id: uuid.UUID, resume_id: uuid.UUID
     ) -> JobApplication:
         profile_id = ApplicationService._get_profile_id(db, user_id)
 
@@ -101,11 +102,9 @@ class ApplicationService:
         job = db.scalar(select(JobPosting).where(JobPosting.job_id == job_id))
 
         if not job:
-            raise HTTPException(status_code=404, detail="Job not found")
+            raise NotFoundError("Job not found")
         if job.status != "active":
-            raise HTTPException(
-                status_code=400, detail="Job is no longer accepting applications"
-            )
+            raise BusinessLogicError("Job is no longer accepting applications")
 
         # Validate resume belongs to candidate
         resume_profile_id = db.scalar(
@@ -113,9 +112,9 @@ class ApplicationService:
         )
 
         if not resume_profile_id:
-            raise HTTPException(status_code=404, detail="Resume not found")
+            raise NotFoundError("Resume not found")
         if resume_profile_id != profile_id:
-            raise HTTPException(status_code=403, detail="Unauthorized resume usage")
+            raise ForbiddenError("Unauthorized resume usage")
 
         # Check for duplicate application
         already_applied = db.scalar(
@@ -125,12 +124,10 @@ class ApplicationService:
             )
         )
         if already_applied:
-            raise HTTPException(
-                status_code=409, detail="You have already applied for this job"
-            )
+            raise ConflictError("You have already applied for this job")
 
         # Create application
-        app_id = str(uuid.uuid4())
+        app_id = uuid.uuid4()
         new_application = JobApplication(
             application_id=app_id,
             candidate_profile_id=profile_id,
@@ -142,7 +139,7 @@ class ApplicationService:
 
         # Create status history
         history = JobApplicationStatusHistory(
-            status_history_id=str(uuid.uuid4()),
+            status_history_id=uuid.uuid4(),
             application_id=app_id,
             status=ApplicationStatus.APPLIED,
         )

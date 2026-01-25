@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 class JobDescription(Base):
     __tablename__ = "job_description"
 
-    job_description_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    job_description_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     job_summary: Mapped[str] = mapped_column(String, nullable=False)
     job_responsibilities: Mapped[list[str]] = mapped_column(
         ARRAY(String), nullable=False
@@ -45,17 +46,17 @@ class JobDescription(Base):
 class JobPosting(Base):
     __tablename__ = "job_posting"
 
-    job_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
 
-    organization_id: Mapped[str] = mapped_column(
+    organization_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("organization.organization_id"), nullable=False
     )
 
-    job_description_id: Mapped[str] = mapped_column(
+    job_description_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("job_description.job_description_id"), nullable=False
     )
 
-    created_by_user_id: Mapped[str | None] = mapped_column(
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("user.user_id"), nullable=True
     )
 
@@ -102,8 +103,8 @@ class JobPosting(Base):
 
 class ReferenceJobDescriptions(Base):
     __tablename__ = "reference_job_description"
-    referncejd_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
-    organization_id: Mapped[str] = mapped_column(Uuid, nullable=False)
+    referncejd_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    organization_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     department: Mapped[str] = mapped_column(String, nullable=False)
     job_summary: Mapped[str] = mapped_column(String, nullable=False)
     job_responsibilities: Mapped[list[str]] = mapped_column(
