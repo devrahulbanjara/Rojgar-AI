@@ -36,6 +36,11 @@ const applicationEndpoints = {
     `/api/v1/applications/candidate/${candidateId}`,
 } as const;
 
+const savedJobEndpoints = {
+  toggleSave: (jobId: string) => `/api/v1/candidate/jobs/${jobId}/save`,
+  list: "/api/v1/candidate/saved-jobs",
+} as const;
+
 export class JobService {
   static async getPersonalizedRecommendations(
     userId: string,
@@ -74,6 +79,7 @@ export class JobService {
     params?: JobSearchParams & {
       employmentType?: string;
       locationType?: string;
+      userId?: string;
     },
   ): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
@@ -90,6 +96,10 @@ export class JobService {
     }
     if (params?.locationType) {
       queryParams.append("location_type", params.locationType);
+    }
+
+    if (params?.userId) {
+      queryParams.append("user_id", params.userId);
     }
 
     const endpoint = `${jobEndpoints.search}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
@@ -136,6 +146,22 @@ export class JobService {
     if (params?.limit) queryParams.append("limit", params.limit.toString());
 
     const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`;
+    return apiClient.get<JobListResponse>(endpoint);
+  }
+
+  static async toggleSaveJob(jobId: string): Promise<{ status: string }> {
+    return apiClient.post<{ status: string }>(savedJobEndpoints.toggleSave(jobId));
+  }
+
+  static async getSavedJobs(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<JobListResponse> {
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page.toString());
+    queryParams.append("limit", limit.toString());
+
+    const endpoint = `${savedJobEndpoints.list}?${queryParams.toString()}`;
     return apiClient.get<JobListResponse>(endpoint);
   }
 }

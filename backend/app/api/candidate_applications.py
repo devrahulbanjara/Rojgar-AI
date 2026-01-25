@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/applications", response_model=list[ApplicationResponse])
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def get_my_applications(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

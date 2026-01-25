@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { STATUS_CONFIG, COLUMN_MAPPING } from "@/utils/statusStyles";
 import { Loader2, Briefcase, Video, Trophy, MapPin, CalendarClock } from "lucide-react";
@@ -30,11 +30,7 @@ export default function CandidateDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
-
-    const fetchApplications = async () => {
+    const fetchApplications = useCallback(async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -50,7 +46,29 @@ export default function CandidateDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchApplications();
+    }, [fetchApplications]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (
+                (event.ctrlKey || event.metaKey) &&
+                event.shiftKey &&
+                event.key === "R"
+            ) {
+                event.preventDefault();
+                fetchApplications();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [fetchApplications]);
 
     const columns: Record<string, ApplicationResponse[]> = {
         Applied: [],

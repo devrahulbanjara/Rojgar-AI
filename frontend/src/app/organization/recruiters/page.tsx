@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -71,6 +71,7 @@ export default function RecruitersPage() {
     data: backendRecruiters,
     isLoading,
     error,
+    refetch: refetchRecruiters,
   } = useRecruiters();
   const createRecruiterMutation = useCreateRecruiter();
   const updateRecruiterMutation = useUpdateRecruiter();
@@ -87,6 +88,24 @@ export default function RecruitersPage() {
       recruiter.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       recruiter.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.key === "R"
+      ) {
+        event.preventDefault();
+        refetchRecruiters();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [refetchRecruiters]);
 
   const handleAddRecruiter = () => {
     setModalMode("add");

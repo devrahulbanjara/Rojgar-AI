@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.get("/me", response_model=OrganizationResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def get_organization_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -37,7 +37,7 @@ def get_organization_profile(
 
 
 @router.put("/me", response_model=OrganizationResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_organization_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -51,7 +51,7 @@ def update_organization_profile(
 
 
 @router.get("/recruiters", response_model=list[RecruiterResponse])
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def get_organization_recruiters(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -76,7 +76,7 @@ def get_organization_recruiters(
     response_model=RecruiterResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def create_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -101,7 +101,7 @@ def create_recruiter(
 
 
 @router.get("/recruiters/{recruiter_id}", response_model=RecruiterResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def get_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -126,7 +126,7 @@ def get_recruiter(
 
 
 @router.put("/recruiters/{recruiter_id}", response_model=RecruiterResponse)
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def update_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -156,7 +156,7 @@ def update_recruiter(
     "/recruiters/{recruiter_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def remove_recruiter(
     request: Request,
     db: Annotated[Session, Depends(get_db)],

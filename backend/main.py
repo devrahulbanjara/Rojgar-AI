@@ -22,9 +22,13 @@ async def lifespan(app: FastAPI):
     init_db()
 
     try:
+        logger.trace(
+            "Indexing pending active jobs (is_indexed=False, status=active)..."
+        )
         with Session(engine) as db:
             vector_service = JobVectorService()
             vector_service.index_all_pending_jobs(db)
+        logger.trace("Completed startup job indexing")
     except Exception as e:
         logger.error(f"Startup indexing error: {e}")
 
@@ -63,7 +67,7 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def root(request: Request):
     return {
         "message": "ConvexHire API is running!",

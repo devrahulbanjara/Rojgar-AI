@@ -3,6 +3,7 @@ import uuid
 from datetime import date, datetime
 
 from fastapi import HTTPException, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core import get_datetime
@@ -31,30 +32,29 @@ class JobService:
         employment_type: str | None = None,
         location_type: str | None = None,
     ):
-        candidate = (
-            db.query(CandidateProfile)
-            .filter(CandidateProfile.user_id == user_id)
-            .first()
-        )
+        stmt = select(CandidateProfile).where(CandidateProfile.user_id == user_id)
+        candidate = db.execute(stmt).scalar_one_or_none()
 
         user_skills = []
         if candidate and candidate.skills:
             user_skills = [s.skill_name for s in candidate.skills]
 
         all_jobs = []
+        today = date.today()
         if user_skills:
             raw_ids = JobService._vector_service.recommend_jobs_by_skills(
                 user_skills, limit=200
             )
             if raw_ids:
-                jobs_from_db = (
-                    db.query(JobPosting)
-                    .filter(
-                        JobPosting.job_id.in_(raw_ids),
-                        JobPosting.status.in_(VISIBLE_STATUSES),
-                    )
-                    .all()
+                stmt = select(JobPosting).where(
+                    JobPosting.job_id.in_(raw_ids),
+                    JobPosting.status.in_(VISIBLE_STATUSES),
+                    or_(
+                        JobPosting.application_deadline.is_(None),
+                        JobPosting.application_deadline >= today,
+                    ),
                 )
+                jobs_from_db = db.execute(stmt).scalars().all()
                 id_to_job = {job.job_id: job for job in jobs_from_db}
                 all_jobs = [id_to_job[jid] for jid in raw_ids if jid in id_to_job]
 
@@ -75,21 +75,26 @@ class JobService:
         location_type: str | None = None,
     ):
         all_jobs = []
+        today = date.today()
         if query.strip():
             raw_ids = JobService._vector_service.search_jobs(query, limit=200)
             if raw_ids:
-                jobs_from_db = (
-                    db.query(JobPosting)
+                stmt = (
+                    select(JobPosting)
                     .options(
                         selectinload(JobPosting.organization),
                         selectinload(JobPosting.job_description),
                     )
-                    .filter(
+                    .where(
                         JobPosting.job_id.in_(raw_ids),
                         JobPosting.status.in_(VISIBLE_STATUSES),
+                        or_(
+                            JobPosting.application_deadline.is_(None),
+                            JobPosting.application_deadline >= today,
+                        ),
                     )
-                    .all()
                 )
+                jobs_from_db = db.execute(stmt).scalars().all()
                 id_to_job = {job.job_id: job for job in jobs_from_db}
                 all_jobs = [id_to_job[jid] for jid in raw_ids if jid in id_to_job]
 
@@ -136,6 +141,19 @@ class JobService:
             application_deadline,
         )
         db.add(job_posting)
+        db.flush()
+
+        if job_status == "active":
+            stmt = (
+                select(JobPosting)
+                .options(
+                    selectinload(JobPosting.job_description),
+                    selectinload(JobPosting.organization),
+                )
+                .where(JobPosting.job_id == job_id)
+            )
+            job_with_relations = db.execute(stmt).scalar_one()
+            JobService._vector_service.index_job(db, job_with_relations)
 
         db.commit()
         db.refresh(job_posting)
@@ -151,37 +169,39 @@ class JobService:
         page: int = 1,
         limit: int = 10,
     ):
-        query = db.query(JobPosting)
+        stmt = select(JobPosting)
         is_recruiter_view = False
 
         if user_id:
             is_recruiter_view = True
-            user = db.query(User).filter(User.user_id == user_id).first()
+            user_stmt = select(User).where(User.user_id == user_id)
+            user = db.execute(user_stmt).scalar_one_or_none()
             if user and user.organization_id:
-                query = query.filter(JobPosting.organization_id == user.organization_id)
+                stmt = stmt.where(JobPosting.organization_id == user.organization_id)
             else:
                 return JobService._empty_pagination_response(page, limit)
         elif organization_id:
-            query = query.filter(JobPosting.organization_id == organization_id)
+            stmt = stmt.where(JobPosting.organization_id == organization_id)
 
         if status:
-            query = query.filter(JobPosting.status == status)
+            stmt = stmt.where(JobPosting.status == status)
         elif not is_recruiter_view:
-            query = query.filter(JobPosting.status.in_(VISIBLE_STATUSES))
+            stmt = stmt.where(JobPosting.status.in_(VISIBLE_STATUSES))
 
-        total = query.count()
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = db.execute(count_stmt).scalar_one() or 0
 
         offset = (page - 1) * limit
-        jobs = (
-            query.options(
+        jobs_stmt = (
+            stmt.options(
                 selectinload(JobPosting.organization),
                 selectinload(JobPosting.job_description),
             )
             .order_by(JobPosting.posted_date.desc())
             .offset(offset)
             .limit(limit)
-            .all()
         )
+        jobs = db.execute(jobs_stmt).scalars().all()
 
         total_pages = math.ceil(total / limit) if limit > 0 else 0
 
@@ -197,18 +217,21 @@ class JobService:
 
     @staticmethod
     def get_job_by_id(db: Session, job_id: str):
-        return db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        stmt = select(JobPosting).where(JobPosting.job_id == job_id)
+        return db.execute(stmt).scalar_one_or_none()
 
     @staticmethod
     def expire_job(db: Session, job_id: str, user_id: str):
-        user = db.query(User).filter(User.user_id == user_id).first()
+        user_stmt = select(User).where(User.user_id == user_id)
+        user = db.execute(user_stmt).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found",
             )
 
-        job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
+        job_posting = db.execute(job_stmt).scalar_one_or_none()
         if not job_posting:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -227,14 +250,16 @@ class JobService:
 
     @staticmethod
     def delete_job(db: Session, job_id: str, user_id: str):
-        user = db.query(User).filter(User.user_id == user_id).first()
+        user_stmt = select(User).where(User.user_id == user_id)
+        user = db.execute(user_stmt).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found",
             )
 
-        job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+        job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
+        job_posting = db.execute(job_stmt).scalar_one_or_none()
         if not job_posting:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -278,11 +303,10 @@ class JobService:
 
         job_posting.updated_at = get_datetime()
 
-        job_description = (
-            db.query(JobDescription)
-            .filter(JobDescription.job_description_id == job_posting.job_description_id)
-            .first()
+        job_desc_stmt = select(JobDescription).where(
+            JobDescription.job_description_id == job_posting.job_description_id
         )
+        job_description = db.execute(job_desc_stmt).scalar_one_or_none()
 
         if job_description:
             if job_data.job_summary is not None:
@@ -306,6 +330,20 @@ class JobService:
 
             job_description.updated_at = get_datetime()
 
+        db.flush()
+
+        if job_data.status == "active" and not job_posting.is_indexed:
+            stmt = (
+                select(JobPosting)
+                .options(
+                    selectinload(JobPosting.job_description),
+                    selectinload(JobPosting.organization),
+                )
+                .where(JobPosting.job_id == job_posting.job_id)
+            )
+            job_with_relations = db.execute(stmt).scalar_one()
+            JobService._vector_service.index_job(db, job_with_relations)
+
         db.commit()
         db.refresh(job_posting)
 
@@ -315,6 +353,14 @@ class JobService:
     def _apply_filters(
         jobs: list, employment_type: str | None, location_type: str | None
     ):
+        # Filter out expired jobs (application_deadline < today)
+        today = date.today()
+        jobs = [
+            job
+            for job in jobs
+            if job.application_deadline is None or job.application_deadline >= today
+        ]
+
         if employment_type:
             jobs = [job for job in jobs if job.employment_type == employment_type]
         if location_type:
@@ -426,7 +472,14 @@ def _build_organization_data(job: JobPosting) -> dict | None:
     }
 
 
-def map_job_to_response(job: JobPosting):
+def map_job_to_response(job: JobPosting, saved_job_ids: set[str] | None = None):
+    """Map a JobPosting to a response dictionary.
+
+    Args:
+        job: The JobPosting instance to map
+        saved_job_ids: Optional set of job IDs that are saved by the current user.
+                      If provided, adds an 'is_saved' field to the response.
+    """
     location = build_location(
         job.location_city, job.location_country, job.location_type
     )
@@ -458,6 +511,10 @@ def map_job_to_response(job: JobPosting):
         "updated_at": (job.updated_at.isoformat() if job.updated_at else None),
         "organization": _build_organization_data(job),
     }
+
+    # Add is_saved field if saved_job_ids is provided
+    if saved_job_ids is not None:
+        job_data["is_saved"] = str(job.job_id) in saved_job_ids
 
     jd = job.job_description
     job_data.update(

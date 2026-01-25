@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import JobPosting, User
@@ -7,7 +8,8 @@ from app.models import JobPosting, User
 class RecruiterStatsService:
     @staticmethod
     def get_active_jobs_count(db: Session, user_id: str) -> int:
-        user = db.query(User).filter(User.user_id == user_id).first()
+        user_stmt = select(User).where(User.user_id == user_id)
+        user = db.execute(user_stmt).scalar_one_or_none()
 
         if not user:
             raise HTTPException(
@@ -21,13 +23,14 @@ class RecruiterStatsService:
                 detail="User does not belong to an organization",
             )
 
-        count = (
-            db.query(JobPosting)
-            .filter(
+        count_stmt = (
+            select(func.count())
+            .select_from(JobPosting)
+            .where(
                 JobPosting.organization_id == user.organization_id,
                 JobPosting.status == "active",
             )
-            .count()
         )
+        count = db.execute(count_stmt).scalar_one()
 
         return count

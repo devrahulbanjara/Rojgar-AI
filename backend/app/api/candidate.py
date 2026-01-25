@@ -1,18 +1,21 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core import get_current_user_id, get_db
 from app.core.limiter import limiter
 from app.schemas import candidate as schemas
+from app.schemas import job as job_schemas
 from app.services.candidate import CandidateService
+from app.services.candidate.saved_job_service import SavedJobService
+from app.services.job_service import map_job_to_response
 
 router = APIRouter()
 
 
 @router.get("/me", response_model=schemas.CandidateProfileFullResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_my_profile(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -56,7 +59,7 @@ def get_my_profile(
 
 
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_candidate_personal_information(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -68,7 +71,7 @@ def update_candidate_personal_information(
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -79,7 +82,7 @@ def add_experience(
 
 
 @router.delete("/experience/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -91,7 +94,7 @@ def delete_experience(
 
 
 @router.patch("/experience/{item_id}", response_model=schemas.WorkExperienceResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_experience(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -103,7 +106,7 @@ def update_experience(
 
 
 @router.post("/education", response_model=schemas.EducationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -114,7 +117,7 @@ def add_education(
 
 
 @router.delete("/education/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -126,7 +129,7 @@ def delete_education(
 
 
 @router.patch("/education/{item_id}", response_model=schemas.EducationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_education(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -138,7 +141,7 @@ def update_education(
 
 
 @router.post("/skills", response_model=schemas.SkillResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -149,7 +152,7 @@ def add_skill(
 
 
 @router.delete("/skills/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -161,7 +164,7 @@ def delete_skill(
 
 
 @router.patch("/skills/{item_id}", response_model=schemas.SkillResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_skill(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -173,7 +176,7 @@ def update_skill(
 
 
 @router.post("/certifications", response_model=schemas.CertificationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -184,7 +187,7 @@ def add_certification(
 
 
 @router.delete("/certifications/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -196,7 +199,7 @@ def delete_certification(
 
 
 @router.patch("/certifications/{item_id}", response_model=schemas.CertificationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_certification(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -208,7 +211,7 @@ def update_certification(
 
 
 @router.post("/social-links", response_model=schemas.SocialLinkResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_social_link(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -219,7 +222,7 @@ def add_social_link(
 
 
 @router.delete("/social-links/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_social_link(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -231,7 +234,7 @@ def delete_social_link(
 
 
 @router.patch("/social-links/{item_id}", response_model=schemas.SocialLinkResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_social_link(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -240,3 +243,57 @@ def update_social_link(
     user_id: str = Depends(get_current_user_id),
 ):
     return CandidateService.update_social_link(db, user_id, item_id, data)
+
+
+@router.post("/jobs/{job_id}/save")
+@limiter.limit("50/minute")
+def toggle_save_job(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    job_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    try:
+        result = SavedJobService.toggle_save_job(db, user_id, job_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to toggle save status: {str(e)}",
+        )
+
+
+@router.get("/saved-jobs", response_model=job_schemas.JobListResponse)
+@limiter.limit("50/minute")
+def get_saved_jobs(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    user_id: str = Depends(get_current_user_id),
+    page: int = 1,
+    limit: int = 10,
+):
+    try:
+        saved_jobs = SavedJobService.get_my_saved_jobs(db, user_id)
+
+        total = len(saved_jobs)
+        start = (page - 1) * limit
+        end = start + limit
+        paginated_jobs = saved_jobs[start:end]
+        total_pages = (total + limit - 1) // limit if total > 0 else 1
+
+        return {
+            "jobs": [map_job_to_response(job) for job in paginated_jobs],
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": total_pages,
+            "has_next": end < total,
+            "has_prev": page > 1,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve saved jobs: {str(e)}",
+        )

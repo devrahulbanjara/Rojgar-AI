@@ -9,6 +9,7 @@ from app.core import get_datetime
 from . import Base
 
 if TYPE_CHECKING:
+    from app.models.job import JobPosting
     from app.models.resume import Resume
     from app.models.user import User
 
@@ -48,6 +49,16 @@ class CandidateProfile(Base):
     )
     resumes: Mapped[list["Resume"]] = relationship(
         "Resume", back_populates="profile", cascade="all, delete-orphan"
+    )
+
+    # Saved jobs relationships
+    saved_jobs_associations: Mapped[list["CandidateSavedJob"]] = relationship(
+        "CandidateSavedJob", back_populates="profile", cascade="all, delete-orphan"
+    )
+
+    saved_jobs: Mapped[list["JobPosting"]] = relationship(
+        secondary="candidate_saved_job",
+        viewonly=True,
     )
 
     @property
@@ -177,4 +188,23 @@ class CandidateSkills(Base):
 
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="skills"
+    )
+
+
+class CandidateSavedJob(Base):
+    __tablename__ = "candidate_saved_job"
+
+    candidate_profile_id: Mapped[str] = mapped_column(
+        String, ForeignKey("candidate_profile.profile_id"), primary_key=True
+    )
+    job_id: Mapped[str] = mapped_column(
+        Uuid, ForeignKey("job_posting.job_id"), primary_key=True
+    )
+
+    saved_at: Mapped[datetime] = mapped_column(
+        DateTime, default=get_datetime, nullable=False
+    )
+
+    profile: Mapped["CandidateProfile"] = relationship(
+        "CandidateProfile", back_populates="saved_jobs_associations"
     )
