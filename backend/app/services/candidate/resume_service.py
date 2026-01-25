@@ -1,9 +1,9 @@
 import uuid
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core import NotFoundError
 from app.models.candidate import CandidateProfile
 from app.models.resume import (
     Resume,
@@ -13,6 +13,7 @@ from app.models.resume import (
     ResumeSocialLink,
     ResumeWorkExperience,
 )
+from app.models.user import User
 from app.schemas import (
     CertificationBase,
     EducationBase,
@@ -30,10 +31,10 @@ from app.services.candidate import CandidateService
 
 class ResumeService:
     @staticmethod
-    def create_resume_fork(db: Session, user_id: str, data: ResumeCreate):
-        profile = CandidateService.get_full_profile(db, user_id)
+    def create_resume_fork(db: Session, user: User, data: ResumeCreate):
+        profile = CandidateService.get_full_profile(db, user)
 
-        new_resume_id = str(uuid.uuid4())
+        new_resume_id = uuid.uuid4()
         new_resume = Resume(
             resume_id=new_resume_id,
             profile_id=profile.profile_id,
@@ -51,7 +52,7 @@ class ResumeService:
         for exp in source_experiences:
             db.add(
                 ResumeWorkExperience(
-                    resume_work_experience_id=str(uuid.uuid4()),
+                    resume_work_experience_id=uuid.uuid4(),
                     resume_id=new_resume_id,
                     job_title=exp.job_title,
                     company=exp.company,
@@ -72,7 +73,7 @@ class ResumeService:
         for edu in source_educations:
             db.add(
                 ResumeEducation(
-                    resume_education_id=str(uuid.uuid4()),
+                    resume_education_id=uuid.uuid4(),
                     resume_id=new_resume_id,
                     college_name=edu.college_name,
                     degree=edu.degree,
@@ -88,7 +89,7 @@ class ResumeService:
         for skill in source_skills:
             db.add(
                 ResumeSkills(
-                    resume_skill_id=str(uuid.uuid4()),
+                    resume_skill_id=uuid.uuid4(),
                     resume_id=new_resume_id,
                     skill_name=skill.skill_name,
                 )
@@ -103,7 +104,7 @@ class ResumeService:
         for cert in source_certifications:
             db.add(
                 ResumeCertification(
-                    resume_certification_id=str(uuid.uuid4()),
+                    resume_certification_id=uuid.uuid4(),
                     resume_id=new_resume_id,
                     certification_name=cert.certification_name,
                     issuing_body=cert.issuing_body,
@@ -121,7 +122,7 @@ class ResumeService:
         for link in source_links:
             db.add(
                 ResumeSocialLink(
-                    resume_social_link_id=str(uuid.uuid4()),
+                    resume_social_link_id=uuid.uuid4(),
                     resume_id=new_resume_id,
                     type=link.type,
                     url=link.url,
@@ -131,16 +132,16 @@ class ResumeService:
         db.commit()
         db.refresh(new_resume)
 
-        return ResumeService.get_resume(db, user_id, new_resume_id)
+        return ResumeService.get_resume(db, user, new_resume_id)
 
     @staticmethod
-    def get_resume(db: Session, user_id: str, resume_id: str):
+    def get_resume(db: Session, user: User, resume_id: uuid.UUID):
         # Strictly check ownership via Profile join
         stmt = (
             select(Resume)
             .join(CandidateProfile)
             .where(Resume.resume_id == resume_id)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
             .options(
                 selectinload(Resume.work_experiences),
                 selectinload(Resume.educations),
@@ -151,22 +152,24 @@ class ResumeService:
         )
         resume = db.execute(stmt).scalar_one_or_none()
         if not resume:
-            raise HTTPException(status_code=404, detail="Resume not found")
+            raise NotFoundError("Resume not found")
         return resume
 
     @staticmethod
-    def list_resumes(db: Session, user_id: str):
+    def list_resumes(db: Session, user: User):
         stmt = (
             select(Resume)
             .join(CandidateProfile)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
             .order_by(Resume.updated_at.desc())
         )
         return db.execute(stmt).scalars().all()
 
     @staticmethod
-    def update_resume(db: Session, user_id: str, resume_id: str, data: ResumeUpdate):
-        resume = ResumeService.get_resume(db, user_id, resume_id)
+    def update_resume(
+        db: Session, user: User, resume_id: uuid.UUID, data: ResumeUpdate
+    ):
+        resume = ResumeService.get_resume(db, user, resume_id)
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(resume, key, value)
         db.commit()
@@ -174,20 +177,20 @@ class ResumeService:
         return resume
 
     @staticmethod
-    def delete_resume(db: Session, user_id: str, resume_id: str):
-        resume = ResumeService.get_resume(db, user_id, resume_id)
+    def delete_resume(db: Session, user: User, resume_id: uuid.UUID):
+        resume = ResumeService.get_resume(db, user, resume_id)
         db.delete(resume)
         db.commit()
 
     @staticmethod
     def add_experience(
-        db: Session, user_id: str, resume_id: str, data: WorkExperienceBase
+        db: Session, user: User, resume_id: uuid.UUID, data: WorkExperienceBase
     ):
         # Verify ownership
-        ResumeService.get_resume(db, user_id, resume_id)
+        ResumeService.get_resume(db, user, resume_id)
 
         new_item = ResumeWorkExperience(
-            resume_work_experience_id=str(uuid.uuid4()),
+            resume_work_experience_id=uuid.uuid4(),
             resume_id=resume_id,
             **data.model_dump(),
         )
@@ -197,7 +200,9 @@ class ResumeService:
         return new_item
 
     @staticmethod
-    def delete_experience(db: Session, user_id: str, resume_id: str, item_id: str):
+    def delete_experience(
+        db: Session, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
+    ):
         # Check ownership and item existence in one query
         stmt = (
             select(ResumeWorkExperience)
@@ -205,20 +210,22 @@ class ResumeService:
             .join(CandidateProfile)
             .where(ResumeWorkExperience.resume_work_experience_id == item_id)
             .where(Resume.resume_id == resume_id)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
         )
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
-            raise HTTPException(status_code=404, detail="Experience item not found")
+            raise NotFoundError("Experience item not found")
 
         db.delete(item)
         db.commit()
 
     @staticmethod
-    def add_education(db: Session, user_id: str, resume_id: str, data: EducationBase):
-        ResumeService.get_resume(db, user_id, resume_id)
+    def add_education(
+        db: Session, user: User, resume_id: uuid.UUID, data: EducationBase
+    ):
+        ResumeService.get_resume(db, user, resume_id)
         new_item = ResumeEducation(
-            resume_education_id=str(uuid.uuid4()),
+            resume_education_id=uuid.uuid4(),
             resume_id=resume_id,
             **data.model_dump(),
         )
@@ -228,28 +235,30 @@ class ResumeService:
         return new_item
 
     @staticmethod
-    def delete_education(db: Session, user_id: str, resume_id: str, item_id: str):
+    def delete_education(
+        db: Session, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
+    ):
         stmt = (
             select(ResumeEducation)
             .join(Resume)
             .join(CandidateProfile)
             .where(ResumeEducation.resume_education_id == item_id)
             .where(Resume.resume_id == resume_id)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
         )
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
-            raise HTTPException(status_code=404, detail="Education item not found")
+            raise NotFoundError("Education item not found")
         db.delete(item)
         db.commit()
 
     # --- Skills ---
 
     @staticmethod
-    def add_skill(db: Session, user_id: str, resume_id: str, data: SkillBase):
-        ResumeService.get_resume(db, user_id, resume_id)
+    def add_skill(db: Session, user: User, resume_id: uuid.UUID, data: SkillBase):
+        ResumeService.get_resume(db, user, resume_id)
         new_item = ResumeSkills(
-            resume_skill_id=str(uuid.uuid4()), resume_id=resume_id, **data.model_dump()
+            resume_skill_id=uuid.uuid4(), resume_id=resume_id, **data.model_dump()
         )
         db.add(new_item)
         db.commit()
@@ -257,18 +266,18 @@ class ResumeService:
         return new_item
 
     @staticmethod
-    def delete_skill(db: Session, user_id: str, resume_id: str, item_id: str):
+    def delete_skill(db: Session, user: User, resume_id: uuid.UUID, item_id: uuid.UUID):
         stmt = (
             select(ResumeSkills)
             .join(Resume)
             .join(CandidateProfile)
             .where(ResumeSkills.resume_skill_id == item_id)
             .where(Resume.resume_id == resume_id)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
         )
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
-            raise HTTPException(status_code=404, detail="Skill item not found")
+            raise NotFoundError("Skill item not found")
         db.delete(item)
         db.commit()
 
@@ -276,13 +285,13 @@ class ResumeService:
 
     @staticmethod
     def add_certification(
-        db: Session, user_id: str, resume_id: str, data: CertificationBase
+        db: Session, user: User, resume_id: uuid.UUID, data: CertificationBase
     ):
-        ResumeService.get_resume(db, user_id, resume_id)
+        ResumeService.get_resume(db, user, resume_id)
         # Exclude credential_id explicitly as it is not in the ResumeCertification model
         cert_data = data.model_dump(exclude={"credential_id"})
         new_item = ResumeCertification(
-            resume_certification_id=str(uuid.uuid4()), resume_id=resume_id, **cert_data
+            resume_certification_id=uuid.uuid4(), resume_id=resume_id, **cert_data
         )
         db.add(new_item)
         db.commit()
@@ -290,44 +299,45 @@ class ResumeService:
         return new_item
 
     @staticmethod
-    def delete_certification(db: Session, user_id: str, resume_id: str, item_id: str):
+    def delete_certification(
+        db: Session, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
+    ):
         stmt = (
             select(ResumeCertification)
             .join(Resume)
             .join(CandidateProfile)
             .where(ResumeCertification.resume_certification_id == item_id)
             .where(Resume.resume_id == resume_id)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
         )
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
-            raise HTTPException(status_code=404, detail="Certification item not found")
+            raise NotFoundError("Certification item not found")
         db.delete(item)
         db.commit()
 
     @staticmethod
     def _update_sub_item(
         db: Session,
-        user_id: str,
-        resume_id: str,
-        item_id: str,
+        user: User,
+        resume_id: uuid.UUID,
+        item_id: uuid.UUID,
         ModelClass,
         id_field,
         data_obj,
     ):
-        # 1. Strict Ownership Check
         stmt = (
             select(ModelClass)
             .join(Resume)
             .join(CandidateProfile)
             .where(getattr(ModelClass, id_field) == item_id)
             .where(Resume.resume_id == resume_id)
-            .where(CandidateProfile.user_id == user_id)
+            .where(CandidateProfile.user_id == user.user_id)
         )
         item = db.execute(stmt).scalar_one_or_none()
 
         if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+            raise NotFoundError("Item not found")
 
         # 2. Partial Update
         update_data = data_obj.model_dump(exclude_unset=True)
@@ -341,14 +351,14 @@ class ResumeService:
     @staticmethod
     def update_experience(
         db: Session,
-        user_id: str,
-        resume_id: str,
-        item_id: str,
+        user: User,
+        resume_id: uuid.UUID,
+        item_id: uuid.UUID,
         data: ResumeWorkExperienceUpdate,
     ):
         return ResumeService._update_sub_item(
             db,
-            user_id,
+            user,
             resume_id,
             item_id,
             ResumeWorkExperience,
@@ -359,14 +369,14 @@ class ResumeService:
     @staticmethod
     def update_education(
         db: Session,
-        user_id: str,
-        resume_id: str,
-        item_id: str,
+        user: User,
+        resume_id: uuid.UUID,
+        item_id: uuid.UUID,
         data: ResumeEducationUpdate,
     ):
         return ResumeService._update_sub_item(
             db,
-            user_id,
+            user,
             resume_id,
             item_id,
             ResumeEducation,
@@ -376,23 +386,27 @@ class ResumeService:
 
     @staticmethod
     def update_skill(
-        db: Session, user_id: str, resume_id: str, item_id: str, data: ResumeSkillUpdate
+        db: Session,
+        user: User,
+        resume_id: uuid.UUID,
+        item_id: uuid.UUID,
+        data: ResumeSkillUpdate,
     ):
         return ResumeService._update_sub_item(
-            db, user_id, resume_id, item_id, ResumeSkills, "resume_skill_id", data
+            db, user, resume_id, item_id, ResumeSkills, "resume_skill_id", data
         )
 
     @staticmethod
     def update_certification(
         db: Session,
-        user_id: str,
-        resume_id: str,
-        item_id: str,
+        user: User,
+        resume_id: uuid.UUID,
+        item_id: uuid.UUID,
         data: ResumeCertificationUpdate,
     ):
         return ResumeService._update_sub_item(
             db,
-            user_id,
+            user,
             resume_id,
             item_id,
             ResumeCertification,

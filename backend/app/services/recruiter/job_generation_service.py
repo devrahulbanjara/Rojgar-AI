@@ -15,8 +15,8 @@ class JobGenerationService:
         title: str,
         raw_requirements: str,
         db: Session | None = None,
-        reference_jd_id: str | None = None,
-        organization_id: str | None = None,
+        reference_jd_id: uuid.UUID | None = None,
+        organization_id: uuid.UUID | None = None,
         current_draft: dict | None = None,
     ) -> JobDescription:
         thread_id = str(uuid.uuid4())

@@ -1,7 +1,8 @@
+import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -15,9 +16,9 @@ if TYPE_CHECKING:
 class Resume(Base):
     __tablename__ = "resume"
 
-    resume_id: Mapped[str] = mapped_column(String, primary_key=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey("candidate_profile.profile_id"), nullable=False
+    resume_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     resume_name: Mapped[str] = mapped_column(String, nullable=False)
     target_job_title: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -54,9 +55,9 @@ class Resume(Base):
 class ResumeSocialLink(Base):
     __tablename__ = "resume_social_links"
 
-    resume_social_link_id: Mapped[str] = mapped_column(String, primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        String, ForeignKey("resume.resume_id"), nullable=False
+    resume_social_link_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     type: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
@@ -74,9 +75,9 @@ class ResumeSocialLink(Base):
 class ResumeWorkExperience(Base):
     __tablename__ = "resume_work_experience"
 
-    resume_work_experience_id: Mapped[str] = mapped_column(String, primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        String, ForeignKey("resume.resume_id"), nullable=False
+    resume_work_experience_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     job_title: Mapped[str] = mapped_column(String, nullable=False)
     company: Mapped[str] = mapped_column(String, nullable=False)
@@ -99,9 +100,9 @@ class ResumeWorkExperience(Base):
 class ResumeEducation(Base):
     __tablename__ = "resume_education"
 
-    resume_education_id: Mapped[str] = mapped_column(String, primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        String, ForeignKey("resume.resume_id"), nullable=False
+    resume_education_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     college_name: Mapped[str] = mapped_column(String, nullable=False)
     degree: Mapped[str] = mapped_column(String, nullable=False)
@@ -123,9 +124,9 @@ class ResumeEducation(Base):
 class ResumeCertification(Base):
     __tablename__ = "resume_certification"
 
-    resume_certification_id: Mapped[str] = mapped_column(String, primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        String, ForeignKey("resume.resume_id"), nullable=False
+    resume_certification_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     certification_name: Mapped[str] = mapped_column(String, nullable=False)
     issuing_body: Mapped[str] = mapped_column(String, nullable=False)
@@ -149,9 +150,9 @@ class ResumeCertification(Base):
 class ResumeSkills(Base):
     __tablename__ = "resume_skills"
 
-    resume_skill_id: Mapped[str] = mapped_column(String, primary_key=True)
-    resume_id: Mapped[str] = mapped_column(
-        String, ForeignKey("resume.resume_id"), nullable=False
+    resume_skill_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
 

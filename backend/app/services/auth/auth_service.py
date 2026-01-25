@@ -1,22 +1,15 @@
 import uuid
 
 import httpx
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import create_token, hash_password, settings, verify_password
 from app.models import CandidateProfile, User, UserGoogle, UserRole
-from app.schemas import CreateUserRequest, GoogleUserInfo, UserResponse
+from app.schemas import CreateUserRequest, GoogleUserInfo
 
 
 class AuthService:
-    @staticmethod
-    def create_user_response(user: User) -> UserResponse:
-        from app.services import UserService
-
-        return UserService.to_user_response(user)
-
     @staticmethod
     def get_user_by_email(email: str, db: Session) -> User | None:
         result = db.execute(select(User).where(User.email == email)).scalars().first()
@@ -73,9 +66,9 @@ class AuthService:
 
     @staticmethod
     def create_access_token(
-        user_id: str | uuid.UUID, remember_me: bool = False
+        user_id: uuid.UUID, remember_me: bool = False
     ) -> tuple[str, int]:
-        user_id_str = str(user_id) if isinstance(user_id, uuid.UUID) else user_id
+        user_id_str = str(user_id)
 
         if remember_me:
             token = create_token(
@@ -119,10 +112,9 @@ class AuthService:
             )
 
             if token_response.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Failed to get Google token",
-                )
+                from app.core import BusinessLogicError
+
+                raise BusinessLogicError("Failed to get Google token")
 
             tokens = token_response.json()
             access_token = tokens.get("access_token")
@@ -132,10 +124,9 @@ class AuthService:
             )
 
             if user_response.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Failed to get user info from Google",
-                )
+                from app.core import BusinessLogicError
+
+                raise BusinessLogicError("Failed to get user info from Google")
 
             return GoogleUserInfo(**user_response.json())
 
