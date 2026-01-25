@@ -1,15 +1,16 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import get_db
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.models import UserRole
 from app.schemas import (
     CreateUserRequest,
     LoginRequest,
-    RoleSelectionRequest,
     SignupRequest,
     TokenResponse,
 )
@@ -18,7 +19,7 @@ from app.schemas.organization import (
     OrganizationSignupRequest,
     OrganizationTokenResponse,
 )
-from app.services import AuthService, UserService
+from app.services import AuthService
 from app.services.auth.organization_auth_service import OrganizationAuthService
 
 router = APIRouter()
@@ -30,7 +31,7 @@ def signup(
     request: Request,
     signup_data: SignupRequest,
     response: Response,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ):
     existing_user = AuthService.get_user_by_email(signup_data.email, db)
     if existing_user:
@@ -45,10 +46,8 @@ def signup(
     if existing_org:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
+            detail="Organization already registered",
         )
-
-    from app.models import UserRole
 
     create_user_data = CreateUserRequest(
         email=signup_data.email,
@@ -84,7 +83,7 @@ def login(
     request: Request,
     login_data: LoginRequest,
     response: Response,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ):
     user = AuthService.get_user_by_email(login_data.email, db)
 
@@ -127,7 +126,9 @@ def google_login(request: Request):
 
 @router.get("/google/callback")
 @limiter.limit("5/minute")
-async def google_callback(request: Request, code: str, db: Session = Depends(get_db)):
+async def google_callback(
+    request: Request, db: Annotated[Session, Depends(get_db)], code: str
+):
     try:
         google_user = await AuthService.exchange_google_code(code)
 
@@ -153,35 +154,6 @@ async def google_callback(request: Request, code: str, db: Session = Depends(get
         return RedirectResponse(url=error_url)
 
 
-@router.post("/select-role")
-@limiter.limit("5/minute")
-def select_role(
-    request: Request,
-    role_data: RoleSelectionRequest,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-):
-    user = UserService.get_user_by_id(user_id, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    if role_data.role != UserRole.CANDIDATE:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only candidate role can be selected",
-        )
-
-    user = AuthService.assign_role_and_create_profile(user, role_data.role, db)
-
-    return {
-        "user": AuthService.create_user_response(user),
-        "redirect_url": f"/dashboard/{role_data.role.value}",
-    }
-
-
 @router.post("/logout")
 @limiter.limit("5/minute")
 def logout(request: Request, response: Response):
@@ -193,9 +165,9 @@ def logout(request: Request, response: Response):
 @limiter.limit("5/minute")
 def organization_signup(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     org_data: OrganizationSignupRequest,
     response: Response,
-    db: Session = Depends(get_db),
 ):
     new_org = OrganizationAuthService.create_organization(org_data, db)
 
@@ -223,9 +195,9 @@ def organization_signup(
 @limiter.limit("5/minute")
 def organization_login(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     login_data: OrganizationLoginRequest,
     response: Response,
-    db: Session = Depends(get_db),
 ):
     organization = OrganizationAuthService.get_organization_by_email(
         login_data.email, db

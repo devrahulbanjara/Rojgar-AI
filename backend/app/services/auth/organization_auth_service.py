@@ -70,7 +70,11 @@ class OrganizationAuthService:
     ) -> tuple[str, int]:
         from app.core.config import settings
 
-        org_id_str = str(organization_id) if isinstance(organization_id, uuid.UUID) else organization_id
+        org_id_str = (
+            str(organization_id)
+            if isinstance(organization_id, uuid.UUID)
+            else organization_id
+        )
 
         if remember_me:
             token = create_token(

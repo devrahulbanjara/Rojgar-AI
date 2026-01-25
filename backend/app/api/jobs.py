@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -16,12 +18,12 @@ router = APIRouter()
 @limiter.limit("5/minute")
 def get_recommendations(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     user_id: str,
     page: int = 1,
     limit: int = 10,
     employment_type: str | None = None,
     location_type: str | None = None,
-    db: Session = Depends(get_db),
 ):
     result = JobService.get_recommendations(
         db=db,
@@ -47,12 +49,12 @@ def get_recommendations(
 @limiter.limit("5/minute")
 def search_jobs(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     q: str = "",
     page: int = 1,
     limit: int = 10,
     employment_type: str | None = None,
     location_type: str | None = None,
-    db: Session = Depends(get_db),
 ):
     result = JobService.search_jobs(
         db=db,
@@ -80,9 +82,9 @@ def search_jobs(
 @limiter.limit("5/minute")
 def create_job(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     job_data: schemas.JobCreate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -107,12 +109,12 @@ def create_job(
 @limiter.limit("5/minute")
 def get_jobs(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     user_id: str | None = None,
     organization_id: str | None = None,
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
-    db: Session = Depends(get_db),
 ):
     result = JobService.get_jobs(
         db=db,
@@ -134,13 +136,17 @@ def get_jobs(
     }
 
 
-@router.post("/reference-jd", response_model=schemas.ReferenceJDResponse)
+@router.post(
+    "/reference-jd",
+    response_model=schemas.ReferenceJDResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("5/minute")
 def create_reference_jd(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.CreateReferenceJD,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
@@ -177,8 +183,8 @@ def create_reference_jd(
 @limiter.limit("5/minute")
 def get_reference_jds(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     """Get all reference JDs for the authenticated user's organization"""
     user = db.query(User).filter(User.user_id == user_id).first()
@@ -231,9 +237,9 @@ def get_reference_jds(
 @limiter.limit("5/minute")
 def get_reference_jd_by_id(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     reference_jd_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     """Get a specific reference JD by ID"""
     user = db.query(User).filter(User.user_id == user_id).first()
@@ -283,10 +289,10 @@ def get_reference_jd_by_id(
 @limiter.limit("5/minute")
 def update_reference_jd(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     reference_jd_id: str,
     data: schemas.CreateReferenceJD,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     """Update a reference JD"""
     user = db.query(User).filter(User.user_id == user_id).first()
@@ -332,9 +338,9 @@ def update_reference_jd(
 @limiter.limit("5/minute")
 def delete_reference_jd(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     reference_jd_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     """Delete a reference JD"""
     user = db.query(User).filter(User.user_id == user_id).first()
@@ -363,7 +369,9 @@ def delete_reference_jd(
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)
 @limiter.limit("5/minute")
-def get_job_detail(request: Request, job_id: str, db: Session = Depends(get_db)):
+def get_job_detail(
+    request: Request, db: Annotated[Session, Depends(get_db)], job_id: str
+):
     job = JobService.get_job_by_id(db=db, job_id=job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

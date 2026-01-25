@@ -125,9 +125,13 @@ class JobUpdate(JobCreateUpdateBase):
     currency: Annotated[str | None, "Salary currency"] = None
     job_summary: Annotated[str | None, "Job summary"] = None
     job_responsibilities: Annotated[list[str] | None, "Job responsibilities"] = None
-    required_qualifications: Annotated[list[str] | None, "Required qualifications"] = None
+    required_qualifications: Annotated[list[str] | None, "Required qualifications"] = (
+        None
+    )
     preferred: Annotated[list[str] | None, "Preferred skills"] = None
-    compensation_and_benefits: Annotated[list[str] | None, "Compensation and benefits"] = None
+    compensation_and_benefits: Annotated[
+        list[str] | None, "Compensation and benefits"
+    ] = None
 
 
 class JobDraftGenerateRequest(BaseModel):
