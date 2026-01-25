@@ -14,14 +14,8 @@ from .resume import Resume
 
 class ApplicationStatus(str, Enum):
     APPLIED = "applied"
-    SHORTLISTING = "shortlisting"
-    SHORTLISTED = "shortlisted"
-    INTERVIEW_SCHEDULED = "interview_scheduled"
-    INTERVIEW_COMPLETED = "interview_completed"
-    OFFER_MADE = "offer_made"
-    OFFER_ACCEPTED = "offer_accepted"
-    HIRED = "hired"
-    REJECTED = "rejected"
+    INTERVIEWING = "interviewing"
+    OUTCOME = "outcome"
 
 
 class JobApplication(Base):
