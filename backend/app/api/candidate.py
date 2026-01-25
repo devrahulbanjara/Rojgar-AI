@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
@@ -13,8 +15,8 @@ router = APIRouter()
 @limiter.limit("5/minute")
 def get_my_profile(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     profile = CandidateService.get_full_profile(db, user_id)
 
@@ -57,21 +59,21 @@ def get_my_profile(
 @limiter.limit("5/minute")
 def update_candidate_personal_information(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.CandidateProfileUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     CandidateService.update_basic_info(db, user_id, data)
-    return get_my_profile(request, user_id, db)
+    return get_my_profile(request, db, user_id)
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
 @limiter.limit("5/minute")
 def add_experience(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.WorkExperienceBase,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.add_experience(db, user_id, data)
 
@@ -80,9 +82,9 @@ def add_experience(
 @limiter.limit("5/minute")
 def delete_experience(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     CandidateService.delete_experience(db, user_id, item_id)
     return {"message": "Experience deleted successfully"}
@@ -92,10 +94,10 @@ def delete_experience(
 @limiter.limit("5/minute")
 def update_experience(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     data: schemas.WorkExperienceUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.update_experience(db, user_id, item_id, data)
 
@@ -104,9 +106,9 @@ def update_experience(
 @limiter.limit("5/minute")
 def add_education(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.EducationBase,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.add_education(db, user_id, data)
 
@@ -115,9 +117,9 @@ def add_education(
 @limiter.limit("5/minute")
 def delete_education(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     CandidateService.delete_education(db, user_id, item_id)
     return {"message": "Education deleted successfully"}
@@ -127,10 +129,10 @@ def delete_education(
 @limiter.limit("5/minute")
 def update_education(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     data: schemas.EducationUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.update_education(db, user_id, item_id, data)
 
@@ -139,9 +141,9 @@ def update_education(
 @limiter.limit("5/minute")
 def add_skill(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.SkillBase,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.add_skill(db, user_id, data)
 
@@ -150,9 +152,9 @@ def add_skill(
 @limiter.limit("5/minute")
 def delete_skill(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     CandidateService.delete_skill(db, user_id, item_id)
     return {"message": "Skill deleted successfully"}
@@ -162,10 +164,10 @@ def delete_skill(
 @limiter.limit("5/minute")
 def update_skill(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     data: schemas.SkillUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.update_skill(db, user_id, item_id, data)
 
@@ -174,9 +176,9 @@ def update_skill(
 @limiter.limit("5/minute")
 def add_certification(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.CertificationBase,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.add_certification(db, user_id, data)
 
@@ -185,9 +187,9 @@ def add_certification(
 @limiter.limit("5/minute")
 def delete_certification(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     CandidateService.delete_certification(db, user_id, item_id)
     return {"message": "Certification deleted successfully"}
@@ -197,10 +199,10 @@ def delete_certification(
 @limiter.limit("5/minute")
 def update_certification(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     data: schemas.CertificationUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.update_certification(db, user_id, item_id, data)
 
@@ -209,9 +211,9 @@ def update_certification(
 @limiter.limit("5/minute")
 def add_social_link(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.SocialLinkBase,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.add_social_link(db, user_id, data)
 
@@ -220,9 +222,9 @@ def add_social_link(
 @limiter.limit("5/minute")
 def delete_social_link(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     CandidateService.delete_social_link(db, user_id, item_id)
     return {"message": "Social link deleted successfully"}
@@ -232,9 +234,9 @@ def delete_social_link(
 @limiter.limit("5/minute")
 def update_social_link(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     item_id: str,
     data: schemas.SocialLinkBase,
     user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
 ):
     return CandidateService.update_social_link(db, user_id, item_id, data)

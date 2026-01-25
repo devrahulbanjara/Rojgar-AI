@@ -6,7 +6,6 @@ class ReferenceJDFormatter:
     def format_reference_jd(
         reference_jd: ReferenceJobDescriptions, about_the_company: str | None = None
     ) -> str:
-
         formatted_lines = []
 
         if reference_jd.department:
