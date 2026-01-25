@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ApplicationModal } from "./ApplicationModal";
 import Image from "next/image";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -45,6 +46,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   showApplyButton = true,
 }) => {
   const [isSaved, setIsSaved] = useState(job?.is_saved || false);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const toggleSaveMutation = useToggleSaveJob();
 
   // Sync is_saved state when job changes or modal opens
@@ -57,7 +59,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   if (!job) return null;
 
   const handleApply = () => {
-    onApply?.(job);
+    setIsApplicationModalOpen(true);
   };
 
   const handleClose = () => {
@@ -88,9 +90,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
   const daysLeft = job.application_deadline
     ? Math.ceil(
-        (new Date(job.application_deadline).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      )
+      (new Date(job.application_deadline).getTime() - Date.now()) /
+      (1000 * 60 * 60 * 24),
+    )
     : null;
 
   return (
@@ -270,19 +272,21 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
           {/* About the Company - Enhanced */}
           {(() => {
-            const organization = (job as unknown as { organization?: { 
-              id?: string | number;
-              name?: string;
-              description?: string;
-              website?: string;
-              location_city?: string;
-              location_country?: string;
-              industry?: string;
-              founded_year?: number;
-            } }).organization;
-            
+            const organization = (job as unknown as {
+              organization?: {
+                id?: string | number;
+                name?: string;
+                description?: string;
+                website?: string;
+                location_city?: string;
+                location_country?: string;
+                industry?: string;
+                founded_year?: number;
+              }
+            }).organization;
+
             const company = job.company || organization;
-            
+
             return company && (
               <section className="mb-12">
                 <div className="flex items-center gap-3 mb-6">
@@ -307,8 +311,8 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   )}
                   <div className="flex flex-wrap gap-3">
                     {(() => {
-                      const location = (company as { location?: string }).location || 
-                        (organization && organization.location_city && organization.location_country 
+                      const location = (company as { location?: string }).location ||
+                        (organization && organization.location_city && organization.location_country
                           ? `${organization.location_city}, ${organization.location_country}`
                           : organization?.location_city || organization?.location_country);
                       return location && (
@@ -548,6 +552,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           )}
         </div>
       </DialogContent>
-    </Dialog>
+      <ApplicationModal
+        job={job}
+        isOpen={isApplicationModalOpen}
+        onClose={() => {
+          setIsApplicationModalOpen(false);
+          // Optionally close the details modal too after successful application
+          // onClose(); 
+        }}
+      />
+    </Dialog >
   );
 };
