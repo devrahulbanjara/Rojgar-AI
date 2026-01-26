@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
+  <img src="docs/ConvexHire.png" alt="ConvexHire Logo" width="400"/>
   
   ### The AI-Native Recruitment Operating System
   
