@@ -1,8 +1,9 @@
-from fastapi import HTTPException, status
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import get_datetime
+from app.core import NotFoundError, get_datetime
 from app.models import Organization
 from app.schemas.organization import OrganizationUpdateRequest
 
@@ -10,7 +11,7 @@ from app.schemas.organization import OrganizationUpdateRequest
 class OrganizationService:
     @staticmethod
     def get_organization_by_id(
-        organization_id: str, db: Session
+        organization_id: uuid.UUID, db: Session
     ) -> Organization | None:
         return db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
@@ -18,14 +19,11 @@ class OrganizationService:
 
     @staticmethod
     def update_organization(
-        organization_id: str, update_data: OrganizationUpdateRequest, db: Session
+        organization_id: uuid.UUID, update_data: OrganizationUpdateRequest, db: Session
     ) -> Organization:
         organization = OrganizationService.get_organization_by_id(organization_id, db)
         if not organization:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Organization not found",
-            )
+            raise NotFoundError("Organization not found")
 
         if update_data.name is not None:
             organization.name = update_data.name

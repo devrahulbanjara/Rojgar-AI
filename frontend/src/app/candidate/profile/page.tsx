@@ -51,6 +51,27 @@ export default function CandidateProfilePage() {
     }
   }, [isAuthenticated, isAuthLoading]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.key === "R"
+      ) {
+        event.preventDefault();
+        fetchProfile();
+        if (refetchUser) {
+          refetchUser();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [refetchUser]);
+
   const handleProfileUpdate = async (updatedProfile: CandidateProfile) => {
     setProfile(updatedProfile);
     if (refetchUser) {

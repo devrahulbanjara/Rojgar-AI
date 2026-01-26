@@ -51,6 +51,7 @@ export interface Job {
   status: JobStatus;
   is_remote: boolean;
   is_featured: boolean;
+  is_saved?: boolean;
   applicant_count: number;
   views_count: number;
   created_by: string;

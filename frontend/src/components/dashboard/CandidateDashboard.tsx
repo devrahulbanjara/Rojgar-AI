@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { STATUS_CONFIG, COLUMN_MAPPING } from "@/utils/statusStyles";
 import { Loader2, Briefcase, Video, Trophy, MapPin, CalendarClock } from "lucide-react";
@@ -10,10 +10,10 @@ interface JobSummary {
     employment_type?: string;
 }
 
-interface CompanySummary {
-    company_id: string;
-    company_name: string;
-    company_logo?: string;
+interface OrganizationSummary {
+    organization_id: string;
+    name: string;
+    organization_logo?: string;
 }
 
 interface ApplicationResponse {
@@ -22,7 +22,7 @@ interface ApplicationResponse {
     applied_at: string;
     updated_at: string;
     job: JobSummary;
-    company: CompanySummary;
+    organization: OrganizationSummary;
 }
 
 export default function CandidateDashboard() {
@@ -30,11 +30,7 @@ export default function CandidateDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
-
-    const fetchApplications = async () => {
+    const fetchApplications = useCallback(async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -50,7 +46,29 @@ export default function CandidateDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchApplications();
+    }, [fetchApplications]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (
+                (event.ctrlKey || event.metaKey) &&
+                event.shiftKey &&
+                event.key === "R"
+            ) {
+                event.preventDefault();
+                fetchApplications();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [fetchApplications]);
 
     const columns: Record<string, ApplicationResponse[]> = {
         Applied: [],
@@ -163,10 +181,8 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
 
     // Quick helper to extract border color from the status config class or default
     const getBorderColorClass = (statusStr: string) => {
-        if (statusStr.includes('interview')) return 'border-l-indigo-500';
-        if (statusStr.includes('offer')) return 'border-l-emerald-500';
-        if (statusStr.includes('hired')) return 'border-l-green-600';
-        if (statusStr.includes('rejected')) return 'border-l-gray-400';
+        if (statusStr === 'interviewing') return 'border-l-indigo-500';
+        if (statusStr === 'outcome') return 'border-l-emerald-500';
         return 'border-l-blue-500'; // Default applied
     };
 
@@ -178,7 +194,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
                     {app.job.title}
                 </h4>
                 <p className="text-sm font-medium text-slate-500">
-                    {app.company.company_name}
+                    {app.organization.name}
                 </p>
             </div>
 

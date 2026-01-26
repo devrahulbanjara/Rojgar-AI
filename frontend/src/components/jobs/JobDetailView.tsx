@@ -39,7 +39,10 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
     onApply?.(job);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!job.job_id) return;
+    // This will be handled by the parent component or we can add the hook here
+    // For now, we'll leave it empty as it might be handled differently
   };
 
   const handleShare = () => {

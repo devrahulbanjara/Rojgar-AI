@@ -1,20 +1,15 @@
 export const ApplicationStage = {
   APPLIED: "applied",
-  SCREENING: "screening",
   INTERVIEWING: "interviewing",
-  OFFER: "offer",
-  DECISION: "decision"
+  OUTCOME: "outcome",
 } as const;
 
 export type ApplicationStage = typeof ApplicationStage[keyof typeof ApplicationStage];
 
 export const ApplicationStatus = {
-  PENDING: "pending",
-  UNDER_REVIEW: "under_review",
-  INTERVIEW_SCHEDULED: "interview_scheduled",
-  OFFER_EXTENDED: "offer_extended",
-  ACCEPTED: "accepted",
-  REJECTED: "rejected"
+  APPLIED: "applied",
+  INTERVIEWING: "interviewing",
+  OUTCOME: "outcome",
 } as const;
 
 export type ApplicationStatus = typeof ApplicationStatus[keyof typeof ApplicationStatus];
@@ -37,11 +32,10 @@ export interface ApplicationTrackingBoard {
   outcome: Application[];
 }
 
-// Application Form Types
 export interface CreateApplicationRequest {
-  jobId: string;
-  resumeUrl?: string;
-  coverLetter?: string;
+  job_id: string;
+  resume_id: string;
+  cover_letter?: string;
 }
 
 export interface UpdateApplicationRequest {
@@ -52,7 +46,6 @@ export interface UpdateApplicationRequest {
   interviewDate?: Date;
 }
 
-// Application Hook Return Types
 export interface UseApplicationsReturn {
   applications: Application[];
   loading: boolean;

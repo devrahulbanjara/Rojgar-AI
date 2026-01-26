@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, CheckCircle2, Star, Gift } from "lucide-react";
+import { Sparkles, CheckCircle2, Briefcase } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { ReferenceJD } from "../../services/referenceJDService";
 
@@ -77,9 +77,8 @@ export function ReferenceJDCard({
     departmentColors[jd.department || ""] || departmentColors.Default;
   
   // Map new backend fields to display fields (with backward compatibility)
+  const jobResponsibilities = jd.job_responsibilities || [];
   const requiredQualifications = jd.required_qualifications || jd.requiredSkillsAndExperience || [];
-  const preferred = jd.preferred || jd.niceToHave || [];
-  const benefits = jd.compensation_and_benefits || jd.benefits || [];
 
   return (
     <div
@@ -131,50 +130,41 @@ export function ReferenceJDCard({
         </div>
 
         {/* Skill Pills - First 2 + Counter */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
-            {requiredQualifications.slice(0, 2).map((skill, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-md"
-              >
-                {skill.length > 30 ? skill.substring(0, 30) + "..." : skill}
-              </span>
-            ))}
-            {requiredQualifications.length > 2 && (
-              <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50/50 rounded-md">
-                +{requiredQualifications.length - 2} more
-              </span>
-            )}
+        {requiredQualifications.length > 0 && (
+          <div className="mb-8">
+            <div className="flex flex-wrap gap-2">
+              {requiredQualifications.slice(0, 2).map((skill, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-md"
+                >
+                  {skill.length > 30 ? skill.substring(0, 30) + "..." : skill}
+                </span>
+              ))}
+              {requiredQualifications.length > 2 && (
+                <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50/50 rounded-md">
+                  +{requiredQualifications.length - 2} more
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Statistics Badges - Primary Focus */}
         <div className="flex flex-wrap items-center gap-3 mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50/50 text-purple-700 rounded-lg">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50/50 text-blue-700 rounded-lg">
+            <Briefcase className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {requiredQualifications.length} Required
+              {jobResponsibilities.length} Responsibilities
             </span>
           </div>
 
-          {preferred.length > 0 && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50/50 text-blue-700 rounded-lg">
-              <Star className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {preferred.length} Nice-to-Have
-              </span>
-            </div>
-          )}
-
-          {benefits.length > 0 && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50/50 text-green-700 rounded-lg">
-              <Gift className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {benefits.length} Benefits
-              </span>
-            </div>
-          )}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50/50 text-purple-700 rounded-lg">
+            <CheckCircle2 className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {requiredQualifications.length} Required Qualifications
+            </span>
+          </div>
         </div>
 
         {/* Spacer to push button to bottom */}
