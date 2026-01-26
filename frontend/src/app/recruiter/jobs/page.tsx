@@ -42,13 +42,6 @@ const mapJobStatus = (status: string): JobStatus => {
 };
 
 interface BackendJobResponse {
-  // New backend fields
-  job_summary?: string;
-  job_responsibilities?: string[];
-  required_qualifications?: string[];
-  preferred?: string[];
-  compensation_and_benefits?: string[];
-  // Legacy fields (for backward compatibility)
   job_id?: string | number;
   id?: string | number;
   company_id?: string | number;
@@ -86,13 +79,11 @@ interface BackendJobResponse {
   salary_max?: number;
   salary_currency?: string;
   salary_range?: { min: number; max: number; currency: string };
-  // New backend fields
   job_summary?: string;
   job_responsibilities?: string[];
   required_qualifications?: string[];
   preferred?: string[];
   compensation_and_benefits?: string[];
-  // Legacy fields (for backward compatibility)
   description?: string;
   role_overview?: string;
   requirements?: string[];
@@ -130,30 +121,30 @@ const transformJob = (job: BackendJobResponse): Job => {
     company:
       job.organization || job.company
         ? {
-            id:
-              parseInt(
-                String(
-                  job.organization?.id ||
-                    job.company?.id ||
-                    job.company_id ||
-                    job.organization_id ||
-                    0,
-                ),
-              ) || 0,
-            name:
-              job.organization?.name ||
-              job.company?.name ||
-              job.company_name ||
-              "Unknown Company",
-            logo: job.organization?.logo || job.company?.logo,
-            website: job.organization?.website || job.company?.website,
-            description:
-              job.organization?.description || job.company?.description,
-            location: job.organization?.location || job.company?.location,
-            industry: job.organization?.industry || job.company?.industry,
-            founded_year:
-              job.organization?.founded_year || job.company?.founded_year,
-          }
+          id:
+            parseInt(
+              String(
+                job.organization?.id ||
+                job.company?.id ||
+                job.company_id ||
+                job.organization_id ||
+                0,
+              ),
+            ) || 0,
+          name:
+            job.organization?.name ||
+            job.company?.name ||
+            job.company_name ||
+            "Unknown Company",
+          logo: job.organization?.logo || job.company?.logo,
+          website: job.organization?.website || job.company?.website,
+          description:
+            job.organization?.description || job.company?.description,
+          location: job.organization?.location || job.company?.location,
+          industry: job.organization?.industry || job.company?.industry,
+          founded_year:
+            job.organization?.founded_year || job.company?.founded_year,
+        }
         : undefined,
     title: job.title || "",
     department: job.department || "",
@@ -162,7 +153,7 @@ const transformJob = (job: BackendJobResponse): Job => {
       // Prioritize location_city and location_country - they are the source of truth
       const city = job.location_city?.trim();
       const country = job.location_country?.trim();
-      
+
       // Check if city/country are actually set (not empty strings or null)
       if (city && city.length > 0 && country && country.length > 0) {
         return `${city}, ${country}`;
@@ -173,17 +164,17 @@ const transformJob = (job: BackendJobResponse): Job => {
       if (country && country.length > 0) {
         return country;
       }
-      
+
       // Fallback: Check if job.location contains a valid city/country format
       // (e.g., "Kathmandu, Nepal") and doesn't match location_type
       const jobLocation = (job.location || "").trim();
       const locationType = (job.location_type || "").toLowerCase();
       const jobLocationLower = jobLocation.toLowerCase();
-      
+
       // Check if location matches location_type keywords (these should not be shown as location)
       const locationTypeKeywords = ["remote", "hybrid", "on-site", "onsite"];
       const isLocationType = locationTypeKeywords.includes(jobLocationLower);
-      
+
       // If location doesn't match location_type keywords and is different from location_type, use it
       if (jobLocation && !isLocationType && jobLocationLower !== locationType) {
         // If it contains a comma, it's likely "City, Country" format - use it
@@ -193,7 +184,7 @@ const transformJob = (job: BackendJobResponse): Job => {
         // Otherwise, only use if it's clearly not a location type
         return jobLocation;
       }
-      
+
       return "Not specified";
     })(),
     location_city: job.location_city || undefined,
@@ -252,12 +243,13 @@ export default function RecruiterJobsPage() {
     data: referenceJDData,
     isLoading: isLoadingReferenceJDs,
     refetch: refetchReferenceJDs,
-  } = useReferenceJDs();
+  } = useReferenceJDs(isAuthenticated && !isAuthLoading);
   const createReferenceJD = useCreateReferenceJD();
   const updateReferenceJDMutation = useUpdateReferenceJD();
   const deleteReferenceJDMutation = useDeleteReferenceJD();
 
   const userId = user?.id || null;
+  const organizationId = user?.organization_id || null;
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
@@ -269,7 +261,11 @@ export default function RecruiterJobsPage() {
     data: jobsData,
     isLoading: isLoadingJobs,
     refetch: refetchJobs,
-  } = useJobsByCompany(userId || "", { page: 1, limit: 100 });
+  } = useJobsByCompany(
+    userId || "",
+    { organizationId: organizationId || undefined, page: 1, limit: 100 },
+    isAuthenticated && !isAuthLoading
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -445,7 +441,7 @@ export default function RecruiterJobsPage() {
         }
         const jobWithExtras = job as JobWithExtras;
         const jobResponsibilities = jobWithExtras.job_responsibilities || [];
-        
+
         const referenceJDData = ReferenceJDService.convertJobToReferenceJD({
           job_summary: jobWithExtras.job_summary,
           description: job.description,
@@ -582,7 +578,7 @@ export default function RecruiterJobsPage() {
             {/* Content Area */}
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs ||
-              (activeTab === "reference-jds" && isLoadingReferenceJDs) ? (
+                (activeTab === "reference-jds" && isLoadingReferenceJDs) ? (
                 <div className="flex items-center justify-center py-20">
                   <LoadingSpinner size="lg" />
                 </div>

@@ -125,14 +125,15 @@ export function useJob(id: string) {
 
 export function useJobsByCompany(
   userId: string,
-  params?: { page?: number; limit?: number },
+  params?: { organizationId?: string; page?: number; limit?: number },
+  enabled: boolean = true,
 ) {
   return useQuery({
     queryKey: [...jobQueryKeys.byCompany(userId), params],
     queryFn: async () => {
       return await jobService.getJobsByCompany(userId, params);
     },
-    enabled: !!userId,
+    enabled: enabled && (!!userId || !!params?.organizationId),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

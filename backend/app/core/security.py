@@ -93,3 +93,33 @@ def get_current_active_user(
 
         raise NotFoundError("User not found")
     return user
+
+
+def get_current_user_id_optional(request: Request) -> uuid.UUID | None:
+    token = request.cookies.get("auth_token")
+
+    if not token:
+        return None
+
+    try:
+        entity_id, entity_type = verify_token(token)
+
+        if entity_type != "user":
+            return None
+
+        return entity_id
+    except (UnauthorizedError, ForbiddenError):
+        return None
+
+
+def get_current_active_user_optional(
+    db: Session = Depends(get_db),
+    user_id: uuid.UUID | None = Depends(get_current_user_id_optional),
+):
+    if not user_id:
+        return None
+
+    from app.models.user import User
+
+    user = db.scalar(select(User).where(User.user_id == user_id))
+    return user
