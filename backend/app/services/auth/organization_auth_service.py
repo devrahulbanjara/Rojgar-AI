@@ -1,13 +1,12 @@
 import uuid
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import get_datetime
+from app.core import BusinessLogicError, get_datetime
 from app.core.security import create_token, hash_password, verify_password
 from app.models import Organization
-from app.schemas.organization import OrganizationResponse, OrganizationSignupRequest
+from app.schemas.organization import OrganizationSignupRequest
 
 
 class OrganizationAuthService:
@@ -25,23 +24,17 @@ class OrganizationAuthService:
             org_data.email, db
         )
         if existing_org:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered",
-            )
+            raise BusinessLogicError("Email already registered")
 
         from app.services.auth.auth_service import AuthService
 
         existing_user = AuthService.get_user_by_email(org_data.email, db)
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered",
-            )
+            raise BusinessLogicError("Email already registered")
 
         now = get_datetime()
         new_org = Organization(
-            organization_id=str(uuid.uuid4()),
+            organization_id=uuid.uuid4(),
             email=org_data.email,
             password=hash_password(org_data.password),
             name=org_data.name,
@@ -66,11 +59,11 @@ class OrganizationAuthService:
 
     @staticmethod
     def create_organization_token(
-        organization_id: str | uuid.UUID, remember_me: bool = False
+        organization_id: uuid.UUID, remember_me: bool = False
     ) -> tuple[str, int]:
         from app.core.config import settings
 
-        org_id_str = str(organization_id) if isinstance(organization_id, uuid.UUID) else organization_id
+        org_id_str = str(organization_id)
 
         if remember_me:
             token = create_token(
@@ -84,9 +77,3 @@ class OrganizationAuthService:
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
         return token, max_age
-
-    @staticmethod
-    def create_organization_response(
-        organization: Organization,
-    ) -> OrganizationResponse:
-        return OrganizationResponse.model_validate(organization)

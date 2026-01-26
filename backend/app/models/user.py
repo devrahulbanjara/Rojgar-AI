@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
@@ -22,8 +23,8 @@ class UserRole(str, Enum):
 class User(Base):
     __tablename__ = "user"
 
-    user_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
-    organization_id: Mapped[str | None] = mapped_column(
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("organization.organization_id"), nullable=True
     )
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
@@ -69,7 +70,7 @@ class UserGoogle(Base):
     __tablename__ = "user_google"
 
     user_google_id: Mapped[str] = mapped_column(String, primary_key=True)
-    user_id: Mapped[str] = mapped_column(
+    user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("user.user_id"), unique=True, nullable=False
     )
 

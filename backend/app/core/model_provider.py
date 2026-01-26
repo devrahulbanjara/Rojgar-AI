@@ -1,5 +1,5 @@
-from langchain_groq import ChatGroq
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_groq import ChatGroq
 
 from app.core.config import settings
 

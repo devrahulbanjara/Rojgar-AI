@@ -23,6 +23,10 @@ import {
   Trash2,
 } from "lucide-react";
 import type { Job } from "../../types/job";
+
+interface JobWithExtras extends Job {
+  job_responsibilities?: string[];
+}
 import { Dialog } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
@@ -297,31 +301,34 @@ export function JobDetailModal({
           )}
 
           {/* Job Responsibilities - Enhanced */}
-          {(job as any).job_responsibilities && (job as any).job_responsibilities.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
-                  <Briefcase className="w-5 h-5 text-blue-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras;
+            return jobWithExtras.job_responsibilities && jobWithExtras.job_responsibilities.length > 0 ? (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                    <Briefcase className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Job Responsibilities
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Job Responsibilities
-                </h3>
-              </div>
-              <div className="pl-14">
-                <ul className="space-y-3 list-disc list-inside">
-                  {(job as any).job_responsibilities.map((resp: string, index: number) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
-                      {resp}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
+                <div className="pl-14">
+                  <ul className="space-y-3 list-disc list-inside">
+                    {jobWithExtras.job_responsibilities.map((resp: string, index: number) => (
+                      <li
+                        key={index}
+                        className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                      >
+                        {resp}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            ) : null;
+          })()}
 
           {/* Required Qualifications - Enhanced */}
           {job.requirements && job.requirements.length > 0 && (

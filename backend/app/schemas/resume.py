@@ -69,27 +69,27 @@ class ResumeCertificationUpdate(BaseModel):
 
 
 class ResumeSocialLinkResponse(SocialLinkBase):
-    resume_social_link_id: Annotated[str, "Resume social link ID"]
+    resume_social_link_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeWorkExperienceResponse(WorkExperienceBase):
-    resume_work_experience_id: Annotated[str, "Resume work experience ID"]
+    resume_work_experience_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeEducationResponse(EducationBase):
-    resume_education_id: Annotated[str, "Resume education ID"]
+    resume_education_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeCertificationResponse(CertificationBase):
-    resume_certification_id: Annotated[str, "Resume certification ID"]
+    resume_certification_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeSkillResponse(SkillBase):
-    resume_skill_id: Annotated[str, "Resume skill ID"]
+    resume_skill_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 

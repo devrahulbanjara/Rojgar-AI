@@ -1,4 +1,5 @@
 from .application import (
+    ApplicationCreate,
     ApplicationResponse,
     JobSummary,
     OrganizationSummary,
@@ -60,22 +61,23 @@ from .user import (
     CreateUserRequest,
     GoogleUserInfo,
     LoginRequest,
-    RoleSelectionRequest,
+    ProfileUpdateRequest,
     SignupRequest,
     TokenResponse,
     UserResponse,
 )
 
 __all__ = [
+    "ApplicationCreate",
     "ApplicationResponse",
     "JobSummary",
     "OrganizationSummary",
     "UserResponse",
     "GoogleUserInfo",
     "CreateUserRequest",
+    "ProfileUpdateRequest",
     "SignupRequest",
     "LoginRequest",
-    "RoleSelectionRequest",
     "TokenResponse",
     "OrganizationResponseInJob",
     "JobResponse",

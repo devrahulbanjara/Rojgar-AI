@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { ApplicationModal } from "./ApplicationModal";
 import Image from "next/image";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -17,6 +18,7 @@ import {
   Sparkles,
   Globe,
   Bookmark,
+  BookmarkCheck,
   Share2,
   TrendingUp,
   MapPinned,
@@ -25,7 +27,16 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { jobUtils } from "../../services/jobService";
-import type { JobDetailsModalProps } from "../../types/job";
+import { useToggleSaveJob } from "../../hooks/queries/useJobs";
+import type { JobDetailsModalProps, Job } from "../../types/job";
+
+interface JobWithExtras extends Job {
+  job_responsibilities?: string[];
+  job_summary?: string;
+  required_qualifications?: string[];
+  preferred?: string[];
+  compensation_and_benefits?: string[];
+}
 
 export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   job,
@@ -34,30 +45,54 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   onApply,
   showApplyButton = true,
 }) => {
+  const [isSaved, setIsSaved] = useState(job?.is_saved || false);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const toggleSaveMutation = useToggleSaveJob();
+
+  // Sync is_saved state when job changes or modal opens
+  useEffect(() => {
+    if (job) {
+      setIsSaved(job.is_saved || false);
+    }
+  }, [job?.job_id, job?.is_saved, isOpen]);
+
   if (!job) return null;
 
   const handleApply = () => {
-    onApply?.(job);
+    setIsApplicationModalOpen(true);
   };
 
   const handleClose = () => {
     onClose();
   };
 
-  const handleSave = () => {
-    // TODO: Implement save functionality
+  const handleSave = async () => {
+    if (!job.job_id) return;
+    const previousSavedState = isSaved;
+    // Optimistically update UI
+    setIsSaved(!previousSavedState);
+    try {
+      const result = await toggleSaveMutation.mutateAsync(job.job_id);
+      // Update state based on actual API response
+      const isNowSaved = result.status === "Job saved successfully";
+      setIsSaved(isNowSaved);
+    } catch (error) {
+      // Revert optimistic update on error
+      setIsSaved(previousSavedState);
+      // Error is handled by the mutation's onError
+      console.error("Failed to toggle save:", error);
+    }
   };
 
   const handleShare = () => {
     // TODO: Implement share functionality
   };
 
-  // Calculate days left to apply
   const daysLeft = job.application_deadline
     ? Math.ceil(
-        (new Date(job.application_deadline).getTime() - Date.now()) /
-          (1000 * 60 * 60 * 24),
-      )
+      (new Date(job.application_deadline).getTime() - Date.now()) /
+      (1000 * 60 * 60 * 24),
+    )
     : null;
 
   return (
@@ -176,7 +211,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   Location
                 </p>
                 <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {job.location}
+                  {job.location_city && job.location_country
+                    ? `${job.location_city}, ${job.location_country}`
+                    : job.location_city || job.location_country || job.location || "Not specified"}
                 </p>
               </div>
             </div>
@@ -234,193 +271,232 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           )}
 
           {/* About the Company - Enhanced */}
-          {job.company && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+          {(() => {
+            const organization = (job as unknown as {
+              organization?: {
+                id?: string | number;
+                name?: string;
+                description?: string;
+                website?: string;
+                location_city?: string;
+                location_country?: string;
+                industry?: string;
+                founded_year?: number;
+              }
+            }).organization;
+
+            const company = job.company || organization;
+
+            return company && (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                    <Building2 className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    About the Company
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  About the Company
-                </h3>
-              </div>
-              <div className="pl-14">
-                {job.company.description ? (
-                  <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
-                    {job.company.description}
-                  </p>
-                ) : (
-                  <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
-                    {job.company.name} is looking for talented individuals to
-                    join their team.
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-3">
-                  {job.company.location && (
-                    <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
-                      <MapPin className="w-4 h-4" />
-                      <span className="font-medium">
-                        {job.company.location}
-                      </span>
-                    </button>
+                <div className="pl-14">
+                  {company.description ? (
+                    <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
+                      {company.description}
+                    </p>
+                  ) : (
+                    <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
+                      {company.name} is looking for talented individuals to
+                      join their team.
+                    </p>
                   )}
-                  {job.company.industry && (
-                    <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
-                      <Building2 className="w-4 h-4" />
-                      <span className="font-medium">
-                        {job.company.industry}
-                      </span>
-                    </button>
-                  )}
-                  {job.company.website && (
-                    <a
-                      href={
-                        job.company.website.startsWith("http")
-                          ? job.company.website
-                          : `https://${job.company.website}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 font-medium"
-                    >
-                      <Globe className="w-4 h-4" />
-                      <span>Visit Website</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                  <div className="flex flex-wrap gap-3">
+                    {(() => {
+                      const location = (company as { location?: string }).location ||
+                        (organization && organization.location_city && organization.location_country
+                          ? `${organization.location_city}, ${organization.location_country}`
+                          : organization?.location_city || organization?.location_country);
+                      return location && (
+                        <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
+                          <MapPin className="w-4 h-4" />
+                          <span className="font-medium">{location}</span>
+                        </button>
+                      );
+                    })()}
+                    {company.industry && (
+                      <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
+                        <Building2 className="w-4 h-4" />
+                        <span className="font-medium">
+                          {company.industry}
+                        </span>
+                      </button>
+                    )}
+                    {company.website && (
+                      <a
+                        href={
+                          company.website.startsWith("http")
+                            ? company.website
+                            : `https://${company.website}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 font-medium"
+                      >
+                        <Globe className="w-4 h-4" />
+                        <span>Visit Website</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </section>
-          )}
+              </section>
+            );
+          })()}
 
           {/* Job Summary - Enhanced */}
-          {job.description && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-indigo-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50">
-                  <Briefcase className="w-5 h-5 text-indigo-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras;
+            return (jobWithExtras.job_summary || job.description) && (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-indigo-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50">
+                    <Briefcase className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Job Summary
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Job Summary
-                </h3>
-              </div>
-              <div className="pl-14 prose prose-sm max-w-none">
-                <p className="text-[16px] text-gray-700 leading-[1.8] whitespace-pre-wrap">
-                  {job.description}
-                </p>
-              </div>
-            </section>
-          )}
+                <div className="pl-14 prose prose-sm max-w-none">
+                  <p className="text-[16px] text-gray-700 leading-[1.8] whitespace-pre-wrap">
+                    {jobWithExtras.job_summary || job.description}
+                  </p>
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Job Responsibilities - Enhanced */}
-          {(job as any).job_responsibilities && (job as any).job_responsibilities.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
-                  <Briefcase className="w-5 h-5 text-blue-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras;
+            return jobWithExtras.job_responsibilities && jobWithExtras.job_responsibilities.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                    <Briefcase className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Job Responsibilities
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Job Responsibilities
-                </h3>
-              </div>
-              <div className="pl-14">
-                <ul className="space-y-3 list-disc list-inside">
-                  {(job as any).job_responsibilities.map((resp: string, index: number) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
-                      {resp}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
+                <div className="pl-14">
+                  <ul className="space-y-3 list-disc list-inside">
+                    {jobWithExtras.job_responsibilities.map((resp: string, index: number) => (
+                      <li
+                        key={index}
+                        className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                      >
+                        {resp}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Required Qualifications - Enhanced with checkmarks */}
-          {job.requirements && job.requirements.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-emerald-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras;
+            const requiredQuals = jobWithExtras.required_qualifications || job.requirements;
+            return requiredQuals && requiredQuals.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-emerald-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Required Qualifications
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Required Qualifications
-                </h3>
-              </div>
-              <div className="pl-14">
-                <ul className="space-y-3 list-disc list-inside">
-                  {job.requirements.map((requirement, index) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
-                      {requirement}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
+                <div className="pl-14">
+                  <ul className="space-y-3 list-disc list-inside">
+                    {(jobWithExtras.required_qualifications || job.requirements || []).map((requirement: string, index: number) => (
+                      <li
+                        key={index}
+                        className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                      >
+                        {requirement}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Preferred - Enhanced */}
-          {job.nice_to_have && job.nice_to_have.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50">
-                  <Sparkles className="w-5 h-5 text-amber-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras;
+            const preferred = jobWithExtras.preferred || job.nice_to_have;
+            return preferred && Array.isArray(preferred) && preferred.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50">
+                    <Sparkles className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Preferred
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Preferred
-                </h3>
-              </div>
-              <div className="pl-14">
-                <ul className="space-y-3 list-disc list-inside">
-                  {job.nice_to_have.map((item, index) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
+                <div className="pl-14">
+                  <ul className="space-y-3 list-disc list-inside">
+                    {(jobWithExtras.preferred || job.nice_to_have || []).map((item: string, index: number) => (
+                      <li
+                        key={index}
+                        className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Compensation & Benefits - Enhanced */}
-          {job.benefits && job.benefits.length > 0 && (
-            <section className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-violet-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50">
-                  <Sparkles className="w-5 h-5 text-violet-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras;
+            const benefits = jobWithExtras.compensation_and_benefits || job.benefits;
+            return benefits && Array.isArray(benefits) && benefits.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-violet-600 rounded-full"></div>
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50">
+                    <Sparkles className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Compensation & Benefits
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Compensation & Benefits
-                </h3>
-              </div>
-              <div className="pl-14">
-                <ul className="space-y-3 list-disc list-inside">
-                  {job.benefits.map((benefit, index) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
-                      {benefit}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
+                <div className="pl-14">
+                  <ul className="space-y-3 list-disc list-inside">
+                    {(jobWithExtras.compensation_and_benefits || job.benefits || []).map((benefit: string, index: number) => (
+                      <li
+                        key={index}
+                        className="text-[15px] text-gray-700 leading-relaxed pl-2"
+                      >
+                        {benefit}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
         </div>
 
         {/* Sticky Footer with CTAs */}
@@ -430,10 +506,29 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               variant="outline"
               size="lg"
               onClick={handleSave}
-              className="h-12 px-5 border-2 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105 active:scale-95"
+              disabled={toggleSaveMutation.isPending}
+              className={cn(
+                "h-12 px-5 border-2 transition-all duration-200 hover:scale-105 active:scale-95",
+                isSaved
+                  ? "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                  : "hover:bg-gray-50 hover:border-gray-300"
+              )}
             >
-              <Bookmark className="w-5 h-5 mr-2" />
-              Save Job
+              {toggleSaveMutation.isPending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
+                  {isSaved ? "Unsaving..." : "Saving..."}
+                </>
+              ) : (
+                <>
+                  {isSaved ? (
+                    <BookmarkCheck className="w-5 h-5 mr-2" />
+                  ) : (
+                    <Bookmark className="w-5 h-5 mr-2" />
+                  )}
+                  {isSaved ? "Saved" : "Save Job"}
+                </>
+              )}
             </Button>
             <Button
               variant="outline"
@@ -457,6 +552,15 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           )}
         </div>
       </DialogContent>
-    </Dialog>
+      <ApplicationModal
+        job={job}
+        isOpen={isApplicationModalOpen}
+        onClose={() => {
+          setIsApplicationModalOpen(false);
+          // Optionally close the details modal too after successful application
+          // onClose(); 
+        }}
+      />
+    </Dialog >
   );
 };

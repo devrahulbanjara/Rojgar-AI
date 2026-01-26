@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -44,8 +44,8 @@ class JobMetadataBase(BaseModel):
 
 
 class JobDatesBase(BaseModel):
-    posted_date: Annotated[str | None, "Job posted date"] = None
-    application_deadline: Annotated[str | None, "Application deadline"] = None
+    posted_date: Annotated[date | None, "Job posted date"] = None
+    application_deadline: Annotated[date | None, "Application deadline"] = None
 
 
 class JobContentBase(BaseModel):
@@ -125,9 +125,13 @@ class JobUpdate(JobCreateUpdateBase):
     currency: Annotated[str | None, "Salary currency"] = None
     job_summary: Annotated[str | None, "Job summary"] = None
     job_responsibilities: Annotated[list[str] | None, "Job responsibilities"] = None
-    required_qualifications: Annotated[list[str] | None, "Required qualifications"] = None
+    required_qualifications: Annotated[list[str] | None, "Required qualifications"] = (
+        None
+    )
     preferred: Annotated[list[str] | None, "Preferred skills"] = None
-    compensation_and_benefits: Annotated[list[str] | None, "Compensation and benefits"] = None
+    compensation_and_benefits: Annotated[
+        list[str] | None, "Compensation and benefits"
+    ] = None
 
 
 class JobDraftGenerateRequest(BaseModel):
@@ -152,7 +156,10 @@ class CreateReferenceJD(ReferenceJDBase):
 
 
 class ReferenceJDResponse(ReferenceJDBase):
-    id: UUID
+    model_config = ConfigDict(from_attributes=True)
+
+    referncejd_id: Annotated[UUID, Field(alias="id")]
+    organization_id: UUID
     about_the_company: Annotated[str | None, "About the company"] = None
 
 
