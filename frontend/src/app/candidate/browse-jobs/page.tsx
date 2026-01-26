@@ -92,12 +92,12 @@ export default function Jobs() {
   } = useJobSearch(
     shouldFetchSearch
       ? {
-          search: debouncedSearchQuery.trim(),
-          page: currentPage,
-          limit: 9,
-          ...backendFilters,
-          userId: user?.id,
-        }
+        search: debouncedSearchQuery.trim(),
+        page: currentPage,
+        limit: 9,
+        ...backendFilters,
+        userId: user?.id,
+      }
       : undefined,
   );
 
@@ -106,12 +106,10 @@ export default function Jobs() {
     ? shouldFetchSearch
       ? isLoadingSearch
       : false
-    : shouldFetchRecommendations
-      ? isLoadingRecommendations
-      : false;
+    : isAuthLoading || (shouldFetchRecommendations ? isLoadingRecommendations : false);
   const error = isSearchMode ? searchError : recommendationsError;
   const refetch = useMemo(
-    () => (isSearchMode ? () => {} : refetchRecommendations),
+    () => (isSearchMode ? () => { } : refetchRecommendations),
     [isSearchMode, refetchRecommendations],
   );
 
@@ -218,9 +216,9 @@ export default function Jobs() {
     async (job: Job) => {
       try {
         await createApplicationMutation.mutateAsync({
-          jobId: job.id.toString(),
+          job_id: job.id.toString(),
         });
-      } catch {}
+      } catch { }
     },
     [createApplicationMutation],
   );

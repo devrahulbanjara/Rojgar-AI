@@ -25,6 +25,8 @@ class JobService:
     def get_recommendations(
         db: Session,
         user_id: uuid.UUID,
+        page: int = 1,
+        limit: int = 10,
         employment_type: str | None = None,
         location_type: str | None = None,
         saved_job_ids: set[uuid.UUID] | None = None,

@@ -100,6 +100,38 @@ class JobPosting(Base):
         "User", foreign_keys=[created_by_user_id]
     )
 
+    @property
+    def id(self) -> uuid.UUID:
+        return self.job_id
+
+    @property
+    def job_summary(self) -> str:
+        return self.job_description.job_summary if self.job_description else ""
+
+    @property
+    def job_responsibilities(self) -> list[str]:
+        return self.job_description.job_responsibilities if self.job_description else []
+
+    @property
+    def required_qualifications(self) -> list[str]:
+        return (
+            self.job_description.required_qualifications
+            if self.job_description
+            else []
+        )
+
+    @property
+    def preferred(self) -> list[str]:
+        return self.job_description.preferred if self.job_description else []
+
+    @property
+    def compensation_and_benefits(self) -> list[str]:
+        return (
+            self.job_description.compensation_and_benefits
+            if self.job_description
+            else []
+        )
+
 
 class ReferenceJobDescriptions(Base):
     __tablename__ = "reference_job_description"
