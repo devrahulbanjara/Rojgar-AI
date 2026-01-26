@@ -25,10 +25,10 @@ export const useApplicationTrackingBoard = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: queryKeys.applications.trackingBoard,
     queryFn: fetchApplicationTrackingBoard,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3, // Retry failed requests 3 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   return {

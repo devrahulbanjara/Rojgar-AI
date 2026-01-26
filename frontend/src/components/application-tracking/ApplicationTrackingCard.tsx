@@ -12,52 +12,31 @@ export const ApplicationTrackingCard: React.FC<ApplicationTrackingCardProps> = (
 
   const getStatusInfo = (status: ApplicationStatus) => {
     switch (status) {
-      case "pending":
+      case "applied":
         return {
           icon: Clock,
-          label: 'Pending',
+          label: 'Applied',
           bgColor: '#F1F5F9',
           textColor: '#64748B'
         };
-      case "under_review":
+      case "interviewing":
         return {
           icon: Eye,
-          label: 'Under Review',
+          label: 'Interviewing',
           bgColor: '#EFF6FF',
           textColor: '#3B82F6'
         };
-      case "interview_scheduled":
-        return {
-          icon: Calendar,
-          label: 'Interview Scheduled',
-          bgColor: '#EFF6FF',
-          textColor: '#3056F5'
-        };
-      case "offer_extended":
+      case "outcome":
         return {
           icon: Gift,
-          label: 'Offer Extended',
+          label: 'Outcome',
           bgColor: '#F0FDF4',
           textColor: '#16A34A'
-        };
-      case "accepted":
-        return {
-          icon: CheckCircle,
-          label: 'Accepted',
-          bgColor: '#F0FDF4',
-          textColor: '#16A34A'
-        };
-      case "rejected":
-        return {
-          icon: XCircle,
-          label: 'Rejected',
-          bgColor: '#FEF2F2',
-          textColor: '#DC2626'
         };
       default:
         return {
           icon: Clock,
-          label: 'Pending',
+          label: 'Applied',
           bgColor: '#F1F5F9',
           textColor: '#64748B'
         };

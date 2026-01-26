@@ -1,7 +1,8 @@
+import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 class JobDescription(Base):
     __tablename__ = "job_description"
 
-    job_description_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    job_description_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     job_summary: Mapped[str] = mapped_column(String, nullable=False)
     job_responsibilities: Mapped[list[str]] = mapped_column(
         ARRAY(String), nullable=False
@@ -25,7 +26,7 @@ class JobDescription(Base):
     required_qualifications: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )
-    preferred: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    preferred: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )
@@ -45,17 +46,17 @@ class JobDescription(Base):
 class JobPosting(Base):
     __tablename__ = "job_posting"
 
-    job_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
 
-    organization_id: Mapped[str] = mapped_column(
+    organization_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("organization.organization_id"), nullable=False
     )
 
-    job_description_id: Mapped[str] = mapped_column(
+    job_description_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("job_description.job_description_id"), nullable=False
     )
 
-    created_by_user_id: Mapped[str | None] = mapped_column(
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("user.user_id"), nullable=True
     )
 
@@ -99,11 +100,43 @@ class JobPosting(Base):
         "User", foreign_keys=[created_by_user_id]
     )
 
+    @property
+    def id(self) -> uuid.UUID:
+        return self.job_id
+
+    @property
+    def job_summary(self) -> str:
+        return self.job_description.job_summary if self.job_description else ""
+
+    @property
+    def job_responsibilities(self) -> list[str]:
+        return self.job_description.job_responsibilities if self.job_description else []
+
+    @property
+    def required_qualifications(self) -> list[str]:
+        return (
+            self.job_description.required_qualifications
+            if self.job_description
+            else []
+        )
+
+    @property
+    def preferred(self) -> list[str]:
+        return self.job_description.preferred if self.job_description else []
+
+    @property
+    def compensation_and_benefits(self) -> list[str]:
+        return (
+            self.job_description.compensation_and_benefits
+            if self.job_description
+            else []
+        )
+
 
 class ReferenceJobDescriptions(Base):
     __tablename__ = "reference_job_description"
-    referncejd_id: Mapped[str] = mapped_column(Uuid, primary_key=True)
-    organization_id: Mapped[str] = mapped_column(Uuid, nullable=False)
+    referncejd_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    organization_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     department: Mapped[str] = mapped_column(String, nullable=False)
     job_summary: Mapped[str] = mapped_column(String, nullable=False)
     job_responsibilities: Mapped[list[str]] = mapped_column(

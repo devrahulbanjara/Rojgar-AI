@@ -1,240 +1,236 @@
+import uuid
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import get_current_active_user, get_db
 from app.core.limiter import limiter
+from app.models.user import User
 from app.schemas import candidate as schemas
+from app.schemas import job as job_schemas
 from app.services.candidate import CandidateService
+from app.services.candidate.saved_job_service import SavedJobService
 
 router = APIRouter()
 
 
 @router.get("/me", response_model=schemas.CandidateProfileFullResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_my_profile(
     request: Request,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    profile = CandidateService.get_full_profile(db, user_id)
-
-    social_links = [
-        schemas.SocialLinkResponse.model_validate(item) for item in profile.social_links
-    ]
-    work_experiences = [
-        schemas.WorkExperienceResponse.model_validate(item)
-        for item in profile.work_experiences
-    ]
-    educations = [
-        schemas.EducationResponse.model_validate(item) for item in profile.educations
-    ]
-    certifications = [
-        schemas.CertificationResponse.model_validate(item)
-        for item in profile.certifications
-    ]
-    skills = [schemas.SkillResponse.model_validate(item) for item in profile.skills]
-
-    return schemas.CandidateProfileFullResponse(
-        profile_id=profile.profile_id,
-        user_id=profile.user_id,
-        full_name=profile.user.name,
-        email=profile.user.email,
-        picture=profile.user.picture,
-        phone=profile.phone,
-        location_city=profile.location_city,
-        location_country=profile.location_country,
-        professional_headline=profile.professional_headline,
-        professional_summary=profile.professional_summary,
-        social_links=social_links,
-        work_experiences=work_experiences,
-        educations=educations,
-        certifications=certifications,
-        skills=skills,
-    )
+    return CandidateService.get_full_profile(db, current_user)
 
 
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_candidate_personal_information(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.CandidateProfileUpdate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.update_basic_info(db, user_id, data)
-    return get_my_profile(request, user_id, db)
+    return CandidateService.update_basic_info(db, current_user, data)
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_experience(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.WorkExperienceBase,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_experience(db, user_id, data)
+    return CandidateService.add_experience(db, current_user, data)
 
 
 @router.delete("/experience/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_experience(
     request: Request,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_experience(db, user_id, item_id)
+    CandidateService.delete_experience(db, current_user, item_id)
     return {"message": "Experience deleted successfully"}
 
 
 @router.patch("/experience/{item_id}", response_model=schemas.WorkExperienceResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_experience(
     request: Request,
-    item_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
     data: schemas.WorkExperienceUpdate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_experience(db, user_id, item_id, data)
+    return CandidateService.update_experience(db, current_user, item_id, data)
 
 
 @router.post("/education", response_model=schemas.EducationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_education(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.EducationBase,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_education(db, user_id, data)
+    return CandidateService.add_education(db, current_user, data)
 
 
 @router.delete("/education/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_education(
     request: Request,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_education(db, user_id, item_id)
+    CandidateService.delete_education(db, current_user, item_id)
     return {"message": "Education deleted successfully"}
 
 
 @router.patch("/education/{item_id}", response_model=schemas.EducationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_education(
     request: Request,
-    item_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
     data: schemas.EducationUpdate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_education(db, user_id, item_id, data)
+    return CandidateService.update_education(db, current_user, item_id, data)
 
 
 @router.post("/skills", response_model=schemas.SkillResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_skill(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.SkillBase,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_skill(db, user_id, data)
+    return CandidateService.add_skill(db, current_user, data)
 
 
 @router.delete("/skills/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_skill(
     request: Request,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_skill(db, user_id, item_id)
+    CandidateService.delete_skill(db, current_user, item_id)
     return {"message": "Skill deleted successfully"}
 
 
 @router.patch("/skills/{item_id}", response_model=schemas.SkillResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_skill(
     request: Request,
-    item_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
     data: schemas.SkillUpdate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_skill(db, user_id, item_id, data)
+    return CandidateService.update_skill(db, current_user, item_id, data)
 
 
 @router.post("/certifications", response_model=schemas.CertificationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_certification(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.CertificationBase,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_certification(db, user_id, data)
+    return CandidateService.add_certification(db, current_user, data)
 
 
 @router.delete("/certifications/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_certification(
     request: Request,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_certification(db, user_id, item_id)
+    CandidateService.delete_certification(db, current_user, item_id)
     return {"message": "Certification deleted successfully"}
 
 
 @router.patch("/certifications/{item_id}", response_model=schemas.CertificationResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_certification(
     request: Request,
-    item_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
     data: schemas.CertificationUpdate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_certification(db, user_id, item_id, data)
+    return CandidateService.update_certification(db, current_user, item_id, data)
 
 
 @router.post("/social-links", response_model=schemas.SocialLinkResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def add_social_link(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     data: schemas.SocialLinkBase,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.add_social_link(db, user_id, data)
+    return CandidateService.add_social_link(db, current_user, data)
 
 
 @router.delete("/social-links/{item_id}")
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def delete_social_link(
     request: Request,
-    item_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    CandidateService.delete_social_link(db, user_id, item_id)
+    CandidateService.delete_social_link(db, current_user, item_id)
     return {"message": "Social link deleted successfully"}
 
 
 @router.patch("/social-links/{item_id}", response_model=schemas.SocialLinkResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_social_link(
     request: Request,
-    item_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    item_id: uuid.UUID,
     data: schemas.SocialLinkBase,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return CandidateService.update_social_link(db, user_id, item_id, data)
+    return CandidateService.update_social_link(db, current_user, item_id, data)
+
+
+@router.post("/jobs/{job_id}/save")
+@limiter.limit("50/minute")
+def toggle_save_job(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    job_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    return SavedJobService.toggle_save_job(db, current_user.user_id, job_id)
+
+
+@router.get("/saved-jobs", response_model=job_schemas.JobListResponse)
+@limiter.limit("50/minute")
+def get_saved_jobs(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    page: int = 1,
+    limit: int = 10,
+):
+    return SavedJobService.get_my_saved_jobs(
+        db, current_user.user_id, page=page, limit=limit
+    )

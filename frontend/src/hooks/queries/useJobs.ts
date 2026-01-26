@@ -1,8 +1,3 @@
-/**
- * React Query hooks for job-related operations
- * Provides data fetching, caching, and state management for jobs
- */
-
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +15,6 @@ import type {
   UpdateApplicationRequest,
 } from "../../types/application";
 
-// Query keys for consistent caching
 export const jobQueryKeys = {
   all: ["jobs"] as const,
   lists: () => [...jobQueryKeys.all, "list"] as const,
@@ -34,6 +28,9 @@ export const jobQueryKeys = {
   detail: (id: string) => [...jobQueryKeys.details(), id] as const,
   byCompany: (companyId: string) =>
     [...jobQueryKeys.all, "company", companyId] as const,
+  savedJobs: () => [...jobQueryKeys.all, "saved"] as const,
+  savedJobsList: (page?: number, limit?: number) =>
+    [...jobQueryKeys.savedJobs(), page, limit] as const,
 };
 
 export const applicationQueryKeys = {
@@ -49,15 +46,14 @@ export const applicationQueryKeys = {
     [...applicationQueryKeys.all, "candidate", candidateId] as const,
 };
 
-// Job Query Hooks
 export function useJobs(params?: JobSearchParams) {
   return useQuery({
     queryKey: jobQueryKeys.list(params),
     queryFn: async () => {
       return await jobService.getJobs(params);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 
@@ -80,9 +76,9 @@ export function usePersonalizedRecommendations(
         filters,
       );
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    enabled: !!userId, // Only run if userId is provided
+    staleTime: 0,
+    gcTime: 0,
+    enabled: !!userId,
   });
 }
 
@@ -92,8 +88,8 @@ export function useRecommendedJobs(limit: number = 5) {
     queryFn: async () => {
       return await jobService.getRecommendedJobs(limit);
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
@@ -101,6 +97,7 @@ export function useJobSearch(
   params?: JobSearchParams & {
     employmentType?: string;
     locationType?: string;
+    userId?: string;
   },
 ) {
   return useQuery({
@@ -108,8 +105,9 @@ export function useJobSearch(
     queryFn: async () => {
       return await jobService.searchJobs(params);
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes (shorter for search results)
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+    gcTime: 0,
+    enabled: !!params,
   });
 }
 
@@ -140,7 +138,6 @@ export function useJobsByCompany(
   });
 }
 
-// Job Mutation Hooks
 export function useGenerateJobDraft() {
   return useMutation({
     mutationFn: async (
@@ -159,11 +156,9 @@ export function useCreateJob() {
       return await jobService.createJob(data);
     },
     onSuccess: () => {
-      // Invalidate and refetch job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
     },
     onError: (error: unknown) => {
-      // Log error for debugging (errors are handled in component try/catch)
       console.error("Job creation error:", error);
     },
   });
@@ -183,9 +178,7 @@ export function useUpdateJob() {
       return await jobService.updateJob(id, data);
     },
     onSuccess: (data, variables) => {
-      // Update the specific job in cache
       queryClient.setQueryData(jobQueryKeys.detail(variables.id), data);
-      // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
     },
   });
@@ -199,9 +192,7 @@ export function useExpireJob() {
       return await jobService.expireJob(id);
     },
     onSuccess: (data, jobId) => {
-      // Update the specific job in cache
       queryClient.setQueryData(jobQueryKeys.detail(jobId), data);
-      // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
     },
   });
@@ -215,9 +206,7 @@ export function useDeleteJob() {
       return await jobService.deleteJob(id);
     },
     onSuccess: (_, id) => {
-      // Remove the job from cache
       queryClient.removeQueries({ queryKey: jobQueryKeys.detail(id) });
-      // Invalidate job lists
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
       toast.success("Job deleted successfully");
     },
@@ -236,7 +225,6 @@ export function useDeleteJob() {
   });
 }
 
-// Application Query Hooks
 export function useApplications(params?: {
   page?: number;
   limit?: number;
@@ -249,8 +237,8 @@ export function useApplications(params?: {
     queryFn: async () => {
       return await applicationService.getApplications(params);
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 }
 
@@ -299,7 +287,6 @@ export function useApplicationsByCandidate(
   });
 }
 
-// Application Mutation Hooks
 export function useCreateApplication() {
   const queryClient = useQueryClient();
 
@@ -308,7 +295,6 @@ export function useCreateApplication() {
       return await applicationService.createApplication(data);
     },
     onSuccess: () => {
-      // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
     },
   });
@@ -328,9 +314,7 @@ export function useUpdateApplication() {
       return await applicationService.updateApplication(id, data);
     },
     onSuccess: (data, variables) => {
-      // Update the specific application in cache
       queryClient.setQueryData(applicationQueryKeys.detail(variables.id), data);
-      // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
     },
   });
@@ -344,15 +328,12 @@ export function useDeleteApplication() {
       return await applicationService.deleteApplication(id);
     },
     onSuccess: (_, id) => {
-      // Remove the application from cache
       queryClient.removeQueries({ queryKey: applicationQueryKeys.detail(id) });
-      // Invalidate application lists
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
     },
   });
 }
 
-// Utility hooks for common patterns
 export function useJobWithApplications(jobId: string) {
   const jobQuery = useJob(jobId);
   const applicationsQuery = useApplicationsByJob(jobId);
@@ -371,4 +352,87 @@ export function useJobWithApplications(jobId: string) {
 
 export function useCandidateApplications(candidateId: string) {
   return useApplicationsByCandidate(candidateId);
+}
+
+export function useToggleSaveJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (jobId: string) => {
+      return await jobService.toggleSaveJob(jobId);
+    },
+    onSuccess: (data, jobId) => {
+      const isNowSaved = data.status === "Job saved successfully";
+
+      queryClient.setQueriesData(
+        { queryKey: ["jobs"] },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+
+          if (oldData.jobs && Array.isArray(oldData.jobs)) {
+            return {
+              ...oldData,
+              jobs: oldData.jobs.map((job: any) =>
+                (job.job_id || job.id) === jobId
+                  ? { ...job, is_saved: isNowSaved }
+                  : job,
+              ),
+            };
+          }
+
+          if (Array.isArray(oldData)) {
+            return oldData.map((job: any) =>
+              (job.job_id || job.id) === jobId
+                ? { ...job, is_saved: isNowSaved }
+                : job,
+            );
+          }
+
+          return oldData;
+        },
+      );
+
+      queryClient.setQueriesData(
+        { queryKey: jobQueryKeys.detail(jobId) },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return { ...oldData, is_saved: isNowSaved };
+        },
+      );
+
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.savedJobs() });
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.search() });
+      queryClient.invalidateQueries({
+        queryKey: jobQueryKeys.recommendations(),
+      });
+      queryClient.invalidateQueries({ queryKey: jobQueryKeys.detail(jobId) });
+
+      const message = isNowSaved ? "Job saved successfully" : "Job unsaved";
+      toast.success(message);
+    },
+    onError: (error: unknown) => {
+      const errorMessage =
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.detail ||
+        (error as { data?: { detail?: string; message?: string } })?.data
+          ?.message ||
+        (error as Error)?.message ||
+        "Failed to save job";
+      toast.error("Failed to save job", {
+        description: errorMessage,
+      });
+    },
+  });
+}
+
+export function useSavedJobs(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: jobQueryKeys.savedJobsList(page, limit),
+    queryFn: async () => {
+      return await jobService.getSavedJobs(page, limit);
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
 }

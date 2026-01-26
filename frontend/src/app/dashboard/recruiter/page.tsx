@@ -15,7 +15,7 @@ import { useDashboardStats } from "../../../hooks/useDashboardStats";
 import { useAuth } from "../../../hooks/useAuth";
 
 export default function RecruiterDashboard() {
-  const { data: stats } = useDashboardStats();
+  const { data: stats, refetch: refetchStats } = useDashboardStats();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
@@ -23,6 +23,24 @@ export default function RecruiterDashboard() {
       window.location.href = "/login";
     }
   }, [isAuthenticated, isAuthLoading]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.key === "R"
+      ) {
+        event.preventDefault();
+        refetchStats();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [refetchStats]);
 
   if (isAuthLoading || !isAuthenticated) {
     return (

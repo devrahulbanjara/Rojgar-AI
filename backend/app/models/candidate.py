@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
@@ -9,6 +10,7 @@ from app.core import get_datetime
 from . import Base
 
 if TYPE_CHECKING:
+    from app.models.job import JobPosting
     from app.models.resume import Resume
     from app.models.user import User
 
@@ -16,8 +18,8 @@ if TYPE_CHECKING:
 class CandidateProfile(Base):
     __tablename__ = "candidate_profile"
 
-    profile_id: Mapped[str] = mapped_column(String, primary_key=True)
-    user_id: Mapped[str] = mapped_column(
+    profile_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("user.user_id"), unique=True, nullable=False
     )
 
@@ -50,17 +52,35 @@ class CandidateProfile(Base):
         "Resume", back_populates="profile", cascade="all, delete-orphan"
     )
 
+    # Saved jobs relationships
+    saved_jobs_associations: Mapped[list["CandidateSavedJob"]] = relationship(
+        "CandidateSavedJob", back_populates="profile", cascade="all, delete-orphan"
+    )
+
+    saved_jobs: Mapped[list["JobPosting"]] = relationship(
+        secondary="candidate_saved_job",
+        viewonly=True,
+    )
+
     @property
     def full_name(self) -> str:
         return self.user.name if self.user else ""
+
+    @property
+    def email(self) -> str:
+        return self.user.email if self.user else ""
+
+    @property
+    def picture(self) -> str | None:
+        return self.user.picture if self.user else None
 
 
 class CandidateSocialLink(Base):
     __tablename__ = "candidate_social_links"
 
-    social_link_id: Mapped[str] = mapped_column(String, primary_key=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey("candidate_profile.profile_id"), nullable=False
+    social_link_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     type: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
@@ -80,9 +100,11 @@ class CandidateSocialLink(Base):
 class CandidateWorkExperience(Base):
     __tablename__ = "candidate_work_experience"
 
-    candidate_work_experience_id: Mapped[str] = mapped_column(String, primary_key=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey("candidate_profile.profile_id"), nullable=False
+    candidate_work_experience_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     job_title: Mapped[str] = mapped_column(String, nullable=False)
     company: Mapped[str] = mapped_column(String, nullable=False)
@@ -107,9 +129,9 @@ class CandidateWorkExperience(Base):
 class CandidateEducation(Base):
     __tablename__ = "candidate_education"
 
-    candidate_education_id: Mapped[str] = mapped_column(String, primary_key=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey("candidate_profile.profile_id"), nullable=False
+    candidate_education_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     college_name: Mapped[str] = mapped_column(String, nullable=False)
     degree: Mapped[str] = mapped_column(String, nullable=False)
@@ -133,9 +155,11 @@ class CandidateEducation(Base):
 class CandidateCertification(Base):
     __tablename__ = "candidate_certification"
 
-    candidate_certification_id: Mapped[str] = mapped_column(String, primary_key=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey("candidate_profile.profile_id"), nullable=False
+    candidate_certification_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     certification_name: Mapped[str] = mapped_column(String, nullable=False)
     issuing_body: Mapped[str] = mapped_column(String, nullable=False)
@@ -162,9 +186,9 @@ class CandidateCertification(Base):
 class CandidateSkills(Base):
     __tablename__ = "candidate_skills"
 
-    candidate_skill_id: Mapped[str] = mapped_column(String, primary_key=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey("candidate_profile.profile_id"), nullable=False
+    candidate_skill_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -177,4 +201,23 @@ class CandidateSkills(Base):
 
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="skills"
+    )
+
+
+class CandidateSavedJob(Base):
+    __tablename__ = "candidate_saved_job"
+
+    candidate_profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("candidate_profile.profile_id"), primary_key=True
+    )
+    job_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("job_posting.job_id"), primary_key=True
+    )
+
+    saved_at: Mapped[datetime] = mapped_column(
+        DateTime, default=get_datetime, nullable=False
+    )
+
+    profile: Mapped["CandidateProfile"] = relationship(
+        "CandidateProfile", back_populates="saved_jobs_associations"
     )
