@@ -156,7 +156,6 @@ class JobService:
             "has_prev": page > 1,
         }
 
-        # Inject is_saved into objects if saved_job_ids is present
         if saved_job_ids:
             for job in paginated["jobs"]:
                 job.is_saved = job.job_id in saved_job_ids
