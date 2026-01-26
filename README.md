@@ -34,6 +34,7 @@ Instead of juggling spreadsheets, email threads, and calendar chaos, recruiters 
 ---
 
 ## ⚡ What This Does
+
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 graph TD
@@ -45,7 +46,7 @@ graph TD
     ROOT --> SCHEDULE[Interview Scheduling & Emails]
     ROOT --> VOICE[Voice Interview Analysis]
     ROOT --> DECIDE[Human-in-Loop Decision Making]
-    ROOT --> ARCHIVE[RAG Powered Candidate Archive]
+    ROOT --> ARCHIVE[Searchable Candidate Database]
     
     style ROOT fill:#667eea,stroke:#764ba2,stroke-width:4px,color:#fff
     style JD fill:#f093fb,stroke:#f5576c,stroke-width:2px
@@ -60,6 +61,7 @@ graph TD
 ---
 
 ## 🏗️ Architecture
+
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 flowchart TB
@@ -84,19 +86,25 @@ flowchart TB
         INTERVIEW -->|Audio Recording| VOICE[Voice Analysis]
         VOICE --> FINAL{Final Verdict}
         FINAL -->|Selected| OFFER[Automated Offer Letter]
-        FINAL -->|Rejected| ARCHIVE[Searchable Archive]
+        FINAL -->|Rejected| REJECT[Rejection Email with Feedback]
     end
     
-    ARCHIVE -.->|RAG Search| QDRANT
+    subgraph Discovery["🔍 Talent Discovery"]
+        OFFER --> ARCHIVE[(All Candidates Archive)]
+        REJECT --> ARCHIVE
+        ARCHIVE -->|RAG Search| RECRUITER[Recruiter Search Interface]
+    end
     
     style CRITIQUE fill:#e1bee7,stroke:#8e24aa,stroke-width:2px
     style HITL fill:#fff59d,stroke:#f57f17,stroke-width:3px
     style VOICE fill:#80cbc4,stroke:#00796b,stroke-width:2px
+    style ARCHIVE fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
 ```
 
 ---
 
 ## 🔄 Complete Hiring Lifecycle
+
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 timeline
@@ -107,8 +115,8 @@ timeline
                            : Publish to portal
     section Discovery
         Vector Search : Semantic candidate matching
-                     : RAG over historical data
-                     : Skills-based recommendations
+                     : RAG over historical database
+                     : Find past candidates for new roles
     section Screening
         Shortlist Agent : Auto-parse resume
                        : Privacy protection
@@ -124,14 +132,15 @@ timeline
                         : Knowledge scoring
                         : AI + Human verdict
     section Closure
-        Final Workflow : Offer letter generation
-                      : Rejection notifications
-                      : Archive to vector database
+        Final Workflow : Offer letter OR rejection email
+                      : Transparent feedback to candidate
+                      : Archive with detailed notes
 ```
 
 ---
 
 ## 🛠️ Tech Stack
+
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 graph LR
@@ -185,6 +194,7 @@ graph LR
 ---
 
 ## 🚀 Quick Start
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/devrahulbanjara/ConvexHire.git
@@ -210,24 +220,31 @@ cd frontend && bun install && bun run dev
 
 ## 📊 Key Features
 
-### 🔍 Semantic Job Matching
+### 🔍 Semantic Talent Discovery
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
-graph LR
-    A[Query: Python Developer] --> B{Vector Search}
-    B --> C[backend engineering]
-    B --> D[distributed systems]
-    B --> E[API design]
-    B --> F[microservices]
+graph TB
+    RECRUITER[New Job: Senior Backend Engineer] --> SEARCH{Vector Search}
+    SEARCH --> DB[(Historical Candidate Database)]
+    DB --> R1[Candidate A: Rejected 6 months ago<br/>Reason: Junior at the time<br/>Skills: Python, FastAPI, PostgreSQL]
+    DB --> R2[Candidate B: Not shortlisted<br/>Reason: Lacked distributed systems exp<br/>Skills: Django, Redis, Docker]
+    DB --> R3[Candidate C: Interview rejected<br/>Reason: Poor communication skills<br/>Skills: Go, Kubernetes, gRPC]
     
-    style B fill:#e1bee7,stroke:#8e24aa,stroke-width:2px
+    R1 --> MATCH[✅ Now matches: Has 6 more months exp]
+    R2 --> NOMATCH[❌ Still lacks required skills]
+    R3 --> NOMATCH2[❌ Communication still a concern]
+    
+    style SEARCH fill:#e1bee7,stroke:#8e24aa,stroke-width:2px
+    style DB fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    style MATCH fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
 ```
 
-**Traditional keyword search misses 70% of qualified candidates. Vector search finds them.**
+**Find past candidates who are now qualified for new roles based on skills and previous feedback.**
 
 ---
 
 ### 👥 Human-in-the-Loop Control
+
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 stateDiagram-v2
@@ -249,20 +266,24 @@ stateDiagram-v2
 
 ---
 
-### 🎯 Explainable AI Decisions
+### 🎯 Transparent Rejection Feedback
+
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 graph TD
-    A[Candidate Resume] --> B[Virtual CTO]
-    A --> C[Virtual HR]
-    B --> D[Technical Score: 8.5/10]
-    C --> E[Culture Fit: 7.8/10]
-    D --> F{Critique Node}
-    E --> F
-    F --> G[Reasoning: Strong backend experience<br/>Concern: Limited exposure to newer tools<br/>Verdict: Interview Recommended]
+    A[Candidate Interview] --> B[AI + Human Evaluation]
+    B --> C{Decision}
+    C -->|Selected| D[Offer Letter]
+    C -->|Rejected| E[Rejection Email]
     
-    style F fill:#fff59d,stroke:#f57f17,stroke-width:2px
-    style G fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+    E --> F[Transparent Feedback:<br/>Technical gaps identified<br/>Areas for improvement<br/>Encouragement to reapply]
+    
+    D --> G[Archive with positive notes]
+    F --> H[Archive with constructive feedback]
+    
+    style C fill:#fff59d,stroke:#f57f17,stroke-width:2px
+    style F fill:#ffccbc,stroke:#d84315,stroke-width:2px
+    style H fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
 ```
 
 ---
