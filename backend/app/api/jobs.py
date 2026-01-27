@@ -88,6 +88,7 @@ def create_job(
 
 from app.core.security import get_current_active_user_optional
 
+
 @router.get("", response_model=schemas.JobListResponse)
 @limiter.limit("50/minute")
 def get_jobs(
@@ -95,12 +96,13 @@ def get_jobs(
     db: Annotated[Session, Depends(get_db)],
     user_id: uuid.UUID | None = None,
     organization_id: uuid.UUID | None = None,
-    current_user: Annotated[User | None, Depends(get_current_active_user_optional)] = None,
+    current_user: Annotated[
+        User | None, Depends(get_current_active_user_optional)
+    ] = None,
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
 ):
-
     if user_id is None and current_user:
         if organization_id and current_user.organization_id == organization_id:
             user_id = current_user.user_id

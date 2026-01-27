@@ -115,9 +115,7 @@ class JobPosting(Base):
     @property
     def required_qualifications(self) -> list[str]:
         return (
-            self.job_description.required_qualifications
-            if self.job_description
-            else []
+            self.job_description.required_qualifications if self.job_description else []
         )
 
     @property
