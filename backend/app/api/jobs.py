@@ -103,9 +103,13 @@ def get_jobs(
     page: int = 1,
     limit: int = 10,
 ):
-    if user_id is None and current_user:
-        if organization_id and current_user.organization_id == organization_id:
-            user_id = current_user.user_id
+    if (
+        user_id is None
+        and current_user
+        and organization_id
+        and current_user.organization_id == organization_id
+    ):
+        user_id = current_user.user_id
 
     return JobService.get_jobs(
         db=db,
