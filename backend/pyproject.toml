@@ -29,6 +29,7 @@ dependencies = [
     "langchain-google-genai>=4.2.0",
     "duckduckgo-search>=8.1.1",
     "ddgs>=9.10.0",
+    "langchain-aws>=1.2.1",
 ]
 
 [dependency-groups]
