@@ -48,7 +48,7 @@ export const StatsGrid = memo<StatsGridProps>(({
     },
     {
       title: 'Candidates',
-      value: stats.totalApplications || 0, // Using totalApplications as candidate count
+      value: stats.activeCandidates || 0,
       icon: <Users />,
       description: 'Active candidates',
     },
