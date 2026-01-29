@@ -4,20 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryClient';
 import { apiClient } from '../lib/api';
 
-export interface DashboardStats {
-  totalApplications?: number;
-  activeApplications?: number;
-  activeJobs?: number;
-  interviewsScheduled?: number;
-  offersReceived?: number;
-  responseRate?: number;
-}
+import type { DashboardStats } from '../types';
 
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
-    const [appStatsResponse, activeJobsResponse] = await Promise.all([
+    const [appStatsResponse, activeJobsResponse, activeCandidatesResponse] = await Promise.all([
       apiClient.get<DashboardStats>('/api/v1/applications/stats').catch(() => null),
       apiClient.get<{ count: number }>('/api/v1/stats/active-jobs').catch(() => null),
+      apiClient.get<{ count: number }>('/api/v1/stats/active-candidates').catch(() => null),
     ]);
 
     let appStats: DashboardStats = {
@@ -37,16 +31,19 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
     }
 
     const activeJobs = activeJobsResponse?.count ?? 0;
+    const activeCandidates = activeCandidatesResponse?.count ?? 0;
 
     return {
       ...appStats,
       activeJobs,
+      activeCandidates,
     };
   } catch {
     return {
       totalApplications: 0,
       activeApplications: 0,
       activeJobs: 0,
+      activeCandidates: 0,
       interviewsScheduled: 0,
       offersReceived: 0,
       responseRate: 0,

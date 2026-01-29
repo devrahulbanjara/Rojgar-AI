@@ -113,6 +113,19 @@ export default function Jobs() {
     [isSearchMode, refetchRecommendations],
   );
 
+  // Invalidate and refetch recommendations when user.id becomes available
+  const prevUserIdRef = React.useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (user?.id && prevUserIdRef.current !== user.id && !isSearchMode) {
+      // User ID just became available, invalidate to trigger a fresh fetch
+      queryClient.invalidateQueries({
+        queryKey: ["jobs", "personalized", user.id],
+        refetchType: "active",
+      });
+    }
+    prevUserIdRef.current = user?.id;
+  }, [user?.id, isSearchMode, queryClient]);
+
   const createApplicationMutation = useCreateApplication();
 
   const handleRefresh = useCallback(async () => {
