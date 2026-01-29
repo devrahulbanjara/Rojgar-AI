@@ -149,6 +149,7 @@ export interface DashboardStats {
   totalApplications?: number;
   activeJobs?: number;
   activeApplications?: number;
+  activeCandidates?: number;
   interviewsScheduled?: number;
   offersReceived?: number;
   responseRate?: number;
