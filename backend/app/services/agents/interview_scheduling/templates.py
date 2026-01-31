@@ -1,8 +1,3 @@
-"""
-Email templates for interview scheduling agent.
-"""
-
-
 def get_interview_email_template(
     name: str,
     reason: str,

@@ -66,9 +66,21 @@ export function usePersonalizedRecommendations(
     locationType?: string;
   },
 ) {
+  const isEnabled = !!userId && userId.length > 0;
+  
+  // Always run the query request, even if it might fail
+  console.log("usePersonalizedRecommendations hook:", {
+    userId,
+    isEnabled,
+    page,
+    limit,
+    filters,
+  });
+  
   return useQuery({
     queryKey: ["jobs", "personalized", userId, page, limit, filters],
     queryFn: async () => {
+      console.log("Fetching personalized recommendations...");
       return await jobService.getPersonalizedRecommendations(
         userId,
         page,
@@ -78,7 +90,11 @@ export function usePersonalizedRecommendations(
     },
     staleTime: 0,
     gcTime: 0,
-    enabled: !!userId,
+    // Disable caching completely to ensure fresh requests
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    // Force network request even if key changed
+    networkMode: 'always',
   });
 }
 

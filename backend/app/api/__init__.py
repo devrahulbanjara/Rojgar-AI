@@ -10,6 +10,7 @@ from app.api import (
     resume,
     stats,
     users,
+    websocket,
 )
 
 api_router = APIRouter()
@@ -27,3 +28,4 @@ api_router.include_router(
     organization.router, prefix="/organization", tags=["organization"]
 )
 api_router.include_router(stats.router, prefix="/stats", tags=["stats"])
+api_router.include_router(websocket.router, tags=["websocket"])
