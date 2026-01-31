@@ -31,3 +31,17 @@ def get_active_candidates_count(
 ):
     count = RecruiterStatsService.get_active_candidates_count(db=db, user=current_user)
     return {"count": count}
+
+
+@router.get("/recent-activity", status_code=status.HTTP_200_OK)
+@limiter.limit("50/minute")
+def get_recent_activity(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    limit: int = 20,
+):
+    activities = RecruiterStatsService.get_recent_activity(
+        db=db, user=current_user, limit=limit
+    )
+    return {"activities": activities}

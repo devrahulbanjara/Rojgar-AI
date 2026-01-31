@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,6 +16,7 @@ from app.core.limiter import limiter
 from app.models import JobPosting, User
 from app.schemas import job as schemas
 from app.services.job_service import JobService
+from app.services.recruiter.activity_events import activity_emitter
 from app.services.recruiter.job_generation_service import JobGenerationService
 
 router = APIRouter()
@@ -61,18 +62,30 @@ def generate_job_draft(
 @limiter.limit("50/minute")
 def create_job(
     request: Request,
+    background_tasks: BackgroundTasks,
     job_data: schemas.JobCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
 
-    return JobService.create_job(
+    job_posting, event_data = JobService.create_job(
         db=db,
         job_data=job_data,
         user_id=current_user.user_id,
         organization_id=organization_id,
     )
+
+    background_tasks.add_task(
+        activity_emitter.emit_job_created,
+        organization_id=event_data["organization_id"],
+        recruiter_name=event_data["recruiter_name"],
+        job_title=event_data["job_title"],
+        job_id=event_data["job_id"],
+        timestamp=event_data["timestamp"],
+    )
+
+    return job_posting
 
 
 @router.put(

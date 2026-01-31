@@ -1,4 +1,4 @@
-from app.models.agents.interview_scheduling import InterviewSchedulingState
+from app.schemas.agents.interview_scheduling import InterviewSchedulingState
 
 
 def wrap_up(state: InterviewSchedulingState) -> dict:

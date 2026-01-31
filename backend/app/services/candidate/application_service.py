@@ -147,5 +147,16 @@ class ApplicationService:
         db.add_all([new_application, history])
         db.commit()
 
-        # Re-fetch with relations using the modern executable select
-        return ApplicationService.get_application_by_id(db, user_id, app_id)
+        from app.models.user import User
+
+        candidate_user = db.scalar(select(User).where(User.user_id == user_id))
+        candidate_name = candidate_user.name if candidate_user else "Unknown Candidate"
+
+        return ApplicationService.get_application_by_id(db, user_id, app_id), {
+            "organization_id": job.organization_id,
+            "candidate_name": candidate_name,
+            "job_title": job.title,
+            "application_id": app_id,
+            "job_id": job_id,
+            "timestamp": new_application.applied_at,
+        }

@@ -1,4 +1,4 @@
-from app.models.agents.interview_scheduling import InterviewSchedulingState
+from app.schemas.agents.interview_scheduling import InterviewSchedulingState
 
 
 def load_state(state: InterviewSchedulingState) -> dict:

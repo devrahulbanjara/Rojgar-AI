@@ -1,6 +1,7 @@
-from app.models.agents.interview_scheduling import InterviewSchedulingState
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
+
+from app.schemas.agents.interview_scheduling import InterviewSchedulingState
 
 from .nodes import (
     approval_router,
