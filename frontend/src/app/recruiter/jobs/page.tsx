@@ -8,6 +8,7 @@ import {
   AnimatedContainer,
   LoadingSpinner,
 } from "../../../components/common";
+import { SkeletonRecruiterJobCard, SkeletonJobTabSwitcher } from "../../../components/common/SkeletonLoader";
 import {
   RecruiterJobCard,
   JobTabSwitcher,
@@ -565,22 +566,31 @@ export default function RecruiterJobsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             {/* Tab Switcher */}
             <div>
-              <JobTabSwitcher
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                activeCount={activeCount}
-                draftCount={draftCount}
-                expiredCount={expiredCount}
-                referenceJDCount={referenceJDCount}
-              />
+              {isLoadingJobs && isLoadingReferenceJDs ? (
+                <SkeletonJobTabSwitcher />
+              ) : (
+                <JobTabSwitcher
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                  activeCount={activeCount}
+                  draftCount={draftCount}
+                  expiredCount={expiredCount}
+                  referenceJDCount={referenceJDCount}
+                />
+              )}
             </div>
 
             {/* Content Area */}
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs ||
                 (activeTab === "reference-jds" && isLoadingReferenceJDs) ? (
-                <div className="flex items-center justify-center py-20">
-                  <LoadingSpinner size="lg" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <SkeletonRecruiterJobCard />
+                  <SkeletonRecruiterJobCard />
+                  <SkeletonRecruiterJobCard />
+                  <SkeletonRecruiterJobCard />
+                  <SkeletonRecruiterJobCard />
+                  <SkeletonRecruiterJobCard />
                 </div>
               ) : activeTab === "reference-jds" ? (
                 /* Reference JDs Grid */

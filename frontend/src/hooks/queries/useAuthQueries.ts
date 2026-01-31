@@ -25,16 +25,20 @@ export const useCurrentUser = () => {
     queryFn: async (): Promise<User | null> => {
       try {
         const user = await authService.getCurrentUser();
+        console.log("getCurrentUser response:", user);
 
         if (user) {
-          return {
+          const processedUser = {
             ...user,
-            id: user.id.toString(),
+            id: (user.id || user.user_id).toString(),
             userType: user.role,
           };
+          console.log("Processed user:", processedUser);
+          return processedUser;
         }
         return null;
-      } catch {
+      } catch (error) {
+        console.error("getCurrentUser error:", error);
         return null;
       }
     },

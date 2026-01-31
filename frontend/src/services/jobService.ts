@@ -52,7 +52,6 @@ export class JobService {
     },
   ): Promise<JobListResponse> {
     const queryParams = new URLSearchParams();
-    queryParams.append("user_id", userId);
     queryParams.append("page", page.toString());
     queryParams.append("limit", limit.toString());
 

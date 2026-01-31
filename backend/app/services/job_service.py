@@ -217,7 +217,16 @@ class JobService:
         db.commit()
         db.refresh(job_posting)
 
-        return job_posting
+        recruiter_user = db.scalar(select(User).where(User.user_id == user_id))
+        recruiter_name = recruiter_user.name if recruiter_user else None
+
+        return job_posting, {
+            "organization_id": organization_id,
+            "recruiter_name": recruiter_name,
+            "job_title": job_posting.title,
+            "job_id": job_id,
+            "timestamp": job_posting.created_at,
+        }
 
     @staticmethod
     def get_jobs(
