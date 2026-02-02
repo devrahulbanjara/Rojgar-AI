@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import {
   LandingNavbar,
@@ -9,7 +9,7 @@ import {
   NeuralIntelligenceSection,
   PricingSection,
   LandingFooter,
-} from '../components/landing';
+} from '../components/landing'
 
 export default function LandingPage() {
   return (
@@ -24,6 +24,6 @@ export default function LandingPage() {
         <PricingSection />
       </main>
       <LandingFooter />
-        </div>
-  );
+    </div>
+  )
 }

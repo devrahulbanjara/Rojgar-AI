@@ -5,7 +5,6 @@ from app.schemas.agents.jd_generator import JobState
 
 def human_node(state: JobState) -> dict:
     draft_job_description = state["draft"]
-
     review_payload = {
         "revision_number": state.get("revision_count", 0),
         "job_summary": draft_job_description.job_summary,
@@ -14,7 +13,5 @@ def human_node(state: JobState) -> dict:
         "preferred": draft_job_description.preferred,
         "compensation_and_benefits": draft_job_description.compensation_and_benefits,
     }
-
     feedback = interrupt(review_payload)
-
     return {"feedback": feedback}

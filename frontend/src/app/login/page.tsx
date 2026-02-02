@@ -1,73 +1,69 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { SearchParamsWrapper } from "../../components/common/SearchParamsWrapper";
-import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
-import { AuthLayout } from "../../components/layout/AuthLayout";
-import { GoogleOAuthButton } from "../../components/auth/GoogleOAuthButton";
-import { PageTransition } from "../../components/common/PageTransition";
-import { useForm } from "../../hooks/useForm";
-import { useAuth } from "../../hooks/useAuth";
-import { validateEmail, validatePassword } from "../../lib/utils";
-import { useState } from "react";
+import Link from 'next/link'
+import { SearchParamsWrapper } from '../../components/common/SearchParamsWrapper'
+import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { AuthLayout } from '../../components/layout/AuthLayout'
+import { GoogleOAuthButton } from '../../components/auth/GoogleOAuthButton'
+import { PageTransition } from '../../components/common/PageTransition'
+import { useForm } from '../../hooks/useForm'
+import { useAuth } from '../../hooks/useAuth'
+import { validateEmail, validatePassword } from '../../lib/utils'
+import { useState } from 'react'
 
 export default function Login() {
-  const { login, isLoading } = useAuth();
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const { login, isLoading } = useAuth()
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const [formState, formActions] = useForm<{
-    email: string;
-    password: string;
-    rememberMe: string;
+    email: string
+    password: string
+    rememberMe: string
   }>({
-    initialValues: { email: "", password: "", rememberMe: "false" },
+    initialValues: { email: '', password: '', rememberMe: 'false' },
     validationRules: {
       email: [validateEmail],
       password: [validatePassword],
     },
-  });
+  })
 
-  const { values, errors } = formState;
-  const { handleChange, handleSubmit, setFieldError } = formActions;
+  const { values, errors } = formState
+  const { handleChange, handleSubmit, setFieldError } = formActions
 
   const handleSearchParams = (searchParams: URLSearchParams) => {
-    const error = searchParams.get("error");
-    if (error === "auth_failed") {
-      setAuthError("Authentication failed. Please try again.");
+    const error = searchParams.get('error')
+    if (error === 'auth_failed') {
+      setAuthError('Authentication failed. Please try again.')
     }
-  };
+  }
 
   const onSubmit = async (formValues: Record<string, string>) => {
     try {
       await login({
         email: formValues.email,
         password: formValues.password,
-        rememberMe: formValues.rememberMe === "true",
-      });
+        rememberMe: formValues.rememberMe === 'true',
+      })
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Login failed. Please try again.";
-      setFieldError("email", errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.'
+      setFieldError('email', errorMessage)
     }
-  };
+  }
 
-  const handleGoogleSuccess = () => {};
+  const handleGoogleSuccess = () => {}
 
   const handleGoogleError = (error: string) => {
-    setAuthError(error);
-  };
+    setAuthError(error)
+  }
 
   return (
     <PageTransition>
       <SearchParamsWrapper>
-        {(searchParams) => {
-          handleSearchParams(searchParams);
+        {searchParams => {
+          handleSearchParams(searchParams)
           return (
-            <AuthLayout
-              title="Welcome back"
-              subtitle="Sign in to your account to continue"
-            >
+            <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
               {/* Page Title */}
               <h2 className="text-xl sm:text-2xl font-semibold text-[#0F172A] mb-4 sm:mb-6 text-center">
                 Sign In
@@ -93,7 +89,7 @@ export default function Login() {
               {/* Divider */}
               <div className="relative mb-4 sm:mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E5E7EB]"></div>
+                  <div className="w-full border-t border-[#E5E7EB]" />
                 </div>
                 <div className="relative flex justify-center text-xs sm:text-sm">
                   <span className="bg-white px-3 sm:px-4 text-[#94A3B8]">
@@ -103,10 +99,7 @@ export default function Login() {
               </div>
 
               {/* Login Form */}
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="space-y-4 sm:space-y-5"
-              >
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
                 {/* Email Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
@@ -121,12 +114,12 @@ export default function Login() {
                     type="email"
                     placeholder="rahulbanjara@gmail.com"
                     value={values.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
+                    onChange={e => handleChange('email', e.target.value)}
                     disabled={isLoading}
                     className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                       errors.email
-                        ? "border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10"
-                        : "border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10"
+                        ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
+                        : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
                     }`}
                   />
                   {errors.email && (
@@ -149,15 +142,15 @@ export default function Login() {
                     <input
                       id="password"
                       name="password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
                       value={values.password}
-                      onChange={(e) => handleChange("password", e.target.value)}
+                      onChange={e => handleChange('password', e.target.value)}
                       disabled={isLoading}
                       className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                         errors.password
-                          ? "border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10"
-                          : "border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10"
+                          ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
+                          : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
                       }`}
                     />
                     <button
@@ -188,17 +181,12 @@ export default function Login() {
                       id="rememberMe"
                       name="rememberMe"
                       type="checkbox"
-                      checked={values.rememberMe === "true"}
-                      onChange={(e) =>
-                        handleChange("rememberMe", e.target.checked.toString())
-                      }
+                      checked={values.rememberMe === 'true'}
+                      onChange={e => handleChange('rememberMe', e.target.checked.toString())}
                       disabled={isLoading}
                       className="w-4 h-4 sm:w-5 sm:h-5 rounded-md border-[1.5px] border-[#E5E7EB] text-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     />
-                    <label
-                      htmlFor="rememberMe"
-                      className="text-xs sm:text-sm text-[#475569]"
-                    >
+                    <label htmlFor="rememberMe" className="text-xs sm:text-sm text-[#475569]">
                       Remember me
                     </label>
                   </div>
@@ -216,22 +204,18 @@ export default function Login() {
                   disabled={isLoading}
                   className="w-full h-10 sm:h-12 bg-[#3056F5] hover:bg-[#2B3CF5] text-white text-sm sm:text-[15px] font-semibold rounded-lg sm:rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#3056F5] disabled:hover:shadow-none mt-4 sm:mt-6 flex items-center justify-center gap-2"
                   style={{
-                    boxShadow: isLoading
-                      ? "none"
-                      : "0 4px 12px rgba(48,86,245,0.3)",
+                    boxShadow: isLoading ? 'none' : '0 4px 12px rgba(48,86,245,0.3)',
                   }}
                 >
-                  {isLoading && (
-                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                  )}
-                  {isLoading ? "Signing in..." : "Sign In"}
+                  {isLoading && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />}
+                  {isLoading ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
 
               {/* Sign Up Link */}
               <div className="mt-4 sm:mt-6 text-center">
                 <p className="text-xs sm:text-sm text-[#475569]">
-                  Don&apos;t have an account?{" "}
+                  Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
                     className="font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"
@@ -241,9 +225,9 @@ export default function Login() {
                 </p>
               </div>
             </AuthLayout>
-          );
+          )
         }}
       </SearchParamsWrapper>
     </PageTransition>
-  );
+  )
 }

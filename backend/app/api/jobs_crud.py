@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+import uuid
+from typing import Annotated
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import BusinessLogicError, NotFoundError, get_current_active_user, get_db
 from app.core.authorization import get_organization_from_user, verify_user_can_edit_job
 from app.core.limiter import limiter
 from app.models import JobPosting, User
 from app.schemas import job as schemas
-from app.services.job_service import JobService, map_job_to_response
+from app.services.job_service import JobService
+from app.services.recruiter.activity_events import activity_emitter
 from app.services.recruiter.job_generation_service import JobGenerationService
 
 router = APIRouter()
@@ -17,145 +22,90 @@ router = APIRouter()
     response_model=schemas.JobDraftResponse,
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("10/minute")
+@limiter.limit("50/minute")
 def generate_job_draft(
     request: Request,
     draft_request: schemas.JobDraftGenerateRequest,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     if not draft_request.raw_requirements:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Raw requirements / some keywords are required",
-        )
-
-    try:
-        # Get organization_id from user
-        user = db.query(User).filter(User.user_id == user_id).first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
-            )
-        organization_id = get_organization_from_user(user)
-
-        generated_draft = JobGenerationService.generate_job_draft(
-            title=draft_request.title,
-            raw_requirements=draft_request.raw_requirements,
-            db=db,
-            reference_jd_id=draft_request.reference_jd_id,
-            organization_id=organization_id,
-            current_draft=draft_request.current_draft,
-        )
-
-        if not generated_draft or not generated_draft.get("draft"):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to generate job description",
-            )
-
-        draft = generated_draft["draft"]
-        return schemas.JobDraftResponse(
-            job_summary=draft.job_summary,
-            job_responsibilities=draft.job_responsibilities,
-            required_qualifications=draft.required_qualifications,
-            preferred=draft.preferred,
-            compensation_and_benefits=draft.compensation_and_benefits,
-        )
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate job description: {str(e)}",
-        )
+        raise BusinessLogicError("Raw requirements / some keywords are required")
+    organization_id = get_organization_from_user(current_user)
+    generated_draft = JobGenerationService.generate_job_draft(
+        title=draft_request.title,
+        raw_requirements=draft_request.raw_requirements,
+        db=db,
+        reference_jd_id=draft_request.reference_jd_id,
+        organization_id=organization_id,
+        current_draft=draft_request.current_draft,
+    )
+    if not generated_draft or not generated_draft.get("draft"):
+        raise BusinessLogicError("Failed to generate job description")
+    draft = generated_draft["draft"]
+    return draft
 
 
 @router.post(
     "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def create_job(
     request: Request,
+    background_tasks: BackgroundTasks,
     job_data: schemas.JobCreate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
-    user = db.query(User).filter(User.user_id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    organization_id = get_organization_from_user(user)
-
-    job_posting = JobService.create_job(
+    organization_id = get_organization_from_user(current_user)
+    job_posting, event_data = JobService.create_job(
         db=db,
         job_data=job_data,
-        user_id=user_id,
+        user_id=current_user.user_id,
         organization_id=organization_id,
     )
-
-    return map_job_to_response(job_posting)
+    background_tasks.add_task(
+        activity_emitter.emit_job_created,
+        organization_id=event_data["organization_id"],
+        recruiter_name=event_data["recruiter_name"],
+        job_title=event_data["job_title"],
+        job_id=event_data["job_id"],
+        timestamp=event_data["timestamp"],
+    )
+    return job_posting
 
 
 @router.put(
     "/{job_id}", response_model=schemas.JobResponse, status_code=status.HTTP_200_OK
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_job(
     request: Request,
-    job_id: str,
+    job_id: uuid.UUID,
     job_data: schemas.JobUpdate,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
-    user = db.query(User).filter(User.user_id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    job_posting = db.query(JobPosting).filter(JobPosting.job_id == job_id).first()
+    job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
+    job_posting = db.execute(job_stmt).scalar_one_or_none()
     if not job_posting:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
-        )
-
-    verify_user_can_edit_job(user, job_posting)
-
+        raise NotFoundError("Job not found")
+    verify_user_can_edit_job(current_user, job_posting)
     updated_job = JobService.update_job(
-        db=db,
-        job_posting=job_posting,
-        job_data=job_data,
+        db=db, job_posting=job_posting, job_data=job_data
     )
+    return updated_job
 
-    return map_job_to_response(updated_job)
 
-
-@router.delete(
-    "/{job_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-@limiter.limit("5/minute")
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("50/minute")
 def delete_job(
     request: Request,
-    job_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    job_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
-    try:
-        JobService.delete_job(db=db, job_id=job_id, user_id=user_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete job: {str(e)}",
-        )
+    JobService.delete_job(db=db, job_id=job_id, user_id=current_user.user_id)
 
 
 @router.post(
@@ -163,20 +113,11 @@ def delete_job(
     response_model=schemas.JobResponse,
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def expire_job(
     request: Request,
-    job_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    job_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
-    try:
-        updated_job = JobService.expire_job(db=db, job_id=job_id, user_id=user_id)
-        return map_job_to_response(updated_job)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to expire job: {str(e)}",
-        )
+    return JobService.expire_job(db=db, job_id=job_id, user_id=current_user.user_id)

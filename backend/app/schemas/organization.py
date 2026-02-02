@@ -29,7 +29,6 @@ class OrganizationLoginRequest(BaseModel):
 
 class OrganizationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: Annotated[UUID, Field(description="Organization ID")]
     email: Annotated[EmailStr, "Organization email"]
     name: Annotated[str, "Organization name"]
@@ -79,8 +78,7 @@ class UpdateRecruiterRequest(BaseModel):
 
 class RecruiterResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+    user_id: Annotated[UUID, Field(alias="id")]
     email: Annotated[EmailStr, "Recruiter email"]
     name: Annotated[str, "Recruiter name"]
     organization_id: UUID | None = None

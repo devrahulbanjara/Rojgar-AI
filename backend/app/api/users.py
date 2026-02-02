@@ -1,55 +1,35 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core import get_current_user_id, get_db
+from app.core import get_current_active_user, get_db
 from app.core.limiter import limiter
-from app.schemas import UserResponse
-from app.services import UserService
+from app.models.user import User
+from app.schemas import ProfileUpdateRequest, UserResponse
 
 router = APIRouter()
 
 
-class ProfileUpdateRequest(BaseModel):
-    name: str
-
-
 @router.get("/me", response_model=UserResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def get_current_user(
     request: Request,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    user = UserService.get_user_by_id(user_id, db)
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    return UserService.to_user_response(user)
+    return current_user
 
 
 @router.put("/profile", response_model=UserResponse)
-@limiter.limit("5/minute")
+@limiter.limit("50/minute")
 def update_profile(
     request: Request,
+    db: Annotated[Session, Depends(get_db)],
     profile_data: ProfileUpdateRequest,
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    user = UserService.get_user_by_id(user_id, db)
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    user.name = profile_data.name
+    current_user.name = profile_data.name
     db.commit()
-    db.refresh(user)
-
-    return UserService.to_user_response(user)
+    db.refresh(current_user)
+    return current_user

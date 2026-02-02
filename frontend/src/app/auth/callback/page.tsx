@@ -1,66 +1,66 @@
-"use client";
+'use client'
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ROUTES } from "../../../config/constants";
-import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ROUTES } from '../../../config/constants'
+import { LoadingSpinner } from '../../../components/common/LoadingSpinner'
 
 function AuthCallbackContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const code = searchParams.get("code");
-        const errorParam = searchParams.get("error");
+        const code = searchParams.get('code')
+        const errorParam = searchParams.get('error')
 
         if (errorParam) {
-          setError(`Authentication failed: ${errorParam}`);
-          return;
+          setError(`Authentication failed: ${errorParam}`)
+          return
         }
 
         if (!code) {
-          setError("No authorization code received");
-          return;
+          setError('No authorization code received')
+          return
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"}/auth/google/callback`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/auth/google/callback`,
           {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
-            credentials: "include",
+            credentials: 'include',
             body: JSON.stringify({ code }),
-          },
-        );
+          }
+        )
 
         if (!response.ok) {
-          throw new Error(`Authentication failed: ${response.statusText}`);
+          throw new Error(`Authentication failed: ${response.statusText}`)
         }
 
-        const data = await response.json();
+        const data = await response.json()
 
         if (data.requires_role_selection) {
-          router.push(ROUTES.SELECT_ROLE);
+          router.push(ROUTES.SELECT_ROLE)
         } else {
           const redirectUrl =
-            data.user?.role === "recruiter"
+            data.user?.role === 'recruiter'
               ? ROUTES.RECRUITER_DASHBOARD
-              : ROUTES.CANDIDATE_DASHBOARD;
-          router.push(redirectUrl);
+              : ROUTES.CANDIDATE_DASHBOARD
+          router.push(redirectUrl)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Authentication failed");
+        setError(err instanceof Error ? err.message : 'Authentication failed')
       }
-    };
+    }
 
-    handleCallback();
+    handleCallback()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams])
 
   if (error) {
     return (
@@ -82,9 +82,7 @@ function AuthCallbackContent() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Authentication Failed
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Authentication Failed</h3>
             <p className="text-sm text-gray-500 mb-4">{error}</p>
             <button
               onClick={() => router.push(ROUTES.LOGIN)}
@@ -95,7 +93,7 @@ function AuthCallbackContent() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -103,16 +101,14 @@ function AuthCallbackContent() {
       <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Completing Authentication
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Completing Authentication</h3>
           <p className="text-sm text-gray-500">
             Please wait while we complete your Google sign-in...
           </p>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default function AuthCallback() {
@@ -123,9 +119,7 @@ export default function AuthCallback() {
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
             <div className="text-center">
               <LoadingSpinner size="lg" className="mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Loading...
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Loading...</h3>
               <p className="text-sm text-gray-500">Please wait...</p>
             </div>
           </div>
@@ -134,5 +128,5 @@ export default function AuthCallback() {
     >
       <AuthCallbackContent />
     </Suspense>
-  );
+  )
 }

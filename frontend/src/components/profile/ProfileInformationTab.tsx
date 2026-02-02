@@ -1,41 +1,35 @@
-import React, { useState } from "react";
-import { profileService } from "../../services/profileService";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { LoadingSpinner } from "../common/LoadingSpinner";
-import { User as UserIcon, Mail, Phone, MapPin, Globe, CheckCircle2 } from "lucide-react";
-import type {
-  CandidateProfile,
-  CandidateProfileUpdate,
-} from "../../types/profile";
-import { toast } from "sonner";
-import { SocialLinksSection } from "./SocialLinksSection";
+import React, { useState } from 'react'
+import { profileService } from '../../services/profileService'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Textarea } from '../ui/textarea'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import { User as UserIcon, Mail, Phone, MapPin, Globe, CheckCircle2 } from 'lucide-react'
+import type { CandidateProfile, CandidateProfileUpdate } from '../../types/profile'
+import { toast } from 'sonner'
+import { SocialLinksSection } from './SocialLinksSection'
 
 interface ProfileInformationTabProps {
-  profile: CandidateProfile;
-  onUpdate: (profile: CandidateProfile) => void;
+  profile: CandidateProfile
+  onUpdate: (profile: CandidateProfile) => void
 }
 
-export function ProfileInformationTab({
-  profile,
-  onUpdate,
-}: ProfileInformationTabProps) {
-  const [isSaving, setIsSaving] = useState(false);
+export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationTabProps) {
+  const [isSaving, setIsSaving] = useState(false)
 
   const [formData, setFormData] = useState({
-    name: profile.full_name || "",
-    phone: profile.phone || "",
-    location_city: profile.location_city || "",
-    location_country: profile.location_country || "",
-    professional_headline: profile.professional_headline || "",
-    professional_summary: profile.professional_summary || "",
-  });
+    name: profile.full_name || '',
+    phone: profile.phone || '',
+    location_city: profile.location_city || '',
+    location_country: profile.location_country || '',
+    professional_headline: profile.professional_headline || '',
+    professional_summary: profile.professional_summary || '',
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
+    e.preventDefault()
+    setIsSaving(true)
 
     try {
       const updateData: CandidateProfileUpdate = {
@@ -45,37 +39,30 @@ export function ProfileInformationTab({
         location_country: formData.location_country || undefined,
         professional_headline: formData.professional_headline || undefined,
         professional_summary: formData.professional_summary || undefined,
-      };
+      }
 
-      const updatedProfile = await profileService.updateProfile(updateData);
-      onUpdate(updatedProfile);
-      toast.success("Profile updated successfully!");
+      const updatedProfile = await profileService.updateProfile(updateData)
+      onUpdate(updatedProfile)
+      toast.success('Profile updated successfully!')
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(
-        error.response?.data?.detail ||
-        "Failed to update profile. Please try again.",
-      );
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Failed to update profile. Please try again.')
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setFormData((prev) => ({
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value,
-    }));
-  };
+    }))
+  }
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">
-          Profile Information
-        </h3>
+        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Profile Information</h3>
         <p className="text-[#475569]">
           Manage your personal information and professional identity.
         </p>
@@ -89,21 +76,14 @@ export function ProfileInformationTab({
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-[#0F172A]">
-                Contact Details
-              </h4>
-              <p className="text-sm text-[#64748B]">
-                Your basic contact information
-              </p>
+              <h4 className="text-lg font-bold text-[#0F172A]">Contact Details</h4>
+              <p className="text-sm text-[#64748B]">Your basic contact information</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label
-                htmlFor="name"
-                className="text-sm font-semibold text-[#374151]"
-              >
+              <Label htmlFor="name" className="text-sm font-semibold text-[#374151]">
                 Full Name
               </Label>
               <Input
@@ -117,10 +97,7 @@ export function ProfileInformationTab({
             </div>
 
             <div className="space-y-3">
-              <Label
-                htmlFor="email"
-                className="text-sm font-semibold text-[#374151]"
-              >
+              <Label htmlFor="email" className="text-sm font-semibold text-[#374151]">
                 Email Address
               </Label>
               <div className="relative group">
@@ -138,10 +115,7 @@ export function ProfileInformationTab({
             </div>
 
             <div className="space-y-3">
-              <Label
-                htmlFor="phone"
-                className="text-sm font-semibold text-[#374151]"
-              >
+              <Label htmlFor="phone" className="text-sm font-semibold text-[#374151]">
                 Phone Number
               </Label>
               <div className="relative group">
@@ -161,10 +135,7 @@ export function ProfileInformationTab({
             </div>
 
             <div className="space-y-3">
-              <Label
-                htmlFor="location_city"
-                className="text-sm font-semibold text-[#374151]"
-              >
+              <Label htmlFor="location_city" className="text-sm font-semibold text-[#374151]">
                 City
               </Label>
               <div className="relative group">
@@ -184,10 +155,7 @@ export function ProfileInformationTab({
             </div>
 
             <div className="space-y-3">
-              <Label
-                htmlFor="location_country"
-                className="text-sm font-semibold text-[#374151]"
-              >
+              <Label htmlFor="location_country" className="text-sm font-semibold text-[#374151]">
                 Country
               </Label>
               <div className="relative group">
@@ -215,12 +183,8 @@ export function ProfileInformationTab({
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-[#0F172A]">
-                Professional Summary
-              </h4>
-              <p className="text-sm text-[#64748B]">
-                Highlight your professional background
-              </p>
+              <h4 className="text-lg font-bold text-[#0F172A]">Professional Summary</h4>
+              <p className="text-sm text-[#64748B]">Highlight your professional background</p>
             </div>
           </div>
 
@@ -268,10 +232,10 @@ export function ProfileInformationTab({
           socialLinks={profile.social_links}
           onUpdate={async () => {
             try {
-              const updatedProfile = await profileService.getProfile();
-              onUpdate(updatedProfile);
+              const updatedProfile = await profileService.getProfile()
+              onUpdate(updatedProfile)
             } catch (error) {
-              console.error("Failed to refresh profile:", error);
+              console.error('Failed to refresh profile:', error)
             }
           }}
         />
@@ -297,5 +261,5 @@ export function ProfileInformationTab({
         </div>
       </form>
     </div>
-  );
+  )
 }

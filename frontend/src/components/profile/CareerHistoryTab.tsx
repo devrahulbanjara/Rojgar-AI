@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { profileService } from "../../services/profileService";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
+import React, { useState } from 'react'
+import { profileService } from '../../services/profileService'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Textarea } from '../ui/textarea'
 import {
   Briefcase,
   GraduationCap,
@@ -14,56 +14,54 @@ import {
   Building,
   Pencil,
   CheckCircle2,
-} from "lucide-react";
+} from 'lucide-react'
 import type {
   WorkExperience,
   Education,
   WorkExperienceCreate,
   EducationCreate,
-} from "../../types/profile";
-import { toast } from "sonner";
+} from '../../types/profile'
+import { toast } from 'sonner'
 
 interface CareerHistoryTabProps {
-  experiences: WorkExperience[];
-  educations: Education[];
+  experiences: WorkExperience[]
+  educations: Education[]
 }
 
 export function CareerHistoryTab({
   experiences: initialExperiences,
   educations: initialEducations,
 }: CareerHistoryTabProps) {
-  const [workExperiences, setWorkExperiences] =
-    useState<WorkExperience[]>(initialExperiences);
-  const [educationRecords, setEducationRecords] =
-    useState<Education[]>(initialEducations);
+  const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>(initialExperiences)
+  const [educationRecords, setEducationRecords] = useState<Education[]>(initialEducations)
 
-  const [isAddingExperience, setIsAddingExperience] = useState(false);
-  const [isAddingEducation, setIsAddingEducation] = useState(false);
+  const [isAddingExperience, setIsAddingExperience] = useState(false)
+  const [isAddingEducation, setIsAddingEducation] = useState(false)
 
-  const [editingExpId, setEditingExpId] = useState<string | null>(null);
-  const [editingEduId, setEditingEduId] = useState<string | null>(null);
+  const [editingExpId, setEditingExpId] = useState<string | null>(null)
+  const [editingEduId, setEditingEduId] = useState<string | null>(null)
 
   const [experienceForm, setExperienceForm] = useState({
-    job_title: "",
-    company: "",
-    location: "",
-    start_date: "",
-    end_date: "",
+    job_title: '',
+    company: '',
+    location: '',
+    start_date: '',
+    end_date: '',
     is_current: false,
-    description: "",
-  });
+    description: '',
+  })
 
   const [educationForm, setEducationForm] = useState({
-    school_university: "",
-    degree: "",
-    location: "",
-    start_date: "",
-    end_date: "",
+    school_university: '',
+    degree: '',
+    location: '',
+    start_date: '',
+    end_date: '',
     is_current: false,
-  });
+  })
 
   const handleAddExperience = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
       const experienceData: WorkExperienceCreate = {
         job_title: experienceForm.job_title,
@@ -73,102 +71,86 @@ export function CareerHistoryTab({
         end_date: experienceForm.end_date || undefined,
         is_current: experienceForm.is_current,
         description: experienceForm.description || undefined,
-      };
+      }
 
       if (editingExpId) {
-        const updatedExp = await profileService.updateExperience(
-          editingExpId,
-          experienceData,
-        );
-        setWorkExperiences((prev) =>
-          prev.map((exp) =>
+        const updatedExp = await profileService.updateExperience(editingExpId, experienceData)
+        setWorkExperiences(prev =>
+          prev.map(exp =>
             exp.candidate_work_experience_id === editingExpId
               ? (updatedExp as unknown as WorkExperience)
-              : exp,
-          ),
-        );
-        toast.success("Work experience updated successfully!");
+              : exp
+          )
+        )
+        toast.success('Work experience updated successfully!')
       } else {
-        const newExperience =
-          await profileService.addExperience(experienceData);
-        setWorkExperiences((prev) => [
-          ...prev,
-          newExperience as unknown as WorkExperience,
-        ]);
-        toast.success("Work experience added successfully!");
+        const newExperience = await profileService.addExperience(experienceData)
+        setWorkExperiences(prev => [...prev, newExperience as unknown as WorkExperience])
+        toast.success('Work experience added successfully!')
       }
 
       setExperienceForm({
-        job_title: "",
-        company: "",
-        location: "",
-        start_date: "",
-        end_date: "",
+        job_title: '',
+        company: '',
+        location: '',
+        start_date: '',
+        end_date: '',
         is_current: false,
-        description: "",
-      });
-      setIsAddingExperience(false);
-      setEditingExpId(null);
+        description: '',
+      })
+      setIsAddingExperience(false)
+      setEditingExpId(null)
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(
-        error.response?.data?.detail || "Failed to save work experience.",
-      );
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Failed to save work experience.')
     }
-  };
+  }
 
   const handleEditExperience = (exp: WorkExperience) => {
     setExperienceForm({
       job_title: exp.job_title,
       company: exp.company,
-      location: exp.location || "",
-      start_date: exp.start_date
-        ? new Date(exp.start_date).toISOString().split("T")[0]
-        : "",
-      end_date: exp.end_date
-        ? new Date(exp.end_date).toISOString().split("T")[0]
-        : "",
+      location: exp.location || '',
+      start_date: exp.start_date ? new Date(exp.start_date).toISOString().split('T')[0] : '',
+      end_date: exp.end_date ? new Date(exp.end_date).toISOString().split('T')[0] : '',
       is_current: exp.is_current,
-      description: exp.description || "",
-    });
-    setEditingExpId(exp.candidate_work_experience_id);
-    setIsAddingExperience(true);
-  };
+      description: exp.description || '',
+    })
+    setEditingExpId(exp.candidate_work_experience_id)
+    setIsAddingExperience(true)
+  }
 
   const handleDeleteExperience = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this work experience?"))
-      return;
+    if (!confirm('Are you sure you want to delete this work experience?')) return
     try {
-      await profileService.deleteExperience(id);
-      setWorkExperiences((prev) =>
-        prev.filter((exp) => exp.candidate_work_experience_id !== id),
-      );
-      toast.success("Work experience deleted successfully!");
+      await profileService.deleteExperience(id)
+      setWorkExperiences(prev => prev.filter(exp => exp.candidate_work_experience_id !== id))
+      toast.success('Work experience deleted successfully!')
       if (editingExpId === id) {
-        setIsAddingExperience(false);
-        setEditingExpId(null);
+        setIsAddingExperience(false)
+        setEditingExpId(null)
       }
     } catch {
-      toast.error("Failed to delete work experience.");
+      toast.error('Failed to delete work experience.')
     }
-  };
+  }
 
   const handleCancelExperience = () => {
-    setIsAddingExperience(false);
-    setEditingExpId(null);
+    setIsAddingExperience(false)
+    setEditingExpId(null)
     setExperienceForm({
-      job_title: "",
-      company: "",
-      location: "",
-      start_date: "",
-      end_date: "",
+      job_title: '',
+      company: '',
+      location: '',
+      start_date: '',
+      end_date: '',
       is_current: false,
-      description: "",
-    });
-  };
+      description: '',
+    })
+  }
 
   const handleAddEducation = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
       const educationData: EducationCreate = {
         college_name: educationForm.school_university,
@@ -177,112 +159,91 @@ export function CareerHistoryTab({
         start_date: educationForm.start_date || undefined,
         end_date: educationForm.end_date || undefined,
         is_current: educationForm.is_current,
-      };
+      }
 
       if (editingEduId) {
-        const updatedEdu = await profileService.updateEducation(
-          editingEduId,
-          educationData,
-        );
-        setEducationRecords((prev) =>
-          prev.map((edu) =>
-            edu.candidate_education_id === editingEduId
-              ? (updatedEdu as unknown as Education)
-              : edu,
-          ),
-        );
-        toast.success("Education record updated successfully!");
+        const updatedEdu = await profileService.updateEducation(editingEduId, educationData)
+        setEducationRecords(prev =>
+          prev.map(edu =>
+            edu.candidate_education_id === editingEduId ? (updatedEdu as unknown as Education) : edu
+          )
+        )
+        toast.success('Education record updated successfully!')
       } else {
-        const newEducation = await profileService.addEducation(educationData);
-        setEducationRecords((prev) => [
-          ...prev,
-          newEducation as unknown as Education,
-        ]);
-        toast.success("Education record added successfully!");
+        const newEducation = await profileService.addEducation(educationData)
+        setEducationRecords(prev => [...prev, newEducation as unknown as Education])
+        toast.success('Education record added successfully!')
       }
 
       setEducationForm({
-        school_university: "",
-        degree: "",
-        location: "",
-        start_date: "",
-        end_date: "",
+        school_university: '',
+        degree: '',
+        location: '',
+        start_date: '',
+        end_date: '',
         is_current: false,
-      });
-      setIsAddingEducation(false);
-      setEditingEduId(null);
+      })
+      setIsAddingEducation(false)
+      setEditingEduId(null)
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(
-        error.response?.data?.detail || "Failed to save education record.",
-      );
+      const error = err as { response?: { data?: { detail?: string } } }
+      toast.error(error.response?.data?.detail || 'Failed to save education record.')
     }
-  };
+  }
 
   const handleEditEducation = (edu: Education) => {
     setEducationForm({
       school_university: edu.college_name,
       degree: edu.degree,
-      location: edu.location || "",
-      start_date: edu.start_date
-        ? new Date(edu.start_date).toISOString().split("T")[0]
-        : "",
-      end_date: edu.end_date
-        ? new Date(edu.end_date).toISOString().split("T")[0]
-        : "",
+      location: edu.location || '',
+      start_date: edu.start_date ? new Date(edu.start_date).toISOString().split('T')[0] : '',
+      end_date: edu.end_date ? new Date(edu.end_date).toISOString().split('T')[0] : '',
       is_current: edu.is_current,
-    });
-    setEditingEduId(edu.candidate_education_id);
-    setIsAddingEducation(true);
-  };
+    })
+    setEditingEduId(edu.candidate_education_id)
+    setIsAddingEducation(true)
+  }
 
   const handleDeleteEducation = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this education record?"))
-      return;
+    if (!confirm('Are you sure you want to delete this education record?')) return
     try {
-      await profileService.deleteEducation(id);
-      setEducationRecords((prev) =>
-        prev.filter((edu) => edu.candidate_education_id !== id),
-      );
-      toast.success("Education record deleted successfully!");
+      await profileService.deleteEducation(id)
+      setEducationRecords(prev => prev.filter(edu => edu.candidate_education_id !== id))
+      toast.success('Education record deleted successfully!')
       if (editingEduId === id) {
-        setIsAddingEducation(false);
-        setEditingEduId(null);
+        setIsAddingEducation(false)
+        setEditingEduId(null)
       }
     } catch {
-      toast.error("Failed to delete education record.");
+      toast.error('Failed to delete education record.')
     }
-  };
+  }
 
   const handleCancelEducation = () => {
-    setIsAddingEducation(false);
-    setEditingEduId(null);
+    setIsAddingEducation(false)
+    setEditingEduId(null)
     setEducationForm({
-      school_university: "",
-      degree: "",
-      location: "",
-      start_date: "",
-      end_date: "",
+      school_university: '',
+      degree: '',
+      location: '',
+      start_date: '',
+      end_date: '',
       is_current: false,
-    });
-  };
+    })
+  }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-    });
-  };
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+    })
+  }
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">
-          Career History
-        </h3>
-        <p className="text-[#475569]">
-          Manage your work experience and education records.
-        </p>
+        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Career History</h3>
+        <p className="text-[#475569]">Manage your work experience and education records.</p>
       </div>
 
       <div className="space-y-8">
@@ -294,28 +255,24 @@ export function CareerHistoryTab({
                 <Briefcase className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-[#0F172A]">
-                  Work Experience
-                </h4>
-                <p className="text-sm text-[#64748B]">
-                  Your professional journey
-                </p>
+                <h4 className="text-lg font-bold text-[#0F172A]">Work Experience</h4>
+                <p className="text-sm text-[#64748B]">Your professional journey</p>
               </div>
             </div>
             {!isAddingExperience && (
               <Button
                 onClick={() => {
-                  setEditingExpId(null);
+                  setEditingExpId(null)
                   setExperienceForm({
-                    job_title: "",
-                    company: "",
-                    location: "",
-                    start_date: "",
-                    end_date: "",
+                    job_title: '',
+                    company: '',
+                    location: '',
+                    start_date: '',
+                    end_date: '',
                     is_current: false,
-                    description: "",
-                  });
-                  setIsAddingExperience(true);
+                    description: '',
+                  })
+                  setIsAddingExperience(true)
                 }}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200"
               >
@@ -337,23 +294,18 @@ export function CareerHistoryTab({
                 ) : (
                   <Plus className="w-5 h-5 text-blue-600" />
                 )}
-                {editingExpId
-                  ? "Edit Work Experience"
-                  : "Add New Work Experience"}
+                {editingExpId ? 'Edit Work Experience' : 'Add New Work Experience'}
               </h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="job_title"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="job_title" className="font-semibold text-gray-700">
                     Job Title *
                   </Label>
                   <Input
                     id="job_title"
                     value={experienceForm.job_title}
-                    onChange={(e) =>
-                      setExperienceForm((prev) => ({
+                    onChange={e =>
+                      setExperienceForm(prev => ({
                         ...prev,
                         job_title: e.target.value,
                       }))
@@ -364,17 +316,14 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="company"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="company" className="font-semibold text-gray-700">
                     Company *
                   </Label>
                   <Input
                     id="company"
                     value={experienceForm.company}
-                    onChange={(e) =>
-                      setExperienceForm((prev) => ({
+                    onChange={e =>
+                      setExperienceForm(prev => ({
                         ...prev,
                         company: e.target.value,
                       }))
@@ -385,17 +334,14 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="location"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="location" className="font-semibold text-gray-700">
                     Location
                   </Label>
                   <Input
                     id="location"
                     value={experienceForm.location}
-                    onChange={(e) =>
-                      setExperienceForm((prev) => ({
+                    onChange={e =>
+                      setExperienceForm(prev => ({
                         ...prev,
                         location: e.target.value,
                       }))
@@ -405,18 +351,15 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="start_date"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="start_date" className="font-semibold text-gray-700">
                     Start Date *
                   </Label>
                   <Input
                     id="start_date"
                     type="date"
                     value={experienceForm.start_date}
-                    onChange={(e) =>
-                      setExperienceForm((prev) => ({
+                    onChange={e =>
+                      setExperienceForm(prev => ({
                         ...prev,
                         start_date: e.target.value,
                       }))
@@ -426,18 +369,15 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="end_date"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="end_date" className="font-semibold text-gray-700">
                     End Date
                   </Label>
                   <Input
                     id="end_date"
                     type="date"
                     value={experienceForm.end_date}
-                    onChange={(e) =>
-                      setExperienceForm((prev) => ({
+                    onChange={e =>
+                      setExperienceForm(prev => ({
                         ...prev,
                         end_date: e.target.value,
                       }))
@@ -453,13 +393,13 @@ export function CareerHistoryTab({
                         type="checkbox"
                         id="is_current"
                         checked={experienceForm.is_current}
-                        onChange={(e) => {
-                          const isChecked = e.target.checked;
-                          setExperienceForm((prev) => ({
+                        onChange={e => {
+                          const isChecked = e.target.checked
+                          setExperienceForm(prev => ({
                             ...prev,
                             is_current: isChecked,
-                            end_date: isChecked ? "" : prev.end_date,
-                          }));
+                            end_date: isChecked ? '' : prev.end_date,
+                          }))
                         }}
                         className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-blue-500 checked:bg-blue-500 hover:border-blue-400"
                       />
@@ -472,17 +412,14 @@ export function CareerHistoryTab({
                 </div>
               </div>
               <div className="mt-6 space-y-2">
-                <Label
-                  htmlFor="description"
-                  className="font-semibold text-gray-700"
-                >
+                <Label htmlFor="description" className="font-semibold text-gray-700">
                   Job Description
                 </Label>
                 <Textarea
                   id="description"
                   value={experienceForm.description}
-                  onChange={(e) =>
-                    setExperienceForm((prev) => ({
+                  onChange={e =>
+                    setExperienceForm(prev => ({
                       ...prev,
                       description: e.target.value,
                     }))
@@ -497,7 +434,7 @@ export function CareerHistoryTab({
                   type="submit"
                   className="px-6 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl font-medium shadow-sm transition-all"
                 >
-                  {editingExpId ? "Save Changes" : "Add Experience"}
+                  {editingExpId ? 'Save Changes' : 'Add Experience'}
                 </Button>
                 <Button
                   type="button"
@@ -521,8 +458,8 @@ export function CareerHistoryTab({
                 No work experience added yet
               </h5>
               <p className="text-gray-500 max-w-sm mx-auto">
-                Add your past work experience to showcase your professional
-                background to recruiters.
+                Add your past work experience to showcase your professional background to
+                recruiters.
               </p>
               {!isAddingExperience && (
                 <Button
@@ -536,7 +473,7 @@ export function CareerHistoryTab({
             </div>
           ) : (
             <div className="space-y-4">
-              {workExperiences.map((experience) => (
+              {workExperiences.map(experience => (
                 <div
                   key={experience.candidate_work_experience_id}
                   className="group bg-white rounded-xl border border-[#E5E7EB] p-5 hover:border-blue-200 hover:shadow-md transition-all duration-300"
@@ -551,9 +488,7 @@ export function CareerHistoryTab({
                           <h5 className="font-bold text-[#0F172A] text-lg">
                             {experience.job_title}
                           </h5>
-                          <p className="text-[#475569] font-medium">
-                            {experience.company}
-                          </p>
+                          <p className="text-[#475569] font-medium">{experience.company}</p>
                         </div>
                       </div>
 
@@ -561,18 +496,16 @@ export function CareerHistoryTab({
                         <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                           <Calendar className="w-4 h-4 text-blue-500" />
                           <span className="font-medium">
-                            {formatDate(experience.start_date)} -{" "}
+                            {formatDate(experience.start_date)} -{' '}
                             {experience.is_current
-                              ? "Present"
-                              : formatDate(experience.end_date || "")}
+                              ? 'Present'
+                              : formatDate(experience.end_date || '')}
                           </span>
                         </div>
                         {experience.location && (
                           <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                             <MapPin className="w-4 h-4 text-blue-500" />
-                            <span className="font-medium">
-                              {experience.location}
-                            </span>
+                            <span className="font-medium">{experience.location}</span>
                           </div>
                         )}
                       </div>
@@ -598,9 +531,7 @@ export function CareerHistoryTab({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          handleDeleteExperience(
-                            experience.candidate_work_experience_id,
-                          )
+                          handleDeleteExperience(experience.candidate_work_experience_id)
                         }
                         className="h-9 w-9 p-0 text-[#64748B] hover:text-red-600 hover:bg-red-50 rounded-lg"
                       >
@@ -623,24 +554,22 @@ export function CareerHistoryTab({
               </div>
               <div>
                 <h4 className="text-lg font-bold text-[#0F172A]">Education</h4>
-                <p className="text-sm text-[#64748B]">
-                  Your academic background
-                </p>
+                <p className="text-sm text-[#64748B]">Your academic background</p>
               </div>
             </div>
             {!isAddingEducation && (
               <Button
                 onClick={() => {
-                  setEditingEduId(null);
+                  setEditingEduId(null)
                   setEducationForm({
-                    school_university: "",
-                    degree: "",
-                    location: "",
-                    start_date: "",
-                    end_date: "",
+                    school_university: '',
+                    degree: '',
+                    location: '',
+                    start_date: '',
+                    end_date: '',
                     is_current: false,
-                  });
-                  setIsAddingEducation(true);
+                  })
+                  setIsAddingEducation(true)
                 }}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200"
               >
@@ -662,23 +591,18 @@ export function CareerHistoryTab({
                 ) : (
                   <Plus className="w-5 h-5 text-indigo-600" />
                 )}
-                {editingEduId
-                  ? "Edit Education Record"
-                  : "Add New Education Record"}
+                {editingEduId ? 'Edit Education Record' : 'Add New Education Record'}
               </h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="school_university"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="school_university" className="font-semibold text-gray-700">
                     College/University *
                   </Label>
                   <Input
                     id="school_university"
                     value={educationForm.school_university}
-                    onChange={(e) =>
-                      setEducationForm((prev) => ({
+                    onChange={e =>
+                      setEducationForm(prev => ({
                         ...prev,
                         school_university: e.target.value,
                       }))
@@ -689,17 +613,14 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="degree"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="degree" className="font-semibold text-gray-700">
                     Degree *
                   </Label>
                   <Input
                     id="degree"
                     value={educationForm.degree}
-                    onChange={(e) =>
-                      setEducationForm((prev) => ({
+                    onChange={e =>
+                      setEducationForm(prev => ({
                         ...prev,
                         degree: e.target.value,
                       }))
@@ -710,17 +631,14 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="location"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="location" className="font-semibold text-gray-700">
                     Location
                   </Label>
                   <Input
                     id="location"
                     value={educationForm.location}
-                    onChange={(e) =>
-                      setEducationForm((prev) => ({
+                    onChange={e =>
+                      setEducationForm(prev => ({
                         ...prev,
                         location: e.target.value,
                       }))
@@ -730,18 +648,15 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="start_date"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="start_date" className="font-semibold text-gray-700">
                     Start Date
                   </Label>
                   <Input
                     id="start_date"
                     type="date"
                     value={educationForm.start_date}
-                    onChange={(e) =>
-                      setEducationForm((prev) => ({
+                    onChange={e =>
+                      setEducationForm(prev => ({
                         ...prev,
                         start_date: e.target.value,
                       }))
@@ -750,18 +665,15 @@ export function CareerHistoryTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="end_date"
-                    className="font-semibold text-gray-700"
-                  >
+                  <Label htmlFor="end_date" className="font-semibold text-gray-700">
                     End Date
                   </Label>
                   <Input
                     id="end_date"
                     type="date"
                     value={educationForm.end_date}
-                    onChange={(e) =>
-                      setEducationForm((prev) => ({
+                    onChange={e =>
+                      setEducationForm(prev => ({
                         ...prev,
                         end_date: e.target.value,
                       }))
@@ -777,13 +689,13 @@ export function CareerHistoryTab({
                         type="checkbox"
                         id="is_current_edu"
                         checked={educationForm.is_current}
-                        onChange={(e) => {
-                          const isChecked = e.target.checked;
-                          setEducationForm((prev) => ({
+                        onChange={e => {
+                          const isChecked = e.target.checked
+                          setEducationForm(prev => ({
                             ...prev,
                             is_current: isChecked,
-                            end_date: isChecked ? "" : prev.end_date,
-                          }));
+                            end_date: isChecked ? '' : prev.end_date,
+                          }))
                         }}
                         className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-indigo-500 checked:bg-indigo-500 hover:border-indigo-400"
                       />
@@ -800,7 +712,7 @@ export function CareerHistoryTab({
                   type="submit"
                   className="px-6 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl font-medium shadow-sm transition-all"
                 >
-                  {editingEduId ? "Save Changes" : "Add Education"}
+                  {editingEduId ? 'Save Changes' : 'Add Education'}
                 </Button>
                 <Button
                   type="button"
@@ -838,7 +750,7 @@ export function CareerHistoryTab({
             </div>
           ) : (
             <div className="space-y-4">
-              {educationRecords.map((education) => (
+              {educationRecords.map(education => (
                 <div
                   key={education.candidate_education_id}
                   className="group bg-white rounded-xl border border-[#E5E7EB] p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-300"
@@ -850,12 +762,8 @@ export function CareerHistoryTab({
                           <GraduationCap className="w-5 h-5" />
                         </div>
                         <div>
-                          <h5 className="font-bold text-[#0F172A] text-lg">
-                            {education.degree}
-                          </h5>
-                          <p className="text-[#475569] font-medium">
-                            {education.college_name}
-                          </p>
+                          <h5 className="font-bold text-[#0F172A] text-lg">{education.degree}</h5>
+                          <p className="text-[#475569] font-medium">{education.college_name}</p>
                         </div>
                       </div>
 
@@ -864,19 +772,17 @@ export function CareerHistoryTab({
                           <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                             <Calendar className="w-4 h-4 text-indigo-500" />
                             <span className="font-medium">
-                              {formatDate(education.start_date)} -{" "}
+                              {formatDate(education.start_date)} -{' '}
                               {education.is_current
-                                ? "Present"
-                                : formatDate(education.end_date || "")}
+                                ? 'Present'
+                                : formatDate(education.end_date || '')}
                             </span>
                           </div>
                         )}
                         {education.location && (
                           <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                             <MapPin className="w-4 h-4 text-indigo-500" />
-                            <span className="font-medium">
-                              {education.location}
-                            </span>
+                            <span className="font-medium">{education.location}</span>
                           </div>
                         )}
                       </div>
@@ -893,11 +799,7 @@ export function CareerHistoryTab({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          handleDeleteEducation(
-                            education.candidate_education_id,
-                          )
-                        }
+                        onClick={() => handleDeleteEducation(education.candidate_education_id)}
                         className="h-9 w-9 p-0 text-[#64748B] hover:text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -911,5 +813,5 @@ export function CareerHistoryTab({
         </div>
       </div>
     </div>
-  );
+  )
 }

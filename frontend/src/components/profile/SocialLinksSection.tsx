@@ -1,102 +1,102 @@
-import React, { useState } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Github, Linkedin, Globe, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
-import { profileService } from '../../services/profileService';
-import { toast } from 'sonner';
-import type { SocialLink } from '../../types/profile';
+import React, { useState } from 'react'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Github, Linkedin, Globe, Plus, Trash2, Edit2, X, Check } from 'lucide-react'
+import { profileService } from '../../services/profileService'
+import { toast } from 'sonner'
+import type { SocialLink } from '../../types/profile'
 
 interface SocialLinksSectionProps {
-  socialLinks: SocialLink[];
-  onUpdate: () => void;
+  socialLinks: SocialLink[]
+  onUpdate: () => void
 }
 
 export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSectionProps) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ type: '', url: '' });
-  const [isSaving, setIsSaving] = useState(false);
+  const [isAdding, setIsAdding] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [formData, setFormData] = useState({ type: '', url: '' })
+  const [isSaving, setIsSaving] = useState(false)
 
   const getIconForType = (type: string) => {
     switch (type.toLowerCase()) {
       case 'github':
-        return <Github className="w-5 h-5" />;
+        return <Github className="w-5 h-5" />
       case 'linkedin':
-        return <Linkedin className="w-5 h-5" />;
+        return <Linkedin className="w-5 h-5" />
       case 'portfolio':
-        return <Globe className="w-5 h-5" />;
+        return <Globe className="w-5 h-5" />
       default:
-        return <Globe className="w-5 h-5" />;
+        return <Globe className="w-5 h-5" />
     }
-  };
+  }
 
   const handleAdd = async () => {
     if (!formData.type.trim() || !formData.url.trim()) {
-      toast.error('Please fill in all fields');
-      return;
+      toast.error('Please fill in all fields')
+      return
     }
 
-    setIsSaving(true);
+    setIsSaving(true)
     try {
-      await profileService.addSocialLink(formData);
-      toast.success('Social link added successfully');
-      setFormData({ type: '', url: '' });
-      setIsAdding(false);
-      onUpdate();
+      await profileService.addSocialLink(formData)
+      toast.success('Social link added successfully')
+      setFormData({ type: '', url: '' })
+      setIsAdding(false)
+      onUpdate()
     } catch (error) {
-      toast.error('Failed to add social link');
-      console.error(error);
+      toast.error('Failed to add social link')
+      console.error(error)
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   const handleUpdate = async (id: string) => {
     if (!formData.type.trim() || !formData.url.trim()) {
-      toast.error('Please fill in all fields');
-      return;
+      toast.error('Please fill in all fields')
+      return
     }
 
-    setIsSaving(true);
+    setIsSaving(true)
     try {
-      await profileService.updateSocialLink(id, formData);
-      toast.success('Social link updated successfully');
-      setEditingId(null);
-      setFormData({ type: '', url: '' });
-      onUpdate();
+      await profileService.updateSocialLink(id, formData)
+      toast.success('Social link updated successfully')
+      setEditingId(null)
+      setFormData({ type: '', url: '' })
+      onUpdate()
     } catch (error) {
-      toast.error('Failed to update social link');
-      console.error(error);
+      toast.error('Failed to update social link')
+      console.error(error)
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this social link?')) return;
+    if (!confirm('Are you sure you want to delete this social link?')) return
 
     try {
-      await profileService.deleteSocialLink(id);
-      toast.success('Social link deleted successfully');
-      onUpdate();
+      await profileService.deleteSocialLink(id)
+      toast.success('Social link deleted successfully')
+      onUpdate()
     } catch (error) {
-      toast.error('Failed to delete social link');
-      console.error(error);
+      toast.error('Failed to delete social link')
+      console.error(error)
     }
-  };
+  }
 
   const startEdit = (link: SocialLink) => {
-    setEditingId(link.social_link_id);
-    setFormData({ type: link.type, url: link.url });
-    setIsAdding(false);
-  };
+    setEditingId(link.social_link_id)
+    setFormData({ type: link.type, url: link.url })
+    setIsAdding(false)
+  }
 
   const cancelEdit = () => {
-    setEditingId(null);
-    setIsAdding(false);
-    setFormData({ type: '', url: '' });
-  };
+    setEditingId(null)
+    setIsAdding(false)
+    setFormData({ type: '', url: '' })
+  }
 
   return (
     <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
@@ -126,7 +126,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
 
       {/* Existing Social Links */}
       <div className="space-y-3 mb-4">
-        {socialLinks.map((link) => (
+        {socialLinks.map(link => (
           <div
             key={link.social_link_id}
             className="bg-white rounded-lg p-4 border border-[#E5E7EB] hover:border-[#3056F5] transition-all duration-200"
@@ -138,7 +138,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                     <Label className="text-sm font-medium text-[#374151]">Type</Label>
                     <select
                       value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      onChange={e => setFormData({ ...formData, type: e.target.value })}
                       className="w-full h-10 pl-3 pr-10 border border-[#D1D5DB] rounded-lg focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 transition-all duration-200 select-arrow bg-white"
                     >
                       <option value="">Select type</option>
@@ -153,7 +153,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                       type="url"
                       placeholder="https://..."
                       value={formData.url}
-                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      onChange={e => setFormData({ ...formData, url: e.target.value })}
                       className="h-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20"
                     />
                   </div>
@@ -235,7 +235,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                 <Label className="text-sm font-medium text-[#374151]">Type</Label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  onChange={e => setFormData({ ...formData, type: e.target.value })}
                   className="w-full h-10 pl-3 pr-10 border border-[#D1D5DB] rounded-lg focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 transition-all duration-200 select-arrow bg-white"
                 >
                   <option value="">Select type</option>
@@ -250,7 +250,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                   type="url"
                   placeholder="https://..."
                   value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  onChange={e => setFormData({ ...formData, url: e.target.value })}
                   className="h-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20"
                 />
               </div>
@@ -288,9 +288,11 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
             <Globe className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm text-[#64748B] mb-2">No social links added yet</p>
-          <p className="text-xs text-[#94A3B8]">Add your professional profiles to showcase your online presence</p>
+          <p className="text-xs text-[#94A3B8]">
+            Add your professional profiles to showcase your online presence
+          </p>
         </div>
       )}
     </div>
-  );
+  )
 }
