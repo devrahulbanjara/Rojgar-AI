@@ -1,40 +1,40 @@
-import React, { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
+import { cn } from '../../lib/utils'
+import { AnimatePresence, motion } from 'framer-motion'
 
 export interface DialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-  className?: string;
-  showCloseButton?: boolean;
+  isOpen: boolean
+  onClose: () => void
+  children: React.ReactNode
+  className?: string
+  showCloseButton?: boolean
 }
 
 export interface DialogContentProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }
 
 export interface DialogHeaderProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }
 
 export interface DialogTitleProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }
 
 export interface DialogDescriptionProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }
 
 export interface DialogFooterProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }
 
 const Dialog: React.FC<DialogProps> = ({
@@ -42,32 +42,32 @@ const Dialog: React.FC<DialogProps> = ({
   onClose,
   children,
   className,
-  showCloseButton = true
+  showCloseButton = true,
 }) => {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        onClose()
       }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen, onClose])
 
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = ''
     }
     return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
 
   const content = (
     <AnimatePresence>
@@ -90,7 +90,7 @@ const Dialog: React.FC<DialogProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0 }}
+            transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
             className={cn(
               // Base styles
               'relative z-50 w-full bg-white border border-gray-200',
@@ -101,7 +101,8 @@ const Dialog: React.FC<DialogProps> = ({
               className
             )}
             style={{
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.1)'
+              boxShadow:
+                '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.1)',
             }}
             role="dialog"
             aria-modal="true"
@@ -122,65 +123,46 @@ const Dialog: React.FC<DialogProps> = ({
         </div>
       )}
     </AnimatePresence>
-  );
+  )
 
   // Render to document body to escape any container constraints
   if (typeof document !== 'undefined') {
-    return createPortal(content, document.body);
+    return createPortal(content, document.body)
   }
-  return null;
-};
+  return null
+}
 
 const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
-  return (
-    <div className={cn('p-8', className)}>
-      {children}
-    </div>
-  );
-};
+  return <div className={cn('p-8', className)}>{children}</div>
+}
 
 const DialogHeader: React.FC<DialogHeaderProps> = ({ children, className }) => {
-  return (
-    <div className={cn(
-      'px-8 pt-8 pb-6 border-b border-gray-100',
-      className
-    )}>
-      {children}
-    </div>
-  );
-};
+  return <div className={cn('px-8 pt-8 pb-6 border-b border-gray-100', className)}>{children}</div>
+}
 
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, className }) => {
   return (
-    <h2 className={cn(
-      'text-xl font-semibold text-gray-900 leading-tight',
-      className
-    )}>
+    <h2 className={cn('text-xl font-semibold text-gray-900 leading-tight', className)}>
       {children}
     </h2>
-  );
-};
+  )
+}
 
 const DialogDescription: React.FC<DialogDescriptionProps> = ({ children, className }) => {
-  return (
-    <p className={cn(
-      'text-sm text-gray-500 mt-1.5',
-      className
-    )}>
-      {children}
-    </p>
-  );
-};
+  return <p className={cn('text-sm text-gray-500 mt-1.5', className)}>{children}</p>
+}
 
 const DialogFooter: React.FC<DialogFooterProps> = ({ children, className }) => {
   return (
-    <div className={cn(
-      'flex justify-end gap-3 px-8 py-6 bg-gray-50 rounded-b-2xl border-t border-gray-100',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex justify-end gap-3 px-8 py-6 bg-gray-50 rounded-b-2xl border-t border-gray-100',
+        className
+      )}
+    >
       {children}
     </div>
-  );
-};
+  )
+}
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter };
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter }

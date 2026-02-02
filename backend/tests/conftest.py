@@ -12,7 +12,6 @@ from app.models.candidate import CandidateProfile
 
 @pytest.fixture(scope="function")
 def db_session():
-    """Create an in-memory SQLite database for testing."""
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -30,7 +29,6 @@ def db_session():
 
 @pytest.fixture
 def sample_organization(db_session: Session):
-    """Create a sample organization for testing."""
     org = Organization(
         organization_id=str(uuid.uuid4()),
         email="admin@convexhire.com",
@@ -51,7 +49,6 @@ def sample_organization(db_session: Session):
 
 @pytest.fixture
 def sample_recruiter(db_session: Session, sample_organization: Organization):
-    """Create a sample recruiter for testing."""
     recruiter = User(
         user_id=str(uuid.uuid4()),
         organization_id=sample_organization.organization_id,
@@ -68,7 +65,6 @@ def sample_recruiter(db_session: Session, sample_organization: Organization):
 
 @pytest.fixture
 def sample_candidate(db_session: Session):
-    """Create a sample candidate for testing."""
     candidate = User(
         user_id=str(uuid.uuid4()),
         organization_id=None,
@@ -79,11 +75,7 @@ def sample_candidate(db_session: Session):
     )
     db_session.add(candidate)
     db_session.flush()
-
-    profile = CandidateProfile(
-        profile_id=str(uuid.uuid4()),
-        user_id=candidate.user_id,
-    )
+    profile = CandidateProfile(profile_id=str(uuid.uuid4()), user_id=candidate.user_id)
     db_session.add(profile)
     db_session.commit()
     db_session.refresh(candidate)

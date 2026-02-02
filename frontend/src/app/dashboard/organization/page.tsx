@@ -1,25 +1,18 @@
-"use client";
+'use client'
 
-import React from "react";
-import { Users, Briefcase, FileText } from "lucide-react";
-import { AppShell } from "../../../components/layout/AppShell";
-import {
-  PageTransition,
-  AnimatedContainer,
-  StatCard,
-} from "../../../components/common";
-import { WelcomeMessage } from "../../../components/dashboard";
-import { useAuth } from "../../../hooks/useAuth";
+import React from 'react'
+import { Users, Briefcase, FileText } from 'lucide-react'
+import { AppShell } from '../../../components/layout/AppShell'
+import { PageTransition, AnimatedContainer, StatCard } from '../../../components/common'
+import { WelcomeMessage } from '../../../components/dashboard'
+import { useAuth } from '../../../hooks/useAuth'
 
 export default function OrganizationDashboard() {
-  const { user } = useAuth();
+  const { user } = useAuth()
 
   return (
     <AppShell>
-      <PageTransition
-        className="min-h-screen"
-        style={{ background: "#F9FAFB" }}
-      >
+      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
         <div className="space-y-8 pb-12">
           {/* Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
@@ -62,5 +55,5 @@ export default function OrganizationDashboard() {
         </div>
       </PageTransition>
     </AppShell>
-  );
+  )
 }

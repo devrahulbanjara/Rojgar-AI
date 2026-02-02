@@ -1,10 +1,10 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Rocket, Zap, ShieldCheck, Check } from 'lucide-react';
-import Link from 'next/link';
+import { motion } from 'framer-motion'
+import { Card, CardContent } from '../ui/card'
+import { Button } from '../ui/button'
+import { Rocket, Zap, ShieldCheck, Check } from 'lucide-react'
+import Link from 'next/link'
 
 const tiers = [
   {
@@ -48,7 +48,7 @@ const tiers = [
       'Custom fairness and bias reporting',
     ],
   },
-];
+]
 
 export function PricingSection() {
   return (
@@ -71,7 +71,7 @@ export function PricingSection() {
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-3">
           {tiers.map((tier, index) => {
-            const Icon = tier.icon;
+            const Icon = tier.icon
             return (
               <motion.div
                 key={tier.name}
@@ -107,9 +107,7 @@ export function PricingSection() {
                         {tier.price}
                       </span>
                       {tier.period && (
-                        <span className="text-[#475569] text-base sm:text-lg">
-                          {tier.period}
-                        </span>
+                        <span className="text-[#475569] text-base sm:text-lg">{tier.period}</span>
                       )}
                     </div>
                     <Link href="/signup">
@@ -124,23 +122,25 @@ export function PricingSection() {
                       </Button>
                     </Link>
                     <ul className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
-                      {tier.features.map((feature) => (
+                      {tier.features.map(feature => (
                         <li
                           key={feature}
                           className="flex items-start gap-2 sm:gap-3 text-[#475569]"
                         >
                           <Check className="h-4 w-4 sm:h-5 sm:w-5 text-brand-blue flex-shrink-0 mt-0.5" />
-                          <span className="text-sm sm:text-base leading-relaxed break-words">{feature}</span>
+                          <span className="text-sm sm:text-base leading-relaxed break-words">
+                            {feature}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   </CardContent>
                 </Card>
               </motion.div>
-            );
+            )
           })}
         </div>
       </div>
     </section>
-  );
+  )
 }

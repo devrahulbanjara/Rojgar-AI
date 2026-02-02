@@ -1,72 +1,70 @@
-import React, { useState } from 'react';
-import { User } from '../../types/index';
-import { apiClient } from '../../lib/api';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { useAuth } from '../../hooks/useAuth';
-import { User as UserIcon, Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react'
+import { User } from '../../types/index'
+import { apiClient } from '../../lib/api'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import { useAuth } from '../../hooks/useAuth'
+import { User as UserIcon, Mail, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface ProfileFormProps {
-  user: User;
+  user: User
 }
 
 export function ProfileForm({ user }: ProfileFormProps) {
-  const { refetchUser } = useAuth();
+  const { refetchUser } = useAuth()
   const [formData, setFormData] = useState({
     name: user.name || '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage(null);
+    e.preventDefault()
+    setIsLoading(true)
+    setMessage(null)
 
     try {
       await apiClient.put('/api/v1/users/profile', {
         name: formData.name,
-      });
+      })
 
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      refetchUser?.();
+      setMessage({ type: 'success', text: 'Profile updated successfully!' })
+      refetchUser?.()
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
+      const error = err as { response?: { data?: { detail?: string } } }
       setMessage({
         type: 'error',
-        text: error.response?.data?.detail || 'Failed to update profile. Please try again.'
-      });
+        text: error.response?.data?.detail || 'Failed to update profile. Please try again.',
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+      [e.target.name]: e.target.value,
+    }))
+  }
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">
-          Profile Information
-        </h3>
-        <p className="text-[#475569]">
-          Update your personal information and profile details.
-        </p>
+        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Profile Information</h3>
+        <p className="text-[#475569]">Update your personal information and profile details.</p>
       </div>
 
       {message && (
-        <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-          message.type === 'success'
-            ? 'bg-green-50 text-green-700 border-green-200'
-            : 'bg-red-50 text-red-700 border-red-200'
-        }`}>
+        <div
+          className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
+            message.type === 'success'
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-red-50 text-red-700 border-red-200'
+          }`}
+        >
           {message.type === 'success' ? (
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
           ) : (
@@ -141,5 +139,5 @@ export function ProfileForm({ user }: ProfileFormProps) {
         </div>
       </form>
     </div>
-  );
+  )
 }

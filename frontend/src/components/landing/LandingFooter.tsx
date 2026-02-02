@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import { Linkedin, Twitter, Github } from 'lucide-react';
-import { LogoLink } from '../common/Logo';
-import Link from 'next/link';
+import { motion } from 'framer-motion'
+import { Linkedin, Twitter, Github } from 'lucide-react'
+import { LogoLink } from '../common/Logo'
+import Link from 'next/link'
 
 export function LandingFooter() {
   return (
@@ -91,5 +91,5 @@ export function LandingFooter() {
         </div>
       </div>
     </footer>
-  );
+  )
 }

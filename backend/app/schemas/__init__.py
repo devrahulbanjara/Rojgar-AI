@@ -1,4 +1,5 @@
 from .application import (
+    ApplicationCreate,
     ApplicationResponse,
     JobSummary,
     OrganizationSummary,
@@ -52,6 +53,8 @@ from .resume import (
 from .shared import (
     CertificationBase,
     EducationBase,
+    ErrorCode,
+    ErrorResponse,
     SkillBase,
     SocialLinkBase,
     WorkExperienceBase,
@@ -60,22 +63,23 @@ from .user import (
     CreateUserRequest,
     GoogleUserInfo,
     LoginRequest,
-    RoleSelectionRequest,
+    ProfileUpdateRequest,
     SignupRequest,
     TokenResponse,
     UserResponse,
 )
 
 __all__ = [
+    "ApplicationCreate",
     "ApplicationResponse",
     "JobSummary",
     "OrganizationSummary",
     "UserResponse",
     "GoogleUserInfo",
     "CreateUserRequest",
+    "ProfileUpdateRequest",
     "SignupRequest",
     "LoginRequest",
-    "RoleSelectionRequest",
     "TokenResponse",
     "OrganizationResponseInJob",
     "JobResponse",
@@ -120,4 +124,6 @@ __all__ = [
     "EducationBase",
     "CertificationBase",
     "SkillBase",
+    "ErrorResponse",
+    "ErrorCode",
 ]

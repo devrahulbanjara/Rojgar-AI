@@ -1,33 +1,33 @@
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Menu, LogOut } from 'lucide-react';
-import { LogoLink } from '../common/Logo';
-import { authService } from '../../services/authService';
-import { ROUTES } from '../../config/constants';
+import React from 'react'
+import { useRouter } from 'next/navigation'
+import { Menu, LogOut } from 'lucide-react'
+import { LogoLink } from '../common/Logo'
+import { authService } from '../../services/authService'
+import { ROUTES } from '../../config/constants'
 
-import { UserAvatar } from '../ui/UserAvatar';
+import { UserAvatar } from '../ui/UserAvatar'
 
 interface TopbarProps {
-  onMenuClick?: () => void;
+  onMenuClick?: () => void
   user: {
-    name: string;
-    email: string;
-    role?: string;
-    picture?: string | null;
-  } | null;
+    name: string
+    email: string
+    role?: string
+    picture?: string | null
+  } | null
 }
 
 export function Topbar({ onMenuClick, user }: TopbarProps) {
-  const router = useRouter();
+  const router = useRouter()
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
-      router.push(ROUTES.HOME);
+      await authService.logout()
+      router.push(ROUTES.HOME)
     } catch {
-      router.push(ROUTES.HOME);
+      router.push(ROUTES.HOME)
     }
-  };
+  }
 
   return (
     <header
@@ -96,5 +96,5 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
         </div>
       </div>
     </header>
-  );
+  )
 }

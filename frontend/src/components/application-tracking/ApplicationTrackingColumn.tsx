@@ -1,73 +1,69 @@
-import React from 'react';
-import { ApplicationTrackingCard } from './ApplicationTrackingCard';
-import { Inbox } from 'lucide-react';
-import type { Application } from '../../types/application';
+import React from 'react'
+import { ApplicationTrackingCard } from './ApplicationTrackingCard'
+import { Inbox } from 'lucide-react'
+import type { Application } from '../../types/application'
 
 interface ApplicationTrackingColumnProps {
-  title: string;
-  description: string;
-  applications: Application[];
-  columnType: 'applied' | 'interviewing' | 'outcome';
+  title: string
+  description: string
+  applications: Application[]
+  columnType: 'applied' | 'interviewing' | 'outcome'
 }
 
 export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps> = ({
   title,
   description,
   applications,
-  columnType
+  columnType,
 }) => {
   const getEmptyStateMessage = () => {
     switch (columnType) {
       case 'applied':
-        return 'No applications yet';
+        return 'No applications yet'
       case 'interviewing':
-        return 'No interviews scheduled';
+        return 'No interviews scheduled'
       case 'outcome':
-        return 'No outcomes yet';
+        return 'No outcomes yet'
       default:
-        return 'No applications';
+        return 'No applications'
     }
-  };
+  }
 
   const getBorderColor = () => {
     switch (columnType) {
       case 'applied':
-        return '#94A3B8';
+        return '#94A3B8'
       case 'interviewing':
-        return '#3056F5';
+        return '#3056F5'
       case 'outcome':
-        return '#16A34A';
+        return '#16A34A'
       default:
-        return '#94A3B8';
+        return '#94A3B8'
     }
-  };
+  }
 
   const getTextColor = () => {
     switch (columnType) {
       case 'applied':
-        return 'text-[#94A3B8]';
+        return 'text-[#94A3B8]'
       case 'interviewing':
-        return 'text-[#3056F5]';
+        return 'text-[#3056F5]'
       case 'outcome':
-        return 'text-[#16A34A]';
+        return 'text-[#16A34A]'
       default:
-        return 'text-[#94A3B8]';
+        return 'text-[#94A3B8]'
     }
-  };
+  }
 
-  const borderColor = getBorderColor();
-  const textColor = getTextColor();
+  const borderColor = getBorderColor()
+  const textColor = getTextColor()
 
   return (
     <section className="flex flex-col">
       {/* Column Header - No background, just border-bottom */}
       <header className="pb-4 mb-5" style={{ borderBottom: `2px solid ${borderColor}` }}>
-        <h3 className={`font-semibold text-lg ${textColor} mb-1`}>
-          {title}
-        </h3>
-        <p className="text-[13px] text-[#94A3B8]">
-          {description}
-        </p>
+        <h3 className={`font-semibold text-lg ${textColor} mb-1`}>{title}</h3>
+        <p className="text-[13px] text-[#94A3B8]">{description}</p>
       </header>
 
       {/* Column Content */}
@@ -75,16 +71,11 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
         {applications.length === 0 ? (
           <div className="bg-[#F9FAFB] border border-dashed border-[#E5E7EB] rounded-xl p-8 text-center">
             <Inbox className="h-8 w-8 text-[#CBD5E1] mx-auto mb-3" />
-            <p className="text-sm font-medium text-[#94A3B8]">
-              {getEmptyStateMessage()}
-            </p>
+            <p className="text-sm font-medium text-[#94A3B8]">{getEmptyStateMessage()}</p>
           </div>
         ) : (
           applications.map(application => (
-            <ApplicationTrackingCard
-              key={application.id}
-              application={application}
-            />
+            <ApplicationTrackingCard key={application.id} application={application} />
           ))
         )}
       </div>
@@ -98,5 +89,5 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
         </footer>
       )}
     </section>
-  );
-};
+  )
+}

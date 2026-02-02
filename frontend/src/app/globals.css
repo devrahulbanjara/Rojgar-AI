@@ -148,7 +148,12 @@
     @apply bg-background text-foreground font-inter antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold;
     letter-spacing: -0.5%;
   }
@@ -221,8 +226,9 @@
   /* Stat card gradient border */
   .stat-card {
     @apply relative overflow-hidden rounded-xl;
-    background: linear-gradient(white, white) padding-box,
-                var(--gradient-brand) border-box;
+    background:
+      linear-gradient(white, white) padding-box,
+      var(--gradient-brand) border-box;
     border: 2px solid transparent;
   }
 }
@@ -318,7 +324,9 @@
 
   /* Enhanced hover effects - Clean, smooth, fluid, minimal */
   .hover-lift {
-    transition: transform var(--transition-base) var(--ease-smooth), box-shadow var(--transition-base) var(--ease-smooth);
+    transition:
+      transform var(--transition-base) var(--ease-smooth),
+      box-shadow var(--transition-base) var(--ease-smooth);
   }
 
   .hover-lift:hover {
@@ -412,14 +420,30 @@
     will-change: opacity, transform;
   }
 
-  .stagger-list > *:nth-child(1) { animation-delay: 0.05s; }
-  .stagger-list > *:nth-child(2) { animation-delay: 0.1s; }
-  .stagger-list > *:nth-child(3) { animation-delay: 0.15s; }
-  .stagger-list > *:nth-child(4) { animation-delay: 0.2s; }
-  .stagger-list > *:nth-child(5) { animation-delay: 0.25s; }
-  .stagger-list > *:nth-child(6) { animation-delay: 0.3s; }
-  .stagger-list > *:nth-child(7) { animation-delay: 0.35s; }
-  .stagger-list > *:nth-child(8) { animation-delay: 0.4s; }
+  .stagger-list > *:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  .stagger-list > *:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+  .stagger-list > *:nth-child(3) {
+    animation-delay: 0.15s;
+  }
+  .stagger-list > *:nth-child(4) {
+    animation-delay: 0.2s;
+  }
+  .stagger-list > *:nth-child(5) {
+    animation-delay: 0.25s;
+  }
+  .stagger-list > *:nth-child(6) {
+    animation-delay: 0.3s;
+  }
+  .stagger-list > *:nth-child(7) {
+    animation-delay: 0.35s;
+  }
+  .stagger-list > *:nth-child(8) {
+    animation-delay: 0.4s;
+  }
 
   /* Page transition utilities */
   .page-enter {
@@ -430,7 +454,9 @@
   .page-enter-active {
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transition:
+      opacity 0.3s ease-out,
+      transform 0.3s ease-out;
   }
 
   .page-exit {
@@ -441,7 +467,9 @@
   .page-exit-active {
     opacity: 0;
     transform: translateY(-20px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transition:
+      opacity 0.3s ease-out,
+      transform 0.3s ease-out;
   }
 
   /* Line clamp utilities */

@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import React from "react";
-import Image from "next/image";
+import React from 'react'
+import Image from 'next/image'
 import {
   Briefcase,
   CheckCircle2,
@@ -21,21 +21,27 @@ import {
   ArrowRight,
   Ban,
   Trash2,
-} from "lucide-react";
-import type { Job } from "../../types/job";
-import { Dialog } from "../../components/ui/dialog";
-import { Button } from "../../components/ui/button";
-import { Badge } from "../../components/ui/badge";
-import { jobUtils } from "../../services/jobService";
-import { cn } from "../../lib/utils";
+  BookmarkPlus,
+} from 'lucide-react'
+import type { Job } from '../../types/job'
+
+interface JobWithExtras extends Job {
+  job_responsibilities?: string[]
+}
+import { Dialog } from '../../components/ui/dialog'
+import { Button } from '../../components/ui/button'
+import { Badge } from '../../components/ui/badge'
+import { jobUtils } from '../../services/jobService'
+import { cn } from '../../lib/utils'
 
 interface JobDetailModalProps {
-  job: Job | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onEdit?: (job: Job) => void;
-  onExpire?: (job: Job) => void;
-  onDelete?: (job: Job) => void;
+  job: Job | null
+  isOpen: boolean
+  onClose: () => void
+  onEdit?: (job: Job) => void
+  onExpire?: (job: Job) => void
+  onDelete?: (job: Job) => void
+  onConvertToReferenceJD?: (job: Job) => void
 }
 
 export function JobDetailModal({
@@ -45,28 +51,35 @@ export function JobDetailModal({
   onEdit,
   onExpire,
   onDelete,
+  onConvertToReferenceJD,
 }: JobDetailModalProps) {
-  if (!job) return null;
+  if (!job) return null
 
   const handleEdit = () => {
     if (onEdit) {
-      onEdit(job);
+      onEdit(job)
     }
-  };
+  }
 
   const handleExpire = () => {
     if (onExpire) {
-      onExpire(job);
+      onExpire(job)
     }
-  };
+  }
 
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(job);
+      onDelete(job)
     }
-  };
+  }
 
-  const isActive = job.status === "Active" || job.status === "active";
+  const handleConvertToReferenceJD = () => {
+    if (onConvertToReferenceJD) {
+      onConvertToReferenceJD(job)
+    }
+  }
+
+  const isActive = job.status === 'Active' || job.status === 'active'
 
   return (
     <Dialog
@@ -106,9 +119,8 @@ export function JobDetailModal({
               </h2>
               <p className="text-lg text-gray-600 font-medium tracking-[0.3px]">
                 {job.company?.name ||
-                  (job as unknown as { organization?: { name?: string } })
-                    .organization?.name ||
-                  "Company"}
+                  (job as unknown as { organization?: { name?: string } }).organization?.name ||
+                  'Company'}
               </p>
             </div>
           </div>
@@ -118,8 +130,8 @@ export function JobDetailModal({
             {job.department && (
               <Badge
                 className={cn(
-                  "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
-                  "bg-blue-50 text-blue-700 hover:bg-blue-100",
+                  'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                  'bg-blue-50 text-blue-700 hover:bg-blue-100'
                 )}
               >
                 {job.department}
@@ -127,8 +139,8 @@ export function JobDetailModal({
             )}
             <Badge
               className={cn(
-                "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
-                "bg-blue-50 text-blue-700 hover:bg-blue-100",
+                'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                'bg-blue-50 text-blue-700 hover:bg-blue-100'
               )}
             >
               <UserCircle2 className="w-4 h-4 mr-1.5" />
@@ -136,8 +148,8 @@ export function JobDetailModal({
             </Badge>
             <Badge
               className={cn(
-                "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
-                "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+                'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
               )}
             >
               <MapPinned className="w-4 h-4 mr-1.5" />
@@ -145,8 +157,8 @@ export function JobDetailModal({
             </Badge>
             <Badge
               className={cn(
-                "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
-                "bg-purple-50 text-purple-700 hover:bg-purple-100",
+                'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                'bg-purple-50 text-purple-700 hover:bg-purple-100'
               )}
             >
               <ClockIcon className="w-4 h-4 mr-1.5" />
@@ -155,8 +167,8 @@ export function JobDetailModal({
             {job.applicant_count !== undefined && job.applicant_count > 0 && (
               <Badge
                 className={cn(
-                  "px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105",
-                  "bg-orange-50 text-orange-700 hover:bg-orange-100",
+                  'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                  'bg-orange-50 text-orange-700 hover:bg-orange-100'
                 )}
               >
                 <TrendingUp className="w-4 h-4 mr-1.5" />
@@ -181,7 +193,7 @@ export function JobDetailModal({
                 <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                   {job.location_city && job.location_country
                     ? `${job.location_city}, ${job.location_country}`
-                    : job.location_city || job.location_country || job.location || "Not specified"}
+                    : job.location_city || job.location_country || job.location || 'Not specified'}
                 </p>
               </div>
             </div>
@@ -191,9 +203,7 @@ export function JobDetailModal({
                 <DollarSign className="w-5 h-5 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">
-                  Salary
-                </p>
+                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">Salary</p>
                 <p className="text-sm font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                   {jobUtils.formatJobSalary(job)}
                 </p>
@@ -205,9 +215,7 @@ export function JobDetailModal({
                 <Clock className="w-5 h-5 text-purple-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">
-                  Posted
-                </p>
+                <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">Posted</p>
                 <p className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                   {jobUtils.formatPostedDate(job.created_at || job.posted_date)}
                 </p>
@@ -219,7 +227,7 @@ export function JobDetailModal({
           {job.company && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
+                <div className="w-1 h-8 bg-blue-600 rounded-full" />
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
                   <Building2 className="w-5 h-5 text-blue-600" />
                 </div>
@@ -234,31 +242,26 @@ export function JobDetailModal({
                   </p>
                 ) : (
                   <p className="text-[15px] text-gray-700 leading-relaxed mb-6">
-                    {job.company.name} is looking for talented individuals to
-                    join their team.
+                    {job.company.name} is looking for talented individuals to join their team.
                   </p>
                 )}
                 <div className="flex flex-wrap gap-3">
                   {job.company.location && (
                     <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
                       <MapPin className="w-4 h-4" />
-                      <span className="font-medium">
-                        {job.company.location}
-                      </span>
+                      <span className="font-medium">{job.company.location}</span>
                     </button>
                   )}
                   {job.company.industry && (
                     <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 hover:scale-105">
                       <Building2 className="w-4 h-4" />
-                      <span className="font-medium">
-                        {job.company.industry}
-                      </span>
+                      <span className="font-medium">{job.company.industry}</span>
                     </button>
                   )}
                   {job.company.website && (
                     <a
                       href={
-                        job.company.website.startsWith("http")
+                        job.company.website.startsWith('http')
                           ? job.company.website
                           : `https://${job.company.website}`
                       }
@@ -280,7 +283,7 @@ export function JobDetailModal({
           {job.description && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-indigo-600 rounded-full"></div>
+                <div className="w-1 h-8 bg-indigo-600 rounded-full" />
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50">
                   <Briefcase className="w-5 h-5 text-indigo-600" />
                 </div>
@@ -297,37 +300,38 @@ export function JobDetailModal({
           )}
 
           {/* Job Responsibilities - Enhanced */}
-          {(job as any).job_responsibilities && (job as any).job_responsibilities.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
-                  <Briefcase className="w-5 h-5 text-blue-600" />
+          {(() => {
+            const jobWithExtras = job as JobWithExtras
+            return jobWithExtras.job_responsibilities &&
+              jobWithExtras.job_responsibilities.length > 0 ? (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1 h-8 bg-blue-600 rounded-full" />
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50">
+                    <Briefcase className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
+                    Job Responsibilities
+                  </h3>
                 </div>
-                <h3 className="text-[22px] font-semibold text-gray-900 tracking-[0.5px]">
-                  Job Responsibilities
-                </h3>
-              </div>
-              <div className="pl-14">
-                <ul className="space-y-3 list-disc list-inside">
-                  {(job as any).job_responsibilities.map((resp: string, index: number) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
-                      {resp}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )}
+                <div className="pl-14">
+                  <ul className="space-y-3 list-disc list-inside">
+                    {jobWithExtras.job_responsibilities.map((resp: string, index: number) => (
+                      <li key={index} className="text-[15px] text-gray-700 leading-relaxed pl-2">
+                        {resp}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            ) : null
+          })()}
 
           {/* Required Qualifications - Enhanced */}
           {job.requirements && job.requirements.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-emerald-600 rounded-full"></div>
+                <div className="w-1 h-8 bg-emerald-600 rounded-full" />
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 </div>
@@ -338,10 +342,7 @@ export function JobDetailModal({
               <div className="pl-14">
                 <ul className="space-y-3 list-disc list-inside">
                   {job.requirements.map((req, index) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
+                    <li key={index} className="text-[15px] text-gray-700 leading-relaxed pl-2">
                       {req}
                     </li>
                   ))}
@@ -354,7 +355,7 @@ export function JobDetailModal({
           {job.nice_to_have && job.nice_to_have.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-amber-600 rounded-full"></div>
+                <div className="w-1 h-8 bg-amber-600 rounded-full" />
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50">
                   <Sparkles className="w-5 h-5 text-amber-600" />
                 </div>
@@ -365,10 +366,7 @@ export function JobDetailModal({
               <div className="pl-14">
                 <ul className="space-y-3 list-disc list-inside">
                   {job.nice_to_have.map((item, index) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
+                    <li key={index} className="text-[15px] text-gray-700 leading-relaxed pl-2">
                       {item}
                     </li>
                   ))}
@@ -381,7 +379,7 @@ export function JobDetailModal({
           {job.benefits && job.benefits.length > 0 && (
             <section className="mb-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-violet-600 rounded-full"></div>
+                <div className="w-1 h-8 bg-violet-600 rounded-full" />
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50">
                   <Sparkles className="w-5 h-5 text-violet-600" />
                 </div>
@@ -392,10 +390,7 @@ export function JobDetailModal({
               <div className="pl-14">
                 <ul className="space-y-3 list-disc list-inside">
                   {job.benefits.map((benefit, index) => (
-                    <li
-                      key={index}
-                      className="text-[15px] text-gray-700 leading-relaxed pl-2"
-                    >
+                    <li key={index} className="text-[15px] text-gray-700 leading-relaxed pl-2">
                       {benefit}
                     </li>
                   ))}
@@ -405,20 +400,34 @@ export function JobDetailModal({
           )}
         </div>
 
-        {/* Sticky Footer with Edit, Expire, and Delete Buttons */}
+        {/* Sticky Footer with Edit, Expire, Delete, and Save as Template Buttons */}
         <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
-          {onDelete && (
-            <Button
-              onClick={handleDelete}
-              size="lg"
-              variant="outline"
-              className="h-12 px-8 text-base font-semibold border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
-            >
-              <Trash2 className="w-5 h-5 mr-2" />
-              Delete Job
-            </Button>
-          )}
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="flex items-center gap-4">
+            {onDelete && (
+              <Button
+                onClick={handleDelete}
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base font-semibold border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+              >
+                <Trash2 className="w-5 h-5 mr-2" />
+                Delete Job
+              </Button>
+            )}
+            {onConvertToReferenceJD &&
+              (isActive || job.status === 'Closed' || job.status === 'Expired') && (
+                <Button
+                  onClick={handleConvertToReferenceJD}
+                  size="lg"
+                  variant="outline"
+                  className="h-12 px-8 text-base font-semibold border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+                >
+                  <BookmarkPlus className="w-5 h-5 mr-2" />
+                  Save as Template
+                </Button>
+              )}
+          </div>
+          <div className="flex items-center gap-4">
             {isActive && onExpire && (
               <Button
                 onClick={handleExpire}
@@ -443,5 +452,5 @@ export function JobDetailModal({
         </div>
       </div>
     </Dialog>
-  );
+  )
 }

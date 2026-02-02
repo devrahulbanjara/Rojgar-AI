@@ -1,50 +1,50 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
-import Link from 'next/link';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { APP_CONFIG } from '../../config/constants';
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import Link from 'next/link'
+import { Button } from '../ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { APP_CONFIG } from '../../config/constants'
 
 interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: ReactNode
+  fallback?: ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  hasError: boolean
+  error?: Error
+  errorInfo?: ErrorInfo
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
-  };
+  }
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({
       error,
       errorInfo,
-    });
+    })
   }
 
   private handleReload = () => {
-    window.location.reload();
-  };
+    window.location.reload()
+  }
 
   private handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
-  };
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined })
+  }
 
   public render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
       return (
@@ -59,7 +59,8 @@ export class ErrorBoundary extends Component<Props, State> {
             <CardContent className="space-y-4">
               <div className="text-center">
                 <p className="text-muted-foreground">
-                  We&apos;re sorry, but something unexpected happened. Please try reloading the page.
+                  We&apos;re sorry, but something unexpected happened. Please try reloading the
+                  page.
                 </p>
 
                 {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -86,19 +87,16 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
 
               <div className="text-center">
-                <Link
-                  href="/"
-                  className="text-sm text-primary hover:underline"
-                >
+                <Link href="/" className="text-sm text-primary hover:underline">
                   Return to {APP_CONFIG.name} Home
                 </Link>
               </div>
             </CardContent>
           </Card>
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
