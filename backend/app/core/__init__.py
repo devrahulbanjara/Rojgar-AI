@@ -2,16 +2,20 @@ from .config import settings
 from .current_datetime import get_datetime
 from .database import engine, get_db, init_db
 from .exceptions import (
+    ApplicationNotFoundError,
     BusinessLogicError,
+    CandidateNotFoundError,
     ConflictError,
     ConvexHireError,
     ForbiddenError,
+    JobNotFoundError,
     NotFoundError,
+    OrganizationNotFoundError,
+    ResumeNotFoundError,
     UnauthorizedError,
+    UserNotFoundError,
 )
 from .logging_config import configure_file_logging, get_logger, logger
-
-# Security
 from .security import (
     create_token,
     get_current_active_user,
@@ -44,4 +48,10 @@ __all__ = [
     "ForbiddenError",
     "BusinessLogicError",
     "ConflictError",
+    "JobNotFoundError",
+    "CandidateNotFoundError",
+    "ApplicationNotFoundError",
+    "OrganizationNotFoundError",
+    "UserNotFoundError",
+    "ResumeNotFoundError",
 ]

@@ -32,6 +32,7 @@ import {
   ResumeCertificationResponse,
 } from "@/types/resume";
 import { cn } from "@/lib/utils";
+import { SkeletonResumeDetail } from "../common/SkeletonLoader";
 
 interface ResumeDetailSheetProps {
   resumeId: string | null;
@@ -166,10 +167,8 @@ export default function ResumeDetailSheet({
   if (!resume || loading) {
     return (
       <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <SheetContent className="w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl p-0 bg-white border-l shadow-2xl">
-          <div className="h-full flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
+        <SheetContent className="w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl p-0 bg-white border-l shadow-2xl flex flex-col overflow-hidden rounded-l-2xl">
+          <SkeletonResumeDetail />
         </SheetContent>
       </Sheet>
     );

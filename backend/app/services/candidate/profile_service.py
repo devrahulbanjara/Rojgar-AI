@@ -32,26 +32,20 @@ class CandidateService:
             )
         )
         profile = db.execute(stmt).scalar_one_or_none()
-
         if not profile:
             raise NotFoundError("Candidate profile not found")
-
         return profile
 
     @staticmethod
     def update_basic_info(db: Session, user: User, data: CandidateProfileUpdate):
         profile = CandidateService.get_full_profile(db, user)
-
         update_data = data.model_dump(exclude_unset=True)
-
         if "full_name" in update_data:
             new_name = update_data.pop("full_name")
             if profile.user:
                 profile.user.name = new_name
-
         for key, value in update_data.items():
             setattr(profile, key, value)
-
         db.commit()
         db.refresh(profile)
         return profile
@@ -69,11 +63,9 @@ class CandidateService:
     @staticmethod
     def _add_item(db: Session, user: User, ModelClass, data_dict, id_field_name):
         profile_id = CandidateService._get_profile_id(db, user)
-
         new_id = uuid.uuid4()
         item_data = {id_field_name: new_id, "profile_id": profile_id, **data_dict}
         new_item = ModelClass(**item_data)
-
         db.add(new_item)
         db.commit()
         db.refresh(new_item)
@@ -90,7 +82,6 @@ class CandidateService:
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
             raise NotFoundError("Item not found")
-
         db.delete(item)
         db.commit()
 
@@ -107,11 +98,9 @@ class CandidateService:
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
             raise NotFoundError("Item not found")
-
         update_data = data_obj.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(item, key, value)
-
         db.commit()
         db.refresh(item)
         return item
@@ -129,11 +118,7 @@ class CandidateService:
     @staticmethod
     def delete_experience(db: Session, user: User, item_id: uuid.UUID):
         CandidateService._delete_item(
-            db,
-            user,
-            CandidateWorkExperience,
-            item_id,
-            "candidate_work_experience_id",
+            db, user, CandidateWorkExperience, item_id, "candidate_work_experience_id"
         )
 
     @staticmethod

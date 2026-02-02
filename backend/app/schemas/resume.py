@@ -101,7 +101,6 @@ class ResumeResponse(BaseModel):
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
     created_at: Annotated[datetime, Field(description="Resume creation timestamp")]
     updated_at: Annotated[datetime, Field(description="Resume last update timestamp")]
-
     social_links: Annotated[list[ResumeSocialLinkResponse], "Social links"] = []
     work_experiences: Annotated[
         list[ResumeWorkExperienceResponse], "Work experiences"
@@ -111,7 +110,6 @@ class ResumeResponse(BaseModel):
         list[ResumeCertificationResponse], "Certification entries"
     ] = []
     skills: Annotated[list[ResumeSkillResponse], "Skill entries"] = []
-
     model_config = ConfigDict(from_attributes=True)
 
 

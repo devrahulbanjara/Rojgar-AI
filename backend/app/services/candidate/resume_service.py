@@ -33,7 +33,6 @@ class ResumeService:
     @staticmethod
     def create_resume_fork(db: Session, user: User, data: ResumeCreate):
         profile = CandidateService.get_full_profile(db, user)
-
         new_resume_id = uuid.uuid4()
         new_resume = Resume(
             resume_id=new_resume_id,
@@ -43,7 +42,6 @@ class ResumeService:
             custom_summary=data.custom_summary or profile.professional_summary,
         )
         db.add(new_resume)
-
         source_experiences = (
             data.work_experiences
             if data.work_experiences is not None
@@ -60,13 +58,9 @@ class ResumeService:
                     start_date=exp.start_date,
                     end_date=exp.end_date,
                     is_current=exp.is_current,
-                    description=getattr(
-                        exp, "description", None
-                    ),  # Handle schema vs model diff if any
+                    description=getattr(exp, "description", None),
                 )
             )
-
-        # Education
         source_educations = (
             data.educations if data.educations is not None else profile.educations
         )
@@ -83,8 +77,6 @@ class ResumeService:
                     is_current=edu.is_current,
                 )
             )
-
-        # Skills
         source_skills = data.skills if data.skills is not None else profile.skills
         for skill in source_skills:
             db.add(
@@ -94,8 +86,6 @@ class ResumeService:
                     skill_name=skill.skill_name,
                 )
             )
-
-        # Certifications
         source_certifications = (
             data.certifications
             if data.certifications is not None
@@ -114,8 +104,6 @@ class ResumeService:
                     does_not_expire=cert.does_not_expire,
                 )
             )
-
-        # Social Links
         source_links = (
             data.social_links if data.social_links is not None else profile.social_links
         )
@@ -128,15 +116,12 @@ class ResumeService:
                     url=link.url,
                 )
             )
-
         db.commit()
         db.refresh(new_resume)
-
         return ResumeService.get_resume(db, user, new_resume_id)
 
     @staticmethod
     def get_resume(db: Session, user: User, resume_id: uuid.UUID):
-        # Strictly check ownership via Profile join
         stmt = (
             select(Resume)
             .join(CandidateProfile)
@@ -186,9 +171,7 @@ class ResumeService:
     def add_experience(
         db: Session, user: User, resume_id: uuid.UUID, data: WorkExperienceBase
     ):
-        # Verify ownership
         ResumeService.get_resume(db, user, resume_id)
-
         new_item = ResumeWorkExperience(
             resume_work_experience_id=uuid.uuid4(),
             resume_id=resume_id,
@@ -203,7 +186,6 @@ class ResumeService:
     def delete_experience(
         db: Session, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
     ):
-        # Check ownership and item existence in one query
         stmt = (
             select(ResumeWorkExperience)
             .join(Resume)
@@ -215,7 +197,6 @@ class ResumeService:
         item = db.execute(stmt).scalar_one_or_none()
         if not item:
             raise NotFoundError("Experience item not found")
-
         db.delete(item)
         db.commit()
 
@@ -225,9 +206,7 @@ class ResumeService:
     ):
         ResumeService.get_resume(db, user, resume_id)
         new_item = ResumeEducation(
-            resume_education_id=uuid.uuid4(),
-            resume_id=resume_id,
-            **data.model_dump(),
+            resume_education_id=uuid.uuid4(), resume_id=resume_id, **data.model_dump()
         )
         db.add(new_item)
         db.commit()
@@ -251,8 +230,6 @@ class ResumeService:
             raise NotFoundError("Education item not found")
         db.delete(item)
         db.commit()
-
-    # --- Skills ---
 
     @staticmethod
     def add_skill(db: Session, user: User, resume_id: uuid.UUID, data: SkillBase):
@@ -281,14 +258,11 @@ class ResumeService:
         db.delete(item)
         db.commit()
 
-    # --- Certifications ---
-
     @staticmethod
     def add_certification(
         db: Session, user: User, resume_id: uuid.UUID, data: CertificationBase
     ):
         ResumeService.get_resume(db, user, resume_id)
-        # Exclude credential_id explicitly as it is not in the ResumeCertification model
         cert_data = data.model_dump(exclude={"credential_id"})
         new_item = ResumeCertification(
             resume_certification_id=uuid.uuid4(), resume_id=resume_id, **cert_data
@@ -335,15 +309,11 @@ class ResumeService:
             .where(CandidateProfile.user_id == user.user_id)
         )
         item = db.execute(stmt).scalar_one_or_none()
-
         if not item:
             raise NotFoundError("Item not found")
-
-        # 2. Partial Update
         update_data = data_obj.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(item, key, value)
-
         db.commit()
         db.refresh(item)
         return item
@@ -375,13 +345,7 @@ class ResumeService:
         data: ResumeEducationUpdate,
     ):
         return ResumeService._update_sub_item(
-            db,
-            user,
-            resume_id,
-            item_id,
-            ResumeEducation,
-            "resume_education_id",
-            data,
+            db, user, resume_id, item_id, ResumeEducation, "resume_education_id", data
         )
 
     @staticmethod

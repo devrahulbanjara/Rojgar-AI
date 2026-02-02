@@ -73,10 +73,7 @@ def update_resume_details(
     return ResumeService.update_resume(db, current_user, resume_id, data)
 
 
-@router.delete(
-    "/{resume_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("50/minute")
 def delete_resume(
     request: Request,
@@ -132,8 +129,7 @@ def add_resume_education(
 
 
 @router.delete(
-    "/{resume_id}/education/{item_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    "/{resume_id}/education/{item_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 @limiter.limit("50/minute")
 def delete_resume_education(
@@ -163,10 +159,7 @@ def add_resume_skill(
     return ResumeService.add_skill(db, current_user, resume_id, data)
 
 
-@router.delete(
-    "/{resume_id}/skills/{item_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/{resume_id}/skills/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("50/minute")
 def delete_resume_skill(
     request: Request,
@@ -196,8 +189,7 @@ def add_resume_certification(
 
 
 @router.delete(
-    "/{resume_id}/certifications/{item_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    "/{resume_id}/certifications/{item_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 @limiter.limit("50/minute")
 def delete_resume_certification(

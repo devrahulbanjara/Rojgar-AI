@@ -1,16 +1,18 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core import NotFoundError, get_current_active_user, get_db
 from app.core.authorization import get_organization_from_user
 from app.core.limiter import limiter
+from app.core.security import get_current_active_user_optional
 from app.models import User
 from app.schemas import job as schemas
 from app.services.candidate.saved_job_service import SavedJobService
 from app.services.job_service import JobService
+from app.services.recruiter.activity_events import activity_emitter
 from app.services.recruiter.reference_jd_service import ReferenceJDService
 
 router = APIRouter()
@@ -54,7 +56,6 @@ def search_jobs(
     saved_job_ids = None
     if user_id:
         saved_job_ids = SavedJobService.get_saved_job_ids(db, user_id)
-
     return JobService.search_jobs(
         db=db,
         query=q,
@@ -72,18 +73,27 @@ def search_jobs(
 @limiter.limit("50/minute")
 def create_job(
     request: Request,
+    background_tasks: BackgroundTasks,
     job_data: schemas.JobCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
-
-    return JobService.create_job(
+    job_posting, event_data = JobService.create_job(
         db=db,
         job_data=job_data,
         user_id=current_user.user_id,
         organization_id=organization_id,
     )
+    background_tasks.add_task(
+        activity_emitter.emit_job_created,
+        organization_id=event_data["organization_id"],
+        recruiter_name=event_data["recruiter_name"],
+        job_title=event_data["job_title"],
+        job_id=event_data["job_id"],
+        timestamp=event_data["timestamp"],
+    )
+    return job_posting
 
 
 @router.get("", response_model=schemas.JobListResponse)
@@ -93,10 +103,20 @@ def get_jobs(
     db: Annotated[Session, Depends(get_db)],
     user_id: uuid.UUID | None = None,
     organization_id: uuid.UUID | None = None,
+    current_user: Annotated[
+        User | None, Depends(get_current_active_user_optional)
+    ] = None,
     status: str | None = None,
     page: int = 1,
     limit: int = 10,
 ):
+    if (
+        user_id is None
+        and current_user
+        and organization_id
+        and (current_user.organization_id == organization_id)
+    ):
+        user_id = current_user.user_id
     return JobService.get_jobs(
         db=db,
         user_id=user_id,
@@ -132,13 +152,10 @@ def get_reference_jds(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    """Get all reference JDs for the authenticated user's organization"""
     organization_id = get_organization_from_user(current_user)
-
     reference_jds = ReferenceJDService.get_reference_jds(
         db=db, organization_id=organization_id
     )
-
     total = len(reference_jds)
     return {
         "reference_jds": reference_jds,
@@ -161,22 +178,17 @@ def get_reference_jd_by_id(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    """Get a specific reference JD by ID"""
     organization_id = get_organization_from_user(current_user)
-
     reference_jd = ReferenceJDService.get_reference_jd_by_id(
         db=db, reference_jd_id=reference_jd_id, organization_id=organization_id
     )
-
     if not reference_jd:
         raise NotFoundError("Reference JD not found")
-
     return reference_jd
 
 
 @router.put(
-    "/reference-jd/{reference_jd_id}",
-    response_model=schemas.ReferenceJDResponse,
+    "/reference-jd/{reference_jd_id}", response_model=schemas.ReferenceJDResponse
 )
 @limiter.limit("50/minute")
 def update_reference_jd(
@@ -186,9 +198,7 @@ def update_reference_jd(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    """Update a reference JD"""
     organization_id = get_organization_from_user(current_user)
-
     return ReferenceJDService.update_reference_jd(
         db=db,
         reference_jd_id=reference_jd_id,
@@ -198,8 +208,7 @@ def update_reference_jd(
 
 
 @router.delete(
-    "/reference-jd/{reference_jd_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    "/reference-jd/{reference_jd_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 @limiter.limit("50/minute")
 def delete_reference_jd(
@@ -208,13 +217,9 @@ def delete_reference_jd(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    """Delete a reference JD"""
     organization_id = get_organization_from_user(current_user)
-
     ReferenceJDService.delete_reference_jd(
-        db=db,
-        reference_jd_id=reference_jd_id,
-        organization_id=organization_id,
+        db=db, reference_jd_id=reference_jd_id, organization_id=organization_id
     )
 
 
@@ -229,5 +234,4 @@ def get_job_detail(
     saved_job_ids = None
     if user_id:
         saved_job_ids = SavedJobService.get_saved_job_ids(db, user_id)
-
     return JobService.get_job_by_id(db=db, job_id=job_id, saved_job_ids=saved_job_ids)

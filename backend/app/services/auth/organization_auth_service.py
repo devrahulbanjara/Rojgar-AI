@@ -4,9 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import BusinessLogicError, get_datetime
+from app.core.config import settings
 from app.core.security import create_token, hash_password, verify_password
 from app.models import Organization
 from app.schemas.organization import OrganizationSignupRequest
+from app.services.auth.auth_service import AuthService
 
 
 class OrganizationAuthService:
@@ -25,13 +27,9 @@ class OrganizationAuthService:
         )
         if existing_org:
             raise BusinessLogicError("Email already registered")
-
-        from app.services.auth.auth_service import AuthService
-
         existing_user = AuthService.get_user_by_email(org_data.email, db)
         if existing_user:
             raise BusinessLogicError("Email already registered")
-
         now = get_datetime()
         new_org = Organization(
             organization_id=uuid.uuid4(),
@@ -47,7 +45,6 @@ class OrganizationAuthService:
             created_at=now,
             updated_at=now,
         )
-
         db.add(new_org)
         db.commit()
         db.refresh(new_org)
@@ -61,19 +58,13 @@ class OrganizationAuthService:
     def create_organization_token(
         organization_id: uuid.UUID, remember_me: bool = False
     ) -> tuple[str, int]:
-        from app.core.config import settings
-
         org_id_str = str(organization_id)
-
         if remember_me:
             token = create_token(
-                org_id_str,
-                entity_type="organization",
-                expires_minutes=30 * 24 * 60,
+                org_id_str, entity_type="organization", expires_minutes=30 * 24 * 60
             )
             max_age = 30 * 24 * 60 * 60
         else:
             token = create_token(org_id_str, entity_type="organization")
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-
-        return token, max_age
+        return (token, max_age)

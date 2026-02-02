@@ -1,4 +1,4 @@
-from app.models.agents.interview_scheduling import InterviewSchedulingState
+from app.schemas.agents.interview_scheduling import InterviewSchedulingState
 
 from .email_service import send_interview_email
 from .graph import create_workflow
@@ -13,7 +13,6 @@ from .nodes import (
 from .templates import get_interview_email_template
 
 app = create_workflow()
-
 __all__ = [
     "InterviewSchedulingState",
     "get_interview_email_template",

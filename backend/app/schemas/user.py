@@ -13,7 +13,6 @@ class ProfileUpdateRequest(BaseModel):
 
 class OrganizationInUserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: Annotated[UUID, Field(alias="organization_id")]
     name: Annotated[str, "Organization name"]
     location_city: Annotated[str | None, "City"] = None
@@ -55,7 +54,6 @@ class GoogleUserInfo(BaseModel):
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: Annotated[UUID, Field(alias="user_id")]
     email: Annotated[str, "User email"]
     name: Annotated[str | None, "User full name"] = None

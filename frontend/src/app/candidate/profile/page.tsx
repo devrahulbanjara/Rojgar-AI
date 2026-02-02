@@ -13,6 +13,7 @@ import { User, Briefcase, Settings, Shield } from "lucide-react";
 import { profileService } from "../../../services/profileService";
 import type { CandidateProfile } from "../../../types/profile";
 import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
+import { SkeletonProfileHeader, SkeletonProfileTab, SkeletonProfileForm } from "../../../components/common/SkeletonLoader";
 
 export default function CandidateProfilePage() {
   const {
@@ -86,8 +87,28 @@ export default function CandidateProfilePage() {
           className="min-h-screen"
           style={{ background: "#F9FAFB" }}
         >
-          <div className="flex items-center justify-center h-[calc(100vh-100px)]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3056F5]"></div>
+          <div className="space-y-8 pb-12">
+            {/* Skeleton Header */}
+            <AnimatedContainer direction="up" delay={0.1}>
+              <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <SkeletonProfileHeader />
+                </div>
+              </div>
+            </AnimatedContainer>
+
+            {/* Main Content Container */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              {/* Skeleton Tab Navigation */}
+              <AnimatedContainer direction="up" delay={0.2}>
+                <SkeletonProfileTab />
+              </AnimatedContainer>
+
+              {/* Skeleton Tab Content */}
+              <AnimatedContainer direction="up" delay={0.3}>
+                <SkeletonProfileForm />
+              </AnimatedContainer>
+            </div>
           </div>
         </PageTransition>
       </AppShell>

@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-from app.models.agents.shortlist.schemas import WorkflowState
 from app.services.agents.shortlist.nodes.resume_parsing import extract_resume_structure
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
@@ -10,6 +9,7 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from app.core.config import settings
+from app.schemas.agents.shortlist.schemas import WorkflowState
 
 TEST_RESUMES_DIR = Path(__file__).parent / "test_resumes"
 PASS_THRESHOLD = 75
@@ -32,23 +32,15 @@ def evaluate_extraction(ground_truth: dict, prediction: dict) -> EvaluationScore
     judge_llm = ChatGroq(
         temperature=0, model_name=MODEL_JUDGE, api_key=settings.GROQ_API_KEY
     )
-
     eval_prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
-                """You are a QA Auditor. Compare Ground Truth vs AI Prediction.
-        Scoring Rules:
-        - **Skills**: OK if order differs. Match concepts (e.g. 'JS' == 'JavaScript').
-        - **Experience**: Dates/Companies must match. Omissions are critical errors.
-        - **Formatting**: Ignore whitespace differences.
-
-        Provide a strict score (0-100) and detailed reasoning.""",
+                "You are a QA Auditor. Compare Ground Truth vs AI Prediction.\n        Scoring Rules:\n        - **Skills**: OK if order differs. Match concepts (e.g. 'JS' == 'JavaScript').\n        - **Experience**: Dates/Companies must match. Omissions are critical errors.\n        - **Formatting**: Ignore whitespace differences.\n\n        Provide a strict score (0-100) and detailed reasoning.",
             ),
             ("human", "GROUND TRUTH:\n{ground_truth}\n\nAI PREDICTION:\n{prediction}"),
         ]
     )
-
     grader = eval_prompt | judge_llm.with_structured_output(EvaluationScore)
     return grader.invoke(
         {"ground_truth": str(ground_truth), "prediction": str(prediction)}
@@ -73,9 +65,7 @@ def ground_truths():
 
 def test_extract_resume_structure(test_resumes, ground_truths):
     logger.info("Starting resume parsing test")
-
     resume_paths = [str(resume) for resume in test_resumes]
-
     state: WorkflowState = {
         "job_description_text": "",
         "resume_file_paths": resume_paths,
@@ -89,41 +79,29 @@ def test_extract_resume_structure(test_resumes, ground_truths):
         "scored_candidates": [],
         "final_report": None,
     }
-
     result = extract_resume_structure(state)
     structured_resumes = result["structured_resumes"]
-
     logger.info(f"Processed {len(structured_resumes)} resumes")
-
     assert len(structured_resumes) == len(ground_truths)
-
     total_scores = []
-
     for idx, (structured, gt) in enumerate(
         zip(structured_resumes, ground_truths, strict=False)
     ):
         resume_data = structured["data"]
         filename = structured["source_file"]
-
         logger.info(f"Evaluating {filename}")
-
         prediction = resume_data.model_dump()
         score = evaluate_extraction(gt, prediction)
-
         total_scores.append(score.overall_quality)
-
         logger.info(
             f"{filename} - Skills: {score.skills_match_score}, Exp: {score.experience_accuracy}, Overall: {score.overall_quality}"
         )
         logger.info(f"Reasoning: {score.reasoning}")
-
         assert score.overall_quality >= PASS_THRESHOLD, (
             f"{filename} failed with score {score.overall_quality} (threshold: {PASS_THRESHOLD})"
         )
-
     avg_score = sum(total_scores) / len(total_scores)
     logger.info(f"Average score: {avg_score:.1f}/100")
-
     assert avg_score >= PASS_THRESHOLD, (
         f"Average score {avg_score:.1f} below threshold {PASS_THRESHOLD}"
     )
