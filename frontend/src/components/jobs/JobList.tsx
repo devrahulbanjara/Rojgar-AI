@@ -1,43 +1,40 @@
-import React, { memo, useMemo } from "react";
-import { JobCard } from "./JobCard";
-import { SkeletonJobCard } from "../common";
-import type { Job } from "../../types/job";
-import { AlertCircle, Search, Filter } from "lucide-react";
+import React, { memo, useMemo } from 'react'
+import { JobCard } from './JobCard'
+import { SkeletonJobCard } from '../common'
+import type { Job } from '../../types/job'
+import { AlertCircle, Search, Filter } from 'lucide-react'
 
 interface JobListProps {
-  jobs: Job[];
-  loading?: boolean;
-  error?: string | null;
-  selectedJob?: Job | null;
-  onJobSelect?: (job: Job) => void;
-  onApply?: (job: Job) => void;
+  jobs: Job[]
+  loading?: boolean
+  error?: string | null
+  selectedJob?: Job | null
+  onJobSelect?: (job: Job) => void
+  onApply?: (job: Job) => void
 }
 
 export const JobList = memo<JobListProps>(
   ({ jobs, loading = false, error, selectedJob, onJobSelect, onApply }) => {
     const uniqueJobs = useMemo(() => {
-      if (!jobs) return [];
-      const seen = new Set();
-      return jobs.filter((job) => {
-        const id = job.id;
-        if (seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      });
-    }, [jobs]);
+      if (!jobs) return []
+      const seen = new Set()
+      return jobs.filter(job => {
+        const id = job.id
+        if (seen.has(id)) return false
+        seen.add(id)
+        return true
+      })
+    }, [jobs])
 
     if (loading) {
       return (
         <>
           {/* Enhanced Loading Skeletons for Grid */}
           {Array.from({ length: 8 }).map((_, index) => (
-            <SkeletonJobCard
-              key={index}
-              className="bg-card border border-border rounded-xl"
-            />
+            <SkeletonJobCard key={index} className="bg-card border border-border rounded-xl" />
           ))}
         </>
-      );
+      )
     }
 
     if (error) {
@@ -45,17 +42,13 @@ export const JobList = memo<JobListProps>(
         <div className="col-span-full flex flex-col items-center justify-center py-16 space-y-4">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: "rgba(220, 38, 38, 0.1)" }}
+            style={{ background: 'rgba(220, 38, 38, 0.1)' }}
           >
             <AlertCircle className="w-8 h-8 text-[#DC2626]" />
           </div>
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-[#0F172A] mb-2">
-              Failed to load jobs
-            </h3>
-            <p className="text-sm text-[#475569] text-center max-w-md mb-4">
-              {error}
-            </p>
+            <h3 className="text-lg font-semibold text-[#0F172A] mb-2">Failed to load jobs</h3>
+            <p className="text-sm text-[#475569] text-center max-w-md mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="text-sm text-[#3056F5] hover:text-[#2B3CF5] hover:underline font-medium"
@@ -64,7 +57,7 @@ export const JobList = memo<JobListProps>(
             </button>
           </div>
         </div>
-      );
+      )
     }
 
     if (!uniqueJobs || uniqueJobs.length === 0) {
@@ -72,17 +65,14 @@ export const JobList = memo<JobListProps>(
         <div className="col-span-full flex flex-col items-center justify-center py-16 space-y-4">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: "rgba(48, 86, 245, 0.08)" }}
+            style={{ background: 'rgba(48, 86, 245, 0.08)' }}
           >
             <Search className="w-8 h-8 text-[#3056F5]" />
           </div>
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-[#0F172A] mb-2">
-              No jobs found
-            </h3>
+            <h3 className="text-lg font-semibold text-[#0F172A] mb-2">No jobs found</h3>
             <p className="text-sm text-[#475569] text-center max-w-md mb-4">
-              Try adjusting your search criteria or check back later for new
-              opportunities.
+              Try adjusting your search criteria or check back later for new opportunities.
             </p>
             <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
               <Filter className="w-4 h-4" />
@@ -90,12 +80,12 @@ export const JobList = memo<JobListProps>(
             </div>
           </div>
         </div>
-      );
+      )
     }
 
     return (
       <>
-        {uniqueJobs.map((job) => (
+        {uniqueJobs.map(job => (
           <JobCard
             key={job.id}
             job={job}
@@ -106,8 +96,8 @@ export const JobList = memo<JobListProps>(
           />
         ))}
       </>
-    );
-  },
-);
+    )
+  }
+)
 
-JobList.displayName = "JobList";
+JobList.displayName = 'JobList'

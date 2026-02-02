@@ -3,11 +3,11 @@
  * Centralized exports for job-related components
  */
 
-export { JobCard } from './JobCard';
-export { JobList } from './JobList';
-export { JobDetailsModal } from './JobDetailsModal';
-export { JobSearchBar } from './JobSearchBar';
-export { JobDetailView } from './JobDetailView';
-export { RecommendedJobs } from './RecommendedJobs';
-export { FilterChips } from './FilterChips';
-export type { FilterType } from './FilterChips';
+export { JobCard } from './JobCard'
+export { JobList } from './JobList'
+export { JobDetailsModal } from './JobDetailsModal'
+export { JobSearchBar } from './JobSearchBar'
+export { JobDetailView } from './JobDetailView'
+export { RecommendedJobs } from './RecommendedJobs'
+export { FilterChips } from './FilterChips'
+export type { FilterType } from './FilterChips'

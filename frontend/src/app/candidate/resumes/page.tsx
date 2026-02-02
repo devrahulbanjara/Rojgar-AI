@@ -1,60 +1,56 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { resumeService } from "@/services/resumeService";
-import { profileService } from "@/services/profileService";
-import { ResumeListResponse, ResumeCreate } from "@/types/resume";
-import { Loader2, Plus, FileText, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
-import { AppShell } from "@/components/layout/AppShell";
-import {
-  PageTransition,
-  AnimatedContainer,
-  PageHeader,
-} from "@/components/common";
-import ResumeDetailSheet from "@/components/resume/ResumeDetailSheet";
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { resumeService } from '@/services/resumeService'
+import { profileService } from '@/services/profileService'
+import { ResumeListResponse, ResumeCreate } from '@/types/resume'
+import { Loader2, Plus, FileText, Trash2, X } from 'lucide-react'
+import { toast } from 'sonner'
+import { AppShell } from '@/components/layout/AppShell'
+import { PageTransition, AnimatedContainer, PageHeader } from '@/components/common'
+import ResumeDetailSheet from '@/components/resume/ResumeDetailSheet'
 
 interface CreateResumeModalProps {
-  onClose: () => void;
-  onCreated: (resume: ResumeListResponse) => void;
+  onClose: () => void
+  onCreated: (resume: ResumeListResponse) => void
 }
 
 function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loading, setLoading] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
   const [formData, setFormData] = useState<ResumeCreate>({
-    resume_name: "",
-    target_job_title: "",
-    custom_summary: "",
+    resume_name: '',
+    target_job_title: '',
+    custom_summary: '',
     work_experiences: [],
     educations: [],
     skills: [],
     certifications: [],
     social_links: [],
-  });
+  })
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const profile = await profileService.getProfile();
-        setFormData((prev) => ({
+        const profile = await profileService.getProfile()
+        setFormData(prev => ({
           ...prev,
           resume_name: `${profile.full_name}'s Resume`,
-          target_job_title: profile.professional_headline || "",
-          custom_summary: profile.professional_summary || "",
+          target_job_title: profile.professional_headline || '',
+          custom_summary: profile.professional_summary || '',
 
-          work_experiences: profile.work_experiences.map((exp) => ({
+          work_experiences: profile.work_experiences.map(exp => ({
             job_title: exp.job_title,
             company: exp.company,
-            location: exp.location || "",
+            location: exp.location || '',
             start_date: exp.start_date,
             end_date: exp.end_date,
             is_current: exp.is_current,
             description: exp.description,
           })),
-          educations: profile.educations.map((edu) => ({
+          educations: profile.educations.map(edu => ({
             college_name: edu.college_name,
             degree: edu.degree,
             location: edu.location,
@@ -62,8 +58,8 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
             end_date: edu.end_date,
             is_current: edu.is_current,
           })),
-          skills: profile.skills.map((s) => ({ skill_name: s.skill_name })),
-          certifications: profile.certifications.map((c) => ({
+          skills: profile.skills.map(s => ({ skill_name: s.skill_name })),
+          certifications: profile.certifications.map(c => ({
             certification_name: c.certification_name,
             issuing_body: c.issuing_body,
             credential_url: c.credential_url,
@@ -71,61 +67,58 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
             expiration_date: c.expiration_date,
             does_not_expire: c.does_not_expire,
           })),
-          social_links: profile.social_links.map((l) => ({
+          social_links: profile.social_links.map(l => ({
             type: l.type,
             url: l.url,
           })),
-        }));
+        }))
       } catch {
-        toast.error("Could not load profile data");
+        toast.error('Could not load profile data')
       } finally {
-        setLoadingProfile(false);
+        setLoadingProfile(false)
       }
-    };
-    fetchProfile();
-  }, []);
+    }
+    fetchProfile()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!formData.resume_name) {
-      toast.error("Resume Name is required");
-      return;
+      toast.error('Resume Name is required')
+      return
     }
-    setLoading(true);
+    setLoading(true)
     try {
-      const newResume = await resumeService.createResumeFork(formData);
+      const newResume = await resumeService.createResumeFork(formData)
       const listResume: ResumeListResponse = {
         resume_id: newResume.resume_id,
         resume_name: newResume.resume_name,
         target_job_title: newResume.target_job_title,
         updated_at: newResume.updated_at,
-      };
-      toast.success("Resume created successfully!");
-      onCreated(listResume);
+      }
+      toast.success('Resume created successfully!')
+      onCreated(listResume)
     } catch (error) {
-      console.error("Failed to create resume", error);
-      toast.error("Failed to create resume");
+      console.error('Failed to create resume', error)
+      toast.error('Failed to create resume')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (loadingProfile) {
     const loadingContent = (
       <div className="fixed inset-0 z-[100] flex items-center justify-center">
-        <div
-          className="fixed inset-0 bg-black/5 backdrop-blur-[3px]"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/5 backdrop-blur-[3px]" onClick={onClose} />
         <div className="relative bg-white p-6 rounded-2xl shadow-2xl border border-gray-200 flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
           <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
           <p className="text-gray-600 font-medium">Initializing...</p>
         </div>
       </div>
-    );
-    return typeof document !== "undefined"
+    )
+    return typeof document !== 'undefined'
       ? createPortal(loadingContent, document.body)
-      : loadingContent;
+      : loadingContent
   }
 
   const modalContent = (
@@ -140,12 +133,8 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
       <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="p-6 border-b flex justify-between items-center bg-gradient-to-b from-gray-50 to-white">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              Create New Resume
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Start by naming your resume
-            </p>
+            <h2 className="text-xl font-bold text-gray-900">Create New Resume</h2>
+            <p className="text-sm text-gray-500 mt-1">Start by naming your resume</p>
           </div>
           <button
             onClick={onClose}
@@ -164,24 +153,18 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
               autoFocus
               type="text"
               value={formData.resume_name}
-              onChange={(e) =>
-                setFormData({ ...formData, resume_name: e.target.value })
-              }
+              onChange={e => setFormData({ ...formData, resume_name: e.target.value })}
               className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="e.g. Senior Backend Engineer"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">
-              Target Job Title
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Target Job Title</label>
             <input
               type="text"
-              value={formData.target_job_title || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, target_job_title: e.target.value })
-              }
+              value={formData.target_job_title || ''}
+              onChange={e => setFormData({ ...formData, target_job_title: e.target.value })}
               className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="e.g. Product Manager"
             />
@@ -204,55 +187,50 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
         </form>
       </div>
     </div>
-  );
+  )
 
-  return typeof document !== "undefined"
-    ? createPortal(modalContent, document.body)
-    : modalContent;
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent
 }
 
 export default function ResumeListPage() {
-  const [resumes, setResumes] = useState<ResumeListResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const [resumes, setResumes] = useState<ResumeListResponse[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
 
   const loadResumes = async () => {
     try {
-      setLoading(true);
-      setError("");
-      const data = await resumeService.getAllResumes();
-      setResumes(data);
+      setLoading(true)
+      setError('')
+      const data = await resumeService.getAllResumes()
+      setResumes(data)
     } catch (err) {
-      console.warn("Failed to load resumes", err);
+      console.warn('Failed to load resumes', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    loadResumes();
-  }, []);
+    loadResumes()
+  }, [])
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this resume?")) return;
+    e.stopPropagation()
+    if (!confirm('Are you sure you want to delete this resume?')) return
     try {
-      await resumeService.deleteResume(id);
-      toast.success("Resume deleted successfully");
-      loadResumes(); // Refresh
+      await resumeService.deleteResume(id)
+      toast.success('Resume deleted successfully')
+      loadResumes() // Refresh
     } catch {
-      toast.error("Failed to delete resume");
+      toast.error('Failed to delete resume')
     }
-  };
+  }
 
   return (
     <AppShell>
-      <PageTransition
-        className="min-h-screen"
-        style={{ background: "#F9FAFB" }}
-      >
+      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
         <div className="space-y-8 pb-12">
           {/* Enhanced Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
@@ -278,8 +256,7 @@ export default function ResumeListPage() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 min-h-[400px]">
                 <div className="flex justify-between items-center mb-8">
                   <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
-                    <FileText className="w-6 h-6 text-indigo-600" /> Your
-                    Resumes
+                    <FileText className="w-6 h-6 text-indigo-600" /> Your Resumes
                   </h2>
                   <button
                     onClick={() => setIsModalOpen(true)}
@@ -302,8 +279,7 @@ export default function ResumeListPage() {
                       No resumes created yet
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-                      Create your first resume to get started with your job
-                      applications!
+                      Create your first resume to get started with your job applications!
                     </p>
                     <button
                       onClick={() => setIsModalOpen(true)}
@@ -314,7 +290,7 @@ export default function ResumeListPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {resumes.map((resume) => (
+                    {resumes.map(resume => (
                       <div
                         key={resume.resume_id}
                         onClick={() => setSelectedResumeId(resume.resume_id)}
@@ -322,7 +298,7 @@ export default function ResumeListPage() {
                       >
                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
-                            onClick={(e) => handleDelete(resume.resume_id, e)}
+                            onClick={e => handleDelete(resume.resume_id, e)}
                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -337,12 +313,11 @@ export default function ResumeListPage() {
                           {resume.resume_name}
                         </h3>
                         <p className="text-sm text-gray-500 mb-5 font-medium">
-                          {resume.target_job_title || "No target title"}
+                          {resume.target_job_title || 'No target title'}
                         </p>
                         <div className="text-xs text-gray-400 pt-4 border-t border-gray-100 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          Updated{" "}
-                          {new Date(resume.updated_at).toLocaleDateString()}
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Updated {new Date(resume.updated_at).toLocaleDateString()}
                         </div>
                       </div>
                     ))}
@@ -354,10 +329,10 @@ export default function ResumeListPage() {
             {isModalOpen && (
               <CreateResumeModal
                 onClose={() => setIsModalOpen(false)}
-                onCreated={(newResume) => {
-                  setResumes([...(resumes || []), newResume]);
-                  setIsModalOpen(false);
-                  setSelectedResumeId(newResume.resume_id); // Open editor immediately
+                onCreated={newResume => {
+                  setResumes([...(resumes || []), newResume])
+                  setIsModalOpen(false)
+                  setSelectedResumeId(newResume.resume_id) // Open editor immediately
                 }}
               />
             )}
@@ -374,5 +349,5 @@ export default function ResumeListPage() {
         </div>
       </PageTransition>
     </AppShell>
-  );
+  )
 }
