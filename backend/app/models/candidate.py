@@ -17,20 +17,16 @@ if TYPE_CHECKING:
 
 class CandidateProfile(Base):
     __tablename__ = "candidate_profile"
-
     profile_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("user.user_id"), unique=True, nullable=False
     )
-
     phone: Mapped[str | None] = mapped_column(String, nullable=True)
     location_city: Mapped[str | None] = mapped_column(String, nullable=True)
     location_country: Mapped[str | None] = mapped_column(String, nullable=True)
     professional_headline: Mapped[str | None] = mapped_column(String, nullable=True)
     professional_summary: Mapped[str | None] = mapped_column(String, nullable=True)
-
     user: Mapped["User"] = relationship("User", back_populates="candidate_profile")
-
     social_links: Mapped[list["CandidateSocialLink"]] = relationship(
         "CandidateSocialLink", back_populates="profile", cascade="all, delete-orphan"
     )
@@ -51,15 +47,11 @@ class CandidateProfile(Base):
     resumes: Mapped[list["Resume"]] = relationship(
         "Resume", back_populates="profile", cascade="all, delete-orphan"
     )
-
-    # Saved jobs relationships
     saved_jobs_associations: Mapped[list["CandidateSavedJob"]] = relationship(
         "CandidateSavedJob", back_populates="profile", cascade="all, delete-orphan"
     )
-
     saved_jobs: Mapped[list["JobPosting"]] = relationship(
-        secondary="candidate_saved_job",
-        viewonly=True,
+        secondary="candidate_saved_job", viewonly=True
     )
 
     @property
@@ -77,21 +69,18 @@ class CandidateProfile(Base):
 
 class CandidateSocialLink(Base):
     __tablename__ = "candidate_social_links"
-
     social_link_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     profile_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     type: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="social_links"
     )
@@ -99,7 +88,6 @@ class CandidateSocialLink(Base):
 
 class CandidateWorkExperience(Base):
     __tablename__ = "candidate_work_experience"
-
     candidate_work_experience_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, primary_key=True
     )
@@ -113,14 +101,12 @@ class CandidateWorkExperience(Base):
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="work_experiences"
     )
@@ -128,7 +114,6 @@ class CandidateWorkExperience(Base):
 
 class CandidateEducation(Base):
     __tablename__ = "candidate_education"
-
     candidate_education_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     profile_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
@@ -139,14 +124,12 @@ class CandidateEducation(Base):
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="educations"
     )
@@ -154,7 +137,6 @@ class CandidateEducation(Base):
 
 class CandidateCertification(Base):
     __tablename__ = "candidate_certification"
-
     candidate_certification_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, primary_key=True
     )
@@ -170,14 +152,12 @@ class CandidateCertification(Base):
     does_not_expire: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="certifications"
     )
@@ -185,20 +165,17 @@ class CandidateCertification(Base):
 
 class CandidateSkills(Base):
     __tablename__ = "candidate_skills"
-
     candidate_skill_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     profile_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
     )
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="skills"
     )
@@ -206,18 +183,15 @@ class CandidateSkills(Base):
 
 class CandidateSavedJob(Base):
     __tablename__ = "candidate_saved_job"
-
     candidate_profile_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("candidate_profile.profile_id"), primary_key=True
     )
     job_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("job_posting.job_id"), primary_key=True
     )
-
     saved_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="saved_jobs_associations"
     )

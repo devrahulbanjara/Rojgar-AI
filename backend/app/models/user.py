@@ -22,7 +22,6 @@ class UserRole(str, Enum):
 
 class User(Base):
     __tablename__ = "user"
-
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     organization_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("organization.organization_id"), nullable=True
@@ -30,23 +29,17 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     picture: Mapped[str | None] = mapped_column(String, nullable=True)
-
     password: Mapped[str | None] = mapped_column(String, nullable=True)
-
     role: Mapped[str | None] = mapped_column(String, nullable=True)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     organization: Mapped[Optional["Organization"]] = relationship(
         "Organization", back_populates="recruiters"
     )
-
-    # Relationships
     google_account: Mapped[Optional["UserGoogle"]] = relationship(
         "UserGoogle", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
@@ -68,10 +61,8 @@ class User(Base):
 
 class UserGoogle(Base):
     __tablename__ = "user_google"
-
     user_google_id: Mapped[str] = mapped_column(String, primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("user.user_id"), unique=True, nullable=False
     )
-
     user: Mapped["User"] = relationship("User", back_populates="google_account")

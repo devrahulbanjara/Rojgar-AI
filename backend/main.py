@@ -7,17 +7,43 @@ from app.core.config import settings
 from app.core.exceptions import setup_exception_handlers
 from app.core.lifespan import lifespan
 from app.core.limiter import limiter
+from app.schemas.shared import ErrorResponse
 
 app = FastAPI(
     title="ConvexHire API",
     description="Backend API for ConvexHire",
     version=f"📦 {settings.APP_VERSION}",
     lifespan=lifespan,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Bad Request - Business logic error",
+        },
+        401: {
+            "model": ErrorResponse,
+            "description": "Unauthorized - Authentication required",
+        },
+        403: {
+            "model": ErrorResponse,
+            "description": "Forbidden - Insufficient permissions",
+        },
+        404: {"model": ErrorResponse, "description": "Not Found - Resource not found"},
+        409: {"model": ErrorResponse, "description": "Conflict - Resource conflict"},
+        422: {
+            "model": ErrorResponse,
+            "description": "Validation Error - Request validation failed",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Too Many Requests - Rate limit exceeded",
+        },
+        500: {
+            "model": ErrorResponse,
+            "description": "Internal Server Error - Unexpected error",
+        },
+    },
 )
-
 setup_exception_handlers(app)
-
-# 2. Setup Middleware
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
@@ -27,8 +53,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 3. Include Routers
 app.include_router(api_router, prefix="/api/v1")
 
 

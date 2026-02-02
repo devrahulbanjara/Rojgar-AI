@@ -13,10 +13,11 @@ export const referenceJDKeys = {
   detail: (id: string) => [...referenceJDKeys.details(), id] as const,
 };
 
-export function useReferenceJDs() {
+export function useReferenceJDs(enabled: boolean = true) {
   return useQuery({
     queryKey: referenceJDKeys.list(),
     queryFn: () => referenceJDService.getReferenceJDs(),
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 }

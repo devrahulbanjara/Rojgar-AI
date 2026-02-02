@@ -93,7 +93,6 @@ class CandidateProfileFullResponse(BaseModel):
     location_country: Annotated[str | None, "Country of residence"] = None
     professional_headline: Annotated[str | None, "Professional headline/title"] = None
     professional_summary: Annotated[str | None, "Professional summary/about"] = None
-
     social_links: Annotated[list[SocialLinkResponse], "Candidate social links"] = []
     work_experiences: Annotated[
         list[WorkExperienceResponse], "Candidate work experiences"
@@ -103,5 +102,4 @@ class CandidateProfileFullResponse(BaseModel):
         list[CertificationResponse], "Candidate certifications"
     ] = []
     skills: Annotated[list[SkillResponse], "Candidate skills"] = []
-
     model_config = ConfigDict(from_attributes=True)

@@ -1,8 +1,8 @@
 from datetime import date
 
 import pytest
-from fastapi import HTTPException
 
+from app.core.exceptions import NotFoundError
 from app.schemas.resume import (
     ResumeCertificationUpdate,
     ResumeCreate,
@@ -25,7 +25,6 @@ from app.services.candidate.resume_service import ResumeService
 @pytest.mark.unit
 class TestResumeService:
     def test_create_resume_fork_from_profile(self, db_session, sample_candidate):
-        """Test creating a resume fork from candidate profile."""
         CandidateService.add_experience(
             db_session,
             sample_candidate.user_id,
@@ -38,17 +37,14 @@ class TestResumeService:
         CandidateService.add_skill(
             db_session, sample_candidate.user_id, SkillBase(skill_name="Python")
         )
-
         resume_data = ResumeCreate(
             resume_name="My First Resume",
             target_job_title="Senior Software Engineer",
             custom_summary="Experienced software engineer seeking new opportunities.",
         )
-
         result = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         assert result is not None
         assert result.resume_name == "My First Resume"
         assert result.target_job_title == "Senior Software Engineer"
@@ -60,7 +56,6 @@ class TestResumeService:
         assert len(result.skills) == 1
 
     def test_create_resume_fork_with_custom_data(self, db_session, sample_candidate):
-        """Test creating a resume fork with custom work experiences."""
         resume_data = ResumeCreate(
             resume_name="Custom Resume",
             target_job_title="Full Stack Developer",
@@ -77,18 +72,15 @@ class TestResumeService:
             ],
             skills=[SkillBase(skill_name="FastAPI"), SkillBase(skill_name="Docker")],
         )
-
         result = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         assert result.resume_name == "Custom Resume"
         assert len(result.work_experiences) == 1
         assert result.work_experiences[0].job_title == "Backend Developer"
         assert len(result.skills) == 2
 
     def test_create_resume_fork_with_all_fields(self, db_session, sample_candidate):
-        """Test creating a resume fork with all possible fields."""
         resume_data = ResumeCreate(
             resume_name="Complete Resume",
             target_job_title="DevOps Engineer",
@@ -132,11 +124,9 @@ class TestResumeService:
                 SocialLinkBase(type="LinkedIn", url="https://linkedin.com/in/sandeep"),
             ],
         )
-
         result = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         assert len(result.work_experiences) == 1
         assert len(result.educations) == 1
         assert len(result.skills) == 3
@@ -144,106 +134,82 @@ class TestResumeService:
         assert len(result.social_links) == 2
 
     def test_create_resume_profile_not_found(self, db_session):
-        """Test creating resume for non-existent profile raises 404."""
         resume_data = ResumeCreate(resume_name="Test Resume")
-
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             ResumeService.create_resume_fork(
                 db_session, "nonexistent-user-id", resume_data
             )
-
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
 
     def test_get_resume_success(self, db_session, sample_candidate):
-        """Test successfully retrieving a resume."""
         resume_data = ResumeCreate(
-            resume_name="Test Resume",
-            target_job_title="Software Developer",
+            resume_name="Test Resume", target_job_title="Software Developer"
         )
         created = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         result = ResumeService.get_resume(
             db_session, sample_candidate.user_id, created.resume_id
         )
-
         assert result is not None
         assert result.resume_id == created.resume_id
         assert result.resume_name == "Test Resume"
 
     def test_get_resume_not_found(self, db_session, sample_candidate):
-        """Test retrieving non-existent resume raises 404."""
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             ResumeService.get_resume(
                 db_session, sample_candidate.user_id, "nonexistent-resume-id"
             )
-
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
 
     def test_get_resume_wrong_owner(
         self, db_session, sample_candidate, sample_recruiter
     ):
-        """Test retrieving resume with wrong user raises 404."""
         resume_data = ResumeCreate(resume_name="My Resume")
         created = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
-        # Try to access with different user (recruiter in this case)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             ResumeService.get_resume(
                 db_session, sample_recruiter.user_id, created.resume_id
             )
-
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
 
     def test_list_resumes_success(self, db_session, sample_candidate):
-        """Test listing all resumes for a candidate."""
-        # Create multiple resumes
         resume1 = ResumeCreate(resume_name="Resume for Backend Jobs")
         resume2 = ResumeCreate(resume_name="Resume for Frontend Jobs")
         resume3 = ResumeCreate(resume_name="Resume for DevOps Jobs")
-
         ResumeService.create_resume_fork(db_session, sample_candidate.user_id, resume1)
         ResumeService.create_resume_fork(db_session, sample_candidate.user_id, resume2)
         ResumeService.create_resume_fork(db_session, sample_candidate.user_id, resume3)
-
         result = ResumeService.list_resumes(db_session, sample_candidate.user_id)
-
         assert len(result) == 3
         resume_names = [r.resume_name for r in result]
         assert "Resume for Backend Jobs" in resume_names
         assert "Resume for DevOps Jobs" in resume_names
 
     def test_list_resumes_empty(self, db_session, sample_candidate):
-        """Test listing resumes when candidate has no resumes."""
         result = ResumeService.list_resumes(db_session, sample_candidate.user_id)
         assert len(result) == 0
 
     def test_update_resume_success(self, db_session, sample_candidate):
-        """Test successfully updating a resume."""
         resume_data = ResumeCreate(resume_name="Original Name")
         created = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         update_data = ResumeUpdate(
             resume_name="Updated Name",
             target_job_title="Senior Engineer",
             custom_summary="Updated summary for better job targeting.",
         )
-
         result = ResumeService.update_resume(
             db_session, sample_candidate.user_id, created.resume_id, update_data
         )
-
         assert result.resume_name == "Updated Name"
         assert result.target_job_title == "Senior Engineer"
         assert result.custom_summary == "Updated summary for better job targeting."
 
     def test_update_resume_partial(self, db_session, sample_candidate):
-        """Test partially updating a resume."""
         resume_data = ResumeCreate(
             resume_name="Original",
             target_job_title="Developer",
@@ -252,43 +218,34 @@ class TestResumeService:
         created = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         update_data = ResumeUpdate(resume_name="Only Name Changed")
-
         result = ResumeService.update_resume(
             db_session, sample_candidate.user_id, created.resume_id, update_data
         )
-
         assert result.resume_name == "Only Name Changed"
         assert result.target_job_title == "Developer"
         assert result.custom_summary == "Original summary"
 
     def test_delete_resume_success(self, db_session, sample_candidate):
-        """Test successfully deleting a resume."""
         resume_data = ResumeCreate(resume_name="Resume to Delete")
         created = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
         ResumeService.delete_resume(
             db_session, sample_candidate.user_id, created.resume_id
         )
-
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             ResumeService.get_resume(
                 db_session, sample_candidate.user_id, created.resume_id
             )
-
-        assert exc_info.value.status_code == 404
+        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
 
     def test_add_experience_to_resume(self, db_session, sample_candidate):
-        """Test adding work experience to a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         exp_data = WorkExperienceBase(
             job_title="Backend Developer",
             company="Banjara Tech",
@@ -298,23 +255,19 @@ class TestResumeService:
             is_current=False,
             description="Developed scalable backend systems.",
         )
-
         result = ResumeService.add_experience(
             db_session, sample_candidate.user_id, resume.resume_id, exp_data
         )
-
         assert result is not None
         assert result.job_title == "Backend Developer"
         assert result.company == "Banjara Tech"
 
     def test_delete_experience_from_resume(self, db_session, sample_candidate):
-        """Test deleting work experience from a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         exp = ResumeService.add_experience(
             db_session,
             sample_candidate.user_id,
@@ -323,27 +276,23 @@ class TestResumeService:
                 job_title="Test Job", company="Test Co", start_date=date(2020, 1, 1)
             ),
         )
-
         ResumeService.delete_experience(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             exp.resume_work_experience_id,
         )
-
         updated_resume = ResumeService.get_resume(
             db_session, sample_candidate.user_id, resume.resume_id
         )
         assert len(updated_resume.work_experiences) == 0
 
     def test_update_experience_in_resume(self, db_session, sample_candidate):
-        """Test updating work experience in a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         exp = ResumeService.add_experience(
             db_session,
             sample_candidate.user_id,
@@ -354,12 +303,10 @@ class TestResumeService:
                 start_date=date(2019, 1, 1),
             ),
         )
-
         update_data = ResumeWorkExperienceUpdate(
             job_title="Senior Developer",
             description="Promoted after 2 years of excellent performance.",
         )
-
         result = ResumeService.update_experience(
             db_session,
             sample_candidate.user_id,
@@ -367,19 +314,16 @@ class TestResumeService:
             exp.resume_work_experience_id,
             update_data,
         )
-
         assert result.job_title == "Senior Developer"
         assert "Promoted" in result.description
         assert result.company == "StartupXYZ"
 
     def test_add_education_to_resume(self, db_session, sample_candidate):
-        """Test adding education to a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         edu_data = EducationBase(
             college_name="Kathmandu University",
             degree="Bachelor of Computer Science",
@@ -387,62 +331,51 @@ class TestResumeService:
             start_date=date(2016, 8, 1),
             end_date=date(2020, 7, 31),
         )
-
         result = ResumeService.add_education(
             db_session, sample_candidate.user_id, resume.resume_id, edu_data
         )
-
         assert result is not None
         assert result.college_name == "Kathmandu University"
         assert result.degree == "Bachelor of Computer Science"
 
     def test_delete_education_from_resume(self, db_session, sample_candidate):
-        """Test deleting education from a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         edu = ResumeService.add_education(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             EducationBase(college_name="Test College", degree="Test Degree"),
         )
-
         ResumeService.delete_education(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             edu.resume_education_id,
         )
-
         updated_resume = ResumeService.get_resume(
             db_session, sample_candidate.user_id, resume.resume_id
         )
         assert len(updated_resume.educations) == 0
 
     def test_update_education_in_resume(self, db_session, sample_candidate):
-        """Test updating education in a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         edu = ResumeService.add_education(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             EducationBase(college_name="Old College", degree="BSc Computer Science"),
         )
-
         update_data = ResumeEducationUpdate(
-            college_name="New University",
-            location="Kathmandu, Nepal",
+            college_name="New University", location="Kathmandu, Nepal"
         )
-
         result = ResumeService.update_education(
             db_session,
             sample_candidate.user_id,
@@ -450,72 +383,59 @@ class TestResumeService:
             edu.resume_education_id,
             update_data,
         )
-
         assert result.college_name == "New University"
         assert result.location == "Kathmandu, Nepal"
         assert result.degree == "BSc Computer Science"
 
     def test_add_skill_to_resume(self, db_session, sample_candidate):
-        """Test adding skill to a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         skill_data = SkillBase(skill_name="TypeScript")
-
         result = ResumeService.add_skill(
             db_session, sample_candidate.user_id, resume.resume_id, skill_data
         )
-
         assert result is not None
         assert result.skill_name == "TypeScript"
 
     def test_delete_skill_from_resume(self, db_session, sample_candidate):
-        """Test deleting skill from a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         skill = ResumeService.add_skill(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             SkillBase(skill_name="Java"),
         )
-
         ResumeService.delete_skill(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             skill.resume_skill_id,
         )
-
         updated_resume = ResumeService.get_resume(
             db_session, sample_candidate.user_id, resume.resume_id
         )
         assert len(updated_resume.skills) == 0
 
     def test_update_skill_in_resume(self, db_session, sample_candidate):
-        """Test updating skill in a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         skill = ResumeService.add_skill(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             SkillBase(skill_name="Javascripts"),
         )
-
         update_data = ResumeSkillUpdate(skill_name="JavaScript")
-
         result = ResumeService.update_skill(
             db_session,
             sample_candidate.user_id,
@@ -523,17 +443,14 @@ class TestResumeService:
             skill.resume_skill_id,
             update_data,
         )
-
         assert result.skill_name == "JavaScript"
 
     def test_add_certification_to_resume(self, db_session, sample_candidate):
-        """Test adding certification to a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         cert_data = CertificationBase(
             certification_name="Google Cloud Professional",
             issuing_body="Google",
@@ -541,65 +458,54 @@ class TestResumeService:
             issue_date=date(2023, 3, 15),
             does_not_expire=True,
         )
-
         result = ResumeService.add_certification(
             db_session, sample_candidate.user_id, resume.resume_id, cert_data
         )
-
         assert result is not None
         assert result.certification_name == "Google Cloud Professional"
         assert result.does_not_expire is True
 
     def test_delete_certification_from_resume(self, db_session, sample_candidate):
-        """Test deleting certification from a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         cert = ResumeService.add_certification(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             CertificationBase(certification_name="Test Cert", issuing_body="Test Body"),
         )
-
         ResumeService.delete_certification(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             cert.resume_certification_id,
         )
-
         updated_resume = ResumeService.get_resume(
             db_session, sample_candidate.user_id, resume.resume_id
         )
         assert len(updated_resume.certifications) == 0
 
     def test_update_certification_in_resume(self, db_session, sample_candidate):
-        """Test updating certification in a resume."""
         resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
             ResumeCreate(resume_name="Test Resume"),
         )
-
         cert = ResumeService.add_certification(
             db_session,
             sample_candidate.user_id,
             resume.resume_id,
             CertificationBase(
-                certification_name="Old Certification",
-                issuing_body="Old Body",
+                certification_name="Old Certification", issuing_body="Old Body"
             ),
         )
-
         update_data = ResumeCertificationUpdate(
             certification_name="Updated Certification",
             credential_url="https://updated-cert.com",
         )
-
         result = ResumeService.update_certification(
             db_session,
             sample_candidate.user_id,
@@ -607,14 +513,11 @@ class TestResumeService:
             cert.resume_certification_id,
             update_data,
         )
-
         assert result.certification_name == "Updated Certification"
         assert result.credential_url == "https://updated-cert.com"
         assert result.issuing_body == "Old Body"
 
     def test_complete_resume_workflow(self, db_session, sample_candidate):
-        """Test a complete workflow of creating and managing a resume."""
-        # Create initial resume
         resume_data = ResumeCreate(
             resume_name="Full Stack Developer Resume",
             target_job_title="Full Stack Developer",
@@ -623,8 +526,6 @@ class TestResumeService:
         resume = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-
-        # Add work experience
         ResumeService.add_experience(
             db_session,
             sample_candidate.user_id,
@@ -638,8 +539,6 @@ class TestResumeService:
                 description="Building recruitment platform with FastAPI and React.",
             ),
         )
-
-        # Add education
         ResumeService.add_education(
             db_session,
             sample_candidate.user_id,
@@ -652,8 +551,6 @@ class TestResumeService:
                 end_date=date(2019, 7, 31),
             ),
         )
-
-        # Add multiple skills
         for skill_name in ["Python", "FastAPI", "React", "PostgreSQL", "Docker"]:
             ResumeService.add_skill(
                 db_session,
@@ -661,8 +558,6 @@ class TestResumeService:
                 resume.resume_id,
                 SkillBase(skill_name=skill_name),
             )
-
-        # Add certification
         ResumeService.add_certification(
             db_session,
             sample_candidate.user_id,
@@ -675,12 +570,9 @@ class TestResumeService:
                 expiration_date=date(2025, 8, 20),
             ),
         )
-
-        # Verify complete resume
         final_resume = ResumeService.get_resume(
             db_session, sample_candidate.user_id, resume.resume_id
         )
-
         assert final_resume.resume_name == "Full Stack Developer Resume"
         assert len(final_resume.work_experiences) == 1
         assert len(final_resume.educations) == 1
@@ -691,8 +583,6 @@ class TestResumeService:
     def test_multiple_resumes_for_different_job_types(
         self, db_session, sample_candidate
     ):
-        """Test creating multiple targeted resumes for different job types."""
-        # Backend-focused resume
         backend_resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
@@ -706,8 +596,6 @@ class TestResumeService:
                 ],
             ),
         )
-
-        # Frontend-focused resume
         frontend_resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
@@ -721,8 +609,6 @@ class TestResumeService:
                 ],
             ),
         )
-
-        # DevOps-focused resume
         devops_resume = ResumeService.create_resume_fork(
             db_session,
             sample_candidate.user_id,
@@ -736,23 +622,17 @@ class TestResumeService:
                 ],
             ),
         )
-
-        # Verify all three resumes exist
         all_resumes = ResumeService.list_resumes(db_session, sample_candidate.user_id)
         assert len(all_resumes) == 3
-
-        # Verify each resume has the correct skills
         backend = ResumeService.get_resume(
             db_session, sample_candidate.user_id, backend_resume.resume_id
         )
         assert len(backend.skills) == 3
         assert any(s.skill_name == "Python" for s in backend.skills)
-
         frontend = ResumeService.get_resume(
             db_session, sample_candidate.user_id, frontend_resume.resume_id
         )
         assert any(s.skill_name == "React" for s in frontend.skills)
-
         devops = ResumeService.get_resume(
             db_session, sample_candidate.user_id, devops_resume.resume_id
         )

@@ -71,6 +71,7 @@ export default function Jobs() {
   }, [activeFilters]);
 
   const shouldFetchRecommendations = !isSearchMode && !!user?.id;
+
   const {
     data: recommendationsData,
     isLoading: isLoadingRecommendations,
@@ -89,6 +90,7 @@ export default function Jobs() {
     data: searchData,
     isLoading: isLoadingSearch,
     error: searchError,
+    refetch: refetchSearch,
   } = useJobSearch(
     shouldFetchSearch
       ? {
@@ -106,12 +108,28 @@ export default function Jobs() {
     ? shouldFetchSearch
       ? isLoadingSearch
       : false
-    : isAuthLoading || (shouldFetchRecommendations ? isLoadingRecommendations : false);
+    : isAuthLoading || isLoadingRecommendations || isRefreshing;
   const error = isSearchMode ? searchError : recommendationsError;
   const refetch = useMemo(
-    () => (isSearchMode ? () => { } : refetchRecommendations),
-    [isSearchMode, refetchRecommendations],
+    () => (isSearchMode ? refetchSearch : refetchRecommendations),
+    [isSearchMode, refetchSearch, refetchRecommendations],
   );
+
+  useEffect(() => {
+    console.log("Auth status effect:", {
+      userId: user?.id,
+      isAuthLoading,
+      isAuthenticated,
+      hasRecommendations: !!recommendationsData,
+      isLoadingRecommendations
+    });
+    
+    // Force immediate fetch when user is authenticated and has ID - this is the key fix
+    if (user?.id && !isSearchMode && isAuthenticated && !isAuthLoading && !isLoadingRecommendations && !recommendationsData) {
+      console.log("Triggering immediate recommendations fetch...");
+      refetchRecommendations();
+    }
+  }, [user?.id, isSearchMode, isAuthenticated, isAuthLoading, isLoadingRecommendations, recommendationsData, refetchRecommendations]);
 
   const createApplicationMutation = useCreateApplication();
 
@@ -123,6 +141,7 @@ export default function Jobs() {
           queryKey: ["jobs", "search"],
           refetchType: "active",
         });
+        await refetchSearch();
       } else {
         await queryClient.invalidateQueries({
           queryKey: ["jobs", "personalized"],
@@ -155,7 +174,7 @@ export default function Jobs() {
           }
         }
 
-        await refetch();
+        await refetchRecommendations();
       }
 
       toast.success(
@@ -169,7 +188,7 @@ export default function Jobs() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [queryClient, isSearchMode, refetch]);
+  }, [queryClient, isSearchMode, refetchSearch, refetchRecommendations]);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -254,6 +273,7 @@ export default function Jobs() {
             queryKey: ["jobs", "search"],
             refetchType: "active",
           });
+          refetchSearch();
         } else {
           refetchRecommendations();
         }
@@ -264,7 +284,7 @@ export default function Jobs() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isSearchMode, refetchRecommendations, queryClient]);
+  }, [isSearchMode, refetchRecommendations, refetchSearch, queryClient]);
 
   const jobs = jobsData?.jobs || [];
   const totalJobs = jobsData?.total || 0;
@@ -370,7 +390,7 @@ export default function Jobs() {
                   {Array.from({ length: 9 }).map((_, index) => (
                     <SkeletonJobCard
                       key={index}
-                      className="bg-white border border-slate-100 rounded-xl shadow-sm"
+                      className="h-full hover:shadow-lg hover:border-indigo-200 transition-all duration-300"
                     />
                   ))}
                 </>

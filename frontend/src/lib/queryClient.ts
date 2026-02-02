@@ -80,6 +80,28 @@ export function restoreQueryCache() {
   }
 }
 
+export function getCachedUserData() {
+  if (typeof window === 'undefined') return undefined;
+
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return undefined;
+
+    const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached);
+    const userKey = JSON.stringify(['auth', 'user']);
+    const userCache = cacheData[userKey];
+    
+    if (!userCache) return undefined;
+    
+    const maxAge = 30 * 60 * 1000; // 30 minutes max cache age
+    if (Date.now() - userCache.timestamp > maxAge) return undefined;
+    
+    return userCache.data;
+  } catch {
+    return undefined;
+  }
+}
+
 export function clearQueryCache() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(CACHE_KEY);

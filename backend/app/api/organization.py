@@ -59,9 +59,7 @@ def get_organization_recruiters(
 
 
 @router.post(
-    "/recruiters",
-    response_model=RecruiterResponse,
-    status_code=status.HTTP_201_CREATED,
+    "/recruiters", response_model=RecruiterResponse, status_code=status.HTTP_201_CREATED
 )
 @limiter.limit("50/minute")
 def create_recruiter(
@@ -110,10 +108,7 @@ def update_recruiter(
     return RecruiterCRUD.update_recruiter(recruiter_id, update_data, db)
 
 
-@router.delete(
-    "/recruiters/{recruiter_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/recruiters/{recruiter_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("50/minute")
 def remove_recruiter(
     request: Request,
