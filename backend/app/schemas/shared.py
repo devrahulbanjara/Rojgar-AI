@@ -1,7 +1,45 @@
 from datetime import date
+from enum import Enum
 from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ErrorCode(str, Enum):
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
+    UNAUTHORIZED = "UNAUTHORIZED"
+    FORBIDDEN = "FORBIDDEN"
+    INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
+    TOKEN_EXPIRED = "TOKEN_EXPIRED"
+    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
+    RESOURCE_ALREADY_EXISTS = "RESOURCE_ALREADY_EXISTS"
+    RESOURCE_CONFLICT = "RESOURCE_CONFLICT"
+    BUSINESS_LOGIC_ERROR = "BUSINESS_LOGIC_ERROR"
+    INVALID_OPERATION = "INVALID_OPERATION"
+    JOB_NOT_FOUND = "JOB_NOT_FOUND"
+    CANDIDATE_NOT_FOUND = "CANDIDATE_NOT_FOUND"
+    APPLICATION_NOT_FOUND = "APPLICATION_NOT_FOUND"
+    ORGANIZATION_NOT_FOUND = "ORGANIZATION_NOT_FOUND"
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    RESUME_NOT_FOUND = "RESUME_NOT_FOUND"
+    WEBHOOK_PROCESSING_FAILED = "WEBHOOK_PROCESSING_FAILED"
+
+
+class ErrorResponse(BaseModel):
+    detail: str = Field(description="Human-readable error message")
+    error_code: str | None = Field(
+        default=None, description="Machine-readable error code for frontend translation"
+    )
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "detail": "The requested resource was not found",
+                "error_code": "RESOURCE_NOT_FOUND",
+            }
+        }
+    )
 
 
 class SocialLinkBase(BaseModel):

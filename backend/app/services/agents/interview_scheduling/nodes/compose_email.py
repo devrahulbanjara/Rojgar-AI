@@ -7,12 +7,10 @@ from ..templates import get_interview_email_template
 def compose_email_draft(state: InterviewSchedulingState) -> dict:
     name = state["name"]
     reason = state["reason"]
-
     html_body = get_interview_email_template(
         name=name,
         reason=reason,
         booking_link=settings.BOOKING_LINK,
         contact_email=settings.GMAIL_USER,
     )
-
     return {"draft_email": html_body}

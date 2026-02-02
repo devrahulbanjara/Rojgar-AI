@@ -21,13 +21,11 @@ class RecruiterCRUD:
             raise BusinessLogicError(
                 "Email already registered to ConvexHire previously."
             )
-
         existing_in_org = OrganizationAuthService.get_organization_by_email(email, db)
         if existing_in_org:
             raise BusinessLogicError(
                 "Recruiter email already registered to ConvexHire previously."
             )
-
         now = get_datetime()
         new_recruiter = User(
             user_id=uuid.uuid4(),
@@ -39,7 +37,6 @@ class RecruiterCRUD:
             created_at=now,
             updated_at=now,
         )
-
         db.add(new_recruiter)
         db.commit()
         db.refresh(new_recruiter)
@@ -68,10 +65,8 @@ class RecruiterCRUD:
         recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
         if not recruiter:
             raise NotFoundError("Recruiter not found")
-
         if update_data.name is not None:
             recruiter.name = update_data.name
-
         if update_data.email is not None:
             existing_user = db.execute(
                 select(User).where(
@@ -81,9 +76,7 @@ class RecruiterCRUD:
             if existing_user:
                 raise BusinessLogicError("Email already in use")
             recruiter.email = update_data.email
-
         recruiter.updated_at = get_datetime()
-
         db.add(recruiter)
         db.commit()
         db.refresh(recruiter)
@@ -94,6 +87,5 @@ class RecruiterCRUD:
         recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
         if not recruiter:
             raise NotFoundError("Recruiter not found")
-
         db.delete(recruiter)
         db.commit()

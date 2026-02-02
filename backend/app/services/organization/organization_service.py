@@ -24,7 +24,6 @@ class OrganizationService:
         organization = OrganizationService.get_organization_by_id(organization_id, db)
         if not organization:
             raise NotFoundError("Organization not found")
-
         if update_data.name is not None:
             organization.name = update_data.name
         if update_data.location_city is not None:
@@ -39,11 +38,8 @@ class OrganizationService:
             organization.industry = update_data.industry
         if update_data.founded_year is not None:
             organization.founded_year = update_data.founded_year
-
         organization.updated_at = get_datetime()
-
         db.add(organization)
         db.commit()
         db.refresh(organization)
-
         return organization

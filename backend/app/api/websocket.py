@@ -1,5 +1,3 @@
-"""WebSocket endpoint for real-time activity updates."""
-
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -28,7 +26,6 @@ async def websocket_activity(websocket: WebSocket):
         try:
             user = await authenticate_websocket_user(websocket, db)
             organization_id = user.organization_id
-
             await manager.connect(websocket, organization_id)
             await manager.send_personal_message(
                 {
@@ -38,12 +35,10 @@ async def websocket_activity(websocket: WebSocket):
                 },
                 websocket,
             )
-
             while True:
                 data = await websocket.receive_text()
                 if data == "ping":
                     await websocket.send_text("pong")
-
         except WebSocketDisconnect:
             if organization_id:
                 manager.disconnect(websocket, organization_id)

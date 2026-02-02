@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 class Resume(Base):
     __tablename__ = "resume"
-
     resume_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     profile_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("candidate_profile.profile_id"), nullable=False
@@ -23,18 +22,15 @@ class Resume(Base):
     resume_name: Mapped[str] = mapped_column(String, nullable=False)
     target_job_title: Mapped[str | None] = mapped_column(String, nullable=True)
     custom_summary: Mapped[str | None] = mapped_column(String, nullable=True)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     profile: Mapped["CandidateProfile"] = relationship(
         "CandidateProfile", back_populates="resumes"
     )
-
     social_links: Mapped[list["ResumeSocialLink"]] = relationship(
         "ResumeSocialLink", back_populates="resume", cascade="all, delete-orphan"
     )
@@ -54,27 +50,23 @@ class Resume(Base):
 
 class ResumeSocialLink(Base):
     __tablename__ = "resume_social_links"
-
     resume_social_link_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     type: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     resume: Mapped["Resume"] = relationship("Resume", back_populates="social_links")
 
 
 class ResumeWorkExperience(Base):
     __tablename__ = "resume_work_experience"
-
     resume_work_experience_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("resume.resume_id"), nullable=False
@@ -86,20 +78,17 @@ class ResumeWorkExperience(Base):
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     resume: Mapped["Resume"] = relationship("Resume", back_populates="work_experiences")
 
 
 class ResumeEducation(Base):
     __tablename__ = "resume_education"
-
     resume_education_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("resume.resume_id"), nullable=False
@@ -110,20 +99,17 @@ class ResumeEducation(Base):
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     resume: Mapped["Resume"] = relationship("Resume", back_populates="educations")
 
 
 class ResumeCertification(Base):
     __tablename__ = "resume_certification"
-
     resume_certification_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("resume.resume_id"), nullable=False
@@ -136,31 +122,26 @@ class ResumeCertification(Base):
     does_not_expire: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     resume: Mapped["Resume"] = relationship("Resume", back_populates="certifications")
 
 
 class ResumeSkills(Base):
     __tablename__ = "resume_skills"
-
     resume_skill_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("resume.resume_id"), nullable=False
     )
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-
     resume: Mapped["Resume"] = relationship("Resume", back_populates="skills")
