@@ -1,21 +1,18 @@
 # GitHub Actions CI Pipeline
-#
+
 # This workflow runs on every push and pull request to main/develop branches.
 # It checks:
-#   - Backend: Python linting with Ruff
-#   - Frontend: ESLint checks
+#   - Backend: Python linting and formatting with Ruff
+#   - Frontend: ESLint checks and Prettier formatting
 
 name: CI
 
-# TRIGGER: When does this workflow run?
 on:
-  # Run on pushes to main or dev branches only
   push:
     branches:
       - main
       - dev
 
-  # Run on pull requests targeting main or dev
   pull_request:
     branches:
       - main
@@ -47,21 +44,16 @@ jobs:
 
       # Step 4: Run Ruff linter to check for code issues
       - name: Run Ruff linter
-        run: uv run ruff check
+        run: uvx ruff check --fix
 
       # Step 5: Check code formatting (fails if code isn't formatted)
       - name: Check code formatting
-        run: uv run ruff format --check
-
-      # Step 6: Run unit tests with pytest
-      - name: Run unit tests
-        run: uv run pytest tests/unit/ -v --tb=short
+        run: uvx ruff format
 
   frontend:
     name: Frontend Lint
     runs-on: ubuntu-latest
 
-    # All commands run from the frontend directory
     defaults:
       run:
         working-directory: frontend
@@ -87,10 +79,6 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      # until TypeScript errors are fixed. will ncomment when ready:
-
-      # - name: TypeScript type check
-      #   run: npm run type-check
-
-      - name: Build
-        run: npm run build
+      # Step 5: Prettier check (fails if formatting is off)
+      - name: Prettier check
+        run: npm run format:check

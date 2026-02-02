@@ -1,26 +1,22 @@
-"use client";
+'use client'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
-import { useEffect } from "react";
-import CandidateDashboardComponent from "../../../components/dashboard/CandidateDashboard";
-import { WelcomeMessage } from "../../../components/dashboard";
-import {
-  PageTransition,
-  AnimatedContainer,
-  LoadingSpinner,
-} from "../../../components/common";
-import { AppShell } from "../../../components/layout/AppShell";
-import { useAuth } from "../../../hooks/useAuth";
+import { useEffect } from 'react'
+import CandidateDashboardComponent from '../../../components/dashboard/CandidateDashboard'
+import { WelcomeMessage } from '../../../components/dashboard'
+import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
+import { AppShell } from '../../../components/layout/AppShell'
+import { useAuth } from '../../../hooks/useAuth'
 
 export default function CandidateDashboardPage() {
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = "/login";
+      window.location.href = '/login'
     }
-  }, [isAuthenticated, isAuthLoading]);
+  }, [isAuthenticated, isAuthLoading])
 
   if (isAuthLoading || !isAuthenticated) {
     return (
@@ -29,18 +25,15 @@ export default function CandidateDashboardPage() {
           <LoadingSpinner />
         </PageTransition>
       </AppShell>
-    );
+    )
   }
 
   // Get first name from user's full name
-  const firstName = user?.name?.split(" ")[0];
+  const firstName = user?.name?.split(' ')[0]
 
   return (
     <AppShell>
-      <PageTransition
-        className="min-h-screen"
-        style={{ background: "#F9FAFB" }}
-      >
+      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
         <div className="space-y-8 pb-12">
           {/* Welcome Message with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
@@ -60,5 +53,5 @@ export default function CandidateDashboardPage() {
         </div>
       </PageTransition>
     </AppShell>
-  );
+  )
 }

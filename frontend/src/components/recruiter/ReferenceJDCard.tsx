@@ -1,113 +1,104 @@
-import React from "react";
-import { Sparkles, CheckCircle2, Briefcase } from "lucide-react";
-import { cn } from "../../lib/utils";
-import { ReferenceJD } from "../../services/referenceJDService";
+import React from 'react'
+import { Sparkles, CheckCircle2, Briefcase } from 'lucide-react'
+import { cn } from '../../lib/utils'
+import { ReferenceJD } from '../../services/referenceJDService'
 
 interface ReferenceJDCardProps {
-  jd: ReferenceJD;
-  onClick?: () => void;
-  onUseTemplate?: (e: React.MouseEvent) => void;
-  className?: string;
+  jd: ReferenceJD
+  onClick?: () => void
+  onUseTemplate?: (e: React.MouseEvent) => void
+  className?: string
 }
 
 // Department color schemes matching RecruiterJobCard
-const departmentColors: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
+const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
-    bg: "bg-blue-50/80",
-    text: "text-blue-700",
-    border: "border-blue-200",
+    bg: 'bg-blue-50/80',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
   },
   Sales: {
-    bg: "bg-green-50/80",
-    text: "text-green-700",
-    border: "border-green-200",
+    bg: 'bg-green-50/80',
+    text: 'text-green-700',
+    border: 'border-green-200',
   },
   Marketing: {
-    bg: "bg-orange-50/80",
-    text: "text-orange-700",
-    border: "border-orange-200",
+    bg: 'bg-orange-50/80',
+    text: 'text-orange-700',
+    border: 'border-orange-200',
   },
   Product: {
-    bg: "bg-purple-50/80",
-    text: "text-purple-700",
-    border: "border-purple-200",
+    bg: 'bg-purple-50/80',
+    text: 'text-purple-700',
+    border: 'border-purple-200',
   },
   Design: {
-    bg: "bg-pink-50/80",
-    text: "text-pink-700",
-    border: "border-pink-200",
+    bg: 'bg-pink-50/80',
+    text: 'text-pink-700',
+    border: 'border-pink-200',
   },
-  "Data Science": {
-    bg: "bg-cyan-50/80",
-    text: "text-cyan-700",
-    border: "border-cyan-200",
+  'Data Science': {
+    bg: 'bg-cyan-50/80',
+    text: 'text-cyan-700',
+    border: 'border-cyan-200',
   },
   HR: {
-    bg: "bg-rose-50/80",
-    text: "text-rose-700",
-    border: "border-rose-200",
+    bg: 'bg-rose-50/80',
+    text: 'text-rose-700',
+    border: 'border-rose-200',
   },
   Finance: {
-    bg: "bg-emerald-50/80",
-    text: "text-emerald-700",
-    border: "border-emerald-200",
+    bg: 'bg-emerald-50/80',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
   },
   Operations: {
-    bg: "bg-amber-50/80",
-    text: "text-amber-700",
-    border: "border-amber-200",
+    bg: 'bg-amber-50/80',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
   },
   Default: {
-    bg: "bg-slate-50/80",
-    text: "text-slate-700",
-    border: "border-slate-200",
+    bg: 'bg-slate-50/80',
+    text: 'text-slate-700',
+    border: 'border-slate-200',
   },
-};
+}
 
-export function ReferenceJDCard({
-  jd,
-  onClick,
-  onUseTemplate,
-  className,
-}: ReferenceJDCardProps) {
-  const deptColor =
-    departmentColors[jd.department || ""] || departmentColors.Default;
-  
+export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: ReferenceJDCardProps) {
+  const deptColor = departmentColors[jd.department || ''] || departmentColors.Default
+
   // Map new backend fields to display fields (with backward compatibility)
-  const jobResponsibilities = jd.job_responsibilities || [];
-  const requiredQualifications = jd.required_qualifications || jd.requiredSkillsAndExperience || [];
+  const jobResponsibilities = jd.job_responsibilities || []
+  const requiredQualifications = jd.required_qualifications || jd.requiredSkillsAndExperience || []
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        "group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-8",
-        "hover:-translate-y-1 hover:border-indigo-200",
-        "border-slate-200",
-        "min-h-[340px]",
-        "flex flex-col",
-        className,
+        'group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-8',
+        'hover:-translate-y-1 hover:border-indigo-200',
+        'border-slate-200',
+        'min-h-[340px]',
+        'flex flex-col',
+        className
       )}
       style={{
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.12)";
+      onMouseEnter={e => {
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'
       }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'
       }}
       role="button"
       tabIndex={0}
       aria-label={`View details for ${jd.department} reference JD`}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.()
         }
       }}
     >
@@ -118,10 +109,10 @@ export function ReferenceJDCard({
           {jd.department && (
             <span
               className={cn(
-                "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
                 deptColor.bg,
                 deptColor.text,
-                deptColor.border,
+                deptColor.border
               )}
             >
               {jd.department}
@@ -138,7 +129,7 @@ export function ReferenceJDCard({
                   key={index}
                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-md"
                 >
-                  {skill.length > 30 ? skill.substring(0, 30) + "..." : skill}
+                  {skill.length > 30 ? `${skill.substring(0, 30)}...` : skill}
                 </span>
               ))}
               {requiredQualifications.length > 2 && (
@@ -174,11 +165,11 @@ export function ReferenceJDCard({
         <button
           onClick={onUseTemplate}
           className={cn(
-            "flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm transition-all duration-200",
-            "text-indigo-600 hover:text-white",
-            "border border-indigo-200 hover:border-indigo-600",
-            "hover:bg-indigo-600",
-            "group-hover:shadow-sm",
+            'flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm transition-all duration-200',
+            'text-indigo-600 hover:text-white',
+            'border border-indigo-200 hover:border-indigo-600',
+            'hover:bg-indigo-600',
+            'group-hover:shadow-sm'
           )}
         >
           <Sparkles className="w-4 h-4" />
@@ -186,5 +177,5 @@ export function ReferenceJDCard({
         </button>
       </div>
     </div>
-  );
+  )
 }

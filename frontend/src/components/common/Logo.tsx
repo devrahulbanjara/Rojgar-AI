@@ -1,19 +1,19 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
+import Link from 'next/link'
 
 interface LogoProps {
-  variant?: 'full' | 'icon' | 'monochrome-dark' | 'monochrome-white';
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  showWordmark?: boolean;
+  variant?: 'full' | 'icon' | 'monochrome-dark' | 'monochrome-white'
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+  showWordmark?: boolean
 }
 
 export function Logo({
   variant = 'full',
   size = 'md',
   className = '',
-  showWordmark = true
+  showWordmark = true,
 }: LogoProps) {
   const sizes = {
     sm: {
@@ -28,9 +28,9 @@ export function Logo({
       icon: 32,
       text: 'text-2xl',
     },
-  };
+  }
 
-  const config = sizes[size];
+  const config = sizes[size]
 
   // Color configurations based on variant
   const getColors = () => {
@@ -40,29 +40,29 @@ export function Logo({
           icon: '#3056F5',
           convex: '#0F172A',
           hire: '#3056F5',
-        };
+        }
       case 'monochrome-dark':
         return {
           icon: '#0F172A',
           convex: '#0F172A',
           hire: '#0F172A',
-        };
+        }
       case 'monochrome-white':
         return {
           icon: '#FFFFFF',
           convex: '#FFFFFF',
           hire: '#FFFFFF',
-        };
+        }
       default: // 'full'
         return {
           icon: '#3056F5',
           convex: '#0F172A',
           hire: '#3056F5',
-        };
+        }
     }
-  };
+  }
 
-  const colors = getColors();
+  const colors = getColors()
 
   // Neural Node Icon (Option B - Connected Neural Network)
   const NeuralIcon = () => (
@@ -96,14 +96,14 @@ export function Logo({
       <circle cx="16" cy="26" r="3" fill={colors.icon} opacity="0.2" />
       <circle cx="16" cy="26" r="3" stroke={colors.icon} strokeWidth="1.5" fill="none" />
     </svg>
-  );
+  )
 
   if (!showWordmark) {
     return (
       <div className={className}>
         <NeuralIcon />
       </div>
-    );
+    )
   }
 
   return (
@@ -114,7 +114,7 @@ export function Logo({
         <span style={{ color: colors.hire }}>Hire</span>
       </span>
     </div>
-  );
+  )
 }
 
 // Convenience component for linking logo to home
@@ -122,11 +122,11 @@ export function LogoLink({
   variant = 'full',
   size = 'md',
   className = '',
-  showWordmark = true
+  showWordmark = true,
 }: LogoProps) {
   return (
     <Link href="/" className={`inline-flex ${className}`}>
       <Logo variant={variant} size={size} showWordmark={showWordmark} />
     </Link>
-  );
+  )
 }

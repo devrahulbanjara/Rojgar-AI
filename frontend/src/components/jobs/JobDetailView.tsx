@@ -1,8 +1,8 @@
-import React from 'react';
-import { Card, CardContent, CardHeader } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
+import React from 'react'
+import { Card, CardContent, CardHeader } from '../ui/card'
+import { Button } from '../ui/button'
+import { Badge } from '../ui/badge'
+import { Separator } from '../ui/separator'
 import {
   MapPin,
   Banknote,
@@ -16,37 +16,36 @@ import {
   Share2,
   Sparkles,
   Briefcase,
-  Globe
-} from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { jobUtils } from '../../services/jobService';
-import type { Job } from '../../types/job';
+  Globe,
+} from 'lucide-react'
+import { cn } from '../../lib/utils'
+import { jobUtils } from '../../services/jobService'
+import type { Job } from '../../types/job'
 
 interface JobDetailViewProps {
-  job: Job;
-  onApply?: (job: Job) => void;
-  isApplying?: boolean;
-  className?: string;
+  job: Job
+  onApply?: (job: Job) => void
+  isApplying?: boolean
+  className?: string
 }
 
 export const JobDetailView: React.FC<JobDetailViewProps> = ({
   job,
   onApply,
   isApplying = false,
-  className
+  className,
 }) => {
   const handleApply = () => {
-    onApply?.(job);
-  };
+    onApply?.(job)
+  }
 
   const handleSave = async () => {
-    if (!job.job_id) return;
+    if (!job.job_id) return
     // This will be handled by the parent component or we can add the hook here
     // For now, we'll leave it empty as it might be handled differently
-  };
+  }
 
-  const handleShare = () => {
-  };
+  const handleShare = () => {}
 
   return (
     <Card className={cn('h-fit overflow-hidden', className)}>
@@ -55,9 +54,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
         <div className="space-y-4">
           {/* Job Title & Company */}
           <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2 leading-tight">
-              {job.title}
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2 leading-tight">{job.title}</h1>
             <p className="text-base text-muted-foreground font-medium">
               {job.company?.name || 'Company'}
             </p>
@@ -123,13 +120,19 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
             >
               {isApplying ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" aria-hidden="true" />
+                  <div
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"
+                    aria-hidden="true"
+                  />
                   Applying...
                 </>
               ) : (
                 <>
                   Apply Now
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+                  <ArrowRight
+                    className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform"
+                    aria-hidden="true"
+                  />
                 </>
               )}
             </Button>
@@ -164,9 +167,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
             <Banknote className="w-5 h-5 text-green-600" />
           </div>
           <div>
-            <p className="font-semibold text-foreground">
-              {jobUtils.formatJobSalary(job)}
-            </p>
+            <p className="font-semibold text-foreground">{jobUtils.formatJobSalary(job)}</p>
             <p className="text-sm text-muted-foreground">Salary Range</p>
           </div>
         </div>
@@ -183,7 +184,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
               <h2 className="text-lg font-semibold text-foreground">About the Company</h2>
             </div>
             {job.company.description ? (
-              <p className="text-muted-foreground text-sm leading-relaxed">{job.company.description}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {job.company.description}
+              </p>
             ) : (
               <p className="text-muted-foreground text-sm leading-relaxed">
                 {job.company.name} is looking for talented individuals to join their team.
@@ -204,7 +207,11 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
               )}
               {job.company.website && (
                 <a
-                  href={job.company.website.startsWith('http') ? job.company.website : `https://${job.company.website}`}
+                  href={
+                    job.company.website.startsWith('http')
+                      ? job.company.website
+                      : `https://${job.company.website}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-primary hover:underline"
@@ -306,7 +313,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </p>
                   <p className="text-sm text-muted-foreground">Don&apos;t miss the deadline!</p>
@@ -317,5 +324,5 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
         )}
       </CardContent>
     </Card>
-  );
-};
+  )
+}
