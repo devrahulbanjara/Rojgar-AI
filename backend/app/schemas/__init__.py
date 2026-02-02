@@ -53,6 +53,8 @@ from .resume import (
 from .shared import (
     CertificationBase,
     EducationBase,
+    ErrorCode,
+    ErrorResponse,
     SkillBase,
     SocialLinkBase,
     WorkExperienceBase,
@@ -122,4 +124,6 @@ __all__ = [
     "EducationBase",
     "CertificationBase",
     "SkillBase",
+    "ErrorResponse",
+    "ErrorCode",
 ]

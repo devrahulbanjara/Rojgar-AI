@@ -1,40 +1,26 @@
-from backend.app.services.agents.shortlist.graph import app
+from dotenv import load_dotenv
+from langgraph.checkpoint.memory import MemorySaver
 
-RESUME_PATH = "devrahulbanjara_resume.pdf"
+from .graph import create_workflow
 
-sample_jd = """Associate Machine Learning Engineer
-- Build and deploy ML/LLM-powered systems using Python, FastAPI, and modern ML frameworks.
-- Design RAG and agentic workflows leveraging LangChain/LangGraph and vector databases.
-- Implement end-to-end MLOps pipelines on AWS (training, deployment, monitoring, CI/CD).
-- Collaborate on production-grade AI solutions with a strong focus on scalability and reliability.
-- Have a AWS Certification focused on ML"""
-
-
-inputs = {"resume_path": RESUME_PATH, "jd_text": sample_jd, "max_iterations": 2}
-
-try:
-    final_state = app.invoke(inputs)
-
-    report = final_state.get("final_report")
-    if report:
-        print("\n" + "=" * 80)
-        print("FINAL SHORTLISTING REPORT")
-        print("=" * 80)
-        print(f"\nDECISION: {report.decision}")
-        print(f"FINAL SCORE: {report.final_score}/10")
-        print("\nScore Breakdown:")
-        for component, score in report.score_breakdown.items():
-            print(f"  • {component}: {score}")
-        print("\nKey Strengths:")
-        for strength in report.key_strengths:
-            print(f"  ✓ {strength}")
-        print("\nKey Concerns:")
-        for concern in report.key_concerns:
-            print(f"  ✗ {concern}")
-        print(f"\nJustification:\n{report.justification}")
-        print(f"\nRecommendation:\n{report.recommendation}")
-        print("=" * 80)
-
-
-except Exception as e:
-    print(f"Error: {e}")
+load_dotenv()
+checkpointer = MemorySaver()
+builder = create_workflow()
+app = builder.compile(checkpointer=checkpointer)
+if __name__ == "__main__":
+    inputs = {
+        "jd": "Senior AI Engineer. Requirements: 5+ years exp, LangGraph, AWS Bedrock, and experience with 'NicheFrameworkX'.",
+        "resume": "John Doe. 6 years experience. Expert in AWS. Worked at 'UnknownStartup Inc' building agents with NicheFrameworkX.",
+        "max_iterations": 2,
+        "iteration": 0,
+        "cto_evals": [],
+        "hr_evals": [],
+        "critiques": [],
+        "is_satisfied": False,
+    }
+    config = {"configurable": {"thread_id": "agentic_reflection_v1"}}
+    for output in app.stream(inputs, config=config):
+        print(output)
+    final_state = app.get_state(config).values
+    print(f"SCORE: {final_state.get('final_score')}/100")
+    print(f"REASON: {final_state.get('final_reason')}")

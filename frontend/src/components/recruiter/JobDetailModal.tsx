@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Ban,
   Trash2,
+  BookmarkPlus,
 } from "lucide-react";
 import type { Job } from "../../types/job";
 
@@ -40,6 +41,7 @@ interface JobDetailModalProps {
   onEdit?: (job: Job) => void;
   onExpire?: (job: Job) => void;
   onDelete?: (job: Job) => void;
+  onConvertToReferenceJD?: (job: Job) => void;
 }
 
 export function JobDetailModal({
@@ -49,6 +51,7 @@ export function JobDetailModal({
   onEdit,
   onExpire,
   onDelete,
+  onConvertToReferenceJD,
 }: JobDetailModalProps) {
   if (!job) return null;
 
@@ -67,6 +70,12 @@ export function JobDetailModal({
   const handleDelete = () => {
     if (onDelete) {
       onDelete(job);
+    }
+  };
+
+  const handleConvertToReferenceJD = () => {
+    if (onConvertToReferenceJD) {
+      onConvertToReferenceJD(job);
     }
   };
 
@@ -412,20 +421,33 @@ export function JobDetailModal({
           )}
         </div>
 
-        {/* Sticky Footer with Edit, Expire, and Delete Buttons */}
+        {/* Sticky Footer with Edit, Expire, Delete, and Save as Template Buttons */}
         <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
-          {onDelete && (
-            <Button
-              onClick={handleDelete}
-              size="lg"
-              variant="outline"
-              className="h-12 px-8 text-base font-semibold border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
-            >
-              <Trash2 className="w-5 h-5 mr-2" />
-              Delete Job
-            </Button>
-          )}
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="flex items-center gap-4">
+            {onDelete && (
+              <Button
+                onClick={handleDelete}
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base font-semibold border-red-300 text-red-700 hover:bg-red-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+              >
+                <Trash2 className="w-5 h-5 mr-2" />
+                Delete Job
+              </Button>
+            )}
+            {onConvertToReferenceJD && (isActive || job.status === "Closed" || job.status === "Expired") && (
+              <Button
+                onClick={handleConvertToReferenceJD}
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base font-semibold border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md group"
+              >
+                <BookmarkPlus className="w-5 h-5 mr-2" />
+                Save as Template
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
             {isActive && onExpire && (
               <Button
                 onClick={handleExpire}

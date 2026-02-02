@@ -11,12 +11,17 @@ import {
   AnimatedContainer,
   LoadingSpinner,
 } from "../../../components/common";
+import { SkeletonStatCard, SkeletonRecentActivity } from "../../../components/common/SkeletonLoader";
 import { useDashboardStats } from "../../../hooks/useDashboardStats";
 import { useAuth } from "../../../hooks/useAuth";
+import { useWebSocket } from "../../../hooks/useWebSocket";
 
 export default function RecruiterDashboard() {
-  const { data: stats, refetch: refetchStats } = useDashboardStats();
+  const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useDashboardStats();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  
+  // Connect to WebSocket for real-time updates
+  useWebSocket();
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
@@ -75,12 +80,25 @@ export default function RecruiterDashboard() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             {/* Stats Grid */}
             <AnimatedContainer direction="up" delay={0.2}>
-              <StatsGrid stats={stats || {}} userType="recruiter" />
+              {isStatsLoading ? (
+                <div className="grid gap-6 md:grid-cols-4">
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                </div>
+              ) : (
+                <StatsGrid stats={stats || {}} userType="recruiter" />
+              )}
             </AnimatedContainer>
 
             {/* Recent Activity Section */}
             <AnimatedContainer direction="up" delay={0.3}>
-              <RecentActivity />
+              {isStatsLoading ? (
+                <SkeletonRecentActivity />
+              ) : (
+                <RecentActivity />
+              )}
             </AnimatedContainer>
           </div>
         </div>

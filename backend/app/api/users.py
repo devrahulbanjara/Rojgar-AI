@@ -32,5 +32,4 @@ def update_profile(
     current_user.name = profile_data.name
     db.commit()
     db.refresh(current_user)
-
     return current_user

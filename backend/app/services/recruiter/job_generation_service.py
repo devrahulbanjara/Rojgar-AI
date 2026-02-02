@@ -20,13 +20,8 @@ class JobGenerationService:
         current_draft: dict | None = None,
     ) -> JobDescription:
         thread_id = str(uuid.uuid4())
-
-        thread_config = {
-            "configurable": {"thread_id": thread_id},
-        }
-
+        thread_config = {"configurable": {"thread_id": thread_id}}
         reference_jd = ""
-
         if reference_jd_id and db and organization_id:
             try:
                 reference_jd_obj, about_the_company = (
@@ -42,8 +37,6 @@ class JobGenerationService:
                     )
             except Exception:
                 pass
-
-        # Build initial state
         initial_state: JobState = {
             "title": title,
             "raw_requirements": raw_requirements,
@@ -52,8 +45,6 @@ class JobGenerationService:
             "draft": None,
             "feedback": "",
         }
-
-        # Runs only if it is a revision
         if current_draft:
             try:
                 draft: JobDescription = JobDescription(
@@ -69,9 +60,7 @@ class JobGenerationService:
                 )
                 initial_state["feedback"] = current_draft.get("feedback", "")
                 initial_state["draft"] = draft
-
             except Exception as e:
                 logger.error(f"Failed to convert current_draft to JobDescription: {e}")
-
         result = jd_agent.invoke(initial_state, config=thread_config)
         return result

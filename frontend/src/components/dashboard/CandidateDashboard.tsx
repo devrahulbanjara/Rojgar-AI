@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { STATUS_CONFIG, COLUMN_MAPPING } from "@/utils/statusStyles";
 import { Loader2, Briefcase, Video, Trophy, MapPin, CalendarClock } from "lucide-react";
+import { SkeletonDashboardColumn } from "../common/SkeletonLoader";
 
 interface JobSummary {
     job_id: string;
@@ -85,8 +86,43 @@ export default function CandidateDashboard() {
         }
     });
 
-    if (loading) return <div className="flex justify-center p-20 min-h-[500px] items-center"><Loader2 className="animate-spin text-blue-600 w-8 h-8" /></div>;
     if (error) return <div className="text-center p-20 text-red-500">Failed to load applications.</div>;
+
+    if (loading) {
+        return (
+            <div className="h-full flex flex-col space-y-8 pb-10">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Your Applications</h1>
+                    <p className="text-slate-500 mt-2 text-lg">Track your job application journey</p>
+                </div>
+
+                {/* Skeleton Kanban Columns */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+                    <SkeletonDashboardColumn
+                        bgColor="bg-blue-50/50"
+                        borderColor="border-blue-100/60"
+                        iconColor="bg-blue-200"
+                        textColor="bg-slate-200"
+                        badgeColor="bg-blue-100"
+                    />
+                    <SkeletonDashboardColumn
+                        bgColor="bg-indigo-50/50"
+                        borderColor="border-indigo-100/60"
+                        iconColor="bg-indigo-200"
+                        textColor="bg-slate-200"
+                        badgeColor="bg-indigo-100"
+                    />
+                    <SkeletonDashboardColumn
+                        bgColor="bg-emerald-50/50"
+                        borderColor="border-emerald-100/60"
+                        iconColor="bg-emerald-200"
+                        textColor="bg-slate-200"
+                        badgeColor="bg-emerald-100"
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col space-y-8 pb-10">
