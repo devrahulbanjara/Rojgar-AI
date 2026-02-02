@@ -1,51 +1,43 @@
-"use client";
+'use client'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
-import { useEffect } from "react";
-import { WelcomeMessage, StatsGrid } from "../../../components/dashboard";
-import { RecentActivity } from "../../../components/dashboard/RecentActivity";
-import { AppShell } from "../../../components/layout/AppShell";
-import {
-  PageTransition,
-  AnimatedContainer,
-  LoadingSpinner,
-} from "../../../components/common";
-import { SkeletonStatCard, SkeletonRecentActivity } from "../../../components/common/SkeletonLoader";
-import { useDashboardStats } from "../../../hooks/useDashboardStats";
-import { useAuth } from "../../../hooks/useAuth";
-import { useWebSocket } from "../../../hooks/useWebSocket";
+import { useEffect } from 'react'
+import { WelcomeMessage, StatsGrid } from '../../../components/dashboard'
+import { RecentActivity } from '../../../components/dashboard/RecentActivity'
+import { AppShell } from '../../../components/layout/AppShell'
+import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
+import { SkeletonStatCard, SkeletonRecentActivity } from '../../../components/common/SkeletonLoader'
+import { useDashboardStats } from '../../../hooks/useDashboardStats'
+import { useAuth } from '../../../hooks/useAuth'
+import { useWebSocket } from '../../../hooks/useWebSocket'
 
 export default function RecruiterDashboard() {
-  const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useDashboardStats();
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  
+  const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useDashboardStats()
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
+
   // Connect to WebSocket for real-time updates
-  useWebSocket();
+  useWebSocket()
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = "/login";
+      window.location.href = '/login'
     }
-  }, [isAuthenticated, isAuthLoading]);
+  }, [isAuthenticated, isAuthLoading])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.shiftKey &&
-        event.key === "R"
-      ) {
-        event.preventDefault();
-        refetchStats();
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
+        event.preventDefault()
+        refetchStats()
       }
-    };
+    }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [refetchStats]);
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [refetchStats])
 
   if (isAuthLoading || !isAuthenticated) {
     return (
@@ -54,15 +46,12 @@ export default function RecruiterDashboard() {
           <LoadingSpinner />
         </PageTransition>
       </AppShell>
-    );
+    )
   }
 
   return (
     <AppShell>
-      <PageTransition
-        className="min-h-screen"
-        style={{ background: "#F9FAFB" }}
-      >
+      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
         <div className="space-y-8 pb-12">
           {/* Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
@@ -94,15 +83,11 @@ export default function RecruiterDashboard() {
 
             {/* Recent Activity Section */}
             <AnimatedContainer direction="up" delay={0.3}>
-              {isStatsLoading ? (
-                <SkeletonRecentActivity />
-              ) : (
-                <RecentActivity />
-              )}
+              {isStatsLoading ? <SkeletonRecentActivity /> : <RecentActivity />}
             </AnimatedContainer>
           </div>
         </div>
       </PageTransition>
     </AppShell>
-  );
+  )
 }

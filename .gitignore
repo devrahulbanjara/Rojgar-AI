@@ -106,3 +106,4 @@ backend/tests/test_resumes/
 .shared
 .cursor
 qdrant_data/
+.vscode

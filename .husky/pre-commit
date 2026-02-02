@@ -1,1 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Backend pre-commit hooks
 uv run --project backend pre-commit run --config ../.pre-commit-config.yaml --staged
+
+# Frontend lint-staged (runs ESLint and Prettier on staged files)
+cd frontend && npx lint-staged

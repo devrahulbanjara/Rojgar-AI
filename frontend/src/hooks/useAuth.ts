@@ -1,29 +1,36 @@
-'use client';
+'use client'
 
-import type { LoginCredentials, SignupData, UseAuthReturn } from '../types';
-import { useCurrentUser, useLogin, useSignup, useLogout, useIsAuthenticated } from './queries/useAuthQueries';
+import type { LoginCredentials, SignupData, UseAuthReturn } from '../types'
+import {
+  useCurrentUser,
+  useLogin,
+  useSignup,
+  useLogout,
+  useIsAuthenticated,
+} from './queries/useAuthQueries'
 
 export const useAuth = (): UseAuthReturn => {
-  const { data: user, refetch: refetchUser } = useCurrentUser();
-  const { isAuthenticated, isLoading: authLoading } = useIsAuthenticated();
+  const { data: user, refetch: refetchUser } = useCurrentUser()
+  const { isAuthenticated, isLoading: authLoading } = useIsAuthenticated()
 
-  const loginMutation = useLogin();
-  const signupMutation = useSignup();
-  const logoutMutation = useLogout();
+  const loginMutation = useLogin()
+  const signupMutation = useSignup()
+  const logoutMutation = useLogout()
 
   const login = async (credentials: LoginCredentials) => {
-    await loginMutation.mutateAsync(credentials);
-  };
+    await loginMutation.mutateAsync(credentials)
+  }
 
   const signup = async (data: SignupData) => {
-    await signupMutation.mutateAsync(data);
-  };
+    await signupMutation.mutateAsync(data)
+  }
 
   const logout = () => {
-    logoutMutation.mutate();
-  };
+    logoutMutation.mutate()
+  }
 
-  const isLoading = authLoading || loginMutation.isPending || signupMutation.isPending || logoutMutation.isPending;
+  const isLoading =
+    authLoading || loginMutation.isPending || signupMutation.isPending || logoutMutation.isPending
 
   return {
     user: user || null,
@@ -39,5 +46,5 @@ export const useAuth = (): UseAuthReturn => {
     isLoginPending: loginMutation.isPending,
     isSignupPending: signupMutation.isPending,
     isLogoutPending: logoutMutation.isPending,
-  };
-};
+  }
+}

@@ -2,12 +2,12 @@
  * Application Query Hooks
  */
 
-'use client';
+'use client'
 
-import { useQuery } from '@tanstack/react-query';
-import { API_CONFIG } from '../../config/constants';
-import { queryKeys } from '../../lib/queryClient';
-import type { ApplicationTrackingBoard } from '../../types/application';
+import { useQuery } from '@tanstack/react-query'
+import { API_CONFIG } from '../../config/constants'
+import { queryKeys } from '../../lib/queryClient'
+import type { ApplicationTrackingBoard } from '../../types/application'
 
 export const useApplicationQueries = () => {
   const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
@@ -17,23 +17,23 @@ export const useApplicationQueries = () => {
       headers: {
         'Content-Type': 'application/json',
       },
-    });
+    })
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
 
-    return response.json();
-  };
+    return response.json()
+  }
 
   const useApplicationTrackingBoard = () => {
     return useQuery({
       queryKey: queryKeys.applications.trackingBoard,
       queryFn: fetchApplicationTrackingBoard,
-    });
-  };
+    })
+  }
 
   return {
     useApplicationTrackingBoard,
-  };
-};
+  }
+}

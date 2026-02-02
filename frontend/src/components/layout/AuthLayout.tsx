@@ -4,24 +4,20 @@
  * Updated with new design system
  */
 
-import React from 'react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
-import { LogoLink } from '../common/Logo';
-import { ROUTES } from '../../config/constants';
+import React from 'react'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
+import { LogoLink } from '../common/Logo'
+import { ROUTES } from '../../config/constants'
 
 interface AuthLayoutProps {
-  children: React.ReactNode;
-  title: string;
-  subtitle?: string;
+  children: React.ReactNode
+  title: string
+  subtitle?: string
 }
 
-export const AuthLayout: React.FC<AuthLayoutProps> = ({
-  children,
-  title,
-  subtitle,
-}) => {
+export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) => {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-6 lg:px-8 py-6 sm:py-8"
@@ -44,9 +40,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-sm sm:text-base text-[#475569] leading-relaxed">
-              {subtitle}
-            </p>
+            <p className="text-sm sm:text-base text-[#475569] leading-relaxed">{subtitle}</p>
           )}
         </div>
 
@@ -70,5 +64,5 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         </div>
       </motion.div>
     </div>
-  );
-};
+  )
+}

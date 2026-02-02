@@ -1,9 +1,17 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import { TrendingUp } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion'
+import { TrendingUp } from 'lucide-react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import { useState, useEffect } from 'react'
 
 const data = [
   { month: 'Jan', hires: 12, applications: 45 },
@@ -12,30 +20,33 @@ const data = [
   { month: 'Apr', hires: 32, applications: 89 },
   { month: 'May', hires: 41, applications: 105 },
   { month: 'Jun', hires: 48, applications: 118 },
-];
+]
 
 export function InsightsSection() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
     const checkVisibility = () => {
-      const section = document.getElementById('insights');
+      const section = document.getElementById('insights')
       if (section) {
-        const rect = section.getBoundingClientRect();
-        const isInViewport = rect.width > 0 && rect.height > 0;
-        setIsVisible(isInViewport);
+        const rect = section.getBoundingClientRect()
+        const isInViewport = rect.width > 0 && rect.height > 0
+        setIsVisible(isInViewport)
       }
-    };
+    }
 
     // Check on mount and resize
-    checkVisibility();
-    window.addEventListener('resize', checkVisibility);
+    checkVisibility()
+    window.addEventListener('resize', checkVisibility)
 
-    return () => window.removeEventListener('resize', checkVisibility);
-  }, []);
+    return () => window.removeEventListener('resize', checkVisibility)
+  }, [])
 
   return (
-    <section id="insights" className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 lg:px-8 bg-white">
+    <section
+      id="insights"
+      className="hidden xl:block py-20 sm:py-24 lg:py-32 px-6 lg:px-8 bg-white"
+    >
       <div className="w-full max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -54,8 +65,8 @@ export function InsightsSection() {
             Data-Driven Insights
           </h2>
           <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-[#475569] max-w-3xl mx-auto leading-relaxed">
-            Track hiring metrics, understand trends, and make informed decisions
-            with real-time analytics
+            Track hiring metrics, understand trends, and make informed decisions with real-time
+            analytics
           </p>
         </motion.div>
 
@@ -71,11 +82,7 @@ export function InsightsSection() {
               <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={256}>
                 <LineChart data={data}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis
-                    dataKey="month"
-                    stroke="#475569"
-                    style={{ fontSize: '14px' }}
-                  />
+                  <XAxis dataKey="month" stroke="#475569" style={{ fontSize: '14px' }} />
                   <YAxis stroke="#475569" style={{ fontSize: '14px' }} />
                   <Tooltip
                     contentStyle={{
@@ -118,7 +125,7 @@ export function InsightsSection() {
               className="text-center"
             >
               <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="w-6 sm:w-8 h-0.5 sm:h-1 bg-brand-blue rounded-full"></div>
+                <div className="w-6 sm:w-8 h-0.5 sm:h-1 bg-brand-blue rounded-full" />
               </div>
               <p className="text-xs sm:text-sm font-medium text-[#475569]">Successful Hires</p>
             </motion.div>
@@ -130,7 +137,13 @@ export function InsightsSection() {
               className="text-center"
             >
               <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="w-6 sm:w-8 h-0.5 sm:h-1 bg-[#8B5CF6] rounded-full" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #8B5CF6 0, #8B5CF6 4px, transparent 4px, transparent 8px)' }}></div>
+                <div
+                  className="w-6 sm:w-8 h-0.5 sm:h-1 bg-[#8B5CF6] rounded-full"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(90deg, #8B5CF6 0, #8B5CF6 4px, transparent 4px, transparent 8px)',
+                  }}
+                />
               </div>
               <p className="text-xs sm:text-sm font-medium text-[#475569]">Total Applications</p>
             </motion.div>
@@ -138,5 +151,5 @@ export function InsightsSection() {
         </motion.div>
       </div>
     </section>
-  );
+  )
 }

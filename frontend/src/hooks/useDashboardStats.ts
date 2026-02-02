@@ -1,10 +1,10 @@
-'use client';
+'use client'
 
-import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '../lib/queryClient';
-import { apiClient } from '../lib/api';
+import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '../lib/queryClient'
+import { apiClient } from '../lib/api'
 
-import type { DashboardStats } from '../types';
+import type { DashboardStats } from '../types'
 
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
@@ -12,7 +12,7 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       apiClient.get<DashboardStats>('/api/v1/applications/stats').catch(() => null),
       apiClient.get<{ count: number }>('/api/v1/stats/active-jobs').catch(() => null),
       apiClient.get<{ count: number }>('/api/v1/stats/active-candidates').catch(() => null),
-    ]);
+    ])
 
     let appStats: DashboardStats = {
       totalApplications: 0,
@@ -20,24 +20,28 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       interviewsScheduled: 0,
       offersReceived: 0,
       responseRate: 0,
-    };
+    }
 
     if (appStatsResponse && typeof appStatsResponse === 'object') {
       if ('totalApplications' in appStatsResponse || 'activeApplications' in appStatsResponse) {
-        appStats = appStatsResponse as DashboardStats;
-      } else if ('data' in appStatsResponse && appStatsResponse.data && typeof appStatsResponse.data === 'object') {
-        appStats = appStatsResponse.data as DashboardStats;
+        appStats = appStatsResponse as DashboardStats
+      } else if (
+        'data' in appStatsResponse &&
+        appStatsResponse.data &&
+        typeof appStatsResponse.data === 'object'
+      ) {
+        appStats = appStatsResponse.data as DashboardStats
       }
     }
 
-    const activeJobs = activeJobsResponse?.count ?? 0;
-    const activeCandidates = activeCandidatesResponse?.count ?? 0;
+    const activeJobs = activeJobsResponse?.count ?? 0
+    const activeCandidates = activeCandidatesResponse?.count ?? 0
 
     return {
       ...appStats,
       activeJobs,
       activeCandidates,
-    };
+    }
   } catch {
     return {
       totalApplications: 0,
@@ -47,9 +51,9 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
       interviewsScheduled: 0,
       offersReceived: 0,
       responseRate: 0,
-    };
+    }
   }
-};
+}
 
 export const useDashboardStats = () => {
   return useQuery({
@@ -60,5 +64,5 @@ export const useDashboardStats = () => {
     retry: 2,
     retryDelay: 1000,
     refetchOnMount: true,
-  });
-};
+  })
+}
