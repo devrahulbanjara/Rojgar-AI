@@ -10,7 +10,6 @@ llm = ChatBedrockConverse(
     region_name="us-east-1",
     temperature=0,
 )
-
 websearch_tool = TavilySearch(max_results=3)
 
 
@@ -18,14 +17,11 @@ def cto_node(state: ShortlistState):
     last_critique = (
         state["critiques"][-1] if state["critiques"] else "None (Initial Review)."
     )
-
     prompt = CTO_PROMPT.format(
         jd=state["jd"], resume=state["resume"], last_critique=last_critique
     )
-
     agent = create_agent(
         model=llm, tools=[websearch_tool], response_format=PersonasResponse
     )
-
     response = agent.invoke({"messages": [("human", prompt)]})
     return {"cto_evals": [response["structured_response"]]}

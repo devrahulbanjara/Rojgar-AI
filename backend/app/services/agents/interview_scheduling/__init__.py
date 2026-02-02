@@ -13,7 +13,6 @@ from .nodes import (
 from .templates import get_interview_email_template
 
 app = create_workflow()
-
 __all__ = [
     "InterviewSchedulingState",
     "get_interview_email_template",

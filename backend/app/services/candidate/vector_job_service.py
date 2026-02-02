@@ -42,10 +42,8 @@ class JobVectorService:
         if not job.job_description:
             org_name = self._get_organization_name(job)
             return f"Title: {job.title}\nOrganization: {org_name}"
-
         jd = job.job_description
         org_name = self._get_organization_name(job)
-
         parts = [
             f"Title: {job.title}",
             f"Organization: {org_name}",
@@ -55,7 +53,6 @@ class JobVectorService:
             f"Preferred: {jd.preferred}",
             f"Compensation and Benefits: {jd.compensation_and_benefits}",
         ]
-
         return "\n".join(parts)
 
     def _get_organization_name(self, job: JobPosting) -> str:
@@ -67,17 +64,14 @@ class JobVectorService:
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized")
             return False
-
         if job.status != "active":
             logger.debug(
                 f"Skipping indexing for job {job.job_id}: status is not 'active'"
             )
             return False
-
         try:
             text_content = self._construct_job_text(job)
             org_name = self._get_organization_name(job)
-
             metadata = {
                 "job_id": job.job_id,
                 "organization_id": job.organization_id,
@@ -91,20 +85,14 @@ class JobVectorService:
                 "salary_max": job.salary_max,
                 "salary_currency": job.salary_currency,
                 "status": job.status,
-                "posted_date": (
-                    job.posted_date.isoformat() if job.posted_date else None
-                ),
+                "posted_date": job.posted_date.isoformat() if job.posted_date else None,
             }
-
             doc = Document(page_content=text_content, metadata=metadata)
             self.qdrant.add_documents([doc], ids=[str(job.job_id)])
-
             job.is_indexed = True
             db.commit()
-
             logger.info(f"Successfully indexed job {job.job_id}")
             return True
-
         except Exception as e:
             logger.error(f"Failed to index job {job.job_id}: {e}")
             return False
@@ -113,39 +101,30 @@ class JobVectorService:
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized, skipping job indexing")
             return
-
         stmt = (
             select(JobPosting)
             .options(
                 selectinload(JobPosting.job_description),
                 selectinload(JobPosting.organization),
             )
-            .where(
-                JobPosting.is_indexed == False,
-                JobPosting.status == "active",
-            )
+            .where(JobPosting.is_indexed == False, JobPosting.status == "active")
         )
         pending_jobs = db.execute(stmt).scalars().all()
-
         if not pending_jobs:
             logger.debug(
                 "No pending active jobs to index (is_indexed=False, status=active)"
             )
             return
-
         logger.info(
             f"Found {len(pending_jobs)} pending active jobs to index (is_indexed=False, status=active)"
         )
-
         successful = 0
         failed = 0
-
         for job in pending_jobs:
             if self.index_job(db, job):
                 successful += 1
             else:
                 failed += 1
-
         logger.success(
             f"Completed indexing: {successful} successful, {failed} failed out of {len(pending_jobs)} total jobs"
         )
@@ -159,6 +138,5 @@ class JobVectorService:
     ) -> list[uuid.UUID]:
         if not skills:
             return []
-
         query_text = f"Job suitable for someone with skills: {', '.join(skills)}"
         return self.search_jobs(query_text, limit)

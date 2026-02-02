@@ -1,242 +1,91 @@
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/ConvexHire.png" />
-    <source media="(prefers-color-scheme: light)" srcset="docs/ConvexHire_transparent.png" />
-    <img src="docs/ConvexHire_transparent.png" alt="ConvexHire Logo" width="400"/>
-  </picture>
-
-  <h1>ConvexHire</h1>
-  <p><i>AI-Powered Recruitment Platform with Multi-Agent Intelligence</i></p>
-
-  <!-- Repo Status -->
-  <p>
-    <img src="https://img.shields.io/github/stars/devrahulbanjara/ConvexHire?style=social" alt="GitHub Stars" />
-    <img src="https://img.shields.io/github/forks/devrahulbanjara/ConvexHire?style=social" alt="GitHub Forks" />
-    <br/>
-    <img src="https://img.shields.io/github/license/devrahulbanjara/ConvexHire?style=flat-square&color=blue" alt="License" />
-    <img src="https://img.shields.io/github/last-commit/devrahulbanjara/ConvexHire?style=flat-square&color=orange" alt="Last Commit" />
-    <img src="https://img.shields.io/github/repo-size/devrahulbanjara/ConvexHire?style=flat-square&color=red" alt="Repo Size" />
+  <img src="docs/ConvexHire.png" alt="ConvexHire Logo" width="800"/>
+  
+  ### Use AI to Recruit Humans
+  
+  *An intelligent recruitment system that automates your entire hiring pipeline—from job posting to offer letters—using AI agents while keeping humans in control.*
+  
+  <br/>
+  
+  <p align="center">
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="50" height="50"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg" alt="FastAPI" width="50" height="50"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" alt="Next.js" width="50" height="50"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg" alt="AWS" width="50" height="50"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="50" height="50"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL" width="50" height="50"/>
   </p>
-
-  <p>
-    <a href="#-overview">Overview</a> •
-    <a href="#-features">Features</a> •
-    <a href="#-quick-start">Quick Start</a> •
-    <a href="#-tech-stack">Tech Stack</a>
-  </p>
+  
 </div>
 
 ---
 
-## Overview
+> [!WARNING]
+> **Currently in Development** – Features are being actively built and tested. Expect breaking changes.
 
-ConvexHire is an intelligent recruitment automation platform that leverages Multi-Agent Systems (MAS) and Retrieval-Augmented Generation (RAG) to streamline hiring workflows. Built with transparency and bias-awareness at its core, it provides explainable AI-driven candidate matching while keeping humans in the loop for critical decisions.
+---
 
-### The Problem
+## 📝 What is ConvexHire?
 
-Traditional ATS platforms rely on opaque keyword matching, often disqualifying qualified candidates without explanation. ConvexHire uses semantic understanding and transparent scoring to bridge this gap.
+ConvexHire is an AI-powered recruitment platform that automates your hiring workflow:
 
-## Features
+- **AI Job Descriptions** – Generate tailored job postings
+- **Smart Resume Screening** – Automated candidate evaluation with dual AI agents
+- **Semantic Search** – Find candidates using vector-based matching
+- **Interview Coordination** – Automated scheduling and reminders
+- **Voice Analysis** – AI-powered interview assessment
+- **Human Oversight** – Keep recruiters in control of final decisions
+- **Talent Database** – Searchable archive of all candidates
 
-<table>
-<tr>
-<td width="50%">
+---
 
-**AI-Powered Automation**
-- Intelligent resume screening and analysis
-- Semantic candidate matching with vector search
-- Automated job description generation
-- Smart interview scheduling
+## 🚀 Quick Setup
 
-</td>
-<td width="50%">
-
-**Transparent & Fair**
-- Explainable AI decision-making
-- Bias-aware algorithms
-- Clear match scoring with reasoning
-- Human-in-the-loop oversight
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-**Advanced Document Processing**
-- Multi-column CV parsing with LlamaParse
-- Layout-preserving markdown extraction
-- PII redaction with llm-guard
-- High accuracy text extraction
-
-</td>
-<td width="50%">
-
-**Seamless Integration**
-- Gmail and Google Calendar sync
-- RESTful API architecture
-- Real-time updates
-- Vector-based semantic search
-
-</td>
-</tr>
-</table>
-
-## Quick Start
-
-### Option 1: Docker (Recommended)
-
-**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) installed on your system
+> [!IMPORTANT]
+> **Prerequisites:** 
+> - [uv](https://docs.astral.sh/uv/getting-started/installation/) - Fast Python package installer
+> - Node.js 18+
+> - Docker
 
 ```bash
-# Clone repository
+# 1. Clone the repository
 git clone https://github.com/devrahulbanjara/ConvexHire.git
 cd ConvexHire
 
-# Setup environment files
+# 2. Set up environment variables
 cp backend/.env.example backend/.env
-cp frontend/.env.local frontend/.env
+cp frontend/.env.example frontend/.env
 
-# Start all services
-docker compose up -d
+# 3. Start infrastructure
+docker-compose up -d
+
+# 4. Run backend (http://localhost:8000)
+cd backend && uv sync && uv run fastapi dev
+
+# 5. Run frontend (http://localhost:3000)
+cd frontend && bun install && bun run dev
 ```
 
-**Services:**
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8000`
-- API Docs: `http://localhost:8000/docs`
+> [!TIP]
+> Make sure to configure your API keys in the `.env` files before running the application.
 
-### Option 2: Local Development
+> [!NOTE]
+> The backend runs on port 8000 and the frontend on port 3000 by default.
 
-**Prerequisites:**
-- Node.js 18+
-- Python 3.10+
-- [UV Package Manager](https://docs.astral.sh/uv/getting-started/installation/)
+---
 
-<table>
-<tr>
-<td width="50%">
+## ⭐ Star History
 
-**Backend Setup**
-
-```bash
-# Clone repository
-git clone https://github.com/devrahulbanjara/ConvexHire.git
-cd ConvexHire/backend
-
-# Setup environment
-cp .env.example .env
-
-# Install dependencies and run
-uv sync
-uv run fastapi dev
-```
-
-Backend runs on `http://localhost:8000`  
-API documentation at `http://localhost:8000/docs`
-
-</td>
-<td width="50%">
-
-**Frontend Setup**
-
-```bash
-# Navigate to frontend
-cd ../frontend
-
-# Setup environment
-cp .env.local .env
-
-# Install dependencies and run
-npm install
-npm run dev
-```
-
-Application runs on `http://localhost:3000`
-
-</td>
-</tr>
-</table>
-
-## Tech Stack
-
-### Core Technologies
-
-<div align="center">
-
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" width="48" alt="Python"/>
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/nextjs/nextjs-original.svg" width="48" alt="Next.js"/>
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/fastapi/fastapi-original.svg" width="48" alt="FastAPI"/>
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/docker/docker-original.svg" width="48" alt="Docker"/>
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/postgresql/postgresql-original.svg" width="48" alt="PostgreSQL"/>
-
-</div>
-
-<div align="center">
-
-![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-15+-000000?style=for-the-badge&logo=next.js&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.118+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-
-</div>
-
-### AI and Data Layer
-
-<div align="center">
-
-![LangChain](https://img.shields.io/badge/LangChain-Framework-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
-![LangGraph](https://img.shields.io/badge/LangGraph-Orchestration-1C3C3C?style=for-the-badge)
-![LangSmith](https://img.shields.io/badge/LangSmith-Observability-1C3C3C?style=for-the-badge)
-![Groq](https://img.shields.io/badge/Groq-Inference-F55036?style=for-the-badge)
-![Google Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
-![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-DC244C?style=for-the-badge)
-![Hugging Face](https://img.shields.io/badge/Hugging_Face-Embeddings-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
-![LlamaParse](https://img.shields.io/badge/LlamaParse-Document_AI-7C3AED?style=for-the-badge)
-![LLM Guard](https://img.shields.io/badge/LLM_Guard-PII_Redaction-DC2626?style=for-the-badge)
-
-</div>
-
-### Technology Roles
-
-| Component | Technology | Purpose |
-|:----------|:-----------|:--------|
-| **Backend API** | FastAPI | High-performance REST API server |
-| **Frontend** | Next.js | Server-side rendered React application |
-| **Orchestration** | LangGraph | Multi-agent workflow management |
-| **LLM Framework** | LangChain | LLM application development |
-| **Observability** | LangSmith | Debugging and monitoring |
-| **Inference** | Groq | Ultra-low latency LLM processing |
-| **Multimodal AI** | Google Gemini | Complex reasoning tasks |
-| **Vector Store** | Qdrant | Semantic search and matching |
-| **Embeddings** | Hugging Face | Text vectorization models |
-| **Document Processing** | LlamaParse | AI-powered document parsing |
-| **Privacy** | llm-guard | PII detection and redaction |
-| **Database** | Supabase | PostgreSQL database with real-time features |
-| **Integration** | Gmail / Google Calendar | Communication and scheduling |
-
-## Acknowledgements
-
-This project leverages:
-- **[LlamaParse](https://github.com/run-llama/llama_parse)** by LlamaIndex for AI-powered document parsing and text extraction
-- **[llm-guard](https://github.com/protectai/llm-guard)** by Protect AI for PII detection and redaction
-
-## Star History
-
-<div align="center">
-
-[![Star History Chart](https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=Date)](https://star-history.com/#devrahulbanjara/ConvexHire&Date)
-
-**Like this project? Give us a star!**
-
-</div>
+[![Star History Chart](https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=date&legend=top-left)](https://www.star-history.com/#devrahulbanjara/ConvexHire&type=date&legend=top-left)
 
 ---
 
 <div align="center">
+  
+### Built with ❤️ by [Rahul Dev Banjara](https://github.com/devrahulbanjara)
 
-### Made with passion by [@devrahulbanjara](https://github.com/devrahulbanjara)
+**ConvexHire** • Where AI meets Human Judgment
 
-[Report Bug](https://github.com/devrahulbanjara/ConvexHire/issues) • [Request Feature](https://github.com/devrahulbanjara/ConvexHire/issues) • [Contribute](CONTRIBUTING.md)
+[⭐ Star this repo](https://github.com/devrahulbanjara/ConvexHire) if you believe hiring should be intelligent, not manual.
 
 </div>

@@ -1,13 +1,3 @@
-from .schemas import (
-    FinalResponse,
-    JudgeResponse,
-    PersonasResponse,
-    ShortlistState,
-)
+from .schemas import FinalResponse, JudgeResponse, PersonasResponse, ShortlistState
 
-__all__ = [
-    "PersonasResponse",
-    "JudgeResponse",
-    "FinalResponse",
-    "ShortlistState",
-]
+__all__ = ["PersonasResponse", "JudgeResponse", "FinalResponse", "ShortlistState"]

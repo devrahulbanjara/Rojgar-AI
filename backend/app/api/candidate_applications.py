@@ -25,7 +25,6 @@ def get_my_applications(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """List all applications for the current candidate."""
     return ApplicationService.get_candidate_applications(db, current_user.user_id)
 
 
@@ -37,7 +36,6 @@ def get_application_detail(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Get detailed information about a specific application."""
     return ApplicationService.get_application_by_id(
         db, current_user.user_id, application_id
     )
@@ -51,7 +49,6 @@ def get_application_by_job(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    """Get application for a specific job if it exists."""
     return ApplicationService.get_application_by_job(db, current_user.user_id, job_id)
 
 
@@ -71,7 +68,6 @@ def create_application(
     application, event_data = ApplicationService.apply_to_job(
         db, current_user.user_id, data.job_id, data.resume_id
     )
-
     background_tasks.add_task(
         activity_emitter.emit_application_created,
         organization_id=event_data["organization_id"],
@@ -81,5 +77,4 @@ def create_application(
         job_id=event_data["job_id"],
         timestamp=event_data["timestamp"],
     )
-
     return application

@@ -694,6 +694,7 @@ export default function RecruiterJobsPage() {
         onEdit={handleEditJob}
         onExpire={handleExpireJob}
         onDelete={handleDeleteJob}
+        onConvertToReferenceJD={handleConvertToReferenceJD}
       />
 
       <PostJobModal

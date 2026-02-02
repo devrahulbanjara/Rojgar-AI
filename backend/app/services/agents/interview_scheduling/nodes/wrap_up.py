@@ -2,7 +2,6 @@ from app.schemas.agents.interview_scheduling import InterviewSchedulingState
 
 
 def wrap_up(state: InterviewSchedulingState) -> dict:
-    """Finalize and return the workflow state."""
     return {
         "name": state["name"],
         "email": state["email"],

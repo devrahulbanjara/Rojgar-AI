@@ -5,12 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import (
-    BusinessLogicError,
-    NotFoundError,
-    get_current_active_user,
-    get_db,
-)
+from app.core import BusinessLogicError, NotFoundError, get_current_active_user, get_db
 from app.core.authorization import get_organization_from_user, verify_user_can_edit_job
 from app.core.limiter import limiter
 from app.models import JobPosting, User
@@ -36,10 +31,7 @@ def generate_job_draft(
 ):
     if not draft_request.raw_requirements:
         raise BusinessLogicError("Raw requirements / some keywords are required")
-
-    # Get organization_id from user
     organization_id = get_organization_from_user(current_user)
-
     generated_draft = JobGenerationService.generate_job_draft(
         title=draft_request.title,
         raw_requirements=draft_request.raw_requirements,
@@ -48,10 +40,8 @@ def generate_job_draft(
         organization_id=organization_id,
         current_draft=draft_request.current_draft,
     )
-
     if not generated_draft or not generated_draft.get("draft"):
         raise BusinessLogicError("Failed to generate job description")
-
     draft = generated_draft["draft"]
     return draft
 
@@ -68,14 +58,12 @@ def create_job(
     db: Annotated[Session, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
-
     job_posting, event_data = JobService.create_job(
         db=db,
         job_data=job_data,
         user_id=current_user.user_id,
         organization_id=organization_id,
     )
-
     background_tasks.add_task(
         activity_emitter.emit_job_created,
         organization_id=event_data["organization_id"],
@@ -84,7 +72,6 @@ def create_job(
         job_id=event_data["job_id"],
         timestamp=event_data["timestamp"],
     )
-
     return job_posting
 
 
@@ -103,22 +90,14 @@ def update_job(
     job_posting = db.execute(job_stmt).scalar_one_or_none()
     if not job_posting:
         raise NotFoundError("Job not found")
-
     verify_user_can_edit_job(current_user, job_posting)
-
     updated_job = JobService.update_job(
-        db=db,
-        job_posting=job_posting,
-        job_data=job_data,
+        db=db, job_posting=job_posting, job_data=job_data
     )
-
     return updated_job
 
 
-@router.delete(
-    "/{job_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("50/minute")
 def delete_job(
     request: Request,

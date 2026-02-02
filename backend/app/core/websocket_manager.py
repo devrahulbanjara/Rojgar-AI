@@ -31,7 +31,6 @@ class ConnectionManager:
     ):
         if organization_id not in self.active_connections:
             return
-
         targets = self.active_connections[organization_id][:]
         for connection in targets:
             try:

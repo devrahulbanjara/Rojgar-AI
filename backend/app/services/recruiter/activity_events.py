@@ -1,5 +1,3 @@
-"""Activity event emitter for WebSocket notifications."""
-
 import uuid
 from datetime import datetime
 
@@ -89,9 +87,7 @@ class ActivityEventEmitter:
                     "action": "posted new job",
                     "target": job_title,
                     "timestamp": timestamp.isoformat(),
-                    "metadata": {
-                        "job_id": str(job_id),
-                    },
+                    "metadata": {"job_id": str(job_id)},
                 },
             },
             organization_id,

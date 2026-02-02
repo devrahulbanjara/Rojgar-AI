@@ -12,10 +12,8 @@ llm = ChatBedrockConverse(
 
 def final_node(state: ShortlistState):
     summary_llm = llm.with_structured_output(FinalResponse)
-
     prompt = FINAL_PROMPT.format(
         cto_eval=state["cto_evals"][-1], hr_eval=state["hr_evals"][-1]
     )
-
     res = summary_llm.invoke(prompt)
     return {"final_score": res.score, "final_reason": res.reason}

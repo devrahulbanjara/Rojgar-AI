@@ -5,14 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.core.database import engine, init_db
 from app.core.logging_config import logger
+from app.core.scheduler import shutdown_scheduler, start_scheduler
 from app.services.candidate.vector_job_service import JobVectorService
 
 
 async def _run_startup_tasks():
-    """Internal helper for startup logic."""
-    logger.trace("Initializing database schema...")
+    logger.info("Initializing database schema...")
     init_db()
-
     try:
         logger.trace("Indexing pending active jobs...")
         with Session(engine) as db:
@@ -25,12 +24,10 @@ async def _run_startup_tasks():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # STARTUP
     logger.info("Starting ConvexHire API...")
     await _run_startup_tasks()
-
+    start_scheduler()
     yield
-
-    # SHUTDOWN
     logger.trace("Shutting down ConvexHire API...")
-    engine.dispose()  # Cleanly close connection pool
+    shutdown_scheduler()
+    engine.dispose()
