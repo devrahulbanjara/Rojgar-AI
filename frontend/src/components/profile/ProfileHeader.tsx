@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import React from 'react';
-import { User } from '../../types/index';
-import { CandidateProfile } from '../../types/profile';
-import { UserAvatar } from '../ui/UserAvatar';
+import React from 'react'
+import { User } from '../../types/index'
+import { CandidateProfile } from '../../types/profile'
+import { UserAvatar } from '../ui/UserAvatar'
 
 interface ProfileHeaderProps {
-  user: User;
-  profile?: CandidateProfile | null;
+  user: User
+  profile?: CandidateProfile | null
 }
 
 export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
@@ -56,5 +56,5 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

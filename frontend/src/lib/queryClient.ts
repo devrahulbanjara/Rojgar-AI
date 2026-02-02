@@ -1,6 +1,6 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query'
 
-const CACHE_KEY = 'convexhire-query-cache';
+const CACHE_KEY = 'convexhire-query-cache'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -8,82 +8,104 @@ export const queryClient = new QueryClient({
       staleTime: 10 * 60 * 1000,
       gcTime: 30 * 60 * 1000,
       retry: (failureCount, error: unknown) => {
-        const apiError = error as { status?: number };
+        const apiError = error as { status?: number }
         if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
-          return false;
+          return false
         }
-        return failureCount < 3;
+        return failureCount < 3
       },
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
     },
     mutations: {
       retry: (failureCount, error: unknown) => {
-        const apiError = error as { status?: number };
+        const apiError = error as { status?: number }
         if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
-          return false;
+          return false
         }
-        return failureCount < 2;
+        return failureCount < 2
       },
     },
   },
-});
-
+})
 
 export function persistQueryCache() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return
 
-  const cache = queryClient.getQueryCache();
-  const queries = cache.getAll();
+  const cache = queryClient.getQueryCache()
+  const queries = cache.getAll()
 
-  const cacheData: Record<string, { data: unknown; timestamp: number }> = {};
+  const cacheData: Record<string, { data: unknown; timestamp: number }> = {}
 
-  queries.forEach((query) => {
+  queries.forEach(query => {
     if (query.state.status === 'success' && query.state.data) {
-      const key = JSON.stringify(query.queryKey);
+      const key = JSON.stringify(query.queryKey)
       cacheData[key] = {
         data: query.state.data,
         timestamp: Date.now(),
-      };
+      }
     }
-  });
+  })
 
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData))
   } catch (e) {
-    console.warn('Failed to persist query cache:', e);
+    console.warn('Failed to persist query cache:', e)
   }
 }
 
 export function restoreQueryCache() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return
 
   try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return;
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (!cached) return
 
-    const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached);
-    const maxAge = 30 * 60 * 1000; // 30 minutes max cache age
-    const now = Date.now();
+    const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached)
+    const maxAge = 30 * 60 * 1000 // 30 minutes max cache age
+    const now = Date.now()
 
     Object.entries(cacheData).forEach(([key, { data, timestamp }]) => {
-      if (now - timestamp > maxAge) return;
+      if (now - timestamp > maxAge) return
 
       try {
-        const queryKey = JSON.parse(key);
-        queryClient.setQueryData(queryKey, data);
+        const queryKey = JSON.parse(key)
+        queryClient.setQueryData(queryKey, data)
       } catch {
+        // Ignore invalid cache entries
       }
-    });
+    })
   } catch {
-    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(CACHE_KEY)
+  }
+}
+
+export function getCachedUserData() {
+  if (typeof window === 'undefined') return undefined
+
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (!cached) return undefined
+
+    const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached)
+    const userKey = JSON.stringify(['auth', 'user'])
+    const userCache = cacheData[userKey]
+
+    if (!userCache) return undefined
+
+    const maxAge = 30 * 60 * 1000 // 30 minutes max cache age
+    if (Date.now() - userCache.timestamp > maxAge) return undefined
+
+    return userCache.data
+  } catch {
+    return undefined
   }
 }
 
 export function clearQueryCache() {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(CACHE_KEY);
-  queryClient.clear();
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(CACHE_KEY)
+  queryClient.clear()
 }
 
 export const queryKeys = {
@@ -123,4 +145,4 @@ export const queryKeys = {
       detail: (id: string) => ['organization', 'recruiters', id] as const,
     },
   },
-} as const;
+} as const

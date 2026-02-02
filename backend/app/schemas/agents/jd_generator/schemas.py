@@ -4,10 +4,6 @@ from pydantic import BaseModel
 
 
 class JobDescription(BaseModel):
-    """
-    Output Schema for the Job Description Generation LLM
-    """
-
     job_summary: str
     job_responsibilities: list[str]
     required_qualifications: list[str]

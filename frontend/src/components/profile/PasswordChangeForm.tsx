@@ -1,114 +1,113 @@
-import React, { useState } from 'react';
-import { apiClient } from '../../lib/api';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { Shield, Lock, CheckCircle, AlertCircle, KeyRound } from 'lucide-react';
+import React, { useState } from 'react'
+import { apiClient } from '../../lib/api'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import { Shield, Lock, CheckCircle, AlertCircle, KeyRound } from 'lucide-react'
 
 export function PasswordChangeForm() {
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {}
 
     if (!formData.currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
+      newErrors.currentPassword = 'Current password is required'
     }
 
     if (!formData.newPassword) {
-      newErrors.newPassword = 'New password is required';
+      newErrors.newPassword = 'New password is required'
     } else if (formData.newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters long';
+      newErrors.newPassword = 'Password must be at least 8 characters long'
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password';
+      newErrors.confirmPassword = 'Please confirm your new password'
     } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Passwords do not match'
     }
 
     if (formData.currentPassword === formData.newPassword) {
-      newErrors.newPassword = 'New password must be different from current password';
+      newErrors.newPassword = 'New password must be different from current password'
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validateForm()) {
-      return;
+      return
     }
 
-    setIsLoading(true);
-    setMessage(null);
+    setIsLoading(true)
+    setMessage(null)
 
     try {
       await apiClient.put('/api/v1/users/password', {
         current_password: formData.currentPassword,
         new_password: formData.newPassword,
         confirm_password: formData.confirmPassword,
-      });
+      })
 
-      setMessage({ type: 'success', text: 'Password changed successfully!' });
+      setMessage({ type: 'success', text: 'Password changed successfully!' })
       setFormData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
-      });
+      })
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } };
+      const error = err as { response?: { data?: { detail?: string } } }
       setMessage({
         type: 'error',
-        text: error.response?.data?.detail || 'Failed to change password. Please try again.'
-      });
+        text: error.response?.data?.detail || 'Failed to change password. Please try again.',
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
-    }));
+      [name]: value,
+    }))
 
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
-        [name]: ''
-      }));
+        [name]: '',
+      }))
     }
-  };
+  }
 
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">
-          Change Password
-        </h3>
-        <p className="text-[#475569]">
-          Update your password to keep your account secure.
-        </p>
+        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Change Password</h3>
+        <p className="text-[#475569]">Update your password to keep your account secure.</p>
       </div>
 
       {message && (
-        <div className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${message.type === 'success'
-            ? 'bg-green-50 text-green-700 border-green-200'
-            : 'bg-red-50 text-red-700 border-red-200'
-          }`}>
+        <div
+          className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
+            message.type === 'success'
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-red-50 text-red-700 border-red-200'
+          }`}
+        >
           {message.type === 'success' ? (
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
           ) : (
@@ -147,8 +146,11 @@ export function PasswordChangeForm() {
                   value={formData.currentPassword}
                   onChange={handleChange}
                   placeholder="Enter your current password"
-                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${errors.currentPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''
-                    }`}
+                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${
+                    errors.currentPassword
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                      : ''
+                  }`}
                   required
                 />
               </div>
@@ -175,8 +177,11 @@ export function PasswordChangeForm() {
                   value={formData.newPassword}
                   onChange={handleChange}
                   placeholder="Enter your new password"
-                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${errors.newPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''
-                    }`}
+                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${
+                    errors.newPassword
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                      : ''
+                  }`}
                   required
                 />
               </div>
@@ -207,8 +212,11 @@ export function PasswordChangeForm() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your new password"
-                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${errors.confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : ''
-                    }`}
+                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${
+                    errors.confirmPassword
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                      : ''
+                  }`}
                   required
                 />
               </div>
@@ -243,5 +251,5 @@ export function PasswordChangeForm() {
         </div>
       </form>
     </div>
-  );
+  )
 }

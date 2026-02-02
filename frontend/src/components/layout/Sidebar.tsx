@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "../../lib/utils";
-import type { UserType } from "../../types/index";
+import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '../../lib/utils'
+import type { UserType } from '../../types/index'
 import {
   LayoutDashboard,
   BriefcaseIcon,
@@ -15,87 +15,82 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
-} from "lucide-react";
+} from 'lucide-react'
 
 interface SidebarProps {
-  isCollapsed: boolean;
-  onToggle: () => void;
-  role: UserType;
-  disableAnimation?: boolean;
+  isCollapsed: boolean
+  onToggle: () => void
+  role: UserType
+  disableAnimation?: boolean
 }
 
-export function Sidebar({
-  isCollapsed,
-  onToggle,
-  role,
-  disableAnimation = false,
-}: SidebarProps) {
-  const pathname = usePathname();
-  const [showPulse, setShowPulse] = useState(true);
+export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false }: SidebarProps) {
+  const pathname = usePathname()
+  const [showPulse, setShowPulse] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowPulse(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
+    const timer = setTimeout(() => setShowPulse(false), 3000)
+    return () => clearTimeout(timer)
+  }, [])
 
   const recruiterItems = [
-    { title: "Dashboard", path: "/dashboard/recruiter", icon: LayoutDashboard },
-    { title: "Jobs", path: "/recruiter/jobs", icon: BriefcaseIcon },
-    { title: "Shortlist", path: "/recruiter/shortlist", icon: Users },
-    { title: "Interviews", path: "/recruiter/interviews", icon: Calendar },
+    { title: 'Dashboard', path: '/dashboard/recruiter', icon: LayoutDashboard },
+    { title: 'Jobs', path: '/recruiter/jobs', icon: BriefcaseIcon },
+    { title: 'Shortlist', path: '/recruiter/shortlist', icon: Users },
+    { title: 'Interviews', path: '/recruiter/interviews', icon: Calendar },
     {
-      title: "Final Selection",
-      path: "/recruiter/final-selection",
+      title: 'Final Selection',
+      path: '/recruiter/final-selection',
       icon: BarChart3,
     },
     {
-      title: "Candidate Pool",
-      path: "/recruiter/candidate-pool",
+      title: 'Candidate Pool',
+      path: '/recruiter/candidate-pool',
       icon: MessageSquare,
     },
-  ];
+  ]
 
   const candidateItems = [
-    { title: "Dashboard", path: "/dashboard/candidate", icon: LayoutDashboard },
-    { title: "Jobs", path: "/candidate/browse-jobs", icon: Search },
-    { title: "Resumes", path: "/candidate/resumes", icon: FileText },
-    { title: "Profile", path: "/candidate/profile", icon: User },
-  ];
+    { title: 'Dashboard', path: '/dashboard/candidate', icon: LayoutDashboard },
+    { title: 'Jobs', path: '/candidate/browse-jobs', icon: Search },
+    { title: 'Resumes', path: '/candidate/resumes', icon: FileText },
+    { title: 'Profile', path: '/candidate/profile', icon: User },
+  ]
 
   const organizationItems = [
     {
-      title: "Overview",
-      path: "/dashboard/organization",
+      title: 'Overview',
+      path: '/dashboard/organization',
       icon: LayoutDashboard,
     },
-    { title: "Recruiters", path: "/organization/recruiters", icon: Users },
-  ];
+    { title: 'Recruiters', path: '/organization/recruiters', icon: Users },
+  ]
 
   const items =
-    role === "organization"
+    role === 'organization'
       ? organizationItems
-      : role === "recruiter"
+      : role === 'recruiter'
         ? recruiterItems
-        : candidateItems;
-  const toggleAriaLabel = isCollapsed ? "Expand sidebar" : "Collapse sidebar";
-  const ToggleIcon = isCollapsed ? PanelLeftOpen : PanelLeftClose;
+        : candidateItems
+  const toggleAriaLabel = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
+  const ToggleIcon = isCollapsed ? PanelLeftOpen : PanelLeftClose
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-[72px] z-40 flex h-[calc(100vh-72px)] flex-col",
-        "bg-white/80 backdrop-blur-xl",
-        "border-r border-[#E2E8F0] shadow-sm",
-        !disableAnimation && "transition-all duration-500 ease-in-out",
-        isCollapsed ? "w-[72px]" : "w-[252px]",
-        "max-lg:w-[252px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl",
+        'fixed left-0 top-[72px] z-40 flex h-[calc(100vh-72px)] flex-col',
+        'bg-white/80 backdrop-blur-xl',
+        'border-r border-[#E2E8F0] shadow-sm',
+        !disableAnimation && 'transition-all duration-500 ease-in-out',
+        isCollapsed ? 'w-[72px]' : 'w-[252px]',
+        'max-lg:w-[252px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl',
         isCollapsed
-          ? "max-lg:-translate-x-full max-lg:pointer-events-none"
-          : "max-lg:translate-x-0 max-lg:pointer-events-auto",
+          ? 'max-lg:-translate-x-full max-lg:pointer-events-none'
+          : 'max-lg:translate-x-0 max-lg:pointer-events-auto'
       )}
       style={{
-        transitionDuration: disableAnimation ? "0ms" : "500ms",
-        transitionTimingFunction: disableAnimation ? undefined : "ease-in-out",
+        transitionDuration: disableAnimation ? '0ms' : '500ms',
+        transitionTimingFunction: disableAnimation ? undefined : 'ease-in-out',
       }}
     >
       {/* Decorative Gradient Background */}
@@ -105,13 +100,13 @@ export function Sidebar({
         type="button"
         onClick={onToggle}
         className={cn(
-          "group absolute z-50 hidden h-8 w-8 items-center justify-center rounded-full",
-          "border border-[#E2E8F0] bg-white text-[#64748B]",
-          "shadow-sm hover:shadow-md transition-all duration-200 ease-in-out lg:flex cursor-pointer",
-          "hover:border-[#3056F5] hover:text-[#3056F5]",
-          "active:scale-95 active:shadow-sm",
-          "focus:outline-none focus:ring-2 focus:ring-[#3056F5] focus:ring-offset-2",
-          isCollapsed ? "bottom-6 left-1/2 -translate-x-1/2" : "top-6 -right-4",
+          'group absolute z-50 hidden h-8 w-8 items-center justify-center rounded-full',
+          'border border-[#E2E8F0] bg-white text-[#64748B]',
+          'shadow-sm hover:shadow-md transition-all duration-200 ease-in-out lg:flex cursor-pointer',
+          'hover:border-[#3056F5] hover:text-[#3056F5]',
+          'active:scale-95 active:shadow-sm',
+          'focus:outline-none focus:ring-2 focus:ring-[#3056F5] focus:ring-offset-2',
+          isCollapsed ? 'bottom-6 left-1/2 -translate-x-1/2' : 'top-6 -right-4'
         )}
         aria-label={toggleAriaLabel}
         aria-expanded={!isCollapsed}
@@ -126,26 +121,25 @@ export function Sidebar({
 
         <ToggleIcon
           className={cn(
-            "h-4 w-4 transition-all duration-500 ease-in-out relative z-10",
-            "group-hover:scale-110",
+            'h-4 w-4 transition-all duration-500 ease-in-out relative z-10',
+            'group-hover:scale-110'
           )}
           style={{
-            transform: isCollapsed ? "rotateY(0deg)" : "rotateY(180deg)",
+            transform: isCollapsed ? 'rotateY(0deg)' : 'rotateY(180deg)',
           }}
         />
       </button>
 
       <nav
         className={cn(
-          "relative pt-8 flex flex-col space-y-2 transition-all duration-500 max-lg:pt-6 overflow-y-auto overflow-x-hidden px-4 flex-1",
-          isCollapsed ? "items-center" : "",
-          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']",
+          'relative pt-8 flex flex-col space-y-2 transition-all duration-500 max-lg:pt-6 overflow-y-auto overflow-x-hidden px-4 flex-1',
+          isCollapsed ? 'items-center' : '',
+          "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
         )}
       >
-        {items.map((item) => {
-          const isActive =
-            pathname === item.path || pathname.startsWith(item.path + "/");
-          const Icon = item.icon;
+        {items.map(item => {
+          const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`)
+          const Icon = item.icon
 
           return (
             <Link
@@ -154,13 +148,11 @@ export function Sidebar({
               aria-label={item.title}
               title={item.title}
               className={cn(
-                "group relative flex items-center rounded-xl transition-all duration-300 cursor-pointer overflow-hidden flex-shrink-0",
-                isCollapsed
-                  ? "w-12 h-12 justify-center"
-                  : "w-full h-12 px-4 gap-3",
+                'group relative flex items-center rounded-xl transition-all duration-300 cursor-pointer overflow-hidden flex-shrink-0',
+                isCollapsed ? 'w-12 h-12 justify-center' : 'w-full h-12 px-4 gap-3',
                 isActive
-                  ? "bg-gradient-to-r from-[#3056F5] to-[#6366F1] text-white shadow-md shadow-blue-500/20"
-                  : "text-[#64748B] hover:bg-blue-50/50 hover:text-[#3056F5]",
+                  ? 'bg-gradient-to-r from-[#3056F5] to-[#6366F1] text-white shadow-md shadow-blue-500/20'
+                  : 'text-[#64748B] hover:bg-blue-50/50 hover:text-[#3056F5]'
               )}
             >
               {isActive && (
@@ -169,21 +161,21 @@ export function Sidebar({
 
               <Icon
                 className={cn(
-                  "flex-shrink-0 transition-all duration-300",
-                  isCollapsed ? "h-6 w-6" : "h-5 w-5",
+                  'flex-shrink-0 transition-all duration-300',
+                  isCollapsed ? 'h-6 w-6' : 'h-5 w-5',
                   isActive
-                    ? "text-white"
-                    : "text-[#64748B] group-hover:text-[#3056F5] group-hover:scale-110",
+                    ? 'text-white'
+                    : 'text-[#64748B] group-hover:text-[#3056F5] group-hover:scale-110'
                 )}
               />
 
               <span
                 className={cn(
-                  "text-[15px] font-medium whitespace-nowrap block transition-all duration-300",
-                  isCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100",
+                  'text-[15px] font-medium whitespace-nowrap block transition-all duration-300',
+                  isCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100',
                   isActive
-                    ? "text-white font-semibold"
-                    : "text-[#475569] group-hover:text-[#3056F5]",
+                    ? 'text-white font-semibold'
+                    : 'text-[#475569] group-hover:text-[#3056F5]'
                 )}
               >
                 {item.title}
@@ -196,9 +188,9 @@ export function Sidebar({
                 </div>
               )}
             </Link>
-          );
+          )
         })}
       </nav>
     </aside>
-  );
+  )
 }

@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import { Button } from '../ui/button';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion'
+import { Button } from '../ui/button'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 
 export function HeroSection() {
   return (
@@ -23,11 +23,10 @@ export function HeroSection() {
             className="px-2 sm:px-4 xl:px-0 text-center xl:text-left"
           >
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[76px] leading-[1.1] font-bold text-[#0F172A] mb-3 sm:mb-4 lg:mb-6 tracking-tight">
-              Use AI to Recruit{' '}
-              <span className="text-brand-blue">Humans</span>
+              Use AI to Recruit <span className="text-brand-blue">Humans</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-[#475569] mb-6 sm:mb-8 lg:mb-10 leading-relaxed max-w-2xl mx-auto xl:mx-0 break-words">
-            Smarter hiring. Better matches. Happier candidates.
+              Smarter hiring. Better matches. Happier candidates.
             </p>
 
             <motion.div
@@ -72,17 +71,15 @@ export function HeroSection() {
                     <h3 className="text-base sm:text-lg font-semibold text-[#0F172A]">
                       Recruiter Dashboard
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#475569]">
-                      Smart candidate matching
-                    </p>
+                    <p className="text-xs sm:text-sm text-[#475569]">Smart candidate matching</p>
                   </div>
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-blue/10 flex items-center justify-center">
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-blue"></div>
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-blue" />
                   </div>
                 </div>
 
                 {/* Candidate Cards */}
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: 20 }}
@@ -90,10 +87,10 @@ export function HeroSection() {
                     transition={{ delay: 0.4 + i * 0.1 }}
                     className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#F9FAFB] border border-[#E5E7EB]"
                   >
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-brand-blue to-[#2B3CF5]"></div>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-brand-blue to-[#2B3CF5]" />
                     <div className="flex-1">
-                      <div className="h-2 sm:h-3 bg-[#E5E7EB] rounded w-24 sm:w-32 mb-1 sm:mb-2"></div>
-                      <div className="h-1.5 sm:h-2 bg-[#E5E7EB] rounded w-16 sm:w-20"></div>
+                      <div className="h-2 sm:h-3 bg-[#E5E7EB] rounded w-24 sm:w-32 mb-1 sm:mb-2" />
+                      <div className="h-1.5 sm:h-2 bg-[#E5E7EB] rounded w-16 sm:w-20" />
                     </div>
                     <div className="text-xs sm:text-sm font-semibold text-brand-blue">
                       {95 - i * 5}%
@@ -114,5 +111,5 @@ export function HeroSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

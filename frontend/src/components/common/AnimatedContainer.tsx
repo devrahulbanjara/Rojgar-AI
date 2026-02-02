@@ -1,16 +1,16 @@
-import React, { memo } from 'react';
-import { motion, Variants } from 'framer-motion';
-import { cn } from '../../lib/utils';
+import React, { memo } from 'react'
+import { motion, Variants } from 'framer-motion'
+import { cn } from '../../lib/utils'
 
 interface AnimatedContainerProps {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  duration?: number;
-  direction?: 'up' | 'down' | 'left' | 'right' | 'fade' | 'scale';
-  stagger?: boolean;
-  staggerDelay?: number;
-  once?: boolean;
+  children: React.ReactNode
+  className?: string
+  delay?: number
+  duration?: number
+  direction?: 'up' | 'down' | 'left' | 'right' | 'fade' | 'scale'
+  stagger?: boolean
+  staggerDelay?: number
+  once?: boolean
 }
 
 const variants: Record<string, Variants> = {
@@ -18,7 +18,7 @@ const variants: Record<string, Variants> = {
     hidden: {
       opacity: 0,
       y: 20,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -27,15 +27,15 @@ const variants: Record<string, Variants> = {
       transition: {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
-        filter: { duration: 0.2 }
-      }
-    }
+        filter: { duration: 0.2 },
+      },
+    },
   },
   down: {
     hidden: {
       opacity: 0,
       y: -20,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -44,15 +44,15 @@ const variants: Record<string, Variants> = {
       transition: {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
-        filter: { duration: 0.2 }
-      }
-    }
+        filter: { duration: 0.2 },
+      },
+    },
   },
   left: {
     hidden: {
       opacity: 0,
       x: -20,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -61,15 +61,15 @@ const variants: Record<string, Variants> = {
       transition: {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
-        filter: { duration: 0.2 }
-      }
-    }
+        filter: { duration: 0.2 },
+      },
+    },
   },
   right: {
     hidden: {
       opacity: 0,
       x: 20,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -78,14 +78,14 @@ const variants: Record<string, Variants> = {
       transition: {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
-        filter: { duration: 0.2 }
-      }
-    }
+        filter: { duration: 0.2 },
+      },
+    },
   },
   fade: {
     hidden: {
       opacity: 0,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -93,15 +93,15 @@ const variants: Record<string, Variants> = {
       transition: {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
-        filter: { duration: 0.2 }
-      }
-    }
+        filter: { duration: 0.2 },
+      },
+    },
   },
   scale: {
     hidden: {
       opacity: 0,
       scale: 0.95,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -110,54 +110,56 @@ const variants: Record<string, Variants> = {
       transition: {
         duration: 0.3,
         ease: [0.175, 0.885, 0.32, 1.275],
-        filter: { duration: 0.2 }
-      }
+        filter: { duration: 0.2 },
+      },
+    },
+  },
+}
+
+export const AnimatedContainer = memo<AnimatedContainerProps>(
+  ({
+    children,
+    className,
+    delay = 0,
+    duration = 0.3,
+    direction = 'up',
+    stagger = false,
+    staggerDelay = 0.05,
+    once = true,
+  }) => {
+    const variant = variants[direction]
+
+    if (!variant) {
+      return <div className={className}>{children}</div>
     }
+
+    return (
+      <motion.div
+        className={cn(className)}
+        variants={variant}
+        initial="hidden"
+        animate="visible"
+        transition={{
+          delay: delay + (stagger ? staggerDelay : 0),
+          duration,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+        viewport={{ once, margin: '-50px' }}
+        style={{ willChange: 'opacity, transform, filter' }}
+      >
+        {children}
+      </motion.div>
+    )
   }
-};
+)
 
-export const AnimatedContainer = memo<AnimatedContainerProps>(({
-  children,
-  className,
-  delay = 0,
-  duration = 0.3,
-  direction = 'up',
-  stagger = false,
-  staggerDelay = 0.05,
-  once = true
-}) => {
-  const variant = variants[direction];
-
-  if (!variant) {
-    return <div className={className}>{children}</div>;
-  }
-
-  return (
-    <motion.div
-      className={cn(className)}
-      variants={variant}
-      initial="hidden"
-      animate="visible"
-      transition={{
-        delay: delay + (stagger ? staggerDelay : 0),
-        duration,
-        ease: [0.25, 0.46, 0.45, 0.94]
-      }}
-      viewport={{ once, margin: "-50px" }}
-      style={{ willChange: 'opacity, transform, filter' }}
-    >
-      {children}
-    </motion.div>
-  );
-});
-
-AnimatedContainer.displayName = 'AnimatedContainer';
+AnimatedContainer.displayName = 'AnimatedContainer'
 
 export const StaggerContainer = memo<{
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  staggerDelay?: number;
+  children: React.ReactNode
+  className?: string
+  delay?: number
+  staggerDelay?: number
 }>(({ children, className, delay = 0, staggerDelay = 0.05 }) => {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -166,16 +168,16 @@ export const StaggerContainer = memo<{
       transition: {
         delay,
         staggerChildren: staggerDelay,
-        delayChildren: delay
-      }
-    }
-  };
+        delayChildren: delay,
+      },
+    },
+  }
 
   const itemVariants: Variants = {
     hidden: {
       opacity: 0,
       y: 20,
-      filter: 'blur(4px)'
+      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
@@ -184,10 +186,10 @@ export const StaggerContainer = memo<{
       transition: {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
-        filter: { duration: 0.2 }
-      }
-    }
-  };
+        filter: { duration: 0.2 },
+      },
+    },
+  }
 
   return (
     <motion.div
@@ -195,7 +197,7 @@ export const StaggerContainer = memo<{
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: true, margin: '-50px' }}
     >
       {React.Children.map(children, (child, index) => (
         <motion.div
@@ -207,7 +209,7 @@ export const StaggerContainer = memo<{
         </motion.div>
       ))}
     </motion.div>
-  );
-});
+  )
+})
 
-StaggerContainer.displayName = 'StaggerContainer';
+StaggerContainer.displayName = 'StaggerContainer'

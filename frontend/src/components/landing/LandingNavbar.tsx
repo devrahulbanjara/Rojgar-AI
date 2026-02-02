@@ -1,136 +1,131 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../ui/button';
-import { LogoLink } from '../common/Logo';
-import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Button } from '../ui/button'
+import { LogoLink } from '../common/Logo'
+import { useEffect, useState } from 'react'
+import { Menu, X } from 'lucide-react'
 
 export function LandingNavbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      setScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = 'unset'
     }
 
     // Cleanup on unmount
     return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [mobileMenuOpen]);
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileMenuOpen])
 
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+    setMobileMenuOpen(!mobileMenuOpen)
+  }
 
   return (
     <>
       <nav
         className={`sticky top-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/95 backdrop-blur-xl shadow-sm'
-            : 'bg-white/60 backdrop-blur-xl'
+          scrolled ? 'bg-white/95 backdrop-blur-xl shadow-sm' : 'bg-white/60 backdrop-blur-xl'
         }`}
       >
         <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-3 sm:py-4">
-        <div className="flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <LogoLink variant="full" size="sm" className="sm:hidden" />
-            <LogoLink variant="full" size="md" className="hidden sm:block" />
-          </motion.div>
+          <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <LogoLink variant="full" size="sm" className="sm:hidden" />
+              <LogoLink variant="full" size="md" className="hidden sm:block" />
+            </motion.div>
 
-          {/* Desktop Navigation */}
-          <motion.div
-            className="hidden xl:flex items-center gap-6 lg:gap-8"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            <a
-              href="#platform"
-              className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors"
+            {/* Desktop Navigation */}
+            <motion.div
+              className="hidden xl:flex items-center gap-6 lg:gap-8"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
             >
-              Platform
-            </a>
-            <a
-              href="#candidates"
-              className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors"
-            >
-              Candidates
-            </a>
-            <a
-              href="#insights"
-              className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors hidden md:block"
-            >
-              Insights
-            </a>
-            <a
-              href="#pricing"
-              className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors"
-            >
-              Pricing
-            </a>
-          </motion.div>
-
-          {/* Desktop CTA Buttons */}
-          <motion.div
-            className="hidden xl:flex items-center gap-3 lg:gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                className="text-sm font-medium text-[#475569] hover:text-brand-blue px-4"
+              <a
+                href="#platform"
+                className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors"
               >
-                Login
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button
-                className="bg-brand-blue hover:bg-[#2B3CF5] text-white text-sm font-medium rounded-xl px-4 lg:px-6 transition-all duration-200 hover:scale-105"
+                Platform
+              </a>
+              <a
+                href="#candidates"
+                className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors"
               >
-                Start Free
-              </Button>
-            </Link>
-          </motion.div>
+                Candidates
+              </a>
+              <a
+                href="#insights"
+                className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors hidden md:block"
+              >
+                Insights
+              </a>
+              <a
+                href="#pricing"
+                className="text-sm font-medium text-[#475569] hover:text-brand-blue transition-colors"
+              >
+                Pricing
+              </a>
+            </motion.div>
 
-          {/* Mobile Menu Button */}
-          <motion.button
-            className="xl:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            onClick={toggleMobileMenu}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5 text-[#475569]" />
-            ) : (
-              <Menu className="h-5 w-5 text-[#475569]" />
-            )}
-          </motion.button>
+            {/* Desktop CTA Buttons */}
+            <motion.div
+              className="hidden xl:flex items-center gap-3 lg:gap-4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="text-sm font-medium text-[#475569] hover:text-brand-blue px-4"
+                >
+                  Login
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-brand-blue hover:bg-[#2B3CF5] text-white text-sm font-medium rounded-xl px-4 lg:px-6 transition-all duration-200 hover:scale-105">
+                  Start Free
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Mobile Menu Button */}
+            <motion.button
+              className="xl:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={toggleMobileMenu}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5 text-[#475569]" />
+              ) : (
+                <Menu className="h-5 w-5 text-[#475569]" />
+              )}
+            </motion.button>
+          </div>
         </div>
-
-      </div>
       </nav>
 
       {/* Mobile Sidebar Overlay */}
@@ -152,7 +147,7 @@ export function LandingNavbar() {
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 xl:hidden"
             >
               <div className="flex flex-col h-full">
@@ -203,9 +198,7 @@ export function LandingNavbar() {
                         </Button>
                       </Link>
                       <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                        <Button
-                          className="w-full bg-brand-blue hover:bg-[#2B3CF5] text-white text-base font-medium rounded-xl py-3 transition-all duration-200"
-                        >
+                        <Button className="w-full bg-brand-blue hover:bg-[#2B3CF5] text-white text-base font-medium rounded-xl py-3 transition-all duration-200">
                           Start Free
                         </Button>
                       </Link>
@@ -218,5 +211,5 @@ export function LandingNavbar() {
         )}
       </AnimatePresence>
     </>
-  );
+  )
 }

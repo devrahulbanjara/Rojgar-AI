@@ -1,13 +1,8 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import {
-  FileEdit,
-  Brain,
-  Eye,
-  Clock,
-} from 'lucide-react';
-import Image from 'next/image';
+import { motion } from 'framer-motion'
+import { FileEdit, Brain, Eye, Clock } from 'lucide-react'
+import Image from 'next/image'
 
 const features = [
   {
@@ -34,7 +29,7 @@ const features = [
     description:
       'Your past interviews fuel tomorrow’s opportunities — get automatically rediscovered by companies for future roles.',
   },
-];
+]
 
 export function CandidatePlatformSection() {
   return (
@@ -58,7 +53,7 @@ export function CandidatePlatformSection() {
 
             <div className="space-y-4 sm:space-y-6 xl:items-start items-center">
               {features.map((feature, index) => {
-                const Icon = feature.icon;
+                const Icon = feature.icon
                 return (
                   <motion.div
                     key={feature.title}
@@ -80,7 +75,7 @@ export function CandidatePlatformSection() {
                       </p>
                     </div>
                   </motion.div>
-                );
+                )
               })}
             </div>
           </motion.div>
@@ -104,9 +99,8 @@ export function CandidatePlatformSection() {
               />
             </div>
           </motion.div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }

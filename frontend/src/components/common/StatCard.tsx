@@ -1,40 +1,33 @@
-import React, { memo } from 'react';
-import { cn } from '../../lib/utils';
+import React, { memo } from 'react'
+import { cn } from '../../lib/utils'
 
 export interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon?: React.ReactNode;
-  description?: string;
+  title: string
+  value: string | number
+  icon?: React.ReactNode
+  description?: string
   trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-  className?: string;
+    value: number
+    isPositive: boolean
+  }
+  className?: string
 }
 
-export const StatCard = memo<StatCardProps>(({
-  title,
-  value,
-  icon,
-  description,
-  trend,
-  className,
-}) => {
+export const StatCard = memo<StatCardProps>(({ title, value, icon, description, className }) => {
   return (
     <div
       className={cn(
-        "group bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.02] relative overflow-hidden",
+        'group bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.02] relative overflow-hidden',
         className
       )}
       style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 12px 24px -8px rgba(48, 86, 245, 0.15)';
-        e.currentTarget.style.borderColor = 'rgba(48, 86, 245, 0.2)';
+      onMouseEnter={e => {
+        e.currentTarget.style.boxShadow = '0 12px 24px -8px rgba(48, 86, 245, 0.15)'
+        e.currentTarget.style.borderColor = 'rgba(48, 86, 245, 0.2)'
       }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
-        e.currentTarget.style.borderColor = '#E5E7EB';
+      onMouseLeave={e => {
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'
+        e.currentTarget.style.borderColor = '#E5E7EB'
       }}
     >
       {/* Hover Gradient Background */}
@@ -46,9 +39,10 @@ export const StatCard = memo<StatCardProps>(({
           className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
           style={{ background: 'rgba(48, 86, 245, 0.08)' }}
         >
-          {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
-            className: 'h-6 w-6 text-[#3056F5]',
-          })}
+          {React.isValidElement(icon) &&
+            React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
+              className: 'h-6 w-6 text-[#3056F5]',
+            })}
         </div>
       )}
 
@@ -58,11 +52,9 @@ export const StatCard = memo<StatCardProps>(({
       </p>
 
       {/* Label */}
-      <p className="text-sm font-medium text-[#475569]">
-        {description || title}
-      </p>
+      <p className="text-sm font-medium text-[#475569]">{description || title}</p>
     </div>
-  );
-});
+  )
+})
 
-StatCard.displayName = 'StatCard';
+StatCard.displayName = 'StatCard'

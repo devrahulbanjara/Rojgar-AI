@@ -1,29 +1,29 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { useRecommendedJobs } from '../../hooks/queries/useJobs';
-import { JobCard } from './JobCard';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { EmptyState } from '../common/EmptyState';
-import { SectionHeader } from '../common/SectionHeader';
-import type { Job } from '../../types/job';
+import React from 'react'
+import { useRecommendedJobs } from '../../hooks/queries/useJobs'
+import { JobCard } from './JobCard'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import { EmptyState } from '../common/EmptyState'
+import { SectionHeader } from '../common/SectionHeader'
+import type { Job } from '../../types/job'
 
 interface RecommendedJobsProps {
-  limit?: number;
-  title?: string;
-  subtitle?: string;
-  className?: string;
+  limit?: number
+  title?: string
+  subtitle?: string
+  className?: string
 }
 
 export function RecommendedJobs({
   limit = 5,
-  title = "Recommended for You",
-  subtitle = "Jobs matched to your profile and preferences",
-  className = ""
+  title = 'Recommended for You',
+  subtitle = 'Jobs matched to your profile and preferences',
+  className = '',
 }: RecommendedJobsProps) {
-  const { data: jobsData, isLoading, error } = useRecommendedJobs(limit);
+  const { data: jobsData, isLoading, error } = useRecommendedJobs(limit)
 
-  const jobs: Job[] = Array.isArray(jobsData) ? jobsData : [];
+  const jobs: Job[] = Array.isArray(jobsData) ? jobsData : []
 
   if (isLoading) {
     return (
@@ -33,7 +33,7 @@ export function RecommendedJobs({
           <LoadingSpinner size="lg" />
         </div>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -43,14 +43,10 @@ export function RecommendedJobs({
         <EmptyState
           title="Unable to load recommendations"
           description="There was an error loading your job recommendations. Please try again later."
-          action={
-            <button onClick={() => window.location.reload()}>
-              Try Again
-            </button>
-          }
+          action={<button onClick={() => window.location.reload()}>Try Again</button>}
         />
       </div>
-    );
+    )
   }
 
   if (jobs.length === 0) {
@@ -62,7 +58,7 @@ export function RecommendedJobs({
           description="We're working on finding the perfect jobs for you. Check back soon!"
         />
       </div>
-    );
+    )
   }
 
   return (
@@ -71,14 +67,9 @@ export function RecommendedJobs({
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {jobs.map((job: Job) => (
-          <JobCard
-            key={job.id}
-            job={job}
-            showApplyButton={true}
-            className="h-full"
-          />
+          <JobCard key={job.id} job={job} showApplyButton className="h-full" />
         ))}
       </div>
     </div>
-  );
+  )
 }

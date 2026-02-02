@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '../ui/card';
-import { FileText, Users2, CalendarClock } from 'lucide-react';
-import Image from 'next/image';
+import { motion } from 'framer-motion'
+import { Card, CardContent } from '../ui/card'
+import { FileText, Users2, CalendarClock } from 'lucide-react'
+import Image from 'next/image'
 
 const features = [
   {
@@ -23,8 +23,8 @@ const features = [
     title: 'Intelligent Scoring',
     description:
       'AI-powered evaluators analyze responses, voice cues, and context to score candidates with unmatched accuracy — decisions made smarter, not slower.',
-  }
-];
+  },
+]
 
 export function RecruiterPlatformSection() {
   return (
@@ -69,7 +69,7 @@ export function RecruiterPlatformSection() {
           {/* Right: Feature Cards */}
           <div className="space-y-6 sm:space-y-8 px-2 xl:px-0 xl:text-left text-center">
             {features.map((feature, index) => {
-              const Icon = feature.icon;
+              const Icon = feature.icon
               return (
                 <motion.div
                   key={feature.title}
@@ -92,12 +92,11 @@ export function RecruiterPlatformSection() {
                     </CardContent>
                   </Card>
                 </motion.div>
-              );
+              )
             })}
           </div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }

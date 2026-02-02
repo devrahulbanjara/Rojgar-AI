@@ -8,10 +8,7 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    echo=False,
-)
+engine = create_engine(settings.DATABASE_URL, echo=False)
 
 
 def init_db():

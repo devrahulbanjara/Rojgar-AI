@@ -1,16 +1,16 @@
 export interface Skill {
-  id: string;
-  user_id: string;
-  skill: string;
-  created_at: string;
-  updated_at: string;
+  id: string
+  user_id: string
+  skill: string
+  created_at: string
+  updated_at: string
 }
 
 export interface SkillCreateRequest {
-  skill: string;
+  skill: string
 }
 
 export interface SkillsListResponse {
-  skills: Skill[];
-  total: number;
+  skills: Skill[]
+  total: number
 }

@@ -1,39 +1,41 @@
-import { useState } from 'react';
-import { authService } from '../../services/authService';
+import { useState } from 'react'
+import { authService } from '../../services/authService'
 
 interface GoogleOAuthButtonProps {
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
-  disabled?: boolean;
-  className?: string;
+  onSuccess?: () => void
+  onError?: (error: string) => void
+  disabled?: boolean
+  className?: string
 }
 
 export function GoogleOAuthButton({
   onSuccess,
   onError,
   disabled = false,
-  className = ""
+  className = '',
 }: GoogleOAuthButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleGoogleLogin = async () => {
     try {
-      setIsLoading(true);
+      setIsLoading(true)
 
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       if (!clientId || clientId === 'your_google_client_id_here') {
-        throw new Error('Google OAuth is not configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment variables.');
+        throw new Error(
+          'Google OAuth is not configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment variables.'
+        )
       }
 
-      await authService.initiateGoogleLogin();
-      onSuccess?.();
+      await authService.initiateGoogleLogin()
+      onSuccess?.()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Google login failed';
-      onError?.(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Google login failed'
+      onError?.(errorMessage)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <button
@@ -70,5 +72,5 @@ export function GoogleOAuthButton({
       </svg>
       {isLoading ? 'Connecting...' : 'Continue with Google'}
     </button>
-  );
+  )
 }
