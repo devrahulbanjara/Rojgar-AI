@@ -12,11 +12,9 @@ llm = ChatBedrockConverse(
 
 def critique_node(state: ShortlistState):
     judge_llm = llm.with_structured_output(JudgeResponse)
-
     prompt = CRITIQUE_PROMPT.format(
         cto_eval=state["cto_evals"][-1], hr_eval=state["hr_evals"][-1]
     )
-
     res = judge_llm.invoke(prompt)
     return {
         "critiques": [res.critique],

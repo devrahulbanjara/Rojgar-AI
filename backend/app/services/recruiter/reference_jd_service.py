@@ -26,11 +26,9 @@ class ReferenceJDService:
         db.add(reference_jd)
         db.commit()
         db.refresh(reference_jd)
-
         reference_jd.about_the_company = (
             ReferenceJDService._get_organization_description(db, organization_id)
         )
-
         return reference_jd
 
     @staticmethod
@@ -41,7 +39,6 @@ class ReferenceJDService:
             Organization.organization_id == organization_id
         )
         organization = db.execute(stmt).scalar_one_or_none()
-
         return organization.description if organization else None
 
     @staticmethod
@@ -50,14 +47,11 @@ class ReferenceJDService:
             ReferenceJobDescriptions.organization_id == organization_id
         )
         reference_jds = db.execute(stmt).scalars().all()
-
         organization_description = ReferenceJDService._get_organization_description(
             db, organization_id
         )
-
         for ref_jd in reference_jds:
             ref_jd.about_the_company = organization_description
-
         return reference_jds
 
     @staticmethod
@@ -69,16 +63,11 @@ class ReferenceJDService:
             ReferenceJobDescriptions.organization_id == organization_id,
         )
         reference_jd = db.execute(stmt).scalar_one_or_none()
-
         if not reference_jd:
             return None
-
-        # Inject about_the_company into the model temporarily for the schema
-        # This is a bit of a hack, but cleaner than manual mapping in controller
         reference_jd.about_the_company = (
             ReferenceJDService._get_organization_description(db, organization_id)
         )
-
         return reference_jd
 
     @staticmethod
@@ -90,10 +79,8 @@ class ReferenceJDService:
             ReferenceJobDescriptions.organization_id == organization_id,
         )
         reference_jd = db.execute(stmt).scalar_one_or_none()
-
         if not reference_jd:
             raise NotFoundError("Reference JD not found")
-
         db.delete(reference_jd)
         db.commit()
 
@@ -109,22 +96,17 @@ class ReferenceJDService:
             ReferenceJobDescriptions.organization_id == organization_id,
         )
         reference_jd = db.execute(stmt).scalar_one_or_none()
-
         if not reference_jd:
             raise NotFoundError("Reference JD not found")
-
         reference_jd.department = data.department
         reference_jd.job_summary = data.job_summary
         reference_jd.job_responsibilities = data.job_responsibilities
         reference_jd.required_qualifications = data.required_qualifications
         reference_jd.preferred = data.preferred
         reference_jd.compensation_and_benefits = data.compensation_and_benefits
-
         db.commit()
         db.refresh(reference_jd)
-
         reference_jd.about_the_company = (
             ReferenceJDService._get_organization_description(db, organization_id)
         )
-
         return reference_jd

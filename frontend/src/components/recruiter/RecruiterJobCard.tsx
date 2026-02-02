@@ -8,6 +8,7 @@ import {
   Eye,
   BookmarkPlus,
   Building2,
+  Calendar,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import type { Job } from "../../types/job";
@@ -75,6 +76,33 @@ function formatPostedDate(dateStr: string): string {
   return `${years}y ago`;
 }
 
+function formatDeadline(deadline: string): string {
+  if (!deadline) return "";
+  try {
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    const diffInMs = deadlineDate.getTime() - now.getTime();
+    const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInDays < 0) {
+      return "Expired";
+    } else if (diffInDays === 0) {
+      return "Today";
+    } else if (diffInDays === 1) {
+      return "Tomorrow";
+    } else if (diffInDays <= 7) {
+      return `${diffInDays} days`;
+    } else {
+      return deadlineDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    }
+  } catch {
+    return "";
+  }
+}
+
 // Department color schemes matching Reference JD cards
 const departmentColors: Record<
   string,
@@ -132,37 +160,12 @@ const departmentColors: Record<
   },
 };
 
-// Status indicator styles
-const statusStyles = {
-  Active: {
-    bg: "bg-emerald-500",
-    label: "Active",
-  },
-  Draft: {
-    bg: "bg-slate-400",
-    label: "Draft",
-  },
-  Expired: {
-    bg: "bg-red-500",
-    label: "Expired",
-  },
-  Closed: {
-    bg: "bg-red-500",
-    label: "Expired",
-  },
-  Inactive: {
-    bg: "bg-gray-400",
-    label: "Inactive",
-  },
-};
 
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
   ({ job, onClick, onConvertToReferenceJD, className }) => {
     const status = job.status || "Draft";
     // Normalize status: map "Closed" to "Expired" for display
     const displayStatus = status === "Closed" ? "Expired" : status;
-    const statusStyle =
-      statusStyles[displayStatus as keyof typeof statusStyles] || statusStyles.Draft;
     const deptColor =
       departmentColors[job.department || ""] || departmentColors.Default;
 
@@ -201,7 +204,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Header Row: Department Badge + Status Indicator */}
+          {/* Header Row: Department Badge */}
           <div className="flex items-start justify-between mb-5">
             {job.department && (
               <span
@@ -215,15 +218,6 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                 {job.department}
               </span>
             )}
-            <div className="flex items-center gap-2">
-              <div
-                className={cn("w-2 h-2 rounded-full", statusStyle.bg)}
-                title={statusStyle.label}
-              />
-              <span className="text-[11px] font-medium text-slate-500">
-                {statusStyle.label}
-              </span>
-            </div>
           </div>
 
           {/* Job Title - Refined Size */}
@@ -269,9 +263,9 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Bottom Action Row - Colored Badges + Button */}
+          {/* Bottom Action Row - Statistics + Deadline/Action */}
           <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-            {/* Statistics - Colored Badges */}
+            {/* Left: Statistics - Colored Badges */}
             <div className="flex items-center gap-3">
               {job.applicant_count !== undefined && (
                 <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50/80 text-purple-700 rounded-lg border border-purple-200">
@@ -291,23 +285,43 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               )}
             </div>
 
-            {/* Save as Template Button */}
-            {onConvertToReferenceJD && (
-              <button
-                onClick={handleConvertClick}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                  "text-indigo-600 hover:text-white",
-                  "border border-indigo-200 hover:border-indigo-600",
-                  "hover:bg-indigo-600",
-                  "group-hover:shadow-sm",
-                )}
-                title="Save as Reference JD Template"
-              >
-                <BookmarkPlus className="w-4 h-4" />
-                <span className="hidden sm:inline">Save as Template</span>
-              </button>
-            )}
+            {/* Right: Deadline Badge or Save Template Button */}
+            <div className="flex items-center">
+              {job.application_deadline ? (
+                displayStatus === "Expired" ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-red-50/80 text-red-700 rounded-lg border border-red-200">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-xs font-semibold">
+                      Deadline: Expired
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50/80 text-amber-700 rounded-lg border border-amber-200">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-xs font-semibold">
+                      {formatDeadline(job.application_deadline)}
+                    </span>
+                  </div>
+                )
+              ) : (
+                onConvertToReferenceJD && (
+                  <button
+                    onClick={handleConvertClick}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                      "text-indigo-600 hover:text-white",
+                      "border border-indigo-200 hover:border-indigo-600",
+                      "hover:bg-indigo-600",
+                      "group-hover:shadow-sm",
+                    )}
+                    title="Save as Reference JD Template"
+                  >
+                    <BookmarkPlus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Save as Template</span>
+                  </button>
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>

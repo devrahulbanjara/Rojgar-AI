@@ -90,7 +90,6 @@ class JobResponse(
     organization: Annotated[
         OrganizationResponseInJob | None, "Organization details"
     ] = None
-
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
@@ -109,7 +108,7 @@ class JobCreateUpdateBase(JobDescription):
     salary_min: Annotated[int | None, "Minimum salary"] = None
     salary_max: Annotated[int | None, "Maximum salary"] = None
     salary_currency: Annotated[str | None, "Salary currency"] = "NPR"
-    application_deadline: Annotated[str | None, "Application deadline"] = None
+    application_deadline: Annotated[date | None, "Application deadline"] = None
     status: Annotated[str | None, "Job status"] = "active"
 
 
@@ -157,7 +156,6 @@ class CreateReferenceJD(ReferenceJDBase):
 
 class ReferenceJDResponse(ReferenceJDBase):
     model_config = ConfigDict(from_attributes=True)
-
     id: Annotated[UUID, Field(validation_alias="referncejd_id")]
     organization_id: UUID
     about_the_company: Annotated[str | None, "About the company"] = None
