@@ -3,7 +3,8 @@ import uuid
 from datetime import date
 
 from sqlalchemy import func, or_, select, update
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import NotFoundError, get_datetime
 from app.core.authorization import verify_user_can_edit_job
@@ -17,8 +18,8 @@ class JobService:
     _vector_service = JobVectorService()
 
     @staticmethod
-    def get_recommendations(
-        db: Session,
+    async def get_recommendations(
+        db: AsyncSession,
         user_id: uuid.UUID,
         page: int = 1,
         limit: int = 10,
@@ -27,7 +28,8 @@ class JobService:
         saved_job_ids: set[uuid.UUID] | None = None,
     ):
         stmt = select(CandidateProfile).where(CandidateProfile.user_id == user_id)
-        candidate = db.execute(stmt).scalar_one_or_none()
+        result = await db.execute(stmt)
+        candidate = result.scalar_one_or_none()
         user_skills = []
         if candidate and candidate.skills:
             user_skills = [s.skill_name for s in candidate.skills]
@@ -47,7 +49,7 @@ class JobService:
             )
         )
         if user_skills:
-            raw_ids = JobService._vector_service.recommend_jobs_by_skills(
+            raw_ids = await JobService._vector_service.recommend_jobs_by_skills(
                 user_skills, limit=1000
             )
             if raw_ids:
@@ -59,10 +61,12 @@ class JobService:
         if location_type:
             base_stmt = base_stmt.where(JobPosting.location_type == location_type)
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
-        total = db.execute(count_stmt).scalar_one() or 0
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one() or 0
         offset = (page - 1) * limit
         jobs_stmt = base_stmt.offset(offset).limit(limit)
-        jobs = db.execute(jobs_stmt).scalars().all()
+        jobs_result = await db.execute(jobs_stmt)
+        jobs = jobs_result.scalars().all()
         total_pages = math.ceil(total / limit) if limit > 0 else 0
         paginated = {
             "jobs": jobs,
@@ -79,8 +83,8 @@ class JobService:
         return paginated
 
     @staticmethod
-    def search_jobs(
-        db: Session,
+    async def search_jobs(
+        db: AsyncSession,
         query: str = "",
         page: int = 1,
         limit: int = 10,
@@ -104,7 +108,7 @@ class JobService:
             )
         )
         if query.strip():
-            raw_ids = JobService._vector_service.search_jobs(query, limit=1000)
+            raw_ids = await JobService._vector_service.search_jobs(query, limit=1000)
             if raw_ids:
                 base_stmt = base_stmt.where(JobPosting.job_id.in_(raw_ids))
         else:
@@ -114,10 +118,12 @@ class JobService:
         if location_type:
             base_stmt = base_stmt.where(JobPosting.location_type == location_type)
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
-        total = db.execute(count_stmt).scalar_one() or 0
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one() or 0
         offset = (page - 1) * limit
         jobs_stmt = base_stmt.offset(offset).limit(limit)
-        jobs = db.execute(jobs_stmt).scalars().all()
+        jobs_result = await db.execute(jobs_stmt)
+        jobs = jobs_result.scalars().all()
         total_pages = math.ceil(total / limit) if limit > 0 else 0
         paginated = {
             "jobs": jobs,
@@ -134,8 +140,8 @@ class JobService:
         return paginated
 
     @staticmethod
-    def create_job(
-        db: Session, job_data, user_id: uuid.UUID, organization_id: uuid.UUID
+    async def create_job(
+        db: AsyncSession, job_data, user_id: uuid.UUID, organization_id: uuid.UUID
     ):
         job_description_id = uuid.uuid4()
         job_id = uuid.uuid4()
@@ -150,7 +156,7 @@ class JobService:
             updated_at=get_datetime(),
         )
         db.add(job_description)
-        db.flush()
+        await db.flush()
         application_deadline = job_data.application_deadline
         job_status = job_data.status if job_data.status else "active"
         job_posting = JobService._build_job_posting(
@@ -163,7 +169,7 @@ class JobService:
             application_deadline,
         )
         db.add(job_posting)
-        db.flush()
+        await db.flush()
         if job_status == "active":
             stmt = (
                 select(JobPosting)
@@ -173,11 +179,13 @@ class JobService:
                 )
                 .where(JobPosting.job_id == job_id)
             )
-            job_with_relations = db.execute(stmt).scalar_one()
-            JobService._vector_service.index_job(db, job_with_relations)
-        db.commit()
-        db.refresh(job_posting)
-        recruiter_user = db.scalar(select(User).where(User.user_id == user_id))
+            job_result = await db.execute(stmt)
+            job_with_relations = job_result.scalar_one()
+            await JobService._vector_service.index_job(db, job_with_relations)
+        await db.commit()
+        await db.refresh(job_posting)
+        user_result = await db.execute(select(User).where(User.user_id == user_id))
+        recruiter_user = user_result.scalar_one_or_none()
         recruiter_name = recruiter_user.name if recruiter_user else None
         return (
             job_posting,
@@ -191,22 +199,31 @@ class JobService:
         )
 
     @staticmethod
-    def auto_expire_jobs(db: Session):
+    async def auto_expire_jobs(db: AsyncSession) -> list[uuid.UUID]:
         today = date.today()
-        stmt = (
+
+        stmt_to_trigger = select(JobPosting.job_id).where(
+            JobPosting.status == "active",
+            JobPosting.application_deadline < today,
+            JobPosting.auto_shortlist == True,
+        )
+        result = await db.execute(stmt_to_trigger)
+        jobs_to_auto_shortlist = list(result.scalars().all())
+
+        update_stmt = (
             update(JobPosting)
             .where(
                 JobPosting.status == "active", JobPosting.application_deadline < today
             )
             .values(status="expired", updated_at=get_datetime())
         )
-        result = db.execute(stmt)
-        db.commit()
-        return result.rowcount
+        await db.execute(update_stmt)
+        await db.commit()
+        return jobs_to_auto_shortlist
 
     @staticmethod
-    def get_jobs(
-        db: Session,
+    async def get_jobs(
+        db: AsyncSession,
         user_id: uuid.UUID | None = None,
         organization_id: uuid.UUID | None = None,
         status: str | None = None,
@@ -218,7 +235,8 @@ class JobService:
         if user_id:
             is_recruiter_view = True
             user_stmt = select(User).where(User.user_id == user_id)
-            user = db.execute(user_stmt).scalar_one_or_none()
+            user_result = await db.execute(user_stmt)
+            user = user_result.scalar_one_or_none()
             if user and user.organization_id:
                 stmt = stmt.where(JobPosting.organization_id == user.organization_id)
             else:
@@ -230,7 +248,8 @@ class JobService:
         elif not is_recruiter_view:
             stmt = stmt.where(JobPosting.status.in_(VISIBLE_STATUSES))
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = db.execute(count_stmt).scalar_one() or 0
+        total_result = await db.execute(count_stmt)
+        total = total_result.scalar_one() or 0
         offset = (page - 1) * limit
         jobs_stmt = (
             stmt.options(
@@ -241,7 +260,8 @@ class JobService:
             .offset(offset)
             .limit(limit)
         )
-        jobs = db.execute(jobs_stmt).scalars().all()
+        jobs_result = await db.execute(jobs_stmt)
+        jobs = jobs_result.scalars().all()
         total_pages = math.ceil(total / limit) if limit > 0 else 0
         return {
             "jobs": jobs,
@@ -254,8 +274,8 @@ class JobService:
         }
 
     @staticmethod
-    def get_job_by_id(
-        db: Session, job_id: uuid.UUID, saved_job_ids: set[uuid.UUID] | None = None
+    async def get_job_by_id(
+        db: AsyncSession, job_id: uuid.UUID, saved_job_ids: set[uuid.UUID] | None = None
     ):
         stmt = (
             select(JobPosting)
@@ -265,44 +285,75 @@ class JobService:
             )
             .where(JobPosting.job_id == job_id)
         )
-        job = db.execute(stmt).scalar_one_or_none()
+        result = await db.execute(stmt)
+        job = result.scalar_one_or_none()
         if job and saved_job_ids:
             job.is_saved = job.job_id in saved_job_ids
         return job
 
     @staticmethod
-    def expire_job(db: Session, job_id: uuid.UUID, user_id: uuid.UUID):
+    async def expire_job(db: AsyncSession, job_id: uuid.UUID, user_id: uuid.UUID):
         user_stmt = select(User).where(User.user_id == user_id)
-        user = db.execute(user_stmt).scalar_one_or_none()
+        user_result = await db.execute(user_stmt)
+        user = user_result.scalar_one_or_none()
         if not user:
-            raise NotFoundError("User not found")
+            raise NotFoundError(
+                message="User not found",
+                details={
+                    "user_id": str(user_id),
+                },
+                user_id=user_id,
+            )
         job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
-        job_posting = db.execute(job_stmt).scalar_one_or_none()
+        job_result = await db.execute(job_stmt)
+        job_posting = job_result.scalar_one_or_none()
         if not job_posting:
-            raise NotFoundError("Job not found")
+            raise NotFoundError(
+                message="Job not found",
+                details={
+                    "job_id": str(job_id),
+                    "user_id": str(user_id),
+                },
+                user_id=user_id,
+            )
         verify_user_can_edit_job(user, job_posting)
         job_posting.status = "expired"
         job_posting.updated_at = get_datetime()
-        db.commit()
-        db.refresh(job_posting)
+        await db.commit()
+        await db.refresh(job_posting)
         return job_posting
 
     @staticmethod
-    def delete_job(db: Session, job_id: uuid.UUID, user_id: uuid.UUID):
+    async def delete_job(db: AsyncSession, job_id: uuid.UUID, user_id: uuid.UUID):
         user_stmt = select(User).where(User.user_id == user_id)
-        user = db.execute(user_stmt).scalar_one_or_none()
+        user_result = await db.execute(user_stmt)
+        user = user_result.scalar_one_or_none()
         if not user:
-            raise NotFoundError("User not found")
+            raise NotFoundError(
+                message="User not found",
+                details={
+                    "user_id": str(user_id),
+                },
+                user_id=user_id,
+            )
         job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
-        job_posting = db.execute(job_stmt).scalar_one_or_none()
+        job_result = await db.execute(job_stmt)
+        job_posting = job_result.scalar_one_or_none()
         if not job_posting:
-            raise NotFoundError("Job not found")
+            raise NotFoundError(
+                message="Job not found",
+                details={
+                    "job_id": str(job_id),
+                    "user_id": str(user_id),
+                },
+                user_id=user_id,
+            )
         verify_user_can_edit_job(user, job_posting)
         db.delete(job_posting)
-        db.commit()
+        await db.commit()
 
     @staticmethod
-    def update_job(db: Session, job_posting: JobPosting, job_data):
+    async def update_job(db: AsyncSession, job_posting: JobPosting, job_data):
         if job_data.title is not None:
             job_posting.title = job_data.title
         if job_data.department is not None:
@@ -327,11 +378,14 @@ class JobService:
             job_posting.status = job_data.status
         if job_data.application_deadline is not None:
             job_posting.application_deadline = job_data.application_deadline
+        if hasattr(job_data, "auto_shortlist") and job_data.auto_shortlist is not None:
+            job_posting.auto_shortlist = job_data.auto_shortlist
         job_posting.updated_at = get_datetime()
         job_desc_stmt = select(JobDescription).where(
             JobDescription.job_description_id == job_posting.job_description_id
         )
-        job_description = db.execute(job_desc_stmt).scalar_one_or_none()
+        job_desc_result = await db.execute(job_desc_stmt)
+        job_description = job_desc_result.scalar_one_or_none()
         if job_description:
             if job_data.job_summary is not None:
                 job_description.job_summary = job_data.job_summary
@@ -348,7 +402,7 @@ class JobService:
                     job_data.compensation_and_benefits
                 )
             job_description.updated_at = get_datetime()
-        db.flush()
+        await db.flush()
         if job_data.status == "active" and (not job_posting.is_indexed):
             stmt = (
                 select(JobPosting)
@@ -358,10 +412,11 @@ class JobService:
                 )
                 .where(JobPosting.job_id == job_posting.job_id)
             )
-            job_with_relations = db.execute(stmt).scalar_one()
-            JobService._vector_service.index_job(db, job_with_relations)
-        db.commit()
-        db.refresh(job_posting)
+            job_rel_result = await db.execute(stmt)
+            job_with_relations = job_rel_result.scalar_one()
+            await JobService._vector_service.index_job(db, job_with_relations)
+        await db.commit()
+        await db.refresh(job_posting)
         return job_posting
 
     @staticmethod
@@ -391,6 +446,7 @@ class JobService:
             salary_currency=job_data.salary_currency,
             status=job_status,
             is_indexed=False,
+            auto_shortlist=getattr(job_data, "auto_shortlist", False),
             posted_date=date.today(),
             application_deadline=application_deadline,
             created_at=get_datetime(),

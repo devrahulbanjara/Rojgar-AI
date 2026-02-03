@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 
 import httpx
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import (
     UnauthorizedError,
@@ -19,21 +19,22 @@ from app.schemas.shared import ErrorCode
 
 class AuthService:
     @staticmethod
-    def get_user_by_email(email: str, db: Session) -> User | None:
-        result = db.execute(select(User).where(User.email == email)).scalars().first()
-        return result
+    async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalars().first()
 
     @staticmethod
-    def get_user_by_google_id(google_id: str, db: Session) -> User | None:
-        user_google = db.execute(
+    async def get_user_by_google_id(google_id: str, db: AsyncSession) -> User | None:
+        result = await db.execute(
             select(UserGoogle).where(UserGoogle.user_google_id == google_id)
-        ).scalar_one_or_none()
+        )
+        user_google = result.scalar_one_or_none()
         if user_google:
             return user_google.user
         return None
 
     @staticmethod
-    def create_user(user_data: CreateUserRequest, db: Session) -> User:
+    async def create_user(user_data: CreateUserRequest, db: AsyncSession) -> User:
         new_user = User(
             user_id=uuid.uuid4(),
             organization_id=user_data.organization_id,
@@ -43,7 +44,7 @@ class AuthService:
             role=user_data.role.value,
         )
         db.add(new_user)
-        db.flush()
+        await db.flush()
         if new_user.role == UserRole.CANDIDATE.value:
             new_profile = CandidateProfile(
                 profile_id=uuid.uuid4(), user_id=new_user.user_id
@@ -56,8 +57,8 @@ class AuthService:
                 user_google_id=user_data.google_id, user_id=new_user.user_id
             )
             db.add(new_google_user)
-        db.commit()
-        db.refresh(new_user)
+        await db.commit()
+        await db.refresh(new_user)
         return new_user
 
     @staticmethod
@@ -109,7 +110,12 @@ class AuthService:
             )
             if token_response.status_code != 200:
                 raise UnauthorizedError(
-                    "Google authentication failed", ErrorCode.INVALID_CREDENTIALS
+                    message="Google authentication failed",
+                    error_code=ErrorCode.INVALID_CREDENTIALS,
+                    details={
+                        "reason": "token_exchange_failed",
+                        "status_code": token_response.status_code,
+                    },
                 )
             tokens = token_response.json()
             access_token = tokens.get("access_token")
@@ -118,15 +124,22 @@ class AuthService:
             )
             if user_response.status_code != 200:
                 raise UnauthorizedError(
-                    "Failed to get user info from Google", ErrorCode.INVALID_CREDENTIALS
+                    message="Failed to get user info from Google",
+                    error_code=ErrorCode.INVALID_CREDENTIALS,
+                    details={
+                        "reason": "user_info_fetch_failed",
+                        "status_code": user_response.status_code,
+                    },
                 )
             return GoogleUserInfo(**user_response.json())
 
     @staticmethod
-    def get_or_create_google_user(google_user: GoogleUserInfo, db: Session) -> User:
-        user = AuthService.get_user_by_google_id(google_user.id, db)
+    async def get_or_create_google_user(
+        google_user: GoogleUserInfo, db: AsyncSession
+    ) -> User:
+        user = await AuthService.get_user_by_google_id(google_user.id, db)
         if not user:
-            existing_user_by_email = AuthService.get_user_by_email(
+            existing_user_by_email = await AuthService.get_user_by_email(
                 google_user.email, db
             )
             if existing_user_by_email:
@@ -141,8 +154,8 @@ class AuthService:
                 if not existing_user_by_email.picture and google_user.picture:
                     existing_user_by_email.picture = google_user.picture
                     db.add(existing_user_by_email)
-                db.commit()
-                db.refresh(existing_user_by_email)
+                await db.commit()
+                await db.refresh(existing_user_by_email)
                 return existing_user_by_email
             create_user_data = CreateUserRequest(
                 email=google_user.email,
@@ -151,7 +164,7 @@ class AuthService:
                 picture=google_user.picture,
                 role=UserRole.CANDIDATE,
             )
-            user = AuthService.create_user(create_user_data, db)
+            user = await AuthService.create_user(create_user_data, db)
         return user
 
     @staticmethod

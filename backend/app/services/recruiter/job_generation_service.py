@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging_config import logger
 from app.schemas.agents.jd_generator import JobDescription, JobState
@@ -11,10 +11,10 @@ from app.services.recruiter.reference_jd_service import ReferenceJDService
 
 class JobGenerationService:
     @staticmethod
-    def generate_job_draft(
+    async def generate_job_draft(
         title: str,
         raw_requirements: str,
-        db: Session | None = None,
+        db: AsyncSession | None = None,
         reference_jd_id: uuid.UUID | None = None,
         organization_id: uuid.UUID | None = None,
         current_draft: dict | None = None,
@@ -24,14 +24,13 @@ class JobGenerationService:
         reference_jd = ""
         if reference_jd_id and db and organization_id:
             try:
-                reference_jd_obj, about_the_company = (
-                    ReferenceJDService.get_reference_jd_by_id(
-                        db=db,
-                        reference_jd_id=reference_jd_id,
-                        organization_id=organization_id,
-                    )
+                reference_jd_obj = await ReferenceJDService.get_reference_jd_by_id(
+                    db=db,
+                    reference_jd_id=reference_jd_id,
+                    organization_id=organization_id,
                 )
                 if reference_jd_obj:
+                    about_the_company = reference_jd_obj.about_the_company
                     reference_jd = ReferenceJDFormatter.format_reference_jd(
                         reference_jd_obj, about_the_company
                     )
@@ -62,5 +61,5 @@ class JobGenerationService:
                 initial_state["draft"] = draft
             except Exception as e:
                 logger.error(f"Failed to convert current_draft to JobDescription: {e}")
-        result = jd_agent.invoke(initial_state, config=thread_config)
+        result = await jd_agent.ainvoke(initial_state, config=thread_config)
         return result

@@ -3,16 +3,19 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import BusinessLogicError, NotFoundError, get_current_active_user, get_db
 from app.core.authorization import get_organization_from_user, verify_user_can_edit_job
+from app.core.config import settings
+from app.core.exceptions import get_request_context
 from app.core.limiter import limiter
 from app.models import JobPosting, User
 from app.schemas import job as schemas
 from app.services.job_service import JobService
 from app.services.recruiter.activity_events import activity_emitter
 from app.services.recruiter.job_generation_service import JobGenerationService
+from app.services.recruiter.shortlist_service import ShortlistService
 
 router = APIRouter()
 
@@ -22,17 +25,26 @@ router = APIRouter()
     response_model=schemas.JobDraftResponse,
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("50/minute")
-def generate_job_draft(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def generate_job_draft(
     request: Request,
     draft_request: schemas.JobDraftGenerateRequest,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if not draft_request.raw_requirements:
-        raise BusinessLogicError("Raw requirements / some keywords are required")
+        raise BusinessLogicError(
+            message="Raw requirements / some keywords are required",
+            details={
+                "title": draft_request.title,
+                "has_reference_jd": draft_request.reference_jd_id is not None,
+                "user_id": str(current_user.user_id),
+            },
+            user_id=current_user.user_id,
+            **get_request_context(request),
+        )
     organization_id = get_organization_from_user(current_user)
-    generated_draft = JobGenerationService.generate_job_draft(
+    generated_draft = await JobGenerationService.generate_job_draft(
         title=draft_request.title,
         raw_requirements=draft_request.raw_requirements,
         db=db,
@@ -41,7 +53,19 @@ def generate_job_draft(
         current_draft=draft_request.current_draft,
     )
     if not generated_draft or not generated_draft.get("draft"):
-        raise BusinessLogicError("Failed to generate job description")
+        raise BusinessLogicError(
+            message="Failed to generate job description",
+            details={
+                "title": draft_request.title,
+                "has_raw_requirements": bool(draft_request.raw_requirements),
+                "reference_jd_id": str(draft_request.reference_jd_id)
+                if draft_request.reference_jd_id
+                else None,
+                "organization_id": str(organization_id),
+                "user_id": str(current_user.user_id),
+            },
+            request_id=getattr(request.state, "request_id", None),
+        )
     draft = generated_draft["draft"]
     return draft
 
@@ -49,16 +73,16 @@ def generate_job_draft(
 @router.post(
     "", response_model=schemas.JobResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("50/minute")
-def create_job(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def create_job(
     request: Request,
     background_tasks: BackgroundTasks,
     job_data: schemas.JobCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
-    job_posting, event_data = JobService.create_job(
+    job_posting, event_data = await JobService.create_job(
         db=db,
         job_data=job_data,
         user_id=current_user.user_id,
@@ -78,34 +102,43 @@ def create_job(
 @router.put(
     "/{job_id}", response_model=schemas.JobResponse, status_code=status.HTTP_200_OK
 )
-@limiter.limit("50/minute")
-def update_job(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def update_job(
     request: Request,
     job_id: uuid.UUID,
     job_data: schemas.JobUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
-    job_posting = db.execute(job_stmt).scalar_one_or_none()
+    job_result = await db.execute(job_stmt)
+    job_posting = job_result.scalar_one_or_none()
     if not job_posting:
-        raise NotFoundError("Job not found")
+        raise NotFoundError(
+            message="Job not found",
+            details={
+                "job_id": str(job_id),
+                "user_id": str(current_user.user_id),
+            },
+            user_id=current_user.user_id,
+            **get_request_context(request),
+        )
     verify_user_can_edit_job(current_user, job_posting)
-    updated_job = JobService.update_job(
+    updated_job = await JobService.update_job(
         db=db, job_posting=job_posting, job_data=job_data
     )
     return updated_job
 
 
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
-@limiter.limit("50/minute")
-def delete_job(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def delete_job(
     request: Request,
     job_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    JobService.delete_job(db=db, job_id=job_id, user_id=current_user.user_id)
+    await JobService.delete_job(db=db, job_id=job_id, user_id=current_user.user_id)
 
 
 @router.post(
@@ -113,11 +146,66 @@ def delete_job(
     response_model=schemas.JobResponse,
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("50/minute")
-def expire_job(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def expire_job(
     request: Request,
     job_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    return JobService.expire_job(db=db, job_id=job_id, user_id=current_user.user_id)
+    return await JobService.expire_job(
+        db=db, job_id=job_id, user_id=current_user.user_id
+    )
+
+
+@router.post("/{job_id}/shortlist", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_SHORTLIST_TRIGGER)
+async def trigger_shortlisting(
+    request: Request,
+    job_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    job_result = await db.execute(select(JobPosting).where(JobPosting.job_id == job_id))
+    job = job_result.scalar_one_or_none()
+    if not job:
+        raise NotFoundError(
+            message="Job not found",
+            details={
+                "job_id": str(job_id),
+                "user_id": str(current_user.user_id),
+            },
+            user_id=current_user.user_id,
+            **get_request_context(request),
+        )
+    verify_user_can_edit_job(current_user, job)
+
+    background_tasks.add_task(ShortlistService.process_shortlisting, job_id)
+
+    return {"message": "AI scoring started in background", "job_id": str(job_id)}
+
+
+@router.get("/{job_id}/shortlist/summary", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_SHORTLIST_SUMMARY)
+async def get_shortlisting_summary(
+    request: Request,
+    job_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    job_result = await db.execute(select(JobPosting).where(JobPosting.job_id == job_id))
+    job = job_result.scalar_one_or_none()
+    if not job:
+        raise NotFoundError(
+            message="Job not found",
+            details={
+                "job_id": str(job_id),
+                "user_id": str(current_user.user_id),
+            },
+            user_id=current_user.user_id,
+            **get_request_context(request),
+        )
+    verify_user_can_edit_job(current_user, job)
+
+    return await ShortlistService.get_shortlisting_summary(db, job_id)
