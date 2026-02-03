@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import get_current_active_user, get_db
@@ -48,7 +48,13 @@ async def create_resume(
     data: schemas.ResumeCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.create_resume_fork(db, current_user, data)
+    resume = await ResumeService.create_resume_fork(db, current_user, data)
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found"
+        )
+    return resume
 
 
 @router.get("/{resume_id}", response_model=schemas.ResumeResponse)
@@ -59,7 +65,13 @@ async def get_resume(
     resume_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.get_resume(db, current_user, resume_id)
+    resume = await ResumeService.get_resume(db, current_user, resume_id)
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
+    return resume
 
 
 @router.patch("/{resume_id}", response_model=schemas.ResumeResponse)
@@ -71,7 +83,13 @@ async def update_resume_details(
     data: schemas.ResumeUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.update_resume(db, current_user, resume_id, data)
+    resume = await ResumeService.update_resume(db, current_user, resume_id, data)
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
+    return resume
 
 
 @router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -82,8 +100,12 @@ async def delete_resume(
     resume_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await ResumeService.delete_resume(db, current_user, resume_id)
-    return {"message": "Resume deleted successfully"}
+    resume = await ResumeService.delete_resume(db, current_user, resume_id)
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
 
 
 @router.post(
@@ -97,7 +119,13 @@ async def add_resume_experience(
     data: WorkExperienceBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.add_experience(db, current_user, resume_id, data)
+    experience = await ResumeService.add_experience(db, current_user, resume_id, data)
+    if not experience:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
+    return experience
 
 
 @router.delete("/{resume_id}/experience/{item_id}")
@@ -109,7 +137,12 @@ async def delete_resume_experience(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await ResumeService.delete_experience(db, current_user, resume_id, item_id)
+    item = await ResumeService.delete_experience(db, current_user, resume_id, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Experience item not found"
+        )
     return {"message": "Resume experience deleted successfully"}
 
 
@@ -126,7 +159,13 @@ async def add_resume_education(
     data: EducationBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.add_education(db, current_user, resume_id, data)
+    education = await ResumeService.add_education(db, current_user, resume_id, data)
+    if not education:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
+    return education
 
 
 @router.delete(
@@ -140,8 +179,12 @@ async def delete_resume_education(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await ResumeService.delete_education(db, current_user, resume_id, item_id)
-    return {"message": "Resume education deleted successfully"}
+    item = await ResumeService.delete_education(db, current_user, resume_id, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Education item not found"
+        )
 
 
 @router.post(
@@ -157,7 +200,13 @@ async def add_resume_skill(
     data: SkillBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.add_skill(db, current_user, resume_id, data)
+    skill = await ResumeService.add_skill(db, current_user, resume_id, data)
+    if not skill:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
+    return skill
 
 
 @router.delete("/{resume_id}/skills/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -169,8 +218,12 @@ async def delete_resume_skill(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await ResumeService.delete_skill(db, current_user, resume_id, item_id)
-    return {"message": "Resume skill deleted successfully"}
+    item = await ResumeService.delete_skill(db, current_user, resume_id, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Skill item not found"
+        )
 
 
 @router.post(
@@ -186,7 +239,15 @@ async def add_resume_certification(
     data: CertificationBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.add_certification(db, current_user, resume_id, data)
+    certification = await ResumeService.add_certification(
+        db, current_user, resume_id, data
+    )
+    if not certification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found"
+        )
+    return certification
 
 
 @router.delete(
@@ -200,8 +261,14 @@ async def delete_resume_certification(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await ResumeService.delete_certification(db, current_user, resume_id, item_id)
-    return {"message": "Resume certification deleted successfully"}
+    item = await ResumeService.delete_certification(
+        db, current_user, resume_id, item_id
+    )
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Certification item not found"
+        )
 
 
 @router.patch(
@@ -216,9 +283,15 @@ async def update_resume_experience(
     data: ResumeWorkExperienceUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.update_experience(
+    experience = await ResumeService.update_experience(
         db, current_user, resume_id, item_id, data
     )
+    if not experience:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Work experience record not found"
+        )
+    return experience
 
 
 @router.patch(
@@ -233,9 +306,15 @@ async def update_resume_education(
     data: ResumeEducationUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.update_education(
+    education = await ResumeService.update_education(
         db, current_user, resume_id, item_id, data
     )
+    if not education:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Education record not found"
+        )
+    return education
 
 
 @router.patch("/{resume_id}/skills/{item_id}", response_model=ResumeSkillResponse)
@@ -248,7 +327,13 @@ async def update_resume_skill(
     data: ResumeSkillUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.update_skill(db, current_user, resume_id, item_id, data)
+    skill = await ResumeService.update_skill(db, current_user, resume_id, item_id, data)
+    if not skill:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Skill record not found"
+        )
+    return skill
 
 
 @router.patch(
@@ -263,6 +348,12 @@ async def update_resume_certification(
     data: ResumeCertificationUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await ResumeService.update_certification(
+    certification = await ResumeService.update_certification(
         db, current_user, resume_id, item_id, data
     )
+    if not certification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Certification record not found"
+        )
+    return certification

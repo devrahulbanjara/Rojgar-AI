@@ -1,12 +1,7 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status
 from starlette.websockets import WebSocketState
 
 from app.core.database import AsyncSessionLocal
-from app.core.exceptions import (
-    BusinessLogicError,
-    ForbiddenError,
-    UnauthorizedError,
-)
 from app.core.logging_config import logger
 from app.core.websocket_manager import manager
 from app.services.recruiter.websocket_service import authenticate_websocket_user
@@ -21,6 +16,11 @@ async def websocket_activity(websocket: WebSocket):
     async with AsyncSessionLocal() as db:
         try:
             user = await authenticate_websocket_user(websocket, db)
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication failed"
+                )
             organization_id = user.organization_id
 
             await manager.connect(websocket, organization_id)
@@ -39,8 +39,12 @@ async def websocket_activity(websocket: WebSocket):
                 if data == "ping":
                     await websocket.send_text("pong")
 
-        except (UnauthorizedError, ForbiddenError, BusinessLogicError) as e:
-            logger.warning(f"WS Connection Refused: {e.message}")
+        except (HTTPException, ValueError) as e:
+            if isinstance(e, HTTPException):
+                message = str(e.detail) if isinstance(e.detail, str) else "Connection refused"
+            else:
+                message = str(e)
+            logger.warning(f"WS Connection Refused: {message}")
             if websocket.client_state != WebSocketState.DISCONNECTED:
                 await websocket.close(code=1008)
 

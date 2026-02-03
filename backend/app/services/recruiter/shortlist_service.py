@@ -63,6 +63,9 @@ class ShortlistService:
                     if job.organization
                     else None,
                 )
+                if not jd_text:
+                    logger.error(f"Failed to generate job description text for job {job_id}")
+                    return {"error": "Failed to generate job description text", "processed": 0}
 
                 logger.info(
                     f"Starting AI evaluation for {len(applications)} applications"
@@ -99,7 +102,14 @@ class ShortlistService:
         db: AsyncSession, application: JobApplication, jd_text: str
     ) -> int | None:
         try:
+            if not application.resume:
+                logger.error(f"Application {application.application_id} has no resume")
+                return None
+            
             resume_text = ResumeFormatter.format_to_markdown(application.resume)
+            if not resume_text:
+                logger.error(f"Failed to generate resume text for application {application.application_id}")
+                return None
 
             inputs = {
                 "jd": jd_text,

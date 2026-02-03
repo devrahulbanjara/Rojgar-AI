@@ -1,13 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import NotFoundError, get_db
+from app.core import get_db
 from app.core.authorization import verify_recruiter_belongs_to_organization
 from app.core.config import settings
-from app.core.exceptions import get_request_context
 from app.core.limiter import limiter
 from app.core.security import get_current_organization_id
 from app.schemas.organization import (
@@ -32,12 +31,9 @@ async def get_organization_profile(
 ):
     organization = await OrganizationService.get_organization_by_id(organization_id, db)
     if not organization:
-        raise NotFoundError(
-            message="Organization not found",
-            details={
-                "organization_id": str(organization_id),
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found"
         )
     return organization
 
@@ -53,6 +49,11 @@ async def update_organization_profile(
     organization = await OrganizationService.update_organization(
         organization_id, update_data, db
     )
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found"
+        )
     return await OrganizationAuthService.create_organization_response(organization)
 
 
@@ -76,13 +77,19 @@ async def create_recruiter(
     recruiter_data: CreateRecruiterRequest,
     organization_id: uuid.UUID = Depends(get_current_organization_id),
 ):
-    return await RecruiterCRUD.create_recruiter(
-        organization_id=organization_id,
-        email=recruiter_data.email,
-        name=recruiter_data.name,
-        password=recruiter_data.password,
-        db=db,
-    )
+    try:
+        return await RecruiterCRUD.create_recruiter(
+            organization_id=organization_id,
+            email=recruiter_data.email,
+            name=recruiter_data.name,
+            password=recruiter_data.password,
+            db=db,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.get("/recruiters/{recruiter_id}", response_model=RecruiterResponse)
@@ -95,15 +102,17 @@ async def get_recruiter(
 ):
     recruiter = await RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
-        raise NotFoundError(
-            message="Recruiter not found",
-            details={
-                "recruiter_id": str(recruiter_id),
-                "organization_id": str(organization_id),
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recruiter not found"
         )
-    verify_recruiter_belongs_to_organization(recruiter, organization_id)
+    try:
+        verify_recruiter_belongs_to_organization(recruiter, organization_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
     return recruiter
 
 
@@ -118,16 +127,32 @@ async def update_recruiter(
 ):
     recruiter = await RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
-        raise NotFoundError(
-            message="Recruiter not found",
-            details={
-                "recruiter_id": str(recruiter_id),
-                "organization_id": str(organization_id),
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recruiter not found"
         )
-    verify_recruiter_belongs_to_organization(recruiter, organization_id)
-    return await RecruiterCRUD.update_recruiter(recruiter_id, update_data, db)
+    try:
+        verify_recruiter_belongs_to_organization(recruiter, organization_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    try:
+        updated_recruiter = await RecruiterCRUD.update_recruiter(
+            recruiter_id, update_data, db
+        )
+        if not updated_recruiter:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Recruiter not found"
+            )
+        return updated_recruiter
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.delete("/recruiters/{recruiter_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -140,14 +165,21 @@ async def remove_recruiter(
 ):
     recruiter = await RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
     if not recruiter:
-        raise NotFoundError(
-            message="Recruiter not found",
-            details={
-                "recruiter_id": str(recruiter_id),
-                "organization_id": str(organization_id),
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recruiter not found"
         )
-    verify_recruiter_belongs_to_organization(recruiter, organization_id)
-    await RecruiterCRUD.delete_recruiter(recruiter_id, db)
+    try:
+        verify_recruiter_belongs_to_organization(recruiter, organization_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    deleted_recruiter = await RecruiterCRUD.delete_recruiter(recruiter_id, db)
+    if not deleted_recruiter:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recruiter not found"
+        )
     return {"message": "Recruiter removed successfully"}

@@ -7,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import api_router
 from app.core.config import settings
-from app.core.exceptions import get_exception_metrics, setup_exception_handlers
+from app.core.exceptions import get_exception_metrics
 from app.core.lifespan import lifespan
 from app.core.limiter import limiter
 from app.schemas.shared import ErrorResponse
@@ -58,7 +58,6 @@ app = FastAPI(
         },
     },
 )
-setup_exception_handlers(app)
 app.state.limiter = limiter
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(SlowAPIMiddleware)

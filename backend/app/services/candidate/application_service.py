@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core import BusinessLogicError, ConflictError, ForbiddenError, NotFoundError
 from app.models.application import (
     ApplicationStatus,
     JobApplication,
@@ -18,29 +17,22 @@ from app.models.user import User
 
 class ApplicationService:
     @staticmethod
-    async def _get_profile_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
+    async def _get_profile_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID | None:
         result = await db.execute(
             select(CandidateProfile.profile_id).where(
                 CandidateProfile.user_id == user_id
             )
         )
         profile_id = result.scalar_one_or_none()
-        if not profile_id:
-            raise NotFoundError(
-                message="Candidate profile not found",
-                details={
-                    "user_id": str(user_id),
-                    "reason": "profile_not_created",
-                },
-                user_id=user_id,
-            )
         return profile_id
 
     @staticmethod
     async def get_candidate_applications(
         db: AsyncSession, user_id: uuid.UUID
-    ) -> list[JobApplication]:
+    ) -> list[JobApplication] | None:
         profile_id = await ApplicationService._get_profile_id(db, user_id)
+        if not profile_id:
+            return None
         stmt = (
             select(JobApplication)
             .where(JobApplication.candidate_profile_id == profile_id)
@@ -56,8 +48,10 @@ class ApplicationService:
     @staticmethod
     async def get_application_by_id(
         db: AsyncSession, user_id: uuid.UUID, application_id: uuid.UUID
-    ) -> JobApplication:
+    ) -> JobApplication | None:
         profile_id = await ApplicationService._get_profile_id(db, user_id)
+        if not profile_id:
+            return None
         stmt = (
             select(JobApplication)
             .where(
@@ -73,16 +67,6 @@ class ApplicationService:
         )
         result = await db.execute(stmt)
         application = result.scalar_one_or_none()
-        if not application:
-            raise NotFoundError(
-                message="Application not found",
-                details={
-                    "application_id": str(application_id),
-                    "user_id": str(user_id),
-                    "profile_id": str(profile_id),
-                },
-                user_id=user_id,
-            )
         return application
 
     @staticmethod
@@ -90,6 +74,8 @@ class ApplicationService:
         db: AsyncSession, user_id: uuid.UUID, job_id: uuid.UUID
     ) -> JobApplication | None:
         profile_id = await ApplicationService._get_profile_id(db, user_id)
+        if not profile_id:
+            return None
         stmt = (
             select(JobApplication)
             .where(
@@ -107,57 +93,26 @@ class ApplicationService:
     @staticmethod
     async def apply_to_job(
         db: AsyncSession, user_id: uuid.UUID, job_id: uuid.UUID, resume_id: uuid.UUID
-    ) -> tuple[JobApplication, dict]:
+    ) -> tuple[JobApplication, dict] | None:
         profile_id = await ApplicationService._get_profile_id(db, user_id)
+        if not profile_id:
+            return None
         job_result = await db.execute(
             select(JobPosting).where(JobPosting.job_id == job_id)
         )
         job = job_result.scalar_one_or_none()
         if not job:
-            raise NotFoundError(
-                message="Job not found",
-                details={
-                    "job_id": str(job_id),
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
+            return None
         if job.status != "active":
-            raise BusinessLogicError(
-                message="Job is no longer accepting applications",
-                details={
-                    "job_id": str(job_id),
-                    "job_title": job.title,
-                    "job_status": job.status,
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
+            raise ValueError("Job is no longer accepting applications")
         resume_result = await db.execute(
             select(Resume.profile_id).where(Resume.resume_id == resume_id)
         )
         resume_profile_id = resume_result.scalar_one_or_none()
         if not resume_profile_id:
-            raise NotFoundError(
-                message="Resume not found",
-                details={
-                    "resume_id": str(resume_id),
-                    "user_id": str(user_id),
-                    "profile_id": str(profile_id),
-                },
-                user_id=user_id,
-            )
+            return None
         if resume_profile_id != profile_id:
-            raise ForbiddenError(
-                message="Unauthorized resume usage",
-                details={
-                    "resume_id": str(resume_id),
-                    "resume_profile_id": str(resume_profile_id),
-                    "user_profile_id": str(profile_id),
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
+            raise ValueError("Unauthorized resume usage")
         already_applied_result = await db.execute(
             select(JobApplication).where(
                 JobApplication.candidate_profile_id == profile_id,
@@ -166,20 +121,7 @@ class ApplicationService:
         )
         existing_application = already_applied_result.scalar_one_or_none()
         if existing_application:
-            raise ConflictError(
-                message="You have already applied for this job",
-                details={
-                    "job_id": str(job_id),
-                    "job_title": job.title,
-                    "application_id": str(existing_application.application_id),
-                    "application_status": existing_application.current_status.value,
-                    "applied_at": existing_application.applied_at.isoformat()
-                    if existing_application.applied_at
-                    else None,
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
+            raise ValueError("You have already applied for this job")
         app_id = uuid.uuid4()
         new_application = JobApplication(
             application_id=app_id,

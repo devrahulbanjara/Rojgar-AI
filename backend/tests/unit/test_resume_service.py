@@ -1,8 +1,8 @@
 from datetime import date
 
 import pytest
+from fastapi import HTTPException
 
-from app.core.exceptions import NotFoundError
 from app.schemas.resume import (
     ResumeCertificationUpdate,
     ResumeCreate,
@@ -135,11 +135,12 @@ class TestResumeService:
 
     def test_create_resume_profile_not_found(self, db_session):
         resume_data = ResumeCreate(resume_name="Test Resume")
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             ResumeService.create_resume_fork(
                 db_session, "nonexistent-user-id", resume_data
             )
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "NOT_FOUND"
 
     def test_get_resume_success(self, db_session, sample_candidate):
         resume_data = ResumeCreate(
@@ -156,11 +157,12 @@ class TestResumeService:
         assert result.resume_name == "Test Resume"
 
     def test_get_resume_not_found(self, db_session, sample_candidate):
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             ResumeService.get_resume(
                 db_session, sample_candidate.user_id, "nonexistent-resume-id"
             )
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "RESUME_NOT_FOUND"
 
     def test_get_resume_wrong_owner(
         self, db_session, sample_candidate, sample_recruiter
@@ -169,11 +171,12 @@ class TestResumeService:
         created = ResumeService.create_resume_fork(
             db_session, sample_candidate.user_id, resume_data
         )
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             ResumeService.get_resume(
                 db_session, sample_recruiter.user_id, created.resume_id
             )
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "RESUME_NOT_FOUND"
 
     def test_list_resumes_success(self, db_session, sample_candidate):
         resume1 = ResumeCreate(resume_name="Resume for Backend Jobs")
@@ -234,11 +237,12 @@ class TestResumeService:
         ResumeService.delete_resume(
             db_session, sample_candidate.user_id, created.resume_id
         )
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             ResumeService.get_resume(
                 db_session, sample_candidate.user_id, created.resume_id
             )
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "RESUME_NOT_FOUND"
 
     def test_add_experience_to_resume(self, db_session, sample_candidate):
         resume = ResumeService.create_resume_fork(

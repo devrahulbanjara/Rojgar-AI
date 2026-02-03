@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import NotFoundError, get_datetime
+from app.core import get_datetime
 from app.models import Organization
 from app.schemas.organization import OrganizationUpdateRequest
 
@@ -28,12 +28,7 @@ class OrganizationService:
             organization_id, db
         )
         if not organization:
-            raise NotFoundError(
-                message="Organization not found",
-                details={
-                    "organization_id": str(organization_id),
-                },
-            )
+            return None
         if update_data.name is not None:
             organization.name = update_data.name
         if update_data.location_city is not None:

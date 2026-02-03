@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import (
-    UnauthorizedError,
     create_token,
     hash_password,
     settings,
@@ -15,7 +14,6 @@ from app.core import (
 )
 from app.models import CandidateProfile, User, UserGoogle, UserRole
 from app.schemas import CreateUserRequest, GoogleUserInfo
-from app.schemas.shared import ErrorCode
 
 
 class AuthService:
@@ -74,7 +72,7 @@ class AuthService:
             db.add(new_google_user)
         await db.commit()
         await db.refresh(new_user)
-        
+
         return await AuthService.get_user_by_email(new_user.email, db)
 
     @staticmethod
@@ -125,28 +123,14 @@ class AuthService:
                 },
             )
             if token_response.status_code != 200:
-                raise UnauthorizedError(
-                    message="Google authentication failed",
-                    error_code=ErrorCode.INVALID_CREDENTIALS,
-                    details={
-                        "reason": "token_exchange_failed",
-                        "status_code": token_response.status_code,
-                    },
-                )
+                raise ValueError("Google authentication failed")
             tokens = token_response.json()
             access_token = tokens.get("access_token")
             user_response = await client.get(
                 f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
             )
             if user_response.status_code != 200:
-                raise UnauthorizedError(
-                    message="Failed to get user info from Google",
-                    error_code=ErrorCode.INVALID_CREDENTIALS,
-                    details={
-                        "reason": "user_info_fetch_failed",
-                        "status_code": user_response.status_code,
-                    },
-                )
+                raise ValueError("Failed to get user info from Google")
             return GoogleUserInfo(**user_response.json())
 
     @staticmethod

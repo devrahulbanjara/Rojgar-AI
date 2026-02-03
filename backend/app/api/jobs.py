@@ -1,13 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import NotFoundError, get_current_active_user, get_db
+from app.core import get_current_active_user, get_db
 from app.core.authorization import get_organization_from_user
 from app.core.config import settings
-from app.core.exceptions import get_request_context
 from app.core.limiter import limiter
 from app.core.security import get_current_active_user_optional
 from app.models import User
@@ -81,6 +80,11 @@ async def create_job(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
     job_posting, event_data = await JobService.create_job(
         db=db,
         job_data=job_data,
@@ -142,6 +146,11 @@ async def create_reference_jd(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
     return await ReferenceJDService.create_reference_jd(
         db=db, organization_id=organization_id, data=data
     )
@@ -155,6 +164,11 @@ async def get_reference_jds(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
     reference_jds = await ReferenceJDService.get_reference_jds(
         db=db, organization_id=organization_id
     )
@@ -181,19 +195,18 @@ async def get_reference_jd_by_id(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
     reference_jd = await ReferenceJDService.get_reference_jd_by_id(
         db=db, reference_jd_id=reference_jd_id, organization_id=organization_id
     )
     if not reference_jd:
-        raise NotFoundError(
-            message="Reference JD not found",
-            details={
-                "reference_jd_id": str(reference_jd_id),
-                "organization_id": str(organization_id),
-                "user_id": str(current_user.user_id),
-            },
-            user_id=current_user.user_id,
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reference JD not found"
         )
     return reference_jd
 
@@ -210,12 +223,23 @@ async def update_reference_jd(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
-    return await ReferenceJDService.update_reference_jd(
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
+    reference_jd = await ReferenceJDService.update_reference_jd(
         db=db,
         reference_jd_id=reference_jd_id,
         organization_id=organization_id,
         data=data,
     )
+    if not reference_jd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reference JD not found"
+        )
+    return reference_jd
 
 
 @router.delete(
@@ -229,9 +253,19 @@ async def delete_reference_jd(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
-    await ReferenceJDService.delete_reference_jd(
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
+    reference_jd = await ReferenceJDService.delete_reference_jd(
         db=db, reference_jd_id=reference_jd_id, organization_id=organization_id
     )
+    if not reference_jd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reference JD not found"
+        )
 
 
 @router.get("/{job_id}", response_model=schemas.JobResponse)
@@ -245,6 +279,12 @@ async def get_job_detail(
     saved_job_ids = None
     if user_id:
         saved_job_ids = await SavedJobService.get_saved_job_ids(db, user_id)
-    return await JobService.get_job_by_id(
+    job = await JobService.get_job_by_id(
         db=db, job_id=job_id, saved_job_ids=saved_job_ids
     )
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )
+    return job

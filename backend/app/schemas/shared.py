@@ -28,31 +28,24 @@ class ErrorCode(str, Enum):
 
 
 class ErrorResponse(BaseModel):
-    detail: str = Field(description="Human-readable error message")
-    error_code: str | None = Field(
-        default=None, description="Machine-readable error code for frontend translation"
-    )
+    code: str = Field(description="Machine-readable error code")
+    message: str = Field(description="Human-readable error message")
     details: dict[str, Any] | None = Field(
         default=None,
-        description="Additional error context (only in development or when explicitly provided)",
+        description="Additional error context (only when explicitly provided)",
     )
     request_id: str | None = Field(
         default=None, description="Unique request identifier for tracing"
     )
-    timestamp: str | None = Field(
-        default=None, description="ISO timestamp when the error occurred"
-    )
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "detail": "The requested resource was not found",
-                "error_code": "RESOURCE_NOT_FOUND",
+                "code": "resource_not_found",
+                "message": "The requested resource was not found",
                 "details": {
                     "resource_id": "12345",
-                    "resource_type": "job",
                 },
                 "request_id": "req_7f8a9b2c",
-                "timestamp": "2025-02-03T14:22:30",
             }
         }
     )

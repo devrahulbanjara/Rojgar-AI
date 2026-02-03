@@ -3,7 +3,6 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import NotFoundError
 from app.models import Organization, ReferenceJobDescriptions
 from app.schemas import job as schemas
 
@@ -84,16 +83,10 @@ class ReferenceJDService:
         )
         result = await db.execute(stmt)
         reference_jd = result.scalar_one_or_none()
-        if not reference_jd:
-            raise NotFoundError(
-                message="Reference JD not found",
-                details={
-                    "reference_jd_id": str(reference_jd_id),
-                    "organization_id": str(organization_id),
-                },
-            )
-        db.delete(reference_jd)
-        await db.commit()
+        if reference_jd:
+            db.delete(reference_jd)
+            await db.commit()
+        return reference_jd
 
     @staticmethod
     async def update_reference_jd(
@@ -109,13 +102,7 @@ class ReferenceJDService:
         result = await db.execute(stmt)
         reference_jd = result.scalar_one_or_none()
         if not reference_jd:
-            raise NotFoundError(
-                message="Reference JD not found",
-                details={
-                    "reference_jd_id": str(reference_jd_id),
-                    "organization_id": str(organization_id),
-                },
-            )
+            return None
         reference_jd.department = data.department
         reference_jd.job_summary = data.job_summary
         reference_jd.job_responsibilities = data.job_responsibilities
