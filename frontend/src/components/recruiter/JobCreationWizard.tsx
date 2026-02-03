@@ -22,7 +22,7 @@ import { toast } from 'sonner'
 import type { CreateJobRequest, Job } from '../../types/job'
 
 interface JobCreationWizardProps {
-  mode: 'agent' | 'manual'
+  mode?: 'agent' | 'manual'
   onBack: () => void
   onComplete: () => void
   jobToEdit?: Job
@@ -65,7 +65,7 @@ const revisionSuggestions = [
 ]
 
 export function JobCreationWizard({
-  mode,
+  mode = 'agent',
   onBack,
   onComplete,
   jobToEdit,
@@ -76,20 +76,12 @@ export function JobCreationWizard({
   const [isGenerated, setIsGenerated] = useState(false)
   const [showRevisionPrompt, setShowRevisionPrompt] = useState(false)
   const [revisionText, setRevisionText] = useState('')
-  const [activeTab, setActiveTab] = useState<'agent' | 'manual'>('agent')
+  const [activeTab, setActiveTab] = useState<'agent' | 'manual'>(mode)
   const [editingField, setEditingField] = useState<{
     field: string
     index: number
   } | null>(null)
   const [editValue, setEditValue] = useState('')
-
-  // Switch to agent tab if reference JD ID is provided
-  useEffect(() => {
-    if (initialReferenceJdId && activeTab !== 'agent') {
-      setActiveTab('agent')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialReferenceJdId])
 
   // Reset step when editing
   useEffect(() => {
@@ -147,6 +139,14 @@ export function JobCreationWizard({
   // Fetch reference JDs for Agent Mode
   const { data: referenceJDsData, isLoading: isLoadingReferenceJDs } = useReferenceJDs()
 
+  // Switch to agent tab if reference JD ID is provided
+  useEffect(() => {
+    if (initialReferenceJdId && activeTab !== 'agent') {
+      setActiveTab('agent')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialReferenceJdId])
+
   useEffect(() => {
     if (jobToEdit) {
       // Pre-populate keywords with existing requirements for AI revision
@@ -189,13 +189,8 @@ export function JobCreationWizard({
         benefits: jobToEdit.benefits && jobToEdit.benefits.length > 0 ? jobToEdit.benefits : [''],
         applicationDeadline: jobToEdit.application_deadline || '',
       })
-
-      // If editing and mode is agent, mark as generated so revision button shows
-      if (mode === 'agent' && jobToEdit.description) {
-        setIsGenerated(true)
-      }
     }
-  }, [jobToEdit, mode])
+  }, [jobToEdit])
 
   const handleGenerate = async () => {
     if (!formData.title || !formData.keywords || !formData.reference_jd_id) {
@@ -362,7 +357,6 @@ export function JobCreationWizard({
       salary_max: salaryMax,
       salary_currency: formData.currency || 'NPR',
       application_deadline: formData.applicationDeadline || undefined,
-      mode,
       status: 'active',
       raw_requirements: formData.keywords.trim() || undefined,
     } as CreateJobRequest

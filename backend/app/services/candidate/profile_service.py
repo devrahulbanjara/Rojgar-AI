@@ -1,10 +1,6 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
-
-from app.core import NotFoundError
-from app.models.candidate import (
+from app.db.models.candidate import (
     CandidateCertification,
     CandidateEducation,
     CandidateProfile,
@@ -12,203 +8,237 @@ from app.models.candidate import (
     CandidateSocialLink,
     CandidateWorkExperience,
 )
-from app.models.user import User
+from app.db.models.user import User
+from app.db.repositories.candidate_repo import (
+    CandidateCertificationRepository,
+    CandidateEducationRepository,
+    CandidateProfileRepository,
+    CandidateSkillsRepository,
+    CandidateSocialLinkRepository,
+    CandidateWorkExperienceRepository,
+)
+from app.db.repositories.user_repo import UserRepository
 from app.schemas import CandidateProfileUpdate
 
 
-class CandidateService:
-    @staticmethod
-    def get_full_profile(db: Session, user: User):
-        stmt = (
-            select(CandidateProfile)
-            .where(CandidateProfile.user_id == user.user_id)
-            .options(
-                selectinload(CandidateProfile.user),
-                selectinload(CandidateProfile.work_experiences),
-                selectinload(CandidateProfile.educations),
-                selectinload(CandidateProfile.certifications),
-                selectinload(CandidateProfile.social_links),
-                selectinload(CandidateProfile.skills),
-            )
-        )
-        profile = db.execute(stmt).scalar_one_or_none()
-        if not profile:
-            raise NotFoundError("Candidate profile not found")
-        return profile
+class ProfileService:
+    def __init__(
+        self,
+        candidate_profile_repo: CandidateProfileRepository,
+        candidate_skills_repo: CandidateSkillsRepository,
+        candidate_work_experience_repo: CandidateWorkExperienceRepository,
+        candidate_education_repo: CandidateEducationRepository,
+        candidate_certification_repo: CandidateCertificationRepository,
+        candidate_social_link_repo: CandidateSocialLinkRepository,
+        user_repo: UserRepository,
+    ):
+        self.candidate_profile_repo = candidate_profile_repo
+        self.candidate_skills_repo = candidate_skills_repo
+        self.candidate_work_experience_repo = candidate_work_experience_repo
+        self.candidate_education_repo = candidate_education_repo
+        self.candidate_certification_repo = candidate_certification_repo
+        self.candidate_social_link_repo = candidate_social_link_repo
+        self.user_repo = user_repo
 
-    @staticmethod
-    def update_basic_info(db: Session, user: User, data: CandidateProfileUpdate):
-        profile = CandidateService.get_full_profile(db, user)
+    async def get_full_profile(self, user: User) -> CandidateProfile | None:
+        """Get full candidate profile with all related data"""
+        return await self.candidate_profile_repo.get_full_profile(user.user_id)
+
+    async def update_basic_info(
+        self, user: User, data: CandidateProfileUpdate
+    ) -> CandidateProfile | None:
+        """Update basic profile information"""
+        profile = await self.get_full_profile(user)
+        if not profile:
+            return None
+
         update_data = data.model_dump(exclude_unset=True)
         if "full_name" in update_data:
             new_name = update_data.pop("full_name")
-            if profile.user:
-                profile.user.name = new_name
-        for key, value in update_data.items():
-            setattr(profile, key, value)
-        db.commit()
-        db.refresh(profile)
-        return profile
+            await self.user_repo.update(user.user_id, name=new_name)
 
-    @staticmethod
-    def _get_profile_id(db: Session, user: User):
-        stmt = select(CandidateProfile.profile_id).where(
-            CandidateProfile.user_id == user.user_id
+        if update_data:
+            await self.candidate_profile_repo.update(profile.profile_id, **update_data)
+        return await self.get_full_profile(user)
+
+    async def add_experience(self, user: User, data) -> CandidateWorkExperience | None:
+        """Add work experience"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        experience = CandidateWorkExperience(
+            candidate_work_experience_id=uuid.uuid4(),
+            profile_id=profile.profile_id,
+            **data.model_dump(),
         )
-        profile_id = db.execute(stmt).scalar_one_or_none()
-        if not profile_id:
-            raise NotFoundError("Profile not found")
-        return profile_id
+        return await self.candidate_work_experience_repo.create(experience)
 
-    @staticmethod
-    def _add_item(db: Session, user: User, ModelClass, data_dict, id_field_name):
-        profile_id = CandidateService._get_profile_id(db, user)
-        new_id = uuid.uuid4()
-        item_data = {id_field_name: new_id, "profile_id": profile_id, **data_dict}
-        new_item = ModelClass(**item_data)
-        db.add(new_item)
-        db.commit()
-        db.refresh(new_item)
-        return new_item
+    async def delete_experience(self, user: User, item_id: uuid.UUID) -> bool:
+        """Delete work experience"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return False
+        experience = await self.candidate_work_experience_repo.get(item_id)
+        if experience and experience.profile_id == profile.profile_id:
+            await self.candidate_work_experience_repo.delete(item_id)
+            return True
+        return False
 
-    @staticmethod
-    def _delete_item(db: Session, user: User, ModelClass, item_id, id_field_name):
-        stmt = (
-            select(ModelClass)
-            .join(CandidateProfile)
-            .where(ModelClass.__table__.c[id_field_name] == item_id)
-            .where(CandidateProfile.user_id == user.user_id)
+    async def update_experience(
+        self, user: User, item_id: uuid.UUID, data
+    ) -> CandidateWorkExperience | None:
+        """Update work experience"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        experience = await self.candidate_work_experience_repo.get(item_id)
+        if not experience or experience.profile_id != profile.profile_id:
+            return None
+        update_data = data.model_dump(exclude_unset=True)
+        return await self.candidate_work_experience_repo.update(item_id, **update_data)
+
+    async def add_education(self, user: User, data) -> CandidateEducation | None:
+        """Add education"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        education = CandidateEducation(
+            candidate_education_id=uuid.uuid4(),
+            profile_id=profile.profile_id,
+            **data.model_dump(),
         )
-        item = db.execute(stmt).scalar_one_or_none()
-        if not item:
-            raise NotFoundError("Item not found")
-        db.delete(item)
-        db.commit()
+        return await self.candidate_education_repo.create(education)
 
-    @staticmethod
-    def _update_item(
-        db: Session, user: User, ModelClass, item_id, id_field_name, data_obj
-    ):
-        stmt = (
-            select(ModelClass)
-            .join(CandidateProfile)
-            .where(ModelClass.__table__.c[id_field_name] == item_id)
-            .where(CandidateProfile.user_id == user.user_id)
-        )
-        item = db.execute(stmt).scalar_one_or_none()
-        if not item:
-            raise NotFoundError("Item not found")
-        update_data = data_obj.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(item, key, value)
-        db.commit()
-        db.refresh(item)
-        return item
+    async def delete_education(self, user: User, item_id: uuid.UUID) -> bool:
+        """Delete education"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return False
+        education = await self.candidate_education_repo.get(item_id)
+        if education and education.profile_id == profile.profile_id:
+            await self.candidate_education_repo.delete(item_id)
+            return True
+        return False
 
-    @staticmethod
-    def add_experience(db: Session, user: User, data):
-        return CandidateService._add_item(
-            db,
-            user,
-            CandidateWorkExperience,
-            data.model_dump(),
-            "candidate_work_experience_id",
-        )
+    async def update_education(
+        self, user: User, item_id: uuid.UUID, data
+    ) -> CandidateEducation | None:
+        """Update education"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        education = await self.candidate_education_repo.get(item_id)
+        if not education or education.profile_id != profile.profile_id:
+            return None
+        update_data = data.model_dump(exclude_unset=True)
+        return await self.candidate_education_repo.update(item_id, **update_data)
 
-    @staticmethod
-    def delete_experience(db: Session, user: User, item_id: uuid.UUID):
-        CandidateService._delete_item(
-            db, user, CandidateWorkExperience, item_id, "candidate_work_experience_id"
+    async def add_skill(self, user: User, data) -> CandidateSkills | None:
+        """Add skill"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        skill = CandidateSkills(
+            candidate_skill_id=uuid.uuid4(),
+            profile_id=profile.profile_id,
+            **data.model_dump(),
         )
+        return await self.candidate_skills_repo.create(skill)
 
-    @staticmethod
-    def update_experience(db: Session, user: User, item_id: uuid.UUID, data):
-        return CandidateService._update_item(
-            db,
-            user,
-            CandidateWorkExperience,
-            item_id,
-            "candidate_work_experience_id",
-            data,
-        )
+    async def delete_skill(self, user: User, item_id: uuid.UUID) -> bool:
+        """Delete skill"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return False
+        skill = await self.candidate_skills_repo.get(item_id)
+        if skill and skill.profile_id == profile.profile_id:
+            await self.candidate_skills_repo.delete(item_id)
+            return True
+        return False
 
-    @staticmethod
-    def add_education(db: Session, user: User, data):
-        return CandidateService._add_item(
-            db, user, CandidateEducation, data.model_dump(), "candidate_education_id"
-        )
+    async def update_skill(
+        self, user: User, item_id: uuid.UUID, data
+    ) -> CandidateSkills | None:
+        """Update skill"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        skill = await self.candidate_skills_repo.get(item_id)
+        if not skill or skill.profile_id != profile.profile_id:
+            return None
+        update_data = data.model_dump(exclude_unset=True)
+        return await self.candidate_skills_repo.update(item_id, **update_data)
 
-    @staticmethod
-    def delete_education(db: Session, user: User, item_id: uuid.UUID):
-        CandidateService._delete_item(
-            db, user, CandidateEducation, item_id, "candidate_education_id"
+    async def add_certification(
+        self, user: User, data
+    ) -> CandidateCertification | None:
+        """Add certification"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        certification = CandidateCertification(
+            candidate_certification_id=uuid.uuid4(),
+            profile_id=profile.profile_id,
+            **data.model_dump(),
         )
+        return await self.candidate_certification_repo.create(certification)
 
-    @staticmethod
-    def update_education(db: Session, user: User, item_id: uuid.UUID, data):
-        return CandidateService._update_item(
-            db, user, CandidateEducation, item_id, "candidate_education_id", data
-        )
+    async def delete_certification(self, user: User, item_id: uuid.UUID) -> bool:
+        """Delete certification"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return False
+        certification = await self.candidate_certification_repo.get(item_id)
+        if certification and certification.profile_id == profile.profile_id:
+            await self.candidate_certification_repo.delete(item_id)
+            return True
+        return False
 
-    @staticmethod
-    def add_skill(db: Session, user: User, data):
-        return CandidateService._add_item(
-            db, user, CandidateSkills, data.model_dump(), "candidate_skill_id"
-        )
+    async def update_certification(
+        self, user: User, item_id: uuid.UUID, data
+    ) -> CandidateCertification | None:
+        """Update certification"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        certification = await self.candidate_certification_repo.get(item_id)
+        if not certification or certification.profile_id != profile.profile_id:
+            return None
+        update_data = data.model_dump(exclude_unset=True)
+        return await self.candidate_certification_repo.update(item_id, **update_data)
 
-    @staticmethod
-    def delete_skill(db: Session, user: User, item_id: uuid.UUID):
-        CandidateService._delete_item(
-            db, user, CandidateSkills, item_id, "candidate_skill_id"
+    async def add_social_link(self, user: User, data) -> CandidateSocialLink | None:
+        """Add social link"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        social_link = CandidateSocialLink(
+            social_link_id=uuid.uuid4(),
+            profile_id=profile.profile_id,
+            **data.model_dump(),
         )
+        return await self.candidate_social_link_repo.create(social_link)
 
-    @staticmethod
-    def update_skill(db: Session, user: User, item_id: uuid.UUID, data):
-        return CandidateService._update_item(
-            db, user, CandidateSkills, item_id, "candidate_skill_id", data
-        )
+    async def delete_social_link(self, user: User, item_id: uuid.UUID) -> bool:
+        """Delete social link"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return False
+        social_link = await self.candidate_social_link_repo.get(item_id)
+        if social_link and social_link.profile_id == profile.profile_id:
+            await self.candidate_social_link_repo.delete(item_id)
+            return True
+        return False
 
-    @staticmethod
-    def add_certification(db: Session, user: User, data):
-        return CandidateService._add_item(
-            db,
-            user,
-            CandidateCertification,
-            data.model_dump(),
-            "candidate_certification_id",
-        )
-
-    @staticmethod
-    def delete_certification(db: Session, user: User, item_id: uuid.UUID):
-        CandidateService._delete_item(
-            db, user, CandidateCertification, item_id, "candidate_certification_id"
-        )
-
-    @staticmethod
-    def update_certification(db: Session, user: User, item_id: uuid.UUID, data):
-        return CandidateService._update_item(
-            db,
-            user,
-            CandidateCertification,
-            item_id,
-            "candidate_certification_id",
-            data,
-        )
-
-    @staticmethod
-    def add_social_link(db: Session, user: User, data):
-        return CandidateService._add_item(
-            db, user, CandidateSocialLink, data.model_dump(), "social_link_id"
-        )
-
-    @staticmethod
-    def delete_social_link(db: Session, user: User, item_id: uuid.UUID):
-        CandidateService._delete_item(
-            db, user, CandidateSocialLink, item_id, "social_link_id"
-        )
-
-    @staticmethod
-    def update_social_link(db: Session, user: User, item_id: uuid.UUID, data):
-        return CandidateService._update_item(
-            db, user, CandidateSocialLink, item_id, "social_link_id", data
-        )
+    async def update_social_link(
+        self, user: User, item_id: uuid.UUID, data
+    ) -> CandidateSocialLink | None:
+        """Update social link"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return None
+        social_link = await self.candidate_social_link_repo.get(item_id)
+        if not social_link or social_link.profile_id != profile.profile_id:
+            return None
+        update_data = data.model_dump(exclude_unset=True)
+        return await self.candidate_social_link_repo.update(item_id, **update_data)

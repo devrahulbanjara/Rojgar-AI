@@ -14,7 +14,6 @@ from app.schemas.shared import (
 
 
 class ResumeCreate(BaseModel):
-    resume_name: Annotated[str, "Resume name"]
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
     work_experiences: Annotated[
@@ -29,7 +28,6 @@ class ResumeCreate(BaseModel):
 
 
 class ResumeUpdate(BaseModel):
-    resume_name: Annotated[str | None, "Resume name"] = None
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
 
@@ -96,7 +94,6 @@ class ResumeSkillResponse(SkillBase):
 class ResumeResponse(BaseModel):
     resume_id: UUID
     profile_id: UUID
-    resume_name: Annotated[str, "Resume name"]
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
     created_at: Annotated[datetime, Field(description="Resume creation timestamp")]
@@ -115,7 +112,6 @@ class ResumeResponse(BaseModel):
 
 class ResumeListResponse(BaseModel):
     resume_id: UUID
-    resume_name: Annotated[str, "Resume name"]
     target_job_title: Annotated[str | None, "Target job title"] = None
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)

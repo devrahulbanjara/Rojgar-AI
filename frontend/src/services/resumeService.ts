@@ -20,37 +20,35 @@ const api = axios.create({
 
 export const resumeService = {
   async getAllResumes(): Promise<ResumeListResponse[]> {
-    const response = await api.get('/resumes/')
+    const response = await api.get('/candidate/resumes/')
     return response.data
   },
 
   async createResumeFork(data: ResumeCreate): Promise<ResumeResponse> {
-    const response = await api.post('/resumes/', data)
+    const response = await api.post('/candidate/resumes/', data)
     return response.data
   },
 
   async getResumeById(id: string): Promise<ResumeResponse> {
-    const response = await api.get(`/resumes/${id}`)
+    const response = await api.get(`/candidate/resumes/${id}`)
     return response.data
   },
 
   async updateResume(id: string, data: ResumeUpdate): Promise<ResumeResponse> {
-    const response = await api.patch(`/resumes/${id}`, data)
+    const response = await api.patch(`/candidate/resumes/${id}`, data)
     return response.data
   },
 
   async deleteResume(id: string): Promise<void> {
-    await api.delete(`/resumes/${id}`)
+    await api.delete(`/candidate/resumes/${id}`)
   },
 
-  // --- Sub-Resources (Example: Experience) ---
-
   async addExperience(resumeId: string, data: WorkExperienceBase): Promise<unknown> {
-    const response = await api.post(`/resumes/${resumeId}/experience`, data)
+    const response = await api.post(`/candidate/resumes/${resumeId}/experience`, data)
     return response.data
   },
 
   async deleteExperience(resumeId: string, itemId: string): Promise<void> {
-    await api.delete(`/resumes/${resumeId}/experience/${itemId}`)
+    await api.delete(`/candidate/resumes/${resumeId}/experience/${itemId}`)
   },
 }

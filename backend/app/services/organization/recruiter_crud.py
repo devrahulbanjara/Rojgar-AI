@@ -1,32 +1,47 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
-from app.core import BusinessLogicError, NotFoundError, get_datetime
+from app.core import get_datetime
 from app.core.security import hash_password
-from app.models import User, UserRole
+from app.db.models.user import User, UserRole
+from app.db.repositories.user_repo import OrganizationRepository, UserRepository
 from app.schemas.organization import UpdateRecruiterRequest
-from app.services.auth.auth_service import AuthService
-from app.services.auth.organization_auth_service import OrganizationAuthService
 
 
-class RecruiterCRUD:
-    @staticmethod
-    def create_recruiter(
-        organization_id: uuid.UUID, email: str, name: str, password: str, db: Session
+class RecruiterCrudService:
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        organization_repo: OrganizationRepository,
+        auth_service,
+        organization_auth_service,
+    ):
+        self.user_repo = user_repo
+        self.organization_repo = organization_repo
+        self.auth_service = auth_service
+        self.organization_auth_service = organization_auth_service
+
+    async def create_recruiter(
+        self,
+        organization_id: uuid.UUID,
+        email: str,
+        name: str,
+        password: str,
     ) -> User:
-        existing_user = AuthService.get_user_by_email(email, db)
+        """Create a new recruiter"""
+        # Check if email already exists as user
+        existing_user = await self.auth_service.get_user_by_email(email)
         if existing_user:
-            raise BusinessLogicError(
-                "Email already registered to ConvexHire previously."
-            )
-        existing_in_org = OrganizationAuthService.get_organization_by_email(email, db)
-        if existing_in_org:
-            raise BusinessLogicError(
+            raise ValueError("Email already registered to ConvexHire previously.")
+
+        # Check if email exists as organization
+        existing_org = await self.organization_auth_service.get_organization_by_email(
+            email
+        )
+        if existing_org:
+            raise ValueError(
                 "Recruiter email already registered to ConvexHire previously."
             )
-        now = get_datetime()
+
         new_recruiter = User(
             user_id=uuid.uuid4(),
             organization_id=organization_id,
@@ -34,58 +49,46 @@ class RecruiterCRUD:
             name=name,
             role=UserRole.RECRUITER.value,
             password=hash_password(password),
-            created_at=now,
-            updated_at=now,
+            created_at=get_datetime(),
+            updated_at=get_datetime(),
         )
-        db.add(new_recruiter)
-        db.commit()
-        db.refresh(new_recruiter)
-        return new_recruiter
+        return await self.user_repo.create(new_recruiter)
 
-    @staticmethod
-    def get_recruiter_by_id(recruiter_id: uuid.UUID, db: Session) -> User | None:
-        return db.execute(
-            select(User).where(User.user_id == recruiter_id)
-        ).scalar_one_or_none()
+    async def get_recruiter_by_id(self, recruiter_id: uuid.UUID) -> User | None:
+        """Get recruiter by ID"""
+        return await self.user_repo.get(recruiter_id)
 
-    @staticmethod
-    def get_recruiters_by_organization(
-        organization_id: uuid.UUID, db: Session
+    async def get_recruiters_by_organization(
+        self, organization_id: uuid.UUID
     ) -> list[User]:
-        return list(
-            db.execute(select(User).where(User.organization_id == organization_id))
-            .scalars()
-            .all()
-        )
+        """Get all recruiters for an organization"""
+        recruiters = await self.user_repo.get_by_organization(organization_id)
+        return list(recruiters)
 
-    @staticmethod
-    def update_recruiter(
-        recruiter_id: uuid.UUID, update_data: UpdateRecruiterRequest, db: Session
-    ) -> User:
-        recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
+    async def update_recruiter(
+        self, recruiter_id: uuid.UUID, update_data: UpdateRecruiterRequest
+    ) -> User | None:
+        """Update recruiter"""
+        recruiter = await self.get_recruiter_by_id(recruiter_id)
         if not recruiter:
-            raise NotFoundError("Recruiter not found")
+            return None
+
+        update_dict = {}
         if update_data.name is not None:
-            recruiter.name = update_data.name
+            update_dict["name"] = update_data.name
         if update_data.email is not None:
-            existing_user = db.execute(
-                select(User).where(
-                    User.email == update_data.email, User.user_id != recruiter_id
-                )
-            ).scalar_one_or_none()
-            if existing_user:
-                raise BusinessLogicError("Email already in use")
-            recruiter.email = update_data.email
-        recruiter.updated_at = get_datetime()
-        db.add(recruiter)
-        db.commit()
-        db.refresh(recruiter)
-        return recruiter
+            # Check if email is already in use
+            existing_user = await self.user_repo.get_by_email(update_data.email)
+            if existing_user and existing_user.user_id != recruiter_id:
+                raise ValueError("Email already in use")
+            update_dict["email"] = update_data.email
 
-    @staticmethod
-    def delete_recruiter(recruiter_id: uuid.UUID, db: Session) -> None:
-        recruiter = RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
-        if not recruiter:
-            raise NotFoundError("Recruiter not found")
-        db.delete(recruiter)
-        db.commit()
+        update_dict["updated_at"] = get_datetime()
+        return await self.user_repo.update(recruiter_id, **update_dict)
+
+    async def delete_recruiter(self, recruiter_id: uuid.UUID) -> User | None:
+        """Delete recruiter"""
+        recruiter = await self.get_recruiter_by_id(recruiter_id)
+        if recruiter:
+            await self.user_repo.delete(recruiter_id)
+        return recruiter

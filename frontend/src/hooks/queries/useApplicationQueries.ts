@@ -11,13 +11,17 @@ import type { ApplicationTrackingBoard } from '../../types/application'
 
 export const useApplicationQueries = () => {
   const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
-    const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/applications/tracking-board`, {
-      method: 'GET',
-      credentials: 'include', // Include cookies for authentication
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
+    // Note: This endpoint may need to be created in backend
+    const response = await fetch(
+      `${API_CONFIG.baseUrl}/api/v1/candidate/applications/tracking-board`,
+      {
+        method: 'GET',
+        credentials: 'include', // Include cookies for authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
 
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`)

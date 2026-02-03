@@ -1,39 +1,31 @@
 from fastapi import WebSocket
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import BusinessLogicError, ForbiddenError, UnauthorizedError
 from app.core.security import verify_token
-from app.models.user import User, UserRole
+from app.db.models.user import User, UserRole
 
 
-async def authenticate_websocket_user(websocket: WebSocket, db: Session) -> User:
+async def authenticate_websocket_user(
+    websocket: WebSocket, db: AsyncSession
+) -> User | None:
     token = websocket.query_params.get("token") or dict(websocket.cookies).get(
         "auth_token"
     )
     if not token:
-        await websocket.close(code=1008, reason="Authentication required")
-        raise UnauthorizedError("Not authenticated")
+        raise ValueError("Not authenticated")
     try:
         user_id, entity_type = verify_token(token)
         if entity_type != "user":
-            await websocket.close(code=1008, reason="Invalid token type")
-            raise UnauthorizedError("Invalid token type")
+            raise ValueError("Invalid token type")
     except Exception:
-        await websocket.close(code=1008, reason="Invalid token")
-        raise UnauthorizedError("Invalid token")
-    user = db.scalar(select(User).where(User.user_id == user_id))
+        raise ValueError("Invalid token")
+    result = await db.execute(select(User).where(User.user_id == user_id))
+    user = result.scalar_one_or_none()
     if not user:
-        await websocket.close(code=1008, reason="User not found")
-        raise UnauthorizedError("User not found")
+        raise ValueError("User not found")
     if not user.organization_id:
-        await websocket.close(
-            code=1008, reason="User does not belong to an organization"
-        )
-        raise BusinessLogicError("User does not belong to an organization")
+        raise ValueError("User does not belong to an organization")
     if user.role != UserRole.RECRUITER.value:
-        await websocket.close(
-            code=1008, reason="Only recruiters can access activity feed"
-        )
-        raise ForbiddenError("Only recruiters can access activity feed")
+        raise ValueError("Only recruiters can access activity feed")
     return user
