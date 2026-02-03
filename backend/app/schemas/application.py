@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models import ApplicationStatus
+from app.db.models import ApplicationStatus
 
 
 class ApplicationCreate(BaseModel):

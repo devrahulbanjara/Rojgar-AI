@@ -7,13 +7,15 @@ from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.db.session import get_db
 
 from .config import settings
 from .current_datetime import get_datetime
-from .database import get_db
 
 if TYPE_CHECKING:
-    from app.models.user import User
+    from app.db.models.user import User
 
 
 def hash_password(password: str) -> str:
@@ -56,13 +58,19 @@ def get_current_user_id(request: Request) -> uuid.UUID:
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not logged in"
+            detail="Authentication required. Please log in to access this resource.",
         )
-    entity_id, entity_type = verify_token(token)
+    try:
+        entity_id, entity_type = verify_token(token)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid or expired authentication token. Please log in again. ({str(e)})",
+        )
     if entity_type != "user":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="User authentication required"
+            detail="Access denied. User authentication required for this endpoint.",
         )
     return entity_id
 
@@ -72,13 +80,19 @@ def get_current_organization_id(request: Request) -> uuid.UUID:
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not logged in"
+            detail="Authentication required. Please log in to access this resource.",
         )
-    entity_id, entity_type = verify_token(token)
+    try:
+        entity_id, entity_type = verify_token(token)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid or expired authentication token. Please log in again. ({str(e)})",
+        )
     if entity_type != "organization":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Organization authentication required"
+            detail="Access denied. Organization-level authentication required for this endpoint.",
         )
     return entity_id
 
@@ -87,14 +101,17 @@ async def get_current_active_user(
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> "User":
-    from app.models.user import User
+    from app.db.models.user import User
 
-    result = await db.execute(select(User).where(User.user_id == user_id))
+    result = await db.execute(
+        select(User)
+        .where(User.user_id == user_id)
+        .options(selectinload(User.google_account), selectinload(User.organization))
+    )
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return user
 
@@ -118,8 +135,36 @@ async def get_current_active_user_optional(
 ) -> "User | None":
     if not user_id:
         return None
-    from app.models.user import User
+    from app.db.models.user import User
 
     result = await db.execute(select(User).where(User.user_id == user_id))
     user = result.scalar_one_or_none()
     return user
+
+
+async def get_current_recruiter_organization_id(
+    request: Request,
+) -> uuid.UUID:
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please log in to access this resource.",
+        )
+
+    try:
+        entity_id, entity_type = verify_token(token)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid or expired authentication token. Please log in again. ({str(e)})",
+        )
+
+    # Only accept organization tokens
+    if entity_type != "organization":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. This endpoint requires organization-level authentication. Please log in with an organization account to manage recruiters.",
+        )
+
+    return entity_id

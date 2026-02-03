@@ -1,50 +1,32 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core import get_datetime
-from app.models import Organization
+from app.db.models.organization import Organization
+from app.db.repositories.user_repo import OrganizationRepository
 from app.schemas.organization import OrganizationUpdateRequest
 
 
 class OrganizationService:
-    @staticmethod
-    async def get_organization_by_id(
-        organization_id: uuid.UUID, db: AsyncSession
-    ) -> Organization | None:
-        result = await db.execute(
-            select(Organization).where(Organization.organization_id == organization_id)
-        )
-        return result.scalar_one_or_none()
+    def __init__(self, organization_repo: OrganizationRepository):
+        self.organization_repo = organization_repo
 
-    @staticmethod
+    async def get_organization_by_id(
+        self, organization_id: uuid.UUID
+    ) -> Organization | None:
+        """Get organization by ID"""
+        return await self.organization_repo.get(organization_id)
+
     async def update_organization(
+        self,
         organization_id: uuid.UUID,
         update_data: OrganizationUpdateRequest,
-        db: AsyncSession,
-    ) -> Organization:
-        organization = await OrganizationService.get_organization_by_id(
-            organization_id, db
-        )
+    ) -> Organization | None:
+        """Update organization"""
+        organization = await self.get_organization_by_id(organization_id)
         if not organization:
             return None
-        if update_data.name is not None:
-            organization.name = update_data.name
-        if update_data.location_city is not None:
-            organization.location_city = update_data.location_city
-        if update_data.location_country is not None:
-            organization.location_country = update_data.location_country
-        if update_data.website is not None:
-            organization.website = update_data.website
-        if update_data.description is not None:
-            organization.description = update_data.description
-        if update_data.industry is not None:
-            organization.industry = update_data.industry
-        if update_data.founded_year is not None:
-            organization.founded_year = update_data.founded_year
-        organization.updated_at = get_datetime()
-        db.add(organization)
-        await db.commit()
-        await db.refresh(organization)
-        return organization
+
+        update_dict = update_data.model_dump(exclude_unset=True)
+        update_dict["updated_at"] = get_datetime()
+
+        return await self.organization_repo.update(organization_id, **update_dict)

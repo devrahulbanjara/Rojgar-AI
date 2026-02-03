@@ -1,15 +1,5 @@
 import React, { memo, useCallback } from 'react'
-import {
-  MapPin,
-  DollarSign,
-  Building2,
-  Users,
-  Clock,
-  Briefcase,
-  Eye,
-  Calendar,
-  BookmarkCheck,
-} from 'lucide-react'
+import { MapPin, DollarSign, Building2, Users, Clock, Briefcase, Eye, Calendar } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { jobUtils } from '../../services/jobService'
 import type { Job } from '../../types/job'
@@ -218,7 +208,6 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
               </span>
             )}
           </div>
-          {job.is_saved && <BookmarkCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />}
         </div>
 
         {/* Job Title & Company - Refined Typography */}

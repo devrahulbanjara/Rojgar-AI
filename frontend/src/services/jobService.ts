@@ -19,10 +19,11 @@ const jobEndpoints = {
   recommendations: '/api/v1/jobs/recommendations',
   search: '/api/v1/jobs/search',
   detail: (id: string) => `/api/v1/jobs/${id}`,
-  create: '/api/v1/jobs',
-  generateDraft: '/api/v1/jobs/generate-draft',
-  update: (id: string) => `/api/v1/jobs/${id}`,
-  delete: (id: string) => `/api/v1/jobs/${id}`,
+  create: '/api/v1/recruiter/jobs',
+  generateDraft: '/api/v1/recruiter/jobs/generate-draft',
+  update: (id: string) => `/api/v1/recruiter/jobs/${id}`,
+  delete: (id: string) => `/api/v1/recruiter/jobs/${id}`,
+  expire: (id: string) => `/api/v1/recruiter/jobs/${id}/expire`,
 } as const
 
 const applicationEndpoints = {
@@ -33,11 +34,6 @@ const applicationEndpoints = {
   delete: (id: string) => `/api/v1/candidate/applications/${id}`,
   byJob: (jobId: string) => `/api/v1/candidate/applications/job/${jobId}`,
   byCandidate: (candidateId: string) => `/api/v1/candidate/applications/candidate/${candidateId}`,
-} as const
-
-const savedJobEndpoints = {
-  toggleSave: (jobId: string) => `/api/v1/candidate/jobs/${jobId}/save`,
-  list: '/api/v1/candidate/saved-jobs',
 } as const
 
 export class JobService {
@@ -77,7 +73,6 @@ export class JobService {
     params?: JobSearchParams & {
       employmentType?: string
       locationType?: string
-      userId?: string
     }
   ): Promise<JobListResponse> {
     const queryParams = new URLSearchParams()
@@ -94,10 +89,6 @@ export class JobService {
     }
     if (params?.locationType) {
       queryParams.append('location_type', params.locationType)
-    }
-
-    if (params?.userId) {
-      queryParams.append('user_id', params.userId)
     }
 
     const endpoint = `${jobEndpoints.search}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
@@ -125,7 +116,7 @@ export class JobService {
   }
 
   static async expireJob(id: string): Promise<Job> {
-    return apiClient.post<Job>(`${jobEndpoints.detail(id)}/expire`, {})
+    return apiClient.post<Job>(jobEndpoints.expire(id), {})
   }
 
   static async deleteJob(id: string): Promise<void> {
@@ -143,19 +134,6 @@ export class JobService {
     if (params?.limit) queryParams.append('limit', params.limit.toString())
 
     const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`
-    return apiClient.get<JobListResponse>(endpoint)
-  }
-
-  static async toggleSaveJob(jobId: string): Promise<{ status: string }> {
-    return apiClient.post<{ status: string }>(savedJobEndpoints.toggleSave(jobId))
-  }
-
-  static async getSavedJobs(page: number = 1, limit: number = 10): Promise<JobListResponse> {
-    const queryParams = new URLSearchParams()
-    queryParams.append('page', page.toString())
-    queryParams.append('limit', limit.toString())
-
-    const endpoint = `${savedJobEndpoints.list}?${queryParams.toString()}`
     return apiClient.get<JobListResponse>(endpoint)
   }
 }

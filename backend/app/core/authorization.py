@@ -1,6 +1,7 @@
 import uuid
 
-from app.models import JobPosting, User, UserRole
+from app.db.models.job import JobPosting
+from app.db.models.user import User, UserRole
 
 
 def verify_recruiter_belongs_to_organization(
@@ -20,6 +21,28 @@ def verify_job_belongs_to_organization(
 
 
 def get_organization_from_user(user: User) -> uuid.UUID | None:
+    """Get organization_id from user if they belong to one.
+
+    Note: This does not verify the user is a recruiter.
+    Use get_current_recruiter_organization_id for recruiter-only endpoints.
+    """
+    return user.organization_id
+
+
+def require_recruiter_with_organization(user: User) -> uuid.UUID:
+    """Require that the user is a recruiter with an organization.
+
+    Raises:
+        ValueError: If user is not a recruiter or doesn't have an organization
+    """
+    if user.role != UserRole.RECRUITER.value:
+        raise ValueError(
+            "This action requires a recruiter account. Please log in with a recruiter account."
+        )
+    if not user.organization_id:
+        raise ValueError(
+            "Your recruiter account is not associated with an organization. Please contact your administrator."
+        )
     return user.organization_id
 
 

@@ -30,8 +30,16 @@ class ConnectionManager:
         self, message: dict, organization_id: uuid.UUID
     ):
         if organization_id not in self.active_connections:
+            logger.warning(
+                f"No active WebSocket connections for organization {organization_id}. "
+                f"Message will not be delivered: {message.get('event', 'unknown')}"
+            )
             return
         targets = self.active_connections[organization_id][:]
+        logger.info(
+            f"Broadcasting {message.get('event', 'unknown')} to {len(targets)} "
+            f"connection(s) for organization {organization_id}"
+        )
         for connection in targets:
             try:
                 await connection.send_json(message)

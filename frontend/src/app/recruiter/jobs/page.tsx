@@ -341,7 +341,6 @@ export default function RecruiterJobsPage() {
     setTimeout(() => {
       setSelectedJob(null)
       setJobToEdit(job)
-      setPostJobMode(null) // Let user choose mode (agent or manual)
       setIsPostJobModalOpen(true)
     }, 300)
   }, [])
@@ -391,14 +390,13 @@ export default function RecruiterJobsPage() {
   )
 
   const handlePostNewJob = useCallback(() => {
-    setPostJobMode(null)
+    setPostJobMode(null) // Let user choose mode (agent or manual)
     setIsPostJobModalOpen(true)
   }, [])
 
   const handleClosePostJobModal = useCallback(() => {
     setIsPostJobModalOpen(false)
     setTimeout(() => {
-      setPostJobMode(null)
       setJobToEdit(null)
       setInitialReferenceJdId(undefined)
     }, 300)

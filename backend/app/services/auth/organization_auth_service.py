@@ -1,38 +1,41 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core import get_datetime
 from app.core.config import settings
 from app.core.security import create_token, hash_password, verify_password
-from app.models import Organization
+from app.db.models.organization import Organization
+from app.db.repositories.user_repo import OrganizationRepository, UserRepository
 from app.schemas.organization import OrganizationSignupRequest
-from app.services.auth.auth_service import AuthService
 
 
 class OrganizationAuthService:
-    @staticmethod
-    async def get_organization_by_email(
-        email: str, db: AsyncSession
-    ) -> Organization | None:
-        result = await db.execute(
-            select(Organization).where(Organization.email == email)
-        )
-        return result.scalar_one_or_none()
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        organization_repo: OrganizationRepository,
+    ):
+        self.user_repo = user_repo
+        self.organization_repo = organization_repo
 
-    @staticmethod
+    async def get_organization_by_email(self, email: str) -> Organization | None:
+        """Get organization by email"""
+        return await self.organization_repo.get_by_email(email)
+
     async def create_organization(
-        org_data: OrganizationSignupRequest, db: AsyncSession
+        self, org_data: OrganizationSignupRequest
     ) -> Organization:
-        existing_org = await OrganizationAuthService.get_organization_by_email(
-            org_data.email, db
-        )
+        """Create a new organization"""
+        # Check if email already exists
+        existing_org = await self.get_organization_by_email(org_data.email)
         if existing_org:
             raise ValueError("Email already registered")
-        existing_user = await AuthService.get_user_by_email(org_data.email, db)
+
+        # Check if user with email exists
+        existing_user = await self.user_repo.get_by_email(org_data.email)
         if existing_user:
             raise ValueError("Email already registered")
+
+        # Create organization
         now = get_datetime()
         new_org = Organization(
             organization_id=uuid.uuid4(),
@@ -48,19 +51,18 @@ class OrganizationAuthService:
             created_at=now,
             updated_at=now,
         )
-        db.add(new_org)
-        await db.commit()
-        await db.refresh(new_org)
-        return new_org
+        return await self.organization_repo.create(new_org)
 
-    @staticmethod
-    def verify_organization_password(organization: Organization, password: str) -> bool:
+    def verify_organization_password(
+        self, organization: Organization, password: str
+    ) -> bool:
+        """Verify organization password"""
         return verify_password(password, organization.password)
 
-    @staticmethod
     def create_organization_token(
-        organization_id: uuid.UUID, remember_me: bool = False
+        self, organization_id: uuid.UUID, remember_me: bool = False
     ) -> tuple[str, int]:
+        """Create access token for organization"""
         org_id_str = str(organization_id)
         if remember_me:
             token = create_token(
