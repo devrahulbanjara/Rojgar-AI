@@ -1,23 +1,36 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import engine
+from app.core.database import AsyncSessionLocal
 from app.core.logging_config import logger
 from app.services.job_service import JobService
+from app.services.recruiter.shortlist_service import ShortlistService
 
 scheduler = AsyncIOScheduler(timezone=settings.TIMEZONE)
 
 
-def expire_jobs_task():
-    with Session(engine) as db:
+async def expire_jobs_task():
+    async with AsyncSessionLocal() as db:
         try:
-            count = JobService.auto_expire_jobs(db)
-            if count > 0:
-                logger.info(f"Cron Job: Successfully expired {count} jobs.")
+            job_ids_to_process = await JobService.auto_expire_jobs(db)
+
+            if job_ids_to_process:
+                logger.info(
+                    f"Cron: Expired jobs and triggering auto-shortlist for {len(job_ids_to_process)} jobs."
+                )
+
+                for job_id in job_ids_to_process:
+                    try:
+                        await ShortlistService.process_shortlisting(job_id)
+                        logger.info(f"Auto-shortlisting completed for job {job_id}")
+                    except Exception as e:
+                        logger.error(f"Auto-shortlisting failed for job {job_id}: {e}")
             else:
-                logger.trace("Cron Job: No jobs to expire.")
+                logger.trace(
+                    "Cron Job: No jobs expired or required auto-shortlisting today."
+                )
+
         except Exception as e:
             logger.error(f"Cron Job Error: {e}")
 

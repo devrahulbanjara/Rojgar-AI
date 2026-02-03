@@ -14,6 +14,8 @@ from .exceptions import (
     ResumeNotFoundError,
     UnauthorizedError,
     UserNotFoundError,
+    get_exception_metrics,
+    get_request_context,
 )
 from .logging_config import configure_file_logging, get_logger, logger
 from .security import (
@@ -54,4 +56,6 @@ __all__ = [
     "OrganizationNotFoundError",
     "UserNotFoundError",
     "ResumeNotFoundError",
+    "get_request_context",
+    "get_exception_metrics",
 ]

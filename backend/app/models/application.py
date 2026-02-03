@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, String, Uuid
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -43,6 +43,9 @@ class JobApplication(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
+    # AI Enrichment Columns
+    ai_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    ai_analysis: Mapped[str | None] = mapped_column(String, nullable=True)
     job: Mapped["JobPosting"] = relationship("JobPosting")
     organization: Mapped["Organization"] = relationship("Organization")
     resume: Mapped["Resume"] = relationship("Resume")

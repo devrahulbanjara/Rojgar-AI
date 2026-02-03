@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.core import BusinessLogicError, get_datetime
 from app.models import (
@@ -19,39 +19,42 @@ class RecruiterStatsService:
     @classmethod
     def _ensure_org_id(cls, user: User) -> uuid.UUID:
         if not user.organization_id:
-            raise BusinessLogicError("User does not belong to an organization")
+            raise BusinessLogicError(
+                message="User does not belong to an organization",
+                details={
+                    "user_id": str(user.user_id),
+                    "user_role": user.role,
+                },
+                user_id=user.user_id,
+            )
         return user.organization_id
 
     @classmethod
-    def get_active_jobs_count(cls, db: Session, user: User) -> int:
+    async def get_active_jobs_count(cls, db: AsyncSession, user: User) -> int:
         org_id = cls._ensure_org_id(user)
-        return (
-            db.scalar(
-                select(func.count(JobPosting.job_id)).where(
-                    JobPosting.organization_id == org_id, JobPosting.status == "active"
-                )
+        result = await db.execute(
+            select(func.count(JobPosting.job_id)).where(
+                JobPosting.organization_id == org_id, JobPosting.status == "active"
             )
-            or 0
         )
+        return result.scalar_one() or 0
 
     @classmethod
-    def get_active_candidates_count(cls, db: Session, user: User) -> int:
+    async def get_active_candidates_count(cls, db: AsyncSession, user: User) -> int:
         org_id = cls._ensure_org_id(user)
-        return (
-            db.scalar(
-                select(
-                    func.count(func.distinct(JobApplication.candidate_profile_id))
-                ).where(
-                    JobApplication.organization_id == org_id,
-                    JobApplication.current_status != "rejected",
-                )
+        result = await db.execute(
+            select(
+                func.count(func.distinct(JobApplication.candidate_profile_id))
+            ).where(
+                JobApplication.organization_id == org_id,
+                JobApplication.current_status != "rejected",
             )
-            or 0
         )
+        return result.scalar_one() or 0
 
     @classmethod
-    def get_recent_activity(
-        cls, db: Session, user: User, limit: int = 20
+    async def get_recent_activity(
+        cls, db: AsyncSession, user: User, limit: int = 20
     ) -> list[dict[str, Any]]:
         org_id = cls._ensure_org_id(user)
         seven_days_ago = get_datetime() - timedelta(days=7)
@@ -71,7 +74,8 @@ class RecruiterStatsService:
             .order_by(JobApplication.applied_at.desc())
             .limit(limit)
         )
-        applications = db.scalars(app_stmt).all()
+        app_result = await db.execute(app_stmt)
+        applications = app_result.scalars().all()
         for app in applications:
             candidate_name = (
                 app.candidate_profile.user.name
@@ -112,7 +116,8 @@ class RecruiterStatsService:
             .order_by(JobApplicationStatusHistory.changed_at.desc())
             .limit(limit)
         )
-        status_changes = db.scalars(history_stmt).all()
+        history_result = await db.execute(history_stmt)
+        status_changes = history_result.scalars().all()
         for history in status_changes:
             app = history.application
             candidate_name = (
@@ -145,7 +150,8 @@ class RecruiterStatsService:
             .order_by(JobPosting.created_at.desc())
             .limit(limit)
         )
-        jobs = db.scalars(jobs_stmt).all()
+        jobs_result = await db.execute(jobs_stmt)
+        jobs = jobs_result.scalars().all()
         for job in jobs:
             activities.append(
                 {

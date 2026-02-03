@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import BusinessLogicError, get_datetime
 from app.core.config import settings
@@ -13,23 +13,40 @@ from app.services.auth.auth_service import AuthService
 
 class OrganizationAuthService:
     @staticmethod
-    def get_organization_by_email(email: str, db: Session) -> Organization | None:
-        return db.execute(
+    async def get_organization_by_email(
+        email: str, db: AsyncSession
+    ) -> Organization | None:
+        result = await db.execute(
             select(Organization).where(Organization.email == email)
-        ).scalar_one_or_none()
+        )
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def create_organization(
-        org_data: OrganizationSignupRequest, db: Session
+    async def create_organization(
+        org_data: OrganizationSignupRequest, db: AsyncSession
     ) -> Organization:
-        existing_org = OrganizationAuthService.get_organization_by_email(
+        existing_org = await OrganizationAuthService.get_organization_by_email(
             org_data.email, db
         )
         if existing_org:
-            raise BusinessLogicError("Email already registered")
-        existing_user = AuthService.get_user_by_email(org_data.email, db)
+            raise BusinessLogicError(
+                message="Email already registered",
+                details={
+                    "email": org_data.email,
+                    "existing_organization_id": str(existing_org.organization_id),
+                    "existing_organization_name": existing_org.name,
+                },
+            )
+        existing_user = await AuthService.get_user_by_email(org_data.email, db)
         if existing_user:
-            raise BusinessLogicError("Email already registered")
+            raise BusinessLogicError(
+                message="Email already registered",
+                details={
+                    "email": org_data.email,
+                    "existing_user_id": str(existing_user.user_id),
+                    "existing_user_role": existing_user.role,
+                },
+            )
         now = get_datetime()
         new_org = Organization(
             organization_id=uuid.uuid4(),
@@ -46,8 +63,8 @@ class OrganizationAuthService:
             updated_at=now,
         )
         db.add(new_org)
-        db.commit()
-        db.refresh(new_org)
+        await db.commit()
+        await db.refresh(new_org)
         return new_org
 
     @staticmethod

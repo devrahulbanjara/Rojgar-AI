@@ -1,4 +1,5 @@
 from app.models import ReferenceJobDescriptions
+from app.models.job import JobDescription
 
 
 class ReferenceJDFormatter:
@@ -28,4 +29,42 @@ class ReferenceJDFormatter:
             formatted_lines.append("\nCompensation and Benefits:")
             for benefit in reference_jd.compensation_and_benefits:
                 formatted_lines.append(f"- {benefit}")
+        return "\n".join(formatted_lines)
+
+    @staticmethod
+    def format_job_description(
+        job_description: JobDescription,
+        job_title: str | None = None,
+        about_the_company: str | None = None,
+    ) -> str:
+        formatted_lines = []
+
+        if job_title:
+            formatted_lines.append(f"# Job Title: {job_title}")
+
+        if about_the_company:
+            formatted_lines.append(f"\n## About the Company\n{about_the_company}")
+
+        formatted_lines.append(f"\n## Job Summary\n{job_description.job_summary}")
+
+        if job_description.job_responsibilities:
+            formatted_lines.append("\n## Job Responsibilities")
+            for responsibility in job_description.job_responsibilities:
+                formatted_lines.append(f"- {responsibility}")
+
+        if job_description.required_qualifications:
+            formatted_lines.append("\n## Required Qualifications")
+            for qualification in job_description.required_qualifications:
+                formatted_lines.append(f"- {qualification}")
+
+        if job_description.preferred:
+            formatted_lines.append("\n## Preferred Skills")
+            for preferred in job_description.preferred:
+                formatted_lines.append(f"- {preferred}")
+
+        if job_description.compensation_and_benefits:
+            formatted_lines.append("\n## Compensation and Benefits")
+            for benefit in job_description.compensation_and_benefits:
+                formatted_lines.append(f"- {benefit}")
+
         return "\n".join(formatted_lines)
