@@ -1,54 +1,7 @@
 from datetime import date
-from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
-
-
-class ErrorCode(str, Enum):
-    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
-    VALIDATION_ERROR = "VALIDATION_ERROR"
-    RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
-    UNAUTHORIZED = "UNAUTHORIZED"
-    FORBIDDEN = "FORBIDDEN"
-    INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
-    TOKEN_EXPIRED = "TOKEN_EXPIRED"
-    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
-    RESOURCE_ALREADY_EXISTS = "RESOURCE_ALREADY_EXISTS"
-    RESOURCE_CONFLICT = "RESOURCE_CONFLICT"
-    BUSINESS_LOGIC_ERROR = "BUSINESS_LOGIC_ERROR"
-    INVALID_OPERATION = "INVALID_OPERATION"
-    JOB_NOT_FOUND = "JOB_NOT_FOUND"
-    CANDIDATE_NOT_FOUND = "CANDIDATE_NOT_FOUND"
-    APPLICATION_NOT_FOUND = "APPLICATION_NOT_FOUND"
-    ORGANIZATION_NOT_FOUND = "ORGANIZATION_NOT_FOUND"
-    USER_NOT_FOUND = "USER_NOT_FOUND"
-    RESUME_NOT_FOUND = "RESUME_NOT_FOUND"
-    WEBHOOK_PROCESSING_FAILED = "WEBHOOK_PROCESSING_FAILED"
-
-
-class ErrorResponse(BaseModel):
-    code: str = Field(description="Machine-readable error code")
-    message: str = Field(description="Human-readable error message")
-    details: dict[str, Any] | None = Field(
-        default=None,
-        description="Additional error context (only when explicitly provided)",
-    )
-    request_id: str | None = Field(
-        default=None, description="Unique request identifier for tracing"
-    )
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "code": "resource_not_found",
-                "message": "The requested resource was not found",
-                "details": {
-                    "resource_id": "12345",
-                },
-                "request_id": "req_7f8a9b2c",
-            }
-        }
-    )
+from pydantic import BaseModel
 
 
 class SocialLinkBase(BaseModel):

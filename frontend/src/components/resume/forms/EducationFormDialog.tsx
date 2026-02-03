@@ -74,8 +74,8 @@ export default function EducationFormDialog({
     try {
       const isEdit = !!initialData
       const url = isEdit
-        ? `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/education/${initialData.resume_education_id}`
-        : `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/education`
+        ? `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/education/${initialData.resume_education_id}`
+        : `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/education`
 
       const method = isEdit ? 'PATCH' : 'POST'
 

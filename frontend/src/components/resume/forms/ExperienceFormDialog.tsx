@@ -78,8 +78,8 @@ export default function ExperienceFormDialog({
     try {
       const isEdit = !!initialData
       const url = isEdit
-        ? `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/experience/${initialData.resume_work_experience_id}`
-        : `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/experience`
+        ? `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/experience/${initialData.resume_work_experience_id}`
+        : `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/experience`
 
       const method = isEdit ? 'PATCH' : 'POST'
 

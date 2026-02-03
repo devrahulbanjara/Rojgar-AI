@@ -60,7 +60,6 @@ export interface ResumeSkillResponse extends SkillBase {
 export interface ResumeResponse {
   resume_id: string
   profile_id: string
-  resume_name: string
   target_job_title?: string | null
   custom_summary?: string | null
   created_at: string
@@ -75,7 +74,6 @@ export interface ResumeResponse {
 
 export interface ResumeListResponse {
   resume_id: string
-  resume_name: string
   target_job_title?: string | null
   updated_at: string
 }
@@ -83,7 +81,6 @@ export interface ResumeListResponse {
 // --- Requests ---
 
 export interface ResumeCreate {
-  resume_name: string
   target_job_title?: string | null
   custom_summary?: string | null
 
@@ -96,7 +93,6 @@ export interface ResumeCreate {
 }
 
 export interface ResumeUpdate {
-  resume_name?: string | null
   target_job_title?: string | null
   custom_summary?: string | null
 }

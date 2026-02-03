@@ -1,11 +1,11 @@
-from app.models.resume import Resume
+from app.db.models.resume import Resume
 
 
 class ResumeFormatter:
     @staticmethod
     def format_to_markdown(resume: Resume) -> str:
         lines = [
-            f"# Resume: {resume.resume_name}",
+            f"# Resume: {resume.target_job_title or 'General Resume'}",
             f"Target Role: {resume.target_job_title or 'Not Specified'}",
             f"Summary: {resume.custom_summary or 'No summary provided.'}\n",
         ]

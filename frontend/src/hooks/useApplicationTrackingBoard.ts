@@ -6,9 +6,15 @@ import { apiClient } from '../lib/api'
 import type { ApplicationTrackingBoard } from '../types/application'
 
 const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
-  const response = await apiClient.get<ApplicationTrackingBoard>(
-    '/api/v1/applications/tracking-board'
-  )
+  // Note: This endpoint may need to be created in backend at /api/v1/recruiter/applications/tracking-board
+  // For now, using candidate applications endpoint as fallback
+  const response = await apiClient
+    .get<ApplicationTrackingBoard>('/api/v1/candidate/applications/tracking-board')
+    .catch(() => null)
+
+  if (!response) {
+    return { applied: [], interviewing: [], outcome: [] }
+  }
 
   if (response && typeof response === 'object') {
     if ('applied' in response && 'interviewing' in response && 'outcome' in response) {

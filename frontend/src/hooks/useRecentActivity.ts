@@ -21,7 +21,7 @@ interface RecentActivityResponse {
 const fetchRecentActivity = async (): Promise<ActivityItem[]> => {
   try {
     const response = await apiClient.get<RecentActivityResponse>(
-      '/api/v1/stats/recent-activity?limit=20'
+      '/api/v1/recruiter/stats/recent-activity?limit=20'
     )
     return response.activities || []
   } catch {
@@ -33,8 +33,9 @@ export const useRecentActivity = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.activity,
     queryFn: fetchRecentActivity,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 0, // Always consider stale to allow immediate refetch on WebSocket events
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   })
 }

@@ -10,8 +10,10 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const [appStatsResponse, activeJobsResponse, activeCandidatesResponse] = await Promise.all([
       apiClient.get<DashboardStats>('/api/v1/applications/stats').catch(() => null),
-      apiClient.get<{ count: number }>('/api/v1/stats/active-jobs').catch(() => null),
-      apiClient.get<{ count: number }>('/api/v1/stats/active-candidates').catch(() => null),
+      apiClient.get<{ count: number }>('/api/v1/recruiter/stats/active-jobs').catch(() => null),
+      apiClient
+        .get<{ count: number }>('/api/v1/recruiter/stats/active-candidates')
+        .catch(() => null),
     ])
 
     let appStats: DashboardStats = {
@@ -59,10 +61,11 @@ export const useDashboardStats = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.stats,
     queryFn: fetchDashboardStats,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 seconds - refresh more frequently for dynamic updates
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 1000,
     refetchOnMount: true,
+    refetchOnWindowFocus: true, // Refetch when user returns to the tab
   })
 }

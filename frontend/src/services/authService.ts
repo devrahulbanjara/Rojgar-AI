@@ -41,7 +41,6 @@ class AuthService {
 
   async getCurrentUser(): Promise<TokenResponse['user'] | null> {
     try {
-      // Try regular user endpoint first
       const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/users/me`, {
         credentials: 'include',
       })
@@ -54,8 +53,6 @@ class AuthService {
         return await response.json()
       }
 
-      // If user endpoint returns 403, it might be an organization token
-      // Try organization endpoint
       if (response.status === 403) {
         const orgResponse = await fetch(`${API_CONFIG.baseUrl}/api/v1/organization/me`, {
           credentials: 'include',
@@ -67,7 +64,6 @@ class AuthService {
 
         if (orgResponse.ok) {
           const orgData = await orgResponse.json()
-          // Convert Organization to User format
           return {
             id: orgData.id.toString(),
             name: orgData.name,
@@ -96,15 +92,34 @@ class AuthService {
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    // Try regular user login first
-    // eslint-disable-next-line no-useless-catch
-    try {
-      const response = await fetch(`${this.baseUrl}/login`, {
+    const response = await fetch(`${this.baseUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        email: credentials.email,
+        password: credentials.password,
+        remember_me: credentials.rememberMe || false,
+      }),
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        user: data.user,
+        token: data.access_token,
+      }
+    }
+
+    if (response.status === 401) {
+      const orgResponse = await fetch(`${this.baseUrl}/organization/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies
+        credentials: 'include',
         body: JSON.stringify({
           email: credentials.email,
           password: credentials.password,
@@ -112,62 +127,35 @@ class AuthService {
         }),
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        return {
-          user: data.user,
-          token: data.access_token,
-        }
+      if (!orgResponse.ok) {
+        throw new Error('Invalid email or password')
       }
 
-      // If regular login fails with 401, try organization login
-      if (response.status === 401) {
-        const orgResponse = await fetch(`${this.baseUrl}/organization/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            email: credentials.email,
-            password: credentials.password,
-            remember_me: credentials.rememberMe || false,
-          }),
-        })
-
-        if (!orgResponse.ok) {
-          throw new Error('Invalid email or password')
-        }
-
-        const orgData = await orgResponse.json()
-        // Convert Organization to User format
-        return {
-          user: {
+      const orgData = await orgResponse.json()
+      return {
+        user: {
+          id: orgData.organization.id.toString(),
+          name: orgData.organization.name,
+          email: orgData.organization.email,
+          userType: 'organization',
+          role: 'organization',
+          organization_id: orgData.organization.id.toString(),
+          organization: {
             id: orgData.organization.id.toString(),
             name: orgData.organization.name,
-            email: orgData.organization.email,
-            userType: 'organization',
-            role: 'organization',
-            organization_id: orgData.organization.id.toString(),
-            organization: {
-              id: orgData.organization.id.toString(),
-              name: orgData.organization.name,
-              location_city: orgData.organization.location_city,
-              location_country: orgData.organization.location_country,
-              website: orgData.organization.website,
-              industry: orgData.organization.industry,
-            },
-            createdAt: orgData.organization.created_at,
-            updatedAt: orgData.organization.updated_at,
+            location_city: orgData.organization.location_city,
+            location_country: orgData.organization.location_country,
+            website: orgData.organization.website,
+            industry: orgData.organization.industry,
           },
-          token: orgData.access_token,
-        }
+          createdAt: orgData.organization.created_at,
+          updatedAt: orgData.organization.updated_at,
+        },
+        token: orgData.access_token,
       }
-
-      throw new Error('Invalid email or password')
-    } catch (error) {
-      throw error
     }
+
+    throw new Error('Invalid email or password')
   }
 
   async signup(data: SignupData): Promise<AuthResponse> {

@@ -2,52 +2,37 @@ import uuid
 from urllib.parse import urlencode
 
 import httpx
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.core import (
-    create_token,
-    hash_password,
-    settings,
-    verify_password,
-)
-from app.models import CandidateProfile, User, UserGoogle, UserRole
+from app.core import create_token, hash_password, settings, verify_password
+from app.db.models.candidate import CandidateProfile
+from app.db.models.user import User, UserGoogle, UserRole
+from app.db.repositories.candidate_repo import CandidateProfileRepository
+from app.db.repositories.user_repo import UserGoogleRepository, UserRepository
 from app.schemas import CreateUserRequest, GoogleUserInfo
 
 
 class AuthService:
-    @staticmethod
-    async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
-        result = await db.execute(
-            select(User)
-            .where(User.email == email)
-            .options(
-                selectinload(User.google_account),
-                selectinload(User.organization),
-            )
-        )
-        return result.scalars().first()
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        user_google_repo: UserGoogleRepository,
+        candidate_profile_repo: CandidateProfileRepository,
+    ):
+        self.user_repo = user_repo
+        self.user_google_repo = user_google_repo
+        self.candidate_profile_repo = candidate_profile_repo
 
-    @staticmethod
-    async def get_user_by_google_id(google_id: str, db: AsyncSession) -> User | None:
-        result = await db.execute(
-            select(UserGoogle)
-            .where(UserGoogle.user_google_id == google_id)
-            .options(
-                selectinload(UserGoogle.user).options(
-                    selectinload(User.google_account),
-                    selectinload(User.organization),
-                )
-            )
-        )
-        user_google = result.scalar_one_or_none()
-        if user_google:
-            return user_google.user
-        return None
+    async def get_user_by_email(self, email: str) -> User | None:
+        """Get user by email with related data"""
+        return await self.user_repo.get_by_email(email)
 
-    @staticmethod
-    async def create_user(user_data: CreateUserRequest, db: AsyncSession) -> User:
+    async def get_user_by_google_id(self, google_id: str) -> User | None:
+        """Get user by Google ID"""
+        user_google = await self.user_google_repo.get_with_user(google_id)
+        return user_google.user if user_google else None
+
+    async def create_user(self, user_data: CreateUserRequest) -> User:
+        """Create a new user"""
         new_user = User(
             user_id=uuid.uuid4(),
             organization_id=user_data.organization_id,
@@ -56,35 +41,37 @@ class AuthService:
             picture=user_data.picture,
             role=user_data.role.value,
         )
-        db.add(new_user)
-        await db.flush()
+        if user_data.password:
+            new_user.password = hash_password(user_data.password)
+
+        await self.user_repo.create(new_user)
+
+        # Create candidate profile if candidate
         if new_user.role == UserRole.CANDIDATE.value:
             new_profile = CandidateProfile(
                 profile_id=uuid.uuid4(), user_id=new_user.user_id
             )
-            db.add(new_profile)
-        if user_data.password:
-            new_user.password = hash_password(user_data.password)
+            await self.candidate_profile_repo.create(new_profile)
+
+        # Create Google account link if provided
         if user_data.google_id:
             new_google_user = UserGoogle(
                 user_google_id=user_data.google_id, user_id=new_user.user_id
             )
-            db.add(new_google_user)
-        await db.commit()
-        await db.refresh(new_user)
+            await self.user_google_repo.create(new_google_user)
 
-        return await AuthService.get_user_by_email(new_user.email, db)
+        return await self.get_user_by_email(new_user.email)
 
-    @staticmethod
-    def verify_user_password(user: User, password: str) -> bool:
+    def verify_user_password(self, user: User, password: str) -> bool:
+        """Verify user password"""
         if not user.password:
             return False
         return verify_password(password, user.password)
 
-    @staticmethod
     def create_access_token(
-        user_id: uuid.UUID, remember_me: bool = False
+        self, user_id: uuid.UUID, remember_me: bool = False
     ) -> tuple[str, int]:
+        """Create access token for user"""
         user_id_str = str(user_id)
         if remember_me:
             token = create_token(
@@ -96,8 +83,8 @@ class AuthService:
             max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         return (token, max_age)
 
-    @staticmethod
-    def generate_google_auth_url() -> str:
+    def generate_google_auth_url(self) -> str:
+        """Generate Google OAuth URL"""
         google_auth_url = "https://accounts.google.com/o/oauth2/auth"
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -109,8 +96,8 @@ class AuthService:
         }
         return f"{google_auth_url}?{urlencode(params)}"
 
-    @staticmethod
-    async def exchange_google_code(code: str) -> GoogleUserInfo:
+    async def exchange_google_code(self, code: str) -> GoogleUserInfo:
+        """Exchange Google OAuth code for user info"""
         async with httpx.AsyncClient() as client:
             token_response = await client.post(
                 "https://oauth2.googleapis.com/token",
@@ -133,30 +120,37 @@ class AuthService:
                 raise ValueError("Failed to get user info from Google")
             return GoogleUserInfo(**user_response.json())
 
-    @staticmethod
-    async def get_or_create_google_user(
-        google_user: GoogleUserInfo, db: AsyncSession
-    ) -> User:
-        user = await AuthService.get_user_by_google_id(google_user.id, db)
+    async def get_or_create_google_user(self, google_user: GoogleUserInfo) -> User:
+        """Get or create user from Google OAuth"""
+        user = await self.get_user_by_google_id(google_user.id)
         if not user:
-            existing_user_by_email = await AuthService.get_user_by_email(
-                google_user.email, db
-            )
+            existing_user_by_email = await self.get_user_by_email(google_user.email)
             if existing_user_by_email:
+                # Link Google account to existing user
                 new_google_link = UserGoogle(
                     user_google_id=google_user.id,
                     user_id=existing_user_by_email.user_id,
                 )
-                db.add(new_google_link)
+                await self.user_google_repo.create(new_google_link)
+
+                # Update user info if needed
+                update_data = {}
                 if existing_user_by_email.name == "User" and google_user.name:
-                    existing_user_by_email.name = google_user.name
-                    db.add(existing_user_by_email)
+                    update_data["name"] = google_user.name
                 if not existing_user_by_email.picture and google_user.picture:
-                    existing_user_by_email.picture = google_user.picture
-                    db.add(existing_user_by_email)
-                await db.commit()
-                await db.refresh(existing_user_by_email)
+                    update_data["picture"] = google_user.picture
+
+                if update_data:
+                    await self.user_repo.update(
+                        existing_user_by_email.user_id, **update_data
+                    )
+                    existing_user_by_email = await self.user_repo.get(
+                        existing_user_by_email.user_id
+                    )
+
                 return existing_user_by_email
+
+            # Create new user
             create_user_data = CreateUserRequest(
                 email=google_user.email,
                 name=google_user.name,
@@ -164,11 +158,11 @@ class AuthService:
                 picture=google_user.picture,
                 role=UserRole.CANDIDATE,
             )
-            user = await AuthService.create_user(create_user_data, db)
+            user = await self.create_user(create_user_data)
         return user
 
-    @staticmethod
-    def get_redirect_url_for_user(user: User) -> str:
+    def get_redirect_url_for_user(self, user: User) -> str:
+        """Get redirect URL based on user role"""
         if user.role == UserRole.CANDIDATE.value:
             return f"{settings.FRONTEND_URL}/dashboard/candidate"
         elif user.role == UserRole.RECRUITER.value:
