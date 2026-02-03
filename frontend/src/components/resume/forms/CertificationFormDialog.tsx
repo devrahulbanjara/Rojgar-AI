@@ -74,8 +74,8 @@ export default function CertificationFormDialog({
     try {
       const isEdit = !!initialData
       const url = isEdit
-        ? `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/certifications/${initialData.resume_certification_id}`
-        : `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/certifications`
+        ? `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/certifications/${initialData.resume_certification_id}`
+        : `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/certifications`
 
       const method = isEdit ? 'PATCH' : 'POST'
 

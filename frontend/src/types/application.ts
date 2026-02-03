@@ -5,7 +5,6 @@ export const ApplicationStatusEnum = {
 } as const
 export type ApplicationStatus = (typeof ApplicationStatusEnum)[keyof typeof ApplicationStatusEnum]
 
-// Alias for backward compatibility - using different names to avoid redeclare
 export const ApplicationStageEnum = ApplicationStatusEnum
 export type ApplicationStage = ApplicationStatus
 

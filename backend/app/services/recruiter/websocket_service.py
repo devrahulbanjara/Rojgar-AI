@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import verify_token
-from app.models.user import User, UserRole
+from app.db.models.user import User, UserRole
 
 
 async def authenticate_websocket_user(

@@ -117,9 +117,7 @@ class JobCreateUpdateBase(JobDescription):
 
 
 class JobCreate(JobCreateUpdateBase):
-    mode: Annotated[str, "Creation mode"] = "manual"
     raw_requirements: Annotated[str | None, "Raw requirements text"] = None
-    is_aigenerated: Annotated[bool | None, "Whether the job is AI generated"] = None
 
 
 class JobUpdate(JobCreateUpdateBase):

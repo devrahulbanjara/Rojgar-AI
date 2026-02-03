@@ -1,11 +1,11 @@
-from app.models import ReferenceJobDescriptions
-from app.models.job import JobDescription
+from app.db.models import ReferenceJD
+from app.db.models.job import JobDescription
 
 
 class ReferenceJDFormatter:
     @staticmethod
     def format_reference_jd(
-        reference_jd: ReferenceJobDescriptions, about_the_company: str | None = None
+        reference_jd: ReferenceJD, about_the_company: str | None = None
     ) -> str:
         formatted_lines = []
         if reference_jd.department:

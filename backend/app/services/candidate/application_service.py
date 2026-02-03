@@ -1,157 +1,138 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
-from app.models.application import (
-    ApplicationStatus,
-    JobApplication,
-    JobApplicationStatusHistory,
+from app.db.models.application import ApplicationStatus, JobApplication
+from app.db.repositories.application_repo import (
+    JobApplicationRepository,
+    JobApplicationStatusHistoryRepository,
 )
-from app.models.candidate import CandidateProfile
-from app.models.job import JobPosting
-from app.models.resume import Resume
-from app.models.user import User
+from app.db.repositories.candidate_repo import CandidateProfileRepository
+from app.db.repositories.job_repo import JobRepository
+from app.db.repositories.resume_repo import ResumeRepository
+from app.db.repositories.user_repo import UserRepository
+from app.services.recruiter.activity_events import ActivityEventEmitter
 
 
 class ApplicationService:
-    @staticmethod
-    async def _get_profile_id(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID | None:
-        result = await db.execute(
-            select(CandidateProfile.profile_id).where(
-                CandidateProfile.user_id == user_id
-            )
-        )
-        profile_id = result.scalar_one_or_none()
-        return profile_id
+    def __init__(
+        self,
+        application_repo: JobApplicationRepository,
+        application_status_repo: JobApplicationStatusHistoryRepository,
+        candidate_profile_repo: CandidateProfileRepository,
+        job_repo: JobRepository,
+        resume_repo: ResumeRepository,
+        user_repo: UserRepository,
+        activity_emitter: ActivityEventEmitter,
+    ):
+        self.application_repo = application_repo
+        self.application_status_repo = application_status_repo
+        self.candidate_profile_repo = candidate_profile_repo
+        self.job_repo = job_repo
+        self.resume_repo = resume_repo
+        self.user_repo = user_repo
+        self.activity_emitter = activity_emitter
 
-    @staticmethod
     async def get_candidate_applications(
-        db: AsyncSession, user_id: uuid.UUID
+        self, user_id: uuid.UUID
     ) -> list[JobApplication] | None:
-        profile_id = await ApplicationService._get_profile_id(db, user_id)
-        if not profile_id:
+        """Get all applications for a candidate"""
+        candidate = await self.candidate_profile_repo.get_by_user_id(user_id)
+        if not candidate:
             return None
-        stmt = (
-            select(JobApplication)
-            .where(JobApplication.candidate_profile_id == profile_id)
-            .options(
-                selectinload(JobApplication.job),
-                selectinload(JobApplication.organization),
-            )
-            .order_by(JobApplication.updated_at.desc())
-        )
-        result = await db.execute(stmt)
-        return list(result.scalars().all())
+        applications = await self.application_repo.get_by_candidate(user_id)
+        return list(applications)
 
-    @staticmethod
     async def get_application_by_id(
-        db: AsyncSession, user_id: uuid.UUID, application_id: uuid.UUID
+        self, user_id: uuid.UUID, application_id: uuid.UUID
     ) -> JobApplication | None:
-        profile_id = await ApplicationService._get_profile_id(db, user_id)
-        if not profile_id:
+        """Get a specific application by ID for a user"""
+        candidate = await self.candidate_profile_repo.get_by_user_id(user_id)
+        if not candidate:
             return None
-        stmt = (
-            select(JobApplication)
-            .where(
-                JobApplication.application_id == application_id,
-                JobApplication.candidate_profile_id == profile_id,
-            )
-            .options(
-                selectinload(JobApplication.job),
-                selectinload(JobApplication.organization),
-                selectinload(JobApplication.resume),
-                selectinload(JobApplication.history),
-            )
-        )
-        result = await db.execute(stmt)
-        application = result.scalar_one_or_none()
-        return application
+        application = await self.application_repo.get_with_details(application_id)
+        # Verify ownership
+        if application and application.candidate_profile_id == candidate.profile_id:
+            return application
+        return None
 
-    @staticmethod
     async def get_application_by_job(
-        db: AsyncSession, user_id: uuid.UUID, job_id: uuid.UUID
+        self, user_id: uuid.UUID, job_id: uuid.UUID
     ) -> JobApplication | None:
-        profile_id = await ApplicationService._get_profile_id(db, user_id)
-        if not profile_id:
+        """Get application for a specific job"""
+        candidate = await self.candidate_profile_repo.get_by_user_id(user_id)
+        if not candidate:
             return None
-        stmt = (
-            select(JobApplication)
-            .where(
-                JobApplication.job_id == job_id,
-                JobApplication.candidate_profile_id == profile_id,
-            )
-            .options(
-                selectinload(JobApplication.job),
-                selectinload(JobApplication.organization),
-            )
+        return await self.application_repo.get_by_candidate_and_job(
+            candidate.profile_id, job_id
         )
-        result = await db.execute(stmt)
-        return result.scalar_one_or_none()
 
-    @staticmethod
     async def apply_to_job(
-        db: AsyncSession, user_id: uuid.UUID, job_id: uuid.UUID, resume_id: uuid.UUID
-    ) -> tuple[JobApplication, dict] | None:
-        profile_id = await ApplicationService._get_profile_id(db, user_id)
-        if not profile_id:
+        self, user_id: uuid.UUID, job_id: uuid.UUID, resume_id: uuid.UUID
+    ) -> JobApplication | None:
+        """Apply to a job with a resume"""
+        # Get candidate profile
+        candidate = await self.candidate_profile_repo.get_by_user_id(user_id)
+        if not candidate:
             return None
-        job_result = await db.execute(
-            select(JobPosting).where(JobPosting.job_id == job_id)
-        )
-        job = job_result.scalar_one_or_none()
+
+        # Get job
+        job = await self.job_repo.get(job_id)
         if not job:
             return None
+
+        # Validate job is active
         if job.status != "active":
             raise ValueError("Job is no longer accepting applications")
-        resume_result = await db.execute(
-            select(Resume.profile_id).where(Resume.resume_id == resume_id)
-        )
-        resume_profile_id = resume_result.scalar_one_or_none()
-        if not resume_profile_id:
-            return None
-        if resume_profile_id != profile_id:
+
+        # Verify resume belongs to candidate
+        resume = await self.resume_repo.get(resume_id)
+        if not resume or resume.profile_id != candidate.profile_id:
             raise ValueError("Unauthorized resume usage")
-        already_applied_result = await db.execute(
-            select(JobApplication).where(
-                JobApplication.candidate_profile_id == profile_id,
-                JobApplication.job_id == job_id,
-            )
+
+        # Check if already applied
+        existing = await self.application_repo.get_by_candidate_and_job(
+            candidate.profile_id, job_id
         )
-        existing_application = already_applied_result.scalar_one_or_none()
-        if existing_application:
+        if existing:
             raise ValueError("You have already applied for this job")
+
+        # Create application
         app_id = uuid.uuid4()
         new_application = JobApplication(
             application_id=app_id,
-            candidate_profile_id=profile_id,
+            candidate_profile_id=candidate.profile_id,
             job_id=job_id,
             organization_id=job.organization_id,
             resume_id=resume_id,
             current_status=ApplicationStatus.APPLIED,
         )
-        history = JobApplicationStatusHistory(
-            status_history_id=uuid.uuid4(),
-            application_id=app_id,
-            status=ApplicationStatus.APPLIED,
+        await self.application_repo.create(new_application)
+
+        # Create status history
+        await self.application_status_repo.add_status_change(
+            app_id, ApplicationStatus.APPLIED
         )
-        db.add_all([new_application, history])
-        await db.commit()
-        user_result = await db.execute(select(User).where(User.user_id == user_id))
-        candidate_user = user_result.scalar_one_or_none()
-        candidate_name = candidate_user.name if candidate_user else "Unknown Candidate"
-        application = await ApplicationService.get_application_by_id(
-            db, user_id, app_id
-        )
-        return (
-            application,
-            {
-                "organization_id": job.organization_id,
-                "candidate_name": candidate_name,
-                "job_title": job.title,
-                "application_id": app_id,
-                "job_id": job_id,
-                "timestamp": new_application.applied_at,
-            },
-        )
+
+        # Get user for event data
+        user = await self.user_repo.get(user_id)
+        candidate_name = user.name if user else "Unknown Candidate"
+
+        # Get full application with relations
+        application = await self.application_repo.get_with_details(app_id)
+
+        # Emit activity event
+        if application:
+            try:
+                await self.activity_emitter.emit_application_created(
+                    organization_id=job.organization_id,
+                    candidate_name=candidate_name,
+                    job_title=job.title,
+                    application_id=app_id,
+                    job_id=job_id,
+                    timestamp=new_application.applied_at,
+                )
+            except Exception as e:
+                # Log error but don't fail the application creation
+                import logging
+                logging.error(f"Failed to emit activity event: {e}")
+
+        return application

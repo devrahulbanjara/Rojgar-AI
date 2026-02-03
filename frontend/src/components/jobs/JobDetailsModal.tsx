@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { ApplicationModal } from './ApplicationModal'
 import Image from 'next/image'
 import { Dialog, DialogContent } from '../ui/dialog'
@@ -17,8 +17,6 @@ import {
   Briefcase,
   Sparkles,
   Globe,
-  Bookmark,
-  BookmarkCheck,
   Share2,
   TrendingUp,
   MapPinned,
@@ -27,7 +25,6 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { jobUtils } from '../../services/jobService'
-import { useToggleSaveJob } from '../../hooks/queries/useJobs'
 import type { JobDetailsModalProps, Job } from '../../types/job'
 
 interface JobWithExtras extends Job {
@@ -45,16 +42,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
   onApply: _onApply,
   showApplyButton = true,
 }) => {
-  const [isSaved, setIsSaved] = useState(job?.is_saved || false)
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false)
-  const toggleSaveMutation = useToggleSaveJob()
-
-  // Sync is_saved state when job changes or modal opens
-  useEffect(() => {
-    if (job) {
-      setIsSaved(job.is_saved || false)
-    }
-  }, [job, isOpen])
 
   if (!job) return null
 
@@ -64,24 +52,6 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
   const handleClose = () => {
     onClose()
-  }
-
-  const handleSave = async () => {
-    if (!job.job_id) return
-    const previousSavedState = isSaved
-    // Optimistically update UI
-    setIsSaved(!previousSavedState)
-    try {
-      const result = await toggleSaveMutation.mutateAsync(job.job_id)
-      // Update state based on actual API response
-      const isNowSaved = result.status === 'Job saved successfully'
-      setIsSaved(isNowSaved)
-    } catch (error) {
-      // Revert optimistic update on error
-      setIsSaved(previousSavedState)
-      // Error is handled by the mutation's onError
-      console.error('Failed to toggle save:', error)
-    }
   }
 
   const handleShare = () => {
@@ -519,34 +489,6 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
         {/* Sticky Footer with CTAs */}
         <div className="border-t border-gray-200 bg-white px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleSave}
-              disabled={toggleSaveMutation.isPending}
-              className={cn(
-                'h-12 px-5 border-2 transition-all duration-200 hover:scale-105 active:scale-95',
-                isSaved
-                  ? 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
-                  : 'hover:bg-gray-50 hover:border-gray-300'
-              )}
-            >
-              {toggleSaveMutation.isPending ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
-                  {isSaved ? 'Unsaving...' : 'Saving...'}
-                </>
-              ) : (
-                <>
-                  {isSaved ? (
-                    <BookmarkCheck className="w-5 h-5 mr-2" />
-                  ) : (
-                    <Bookmark className="w-5 h-5 mr-2" />
-                  )}
-                  {isSaved ? 'Saved' : 'Save Job'}
-                </>
-              )}
-            </Button>
             <Button
               variant="outline"
               size="lg"

@@ -1,20 +1,26 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models import Organization, ReferenceJobDescriptions
+from app.db.models.job import ReferenceJD
+from app.db.repositories.job_repo import ReferenceJDRepository
+from app.db.repositories.user_repo import OrganizationRepository
 from app.schemas import job as schemas
 
 
 class ReferenceJDService:
-    @staticmethod
-    async def create_reference_jd(
-        db: AsyncSession, organization_id: uuid.UUID, data: schemas.CreateReferenceJD
+    def __init__(
+        self,
+        reference_jd_repo: ReferenceJDRepository,
+        organization_repo: OrganizationRepository,
     ):
-        id = uuid.uuid4()
-        reference_jd = ReferenceJobDescriptions(
-            referncejd_id=id,
+        self.reference_jd_repo = reference_jd_repo
+        self.organization_repo = organization_repo
+
+    async def create_reference_jd(
+        self, organization_id: uuid.UUID, data: schemas.CreateReferenceJD
+    ):
+        """Create a new reference JD"""
+        reference_jd = ReferenceJD(
+            referncejd_id=uuid.uuid4(),
             organization_id=organization_id,
             department=data.department,
             job_summary=data.job_summary,
@@ -23,95 +29,70 @@ class ReferenceJDService:
             preferred=data.preferred,
             compensation_and_benefits=data.compensation_and_benefits,
         )
-        db.add(reference_jd)
-        await db.commit()
-        await db.refresh(reference_jd)
-        reference_jd.about_the_company = (
-            await ReferenceJDService._get_organization_description(db, organization_id)
-        )
-        return reference_jd
+        created_jd = await self.reference_jd_repo.create(reference_jd)
+        # Add organization description
+        organization = await self.organization_repo.get(organization_id)
+        if organization:
+            created_jd.about_the_company = organization.description
+        return created_jd
 
-    @staticmethod
-    async def _get_organization_description(
-        db: AsyncSession, organization_id: uuid.UUID
-    ) -> str | None:
-        stmt = select(Organization).where(
-            Organization.organization_id == organization_id
+    async def get_reference_jds(self, organization_id: uuid.UUID):
+        """Get all reference JDs for an organization"""
+        reference_jds = await self.reference_jd_repo.get_by_organization(
+            organization_id
         )
-        result = await db.execute(stmt)
-        organization = result.scalar_one_or_none()
-        return organization.description if organization else None
-
-    @staticmethod
-    async def get_reference_jds(db: AsyncSession, organization_id: uuid.UUID):
-        stmt = select(ReferenceJobDescriptions).where(
-            ReferenceJobDescriptions.organization_id == organization_id
-        )
-        result = await db.execute(stmt)
-        reference_jds = result.scalars().all()
-        organization_description = (
-            await ReferenceJDService._get_organization_description(db, organization_id)
-        )
+        organization = await self.organization_repo.get(organization_id)
+        org_description = organization.description if organization else None
         for ref_jd in reference_jds:
-            ref_jd.about_the_company = organization_description
+            ref_jd.about_the_company = org_description
         return reference_jds
 
-    @staticmethod
     async def get_reference_jd_by_id(
-        db: AsyncSession, reference_jd_id: uuid.UUID, organization_id: uuid.UUID
+        self, reference_jd_id: uuid.UUID, organization_id: uuid.UUID
     ):
-        stmt = select(ReferenceJobDescriptions).where(
-            ReferenceJobDescriptions.referncejd_id == reference_jd_id,
-            ReferenceJobDescriptions.organization_id == organization_id,
-        )
-        result = await db.execute(stmt)
-        reference_jd = result.scalar_one_or_none()
-        if not reference_jd:
+        """Get a specific reference JD"""
+        reference_jd = await self.reference_jd_repo.get(reference_jd_id)
+        if not reference_jd or reference_jd.organization_id != organization_id:
             return None
-        reference_jd.about_the_company = (
-            await ReferenceJDService._get_organization_description(db, organization_id)
-        )
+        organization = await self.organization_repo.get(organization_id)
+        if organization:
+            reference_jd.about_the_company = organization.description
         return reference_jd
 
-    @staticmethod
     async def delete_reference_jd(
-        db: AsyncSession, reference_jd_id: uuid.UUID, organization_id: uuid.UUID
+        self, reference_jd_id: uuid.UUID, organization_id: uuid.UUID
     ):
-        stmt = select(ReferenceJobDescriptions).where(
-            ReferenceJobDescriptions.referncejd_id == reference_jd_id,
-            ReferenceJobDescriptions.organization_id == organization_id,
+        """Delete a reference JD"""
+        reference_jd = await self.get_reference_jd_by_id(
+            reference_jd_id, organization_id
         )
-        result = await db.execute(stmt)
-        reference_jd = result.scalar_one_or_none()
         if reference_jd:
-            db.delete(reference_jd)
-            await db.commit()
+            await self.reference_jd_repo.delete(reference_jd_id)
         return reference_jd
 
-    @staticmethod
     async def update_reference_jd(
-        db: AsyncSession,
+        self,
         reference_jd_id: uuid.UUID,
         organization_id: uuid.UUID,
         data: schemas.CreateReferenceJD,
     ):
-        stmt = select(ReferenceJobDescriptions).where(
-            ReferenceJobDescriptions.referncejd_id == reference_jd_id,
-            ReferenceJobDescriptions.organization_id == organization_id,
+        """Update a reference JD"""
+        reference_jd = await self.get_reference_jd_by_id(
+            reference_jd_id, organization_id
         )
-        result = await db.execute(stmt)
-        reference_jd = result.scalar_one_or_none()
         if not reference_jd:
             return None
-        reference_jd.department = data.department
-        reference_jd.job_summary = data.job_summary
-        reference_jd.job_responsibilities = data.job_responsibilities
-        reference_jd.required_qualifications = data.required_qualifications
-        reference_jd.preferred = data.preferred
-        reference_jd.compensation_and_benefits = data.compensation_and_benefits
-        await db.commit()
-        await db.refresh(reference_jd)
-        reference_jd.about_the_company = (
-            await ReferenceJDService._get_organization_description(db, organization_id)
-        )
-        return reference_jd
+
+        update_data = {
+            "department": data.department,
+            "job_summary": data.job_summary,
+            "job_responsibilities": data.job_responsibilities,
+            "required_qualifications": data.required_qualifications,
+            "preferred": data.preferred,
+            "compensation_and_benefits": data.compensation_and_benefits,
+        }
+        updated_jd = await self.reference_jd_repo.update(reference_jd_id, **update_data)
+        organization = await self.organization_repo.get(organization_id)
+        if organization and updated_jd:
+            updated_jd.about_the_company = organization.description
+        return updated_jd

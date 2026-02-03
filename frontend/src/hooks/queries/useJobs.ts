@@ -21,9 +21,6 @@ export const jobQueryKeys = {
   details: () => [...jobQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...jobQueryKeys.details(), id] as const,
   byCompany: (companyId: string) => [...jobQueryKeys.all, 'company', companyId] as const,
-  savedJobs: () => [...jobQueryKeys.all, 'saved'] as const,
-  savedJobsList: (page?: number, limit?: number) =>
-    [...jobQueryKeys.savedJobs(), page, limit] as const,
 }
 
 export const applicationQueryKeys = {
@@ -99,7 +96,6 @@ export function useJobSearch(
   params?: JobSearchParams & {
     employmentType?: string
     locationType?: string
-    userId?: string
   }
 ) {
   return useQuery({
@@ -333,79 +329,4 @@ export function useJobWithApplications(jobId: string) {
 
 export function useCandidateApplications(candidateId: string) {
   return useApplicationsByCandidate(candidateId)
-}
-
-export function useToggleSaveJob() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (jobId: string) => {
-      return await jobService.toggleSaveJob(jobId)
-    },
-    onSuccess: (data, jobId) => {
-      const isNowSaved = data.status === 'Job saved successfully'
-
-      queryClient.setQueriesData({ queryKey: ['jobs'] }, (oldData: unknown) => {
-        if (!oldData) return oldData
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((oldData as any)?.jobs && Array.isArray((oldData as any).jobs)) {
-          return {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ...(oldData as any),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            jobs: (oldData as any).jobs.map((job: any) =>
-              (job.job_id || job.id) === jobId ? { ...job, is_saved: isNowSaved } : job
-            ),
-          }
-        }
-
-        if (Array.isArray(oldData)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return (oldData as any[]).map((job: any) =>
-            (job.job_id || job.id) === jobId ? { ...job, is_saved: isNowSaved } : job
-          )
-        }
-
-        return oldData
-      })
-
-      queryClient.setQueriesData({ queryKey: jobQueryKeys.detail(jobId) }, (oldData: unknown) => {
-        if (!oldData) return oldData
-        return { ...oldData, is_saved: isNowSaved }
-      })
-
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.savedJobs() })
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.search() })
-      queryClient.invalidateQueries({
-        queryKey: jobQueryKeys.recommendations(),
-      })
-      queryClient.invalidateQueries({ queryKey: jobQueryKeys.detail(jobId) })
-
-      const message = isNowSaved ? 'Job saved successfully' : 'Job unsaved'
-      toast.success(message)
-    },
-    onError: (error: unknown) => {
-      const errorMessage =
-        (error as { data?: { detail?: string; message?: string } })?.data?.detail ||
-        (error as { data?: { detail?: string; message?: string } })?.data?.message ||
-        (error as Error)?.message ||
-        'Failed to save job'
-      toast.error('Failed to save job', {
-        description: errorMessage,
-      })
-    },
-  })
-}
-
-export function useSavedJobs(page: number = 1, limit: number = 10) {
-  return useQuery({
-    queryKey: jobQueryKeys.savedJobsList(page, limit),
-    queryFn: async () => {
-      return await jobService.getSavedJobs(page, limit)
-    },
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-  })
 }

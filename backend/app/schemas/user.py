@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.user import UserRole
+from app.db.models.user import UserRole
 
 
 class ProfileUpdateRequest(BaseModel):
