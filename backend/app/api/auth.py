@@ -1,41 +1,48 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
-from app.core import BusinessLogicError, UnauthorizedError, get_db
+from app.api.dependencies import get_auth_service, get_organization_auth_service
 from app.core.config import settings
 from app.core.limiter import limiter
-from app.models import UserRole
+from app.db.models.user import UserRole
 from app.schemas import CreateUserRequest, LoginRequest, SignupRequest, TokenResponse
 from app.schemas.organization import (
     OrganizationLoginRequest,
     OrganizationSignupRequest,
     OrganizationTokenResponse,
 )
-from app.services import AuthService
+from app.services.auth.auth_service import AuthService
 from app.services.auth.organization_auth_service import OrganizationAuthService
 
 router = APIRouter()
 
 
 @router.post("/signup", response_model=TokenResponse)
-@limiter.limit("50/minute")
-def signup(
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def signup(
     request: Request,
     signup_data: SignupRequest,
     response: Response,
-    db: Annotated[Session, Depends(get_db)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    organization_auth_service: Annotated[
+        OrganizationAuthService, Depends(get_organization_auth_service)
+    ],
 ):
-    existing_user = AuthService.get_user_by_email(signup_data.email, db)
+    existing_user = await auth_service.get_user_by_email(signup_data.email)
     if existing_user:
-        raise BusinessLogicError("Email already registered")
-    existing_org = OrganizationAuthService.get_organization_by_email(
-        signup_data.email, db
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
+        )
+    existing_org = await organization_auth_service.get_organization_by_email(
+        signup_data.email
     )
     if existing_org:
-        raise BusinessLogicError("Organization already registered")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Organization already registered",
+        )
     create_user_data = CreateUserRequest(
         email=signup_data.email,
         name=signup_data.name,
@@ -43,8 +50,8 @@ def signup(
         picture=signup_data.picture,
         role=UserRole.CANDIDATE,
     )
-    new_user = AuthService.create_user(create_user_data, db)
-    token, max_age = AuthService.create_access_token(new_user.id)
+    new_user = await auth_service.create_user(create_user_data)
+    token, max_age = auth_service.create_access_token(new_user.user_id)
     response.set_cookie(
         key="auth_token",
         value=token,
@@ -57,19 +64,25 @@ def signup(
 
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit("50/minute")
-def login(
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def login(
     request: Request,
     login_data: LoginRequest,
     response: Response,
-    db: Annotated[Session, Depends(get_db)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
-    user = AuthService.get_user_by_email(login_data.email, db)
+    user = await auth_service.get_user_by_email(login_data.email)
     if not user or not user.password:
-        raise UnauthorizedError("Invalid email or password")
-    if not AuthService.verify_user_password(user, login_data.password):
-        raise UnauthorizedError("Invalid email or password")
-    token, max_age = AuthService.create_access_token(user.id, login_data.remember_me)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
+    if not auth_service.verify_user_password(user, login_data.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
+    token, max_age = auth_service.create_access_token(
+        user.user_id, login_data.remember_me
+    )
     response.set_cookie(
         key="auth_token",
         value=token,
@@ -82,22 +95,29 @@ def login(
 
 
 @router.get("/google")
-@limiter.limit("50/minute")
-def google_login(request: Request):
-    auth_url = AuthService.generate_google_auth_url()
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def google_login(
+    request: Request,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    auth_url = auth_service.generate_google_auth_url()
     return {"auth_url": auth_url}
 
 
 @router.get("/google/callback")
-@limiter.limit("50/minute")
+@limiter.limit(settings.RATE_LIMIT_AUTH)
 async def google_callback(
-    request: Request, db: Annotated[Session, Depends(get_db)], code: str
+    request: Request,
+    code: str,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     try:
-        google_user = await AuthService.exchange_google_code(code)
-        user = AuthService.get_or_create_google_user(google_user, db)
-        token, max_age = AuthService.create_access_token(user.id, remember_me=True)
-        redirect_url = AuthService.get_redirect_url_for_user(user)
+        google_user = await auth_service.exchange_google_code(code)
+        user = await auth_service.get_or_create_google_user(google_user)
+        token, max_age = auth_service.create_access_token(
+            user.user_id, remember_me=True
+        )
+        redirect_url = auth_service.get_redirect_url_for_user(user)
         response = RedirectResponse(url=redirect_url)
         response.set_cookie(
             key="auth_token",
@@ -108,28 +128,36 @@ async def google_callback(
             samesite="lax",
         )
         return response
+    except ValueError:
+        error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
+        return RedirectResponse(url=error_url)
     except Exception:
         error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
         return RedirectResponse(url=error_url)
 
 
 @router.post("/logout")
-@limiter.limit("50/minute")
-def logout(request: Request, response: Response):
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def logout(request: Request, response: Response):
     response.delete_cookie(key="auth_token")
     return {"message": "Logged out successfully"}
 
 
 @router.post("/organization/signup", response_model=OrganizationTokenResponse)
-@limiter.limit("50/minute")
-def organization_signup(
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def organization_signup(
     request: Request,
-    db: Annotated[Session, Depends(get_db)],
     org_data: OrganizationSignupRequest,
     response: Response,
+    organization_auth_service: Annotated[
+        OrganizationAuthService, Depends(get_organization_auth_service)
+    ],
 ):
-    new_org = OrganizationAuthService.create_organization(org_data, db)
-    token, max_age = OrganizationAuthService.create_organization_token(
+    try:
+        new_org = await organization_auth_service.create_organization(org_data)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    token, max_age = organization_auth_service.create_organization_token(
         new_org.organization_id
     )
     response.set_cookie(
@@ -146,23 +174,29 @@ def organization_signup(
 
 
 @router.post("/organization/login", response_model=OrganizationTokenResponse)
-@limiter.limit("50/minute")
-def organization_login(
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def organization_login(
     request: Request,
-    db: Annotated[Session, Depends(get_db)],
     login_data: OrganizationLoginRequest,
     response: Response,
+    organization_auth_service: Annotated[
+        OrganizationAuthService, Depends(get_organization_auth_service)
+    ],
 ):
-    organization = OrganizationAuthService.get_organization_by_email(
-        login_data.email, db
+    organization = await organization_auth_service.get_organization_by_email(
+        login_data.email
     )
     if not organization:
-        raise UnauthorizedError("Invalid email or password")
-    if not OrganizationAuthService.verify_organization_password(
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
+    if not organization_auth_service.verify_organization_password(
         organization, login_data.password
     ):
-        raise UnauthorizedError("Invalid email or password")
-    token, max_age = OrganizationAuthService.create_organization_token(
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
+    token, max_age = organization_auth_service.create_organization_token(
         organization.organization_id, login_data.remember_me
     )
     response.set_cookie(

@@ -32,11 +32,11 @@ export interface ReferenceJDListResponse {
 }
 
 const referenceJDEndpoints = {
-  list: '/api/v1/jobs/reference-jd',
-  detail: (id: string) => `/api/v1/jobs/reference-jd/${id}`,
-  create: '/api/v1/jobs/reference-jd',
-  update: (id: string) => `/api/v1/jobs/reference-jd/${id}`,
-  delete: (id: string) => `/api/v1/jobs/reference-jd/${id}`,
+  list: '/api/v1/recruiter/jobs/reference-jd',
+  detail: (id: string) => `/api/v1/recruiter/jobs/reference-jd/${id}`,
+  create: '/api/v1/recruiter/jobs/reference-jd',
+  update: (id: string) => `/api/v1/recruiter/jobs/reference-jd/${id}`,
+  delete: (id: string) => `/api/v1/recruiter/jobs/reference-jd/${id}`,
 } as const
 
 export class ReferenceJDService {

@@ -46,12 +46,6 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
                 Add a professional headline
               </p>
             )}
-
-            {profile?.professional_summary && (
-              <p className="text-[#475569] leading-relaxed max-w-3xl mt-2 line-clamp-2">
-                {profile.professional_summary}
-              </p>
-            )}
           </div>
         </div>
       </div>

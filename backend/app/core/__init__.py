@@ -1,25 +1,15 @@
+# Import from new db module location
+from app.db.session import engine, get_db, init_db
+
 from .config import settings
 from .current_datetime import get_datetime
-from .database import engine, get_db, init_db
-from .exceptions import (
-    ApplicationNotFoundError,
-    BusinessLogicError,
-    CandidateNotFoundError,
-    ConflictError,
-    ConvexHireError,
-    ForbiddenError,
-    JobNotFoundError,
-    NotFoundError,
-    OrganizationNotFoundError,
-    ResumeNotFoundError,
-    UnauthorizedError,
-    UserNotFoundError,
-)
+from .exceptions import get_exception_metrics
 from .logging_config import configure_file_logging, get_logger, logger
 from .security import (
     create_token,
     get_current_active_user,
     get_current_organization_id,
+    get_current_recruiter_organization_id,
     get_current_user_id,
     hash_password,
     verify_password,
@@ -38,20 +28,10 @@ __all__ = [
     "get_current_user_id",
     "get_current_active_user",
     "get_current_organization_id",
+    "get_current_recruiter_organization_id",
     "logger",
     "configure_file_logging",
     "get_logger",
     "get_datetime",
-    "ConvexHireError",
-    "NotFoundError",
-    "UnauthorizedError",
-    "ForbiddenError",
-    "BusinessLogicError",
-    "ConflictError",
-    "JobNotFoundError",
-    "CandidateNotFoundError",
-    "ApplicationNotFoundError",
-    "OrganizationNotFoundError",
-    "UserNotFoundError",
-    "ResumeNotFoundError",
+    "get_exception_metrics",
 ]

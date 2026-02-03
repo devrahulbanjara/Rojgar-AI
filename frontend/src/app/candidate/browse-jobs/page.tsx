@@ -243,18 +243,6 @@ export default function Jobs() {
     }
   }, [isAuthenticated, isAuthLoading])
 
-  // Sync selectedJob with cache updates (for immediate is_saved updates)
-  useEffect(() => {
-    if (selectedJob && jobsData?.jobs) {
-      const updatedJob = jobsData.jobs.find(
-        job => (job.job_id || job.id) === (selectedJob.job_id || selectedJob.id)
-      )
-      if (updatedJob && updatedJob.is_saved !== selectedJob.is_saved) {
-        setSelectedJob(updatedJob)
-      }
-    }
-  }, [jobsData, selectedJob])
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
