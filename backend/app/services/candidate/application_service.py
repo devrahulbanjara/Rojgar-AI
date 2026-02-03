@@ -1,7 +1,8 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import BusinessLogicError, ConflictError, ForbiddenError, NotFoundError
 from app.models.application import (
