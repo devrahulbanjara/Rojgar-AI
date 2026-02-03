@@ -7,8 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db.models.application import JobApplication, JobApplicationStatusHistory
 from app.db.models.candidate import CandidateProfile
-from app.db.models.job import JobDescription, JobPosting
-from app.db.models.user import User
+from app.db.models.job import JobPosting
 from app.db.repositories.base import BaseRepository
 
 
@@ -34,7 +33,9 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
         query = (
             select(JobApplication)
             .options(
-                selectinload(JobApplication.job).selectinload(JobPosting.job_description),
+                selectinload(JobApplication.job).selectinload(
+                    JobPosting.job_description
+                ),
                 selectinload(JobApplication.organization),
                 selectinload(JobApplication.resume),
             )
