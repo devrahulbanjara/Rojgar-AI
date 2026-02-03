@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core import NotFoundError
 from app.models.candidate import CandidateProfile
 from app.models.resume import (
     Resume,
@@ -34,6 +33,8 @@ class ResumeService:
     @staticmethod
     async def create_resume_fork(db: AsyncSession, user: User, data: ResumeCreate):
         profile = await CandidateService.get_full_profile(db, user)
+        if not profile:
+            return None
         new_resume_id = uuid.uuid4()
         new_resume = Resume(
             resume_id=new_resume_id,
@@ -138,15 +139,6 @@ class ResumeService:
         )
         result = await db.execute(stmt)
         resume = result.scalar_one_or_none()
-        if not resume:
-            raise NotFoundError(
-                message="Resume not found",
-                details={
-                    "resume_id": str(resume_id),
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
         return resume
 
     @staticmethod
@@ -165,6 +157,8 @@ class ResumeService:
         db: AsyncSession, user: User, resume_id: uuid.UUID, data: ResumeUpdate
     ):
         resume = await ResumeService.get_resume(db, user, resume_id)
+        if not resume:
+            return None
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(resume, key, value)
         await db.commit()
@@ -174,14 +168,18 @@ class ResumeService:
     @staticmethod
     async def delete_resume(db: AsyncSession, user: User, resume_id: uuid.UUID):
         resume = await ResumeService.get_resume(db, user, resume_id)
-        db.delete(resume)
-        await db.commit()
+        if resume:
+            db.delete(resume)
+            await db.commit()
+        return resume
 
     @staticmethod
     async def add_experience(
         db: AsyncSession, user: User, resume_id: uuid.UUID, data: WorkExperienceBase
     ):
-        await ResumeService.get_resume(db, user, resume_id)
+        resume = await ResumeService.get_resume(db, user, resume_id)
+        if not resume:
+            return None
         new_item = ResumeWorkExperience(
             resume_work_experience_id=uuid.uuid4(),
             resume_id=resume_id,
@@ -206,24 +204,18 @@ class ResumeService:
         )
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
-        if not item:
-            raise NotFoundError(
-                message="Experience item not found",
-                details={
-                    "item_id": str(item_id),
-                    "resume_id": str(resume_id),
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
-        db.delete(item)
-        await db.commit()
+        if item:
+            db.delete(item)
+            await db.commit()
+        return item
 
     @staticmethod
     async def add_education(
         db: AsyncSession, user: User, resume_id: uuid.UUID, data: EducationBase
     ):
-        await ResumeService.get_resume(db, user, resume_id)
+        resume = await ResumeService.get_resume(db, user, resume_id)
+        if not resume:
+            return None
         new_item = ResumeEducation(
             resume_education_id=uuid.uuid4(), resume_id=resume_id, **data.model_dump()
         )
@@ -246,24 +238,18 @@ class ResumeService:
         )
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
-        if not item:
-            raise NotFoundError(
-                message="Education item not found",
-                details={
-                    "item_id": str(item_id),
-                    "resume_id": str(resume_id),
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
-        db.delete(item)
-        await db.commit()
+        if item:
+            db.delete(item)
+            await db.commit()
+        return item
 
     @staticmethod
     async def add_skill(
         db: AsyncSession, user: User, resume_id: uuid.UUID, data: SkillBase
     ):
-        await ResumeService.get_resume(db, user, resume_id)
+        resume = await ResumeService.get_resume(db, user, resume_id)
+        if not resume:
+            return None
         new_item = ResumeSkills(
             resume_skill_id=uuid.uuid4(), resume_id=resume_id, **data.model_dump()
         )
@@ -286,24 +272,18 @@ class ResumeService:
         )
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
-        if not item:
-            raise NotFoundError(
-                message="Skill item not found",
-                details={
-                    "item_id": str(item_id),
-                    "resume_id": str(resume_id),
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
-        db.delete(item)
-        await db.commit()
+        if item:
+            db.delete(item)
+            await db.commit()
+        return item
 
     @staticmethod
     async def add_certification(
         db: AsyncSession, user: User, resume_id: uuid.UUID, data: CertificationBase
     ):
-        await ResumeService.get_resume(db, user, resume_id)
+        resume = await ResumeService.get_resume(db, user, resume_id)
+        if not resume:
+            return None
         cert_data = data.model_dump(exclude={"credential_id"})
         new_item = ResumeCertification(
             resume_certification_id=uuid.uuid4(), resume_id=resume_id, **cert_data
@@ -327,18 +307,10 @@ class ResumeService:
         )
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
-        if not item:
-            raise NotFoundError(
-                message="Certification item not found",
-                details={
-                    "item_id": str(item_id),
-                    "resume_id": str(resume_id),
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
-        db.delete(item)
-        await db.commit()
+        if item:
+            db.delete(item)
+            await db.commit()
+        return item
 
     @staticmethod
     async def _update_sub_item(
@@ -361,16 +333,7 @@ class ResumeService:
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
         if not item:
-            raise NotFoundError(
-                message="Item not found",
-                details={
-                    "item_id": str(item_id),
-                    "resume_id": str(resume_id),
-                    "user_id": str(user.user_id),
-                    "item_type": ModelClass.__name__,
-                },
-                user_id=user.user_id,
-            )
+            return None
         update_data = data_obj.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(item, key, value)

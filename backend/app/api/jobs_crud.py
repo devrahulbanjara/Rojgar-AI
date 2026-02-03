@@ -1,14 +1,13 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import BusinessLogicError, NotFoundError, get_current_active_user, get_db
+from app.core import get_current_active_user, get_db
 from app.core.authorization import get_organization_from_user, verify_user_can_edit_job
 from app.core.config import settings
-from app.core.exceptions import get_request_context
 from app.core.limiter import limiter
 from app.models import JobPosting, User
 from app.schemas import job as schemas
@@ -33,17 +32,16 @@ async def generate_job_draft(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if not draft_request.raw_requirements:
-        raise BusinessLogicError(
-            message="Raw requirements / some keywords are required",
-            details={
-                "title": draft_request.title,
-                "has_reference_jd": draft_request.reference_jd_id is not None,
-                "user_id": str(current_user.user_id),
-            },
-            user_id=current_user.user_id,
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Raw requirements / some keywords are required"
         )
     organization_id = get_organization_from_user(current_user)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
     generated_draft = await JobGenerationService.generate_job_draft(
         title=draft_request.title,
         raw_requirements=draft_request.raw_requirements,
@@ -53,18 +51,9 @@ async def generate_job_draft(
         current_draft=draft_request.current_draft,
     )
     if not generated_draft or not generated_draft.get("draft"):
-        raise BusinessLogicError(
-            message="Failed to generate job description",
-            details={
-                "title": draft_request.title,
-                "has_raw_requirements": bool(draft_request.raw_requirements),
-                "reference_jd_id": str(draft_request.reference_jd_id)
-                if draft_request.reference_jd_id
-                else None,
-                "organization_id": str(organization_id),
-                "user_id": str(current_user.user_id),
-            },
-            request_id=getattr(request.state, "request_id", None),
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to generate job description. Please check your requirements and try again."
         )
     draft = generated_draft["draft"]
     return draft
@@ -82,6 +71,11 @@ async def create_job(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     organization_id = get_organization_from_user(current_user)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not belong to any organization"
+        )
     job_posting, event_data = await JobService.create_job(
         db=db,
         job_data=job_data,
@@ -114,16 +108,17 @@ async def update_job(
     job_result = await db.execute(job_stmt)
     job_posting = job_result.scalar_one_or_none()
     if not job_posting:
-        raise NotFoundError(
-            message="Job not found",
-            details={
-                "job_id": str(job_id),
-                "user_id": str(current_user.user_id),
-            },
-            user_id=current_user.user_id,
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
         )
-    verify_user_can_edit_job(current_user, job_posting)
+    try:
+        verify_user_can_edit_job(current_user, job_posting)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
     updated_job = await JobService.update_job(
         db=db, job_posting=job_posting, job_data=job_data
     )
@@ -138,7 +133,14 @@ async def delete_job(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    await JobService.delete_job(db=db, job_id=job_id, user_id=current_user.user_id)
+    job = await JobService.delete_job(
+        db=db, job_id=job_id, user_id=current_user.user_id
+    )
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )
 
 
 @router.post(
@@ -153,9 +155,15 @@ async def expire_job(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    return await JobService.expire_job(
+    job = await JobService.expire_job(
         db=db, job_id=job_id, user_id=current_user.user_id
     )
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )
+    return job
 
 
 @router.post("/{job_id}/shortlist", status_code=status.HTTP_200_OK)
@@ -170,16 +178,17 @@ async def trigger_shortlisting(
     job_result = await db.execute(select(JobPosting).where(JobPosting.job_id == job_id))
     job = job_result.scalar_one_or_none()
     if not job:
-        raise NotFoundError(
-            message="Job not found",
-            details={
-                "job_id": str(job_id),
-                "user_id": str(current_user.user_id),
-            },
-            user_id=current_user.user_id,
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
         )
-    verify_user_can_edit_job(current_user, job)
+    try:
+        verify_user_can_edit_job(current_user, job)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
 
     background_tasks.add_task(ShortlistService.process_shortlisting, job_id)
 
@@ -197,15 +206,16 @@ async def get_shortlisting_summary(
     job_result = await db.execute(select(JobPosting).where(JobPosting.job_id == job_id))
     job = job_result.scalar_one_or_none()
     if not job:
-        raise NotFoundError(
-            message="Job not found",
-            details={
-                "job_id": str(job_id),
-                "user_id": str(current_user.user_id),
-            },
-            user_id=current_user.user_id,
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
         )
-    verify_user_can_edit_job(current_user, job)
+    try:
+        verify_user_can_edit_job(current_user, job)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
 
     return await ShortlistService.get_shortlisting_summary(db, job_id)

@@ -1,12 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import BusinessLogicError, UnauthorizedError, get_db
+from app.core import get_db
 from app.core.config import settings
-from app.core.exceptions import get_request_context
 from app.core.limiter import limiter
 from app.models import UserRole
 from app.schemas import CreateUserRequest, LoginRequest, SignupRequest, TokenResponse
@@ -31,29 +30,17 @@ async def signup(
 ):
     existing_user = await AuthService.get_user_by_email(signup_data.email, db)
     if existing_user:
-        raise BusinessLogicError(
-            message="Email already registered",
-            details={
-                "email": signup_data.email,
-                "attempted_name": signup_data.name,
-                "existing_user_id": str(existing_user.user_id),
-                "existing_user_role": existing_user.role,
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered"
         )
     existing_org = await OrganizationAuthService.get_organization_by_email(
         signup_data.email, db
     )
     if existing_org:
-        raise BusinessLogicError(
-            message="Organization already registered",
-            details={
-                "email": signup_data.email,
-                "attempted_name": signup_data.name,
-                "existing_organization_id": str(existing_org.organization_id),
-                "existing_organization_name": existing_org.name,
-            },
-            request_id=getattr(request.state, "request_id", None),
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Organization already registered"
         )
     create_user_data = CreateUserRequest(
         email=signup_data.email,
@@ -85,24 +72,14 @@ async def login(
 ):
     user = await AuthService.get_user_by_email(login_data.email, db)
     if not user or not user.password:
-        raise UnauthorizedError(
-            message="Invalid email or password",
-            details={
-                "email": login_data.email,
-                "reason": "user_not_found_or_no_password",
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
         )
     if not AuthService.verify_user_password(user, login_data.password):
-        raise UnauthorizedError(
-            message="Invalid email or password",
-            details={
-                "email": login_data.email,
-                "user_id": str(user.user_id),
-                "reason": "password_mismatch",
-            },
-            user_id=user.user_id,
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
         )
     token, max_age = AuthService.create_access_token(user.id, login_data.remember_me)
     response.set_cookie(
@@ -143,6 +120,9 @@ async def google_callback(
             samesite="lax",
         )
         return response
+    except ValueError:
+        error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
+        return RedirectResponse(url=error_url)
     except Exception:
         error_url = f"{settings.FRONTEND_URL}/login?error=auth_failed"
         return RedirectResponse(url=error_url)
@@ -163,7 +143,13 @@ async def organization_signup(
     org_data: OrganizationSignupRequest,
     response: Response,
 ):
-    new_org = await OrganizationAuthService.create_organization(org_data, db)
+    try:
+        new_org = await OrganizationAuthService.create_organization(org_data, db)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     token, max_age = OrganizationAuthService.create_organization_token(
         new_org.organization_id
     )
@@ -192,25 +178,16 @@ async def organization_login(
         login_data.email, db
     )
     if not organization:
-        raise UnauthorizedError(
-            message="Invalid email or password",
-            details={
-                "email": login_data.email,
-                "reason": "organization_not_found",
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
         )
     if not OrganizationAuthService.verify_organization_password(
         organization, login_data.password
     ):
-        raise UnauthorizedError(
-            message="Invalid email or password",
-            details={
-                "email": login_data.email,
-                "organization_id": str(organization.organization_id),
-                "reason": "password_mismatch",
-            },
-            **get_request_context(request),
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
         )
     token, max_age = OrganizationAuthService.create_organization_token(
         organization.organization_id, login_data.remember_me

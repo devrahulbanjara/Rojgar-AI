@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core import NotFoundError
 from app.models.candidate import (
     CandidateCertification,
     CandidateEducation,
@@ -34,14 +33,6 @@ class CandidateService:
         )
         result = await db.execute(stmt)
         profile = result.scalar_one_or_none()
-        if not profile:
-            raise NotFoundError(
-                message="Candidate profile not found",
-                details={
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
         return profile
 
     @staticmethod
@@ -49,6 +40,8 @@ class CandidateService:
         db: AsyncSession, user: User, data: CandidateProfileUpdate
     ):
         profile = await CandidateService.get_full_profile(db, user)
+        if not profile:
+            return None
         update_data = data.model_dump(exclude_unset=True)
         if "full_name" in update_data:
             new_name = update_data.pop("full_name")
@@ -67,14 +60,6 @@ class CandidateService:
         )
         result = await db.execute(stmt)
         profile_id = result.scalar_one_or_none()
-        if not profile_id:
-            raise NotFoundError(
-                message="Profile not found",
-                details={
-                    "user_id": str(user.user_id),
-                },
-                user_id=user.user_id,
-            )
         return profile_id
 
     @staticmethod
@@ -82,6 +67,8 @@ class CandidateService:
         db: AsyncSession, user: User, ModelClass, data_dict, id_field_name
     ):
         profile_id = await CandidateService._get_profile_id(db, user)
+        if not profile_id:
+            return None
         new_id = uuid.uuid4()
         item_data = {id_field_name: new_id, "profile_id": profile_id, **data_dict}
         new_item = ModelClass(**item_data)
@@ -102,18 +89,10 @@ class CandidateService:
         )
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
-        if not item:
-            raise NotFoundError(
-                message="Item not found",
-                details={
-                    "item_id": str(item_id),
-                    "user_id": str(user.user_id),
-                    "item_type": ModelClass.__name__,
-                },
-                user_id=user.user_id,
-            )
-        db.delete(item)
-        await db.commit()
+        if item:
+            db.delete(item)
+            await db.commit()
+        return item
 
     @staticmethod
     async def _update_item(
@@ -128,15 +107,7 @@ class CandidateService:
         result = await db.execute(stmt)
         item = result.scalar_one_or_none()
         if not item:
-            raise NotFoundError(
-                message="Item not found",
-                details={
-                    "item_id": str(item_id),
-                    "user_id": str(user.user_id),
-                    "item_type": ModelClass.__name__,
-                },
-                user_id=user.user_id,
-            )
+            return None
         update_data = data_obj.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(item, key, value)

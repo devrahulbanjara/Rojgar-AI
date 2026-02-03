@@ -3,7 +3,7 @@ import uuid
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .config import settings
 from .current_datetime import get_datetime
 from .database import get_db
-from .exceptions import ForbiddenError, NotFoundError, UnauthorizedError
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -46,43 +45,24 @@ def verify_token(token: str) -> tuple[uuid.UUID, str]:
         entity_id = payload.get("sub")
         entity_type = payload.get("entity_type", "user")
         if entity_id is None:
-            raise UnauthorizedError(
-                message="Invalid token",
-                details={
-                    "reason": "missing_entity_id",
-                    "entity_type": entity_type,
-                },
-            )
+            raise ValueError("Invalid token")
         return (uuid.UUID(entity_id), entity_type)
-    except JWTError as e:
-        raise UnauthorizedError(
-            message="Invalid or expired token",
-            details={
-                "reason": "jwt_decode_error",
-                "error_type": type(e).__name__,
-            },
-        )
+    except JWTError:
+        raise ValueError("Invalid or expired token")
 
 
 def get_current_user_id(request: Request) -> uuid.UUID:
     token = request.cookies.get("auth_token")
     if not token:
-        raise UnauthorizedError(
-            message="Not logged in",
-            details={
-                "reason": "no_auth_token",
-            },
-            request_id=getattr(request.state, "request_id", None),
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not logged in"
         )
     entity_id, entity_type = verify_token(token)
     if entity_type != "user":
-        raise ForbiddenError(
-            message="User authentication required",
-            details={
-                "entity_type": entity_type,
-                "entity_id": str(entity_id),
-            },
-            request_id=getattr(request.state, "request_id", None),
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User authentication required"
         )
     return entity_id
 
@@ -90,22 +70,15 @@ def get_current_user_id(request: Request) -> uuid.UUID:
 def get_current_organization_id(request: Request) -> uuid.UUID:
     token = request.cookies.get("auth_token")
     if not token:
-        raise UnauthorizedError(
-            message="Not logged in",
-            details={
-                "reason": "no_auth_token",
-            },
-            request_id=getattr(request.state, "request_id", None),
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not logged in"
         )
     entity_id, entity_type = verify_token(token)
     if entity_type != "organization":
-        raise ForbiddenError(
-            message="Organization authentication required",
-            details={
-                "entity_type": entity_type,
-                "entity_id": str(entity_id),
-            },
-            request_id=getattr(request.state, "request_id", None),
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization authentication required"
         )
     return entity_id
 
@@ -119,11 +92,9 @@ async def get_current_active_user(
     result = await db.execute(select(User).where(User.user_id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise NotFoundError(
-            message="User not found",
-            details={
-                "user_id": str(user_id),
-            },
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )
     return user
 
@@ -137,7 +108,7 @@ def get_current_user_id_optional(request: Request) -> uuid.UUID | None:
         if entity_type != "user":
             return None
         return entity_id
-    except (UnauthorizedError, ForbiddenError):
+    except (HTTPException, ValueError):
         return None
 
 

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import get_current_active_user, get_db
@@ -20,6 +20,11 @@ async def get_active_jobs_count(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     count = await RecruiterStatsService.get_active_jobs_count(db=db, user=current_user)
+    if count is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization statistics unavailable"
+        )
     return {"count": count}
 
 
@@ -33,6 +38,11 @@ async def get_active_candidates_count(
     count = await RecruiterStatsService.get_active_candidates_count(
         db=db, user=current_user
     )
+    if count is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization statistics unavailable"
+        )
     return {"count": count}
 
 
@@ -47,4 +57,9 @@ async def get_recent_activity(
     activities = await RecruiterStatsService.get_recent_activity(
         db=db, user=current_user, limit=limit
     )
+    if activities is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization statistics unavailable"
+        )
     return {"activities": activities}
