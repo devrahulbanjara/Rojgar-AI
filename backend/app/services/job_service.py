@@ -6,7 +6,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core import NotFoundError, get_datetime
+from app.core import get_datetime
 from app.core.authorization import verify_user_can_edit_job
 from app.models import CandidateProfile, JobDescription, JobPosting, User
 from app.services.candidate.vector_job_service import JobVectorService
@@ -297,26 +297,16 @@ class JobService:
         user_result = await db.execute(user_stmt)
         user = user_result.scalar_one_or_none()
         if not user:
-            raise NotFoundError(
-                message="User not found",
-                details={
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
+            return None
         job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
         job_result = await db.execute(job_stmt)
         job_posting = job_result.scalar_one_or_none()
         if not job_posting:
-            raise NotFoundError(
-                message="Job not found",
-                details={
-                    "job_id": str(job_id),
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
-        verify_user_can_edit_job(user, job_posting)
+            return None
+        try:
+            verify_user_can_edit_job(user, job_posting)
+        except ValueError:
+            return None
         job_posting.status = "expired"
         job_posting.updated_at = get_datetime()
         await db.commit()
@@ -329,28 +319,19 @@ class JobService:
         user_result = await db.execute(user_stmt)
         user = user_result.scalar_one_or_none()
         if not user:
-            raise NotFoundError(
-                message="User not found",
-                details={
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
+            return None
         job_stmt = select(JobPosting).where(JobPosting.job_id == job_id)
         job_result = await db.execute(job_stmt)
         job_posting = job_result.scalar_one_or_none()
         if not job_posting:
-            raise NotFoundError(
-                message="Job not found",
-                details={
-                    "job_id": str(job_id),
-                    "user_id": str(user_id),
-                },
-                user_id=user_id,
-            )
-        verify_user_can_edit_job(user, job_posting)
+            return None
+        try:
+            verify_user_can_edit_job(user, job_posting)
+        except ValueError:
+            return None
         db.delete(job_posting)
         await db.commit()
+        return job_posting
 
     @staticmethod
     async def update_job(db: AsyncSession, job_posting: JobPosting, job_data):

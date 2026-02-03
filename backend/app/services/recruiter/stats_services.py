@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.core import BusinessLogicError, get_datetime
+from app.core import get_datetime
 from app.models import (
     CandidateProfile,
     JobApplication,
@@ -18,21 +18,14 @@ from app.models import (
 
 class RecruiterStatsService:
     @classmethod
-    def _ensure_org_id(cls, user: User) -> uuid.UUID:
-        if not user.organization_id:
-            raise BusinessLogicError(
-                message="User does not belong to an organization",
-                details={
-                    "user_id": str(user.user_id),
-                    "user_role": user.role,
-                },
-                user_id=user.user_id,
-            )
+    def _ensure_org_id(cls, user: User) -> uuid.UUID | None:
         return user.organization_id
 
     @classmethod
-    async def get_active_jobs_count(cls, db: AsyncSession, user: User) -> int:
+    async def get_active_jobs_count(cls, db: AsyncSession, user: User) -> int | None:
         org_id = cls._ensure_org_id(user)
+        if not org_id:
+            return None
         result = await db.execute(
             select(func.count(JobPosting.job_id)).where(
                 JobPosting.organization_id == org_id, JobPosting.status == "active"
@@ -41,8 +34,12 @@ class RecruiterStatsService:
         return result.scalar_one() or 0
 
     @classmethod
-    async def get_active_candidates_count(cls, db: AsyncSession, user: User) -> int:
+    async def get_active_candidates_count(
+        cls, db: AsyncSession, user: User
+    ) -> int | None:
         org_id = cls._ensure_org_id(user)
+        if not org_id:
+            return None
         result = await db.execute(
             select(
                 func.count(func.distinct(JobApplication.candidate_profile_id))
@@ -56,8 +53,10 @@ class RecruiterStatsService:
     @classmethod
     async def get_recent_activity(
         cls, db: AsyncSession, user: User, limit: int = 20
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, Any]] | None:
         org_id = cls._ensure_org_id(user)
+        if not org_id:
+            return None
         seven_days_ago = get_datetime() - timedelta(days=7)
         activities = []
         app_stmt = (

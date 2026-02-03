@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import BusinessLogicError, get_datetime
+from app.core import get_datetime
 from app.core.config import settings
 from app.core.security import create_token, hash_password, verify_password
 from app.models import Organization
@@ -29,24 +29,10 @@ class OrganizationAuthService:
             org_data.email, db
         )
         if existing_org:
-            raise BusinessLogicError(
-                message="Email already registered",
-                details={
-                    "email": org_data.email,
-                    "existing_organization_id": str(existing_org.organization_id),
-                    "existing_organization_name": existing_org.name,
-                },
-            )
+            raise ValueError("Email already registered")
         existing_user = await AuthService.get_user_by_email(org_data.email, db)
         if existing_user:
-            raise BusinessLogicError(
-                message="Email already registered",
-                details={
-                    "email": org_data.email,
-                    "existing_user_id": str(existing_user.user_id),
-                    "existing_user_role": existing_user.role,
-                },
-            )
+            raise ValueError("Email already registered")
         now = get_datetime()
         new_org = Organization(
             organization_id=uuid.uuid4(),

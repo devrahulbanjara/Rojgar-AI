@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import get_current_active_user, get_db
@@ -23,7 +23,13 @@ async def get_my_profile(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.get_full_profile(db, current_user)
+    profile = await CandidateService.get_full_profile(db, current_user)
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found"
+        )
+    return profile
 
 
 @router.patch("/me", response_model=schemas.CandidateProfileFullResponse)
@@ -34,7 +40,13 @@ async def update_candidate_personal_information(
     data: schemas.CandidateProfileUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.update_basic_info(db, current_user, data)
+    profile = await CandidateService.update_basic_info(db, current_user, data)
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found"
+        )
+    return profile
 
 
 @router.post("/experience", response_model=schemas.WorkExperienceResponse)
@@ -45,7 +57,13 @@ async def add_experience(
     data: schemas.WorkExperienceBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.add_experience(db, current_user, data)
+    experience = await CandidateService.add_experience(db, current_user, data)
+    if not experience:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    return experience
 
 
 @router.delete("/experience/{item_id}")
@@ -56,7 +74,12 @@ async def delete_experience(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await CandidateService.delete_experience(db, current_user, item_id)
+    item = await CandidateService.delete_experience(db, current_user, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Work experience record not found"
+        )
     return {"message": "Experience deleted successfully"}
 
 
@@ -69,7 +92,15 @@ async def update_experience(
     data: schemas.WorkExperienceUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.update_experience(db, current_user, item_id, data)
+    experience = await CandidateService.update_experience(
+        db, current_user, item_id, data
+    )
+    if not experience:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Work experience record not found"
+        )
+    return experience
 
 
 @router.post("/education", response_model=schemas.EducationResponse)
@@ -80,7 +111,13 @@ async def add_education(
     data: schemas.EducationBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.add_education(db, current_user, data)
+    education = await CandidateService.add_education(db, current_user, data)
+    if not education:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    return education
 
 
 @router.delete("/education/{item_id}")
@@ -91,7 +128,12 @@ async def delete_education(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await CandidateService.delete_education(db, current_user, item_id)
+    item = await CandidateService.delete_education(db, current_user, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Education record not found"
+        )
     return {"message": "Education deleted successfully"}
 
 
@@ -104,7 +146,13 @@ async def update_education(
     data: schemas.EducationUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.update_education(db, current_user, item_id, data)
+    education = await CandidateService.update_education(db, current_user, item_id, data)
+    if not education:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Education record not found"
+        )
+    return education
 
 
 @router.post("/skills", response_model=schemas.SkillResponse)
@@ -115,7 +163,13 @@ async def add_skill(
     data: schemas.SkillBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.add_skill(db, current_user, data)
+    skill = await CandidateService.add_skill(db, current_user, data)
+    if not skill:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    return skill
 
 
 @router.delete("/skills/{item_id}")
@@ -126,7 +180,12 @@ async def delete_skill(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await CandidateService.delete_skill(db, current_user, item_id)
+    item = await CandidateService.delete_skill(db, current_user, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Skill record not found"
+        )
     return {"message": "Skill deleted successfully"}
 
 
@@ -139,7 +198,13 @@ async def update_skill(
     data: schemas.SkillUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.update_skill(db, current_user, item_id, data)
+    skill = await CandidateService.update_skill(db, current_user, item_id, data)
+    if not skill:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Skill record not found"
+        )
+    return skill
 
 
 @router.post("/certifications", response_model=schemas.CertificationResponse)
@@ -150,7 +215,13 @@ async def add_certification(
     data: schemas.CertificationBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.add_certification(db, current_user, data)
+    certification = await CandidateService.add_certification(db, current_user, data)
+    if not certification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    return certification
 
 
 @router.delete("/certifications/{item_id}")
@@ -161,7 +232,12 @@ async def delete_certification(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await CandidateService.delete_certification(db, current_user, item_id)
+    item = await CandidateService.delete_certification(db, current_user, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Certification record not found"
+        )
     return {"message": "Certification deleted successfully"}
 
 
@@ -174,7 +250,15 @@ async def update_certification(
     data: schemas.CertificationUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.update_certification(db, current_user, item_id, data)
+    certification = await CandidateService.update_certification(
+        db, current_user, item_id, data
+    )
+    if not certification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Certification record not found"
+        )
+    return certification
 
 
 @router.post("/social-links", response_model=schemas.SocialLinkResponse)
@@ -185,7 +269,13 @@ async def add_social_link(
     data: schemas.SocialLinkBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.add_social_link(db, current_user, data)
+    social_link = await CandidateService.add_social_link(db, current_user, data)
+    if not social_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    return social_link
 
 
 @router.delete("/social-links/{item_id}")
@@ -196,7 +286,12 @@ async def delete_social_link(
     item_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    await CandidateService.delete_social_link(db, current_user, item_id)
+    item = await CandidateService.delete_social_link(db, current_user, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Social link record not found"
+        )
     return {"message": "Social link deleted successfully"}
 
 
@@ -209,7 +304,15 @@ async def update_social_link(
     data: schemas.SocialLinkBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await CandidateService.update_social_link(db, current_user, item_id, data)
+    social_link = await CandidateService.update_social_link(
+        db, current_user, item_id, data
+    )
+    if not social_link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Social link record not found"
+        )
+    return social_link
 
 
 @router.post("/jobs/{job_id}/save")
@@ -220,7 +323,13 @@ async def toggle_save_job(
     job_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return await SavedJobService.toggle_save_job(db, current_user.user_id, job_id)
+    result = await SavedJobService.toggle_save_job(db, current_user.user_id, job_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found"
+        )
+    return result
 
 
 @router.get("/saved-jobs", response_model=job_schemas.JobListResponse)

@@ -1,8 +1,8 @@
 from datetime import date
 
 import pytest
+from fastapi import HTTPException
 
-from app.core.exceptions import NotFoundError
 from app.schemas.candidate import CandidateProfileUpdate
 from app.schemas.shared import (
     CertificationBase,
@@ -24,10 +24,11 @@ class TestCandidateProfileService:
         assert result.user.email == sample_candidate.email
 
     def test_get_full_profile_not_found(self, db_session):
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             CandidateService.get_full_profile(db_session, "nonexistent-id")
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
-        assert "not found" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "NOT_FOUND"
+        assert "not found" in exc_info.value.detail["message"].lower()
 
     def test_update_basic_info_success(self, db_session, sample_candidate):
         update_data = CandidateProfileUpdate(
@@ -140,11 +141,12 @@ class TestCandidateProfileService:
         assert len(profile.work_experiences) == 0
 
     def test_delete_work_experience_not_found(self, db_session, sample_candidate):
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             CandidateService.delete_experience(
                 db_session, sample_candidate.user_id, "nonexistent-exp-id"
             )
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "NOT_FOUND"
 
     def test_add_education_success(self, db_session, sample_candidate):
         edu_data = EducationBase(

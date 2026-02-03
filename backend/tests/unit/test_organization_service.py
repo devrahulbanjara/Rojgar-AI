@@ -1,6 +1,6 @@
 import pytest
+from fastapi import HTTPException
 
-from app.core.exceptions import NotFoundError
 from app.schemas.organization import OrganizationUpdateRequest
 from app.services.organization import OrganizationService
 
@@ -47,12 +47,13 @@ class TestOrganizationService:
 
     def test_update_organization_not_found(self, db_session):
         update_data = OrganizationUpdateRequest(name="Updated")
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             OrganizationService.update_organization(
                 "nonexistent-id", update_data, db_session
             )
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
-        assert "not found" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "ORGANIZATION_NOT_FOUND"
+        assert "not found" in exc_info.value.detail["message"].lower()
 
     def test_update_organization_all_fields(self, db_session, sample_organization):
         update_data = OrganizationUpdateRequest(

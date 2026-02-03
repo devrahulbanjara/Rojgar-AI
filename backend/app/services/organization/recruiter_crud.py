@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import BusinessLogicError, NotFoundError, get_datetime
+from app.core import get_datetime
 from app.core.security import hash_password
 from app.models import User, UserRole
 from app.schemas.organization import UpdateRecruiterRequest
@@ -22,26 +22,13 @@ class RecruiterCRUD:
     ) -> User:
         existing_user = await AuthService.get_user_by_email(email, db)
         if existing_user:
-            raise BusinessLogicError(
-                message="Email already registered to ConvexHire previously.",
-                details={
-                    "email": email,
-                    "existing_user_id": str(existing_user.user_id),
-                    "existing_user_role": existing_user.role,
-                    "organization_id": str(organization_id),
-                },
-            )
+            raise ValueError("Email already registered to ConvexHire previously.")
         existing_in_org = await OrganizationAuthService.get_organization_by_email(
             email, db
         )
         if existing_in_org:
-            raise BusinessLogicError(
-                message="Recruiter email already registered to ConvexHire previously.",
-                details={
-                    "email": email,
-                    "existing_organization_id": str(existing_in_org.organization_id),
-                    "organization_id": str(organization_id),
-                },
+            raise ValueError(
+                "Recruiter email already registered to ConvexHire previously."
             )
         now = get_datetime()
         new_recruiter = User(
@@ -81,12 +68,7 @@ class RecruiterCRUD:
     ) -> User:
         recruiter = await RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
         if not recruiter:
-            raise NotFoundError(
-                message="Recruiter not found",
-                details={
-                    "recruiter_id": str(recruiter_id),
-                },
-            )
+            return None
         if update_data.name is not None:
             recruiter.name = update_data.name
         if update_data.email is not None:
@@ -96,14 +78,7 @@ class RecruiterCRUD:
                 )
             ).scalar_one_or_none()
             if existing_user:
-                raise BusinessLogicError(
-                    message="Email already in use",
-                    details={
-                        "email": update_data.email,
-                        "existing_user_id": str(existing_user.user_id),
-                        "recruiter_id": str(recruiter_id),
-                    },
-                )
+                raise ValueError("Email already in use")
             recruiter.email = update_data.email
         recruiter.updated_at = get_datetime()
         db.add(recruiter)
@@ -112,14 +87,9 @@ class RecruiterCRUD:
         return recruiter
 
     @staticmethod
-    async def delete_recruiter(recruiter_id: uuid.UUID, db: AsyncSession) -> None:
+    async def delete_recruiter(recruiter_id: uuid.UUID, db: AsyncSession):
         recruiter = await RecruiterCRUD.get_recruiter_by_id(recruiter_id, db)
-        if not recruiter:
-            raise NotFoundError(
-                message="Recruiter not found",
-                details={
-                    "recruiter_id": str(recruiter_id),
-                },
-            )
-        db.delete(recruiter)
-        await db.commit()
+        if recruiter:
+            db.delete(recruiter)
+            await db.commit()
+        return recruiter

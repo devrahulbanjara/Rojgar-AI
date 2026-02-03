@@ -34,8 +34,9 @@ class JobGenerationService:
                     reference_jd = ReferenceJDFormatter.format_reference_jd(
                         reference_jd_obj, about_the_company
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error fetching reference JD: {e}")
+                raise ValueError("Could not retrieve the selected reference job description.")
         initial_state: JobState = {
             "title": title,
             "raw_requirements": raw_requirements,

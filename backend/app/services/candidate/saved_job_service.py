@@ -6,7 +6,6 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import CandidateNotFoundError
 from app.models.candidate import CandidateProfile, CandidateSavedJob
 from app.models.job import JobPosting
 
@@ -22,15 +21,7 @@ class SavedJobService:
         profile_result = await db.execute(profile_stmt)
         profile_id = profile_result.scalar_one_or_none()
         if not profile_id:
-            raise CandidateNotFoundError(
-                message="Candidate profile not found",
-                details={
-                    "user_id": str(user_id),
-                    "job_id": str(job_id),
-                    "operation": "toggle_save_job",
-                },
-                user_id=user_id,
-            )
+            return None
         check_stmt = select(CandidateSavedJob).where(
             CandidateSavedJob.candidate_profile_id == profile_id,
             CandidateSavedJob.job_id == job_id,

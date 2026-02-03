@@ -1,6 +1,6 @@
 import pytest
+from fastapi import HTTPException
 
-from app.core.exceptions import BusinessLogicError, NotFoundError
 from app.schemas.organization import UpdateRecruiterRequest
 from app.services.organization import RecruiterCRUD
 
@@ -54,7 +54,7 @@ class TestRecruiterCRUD:
     def test_create_recruiter_duplicate_email(
         self, db_session, sample_organization, sample_recruiter
     ):
-        with pytest.raises(BusinessLogicError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             RecruiterCRUD.create_recruiter(
                 organization_id=sample_organization.organization_id,
                 email=sample_recruiter.email,
@@ -62,13 +62,14 @@ class TestRecruiterCRUD:
                 password="password",
                 db=db_session,
             )
-        assert exc_info.value.error_code == "BUSINESS_LOGIC_ERROR"
-        assert "already registered" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.detail["error"] == "LOGIC_ERROR"
+        assert "already registered" in exc_info.value.detail["message"].lower()
 
     def test_create_recruiter_organization_email_conflict(
         self, db_session, sample_organization
     ):
-        with pytest.raises(BusinessLogicError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             RecruiterCRUD.create_recruiter(
                 organization_id=sample_organization.organization_id,
                 email=sample_organization.email,
@@ -76,8 +77,9 @@ class TestRecruiterCRUD:
                 password="password",
                 db=db_session,
             )
-        assert exc_info.value.error_code == "BUSINESS_LOGIC_ERROR"
-        assert "already registered" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.detail["error"] == "LOGIC_ERROR"
+        assert "already registered" in exc_info.value.detail["message"].lower()
 
     def test_update_recruiter_success(self, db_session, sample_recruiter):
         update_data = UpdateRecruiterRequest(
@@ -108,10 +110,11 @@ class TestRecruiterCRUD:
 
     def test_update_recruiter_not_found(self, db_session):
         update_data = UpdateRecruiterRequest(name="Updated")
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             RecruiterCRUD.update_recruiter("nonexistent-id", update_data, db_session)
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
-        assert "not found" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "USER_NOT_FOUND"
+        assert "not found" in exc_info.value.detail["message"].lower()
 
     def test_update_recruiter_duplicate_email(
         self, db_session, sample_organization, sample_recruiter
@@ -124,12 +127,13 @@ class TestRecruiterCRUD:
             db=db_session,
         )
         update_data = UpdateRecruiterRequest(email=other_recruiter.email)
-        with pytest.raises(BusinessLogicError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             RecruiterCRUD.update_recruiter(
                 sample_recruiter.user_id, update_data, db_session
             )
-        assert exc_info.value.error_code == "BUSINESS_LOGIC_ERROR"
-        assert "already in use" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.detail["error"] == "LOGIC_ERROR"
+        assert "already in use" in exc_info.value.detail["message"].lower()
 
     def test_delete_recruiter_success(self, db_session, sample_recruiter):
         RecruiterCRUD.delete_recruiter(sample_recruiter.user_id, db_session)
@@ -137,7 +141,8 @@ class TestRecruiterCRUD:
         assert result is None
 
     def test_delete_recruiter_not_found(self, db_session):
-        with pytest.raises(NotFoundError) as exc_info:
+        with pytest.raises(HTTPException) as exc_info:
             RecruiterCRUD.delete_recruiter("nonexistent-id", db_session)
-        assert exc_info.value.error_code == "RESOURCE_NOT_FOUND"
-        assert "not found" in exc_info.value.message.lower()
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail["error"] == "USER_NOT_FOUND"
+        assert "not found" in exc_info.value.detail["message"].lower()
