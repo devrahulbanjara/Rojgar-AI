@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import (
     UnauthorizedError,
@@ -20,13 +21,27 @@ from app.schemas.shared import ErrorCode
 class AuthService:
     @staticmethod
     async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
-        result = await db.execute(select(User).where(User.email == email))
+        result = await db.execute(
+            select(User)
+            .where(User.email == email)
+            .options(
+                selectinload(User.google_account),
+                selectinload(User.organization),
+            )
+        )
         return result.scalars().first()
 
     @staticmethod
     async def get_user_by_google_id(google_id: str, db: AsyncSession) -> User | None:
         result = await db.execute(
-            select(UserGoogle).where(UserGoogle.user_google_id == google_id)
+            select(UserGoogle)
+            .where(UserGoogle.user_google_id == google_id)
+            .options(
+                selectinload(UserGoogle.user).options(
+                    selectinload(User.google_account),
+                    selectinload(User.organization),
+                )
+            )
         )
         user_google = result.scalar_one_or_none()
         if user_google:
