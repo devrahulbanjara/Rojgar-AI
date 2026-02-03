@@ -378,7 +378,8 @@ def setup_exception_handlers(app: FastAPI) -> None:
         )
 
         logger.error(
-            f"ConvexHire Error: {exc}",
+            "ConvexHire Error: {}",
+            str(exc),
             extra={
                 **exc.to_dict(),
                 "url": str(request.url),
