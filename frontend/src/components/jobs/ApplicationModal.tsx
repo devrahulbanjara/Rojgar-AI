@@ -43,10 +43,18 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
     } catch (error: unknown) {
       console.error('Application failed:', error)
 
-      // Handle ApiError structure (message is already extracted)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const msg =
-        (error as any)?.message || (error as any)?.data?.detail || 'Failed to submit application.'
+      const getErrorMessage = (err: unknown): string => {
+        if (err instanceof Error) {
+          return err.message
+        }
+        if (typeof err === 'object' && err !== null) {
+          const errorObj = err as { message?: string; data?: { detail?: string } }
+          return errorObj?.message || errorObj?.data?.detail || 'Failed to submit application.'
+        }
+        return 'Failed to submit application.'
+      }
+
+      const msg = getErrorMessage(error)
 
       if (msg.includes('Application already exists for this job')) {
         toast.error('You have already applied for this job')
