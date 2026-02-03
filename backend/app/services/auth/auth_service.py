@@ -74,7 +74,8 @@ class AuthService:
             db.add(new_google_user)
         await db.commit()
         await db.refresh(new_user)
-        return new_user
+        
+        return await AuthService.get_user_by_email(new_user.email, db)
 
     @staticmethod
     def verify_user_password(user: User, password: str) -> bool:
