@@ -1,16 +1,17 @@
 import uuid
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
-
-from app.models import User
+from app.db.models.user import User
+from app.db.repositories.user_repo import UserRepository
 
 
 class UserService:
-    @staticmethod
-    def get_user_by_id(user_id: uuid.UUID, db: Session) -> User | None:
-        return db.execute(
-            select(User)
-            .where(User.user_id == user_id)
-            .options(selectinload(User.organization))
-        ).scalar_one_or_none()
+    def __init__(self, user_repo: UserRepository):
+        self.user_repo = user_repo
+
+    async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
+        """Get user by ID with organization"""
+        return await self.user_repo.get_with_organization(user_id)
+
+    async def update_profile(self, user_id: uuid.UUID, name: str) -> User | None:
+        """Update user profile"""
+        return await self.user_repo.update(user_id, name=name)

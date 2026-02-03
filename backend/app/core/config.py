@@ -26,7 +26,13 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str
     GMAIL_APP_PASSWORD: str
     GOOGLE_API_KEY: str
+    TAVILY_API_KEY: str
+    RATE_LIMIT_AUTH: str = "50/minute"
+    RATE_LIMIT_API: str = "100/minute"
+    RATE_LIMIT_WEBSOCKET: str = "30/minute"
+    RATE_LIMIT_SHORTLIST_TRIGGER: str = "10/minute"
+    RATE_LIMIT_SHORTLIST_SUMMARY: str = "100/minute"
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-settings = Settings()
+settings = Settings()  # type: ignore

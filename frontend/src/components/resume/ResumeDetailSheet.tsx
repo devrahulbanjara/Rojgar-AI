@@ -71,7 +71,7 @@ export default function ResumeDetailSheet({
     }
     setLoading(true)
     try {
-      const res = await fetch(`${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}`, {
+      const res = await fetch(`${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}`, {
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to fetch resume details')
@@ -104,7 +104,7 @@ export default function ResumeDetailSheet({
     if (!confirm('Are you sure you want to remove this item?')) return
     try {
       const res = await fetch(
-        `${API_CONFIG.baseUrl}/api/v1/resumes/${resume?.resume_id}/${type}/${id}`,
+        `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resume?.resume_id}/${type}/${id}`,
         {
           method: 'DELETE',
           credentials: 'include',
@@ -184,7 +184,7 @@ export default function ResumeDetailSheet({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 group">
                   <h2 className="text-2xl font-bold text-gray-900 leading-tight">
-                    {resume.resume_name}
+                    {resume.target_job_title || 'General Resume'}
                   </h2>
                   <button
                     onClick={() => setIsBasicInfoOpen(true)}
@@ -194,7 +194,6 @@ export default function ResumeDetailSheet({
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <p className="text-base text-gray-500 mt-1">{resume.target_job_title}</p>
                 {resume.custom_summary && (
                   <p className="text-[15px] text-gray-600 leading-relaxed mt-4 max-w-3xl">
                     {resume.custom_summary}

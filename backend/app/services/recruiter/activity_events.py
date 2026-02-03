@@ -5,8 +5,10 @@ from app.core.websocket_manager import manager
 
 
 class ActivityEventEmitter:
-    @staticmethod
+    """Injectable service for emitting activity events via WebSocket"""
+
     async def emit_application_created(
+        self,
         organization_id: uuid.UUID,
         candidate_name: str,
         job_title: str,
@@ -14,6 +16,7 @@ class ActivityEventEmitter:
         job_id: uuid.UUID,
         timestamp: datetime,
     ):
+        """Emit application created event"""
         await manager.broadcast_to_organization(
             {
                 "type": "activity",
@@ -35,8 +38,8 @@ class ActivityEventEmitter:
             organization_id,
         )
 
-    @staticmethod
     async def emit_status_changed(
+        self,
         organization_id: uuid.UUID,
         candidate_name: str,
         job_title: str,
@@ -46,6 +49,7 @@ class ActivityEventEmitter:
         new_status: str,
         timestamp: datetime,
     ):
+        """Emit status changed event"""
         await manager.broadcast_to_organization(
             {
                 "type": "activity",
@@ -68,14 +72,15 @@ class ActivityEventEmitter:
             organization_id,
         )
 
-    @staticmethod
     async def emit_job_created(
+        self,
         organization_id: uuid.UUID,
         recruiter_name: str,
         job_title: str,
         job_id: uuid.UUID,
         timestamp: datetime,
     ):
+        """Emit job created event"""
         await manager.broadcast_to_organization(
             {
                 "type": "activity",
@@ -92,6 +97,3 @@ class ActivityEventEmitter:
             },
             organization_id,
         )
-
-
-activity_emitter = ActivityEventEmitter()

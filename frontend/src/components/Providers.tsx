@@ -13,7 +13,6 @@ import { ReactNode, useEffect } from 'react'
 
 export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
-    // Restore cache after hydration to avoid SSR mismatch
     restoreQueryCache()
 
     apiClient.setUnauthorizedHandler(() => {

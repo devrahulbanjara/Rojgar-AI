@@ -24,7 +24,6 @@ class ApiClient {
     }
   }
 
-  // Set callback for handling unauthorized (401) responses
   setUnauthorizedHandler(handler: () => void) {
     this.onUnauthorized = handler
   }
@@ -44,21 +43,17 @@ class ApiClient {
     try {
       const response = await fetch(url, config)
 
-      // Handle 204 No Content responses (like DELETE operations)
       if (response.status === 204) {
         return null as T
       }
 
-      // Handle 401 Unauthorized - token expired or invalid
       if (response.status === 401) {
-        // Call unauthorized handler if set (will clear cache and redirect)
         if (this.onUnauthorized) {
           this.onUnauthorized()
         }
         throw new ApiError('Authentication required. Please log in again.', response.status, null)
       }
 
-      // Only try to parse JSON if there's content
       let data
       const contentType = response.headers.get('content-type')
       if (contentType && contentType.includes('application/json')) {
@@ -68,26 +63,21 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        // Handle error message extraction
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`
 
         if (data) {
           if (typeof data === 'string') {
             errorMessage = data
           } else if (typeof data === 'object') {
-            // Try to extract message from various possible formats
             if (data.message) {
               errorMessage = data.message
             } else if (data.detail) {
-              // If detail is a string, use it directly
               if (typeof data.detail === 'string') {
                 errorMessage = data.detail
               } else {
-                // If detail is an object, stringify it
                 errorMessage = JSON.stringify(data.detail)
               }
             } else {
-              // Fallback to stringifying the entire error object
               errorMessage = JSON.stringify(data)
             }
           }
@@ -96,14 +86,12 @@ class ApiClient {
         throw new ApiError(errorMessage, response.status, data)
       }
 
-      // Return data directly (standardized format)
       return data
     } catch (error) {
       if (error instanceof ApiError) {
         throw error
       }
 
-      // Network or other errors
       throw new ApiError(error instanceof Error ? error.message : 'Network error', 0, error)
     }
   }
@@ -140,7 +128,6 @@ class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' })
   }
 
-  // Utility methods
   setAuthToken(token: string) {
     this.defaultHeaders['Authorization'] = `Bearer ${token}`
   }
@@ -158,12 +145,9 @@ class ApiClient {
   }
 }
 
-// Create API client instance
 export const apiClient = new ApiClient(API_BASE_URL)
 
-// API endpoints
 export const endpoints = {
-  // Auth endpoints
   auth: {
     login: '/api/v1/auth/login',
     signup: '/api/v1/auth/signup',
@@ -173,7 +157,6 @@ export const endpoints = {
     me: '/api/v1/users/me',
   },
 
-  // User endpoints
   users: {
     list: '/api/v1/users',
     detail: (id: string) => `/api/v1/users/${id}`,
@@ -181,112 +164,110 @@ export const endpoints = {
     delete: (id: string) => `/api/v1/users/${id}`,
   },
 
-  // Dashboard endpoints
   dashboard: {
-    stats: '/api/v1/dashboard/stats',
-    recentActivity: '/api/v1/dashboard/activity',
+    // Note: Dashboard stats are fetched via useDashboardStats hook which calls multiple endpoints
+    // This endpoint definition is kept for backward compatibility but may not be used
+    stats: '/api/v1/recruiter/stats/active-jobs',
+    recentActivity: '/api/v1/recruiter/stats/recent-activity',
   },
 
-  // Job endpoints
   jobs: {
     list: '/api/v1/jobs',
     recommendations: '/api/v1/jobs/recommendations',
     search: '/api/v1/jobs/search',
     detail: (id: string) => `/api/v1/jobs/${id}`,
-    create: '/api/v1/jobs',
-    generateDraft: '/api/v1/jobs/generate-draft',
-    update: (id: string) => `/api/v1/jobs/${id}`,
-    delete: (id: string) => `/api/v1/jobs/${id}`,
+    create: '/api/v1/recruiter/jobs',
+    generateDraft: '/api/v1/recruiter/jobs/generate-draft',
+    update: (id: string) => `/api/v1/recruiter/jobs/${id}`,
+    delete: (id: string) => `/api/v1/recruiter/jobs/${id}`,
+    expire: (id: string) => `/api/v1/recruiter/jobs/${id}/expire`,
   },
 
-  // Application endpoints
   applications: {
-    list: '/api/v1/applications',
-    detail: (id: string) => `/api/v1/applications/${id}`,
-    create: '/api/v1/applications',
-    update: (id: string) => `/api/v1/applications/${id}`,
-    delete: (id: string) => `/api/v1/applications/${id}`,
-    byJob: (jobId: string) => `/api/v1/applications/job/${jobId}`,
-    byCandidate: (candidateId: string) => `/api/v1/applications/candidate/${candidateId}`,
-    trackingBoard: '/api/v1/applications/tracking-board',
-    stats: '/api/v1/applications/stats',
+    list: '/api/v1/candidate/applications',
+    detail: (id: string) => `/api/v1/candidate/applications/${id}`,
+    create: '/api/v1/candidate/applications',
+    update: (id: string) => `/api/v1/candidate/applications/${id}`, // Note: Update endpoint may not exist
+    delete: (id: string) => `/api/v1/candidate/applications/${id}`, // Note: Delete endpoint may not exist
+    byJob: (jobId: string) => `/api/v1/candidate/applications/job/${jobId}`,
+    byCandidate: (candidateId: string) => `/api/v1/candidate/applications/candidate/${candidateId}`, // Note: This endpoint may not exist
+    trackingBoard: '/api/v1/recruiter/applications/tracking-board', // Note: This endpoint may not exist, check backend
+    stats: '/api/v1/candidate/applications/stats', // Note: This endpoint may not exist, check backend
   },
 
-  // Profile endpoints (SSOT - Single Source of Truth)
-  // Candidate Profile endpoints (New Implementation)
   candidate: {
     me: '/api/v1/candidate/me',
     experience: {
-      base: '/api/v1/candidate/experience',
-      delete: (id: string) => `/api/v1/candidate/experience/${id}`,
-      update: (id: string) => `/api/v1/candidate/experience/${id}`,
+      base: '/api/v1/candidate/me/experience',
+      delete: (id: string) => `/api/v1/candidate/me/experience/${id}`,
+      update: (id: string) => `/api/v1/candidate/me/experience/${id}`,
     },
     education: {
-      base: '/api/v1/candidate/education',
-      delete: (id: string) => `/api/v1/candidate/education/${id}`,
-      update: (id: string) => `/api/v1/candidate/education/${id}`,
+      base: '/api/v1/candidate/me/education',
+      delete: (id: string) => `/api/v1/candidate/me/education/${id}`,
+      update: (id: string) => `/api/v1/candidate/me/education/${id}`,
     },
     skills: {
-      base: '/api/v1/candidate/skills',
-      delete: (id: string) => `/api/v1/candidate/skills/${id}`,
-      update: (id: string) => `/api/v1/candidate/skills/${id}`,
+      base: '/api/v1/candidate/me/skills',
+      delete: (id: string) => `/api/v1/candidate/me/skills/${id}`,
+      update: (id: string) => `/api/v1/candidate/me/skills/${id}`,
     },
     certifications: {
-      base: '/api/v1/candidate/certifications',
-      delete: (id: string) => `/api/v1/candidate/certifications/${id}`,
-      update: (id: string) => `/api/v1/candidate/certifications/${id}`,
+      base: '/api/v1/candidate/me/certifications',
+      delete: (id: string) => `/api/v1/candidate/me/certifications/${id}`,
+      update: (id: string) => `/api/v1/candidate/me/certifications/${id}`,
     },
     socialLinks: {
-      base: '/api/v1/candidate/social-links',
-      delete: (id: string) => `/api/v1/candidate/social-links/${id}`,
-      update: (id: string) => `/api/v1/candidate/social-links/${id}`,
+      base: '/api/v1/candidate/me/social-links',
+      delete: (id: string) => `/api/v1/candidate/me/social-links/${id}`,
+      update: (id: string) => `/api/v1/candidate/me/social-links/${id}`,
     },
   },
 
   // Resume endpoints (Tailored views)
   resumes: {
-    list: '/api/v1/resumes',
-    detail: (id: string) => `/api/v1/resumes/${id}`,
-    create: '/api/v1/resumes',
-    update: (id: string) => `/api/v1/resumes/${id}`,
-    delete: (id: string) => `/api/v1/resumes/${id}`,
-    autofillData: '/api/v1/resumes/autofill-data',
+    list: '/api/v1/candidate/resumes',
+    detail: (id: string) => `/api/v1/candidate/resumes/${id}`,
+    create: '/api/v1/candidate/resumes',
+    update: (id: string) => `/api/v1/candidate/resumes/${id}`,
+    delete: (id: string) => `/api/v1/candidate/resumes/${id}`,
+    autofillData: '/api/v1/candidate/resumes/autofill-data',
     experiences: {
-      add: (resumeId: string) => `/api/v1/resumes/${resumeId}/experiences`,
-      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/experiences/create`,
+      add: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/experiences`,
+      create: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/experiences/create`,
       update: (resumeId: string, expId: string) =>
-        `/api/v1/resumes/${resumeId}/experiences/${expId}`,
+        `/api/v1/candidate/resumes/${resumeId}/experiences/${expId}`,
       remove: (resumeId: string, expId: string) =>
-        `/api/v1/resumes/${resumeId}/experiences/${expId}`,
+        `/api/v1/candidate/resumes/${resumeId}/experiences/${expId}`,
     },
     education: {
-      add: (resumeId: string) => `/api/v1/resumes/${resumeId}/education`,
-      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/education/create`,
-      update: (resumeId: string, eduId: string) => `/api/v1/resumes/${resumeId}/education/${eduId}`,
-      remove: (resumeId: string, eduId: string) => `/api/v1/resumes/${resumeId}/education/${eduId}`,
+      add: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/education`,
+      create: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/education/create`,
+      update: (resumeId: string, eduId: string) =>
+        `/api/v1/candidate/resumes/${resumeId}/education/${eduId}`,
+      remove: (resumeId: string, eduId: string) =>
+        `/api/v1/candidate/resumes/${resumeId}/education/${eduId}`,
     },
     certifications: {
-      add: (resumeId: string) => `/api/v1/resumes/${resumeId}/certifications`,
-      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/certifications/create`,
+      add: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/certifications`,
+      create: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/certifications/create`,
       update: (resumeId: string, certId: string) =>
-        `/api/v1/resumes/${resumeId}/certifications/${certId}`,
+        `/api/v1/candidate/resumes/${resumeId}/certifications/${certId}`,
       remove: (resumeId: string, certId: string) =>
-        `/api/v1/resumes/${resumeId}/certifications/${certId}`,
+        `/api/v1/candidate/resumes/${resumeId}/certifications/${certId}`,
     },
     skills: {
-      add: (resumeId: string) => `/api/v1/resumes/${resumeId}/skills`,
-      create: (resumeId: string) => `/api/v1/resumes/${resumeId}/skills/create`,
+      add: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/skills`,
+      create: (resumeId: string) => `/api/v1/candidate/resumes/${resumeId}/skills/create`,
       update: (resumeId: string, skillId: string) =>
-        `/api/v1/resumes/${resumeId}/skills/${skillId}`,
+        `/api/v1/candidate/resumes/${resumeId}/skills/${skillId}`,
       remove: (resumeId: string, skillId: string) =>
-        `/api/v1/resumes/${resumeId}/skills/${skillId}`,
+        `/api/v1/candidate/resumes/${resumeId}/skills/${skillId}`,
     },
   },
 } as const
 
-// Type-safe API methods
 export const api = {
-  // Auth methods
   auth: {
     login: (credentials: unknown) => apiClient.post(endpoints.auth.login, credentials),
     signup: (data: unknown) => apiClient.post(endpoints.auth.signup, data),
@@ -295,7 +276,6 @@ export const api = {
     getCurrentUser: () => apiClient.get(endpoints.auth.me),
   },
 
-  // User methods
   users: {
     list: (params?: Record<string, unknown>) =>
       apiClient.get(
@@ -306,13 +286,11 @@ export const api = {
     delete: (id: string) => apiClient.delete(endpoints.users.delete(id)),
   },
 
-  // Dashboard methods
   dashboard: {
     getStats: () => apiClient.get(endpoints.dashboard.stats),
     getRecentActivity: () => apiClient.get(endpoints.dashboard.recentActivity),
   },
 
-  // Job methods
   jobs: {
     list: (params?: Record<string, unknown>) =>
       apiClient.get(
@@ -333,7 +311,6 @@ export const api = {
     delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
   },
 
-  // Application methods
   applications: {
     list: (params?: Record<string, unknown>) =>
       apiClient.get(
@@ -350,8 +327,6 @@ export const api = {
     getStats: () => apiClient.get(endpoints.applications.stats),
   },
 
-  // Profile methods (SSOT - Single Source of Truth)
-  // Candidate methods
   candidate: {
     getProfile: () => apiClient.get(endpoints.candidate.me),
     updateProfile: (data: unknown) => apiClient.patch(endpoints.candidate.me, data),
@@ -388,7 +363,6 @@ export const api = {
     },
   },
 
-  // Resume methods (Tailored views)
   resumes: {
     list: () => apiClient.get(endpoints.resumes.list),
     get: (id: string) => apiClient.get(endpoints.resumes.detail(id)),
@@ -439,7 +413,6 @@ export const api = {
   },
 }
 
-// Error handling utilities
 export const handleApiError = (error: unknown): string => {
   if (error instanceof ApiError) {
     return error.message
@@ -461,11 +434,6 @@ export const handleApiError = (error: unknown): string => {
   return 'An unexpected error occurred'
 }
 
-// Request/response interceptors
-export const setupApiInterceptors = () => {
-  // You can add global request/response interceptors here
-  // For example, automatic token refresh, request logging, etc.
-}
+export const setupApiInterceptors = () => {}
 
-// Initialize interceptors
 setupApiInterceptors()

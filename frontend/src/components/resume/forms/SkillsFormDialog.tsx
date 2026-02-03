@@ -47,8 +47,8 @@ export default function SkillsFormDialog({
     try {
       const isEdit = !!initialData
       const url = isEdit
-        ? `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/skills/${initialData.resume_skill_id}`
-        : `${API_CONFIG.baseUrl}/api/v1/resumes/${resumeId}/skills`
+        ? `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/skills/${initialData.resume_skill_id}`
+        : `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resumeId}/skills`
 
       const method = isEdit ? 'PATCH' : 'POST'
 

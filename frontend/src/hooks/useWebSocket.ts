@@ -75,10 +75,18 @@ export function useWebSocket() {
           }
 
           if (data.type === 'activity' && data.data) {
+            // Invalidate and immediately refetch activity queries
             queryClient.invalidateQueries({
               queryKey: queryKeys.dashboard.activity,
             })
+            queryClient.refetchQueries({
+              queryKey: queryKeys.dashboard.activity,
+            })
+            // Also invalidate stats
             queryClient.invalidateQueries({
+              queryKey: queryKeys.dashboard.stats,
+            })
+            queryClient.refetchQueries({
               queryKey: queryKeys.dashboard.stats,
             })
           }
