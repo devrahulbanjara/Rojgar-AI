@@ -15,7 +15,6 @@ import {
   MoreVertical,
   Edit,
   Copy,
-  Download,
   ChevronDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -231,7 +230,7 @@ export default function ResumeListPage() {
   }
 
   const filteredAndSortedResumes = useMemo(() => {
-    let filtered = resumes.filter(resume =>
+    const filtered = resumes.filter(resume =>
       resume.target_job_title?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
@@ -296,7 +295,7 @@ export default function ResumeListPage() {
           url: l.url,
         })),
       }
-      const newResume = await resumeService.createResumeFork(duplicateData)
+      await resumeService.createResumeFork(duplicateData)
       toast.success('Resume duplicated successfully')
       loadResumes()
     } catch (error) {

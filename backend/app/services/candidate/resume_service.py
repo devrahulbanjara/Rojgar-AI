@@ -88,7 +88,9 @@ class ResumeService:
 
         # Copy educations
         source_educations = (
-            data.educations if data.educations is not None else (profile.educations or [])
+            data.educations
+            if data.educations is not None
+            else (profile.educations or [])
         )
         for edu in source_educations:
             education = ResumeEducation(
@@ -104,7 +106,9 @@ class ResumeService:
             await self.resume_education_repo.create(education)
 
         # Copy skills
-        source_skills = data.skills if data.skills is not None else (profile.skills or [])
+        source_skills = (
+            data.skills if data.skills is not None else (profile.skills or [])
+        )
         for skill in source_skills:
             resume_skill = ResumeSkills(
                 resume_skill_id=uuid.uuid4(),
@@ -134,7 +138,9 @@ class ResumeService:
 
         # Copy social links
         source_links = (
-            data.social_links if data.social_links is not None else (profile.social_links or [])
+            data.social_links
+            if data.social_links is not None
+            else (profile.social_links or [])
         )
         for link in source_links:
             social_link = ResumeSocialLink(

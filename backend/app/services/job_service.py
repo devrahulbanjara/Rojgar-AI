@@ -55,6 +55,7 @@ class JobService:
                     order_by_date = False
             except Exception as e:
                 from app.core.logging_config import logger
+
                 logger.warning(f"Vector search failed for recommendations: {e}")
                 job_ids = None
                 order_by_date = True
