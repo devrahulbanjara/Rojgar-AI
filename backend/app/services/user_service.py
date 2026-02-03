@@ -1,16 +1,18 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import User
 
 
 class UserService:
     @staticmethod
-    def get_user_by_id(user_id: uuid.UUID, db: Session) -> User | None:
-        return db.execute(
+    async def get_user_by_id(user_id: uuid.UUID, db: AsyncSession) -> User | None:
+        result = await db.execute(
             select(User)
             .where(User.user_id == user_id)
             .options(selectinload(User.organization))
-        ).scalar_one_or_none()
+        )
+        return result.scalar_one_or_none()

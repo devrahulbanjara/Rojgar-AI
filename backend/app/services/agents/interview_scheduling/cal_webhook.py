@@ -30,6 +30,14 @@ async def cal_webhook_handler(request: Request):
         raise BusinessLogicError(
             message="Webhook processing failed",
             error_code=ErrorCode.WEBHOOK_PROCESSING_FAILED,
+            details={
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "trigger_event": payload.get("triggerEvent")
+                if "payload" in locals()
+                else None,
+            },
+            request_id=getattr(request.state, "request_id", None),
         )
 
 

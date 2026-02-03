@@ -2,9 +2,10 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import get_current_active_user, get_db
+from app.core.config import settings
 from app.core.limiter import limiter
 from app.models.user import User
 from app.schemas import ApplicationCreate, ApplicationResponse
@@ -19,37 +20,39 @@ router = APIRouter()
     response_model=list[ApplicationResponse],
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("50/minute")
-def get_my_applications(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def get_my_applications(
     request: Request,
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ApplicationService.get_candidate_applications(db, current_user.user_id)
+    return await ApplicationService.get_candidate_applications(db, current_user.user_id)
 
 
 @router.get("/applications/{application_id}", response_model=ApplicationResponse)
-@limiter.limit("50/minute")
-def get_application_detail(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def get_application_detail(
     request: Request,
     application_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ApplicationService.get_application_by_id(
+    return await ApplicationService.get_application_by_id(
         db, current_user.user_id, application_id
     )
 
 
 @router.get("/applications/job/{job_id}", response_model=ApplicationResponse | None)
-@limiter.limit("50/minute")
-def get_application_by_job(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def get_application_by_job(
     request: Request,
     job_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    return ApplicationService.get_application_by_job(db, current_user.user_id, job_id)
+    return await ApplicationService.get_application_by_job(
+        db, current_user.user_id, job_id
+    )
 
 
 @router.post(
@@ -57,15 +60,15 @@ def get_application_by_job(
     response_model=ApplicationResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("50/minute")
-def create_application(
+@limiter.limit(settings.RATE_LIMIT_API)
+async def create_application(
     request: Request,
     background_tasks: BackgroundTasks,
-    db: Annotated[Session, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     data: ApplicationCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    application, event_data = ApplicationService.apply_to_job(
+    application, event_data = await ApplicationService.apply_to_job(
         db, current_user.user_id, data.job_id, data.resume_id
     )
     background_tasks.add_task(

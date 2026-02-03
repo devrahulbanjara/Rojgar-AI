@@ -66,6 +66,7 @@ class JobPosting(Base):
     salary_currency: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="active", nullable=False)
     is_indexed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    auto_shortlist: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     posted_date: Mapped[date] = mapped_column(Date, nullable=False)
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

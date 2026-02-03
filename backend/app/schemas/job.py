@@ -87,6 +87,7 @@ class JobResponse(
     JobContentBase,
     TimestampMixin,
 ):
+    auto_shortlist: Annotated[bool, "Auto-trigger AI shortlisting on job expiry"]
     organization: Annotated[
         OrganizationResponseInJob | None, "Organization details"
     ] = None
@@ -109,6 +110,9 @@ class JobCreateUpdateBase(JobDescription):
     salary_max: Annotated[int | None, "Maximum salary"] = None
     salary_currency: Annotated[str | None, "Salary currency"] = "NPR"
     application_deadline: Annotated[date | None, "Application deadline"] = None
+    auto_shortlist: Annotated[bool, "Auto-trigger AI shortlisting on job expiry"] = (
+        False
+    )
     status: Annotated[str | None, "Job status"] = "active"
 
 

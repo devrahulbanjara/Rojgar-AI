@@ -5,7 +5,8 @@ from langchain_qdrant import QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core import settings
 from app.core.logging_config import logger
@@ -60,7 +61,7 @@ class JobVectorService:
             return "Unknown Organization"
         return job.organization.name
 
-    def index_job(self, db: Session, job: JobPosting) -> bool:
+    async def index_job(self, db: AsyncSession, job: JobPosting) -> bool:
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized")
             return False
@@ -88,16 +89,16 @@ class JobVectorService:
                 "posted_date": job.posted_date.isoformat() if job.posted_date else None,
             }
             doc = Document(page_content=text_content, metadata=metadata)
-            self.qdrant.add_documents([doc], ids=[str(job.job_id)])
+            await self.qdrant.aadd_documents([doc], ids=[str(job.job_id)])
             job.is_indexed = True
-            db.commit()
+            await db.commit()
             logger.info(f"Successfully indexed job {job.job_id}")
             return True
         except Exception as e:
             logger.error(f"Failed to index job {job.job_id}: {e}")
             return False
 
-    def index_all_pending_jobs(self, db: Session):
+    async def index_all_pending_jobs(self, db: AsyncSession):
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized, skipping job indexing")
             return
@@ -109,7 +110,8 @@ class JobVectorService:
             )
             .where(JobPosting.is_indexed == False, JobPosting.status == "active")
         )
-        pending_jobs = db.execute(stmt).scalars().all()
+        result = await db.execute(stmt)
+        pending_jobs = result.scalars().all()
         if not pending_jobs:
             logger.debug(
                 "No pending active jobs to index (is_indexed=False, status=active)"
@@ -121,7 +123,7 @@ class JobVectorService:
         successful = 0
         failed = 0
         for job in pending_jobs:
-            if self.index_job(db, job):
+            if await self.index_job(db, job):
                 successful += 1
             else:
                 failed += 1
@@ -129,14 +131,14 @@ class JobVectorService:
             f"Completed indexing: {successful} successful, {failed} failed out of {len(pending_jobs)} total jobs"
         )
 
-    def search_jobs(self, query: str, limit: int) -> list[uuid.UUID]:
-        results = self.qdrant.similarity_search(query, k=limit)
+    async def search_jobs(self, query: str, limit: int) -> list[uuid.UUID]:
+        results = await self.qdrant.asimilarity_search(query, k=limit)
         return [uuid.UUID(res.metadata["job_id"]) for res in results]
 
-    def recommend_jobs_by_skills(
+    async def recommend_jobs_by_skills(
         self, skills: list[str], limit: int
     ) -> list[uuid.UUID]:
         if not skills:
             return []
         query_text = f"Job suitable for someone with skills: {', '.join(skills)}"
-        return self.search_jobs(query_text, limit)
+        return await self.search_jobs(query_text, limit)
