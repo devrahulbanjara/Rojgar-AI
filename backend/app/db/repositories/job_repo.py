@@ -69,6 +69,7 @@ class JobRepository(BaseRepository[JobPosting]):
 
         if job_ids and not order_by_date:
             from sqlalchemy import case
+
             order_mapping = {job_id: idx for idx, job_id in enumerate(job_ids)}
             order_case = case(order_mapping, value=JobPosting.job_id)
             base_stmt = base_stmt.order_by(order_case)
@@ -86,7 +87,7 @@ class JobRepository(BaseRepository[JobPosting]):
 
         if job_ids and not order_by_date:
             job_order = {job_id: idx for idx, job_id in enumerate(job_ids)}
-            jobs = sorted(jobs, key=lambda job: job_order.get(job.job_id, float('inf')))
+            jobs = sorted(jobs, key=lambda job: job_order.get(job.job_id, float("inf")))
 
         total_pages = math.ceil(total / limit) if limit > 0 else 0
 

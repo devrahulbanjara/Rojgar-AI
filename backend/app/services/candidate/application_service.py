@@ -133,6 +133,7 @@ class ApplicationService:
             except Exception as e:
                 # Log error but don't fail the application creation
                 import logging
+
                 logging.error(f"Failed to emit activity event: {e}")
 
         return application
