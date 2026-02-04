@@ -312,7 +312,7 @@ export default function Jobs() {
               </div>
 
               {/* Enhanced Search & Filter Section */}
-              <div className="space-y-6 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <div className="space-y-6 bg-white rounded-2xl p-6 border border-slate-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <JobSearchBar
                   value={searchQuery}
                   onChange={handleSearchChange}

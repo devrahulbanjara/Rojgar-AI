@@ -15,6 +15,7 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  ListChecks,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -36,7 +37,8 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
   const recruiterItems = [
     { title: 'Dashboard', path: '/dashboard/recruiter', icon: LayoutDashboard },
     { title: 'Jobs', path: '/recruiter/jobs', icon: BriefcaseIcon },
-    { title: 'Shortlist', path: '/recruiter/shortlist', icon: Users },
+    { title: 'Candidates', path: '/recruiter/candidates', icon: Users },
+    { title: 'Shortlist', path: '/recruiter/shortlist', icon: ListChecks },
     { title: 'Interviews', path: '/recruiter/interviews', icon: Calendar },
     {
       title: 'Final Selection',

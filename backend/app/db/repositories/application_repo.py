@@ -3,7 +3,7 @@ from collections.abc import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.db.models.application import JobApplication, JobApplicationStatusHistory
 from app.db.models.candidate import CandidateProfile
@@ -108,7 +108,8 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
                 ),
                 selectinload(JobApplication.job).selectinload(JobPosting.created_by),
                 selectinload(JobApplication.resume),
-                selectinload(JobApplication.candidate_profile).selectinload(
+                # Use joinedload for candidate_profile to ensure all columns are fetched in a single JOIN
+                joinedload(JobApplication.candidate_profile).selectinload(
                     CandidateProfile.user
                 ),
                 selectinload(JobApplication.history),

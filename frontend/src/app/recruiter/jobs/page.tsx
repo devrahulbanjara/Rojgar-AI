@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { Plus, FolderOpen } from 'lucide-react'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
@@ -219,6 +220,7 @@ const transformJob = (job: BackendJobResponse): Job => {
 
 export default function RecruiterJobsPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
+  const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabType>('active')
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -262,6 +264,37 @@ export default function RecruiterJobsPage() {
     { organizationId: organizationId || undefined, page: 1, limit: 100 },
     isAuthenticated && !isAuthLoading
   )
+
+  useEffect(() => {
+    if (isAuthenticated && !isAuthLoading && pathname === '/recruiter/jobs') {
+      refetchJobs()
+      refetchReferenceJDs()
+    }
+  }, [isAuthenticated, isAuthLoading, pathname, refetchJobs, refetchReferenceJDs])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && pathname === '/recruiter/jobs') {
+        refetchJobs()
+        refetchReferenceJDs()
+      }
+    }
+
+    const handleFocus = () => {
+      if (pathname === '/recruiter/jobs') {
+        refetchJobs()
+        refetchReferenceJDs()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [pathname, refetchJobs, refetchReferenceJDs])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
