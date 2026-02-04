@@ -68,7 +68,7 @@ def start_scheduler():
         replace_existing=True,
     )
     scheduler.start()
-    logger.info("Background Scheduler Started (Nepal Time).")
+    logger.info("Background Scheduler Started")
 
 
 def shutdown_scheduler():
