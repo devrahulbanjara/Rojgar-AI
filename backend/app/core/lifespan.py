@@ -51,7 +51,7 @@ async def _run_startup_tasks():
         raise
 
     try:
-        logger.trace("Indexing pending active jobs...")
+        logger.info("Indexing pending active jobs...")
         async with AsyncSessionLocal() as db:
             vector_service = JobVectorService()
             await vector_service.index_all_pending_jobs(db)

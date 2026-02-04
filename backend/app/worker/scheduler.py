@@ -68,7 +68,7 @@ def start_scheduler():
         replace_existing=True,
     )
     scheduler.start()
-    logger.info("Background Scheduler Started")
+    logger.info("Background Scheduler to auto expire jobs started.")
 
 
 def shutdown_scheduler():
