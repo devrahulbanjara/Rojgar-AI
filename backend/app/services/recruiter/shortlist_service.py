@@ -56,17 +56,19 @@ class ShortlistService:
                     "processed": 0,
                 }
 
-            logger.info(f"Starting AI evaluation for {len(applications)} applications")
+            logger.info(
+                f"Starting AI shortlisting for {len(applications)} applications"
+            )
 
-            # Evaluate all candidates
-            tasks = [self._evaluate_candidate(app, jd_text) for app in applications]
+            # Shortlist all candidates
+            tasks = [self._shortlist_candidate(app, jd_text) for app in applications]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             successful = sum(1 for r in results if isinstance(r, int))
             failed = len(results) - successful
 
             logger.info(
-                f"AI evaluation complete: {successful} successful, {failed} failed"
+                f"AI shortlisting completed for {successful} applications, {failed} applications failed"
             )
 
             return {
@@ -79,10 +81,10 @@ class ShortlistService:
             logger.error(f"Error in shortlisting workflow for job {job_id}: {e}")
             return {"error": str(e), "processed": 0}
 
-    async def _evaluate_candidate(
+    async def _shortlist_candidate(
         self, application: JobApplication, jd_text: str
     ) -> int | None:
-        """Evaluate a single candidate"""
+        """Shortlist a single candidate"""
         try:
             if not application.resume:
                 logger.error(f"Application {application.application_id} has no resume")
@@ -120,17 +122,17 @@ class ShortlistService:
                 updated_at=get_datetime(),
             )
 
-            logger.info(f"Candidate {application.application_id} scored {score}/100")
+            logger.info(f"Candidate {application.application_id} shortlisted with score {score}/100")
             return score
 
         except Exception as e:
             logger.error(
-                f"Failed to evaluate application {application.application_id}: {e}"
+                f"Failed to shortlist candidate {application.application_id}: {e}"
             )
             return None
 
     async def get_shortlisting_summary(self, job_id: uuid.UUID) -> dict[str, Any]:
-        """Get shortlisting summary for a job"""
+        """Get shortlisting summary for a job to show to the recruiter"""
         try:
             applications = await self.application_repo.get_by_job(job_id)
             total_applications = len(applications)
