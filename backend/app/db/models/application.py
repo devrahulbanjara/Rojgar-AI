@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,7 +13,7 @@ from .organization import Organization
 from .resume import Resume
 
 
-class ApplicationStatus(str, Enum):
+class ApplicationStatus(StrEnum):
     APPLIED = "applied"
     INTERVIEWING = "interviewing"
     OUTCOME = "outcome"
