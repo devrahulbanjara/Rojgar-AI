@@ -15,7 +15,7 @@ export function UserAvatar({ name, src, className }: UserAvatarProps) {
 
   return (
     <Avatar className={cn('border border-slate-200', className)}>
-      <AvatarImage src={src || ''} alt={displayName} />
+      <AvatarImage src={src || undefined} alt={displayName} />
       <AvatarFallback className={cn('font-bold text-sm', colorClass)}>{initials}</AvatarFallback>
     </Avatar>
   )

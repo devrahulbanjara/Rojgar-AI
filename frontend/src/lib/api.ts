@@ -195,6 +195,11 @@ export const endpoints = {
     stats: '/api/v1/candidate/applications/stats', // Note: This endpoint may not exist, check backend
   },
 
+  candidates: {
+    list: '/api/v1/recruiter/candidates',
+    search: '/api/v1/recruiter/candidates/search', // Note: This might be handled via query params
+  },
+
   candidate: {
     me: '/api/v1/candidate/me',
     experience: {
@@ -325,6 +330,17 @@ export const api = {
       apiClient.get(endpoints.applications.byCandidate(candidateId)),
     getTrackingBoard: () => apiClient.get(endpoints.applications.trackingBoard),
     getStats: () => apiClient.get(endpoints.applications.stats),
+  },
+
+  candidates: {
+    list: (params?: Record<string, unknown>) =>
+      apiClient.get(
+        `${endpoints.candidates.list}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`
+      ),
+    search: (params?: Record<string, unknown>) =>
+      apiClient.get(
+        `${endpoints.candidates.search}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`
+      ),
   },
 
   candidate: {
