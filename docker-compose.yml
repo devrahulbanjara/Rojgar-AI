@@ -5,3 +5,15 @@ services:
       - "6333:6333"
     volumes:
       - ./qdrant_data:/qdrant/data
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: rahul
+      POSTGRES_PASSWORD: rahul123
+      POSTGRES_DB: convexhire
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql
