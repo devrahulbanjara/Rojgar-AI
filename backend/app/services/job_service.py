@@ -133,7 +133,9 @@ class JobService:
         if job_status == "active":
             job_with_relations = await self.job_repo.get_with_details(job_id)
             if job_with_relations:
-                await self.vector_service.index_job(job_with_relations, self.job_repo.db)
+                await self.vector_service.index_job(
+                    job_with_relations, self.job_repo.db
+                )
 
         # Get final job with relations and user info
         job_posting_with_relations = await self.job_repo.get_with_details(job_id)
@@ -231,7 +233,9 @@ class JobService:
                 job_posting.job_id
             )
             if job_with_relations:
-                await self.vector_service.index_job(job_with_relations, self.job_repo.db)
+                await self.vector_service.index_job(
+                    job_with_relations, self.job_repo.db
+                )
 
         return await self.job_repo.get_with_details(updated_job.job_id)
 

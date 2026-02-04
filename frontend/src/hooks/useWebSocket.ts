@@ -104,6 +104,7 @@ export function useWebSocket() {
         if (event.code === 1008) {
           console.error('WebSocket authentication failed')
           setError(new Error('WebSocket authentication failed'))
+          return
         } else if (event.code === 1006 && reconnectAttemptsRef.current <= 1) {
           console.warn('WebSocket connection failed - retrying...')
         }
