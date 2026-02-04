@@ -3,8 +3,8 @@ import time
 from contextlib import asynccontextmanager
 
 import anyio
-from alembic.config import Config
 from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from sqlalchemy.exc import OperationalError
 
@@ -17,10 +17,10 @@ from app.worker.scheduler import shutdown_scheduler, start_scheduler
 def run_alembic_upgrade():
     logger.info("Applying database migrations...")
     alembic_cfg = Config("alembic.ini")
-    
+
     max_retries = 5
     retry_delay = 2
-    
+
     for attempt in range(max_retries):
         try:
             command.upgrade(alembic_cfg, "head")
@@ -33,7 +33,9 @@ def run_alembic_upgrade():
                 )
                 time.sleep(retry_delay)
             else:
-                logger.error(f"Failed to connect to database after {max_retries} attempts")
+                logger.error(
+                    f"Failed to connect to database after {max_retries} attempts"
+                )
                 raise
         except Exception as e:
             logger.error(f"Migration error: {e}")
@@ -47,7 +49,7 @@ async def _run_startup_tasks():
     except Exception as e:
         logger.error(f"Migration error: {e}")
         raise
-    
+
     try:
         logger.trace("Indexing pending active jobs...")
         async with AsyncSessionLocal() as db:
