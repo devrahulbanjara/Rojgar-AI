@@ -61,7 +61,7 @@ class JobVectorService:
             return "Unknown Organization"
         return job.organization.name
 
-    async def index_job(self, job: JobPosting) -> bool:
+    async def index_job(self, job: JobPosting, db: AsyncSession | None = None) -> bool:
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized")
             return False
@@ -91,7 +91,8 @@ class JobVectorService:
             doc = Document(page_content=text_content, metadata=metadata)
             await self.qdrant.aadd_documents([doc], ids=[str(job.job_id)])
             job.is_indexed = True
-            await db.commit()
+            if db:
+                await db.flush()
             logger.info(f"Successfully indexed job {job.job_id}")
             return True
         except Exception as e:
@@ -123,7 +124,7 @@ class JobVectorService:
         successful = 0
         failed = 0
         for job in pending_jobs:
-            if await self.index_job(db, job):
+            if await self.index_job(job, db):
                 successful += 1
             else:
                 failed += 1
