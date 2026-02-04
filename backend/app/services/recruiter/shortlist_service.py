@@ -122,7 +122,9 @@ class ShortlistService:
                 updated_at=get_datetime(),
             )
 
-            logger.info(f"Candidate {application.application_id} shortlisted with score {score}/100")
+            logger.info(
+                f"Candidate {application.application_id} shortlisted with score {score}/100"
+            )
             return score
 
         except Exception as e:
