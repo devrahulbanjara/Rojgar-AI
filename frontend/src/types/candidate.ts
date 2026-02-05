@@ -1,3 +1,9 @@
+export interface SocialLink {
+  social_link_id: string
+  type: string
+  url: string
+}
+
 export interface CandidateApplication {
   application_id: string
   job_id: string
@@ -13,6 +19,7 @@ export interface CandidateApplication {
   applied_at: string
   ai_score?: number
   ai_analysis?: string
+  social_links?: SocialLink[]
 }
 
 export interface CandidateListResponse {

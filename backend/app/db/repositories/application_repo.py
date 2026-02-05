@@ -8,6 +8,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from app.db.models.application import JobApplication, JobApplicationStatusHistory
 from app.db.models.candidate import CandidateProfile
 from app.db.models.job import JobPosting
+from app.db.models.resume import Resume
 from app.db.repositories.base import BaseRepository
 
 
@@ -29,7 +30,7 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
     async def get_with_details(
         self, application_id: uuid.UUID
     ) -> JobApplication | None:
-        """Get application with job, organization, and resume details"""
+        """Get application with job, organization, and deep-loaded resume details"""
         query = (
             select(JobApplication)
             .options(
@@ -37,7 +38,13 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
                     JobPosting.job_description
                 ),
                 selectinload(JobApplication.organization),
-                selectinload(JobApplication.resume),
+                selectinload(JobApplication.resume).selectinload(
+                    Resume.work_experiences
+                ),
+                selectinload(JobApplication.resume).selectinload(Resume.educations),
+                selectinload(JobApplication.resume).selectinload(Resume.skills),
+                selectinload(JobApplication.resume).selectinload(Resume.certifications),
+                selectinload(JobApplication.resume).selectinload(Resume.social_links),
             )
             .where(JobApplication.application_id == application_id)
         )
@@ -108,9 +115,11 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
                 ),
                 selectinload(JobApplication.job).selectinload(JobPosting.created_by),
                 selectinload(JobApplication.resume),
-                # Use joinedload for candidate_profile to ensure all columns are fetched in a single JOIN
                 joinedload(JobApplication.candidate_profile).selectinload(
                     CandidateProfile.user
+                ),
+                joinedload(JobApplication.candidate_profile).selectinload(
+                    CandidateProfile.social_links
                 ),
                 selectinload(JobApplication.history),
             )

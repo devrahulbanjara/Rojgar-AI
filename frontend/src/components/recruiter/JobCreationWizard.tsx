@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,6 +14,7 @@ import {
   Briefcase,
   Pencil,
   X as XIcon,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useCreateJob, useGenerateJobDraft, useUpdateJob } from '../../hooks/queries/useJobs'
@@ -49,6 +50,111 @@ function SkeletonLine({ className }: { className?: string }) {
         animation: 'shimmer 1.5s ease-in-out infinite',
       }}
     />
+  )
+}
+
+interface CustomDropdownProps {
+  value: string
+  onChange: (value: string) => void
+  options: { value: string; label: string; disabled?: boolean }[]
+  placeholder: string
+  disabled?: boolean
+  className?: string
+}
+
+function CustomDropdown({ value, onChange, options, placeholder, disabled = false, className }: CustomDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Handle clicking outside the dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const selectedOption = options.find(option => option.value === value)
+
+  return (
+    <div className={cn('relative', className)} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        onKeyDown={(e) => {
+          if (disabled) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setIsOpen(!isOpen)
+          } else if (e.key === 'Escape') {
+            setIsOpen(false)
+          }
+        }}
+        className={cn(
+          'w-full h-12 pl-4 pr-10 py-3 border rounded-xl bg-white text-left focus:outline-none text-base text-slate-800 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]',
+          disabled 
+            ? 'opacity-50 cursor-not-allowed border-slate-200' 
+            : isOpen 
+              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md' 
+              : 'border-slate-200 hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+        )}
+      >
+        <div className="flex items-center gap-3 h-full">
+          {selectedOption ? (
+            <span className="font-medium text-slate-800">{selectedOption.label}</span>
+          ) : (
+            <span className="text-slate-500">{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown className={cn(
+          'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
+          disabled 
+            ? 'text-slate-300'
+            : isOpen 
+              ? 'rotate-180 text-indigo-600' 
+              : 'text-slate-400 group-hover:text-indigo-500'
+        )} />
+      </button>
+      
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-2 bg-white border border-indigo-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-indigo-100">
+          {options.map((option, index) => (
+            <button
+              key={option.value}
+              type="button"
+              disabled={option.disabled}
+              onClick={() => {
+                if (!option.disabled) {
+                  onChange(option.value)
+                  setIsOpen(false)
+                }
+              }}
+              className={cn(
+                'w-full px-4 py-3 text-left focus:outline-none transition-all duration-200 flex items-center gap-3 text-base',
+                option.disabled
+                  ? 'text-slate-400 cursor-not-allowed bg-slate-50'
+                  : 'text-slate-800 hover:text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 focus:bg-gradient-to-r focus:from-indigo-50 focus:to-blue-50 transform hover:scale-[1.01] active:scale-[0.99] group'
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <span className="font-medium">{option.label}</span>
+              {!option.disabled && (
+                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -189,7 +295,7 @@ export function JobCreationWizard({
         currency: jobToEdit.salary_currency || 'NPR',
         benefits: jobToEdit.benefits && jobToEdit.benefits.length > 0 ? jobToEdit.benefits : [''],
         applicationDeadline: jobToEdit.application_deadline || '',
-        autoShortlist: (jobToEdit as any).auto_shortlist || false,
+        autoShortlist: jobToEdit.auto_shortlist ?? false,
       })
     }
   }, [jobToEdit])
@@ -657,30 +763,27 @@ export function JobCreationWizard({
                       <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Reference Job Description <span className="text-red-400">*</span>
                       </label>
-                      <select
+                      <CustomDropdown
                         value={formData.reference_jd_id}
-                        onChange={e => updateField('reference_jd_id', e.target.value)}
-                        className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
-                      >
-                        <option value="">Select a reference JD...</option>
-                        {isLoadingReferenceJDs ? (
-                          <option disabled>Loading reference JDs...</option>
-                        ) : referenceJDsData?.reference_jds &&
-                          referenceJDsData.reference_jds.length > 0 ? (
-                          referenceJDsData.reference_jds.map(refJD => {
-                            const jobSummary = refJD.job_summary || refJD.role_overview || ''
-                            return (
-                              <option key={refJD.id} value={refJD.id}>
-                                {refJD.department
-                                  ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
-                                  : jobSummary.slice(0, 80)}
-                              </option>
-                            )
-                          })
-                        ) : (
-                          <option disabled>No reference JDs available</option>
-                        )}
-                      </select>
+                        onChange={(value) => updateField('reference_jd_id', value)}
+                        placeholder="Select a reference JD..."
+                        disabled={isLoadingReferenceJDs}
+                        options={
+                          isLoadingReferenceJDs 
+                            ? [{ value: '', label: 'Loading reference JDs...', disabled: true }]
+                            : referenceJDsData?.reference_jds && referenceJDsData.reference_jds.length > 0
+                              ? referenceJDsData.reference_jds.map(refJD => {
+                                  const jobSummary = refJD.job_summary || refJD.role_overview || ''
+                                  return {
+                                    value: refJD.id,
+                                    label: refJD.department
+                                      ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
+                                      : jobSummary.slice(0, 80)
+                                  }
+                                })
+                              : [{ value: '', label: 'No reference JDs available', disabled: true }]
+                        }
+                      />
                       <p className="text-xs text-slate-500 mt-2">
                         {referenceJDsData?.reference_jds &&
                         referenceJDsData.reference_jds.length > 0
@@ -775,36 +878,36 @@ export function JobCreationWizard({
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Department <span className="text-red-400">*</span>
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.department}
-                          onChange={e => updateField('department', e.target.value)}
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
-                        >
-                          <option value="">Select department...</option>
-                          <option value="Engineering">Engineering</option>
-                          <option value="Design">Design</option>
-                          <option value="Product">Product</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="Sales">Sales</option>
-                          <option value="Operations">Operations</option>
-                        </select>
+                          onChange={(value) => updateField('department', value)}
+                          placeholder="Select department..."
+                          options={[
+                            { value: 'Engineering', label: 'Engineering' },
+                            { value: 'Design', label: 'Design' },
+                            { value: 'Product', label: 'Product' },
+                            { value: 'Marketing', label: 'Marketing' },
+                            { value: 'Sales', label: 'Sales' },
+                            { value: 'Operations', label: 'Operations' }
+                          ]}
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Level <span className="text-red-400">*</span>
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.level}
-                          onChange={e => updateField('level', e.target.value)}
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
-                        >
-                          <option value="">Select level...</option>
-                          <option value="Junior">Junior</option>
-                          <option value="Mid">Mid-Level</option>
-                          <option value="Senior">Senior</option>
-                          <option value="Lead">Lead</option>
-                          <option value="Principal">Principal</option>
-                        </select>
+                          onChange={(value) => updateField('level', value)}
+                          placeholder="Select level..."
+                          options={[
+                            { value: 'Junior', label: 'Junior' },
+                            { value: 'Mid', label: 'Mid-Level' },
+                            { value: 'Senior', label: 'Senior' },
+                            { value: 'Lead', label: 'Lead' },
+                            { value: 'Principal', label: 'Principal' }
+                          ]}
+                        />
                       </div>
                     </div>
 
@@ -1011,48 +1114,46 @@ export function JobCreationWizard({
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Department *
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.department}
-                          onChange={e => updateField('department', e.target.value)}
+                          onChange={(value) => updateField('department', value)}
+                          placeholder="Select department..."
                           className={cn(
-                            'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 transition-colors duration-200',
-                            'select-arrow bg-white',
                             isGenerated &&
                               formData.department &&
-                              '!bg-indigo-50/50 border-indigo-200'
+                              '[&>button]:!bg-indigo-50/50 [&>button]:border-indigo-200'
                           )}
-                        >
-                          <option value="">Select department...</option>
-                          <option value="Engineering">Engineering</option>
-                          <option value="Design">Design</option>
-                          <option value="Product">Product</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="Sales">Sales</option>
-                          <option value="Operations">Operations</option>
-                        </select>
+                          options={[
+                            { value: 'Engineering', label: 'Engineering' },
+                            { value: 'Design', label: 'Design' },
+                            { value: 'Product', label: 'Product' },
+                            { value: 'Marketing', label: 'Marketing' },
+                            { value: 'Sales', label: 'Sales' },
+                            { value: 'Operations', label: 'Operations' }
+                          ]}
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Level *
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.level}
-                          onChange={e => updateField('level', e.target.value)}
+                          onChange={(value) => updateField('level', value)}
+                          placeholder="Select level..."
                           className={cn(
-                            'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 transition-colors duration-200',
-                            'select-arrow bg-white',
-                            isGenerated && formData.level && '!bg-indigo-50/50 border-indigo-200'
+                            isGenerated && 
+                              formData.level && 
+                              '[&>button]:!bg-indigo-50/50 [&>button]:border-indigo-200'
                           )}
-                        >
-                          <option value="">Select level...</option>
-                          <option value="Junior">Junior</option>
-                          <option value="Mid">Mid-Level</option>
-                          <option value="Senior">Senior</option>
-                          <option value="Lead">Lead</option>
-                          <option value="Principal">Principal</option>
-                        </select>
+                          options={[
+                            { value: 'Junior', label: 'Junior' },
+                            { value: 'Mid', label: 'Mid-Level' },
+                            { value: 'Senior', label: 'Senior' },
+                            { value: 'Lead', label: 'Lead' },
+                            { value: 'Principal', label: 'Principal' }
+                          ]}
+                        />
                       </div>
                     </div>
 
@@ -1240,48 +1341,42 @@ export function JobCreationWizard({
                       <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Location Type *
                       </label>
-                      <select
+                      <CustomDropdown
                         value={formData.locationType}
-                        onChange={e => updateField('locationType', e.target.value)}
+                        onChange={(value) => updateField('locationType', value)}
+                        placeholder="Select type..."
                         className={cn(
-                          'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                          'text-base text-slate-800 transition-colors duration-200',
-                          'appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat',
-                          'select-arrow bg-white',
                           isGenerated &&
                             formData.locationType &&
-                            '!bg-indigo-50/50 border-indigo-200'
+                            '[&>button]:!bg-indigo-50/50 [&>button]:border-indigo-200'
                         )}
-                      >
-                        <option value="">Select type...</option>
-                        <option value="Remote">Remote</option>
-                        <option value="Hybrid">Hybrid</option>
-                        <option value="On-site">On-site</option>
-                      </select>
+                        options={[
+                          { value: 'Remote', label: 'Remote' },
+                          { value: 'Hybrid', label: 'Hybrid' },
+                          { value: 'On-site', label: 'On-site' }
+                        ]}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-3">
                         Employment Type *
                       </label>
-                      <select
+                      <CustomDropdown
                         value={formData.employmentType}
-                        onChange={e => updateField('employmentType', e.target.value)}
+                        onChange={(value) => updateField('employmentType', value)}
+                        placeholder="Select type..."
                         className={cn(
-                          'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                          'text-base text-slate-800 transition-colors duration-200',
-                          'appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat',
-                          'select-arrow bg-white',
                           isGenerated &&
                             formData.employmentType &&
-                            '!bg-indigo-50/50 border-indigo-200'
+                            '[&>button]:!bg-indigo-50/50 [&>button]:border-indigo-200'
                         )}
-                      >
-                        <option value="">Select type...</option>
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="Contract">Contract</option>
-                        <option value="Internship">Internship</option>
-                      </select>
+                        options={[
+                          { value: 'Full-time', label: 'Full-time' },
+                          { value: 'Part-time', label: 'Part-time' },
+                          { value: 'Contract', label: 'Contract' },
+                          { value: 'Internship', label: 'Internship' }
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1558,15 +1653,16 @@ export function JobCreationWizard({
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Currency
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.currency}
-                          onChange={e => updateField('currency', e.target.value)}
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 select-arrow bg-white text-base text-slate-800 transition-colors duration-200"
-                        >
-                          <option value="INR">INR</option>
-                          <option value="USD">USD</option>
-                          <option value="NPR">NPR</option>
-                        </select>
+                          onChange={(value) => updateField('currency', value)}
+                          placeholder="Select currency..."
+                          options={[
+                            { value: 'INR', label: 'INR' },
+                            { value: 'USD', label: 'USD' },
+                            { value: 'NPR', label: 'NPR' }
+                          ]}
+                        />
                       </div>
                     </div>
                     <div>
@@ -1686,14 +1782,11 @@ export function JobCreationWizard({
 
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Auto Shortlist Settings</h4>
+                    <h4 className="text-xl font-bold text-slate-900">Automatic Shortlisting</h4>
                   </div>
                   <div className="px-8 py-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h5 className="text-lg font-semibold text-slate-900 mb-2">
-                          Automatic Shortlisting
-                        </h5>
                         <p className="text-sm text-slate-600 leading-relaxed">
                           When enabled, candidates will be automatically shortlisted when this job expires.
                           This helps streamline your recruitment process by identifying top candidates using AI.
@@ -1706,7 +1799,7 @@ export function JobCreationWizard({
                           onChange={e => updateField('autoShortlist', e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600" />
                       </label>
                     </div>
                   </div>

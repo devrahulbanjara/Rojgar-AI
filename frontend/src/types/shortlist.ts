@@ -1,8 +1,14 @@
+export interface SocialLink {
+  social_link_id: string
+  type: string
+  url: string
+}
+
 export interface ShortlistCandidate {
   application_id: string
+  job_id: string
   candidate_id: string
   name: string
-  email: string
   phone?: string
   picture?: string
   professional_headline?: string
@@ -11,6 +17,7 @@ export interface ShortlistCandidate {
   ai_analysis: string
   ai_recommendation: 'approve' | 'review' | 'reject'
   job_title: string
+  social_links?: SocialLink[]
 }
 
 export interface ShortlistJob {

@@ -3,7 +3,7 @@ from datetime import date
 
 from app.core import get_datetime
 from app.core.authorization import verify_user_can_edit_job
-from app.db.models.job import JobDescription, JobPosting
+from app.db.models.job import JobDescription, JobPosting, ShortlistStatus
 from app.db.repositories.candidate_repo import CandidateProfileRepository
 from app.db.repositories.job_repo import JobDescriptionRepository, JobRepository
 from app.db.repositories.user_repo import UserRepository
@@ -270,6 +270,7 @@ class JobService:
             status=job_status,
             is_indexed=False,
             auto_shortlist=job_data.auto_shortlist,
+            shortlist_status=ShortlistStatus.NOT_STARTED,
             posted_date=date.today(),
             application_deadline=application_deadline,
             created_at=get_datetime(),
