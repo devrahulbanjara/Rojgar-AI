@@ -1,5 +1,5 @@
 import React from 'react'
-import { Users, Clock } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 interface ShortlistJobCardProps {
@@ -37,18 +37,20 @@ export function ShortlistJobCard({
   return (
     <div
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-6',
+        'group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-6 relative',
         'hover:-translate-y-1 hover:border-indigo-200',
         isSelected
-          ? 'border-indigo-300 bg-indigo-50/30'
-          : 'border-slate-200',
+          ? 'border-indigo-400 bg-gradient-to-br from-indigo-50/80 to-blue-50/60 shadow-lg shadow-indigo-500/20'
+          : 'border-slate-200 hover:shadow-lg',
         className
       )}
       style={{
+        borderWidth: isSelected ? '3px' : '1px',
         boxShadow: isSelected 
-          ? '0 4px 16px rgba(99, 102, 241, 0.15)' 
+          ? '0 8px 24px rgba(99, 102, 241, 0.2), 0 4px 16px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1)' 
           : '0 2px 8px rgba(0,0,0,0.08)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
       }}
       onClick={onClick}
       role="button"
@@ -103,13 +105,6 @@ export function ShortlistJobCard({
             <Users className="w-4 h-4" />
             <span className="text-xs font-semibold">{job.applicant_count}</span>
           </div>
-
-          {job.pending_ai_reviews > 0 && (
-            <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50/80 text-amber-700 rounded-lg border border-amber-200">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs font-semibold">{job.pending_ai_reviews}</span>
-            </div>
-          )}
         </div>
       </div>
     </div>

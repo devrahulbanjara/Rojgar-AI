@@ -204,22 +204,24 @@ class JobService:
         return await self.job_repo.get_with_details(job_id)
 
     async def delete_job(self, job_id: uuid.UUID, user_id: uuid.UUID):
-        """Delete a job if user has permission"""
-        user = await self.user_repo.get(user_id)
-        if not user:
-            return None
+        """Delete a job if user has permission
 
+        Raises:
+            ValueError: If deletion fails due to database constraints or errors
+        """
         job_posting = await self.job_repo.get(job_id)
         if not job_posting:
             return None
 
-        try:
-            verify_user_can_edit_job(user, job_posting)
-        except ValueError:
-            return None
+        user = await self.user_repo.get(user_id)
+        if not user:
+            raise ValueError("User not found")
 
-        success = await self.job_repo.delete_job_cascade(job_id)
-        return job_posting if success else None
+        verify_user_can_edit_job(user, job_posting)
+
+        # If the repo raises ValueError, it bubbles up to the API
+        await self.job_repo.delete_job_cascade(job_id)
+        return job_posting
 
     async def update_job(self, job_posting: JobPosting, job_data):
         """Update job posting and description"""

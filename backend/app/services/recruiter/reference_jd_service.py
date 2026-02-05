@@ -62,11 +62,16 @@ class ReferenceJDService:
     async def delete_reference_jd(
         self, reference_jd_id: uuid.UUID, organization_id: uuid.UUID
     ):
-        """Delete a reference JD"""
+        """Delete a reference JD
+        
+        Raises:
+            ValueError: If deletion fails due to database constraints or errors
+        """
         reference_jd = await self.get_reference_jd_by_id(
             reference_jd_id, organization_id
         )
         if reference_jd:
+            # This will raise ValueError if deletion fails
             await self.reference_jd_repo.delete(reference_jd_id)
         return reference_jd
 

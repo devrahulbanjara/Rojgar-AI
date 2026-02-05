@@ -3,12 +3,18 @@ import uuid
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import case, delete, func, or_, select, update
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import get_datetime
+from app.db.models.application import (
+    JobApplication,
+    JobApplicationStatusHistory,
+)
 from app.db.models.job import JobDescription, JobPosting, ReferenceJD
+from app.db.models.user import User
 from app.db.repositories.base import BaseRepository
 
 VISIBLE_STATUSES = ["active"]
@@ -68,8 +74,6 @@ class JobRepository(BaseRepository[JobPosting]):
             base_stmt = base_stmt.where(JobPosting.location_type == location_type)
 
         if job_ids and not order_by_date:
-            from sqlalchemy import case
-
             order_mapping = {job_id: idx for idx, job_id in enumerate(job_ids)}
             order_case = case(order_mapping, value=JobPosting.job_id)
             base_stmt = base_stmt.order_by(order_case)
@@ -120,8 +124,6 @@ class JobRepository(BaseRepository[JobPosting]):
         self, user_id: uuid.UUID, skip: int = 0, limit: int = 100
     ) -> Sequence[JobPosting]:
         """Get jobs by user's organization"""
-        from app.db.models.user import User
-
         query = (
             select(JobPosting)
             .options(selectinload(JobPosting.job_description))
@@ -181,8 +183,6 @@ class JobRepository(BaseRepository[JobPosting]):
         limit: int = 10,
     ) -> dict:
         """Get paginated jobs with filters for recruiter view"""
-        from app.db.models.user import User
-
         query = select(JobPosting)
         is_recruiter_view = False
 
@@ -258,51 +258,53 @@ class JobRepository(BaseRepository[JobPosting]):
         return job
 
     async def delete_job_cascade(self, job_id: uuid.UUID) -> bool:
-        """Delete job and all related data (applications, etc.)"""
-        from sqlalchemy import delete
+        """Delete job and all related data (applications, etc.)
 
-        from app.db.models.application import (
-            JobApplication,
-            JobApplicationStatusHistory,
-        )
-
+        Raises:
+            ValueError: If deletion fails due to foreign key constraints or other database errors
+        """
         job = await self.get(job_id)
         if not job:
             return False
 
-        # Get application IDs for deleting status history
-        applications_query = select(JobApplication.application_id).where(
-            JobApplication.job_id == job_id
-        )
-        applications_result = await self.db.execute(applications_query)
-        application_ids = [app_id for app_id in applications_result.scalars().all()]
+        try:
+            # 1. Cleanup related data (Use explicit deletes for clarity)
+            # Note: In a larger app, setting 'ondelete="CASCADE"' in Models is better
+            # but for manual code, this order is correct:
 
-        # Delete application status history
-        if application_ids:
-            delete_history_stmt = delete(JobApplicationStatusHistory).where(
-                JobApplicationStatusHistory.application_id.in_(application_ids)
+            # Delete history via subquery
+            await self.db.execute(
+                delete(JobApplicationStatusHistory).where(
+                    JobApplicationStatusHistory.application_id.in_(
+                        select(JobApplication.application_id).where(
+                            JobApplication.job_id == job_id
+                        )
+                    )
+                )
             )
-            await self.db.execute(delete_history_stmt)
 
-        # Delete applications
-        delete_applications_stmt = delete(JobApplication).where(
-            JobApplication.job_id == job_id
-        )
-        await self.db.execute(delete_applications_stmt)
+            # Delete applications
+            await self.db.execute(
+                delete(JobApplication).where(JobApplication.job_id == job_id)
+            )
 
-        # Delete job description
-        job_description_id = job.job_description_id
-        delete_job_desc_stmt = delete(JobDescription).where(
-            JobDescription.job_description_id == job_description_id
-        )
-        await self.db.execute(delete_job_desc_stmt)
+            # 2. Delete the Job (this also triggers the JobDescription delete if logic matches)
+            job_desc_id = job.job_description_id
+            await self.db.delete(job)
+            await self.db.execute(
+                delete(JobDescription).where(
+                    JobDescription.job_description_id == job_desc_id
+                )
+            )
 
-        # Delete job posting
-        delete_job_stmt = delete(JobPosting).where(JobPosting.job_id == job_id)
-        await self.db.execute(delete_job_stmt)
-
-        await self.db.flush()
-        return True
+            await self.db.flush()
+            return True
+        except (IntegrityError, SQLAlchemyError) as e:
+            # Use a specific message for Jobs
+            await self._handle_db_error(
+                e,
+                "Cannot delete job: It has active applications or historical data that cannot be removed.",
+            )
 
     async def update_job_and_description(
         self, job_posting: JobPosting, job_data
