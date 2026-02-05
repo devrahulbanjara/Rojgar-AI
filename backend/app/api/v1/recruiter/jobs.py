@@ -123,11 +123,18 @@ async def delete_job(
     current_user: Annotated[User, Depends(get_current_active_user)],
     job_service: Annotated[JobService, Depends(get_job_service)],
 ):
-    job = await job_service.delete_job(job_id=job_id, user_id=current_user.user_id)
-    if not job:
+    try:
+        job = await job_service.delete_job(job_id=job_id, user_id=current_user.user_id)
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found",
+            )
+    except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
-        )
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
 
 
 @router.post(
@@ -321,10 +328,17 @@ async def delete_reference_jd(
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    reference_jd = await reference_jd_service.delete_reference_jd(
-        reference_jd_id=reference_jd_id, organization_id=organization_id
-    )
-    if not reference_jd:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Reference JD not found"
+    try:
+        reference_jd = await reference_jd_service.delete_reference_jd(
+            reference_jd_id=reference_jd_id, organization_id=organization_id
         )
+        if not reference_jd:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Reference JD not found",
+            )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e

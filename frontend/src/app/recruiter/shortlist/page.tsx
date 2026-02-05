@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
 import { ShortlistJobCard } from '../../../components/shortlist/ShortlistJobCard'
 import { ShortlistCandidateCard } from '../../../components/shortlist/ShortlistCandidateCard'
-import { CheckCircle2, Users, Sparkles } from 'lucide-react'
+import { Users, Sparkles, ShieldCheck, Brain } from 'lucide-react'
+import { toast } from 'sonner'
 import type { ShortlistJob, ShortlistCandidate } from '../../../types/shortlist'
 
 // Dummy data generator
@@ -97,6 +98,7 @@ const dummyJobs: ShortlistJob[] = [
 export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(dummyJobs[0]?.job_id || null)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const selectedJob = useMemo(
     () => dummyJobs.find(job => job.job_id === selectedJobId) || null,
@@ -108,19 +110,53 @@ export default function ShortlistPage() {
     return selectedJob.candidates.filter(c => c.ai_score >= 75)
   }, [selectedJob])
 
+  const getScoreInterpretation = (score: number) => {
+    if (score >= 90) return { text: 'Excellent Match', color: 'text-emerald-600' }
+    if (score >= 80) return { text: 'Great Match', color: 'text-blue-600' }
+    if (score >= 70) return { text: 'Good Match', color: 'text-indigo-600' }
+    return { text: 'Fair Match', color: 'text-orange-600' }
+  }
+
   const handleApprove = useCallback((_candidateId: string) => {
-    // TODO: Implement approve logic
+    // TODO: Implement approve logic with toast notification
+    // toast.success(`${candidate.name} approved for ${selectedJob?.title}`)
   }, [])
 
   const handleReject = useCallback((_candidateId: string) => {
-    // TODO: Implement reject logic
+    // TODO: Implement reject logic with toast notification
+    // toast.success(`${candidate.name} rejected for ${selectedJob?.title}`)
   }, [])
 
-  const handleBulkApprove = useCallback(() => {
+  const handleAcceptAIRecommendations = useCallback(() => {
+    setShowConfirmModal(true)
+  }, [])
+
+  const handleConfirmAcceptAI = useCallback(() => {
+    // TODO: Implement actual AI recommendations acceptance logic
     recommendedCandidates.forEach(candidate => {
       handleApprove(candidate.candidate_id)
     })
+    setShowConfirmModal(false)
+    
+    // Show success toast using Sonner
+    toast.success(`AI recommendations accepted for ${recommendedCandidates.length} candidates`)
   }, [recommendedCandidates, handleApprove])
+
+  const handleCancelAcceptAI = useCallback(() => {
+    setShowConfirmModal(false)
+  }, [])
+
+  // Handle ESC key press
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showConfirmModal) {
+        handleCancelAcceptAI()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscKey)
+    return () => document.removeEventListener('keydown', handleEscKey)
+  }, [showConfirmModal, handleCancelAcceptAI])
 
   if (isAuthLoading || !isAuthenticated) {
     return (
@@ -149,13 +185,18 @@ export default function ShortlistPage() {
                       Review AI-analyzed candidates and make hiring decisions
                     </p>
                   </div>
-                  {recommendedCandidates.length > 0 && (
+                  {/* Accept AI Recommendations Button */}
+                  {recommendedCandidates.length > 0 && selectedJob && (
                     <button
-                      onClick={handleBulkApprove}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                      onClick={handleAcceptAIRecommendations}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 text-base rounded-lg transition-all duration-150 active:scale-95"
+                      style={{ 
+                        fontWeight: 500,
+                        borderWidth: '1.5px'
+                      }}
                     >
-                      <CheckCircle2 className="w-5 h-5" />
-                      Approve All AI Recommendations ({recommendedCandidates.length})
+                      <ShieldCheck className="w-4 h-4" />
+                      Accept AI Recommendations ({recommendedCandidates.length})
                     </button>
                   )}
                 </div>
@@ -187,6 +228,15 @@ export default function ShortlistPage() {
                 <AnimatedContainer direction="up" delay={0.3}>
                   {selectedJob ? (
                     <div className="space-y-6">
+                      {/* Job-specific Candidates Header */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-2xl font-bold text-slate-900">
+                            Candidates for {selectedJob.title} ({selectedJob.candidates.length})
+                          </h2>
+                        </div>
+                      </div>
+
                       {/* Candidates List */}
                       {selectedJob.candidates.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
@@ -199,7 +249,7 @@ export default function ShortlistPage() {
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           {selectedJob.candidates
                             .sort((a, b) => b.ai_score - a.ai_score)
                             .map(candidate => (
@@ -208,6 +258,7 @@ export default function ShortlistPage() {
                                 candidate={candidate}
                                 onApprove={handleApprove}
                                 onReject={handleReject}
+                                scoreInterpretation={getScoreInterpretation(candidate.ai_score)}
                               />
                             ))}
                         </div>
@@ -230,6 +281,100 @@ export default function ShortlistPage() {
           </div>
         </div>
       </PageTransition>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div 
+          className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={handleCancelAcceptAI}
+        >
+          <div 
+            className="bg-white rounded-2xl max-w-md w-full mx-4 border border-slate-200 animate-in zoom-in-95 duration-200 ease-out"
+            style={{ 
+              padding: '40px',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="flex justify-center mb-5">
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <Brain className="w-6 h-6 text-indigo-600" />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center mb-8">
+              <h3 
+                className="text-gray-900 mb-4"
+                style={{ 
+                  fontSize: '24px', 
+                  fontWeight: 700,
+                  lineHeight: 1.2
+                }}
+              >
+                Accept AI Recommendations
+              </h3>
+              
+              <p 
+                className="text-gray-600 mb-3"
+                style={{ 
+                  fontSize: '16px', 
+                  fontWeight: 400,
+                  lineHeight: 1.5
+                }}
+              >
+                You're about to accept AI recommendations for{' '}
+                <span className="font-bold text-gray-900">{recommendedCandidates.length} candidates</span>{' '}
+                for <span className="font-bold text-indigo-600">{selectedJob?.title}</span>.
+              </p>
+              
+              <p 
+                className="text-gray-400"
+                style={{ 
+                  fontSize: '14px', 
+                  fontWeight: 400,
+                  lineHeight: 1.5
+                }}
+              >
+                This will approve all AI-recommended candidates. This action cannot be undone.
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={handleCancelAcceptAI}
+                className="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all duration-200"
+                style={{ 
+                  minWidth: '120px',
+                  height: '44px',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  borderWidth: '1.5px'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAcceptAI}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200"
+                style={{ 
+                  minWidth: '200px',
+                  height: '44px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                }}
+              >
+                Accept Recommendations
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </AppShell>
   )
 }
