@@ -11,7 +11,6 @@ import {
   FileText,
   Calendar,
   BarChart3,
-  MessageSquare,
   User,
   PanelLeftClose,
   PanelLeftOpen,
@@ -44,11 +43,6 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
       title: 'Final Selection',
       path: '/recruiter/final-selection',
       icon: BarChart3,
-    },
-    {
-      title: 'Candidate Pool',
-      path: '/recruiter/candidate-pool',
-      icon: MessageSquare,
     },
   ]
 

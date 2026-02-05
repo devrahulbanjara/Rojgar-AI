@@ -176,6 +176,19 @@ class JobRepository(BaseRepository[JobPosting]):
         except (IntegrityError, SQLAlchemyError) as e:
             await self._handle_db_error(e, "Failed to update auto-shortlist settings.")
 
+    async def update_shortlist_status(self, job_id: uuid.UUID, status: str) -> None:
+        """Updates the AI shortlisting status for a job."""
+        try:
+            query = (
+                update(JobPosting)
+                .where(JobPosting.job_id == job_id)
+                .values(shortlist_status=status, updated_at=get_datetime())
+            )
+            await self.db.execute(query)
+            await self.db.flush()
+        except (IntegrityError, SQLAlchemyError) as e:
+            await self._handle_db_error(e, "Failed to update shortlist status.")
+
     async def expire_jobs(self) -> int:
         """Expire jobs past their application deadline"""
         today = date.today()
