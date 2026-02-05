@@ -56,31 +56,22 @@ export function CandidateCard({ candidate, onClick, className, index: _index = 0
         </div>
 
         {/* Main Content - Flex Column */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ gap: '8px' }}>
-          {/* Header Row - Name + Roles */}
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <h3 className="text-lg font-semibold text-[#1E293B] leading-[1.2]">
-              {candidate.name}
-            </h3>
-            {candidate.professional_headline && (
-              <>
-                <span className="text-[#CBD5E1] text-sm mx-1">•</span>
-                <span className="text-sm text-[#64748B] font-medium">
-                  {candidate.professional_headline}
-                </span>
-              </>
-            )}
-            {candidate.job_title && (
-              <>
-                <span className="text-[#CBD5E1] text-sm mx-1">•</span>
-                <span className="text-sm text-[#64748B] font-medium">
-                  {candidate.job_title}
-                </span>
-              </>
-            )}
-          </div>
+        <div className="flex-1 min-w-0 flex flex-col" style={{ gap: '6px' }}>
+          {/* Name */}
+          <h3 className="text-lg font-semibold text-[#1E293B] leading-[1.2]">
+            {candidate.name}
+          </h3>
 
-          {/* Contact Information Row */}
+          {/* Job Applied For */}
+          {candidate.job_title && (
+            <div style={{ marginTop: '4px' }}>
+              <span className="text-sm font-medium text-[#5B7FFF]">
+                {candidate.job_title}
+              </span>
+            </div>
+          )}
+
+          {/* Email | Phone */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-[#94A3B8]" strokeWidth={2} />
