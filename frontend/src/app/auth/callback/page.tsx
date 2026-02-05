@@ -2,12 +2,15 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { ROUTES } from '../../../config/constants'
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner'
+import { clearQueryCache, queryKeys } from '../../../lib/queryClient'
 
 function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -26,15 +29,17 @@ function AuthCallbackContent() {
           return
         }
 
+        // Clear any old cached data before authenticating
+        clearQueryCache()
+        queryClient.clear()
+        // Remove any cached user data
+        queryClient.setQueryData(queryKeys.auth.user, null)
+
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/auth/google/callback`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/google/callback?code=${encodeURIComponent(code)}`,
           {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            method: 'GET',
             credentials: 'include',
-            body: JSON.stringify({ code }),
           }
         )
 
@@ -42,25 +47,43 @@ function AuthCallbackContent() {
           throw new Error(`Authentication failed: ${response.statusText}`)
         }
 
-        const data = await response.json()
-
-        if (data.requires_role_selection) {
-          router.push(ROUTES.SELECT_ROLE)
-        } else {
-          const redirectUrl =
-            data.user?.role === 'recruiter'
-              ? ROUTES.RECRUITER_DASHBOARD
-              : ROUTES.CANDIDATE_DASHBOARD
-          router.push(redirectUrl)
+        // After successful OAuth, invalidate user query to force fresh fetch
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user })
+        
+        // Fetch user data immediately to update the cache
+        try {
+          const userResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/users/me`,
+            {
+              credentials: 'include',
+            }
+          )
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json()
+            const processedUser = {
+              ...userData,
+              id: (userData.id || userData.user_id).toString(),
+              userType: userData.role,
+            }
+            queryClient.setQueryData(queryKeys.auth.user, processedUser)
+          }
+        } catch (err) {
+          console.error('Failed to fetch user after OAuth:', err)
         }
+
+        // Redirect based on response or default to candidate dashboard
+        // The backend redirects, but we handle it client-side for better control
+        const redirectUrl = ROUTES.CANDIDATE_DASHBOARD
+        router.push(redirectUrl)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Authentication failed')
       }
     }
 
     handleCallback()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams])
+     
+  }, [searchParams, queryClient, router])
 
   if (error) {
     return (

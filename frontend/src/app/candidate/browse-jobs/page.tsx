@@ -15,7 +15,6 @@ import { AppShell } from '../../../components/layout/AppShell'
 import { Button } from '../../../components/ui/button'
 import {
   AnimatedContainer,
-  AIPoweredBadge,
   LoadingSpinner,
   SkeletonJobCard,
 } from '../../../components/common'
@@ -353,11 +352,6 @@ export default function Jobs() {
                   </p>
                 </div>
               </div>
-              {!isLoading && jobs.length > 0 && !isSearchMode && (
-                <div className="hidden sm:block">
-                  <AIPoweredBadge />
-                </div>
-              )}
             </div>
 
             {/* Job Cards Grid with larger gap */}
