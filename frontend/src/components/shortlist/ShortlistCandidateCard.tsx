@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronDown, Brain } from 'lucide-react'
+import { CheckCircle2, XCircle, ChevronDown, Brain, FileText } from 'lucide-react'
 import { UserAvatar } from '../ui/UserAvatar'
 import { cn } from '../../lib/utils'
 import type { ShortlistCandidate } from '../../types/shortlist'
+import { ResumeDetailModal } from './ResumeDetailModal'
 
 interface ShortlistCandidateCardProps {
   candidate: ShortlistCandidate
@@ -25,8 +26,8 @@ export function ShortlistCandidateCard({
   scoreInterpretation,
 }: ShortlistCandidateCardProps) {
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false)
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
 
-  // Get score-based styling
   const getScoreStyles = (score: number) => {
     if (score < 50) {
       return {
@@ -59,7 +60,7 @@ export function ShortlistCandidateCard({
         className
       )}
       style={{
-        padding: '28px',
+        padding: '24px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
@@ -74,8 +75,7 @@ export function ShortlistCandidateCard({
         e.currentTarget.style.transform = 'translateY(0)'
       }}
     >
-      <div className="flex items-center gap-6">
-        {/* Avatar & Name */}
+      <div className="flex items-center gap-8">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="flex-shrink-0">
             <UserAvatar
@@ -94,14 +94,22 @@ export function ShortlistCandidateCard({
                 Applied for: {candidate.job_title}
               </div>
             )}
-            <div className="text-sm text-slate-600">
-              {candidate.email}
+            {candidate.professional_headline && (
+              <div className="text-sm text-slate-600">
+                {candidate.professional_headline}
+              </div>
+            )}
+            <div className="text-xs text-slate-500 mt-1">
+              Applied {new Date(candidate.applied_at).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+              })}
             </div>
           </div>
         </div>
 
-        {/* Enhanced AI Score */}
-        <div className="flex-shrink-0 flex flex-col items-center gap-1 text-center">
+        <div className="flex-shrink-0 flex flex-col items-center gap-1 text-center w-24">
           <div className={`text-3xl font-bold ${scoreStyles.scoreColor} leading-none`}>
             {candidate.ai_score}
           </div>
@@ -115,8 +123,14 @@ export function ShortlistCandidateCard({
           )}
         </div>
 
-        {/* Enhanced Action Buttons */}
-        <div className="flex-shrink-0 flex items-center gap-3">
+        <div className="flex-shrink-0 flex items-center gap-4">
+          <button
+            onClick={() => setIsResumeModalOpen(true)}
+            className="group inline-flex items-center gap-2 px-5 py-3 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
+          >
+            <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>View Resume</span>
+          </button>
           <button
             onClick={() => onApprove(candidate.candidate_id)}
             className="group inline-flex items-center gap-2 px-5 py-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-500/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
@@ -134,7 +148,6 @@ export function ShortlistCandidateCard({
         </div>
       </div>
 
-      {/* Premium AI Feedback Section */}
       <div className="mt-8 pt-6 border-t border-gradient-to-r from-transparent via-slate-200 to-transparent">
         <button
           onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
@@ -185,6 +198,16 @@ export function ShortlistCandidateCard({
           </div>
         </div>
       </div>
+
+      {/* Resume Detail Modal */}
+      <ResumeDetailModal
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        applicationId={candidate.application_id}
+        candidateName={candidate.name}
+        candidatePhoto={candidate.picture}
+        candidateSocialLinks={candidate.social_links}
+      />
     </div>
   )
 }

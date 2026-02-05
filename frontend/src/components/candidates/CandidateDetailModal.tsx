@@ -14,7 +14,9 @@ import {
   Clock,
   UserCircle2,
   Phone,
+  Globe,
 } from 'lucide-react'
+import { SiGithub, SiLinkedin } from 'react-icons/si'
 import { formatDistanceToNow, format } from 'date-fns'
 import { UserAvatar } from '../ui/UserAvatar'
 
@@ -188,7 +190,71 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                 </div>
               </div>
             </div>
+
+            {/* Premium Horizontal Social Links Cards */}
+            {candidate.social_links && candidate.social_links.length > 0 && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {candidate.social_links.map((link) => {
+                  const getSocialIcon = (type: string) => {
+                    const iconType = type.toLowerCase()
+                    if (iconType.includes('linkedin')) {
+                      return <SiLinkedin className="w-6 h-6" style={{ color: '#0A66C2' }} />
+                    }
+                    if (iconType.includes('github')) {
+                      return <SiGithub className="w-6 h-6" style={{ color: '#24292e' }} />
+                    }
+                    // Portfolio/Website
+                    return <Globe className="w-6 h-6" style={{ color: '#6366F1' }} />
+                  }
+
+                  const getPlatformName = (type: string) => {
+                    const iconType = type.toLowerCase()
+                    if (iconType.includes('linkedin')) {
+                      return 'LinkedIn'
+                    }
+                    if (iconType.includes('github')) {
+                      return 'GitHub'
+                    }
+                    return 'Portfolio'
+                  }
+
+                  const cleanUrl = link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')
+
+                  return (
+                    <a
+                      key={link.social_link_id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative h-15 p-3 bg-gray-50 border border-gray-200 rounded-lg transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50/50 active:scale-[0.98]"
+                    >
+                      {/* Content Layout */}
+                      <div className="flex items-center gap-3 h-full">
+                        {/* Icon */}
+                        <div className="flex-shrink-0">
+                          {getSocialIcon(link.type)}
+                        </div>
+                        
+                        {/* Text Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-sm text-gray-900">
+                            {getPlatformName(link.type)}
+                          </div>
+                          <div className="text-xs text-gray-600 truncate">
+                            {cleanUrl}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* External Link Icon - Top Right */}
+                      <ExternalLink className="absolute top-2 right-2 w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
+                    </a>
+                  )
+                })}
+              </div>
+            )}
           </div>
+
 
           {/* Professional Summary */}
           {candidate.professional_summary && (

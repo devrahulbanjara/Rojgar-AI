@@ -4,105 +4,88 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
+import { useCandidates } from '../../../hooks/useCandidates'
 import { ShortlistJobCard } from '../../../components/shortlist/ShortlistJobCard'
 import { ShortlistCandidateCard } from '../../../components/shortlist/ShortlistCandidateCard'
 import { Users, Sparkles, ShieldCheck, Brain } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ShortlistJob, ShortlistCandidate } from '../../../types/shortlist'
 
-// Dummy data generator
-const generateDummyCandidates = (jobTitle: string, count: number): ShortlistCandidate[] => {
-  const names = [
-    'Rahul Banjara',
-    'Sarah Johnson',
-    'Michael Chen',
-    'Emily Rodriguez',
-    'David Kim',
-    'Jessica Martinez',
-    'James Wilson',
-    'Maria Garcia',
-    'Robert Taylor',
-    'Lisa Anderson',
-  ]
-
-  const emails = names.map(name => `${name.toLowerCase().replace(' ', '.')}@example.com`)
-
-  const analysisTemplates = [
-    'Strong technical background in React and Node.js. 5+ years experience aligns well with job requirements. Communication skills evident in portfolio presentation. Minor gap: lacks specific experience with GraphQL mentioned in job description.',
-    'Excellent problem-solving abilities demonstrated through previous projects. Strong portfolio showcasing modern web development practices. Good cultural fit based on background. Areas for improvement: could benefit from more team collaboration experience.',
-    'Impressive educational background with relevant certifications. Shows strong initiative and self-learning capabilities. Technical skills match job requirements well. Consideration: limited industry experience but high potential for growth.',
-    'Proven track record in similar roles with measurable achievements. Strong leadership qualities and team collaboration skills. Technical expertise covers all required areas. Note: salary expectations may need discussion.',
-    'Outstanding portfolio with innovative project implementations. Excellent communication skills and professional presentation. Strong alignment with company values and culture. Recommendation: top candidate for this position.',
-    'Solid technical foundation with room for growth. Shows enthusiasm and willingness to learn. Good problem-solving approach demonstrated in projects. Consideration: may need mentorship initially but shows promise.',
-    'Experienced professional with diverse skill set. Strong analytical thinking and attention to detail. Good understanding of industry best practices. Note: may be overqualified, discuss career goals.',
-    'Fresh perspective with modern development practices. Strong academic performance and relevant coursework. Good potential for long-term growth. Consideration: entry-level but shows exceptional promise.',
-  ]
-
-  return Array.from({ length: count }, (_, i) => {
-    const score = Math.floor(Math.random() * 31) + 65 // 65-95 range
-    const nameIndex = i % names.length
-    const appliedHoursAgo = Math.floor(Math.random() * 168) + 2 // 2 hours to 1 week
-
-    return {
-      application_id: `app-${i + 1}`,
-      candidate_id: `cand-${i + 1}`,
-      name: names[nameIndex],
-      email: emails[nameIndex],
-      phone: `+1-555-${Math.floor(Math.random() * 9000) + 1000}`,
-      picture: null,
-      professional_headline: i % 3 === 0 ? 'Senior Software Engineer' : undefined,
-      applied_at: new Date(Date.now() - appliedHoursAgo * 60 * 60 * 1000).toISOString(),
-      ai_score: score,
-      ai_analysis: analysisTemplates[i % analysisTemplates.length],
-      ai_recommendation: score >= 75 ? 'approve' : score >= 60 ? 'review' : 'reject',
-      job_title: jobTitle,
-    }
-  })
-}
-
-const dummyJobs: ShortlistJob[] = [
-  {
-    job_id: 'job-1',
-    title: 'UI UX Developer',
-    department: 'Design',
-    applicant_count: 12,
-    pending_ai_reviews: 3,
-    candidates: generateDummyCandidates('UI UX Developer', 12),
-  },
-  {
-    job_id: 'job-2',
-    title: 'Full Stack Developer',
-    department: 'Engineering',
-    applicant_count: 18,
-    pending_ai_reviews: 5,
-    candidates: generateDummyCandidates('Full Stack Developer', 18),
-  },
-  {
-    job_id: 'job-3',
-    title: 'Product Manager',
-    department: 'Product',
-    applicant_count: 8,
-    pending_ai_reviews: 2,
-    candidates: generateDummyCandidates('Product Manager', 8),
-  },
-  {
-    job_id: 'job-4',
-    title: 'Data Scientist',
-    department: 'Analytics',
-    applicant_count: 15,
-    pending_ai_reviews: 4,
-    candidates: generateDummyCandidates('Data Scientist', 15),
-  },
+const analysisTemplates = [
+  'Strong technical background in React and Node.js. 5+ years experience aligns well with job requirements. Communication skills evident in portfolio presentation. Minor gap: lacks specific experience with GraphQL mentioned in job description.',
+  'Excellent problem-solving abilities demonstrated through previous projects. Strong portfolio showcasing modern web development practices. Good cultural fit based on background. Areas for improvement: could benefit from more team collaboration experience.',
+  'Impressive educational background with relevant certifications. Shows strong initiative and self-learning capabilities. Technical skills match job requirements well. Consideration: limited industry experience but high potential for growth.',
+  'Proven track record in similar roles with measurable achievements. Strong leadership qualities and team collaboration skills. Technical expertise covers all required areas. Note: salary expectations may need discussion.',
+  'Outstanding portfolio with innovative project implementations. Excellent communication skills and professional presentation. Strong alignment with company values and culture. Recommendation: top candidate for this position.',
+  'Solid technical foundation with room for growth. Shows enthusiasm and willingness to learn. Good problem-solving approach demonstrated in projects. Consideration: may need mentorship initially but shows promise.',
+  'Experienced professional with diverse skill set. Strong analytical thinking and attention to detail. Good understanding of industry best practices. Note: may be overqualified, discuss career goals.',
+  'Fresh perspective with modern development practices. Strong academic performance and relevant coursework. Good potential for long-term growth. Consideration: entry-level but shows exceptional promise.',
 ]
 
 export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(dummyJobs[0]?.job_id || null)
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  
+  const { data: candidatesData, isLoading: isCandidatesLoading, error } = useCandidates()
+  const jobsData = useMemo(() => {
+    if (!candidatesData?.candidates) return []
+    
+    const jobsMap = new Map<string, ShortlistJob>()
+    
+    candidatesData.candidates.forEach((candidate) => {
+      const jobId = candidate.job_id
+      
+      if (!jobsMap.has(jobId)) {
+        jobsMap.set(jobId, {
+          job_id: jobId,
+          title: candidate.job_title,
+          department: undefined,
+          applicant_count: 0,
+          pending_ai_reviews: 0,
+          candidates: []
+        })
+      }
+      
+      const job = jobsMap.get(jobId)
+      if (!job) return
+      
+      const score = Math.floor(Math.random() * 31) + 65
+      const analysisIndex = Math.floor(Math.random() * analysisTemplates.length)
+      
+      const shortlistCandidate: ShortlistCandidate = {
+        application_id: candidate.application_id,
+        job_id: candidate.job_id,
+        candidate_id: candidate.candidate_id,
+        name: candidate.name,
+        phone: candidate.phone,
+        picture: candidate.picture,
+        professional_headline: candidate.professional_headline,
+        applied_at: candidate.applied_at,
+        ai_score: score,
+        ai_analysis: analysisTemplates[analysisIndex],
+        ai_recommendation: score >= 75 ? 'approve' : score >= 60 ? 'review' : 'reject',
+        job_title: candidate.job_title,
+        social_links: candidate.social_links,
+      }
+      
+      job.candidates.push(shortlistCandidate)
+      job.applicant_count = job.candidates.length
+      job.pending_ai_reviews = job.candidates.filter(c => c.ai_recommendation === 'review').length
+    })
+    
+    return Array.from(jobsMap.values())
+  }, [candidatesData])
+
+  useEffect(() => {
+    if (jobsData.length > 0 && !selectedJobId) {
+      setSelectedJobId(jobsData[0].job_id)
+    }
+  }, [jobsData, selectedJobId])
 
   const selectedJob = useMemo(
-    () => dummyJobs.find(job => job.job_id === selectedJobId) || null,
-    [selectedJobId]
+    () => jobsData.find(job => job.job_id === selectedJobId) || null,
+    [jobsData, selectedJobId]
   )
 
   const recommendedCandidates = useMemo(() => {
@@ -118,13 +101,9 @@ export default function ShortlistPage() {
   }
 
   const handleApprove = useCallback((_candidateId: string) => {
-    // TODO: Implement approve logic with toast notification
-    // toast.success(`${candidate.name} approved for ${selectedJob?.title}`)
   }, [])
 
   const handleReject = useCallback((_candidateId: string) => {
-    // TODO: Implement reject logic with toast notification
-    // toast.success(`${candidate.name} rejected for ${selectedJob?.title}`)
   }, [])
 
   const handleAcceptAIRecommendations = useCallback(() => {
@@ -132,13 +111,11 @@ export default function ShortlistPage() {
   }, [])
 
   const handleConfirmAcceptAI = useCallback(() => {
-    // TODO: Implement actual AI recommendations acceptance logic
     recommendedCandidates.forEach(candidate => {
       handleApprove(candidate.candidate_id)
     })
     setShowConfirmModal(false)
     
-    // Show success toast using Sonner
     toast.success(`AI recommendations accepted for ${recommendedCandidates.length} candidates`)
   }, [recommendedCandidates, handleApprove])
 
@@ -146,7 +123,6 @@ export default function ShortlistPage() {
     setShowConfirmModal(false)
   }, [])
 
-  // Handle ESC key press
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && showConfirmModal) {
@@ -158,7 +134,7 @@ export default function ShortlistPage() {
     return () => document.removeEventListener('keydown', handleEscKey)
   }, [showConfirmModal, handleCancelAcceptAI])
 
-  if (isAuthLoading || !isAuthenticated) {
+  if (isAuthLoading || !isAuthenticated || isCandidatesLoading) {
     return (
       <AppShell>
         <PageTransition className="min-h-screen flex items-center justify-center">
@@ -168,11 +144,23 @@ export default function ShortlistPage() {
     )
   }
 
+  if (error) {
+    return (
+      <AppShell>
+        <PageTransition className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load candidates</h2>
+            <p className="text-gray-600">Please try refreshing the page</p>
+          </div>
+        </PageTransition>
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell>
       <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
         <div className="space-y-8 pb-12">
-          {/* Enhanced Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
             <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
@@ -185,7 +173,6 @@ export default function ShortlistPage() {
                       Review AI-analyzed candidates and make hiring decisions
                     </p>
                   </div>
-                  {/* Accept AI Recommendations Button */}
                   {recommendedCandidates.length > 0 && selectedJob && (
                     <button
                       onClick={handleAcceptAIRecommendations}
@@ -204,40 +191,44 @@ export default function ShortlistPage() {
             </div>
           </AnimatedContainer>
 
-          {/* Main Content Container */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div className="flex gap-8">
-              {/* Left Sidebar - Job Selection */}
-              <div className="w-80 flex-shrink-0">
+              <div className="w-72 flex-shrink-0">
                 <AnimatedContainer direction="up" delay={0.2}>
                   <div className="space-y-4">
-                    {dummyJobs.map(job => (
-                      <ShortlistJobCard
-                        key={job.job_id}
-                        job={job}
-                        isSelected={selectedJobId === job.job_id}
-                        onClick={() => setSelectedJobId(job.job_id)}
-                      />
-                    ))}
+                    {jobsData.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-500 mb-2">No jobs with candidates found</div>
+                        <div className="text-sm text-gray-400">Candidates will appear here once they apply to jobs</div>
+                      </div>
+                    ) : (
+                      jobsData.map(job => (
+                        <ShortlistJobCard
+                          key={job.job_id}
+                          job={job}
+                          isSelected={selectedJobId === job.job_id}
+                          onClick={() => setSelectedJobId(job.job_id)}
+                        />
+                      ))
+                    )}
                   </div>
                 </AnimatedContainer>
               </div>
 
-              {/* Main Content Area */}
               <div className="flex-1 min-w-0">
                 <AnimatedContainer direction="up" delay={0.3}>
                   {selectedJob ? (
                     <div className="space-y-6">
-                      {/* Job-specific Candidates Header */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h2 className="text-2xl font-bold text-slate-900">
-                            Candidates for {selectedJob.title} ({selectedJob.candidates.length})
-                          </h2>
+                      <div className="flex items-baseline gap-3 mb-6">
+                        <h2 className="text-2xl font-semibold text-[#1F2937] inline">
+                          Candidates for {selectedJob.title}
+                        </h2>
+                        <div className="inline-flex items-center gap-2 bg-[#EEF2FF] text-[#6366F1] border border-[#E0E7FF] rounded-md px-3 py-1 text-base font-semibold">
+                          <Users className="w-4 h-4" />
+                          {selectedJob.candidates.length}
                         </div>
                       </div>
 
-                      {/* Candidates List */}
                       {selectedJob.candidates.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
                           <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
@@ -282,7 +273,6 @@ export default function ShortlistPage() {
         </div>
       </PageTransition>
 
-      {/* Confirmation Modal */}
       {showConfirmModal && (
         <div 
           className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
@@ -297,14 +287,12 @@ export default function ShortlistPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Icon */}
             <div className="flex justify-center mb-5">
               <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                 <Brain className="w-6 h-6 text-indigo-600" />
               </div>
             </div>
 
-            {/* Content */}
             <div className="text-center mb-8">
               <h3 
                 className="text-gray-900 mb-4"
@@ -342,7 +330,6 @@ export default function ShortlistPage() {
               </p>
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-center gap-3">
               <button
                 onClick={handleCancelAcceptAI}

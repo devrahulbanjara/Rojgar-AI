@@ -88,6 +88,7 @@ class JobResponse(
     TimestampMixin,
 ):
     auto_shortlist: Annotated[bool, "Auto-trigger AI shortlisting on job expiry"]
+    shortlist_status: Annotated[str, "AI shortlisting status"]
     organization: Annotated[
         OrganizationResponseInJob | None, "Organization details"
     ] = None

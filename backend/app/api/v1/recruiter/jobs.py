@@ -178,6 +178,13 @@ async def trigger_shortlisting(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
+    # Guard: Don't allow trigger if already running
+    if job.shortlist_status == "in_progress":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="AI shortlisting is already running for this job.",
+        )
+
     background_tasks.add_task(shortlist_service.process_shortlisting, job_id)
 
     return {"message": "AI scoring started in background", "job_id": str(job_id)}

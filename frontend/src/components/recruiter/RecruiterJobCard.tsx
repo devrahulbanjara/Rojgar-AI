@@ -258,7 +258,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               {/* Tooltip */}
               <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                 {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
-                <div className="absolute bottom-full right-2 border-4 border-transparent border-b-gray-900"></div>
+                <div className="absolute bottom-full right-2 border-4 border-transparent border-b-gray-900" />
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -19,6 +20,7 @@ class CandidateApplicationSummary(BaseModel):
     applied_at: datetime
     ai_score: int | None = None
     ai_analysis: str | None = None
+    social_links: list[dict[str, Any]] = []
 
     model_config = ConfigDict(from_attributes=True)
 
