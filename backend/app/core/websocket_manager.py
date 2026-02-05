@@ -12,9 +12,6 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket, organization_id: uuid.UUID):
         await websocket.accept()
         self.active_connections.setdefault(organization_id, []).append(websocket)
-        logger.info(
-            f"WS: Org {organization_id} connected. Total: {len(self.active_connections[organization_id])}"
-        )
 
     def disconnect(self, websocket: WebSocket, organization_id: uuid.UUID):
         if organization_id in self.active_connections:
