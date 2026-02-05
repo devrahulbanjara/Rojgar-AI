@@ -269,7 +269,7 @@ class JobService:
             salary_currency=job_data.salary_currency,
             status=job_status,
             is_indexed=False,
-            auto_shortlist=getattr(job_data, "auto_shortlist", False),
+            auto_shortlist=job_data.auto_shortlist,
             posted_date=date.today(),
             application_deadline=application_deadline,
             created_at=get_datetime(),
@@ -287,3 +287,30 @@ class JobService:
             "has_next": False,
             "has_prev": False,
         }
+
+    async def get_auto_shortlist_status(
+        self, job_id: uuid.UUID, user_id: uuid.UUID
+    ) -> bool | None:
+        """Get auto shortlist status for a job"""
+        job = await self.get_job_by_id(job_id)
+        if not job:
+            return None
+
+        user = await self.user_repo.get(user_id)
+        verify_user_can_edit_job(user, job)  # This raises ValueError if unauthorized
+        return job.auto_shortlist
+
+    async def toggle_auto_shortlist(
+        self, job_id: uuid.UUID, user_id: uuid.UUID
+    ) -> bool | None:
+        """Toggle auto shortlist status for a job"""
+        job = await self.get_job_by_id(job_id)
+        if not job:
+            return None
+
+        user = await self.user_repo.get(user_id)
+        verify_user_can_edit_job(user, job)
+
+        new_status = not job.auto_shortlist
+        updated_job = await self.job_repo.update_auto_shortlist(job_id, new_status)
+        return updated_job.auto_shortlist if updated_job else None

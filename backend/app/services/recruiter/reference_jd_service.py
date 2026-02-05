@@ -63,7 +63,7 @@ class ReferenceJDService:
         self, reference_jd_id: uuid.UUID, organization_id: uuid.UUID
     ):
         """Delete a reference JD
-        
+
         Raises:
             ValueError: If deletion fails due to database constraints or errors
         """

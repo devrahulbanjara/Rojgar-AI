@@ -183,6 +183,11 @@ export const endpoints = {
     expire: (id: string) => `/api/v1/recruiter/jobs/${id}/expire`,
   },
 
+  autoShortlist: {
+    get: (jobId: string) => `/api/v1/recruiter/auto-shortlist/${jobId}`,
+    toggle: (jobId: string) => `/api/v1/recruiter/auto-shortlist/${jobId}/toggle`,
+  },
+
   applications: {
     list: '/api/v1/candidate/applications',
     detail: (id: string) => `/api/v1/candidate/applications/${id}`,
@@ -314,6 +319,11 @@ export const api = {
     generateDraft: (data: unknown) => apiClient.post(endpoints.jobs.generateDraft, data),
     update: (id: string, data: unknown) => apiClient.put(endpoints.jobs.update(id), data),
     delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
+  },
+
+  autoShortlist: {
+    get: (jobId: string) => apiClient.get<{ auto_shortlist: boolean }>(endpoints.autoShortlist.get(jobId)),
+    toggle: (jobId: string) => apiClient.put<{ auto_shortlist: boolean }>(endpoints.autoShortlist.toggle(jobId)),
   },
 
   applications: {

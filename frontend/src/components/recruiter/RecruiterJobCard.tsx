@@ -9,8 +9,11 @@ import {
   BookmarkPlus,
   Building2,
   Calendar,
+  Zap,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useAutoShortlist } from '../../hooks/useAutoShortlist'
+import { toast } from 'sonner'
 import type { Job } from '../../types/job'
 
 interface RecruiterJobCardProps {
@@ -159,9 +162,29 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
     const displayStatus = status === 'Closed' ? 'Expired' : status
     const deptColor = departmentColors[job.department || ''] || departmentColors.Default
 
+    // Auto shortlist hook
+    const jobId = job.job_id || job.id?.toString() || null
+    const { autoShortlist, isLoading: isLoadingAutoShortlist, toggle, isToggling } = useAutoShortlist(jobId)
+
     const handleConvertClick = (e: React.MouseEvent) => {
       e.stopPropagation()
       onConvertToReferenceJD?.()
+    }
+
+    const handleAutoShortlistToggle = (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (!jobId || isLoadingAutoShortlist || isToggling) return
+      
+      toggle()
+      // Custom toast message
+      setTimeout(() => {
+        toast.success(
+          autoShortlist 
+            ? `Auto Shortlist disabled for ${job.title}` 
+            : `Auto Shortlist enabled for ${job.title}`,
+          { duration: 3000 }
+        )
+      }, 100)
     }
 
     return (
@@ -194,7 +217,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Header Row: Department Badge */}
+          {/* Header Row: Department Badge + Auto Shortlist Toggle */}
           <div className="flex items-start justify-between mb-5">
             {job.department && (
               <span
@@ -208,6 +231,36 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                 {job.department}
               </span>
             )}
+            
+            {/* Auto Shortlist Toggle */}
+            <div className="relative group/tooltip">
+              <button
+                onClick={handleAutoShortlistToggle}
+                disabled={isLoadingAutoShortlist || isToggling || !jobId}
+                className={cn(
+                  'flex items-center justify-center transition-all duration-200 rounded-full',
+                  'hover:scale-110 active:scale-95',
+                  autoShortlist
+                    ? 'w-7 h-7 bg-orange-100 text-orange-600 shadow-sm'
+                    : 'w-5 h-5 text-gray-400 hover:text-orange-500',
+                  (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
+                )}
+                title={autoShortlist ? 'Auto Shortlist: ON - Click to disable' : 'Auto Shortlist: OFF - Click to enable'}
+              >
+                <Zap 
+                  className={cn(
+                    'transition-all duration-200',
+                    autoShortlist ? 'w-4 h-4' : 'w-4 h-4'
+                  )} 
+                />
+              </button>
+              
+              {/* Tooltip */}
+              <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
+                <div className="absolute bottom-full right-2 border-4 border-transparent border-b-gray-900"></div>
+              </div>
+            </div>
           </div>
 
           {/* Job Title - Refined Size */}
