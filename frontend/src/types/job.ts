@@ -52,6 +52,7 @@ export interface Job {
   created_by: string
   created_at: string
   updated_at: string
+  auto_shortlist?: boolean
 }
 
 export interface JobFilters {
@@ -115,6 +116,7 @@ export interface CreateJobRequest {
   applicationDeadline?: string
   raw_requirements?: string
   status?: 'draft' | 'active'
+  auto_shortlist: boolean
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {

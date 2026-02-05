@@ -3,7 +3,14 @@ from fastapi import APIRouter
 from app.api import auth, users
 from app.api.v1 import jobs as public_jobs
 from app.api.v1.candidate import applications, profile, resumes
-from app.api.v1.recruiter import candidates, jobs, organization, stats, websocket
+from app.api.v1.recruiter import (
+    auto_shortlist,
+    candidates,
+    jobs,
+    organization,
+    stats,
+    websocket,
+)
 
 v1_router = APIRouter()
 
@@ -27,6 +34,11 @@ v1_router.include_router(
 
 # Recruiter Domain
 v1_router.include_router(jobs.router, prefix="/recruiter/jobs", tags=["recruiter-jobs"])
+v1_router.include_router(
+    auto_shortlist.router,
+    prefix="/recruiter/auto-shortlist",
+    tags=["recruiter-auto-shortlist"],
+)
 v1_router.include_router(
     candidates.router,
     prefix="/recruiter/candidates",

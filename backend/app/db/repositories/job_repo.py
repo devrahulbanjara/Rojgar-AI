@@ -160,6 +160,22 @@ class JobRepository(BaseRepository[JobPosting]):
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
+    async def update_auto_shortlist(
+        self, job_id: uuid.UUID, auto_shortlist: bool
+    ) -> JobPosting | None:
+        """Updates only the auto_shortlist toggle for a job."""
+        try:
+            query = (
+                update(JobPosting)
+                .where(JobPosting.job_id == job_id)
+                .values(auto_shortlist=auto_shortlist, updated_at=get_datetime())
+            )
+            await self.db.execute(query)
+            await self.db.flush()
+            return await self.get(job_id)
+        except (IntegrityError, SQLAlchemyError) as e:
+            await self._handle_db_error(e, "Failed to update auto-shortlist settings.")
+
     async def expire_jobs(self) -> int:
         """Expire jobs past their application deadline"""
         today = date.today()
