@@ -4,7 +4,7 @@ from app.db.session import engine, get_db, init_db
 from .config import settings
 from .current_datetime import get_datetime
 from .exceptions import get_exception_metrics
-from .logging_config import get_logger, logger
+from .logging_config import logger
 from .security import (
     create_token,
     get_current_active_user,
@@ -30,7 +30,6 @@ __all__ = [
     "get_current_organization_id",
     "get_current_recruiter_organization_id",
     "logger",
-    "get_logger",
     "get_datetime",
     "get_exception_metrics",
 ]
