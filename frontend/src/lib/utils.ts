@@ -72,7 +72,15 @@ export const formatUserName = (name: string): string => {
 }
 
 export const getDashboardRoute = (userType: UserType): string => {
-  return userType === 'recruiter' ? ROUTES.RECRUITER.DASHBOARD : ROUTES.CANDIDATE.DASHBOARD
+  switch (userType) {
+    case 'recruiter':
+      return ROUTES.RECRUITER.DASHBOARD
+    case 'organization':
+      return ROUTES.ORGANIZATION.DASHBOARD
+    case 'candidate':
+    default:
+      return ROUTES.CANDIDATE.DASHBOARD
+  }
 }
 
 export const getUserInitials = (name: string): string => {
