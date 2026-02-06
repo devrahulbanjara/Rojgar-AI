@@ -237,7 +237,7 @@ export default function RecruiterJobsPage() {
   const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [referenceJDToEdit, setReferenceJDToEdit] = useState<ReferenceJD | null>(null)
-  
+
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
 
@@ -313,7 +313,7 @@ export default function RecruiterJobsPage() {
         refetchJobs()
         refetchReferenceJDs()
       }
-      
+
       if (event.key === 'Escape' && showDeleteModal) {
         handleCancelDeleteJob()
       }
@@ -416,38 +416,36 @@ export default function RecruiterJobsPage() {
     setShowDeleteModal(true)
   }, [])
 
-  const handleConfirmDeleteJob = useCallback(
-    async () => {
-      if (!jobToDelete) return
-      
-      const jobId = jobToDelete.job_id || jobToDelete.id
-      if (!jobId) {
-        toast.error('Invalid job ID')
-        return
-      }
+  const handleConfirmDeleteJob = useCallback(async () => {
+    if (!jobToDelete) return
 
-      try {
-        await deleteJobMutation.mutateAsync(String(jobId))
-        setShowDeleteModal(false)
-        setJobToDelete(null)
-        setIsDetailOpen(false)
-        setTimeout(() => {
-          setSelectedJob(null)
-        }, 300)
-        refetchJobs()
-        toast.success(`"${jobToDelete.title}" has been deleted`)
-      } catch (error) {
-        console.error('Failed to delete job:', error)
-        const errorMessage = error instanceof Error && error.message.includes('CORS') 
+    const jobId = jobToDelete.job_id || jobToDelete.id
+    if (!jobId) {
+      toast.error('Invalid job ID')
+      return
+    }
+
+    try {
+      await deleteJobMutation.mutateAsync(String(jobId))
+      setShowDeleteModal(false)
+      setJobToDelete(null)
+      setIsDetailOpen(false)
+      setTimeout(() => {
+        setSelectedJob(null)
+      }, 300)
+      refetchJobs()
+      toast.success(`"${jobToDelete.title}" has been deleted`)
+    } catch (error) {
+      console.error('Failed to delete job:', error)
+      const errorMessage =
+        error instanceof Error && error.message.includes('CORS')
           ? 'Unable to delete job due to server configuration. Please contact support.'
           : 'Failed to delete job. Please try again later.'
-        toast.error(errorMessage)
-        setShowDeleteModal(false)
-        setJobToDelete(null)
-      }
-    },
-    [jobToDelete, deleteJobMutation, refetchJobs]
-  )
+      toast.error(errorMessage)
+      setShowDeleteModal(false)
+      setJobToDelete(null)
+    }
+  }, [jobToDelete, deleteJobMutation, refetchJobs])
 
   const handlePostNewJob = useCallback(() => {
     setPostJobMode(null) // Let user choose mode (agent or manual)
@@ -752,21 +750,23 @@ export default function RecruiterJobsPage() {
         onSave={handleSaveReferenceJD}
       />
 
-      {showDeleteModal && jobToDelete && typeof document !== 'undefined' && 
+      {showDeleteModal &&
+        jobToDelete &&
+        typeof document !== 'undefined' &&
         createPortal(
-          <div 
+          <div
             className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200"
             style={{ zIndex: 10000 }}
             onClick={handleCancelDeleteJob}
           >
-            <div 
+            <div
               className="bg-white rounded-2xl max-w-md w-full mx-4 border border-slate-200 animate-in zoom-in-95 duration-200 ease-out"
-              style={{ 
+              style={{
                 padding: '40px',
                 borderRadius: '16px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               <div className="flex justify-center mb-5">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -775,38 +775,44 @@ export default function RecruiterJobsPage() {
               </div>
 
               <div className="text-center mb-8">
-                <h3 
+                <h3
                   className="text-gray-900 mb-4"
-                  style={{ 
-                    fontSize: '24px', 
+                  style={{
+                    fontSize: '24px',
                     fontWeight: 700,
-                    lineHeight: 1.2
+                    lineHeight: 1.2,
                   }}
                 >
                   Delete Job Posting
                 </h3>
-                
-                <p 
+
+                <p
                   className="text-gray-600 mb-3"
-                  style={{ 
-                    fontSize: '16px', 
+                  style={{
+                    fontSize: '16px',
                     fontWeight: 400,
-                    lineHeight: 1.5
+                    lineHeight: 1.5,
                   }}
                 >
                   You're about to permanently delete{' '}
                   <span className="font-bold text-gray-900">"{jobToDelete.title}"</span>{' '}
                   {jobToDelete.applicant_count > 0 && (
-                    <>with <span className="font-bold text-red-600">{jobToDelete.applicant_count} applications</span></>
-                  )}.
+                    <>
+                      with{' '}
+                      <span className="font-bold text-red-600">
+                        {jobToDelete.applicant_count} applications
+                      </span>
+                    </>
+                  )}
+                  .
                 </p>
-                
-                <p 
+
+                <p
                   className="text-gray-400"
-                  style={{ 
-                    fontSize: '14px', 
+                  style={{
+                    fontSize: '14px',
                     fontWeight: 400,
-                    lineHeight: 1.5
+                    lineHeight: 1.5,
                   }}
                 >
                   This action cannot be undone. All associated data will be lost.
@@ -817,12 +823,12 @@ export default function RecruiterJobsPage() {
                 <button
                   onClick={handleCancelDeleteJob}
                   className="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all duration-200"
-                  style={{ 
+                  style={{
                     minWidth: '120px',
                     height: '44px',
                     fontSize: '15px',
                     fontWeight: 500,
-                    borderWidth: '1.5px'
+                    borderWidth: '1.5px',
                   }}
                 >
                   Cancel
@@ -830,12 +836,12 @@ export default function RecruiterJobsPage() {
                 <button
                   onClick={handleConfirmDeleteJob}
                   className="bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ 
+                  style={{
                     minWidth: '160px',
                     height: '44px',
                     fontSize: '15px',
                     fontWeight: 600,
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                   }}
                   disabled={deleteJobMutation.isPending}
                 >
@@ -845,8 +851,7 @@ export default function RecruiterJobsPage() {
             </div>
           </div>,
           document.body
-        )
-      }
+        )}
     </AppShell>
   )
 }

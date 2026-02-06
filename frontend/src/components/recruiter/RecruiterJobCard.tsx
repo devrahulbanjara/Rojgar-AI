@@ -164,7 +164,12 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
 
     // Auto shortlist hook
     const jobId = job.job_id || job.id?.toString() || null
-    const { autoShortlist, isLoading: isLoadingAutoShortlist, toggle, isToggling } = useAutoShortlist(jobId)
+    const {
+      autoShortlist,
+      isLoading: isLoadingAutoShortlist,
+      toggle,
+      isToggling,
+    } = useAutoShortlist(jobId)
 
     const handleConvertClick = (e: React.MouseEvent) => {
       e.stopPropagation()
@@ -174,13 +179,13 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
     const handleAutoShortlistToggle = (e: React.MouseEvent) => {
       e.stopPropagation()
       if (!jobId || isLoadingAutoShortlist || isToggling) return
-      
+
       toggle()
       // Custom toast message
       setTimeout(() => {
         toast.success(
-          autoShortlist 
-            ? `Auto Shortlist disabled for ${job.title}` 
+          autoShortlist
+            ? `Auto Shortlist disabled for ${job.title}`
             : `Auto Shortlist enabled for ${job.title}`,
           { duration: 3000 }
         )
@@ -231,7 +236,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                 {job.department}
               </span>
             )}
-            
+
             {/* Auto Shortlist Toggle */}
             <div className="relative group/tooltip">
               <button
@@ -245,16 +250,20 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                     : 'w-5 h-5 text-gray-400 hover:text-orange-500',
                   (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
                 )}
-                title={autoShortlist ? 'Auto Shortlist: ON - Click to disable' : 'Auto Shortlist: OFF - Click to enable'}
+                title={
+                  autoShortlist
+                    ? 'Auto Shortlist: ON - Click to disable'
+                    : 'Auto Shortlist: OFF - Click to enable'
+                }
               >
-                <Zap 
+                <Zap
                   className={cn(
                     'transition-all duration-200',
                     autoShortlist ? 'w-4 h-4' : 'w-4 h-4'
-                  )} 
+                  )}
                 />
               </button>
-              
+
               {/* Tooltip */}
               <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                 {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}

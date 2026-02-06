@@ -71,7 +71,8 @@ export default function InterviewsPage() {
                   Interview Management Coming Soon
                 </h3>
                 <p className="text-base text-gray-500 max-w-md">
-                  Schedule interviews, manage candidate availability, and track interview progress all in one place.
+                  Schedule interviews, manage candidate availability, and track interview progress
+                  all in one place.
                 </p>
               </div>
             </AnimatedContainer>

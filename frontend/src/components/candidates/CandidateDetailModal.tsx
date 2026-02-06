@@ -39,7 +39,6 @@ const getStatusColors = (status: string) => {
   }
 }
 
-
 export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDetailModalProps) {
   if (!candidate) return null
 
@@ -163,7 +162,9 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                   <Mail className="w-5 h-5 text-purple-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">Contact</p>
+                  <p className="text-xs text-gray-500 font-medium mb-0.5 whitespace-nowrap">
+                    Contact
+                  </p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <a
                       href={`mailto:${candidate.email}`}
@@ -194,7 +195,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
             {/* Premium Horizontal Social Links Cards */}
             {candidate.social_links && candidate.social_links.length > 0 && (
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-                {candidate.social_links.map((link) => {
+                {candidate.social_links.map(link => {
                   const getSocialIcon = (type: string) => {
                     const iconType = type.toLowerCase()
                     if (iconType.includes('linkedin')) {
@@ -231,18 +232,14 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                       {/* Content Layout */}
                       <div className="flex items-center gap-3 h-full">
                         {/* Icon */}
-                        <div className="flex-shrink-0">
-                          {getSocialIcon(link.type)}
-                        </div>
-                        
+                        <div className="flex-shrink-0">{getSocialIcon(link.type)}</div>
+
                         {/* Text Content */}
                         <div className="flex-1 min-w-0">
                           <div className="font-bold text-sm text-gray-900">
                             {getPlatformName(link.type)}
                           </div>
-                          <div className="text-xs text-gray-600 truncate">
-                            {cleanUrl}
-                          </div>
+                          <div className="text-xs text-gray-600 truncate">{cleanUrl}</div>
                         </div>
                       </div>
 
@@ -254,7 +251,6 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
               </div>
             )}
           </div>
-
 
           {/* Professional Summary */}
           {candidate.professional_summary && (
@@ -279,12 +275,13 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
               </div>
               <div className="pl-14">
                 <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6">
-                  <p className="text-[15px] text-gray-700 leading-relaxed">{candidate.ai_analysis}</p>
+                  <p className="text-[15px] text-gray-700 leading-relaxed">
+                    {candidate.ai_analysis}
+                  </p>
                 </div>
               </div>
             </section>
           )}
-
         </div>
 
         {/* Sticky Footer with CTAs */}

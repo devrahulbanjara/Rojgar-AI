@@ -62,7 +62,14 @@ interface CustomDropdownProps {
   className?: string
 }
 
-function CustomDropdown({ value, onChange, options, placeholder, disabled = false, className }: CustomDropdownProps) {
+function CustomDropdown({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled = false,
+  className,
+}: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -88,7 +95,7 @@ function CustomDropdown({ value, onChange, options, placeholder, disabled = fals
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        onKeyDown={(e) => {
+        onKeyDown={e => {
           if (disabled) return
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
@@ -99,10 +106,10 @@ function CustomDropdown({ value, onChange, options, placeholder, disabled = fals
         }}
         className={cn(
           'w-full h-12 pl-4 pr-10 py-3 border rounded-xl bg-white text-left focus:outline-none text-base text-slate-800 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]',
-          disabled 
-            ? 'opacity-50 cursor-not-allowed border-slate-200' 
-            : isOpen 
-              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md' 
+          disabled
+            ? 'opacity-50 cursor-not-allowed border-slate-200'
+            : isOpen
+              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
               : 'border-slate-200 hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
         )}
       >
@@ -113,16 +120,18 @@ function CustomDropdown({ value, onChange, options, placeholder, disabled = fals
             <span className="text-slate-500">{placeholder}</span>
           )}
         </div>
-        <ChevronDown className={cn(
-          'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
-          disabled 
-            ? 'text-slate-300'
-            : isOpen 
-              ? 'rotate-180 text-indigo-600' 
-              : 'text-slate-400 group-hover:text-indigo-500'
-        )} />
+        <ChevronDown
+          className={cn(
+            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
+            disabled
+              ? 'text-slate-300'
+              : isOpen
+                ? 'rotate-180 text-indigo-600'
+                : 'text-slate-400 group-hover:text-indigo-500'
+          )}
+        />
       </button>
-      
+
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-2 bg-white border border-indigo-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-indigo-100">
           {options.map((option, index) => (
@@ -765,20 +774,21 @@ export function JobCreationWizard({
                       </label>
                       <CustomDropdown
                         value={formData.reference_jd_id}
-                        onChange={(value) => updateField('reference_jd_id', value)}
+                        onChange={value => updateField('reference_jd_id', value)}
                         placeholder="Select a reference JD..."
                         disabled={isLoadingReferenceJDs}
                         options={
-                          isLoadingReferenceJDs 
+                          isLoadingReferenceJDs
                             ? [{ value: '', label: 'Loading reference JDs...', disabled: true }]
-                            : referenceJDsData?.reference_jds && referenceJDsData.reference_jds.length > 0
+                            : referenceJDsData?.reference_jds &&
+                                referenceJDsData.reference_jds.length > 0
                               ? referenceJDsData.reference_jds.map(refJD => {
                                   const jobSummary = refJD.job_summary || refJD.role_overview || ''
                                   return {
                                     value: refJD.id,
                                     label: refJD.department
                                       ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
-                                      : jobSummary.slice(0, 80)
+                                      : jobSummary.slice(0, 80),
                                   }
                                 })
                               : [{ value: '', label: 'No reference JDs available', disabled: true }]
@@ -880,7 +890,7 @@ export function JobCreationWizard({
                         </label>
                         <CustomDropdown
                           value={formData.department}
-                          onChange={(value) => updateField('department', value)}
+                          onChange={value => updateField('department', value)}
                           placeholder="Select department..."
                           options={[
                             { value: 'Engineering', label: 'Engineering' },
@@ -888,7 +898,7 @@ export function JobCreationWizard({
                             { value: 'Product', label: 'Product' },
                             { value: 'Marketing', label: 'Marketing' },
                             { value: 'Sales', label: 'Sales' },
-                            { value: 'Operations', label: 'Operations' }
+                            { value: 'Operations', label: 'Operations' },
                           ]}
                         />
                       </div>
@@ -898,14 +908,14 @@ export function JobCreationWizard({
                         </label>
                         <CustomDropdown
                           value={formData.level}
-                          onChange={(value) => updateField('level', value)}
+                          onChange={value => updateField('level', value)}
                           placeholder="Select level..."
                           options={[
                             { value: 'Junior', label: 'Junior' },
                             { value: 'Mid', label: 'Mid-Level' },
                             { value: 'Senior', label: 'Senior' },
                             { value: 'Lead', label: 'Lead' },
-                            { value: 'Principal', label: 'Principal' }
+                            { value: 'Principal', label: 'Principal' },
                           ]}
                         />
                       </div>
@@ -1116,7 +1126,7 @@ export function JobCreationWizard({
                         </label>
                         <CustomDropdown
                           value={formData.department}
-                          onChange={(value) => updateField('department', value)}
+                          onChange={value => updateField('department', value)}
                           placeholder="Select department..."
                           className={cn(
                             isGenerated &&
@@ -1129,7 +1139,7 @@ export function JobCreationWizard({
                             { value: 'Product', label: 'Product' },
                             { value: 'Marketing', label: 'Marketing' },
                             { value: 'Sales', label: 'Sales' },
-                            { value: 'Operations', label: 'Operations' }
+                            { value: 'Operations', label: 'Operations' },
                           ]}
                         />
                       </div>
@@ -1139,11 +1149,11 @@ export function JobCreationWizard({
                         </label>
                         <CustomDropdown
                           value={formData.level}
-                          onChange={(value) => updateField('level', value)}
+                          onChange={value => updateField('level', value)}
                           placeholder="Select level..."
                           className={cn(
-                            isGenerated && 
-                              formData.level && 
+                            isGenerated &&
+                              formData.level &&
                               '[&>button]:!bg-indigo-50/50 [&>button]:border-indigo-200'
                           )}
                           options={[
@@ -1151,7 +1161,7 @@ export function JobCreationWizard({
                             { value: 'Mid', label: 'Mid-Level' },
                             { value: 'Senior', label: 'Senior' },
                             { value: 'Lead', label: 'Lead' },
-                            { value: 'Principal', label: 'Principal' }
+                            { value: 'Principal', label: 'Principal' },
                           ]}
                         />
                       </div>
@@ -1343,7 +1353,7 @@ export function JobCreationWizard({
                       </label>
                       <CustomDropdown
                         value={formData.locationType}
-                        onChange={(value) => updateField('locationType', value)}
+                        onChange={value => updateField('locationType', value)}
                         placeholder="Select type..."
                         className={cn(
                           isGenerated &&
@@ -1353,7 +1363,7 @@ export function JobCreationWizard({
                         options={[
                           { value: 'Remote', label: 'Remote' },
                           { value: 'Hybrid', label: 'Hybrid' },
-                          { value: 'On-site', label: 'On-site' }
+                          { value: 'On-site', label: 'On-site' },
                         ]}
                       />
                     </div>
@@ -1363,7 +1373,7 @@ export function JobCreationWizard({
                       </label>
                       <CustomDropdown
                         value={formData.employmentType}
-                        onChange={(value) => updateField('employmentType', value)}
+                        onChange={value => updateField('employmentType', value)}
                         placeholder="Select type..."
                         className={cn(
                           isGenerated &&
@@ -1374,7 +1384,7 @@ export function JobCreationWizard({
                           { value: 'Full-time', label: 'Full-time' },
                           { value: 'Part-time', label: 'Part-time' },
                           { value: 'Contract', label: 'Contract' },
-                          { value: 'Internship', label: 'Internship' }
+                          { value: 'Internship', label: 'Internship' },
                         ]}
                       />
                     </div>
@@ -1655,12 +1665,12 @@ export function JobCreationWizard({
                         </label>
                         <CustomDropdown
                           value={formData.currency}
-                          onChange={(value) => updateField('currency', value)}
+                          onChange={value => updateField('currency', value)}
                           placeholder="Select currency..."
                           options={[
                             { value: 'INR', label: 'INR' },
                             { value: 'USD', label: 'USD' },
-                            { value: 'NPR', label: 'NPR' }
+                            { value: 'NPR', label: 'NPR' },
                           ]}
                         />
                       </div>
@@ -1788,8 +1798,9 @@ export function JobCreationWizard({
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="text-sm text-slate-600 leading-relaxed">
-                          When enabled, candidates will be automatically shortlisted when this job expires.
-                          This helps streamline your recruitment process by identifying top candidates using AI.
+                          When enabled, candidates will be automatically shortlisted when this job
+                          expires. This helps streamline your recruitment process by identifying top
+                          candidates using AI.
                         </p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer ml-6">

@@ -79,11 +79,11 @@ export function AIScoreBadge({
         )}
       >
         <span className={cn('font-bold', sizeClasses[size].grade, colors.text)}>{grade}</span>
-        <span className={cn('font-semibold', sizeClasses[size].score, colors.scoreText)}>{score}</span>
+        <span className={cn('font-semibold', sizeClasses[size].score, colors.scoreText)}>
+          {score}
+        </span>
       </div>
-      {showLabel && (
-        <p className="text-xs text-slate-500 font-medium">AI Score</p>
-      )}
+      {showLabel && <p className="text-xs text-slate-500 font-medium">AI Score</p>}
     </div>
   )
 }
