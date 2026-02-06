@@ -1,6 +1,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, LogOut } from 'lucide-react'
+import { Menu, LogOut, Sun, Moon, Monitor } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { LogoLink } from '../common/Logo'
 import { authService } from '../../services/authService'
 import { ROUTES } from '../../config/constants'
@@ -19,6 +20,10 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick, user }: TopbarProps) {
   const router = useRouter()
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => setMounted(true), [])
 
   const handleLogout = async () => {
     try {
@@ -29,13 +34,32 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
     }
   }
 
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark')
+    else if (theme === 'dark') setTheme('system')
+    else setTheme('light')
+  }
+
+  const ThemeIcon = () => {
+    if (!mounted) return <Sun className="h-4 w-4" />
+    if (theme === 'system') return <Monitor className="h-4 w-4" />
+    if (resolvedTheme === 'dark') return <Moon className="h-4 w-4" />
+    return <Sun className="h-4 w-4" />
+  }
+
+  const themeLabel = !mounted
+    ? 'Light'
+    : theme === 'system'
+      ? 'System'
+      : resolvedTheme === 'dark'
+        ? 'Dark'
+        : 'Light'
+
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 h-[72px] border-b border-[#E5E7EB] transition-all duration-300"
+      className="fixed top-0 left-0 right-0 z-50 h-[72px] border-b border-border-default transition-all duration-300 bg-background-surface/85 backdrop-blur-xl"
       style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(16px)',
-        boxShadow: '0 4px 20px -5px rgba(48, 86, 245, 0.05)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div className="flex items-center justify-between h-full px-8 max-w-[1600px] mx-auto">
@@ -44,7 +68,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           {onMenuClick && (
             <button
               onClick={onMenuClick}
-              className="lg:hidden p-2.5 rounded-xl hover:bg-blue-50 text-[#475569] hover:text-[#3056F5] transition-all duration-200"
+              className="lg:hidden p-2.5 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 text-text-secondary hover:text-primary dark:hover:text-primary-400 transition-all duration-200"
               aria-label="Toggle menu"
             >
               <Menu className="h-5 w-5" />
@@ -56,39 +80,55 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           </div>
         </div>
 
-        {/* Right: User Profile + Logout */}
-        <div className="flex items-center gap-6">
+        {/* Right: Theme Toggle + User Profile + Logout */}
+        <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
+          <button
+            onClick={cycleTheme}
+            className="group relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-50/10 transition-all duration-200"
+            aria-label={`Switch theme (current: ${themeLabel})`}
+            title={`Theme: ${themeLabel}`}
+          >
+            <div className="p-1.5 rounded-lg bg-background-subtle group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors duration-200">
+              <ThemeIcon />
+            </div>
+            <span className="hidden lg:inline">{themeLabel}</span>
+          </button>
+
+          {/* Vertical Divider */}
+          <div className="h-8 w-px bg-border-default hidden sm:block" />
+
           {/* User Profile Pill */}
-          <div className="group flex items-center gap-3 pl-1.5 pr-5 py-1.5 rounded-full bg-white border border-[#E5E7EB] hover:border-[#3056F5]/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer">
+          <div className="group flex items-center gap-3 pl-1.5 pr-5 py-1.5 rounded-full bg-background-surface border border-border-default hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer">
             <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-tr from-[#3056F5] to-blue-300 rounded-full opacity-0 group-hover:opacity-20 blur-[2px] transition-opacity duration-300" />
+              <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-primary-300 rounded-full opacity-0 group-hover:opacity-20 blur-[2px] transition-opacity duration-300" />
               {user ? (
                 <UserAvatar
                   name={user.name}
                   src={user.picture}
-                  className="w-9 h-9 border-2 border-white shadow-sm"
+                  className="w-9 h-9 border-2 border-background-surface shadow-sm"
                 />
               ) : (
-                <div className="w-9 h-9 bg-gradient-to-br from-[#3056F5] to-[#6366F1] text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
+                <div className="w-9 h-9 bg-gradient-primary text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
                   U
                 </div>
               )}
             </div>
 
-            <span className="hidden md:block text-[14px] font-bold text-[#0F172A] group-hover:text-[#3056F5] transition-colors duration-200">
+            <span className="hidden md:block text-[14px] font-bold text-text-primary group-hover:text-primary transition-colors duration-200">
               {user?.name}
             </span>
           </div>
 
           {/* Vertical Divider */}
-          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
+          <div className="h-8 w-px bg-border-default hidden sm:block" />
 
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="group flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold text-[#475569] hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+            className="group flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold text-text-secondary hover:text-error hover:bg-error-50 dark:hover:bg-error-50/10 transition-all duration-200"
           >
-            <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-red-100 transition-colors duration-200">
+            <div className="p-1.5 rounded-lg bg-background-subtle group-hover:bg-error-100 dark:group-hover:bg-error-900/30 transition-colors duration-200">
               <LogOut className="h-4 w-4" />
             </div>
             <span className="hidden sm:inline">Logout</span>

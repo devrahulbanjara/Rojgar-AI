@@ -31,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={jakarta.className} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className={jakarta.className}>
         <Providers>
           {children}
           <Toaster position="top-right" richColors />

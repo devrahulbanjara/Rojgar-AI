@@ -49,7 +49,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
     <div className={className}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="text-indigo-600 hover:text-indigo-700 font-medium text-sm flex items-center gap-2 transition-colors"
+        className="text-ai-600 dark:text-ai-400 hover:text-ai-700 dark:hover:text-ai-300 font-medium text-sm flex items-center gap-2 transition-colors"
       >
         <Sparkles className="w-4 h-4" />
         <span>AI Analysis</span>
@@ -64,11 +64,11 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
           isExpanded ? 'max-h-[1000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
         )}
       >
-        <div className="bg-gradient-to-br from-indigo-50/30 to-purple-50/30 rounded-lg p-5 border border-indigo-100">
+        <div className="bg-gradient-to-br from-ai-50/30 to-ai-100/30 dark:from-ai-950/30 dark:to-ai-900/30 rounded-lg p-5 border border-ai-200 dark:border-ai-800">
           {/* Purple Sparkles Badge */}
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-3 h-3 text-purple-600" />
+            <div className="w-6 h-6 bg-ai-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-3 h-3 text-ai-600" />
             </div>
             <div className="flex-1 space-y-3">
               {/* Tags */}
@@ -79,7 +79,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
                       {strengths.map((strength, index) => (
                         <span
                           key={index}
-                          className="bg-emerald-50/80 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-1 rounded-full"
+                          className="bg-success-50/80 dark:bg-success-950/30 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 text-xs px-2.5 py-1 rounded-full"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
                           {strength}
@@ -92,7 +92,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
                       {concerns.map((concern, index) => (
                         <span
                           key={index}
-                          className="bg-amber-50/80 text-amber-700 border border-amber-200 text-xs px-2.5 py-1 rounded-full"
+                          className="bg-warning-50/80 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 border border-warning-200 dark:border-warning-800 text-xs px-2.5 py-1 rounded-full"
                           style={{ animationDelay: `${(strengths.length + index) * 100}ms` }}
                         >
                           {concern}
@@ -104,7 +104,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
               )}
 
               {/* Full Analysis */}
-              <div className="text-sm text-[#475569] leading-relaxed space-y-3">
+              <div className="text-sm text-text-secondary leading-relaxed space-y-3">
                 {analysis.split('\n').map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
                 ))}
@@ -112,8 +112,8 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
 
               {/* Applied Timestamp */}
               {appliedAt && (
-                <div className="pt-3 border-t border-indigo-100/50">
-                  <span className="bg-purple-50/80 text-purple-700 px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5">
+                <div className="pt-3 border-t border-ai-200/50 dark:border-ai-800/50">
+                  <span className="bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5">
                     <Clock className="w-3 h-3" />
                     Applied {appliedAt}
                   </span>

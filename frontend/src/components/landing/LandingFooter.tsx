@@ -26,13 +26,17 @@ const footerLinks = {
 }
 
 const socialLinks = [
-  { icon: Linkedin, href: 'https://www.linkedin.com/company/convexhire/about/?viewAsMember=true', label: 'LinkedIn' },
+  {
+    icon: Linkedin,
+    href: 'https://www.linkedin.com/company/convexhire/about/?viewAsMember=true',
+    label: 'LinkedIn',
+  },
   { icon: Instagram, href: 'https://www.instagram.com/convexhire', label: 'Instagram' },
 ]
 
 export function LandingFooter() {
   return (
-    <footer className="bg-slate-50 border-t border-slate-200">
+    <footer className="bg-background-subtle border-t border-border-default">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Column */}
@@ -43,9 +47,9 @@ export function LandingFooter() {
             className="col-span-2 lg:col-span-2"
           >
             <LogoLink variant="full" size="md" className="mb-4" />
-            <p className="text-slate-600 text-sm mb-6 max-w-xs">
-              AI-powered recruitment that understands your candidates. 
-              Hire smarter, faster, and fairer.
+            <p className="text-text-secondary text-sm mb-6 max-w-xs">
+              AI-powered recruitment that understands your candidates. Hire smarter, faster, and
+              fairer.
             </p>
 
             {/* Social Links */}
@@ -56,7 +60,7 @@ export function LandingFooter() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all duration-200"
+                  className="w-10 h-10 rounded-xl bg-background-surface border border-border-default flex items-center justify-center text-text-tertiary hover:text-primary hover:border-primary-200 hover:bg-primary-50 transition-all duration-200"
                   aria-label={label}
                 >
                   <Icon className="w-4 h-4" />
@@ -72,13 +76,13 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h4 className="text-sm font-semibold text-slate-900 mb-4">Product</h4>
+            <h4 className="text-sm font-semibold text-text-primary mb-4">Product</h4>
             <ul className="space-y-3">
-              {footerLinks.product.map((link) => (
+              {footerLinks.product.map(link => (
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="text-sm text-slate-600 hover:text-indigo-600 transition-colors"
+                    className="text-sm text-text-secondary hover:text-primary transition-colors"
                   >
                     {link.label}
                   </a>
@@ -94,13 +98,13 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h4 className="text-sm font-semibold text-slate-900 mb-4">Company</h4>
+            <h4 className="text-sm font-semibold text-text-primary mb-4">Company</h4>
             <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
+              {footerLinks.company.map(link => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-slate-600 hover:text-indigo-600 transition-colors"
+                    className="text-sm text-text-secondary hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -116,13 +120,13 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h4 className="text-sm font-semibold text-slate-900 mb-4">Legal</h4>
+            <h4 className="text-sm font-semibold text-text-primary mb-4">Legal</h4>
             <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
+              {footerLinks.legal.map(link => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-slate-600 hover:text-indigo-600 transition-colors"
+                    className="text-sm text-text-secondary hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -138,15 +142,13 @@ export function LandingFooter() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
-          className="mt-12 pt-8 border-t border-slate-200"
+          className="mt-12 pt-8 border-t border-border-default"
         >
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-text-tertiary">
               © {new Date().getFullYear()} ConvexHire. All rights reserved.
             </p>
-            <p className="text-sm text-slate-500">
-              Built with AI for a fairer hiring future.
-            </p>
+            <p className="text-sm text-text-tertiary">Built with AI for a fairer hiring future.</p>
           </div>
         </motion.div>
       </div>

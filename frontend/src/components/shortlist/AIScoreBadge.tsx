@@ -24,33 +24,37 @@ const getScoreGrade = (score: number): string => {
 const getScoreColors = (score: number) => {
   if (score >= 80) {
     return {
-      gradient: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
-      border: 'border-emerald-200',
-      text: 'text-emerald-700',
-      scoreText: 'text-emerald-600',
+      gradient:
+        'bg-gradient-to-br from-success-50 to-success-100 dark:from-success-950/30 dark:to-success-900/30',
+      border: 'border-success-200 dark:border-success-800',
+      text: 'text-success-700 dark:text-success-300',
+      scoreText: 'text-success-600 dark:text-success-400',
     }
   }
   if (score >= 60) {
     return {
-      gradient: 'bg-gradient-to-br from-amber-50 to-amber-100',
-      border: 'border-amber-200',
-      text: 'text-amber-700',
-      scoreText: 'text-amber-600',
+      gradient:
+        'bg-gradient-to-br from-warning-50 to-warning-100 dark:from-warning-950/30 dark:to-warning-900/30',
+      border: 'border-warning-200 dark:border-warning-800',
+      text: 'text-warning-700 dark:text-warning-300',
+      scoreText: 'text-warning-600 dark:text-warning-400',
     }
   }
   if (score >= 40) {
     return {
-      gradient: 'bg-gradient-to-br from-orange-50 to-orange-100',
-      border: 'border-orange-200',
-      text: 'text-orange-700',
-      scoreText: 'text-orange-600',
+      gradient:
+        'bg-gradient-to-br from-warning-50 to-warning-100 dark:from-warning-950/30 dark:to-warning-900/30',
+      border: 'border-warning-200 dark:border-warning-800',
+      text: 'text-warning-700 dark:text-warning-300',
+      scoreText: 'text-warning-600 dark:text-warning-400',
     }
   }
   return {
-    gradient: 'bg-gradient-to-br from-red-50 to-red-100',
-    border: 'border-red-200',
-    text: 'text-red-700',
-    scoreText: 'text-red-600',
+    gradient:
+      'bg-gradient-to-br from-error-50 to-error-100 dark:from-error-950/30 dark:to-error-900/30',
+    border: 'border-error-200 dark:border-error-800',
+    text: 'text-error-700 dark:text-error-300',
+    scoreText: 'text-error-600 dark:text-error-400',
   }
 }
 
@@ -83,7 +87,7 @@ export function AIScoreBadge({
           {score}
         </span>
       </div>
-      {showLabel && <p className="text-xs text-slate-500 font-medium">AI Score</p>}
+      {showLabel && <p className="text-xs text-text-tertiary font-medium">AI Score</p>}
     </div>
   )
 }

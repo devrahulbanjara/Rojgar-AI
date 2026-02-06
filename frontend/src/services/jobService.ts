@@ -274,34 +274,34 @@ export const jobUtils = {
 
   getJobLevelColor: (level: string): string => {
     const colors = {
-      Intern: 'bg-blue-100 text-blue-800',
-      Entry: 'bg-green-100 text-green-800',
-      Mid: 'bg-yellow-100 text-yellow-800',
-      Senior: 'bg-orange-100 text-orange-800',
-      Lead: 'bg-purple-100 text-purple-800',
-      Executive: 'bg-red-100 text-red-800',
+      Intern: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+      Entry: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+      Mid: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+      Senior: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
+      Lead: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
+      Executive: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
     }
-    return colors[level as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[level as keyof typeof colors] || 'bg-background-subtle text-text-primary'
   },
 
   getLocationTypeColor: (locationType: string): string => {
     const colors = {
-      Remote: 'bg-green-100 text-green-800',
-      Hybrid: 'bg-blue-100 text-blue-800',
-      'On-site': 'bg-orange-100 text-orange-800',
+      Remote: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+      Hybrid: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+      'On-site': 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
     }
-    return colors[locationType as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[locationType as keyof typeof colors] || 'bg-background-subtle text-text-primary'
   },
 
   getEmploymentTypeColor: (employmentType: string): string => {
     const colors = {
-      'Full-time': 'bg-blue-100 text-blue-800',
-      'Part-time': 'bg-green-100 text-green-800',
-      Contract: 'bg-yellow-100 text-yellow-800',
-      Freelance: 'bg-purple-100 text-purple-800',
-      Internship: 'bg-pink-100 text-pink-800',
+      'Full-time': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+      'Part-time': 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+      Contract: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+      Freelance: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
+      Internship: 'bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300',
     }
-    return colors[employmentType as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[employmentType as keyof typeof colors] || 'bg-background-subtle text-text-primary'
   },
 }
 
