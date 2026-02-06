@@ -1,9 +1,3 @@
-/**
- * FilterChips Component
- * Quick filter chips for job search (Remote, Full-time, etc.)
- * Shows available filters for quick access and active filters with remove option
- */
-
 import React from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -15,7 +9,7 @@ interface FilterChipsProps {
   onFilterToggle: (filter: FilterType) => void
   onClearAll: () => void
   className?: string
-  showAvailable?: boolean // Show all available filters, not just active ones
+  showAvailable?: boolean
 }
 
 const filterLabels: Record<FilterType, string> = {
@@ -35,7 +29,6 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
 }) => {
   const allFilters: FilterType[] = ['remote', 'full-time', 'part-time', 'contract', 'hybrid']
 
-  // If showAvailable is true, show all filters; otherwise only show active ones
   const filtersToShow = showAvailable ? allFilters : activeFilters
 
   if (filtersToShow.length === 0) {
@@ -45,7 +38,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {activeFilters.length > 0 && (
-        <span className="text-sm text-[#64748B] font-medium">Filters:</span>
+        <span className="text-sm text-text-tertiary font-medium">Filters:</span>
       )}
       {filtersToShow.map(filter => {
         const isActive = activeFilters.includes(filter)
@@ -57,8 +50,8 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
             className={cn(
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer',
               isActive
-                ? 'bg-[#3056F5] text-white hover:bg-[#2545D4] border border-[#3056F5]'
-                : 'bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] border border-[#E5E7EB] hover:border-[#CBD5E1]'
+                ? 'bg-primary text-primary-foreground hover:bg-primary-700 border border-primary'
+                : 'bg-background-surface text-text-tertiary hover:text-text-primary hover:bg-background-subtle border border-default hover:border-strong'
             )}
             aria-label={
               isActive
@@ -74,7 +67,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
       {activeFilters.length > 0 && (
         <button
           onClick={onClearAll}
-          className="text-sm text-[#64748B] hover:text-[#475569] font-medium transition-colors cursor-pointer"
+          className="text-sm text-text-tertiary hover:text-text-secondary font-medium transition-colors cursor-pointer"
         >
           Clear all
         </button>

@@ -1,7 +1,10 @@
 'use client'
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
-import { Plus, FolderOpen } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { usePathname } from 'next/navigation'
+import { Plus, FolderOpen, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import {
@@ -111,7 +114,6 @@ interface BackendJobResponse {
 }
 
 const transformJob = (job: BackendJobResponse): Job => {
-  // Map new backend fields to frontend fields
   const requirements =
     job.required_qualifications || job.requirements || job.required_skills_experience || []
   const preferred = job.preferred || job.nice_to_have || []
@@ -150,11 +152,9 @@ const transformJob = (job: BackendJobResponse): Job => {
     department: job.department || '',
     level: (job.level || 'Mid') as Job['level'],
     location: (() => {
-      // Prioritize location_city and location_country - they are the source of truth
       const city = job.location_city?.trim()
       const country = job.location_country?.trim()
 
-      // Check if city/country are actually set (not empty strings or null)
       if (city && city.length > 0 && country && country.length > 0) {
         return `${city}, ${country}`
       }
@@ -165,23 +165,18 @@ const transformJob = (job: BackendJobResponse): Job => {
         return country
       }
 
-      // Fallback: Check if job.location contains a valid city/country format
-      // (e.g., "Kathmandu, Nepal") and doesn't match location_type
       const jobLocation = (job.location || '').trim()
       const locationType = (job.location_type || '').toLowerCase()
       const jobLocationLower = jobLocation.toLowerCase()
 
-      // Check if location matches location_type keywords (these should not be shown as location)
       const locationTypeKeywords = ['remote', 'hybrid', 'on-site', 'onsite']
       const isLocationType = locationTypeKeywords.includes(jobLocationLower)
 
-      // If location doesn't match location_type keywords and is different from location_type, use it
       if (jobLocation && !isLocationType && jobLocationLower !== locationType) {
-        // If it contains a comma, it's likely "City, Country" format - use it
         if (jobLocation.includes(',')) {
           return jobLocation
         }
-        // Otherwise, only use if it's clearly not a location type
+
         return jobLocation
       }
 
@@ -201,7 +196,7 @@ const transformJob = (job: BackendJobResponse): Job => {
     nice_to_have: Array.isArray(preferred) ? preferred : [],
     benefits: Array.isArray(benefits) ? benefits : [],
     posted_date: job.posted_date || job.created_at || new Date().toISOString(),
-    // Add new backend fields for access via type casting
+
     job_responsibilities: job.job_responsibilities || [],
     application_deadline: job.application_deadline || '',
     status: mapJobStatus(job.status || 'draft'),
@@ -219,6 +214,7 @@ const transformJob = (job: BackendJobResponse): Job => {
 
 export default function RecruiterJobsPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
+  const pathname = usePathname()
   const [activeTab, setActiveTab] = useState<TabType>('active')
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -234,7 +230,9 @@ export default function RecruiterJobsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [referenceJDToEdit, setReferenceJDToEdit] = useState<ReferenceJD | null>(null)
 
-  // Fetch reference JDs from API
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
+
   const {
     data: referenceJDData,
     isLoading: isLoadingReferenceJDs,
@@ -264,11 +262,51 @@ export default function RecruiterJobsPage() {
   )
 
   useEffect(() => {
+    if (isAuthenticated && !isAuthLoading && pathname === '/recruiter/jobs') {
+      refetchJobs()
+      refetchReferenceJDs()
+    }
+  }, [isAuthenticated, isAuthLoading, pathname, refetchJobs, refetchReferenceJDs])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && pathname === '/recruiter/jobs') {
+        refetchJobs()
+        refetchReferenceJDs()
+      }
+    }
+
+    const handleFocus = () => {
+      if (pathname === '/recruiter/jobs') {
+        refetchJobs()
+        refetchReferenceJDs()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [pathname, refetchJobs, refetchReferenceJDs])
+
+  const handleCancelDeleteJob = useCallback(() => {
+    setShowDeleteModal(false)
+    setJobToDelete(null)
+  }, [])
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
         event.preventDefault()
         refetchJobs()
         refetchReferenceJDs()
+      }
+
+      if (event.key === 'Escape' && showDeleteModal) {
+        handleCancelDeleteJob()
       }
     }
 
@@ -276,7 +314,7 @@ export default function RecruiterJobsPage() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [refetchJobs, refetchReferenceJDs])
+  }, [refetchJobs, refetchReferenceJDs, showDeleteModal, handleCancelDeleteJob])
 
   const allJobs = useMemo(() => {
     if (!jobsData?.jobs) return []
@@ -303,7 +341,6 @@ export default function RecruiterJobsPage() {
       return false
     })
 
-    // Sort by latest posted date first
     return filtered.sort((a, b) => {
       const dateA = new Date(a.posted_date || a.created_at).getTime()
       const dateB = new Date(b.posted_date || b.created_at).getTime()
@@ -322,7 +359,6 @@ export default function RecruiterJobsPage() {
     [referenceJDData]
   )
 
-  // Handlers
   const handleJobClick = useCallback((job: Job) => {
     setSelectedJob(job)
     setIsDetailOpen(true)
@@ -364,33 +400,45 @@ export default function RecruiterJobsPage() {
     [expireJobMutation, refetchJobs]
   )
 
-  const handleDeleteJob = useCallback(
-    async (job: Job) => {
-      const jobId = job.job_id || job.id
-      if (!jobId) return
+  const handleDeleteJob = useCallback((job: Job) => {
+    setJobToDelete(job)
+    setShowDeleteModal(true)
+  }, [])
 
-      if (
-        !confirm(`Are you sure you want to delete "${job.title}"? This action cannot be undone.`)
-      ) {
-        return
-      }
+  const handleConfirmDeleteJob = useCallback(async () => {
+    if (!jobToDelete) return
 
-      try {
-        await deleteJobMutation.mutateAsync(String(jobId))
-        setIsDetailOpen(false)
-        setTimeout(() => {
-          setSelectedJob(null)
-        }, 300)
-        refetchJobs()
-      } catch (error) {
-        console.error('Failed to delete job:', error)
-      }
-    },
-    [deleteJobMutation, refetchJobs]
-  )
+    const jobId = jobToDelete.job_id || jobToDelete.id
+    if (!jobId) {
+      toast.error('Invalid job ID')
+      return
+    }
+
+    try {
+      await deleteJobMutation.mutateAsync(String(jobId))
+      setShowDeleteModal(false)
+      setJobToDelete(null)
+      setIsDetailOpen(false)
+      setTimeout(() => {
+        setSelectedJob(null)
+      }, 300)
+      refetchJobs()
+      toast.success(`"${jobToDelete.title}" has been deleted`)
+    } catch (error) {
+      console.error('Failed to delete job:', error)
+      const errorMessage =
+        error instanceof Error && error.message.includes('CORS')
+          ? 'Unable to delete job due to server configuration. Please contact support.'
+          : 'Failed to delete job. Please try again later.'
+      toast.error(errorMessage)
+      setShowDeleteModal(false)
+      setJobToDelete(null)
+    }
+  }, [jobToDelete, deleteJobMutation, refetchJobs])
 
   const handlePostNewJob = useCallback(() => {
-    setPostJobMode(null) // Let user choose mode (agent or manual)
+    setPostJobMode(null)
+
     setIsPostJobModalOpen(true)
   }, [])
 
@@ -512,36 +560,33 @@ export default function RecruiterJobsPage() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-        <div className="space-y-8 pb-12">
-          {/* Enhanced Header with Gradient Background */}
+      <PageTransition className="min-h-screen bg-background-subtle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+          {/* Minimalist Page Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div>
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight tracking-tight">
-                      Jobs
-                    </h1>
-                    <p className="text-lg text-[#475569] mt-2 max-w-2xl">
-                      Manage your job postings and track applicants
-                    </p>
-                  </div>
-                  <button
-                    onClick={handlePostNewJob}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Post New Job
-                  </button>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+                  Jobs
+                </h1>
+                <p className="text-base text-text-secondary">
+                  Manage your job postings and track applicants
+                </p>
               </div>
+              <button
+                onClick={handlePostNewJob}
+                className="btn-primary-gradient inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4" />
+                Post New Job
+              </button>
             </div>
+            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
-          {/* Main Content Container */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            {/* Tab Switcher */}
+          {/* Content */}
+          <div className="space-y-8">
+            {}
             <div>
               {isLoadingJobs && isLoadingReferenceJDs ? (
                 <SkeletonJobTabSwitcher />
@@ -557,7 +602,7 @@ export default function RecruiterJobsPage() {
               )}
             </div>
 
-            {/* Content Area */}
+            {}
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs || (activeTab === 'reference-jds' && isLoadingReferenceJDs) ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -569,7 +614,6 @@ export default function RecruiterJobsPage() {
                   <SkeletonRecruiterJobCard />
                 </div>
               ) : activeTab === 'reference-jds' ? (
-                /* Reference JDs Grid */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {referenceJDData?.reference_jds?.map(jd => (
                     <ReferenceJDCard
@@ -600,17 +644,17 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              {/* Empty State for Jobs */}
+              {}
               {activeTab !== 'reference-jds' && filteredJobs.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
                   {activeTab === 'expired' ? (
-                    <h3 className="text-xl font-bold text-gray-900">No job has expired</h3>
+                    <h3 className="text-xl font-bold text-text-primary">No job has expired</h3>
                   ) : (
                     <>
-                      <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                        <FolderOpen className="w-10 h-10 text-indigo-300" />
+                      <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
+                        <FolderOpen className="w-10 h-10 text-primary-300" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      <h3 className="text-xl font-bold text-text-primary mb-2">
                         No{' '}
                         {activeTab === 'active'
                           ? 'active'
@@ -619,7 +663,7 @@ export default function RecruiterJobsPage() {
                             : 'expired'}{' '}
                         jobs
                       </h3>
-                      <p className="text-base text-gray-500 max-w-md mb-8">
+                      <p className="text-base text-text-tertiary max-w-md mb-8">
                         {activeTab === 'active'
                           ? 'Create a new job posting to start receiving applications.'
                           : activeTab === 'drafts'
@@ -628,7 +672,7 @@ export default function RecruiterJobsPage() {
                       </p>
                       <button
                         onClick={handlePostNewJob}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-200 shadow-sm"
+                        className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-primary-600 dark:text-primary-400 bg-background-surface border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 shadow-sm"
                       >
                         <Plus className="w-5 h-5" />
                         Create Job
@@ -638,15 +682,17 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              {/* Empty State for Reference JDs */}
+              {}
               {activeTab === 'reference-jds' &&
                 (!referenceJDData?.reference_jds || referenceJDData.reference_jds.length === 0) && (
-                  <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
-                    <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                      <FolderOpen className="w-10 h-10 text-purple-300" />
+                  <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
+                    <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
+                      <FolderOpen className="w-10 h-10 text-ai-300 dark:text-ai-600" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No reference JDs yet</h3>
-                    <p className="text-base text-gray-500 max-w-md mb-8">
+                    <h3 className="text-xl font-bold text-text-primary mb-2">
+                      No reference JDs yet
+                    </h3>
+                    <p className="text-base text-text-tertiary max-w-md mb-8">
                       Convert your existing job postings to reference JDs or create new ones to
                       streamline your hiring process.
                     </p>
@@ -657,7 +703,7 @@ export default function RecruiterJobsPage() {
         </div>
       </PageTransition>
 
-      {/* Modals */}
+      {}
       <JobDetailModal
         job={selectedJob}
         isOpen={isDetailOpen}
@@ -691,6 +737,109 @@ export default function RecruiterJobsPage() {
         onClose={handleCloseEditModal}
         onSave={handleSaveReferenceJD}
       />
+
+      {showDeleteModal &&
+        jobToDelete &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-text-primary/50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200"
+            style={{ zIndex: 10000 }}
+            onClick={handleCancelDeleteJob}
+          >
+            <div
+              className="bg-background-surface rounded-2xl max-w-md w-full mx-4 border border-border-default animate-in zoom-in-95 duration-200 ease-out"
+              style={{
+                padding: '40px',
+                borderRadius: '16px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-center mb-5">
+                <div className="w-12 h-12 bg-error-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-error-600" />
+                </div>
+              </div>
+
+              <div className="text-center mb-8">
+                <h3
+                  className="text-text-primary mb-4"
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Delete Job Posting
+                </h3>
+
+                <p
+                  className="text-text-secondary mb-3"
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: 400,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  You're about to permanently delete{' '}
+                  <span className="font-bold text-text-primary">"{jobToDelete.title}"</span>{' '}
+                  {jobToDelete.applicant_count > 0 && (
+                    <>
+                      with{' '}
+                      <span className="font-bold text-error-600">
+                        {jobToDelete.applicant_count} applications
+                      </span>
+                    </>
+                  )}
+                  .
+                </p>
+
+                <p
+                  className="text-text-muted"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  This action cannot be undone. All associated data will be lost.
+                </p>
+              </div>
+
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={handleCancelDeleteJob}
+                  className="border border-border-default text-text-secondary bg-background-surface hover:bg-background-subtle hover:border-border-strong rounded-lg transition-all duration-200"
+                  style={{
+                    minWidth: '120px',
+                    height: '44px',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    borderWidth: '1.5px',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDeleteJob}
+                  className="bg-error-600 hover:bg-error-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    minWidth: '160px',
+                    height: '44px',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                  }}
+                  disabled={deleteJobMutation.isPending}
+                >
+                  {deleteJobMutation.isPending ? 'Deleting...' : 'Delete Job'}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </AppShell>
   )
 }

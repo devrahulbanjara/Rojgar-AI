@@ -52,6 +52,7 @@ export interface Job {
   created_by: string
   created_at: string
   updated_at: string
+  auto_shortlist?: boolean
 }
 
 export interface JobFilters {
@@ -82,14 +83,14 @@ export interface JobDetailResponse {
 
 export interface CreateJobRequest {
   title: string
-  company?: string // Not used by backend, kept for compatibility
-  // New backend fields (required)
+  company?: string
+
   job_summary: string
   job_responsibilities: string[]
   required_qualifications: string[]
   preferred: string[]
   compensation_and_benefits: string[]
-  // Location fields (snake_case for backend)
+
   location_city?: string
   location_country?: string
   location_type?: string
@@ -98,7 +99,7 @@ export interface CreateJobRequest {
   salary_max?: number
   salary_currency?: string
   application_deadline?: string
-  // Legacy fields (for backward compatibility)
+
   locationCity?: string
   locationCountry?: string
   locationType?: LocationType
@@ -115,6 +116,7 @@ export interface CreateJobRequest {
   applicationDeadline?: string
   raw_requirements?: string
   status?: 'draft' | 'active'
+  auto_shortlist: boolean
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
@@ -136,13 +138,12 @@ export interface JobDraftGenerateRequest {
 }
 
 export interface JobDraftResponse {
-  // New backend fields
   job_summary?: string
   job_responsibilities?: string[]
   required_qualifications?: string[]
   preferred?: string[]
   compensation_and_benefits?: string[]
-  // Legacy fields (for backward compatibility)
+
   title?: string
   description?: string
   requiredSkillsAndExperience?: string[]
@@ -184,7 +185,6 @@ export interface JobDetailsModalProps {
   showApplyButton?: boolean
 }
 
-// Job Hook Return Types
 export interface UseJobsReturn {
   jobs: Job[]
   loading: boolean

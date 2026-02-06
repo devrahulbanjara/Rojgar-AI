@@ -46,7 +46,6 @@ const Dialog: React.FC<DialogProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -57,7 +56,6 @@ const Dialog: React.FC<DialogProps> = ({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
-  // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -73,7 +71,7 @@ const Dialog: React.FC<DialogProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
+          {}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -84,7 +82,7 @@ const Dialog: React.FC<DialogProps> = ({
             aria-hidden="true"
           />
 
-          {/* Dialog Container */}
+          {}
           <motion.div
             ref={dialogRef}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -92,26 +90,22 @@ const Dialog: React.FC<DialogProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
             className={cn(
-              // Base styles
-              'relative z-50 w-full bg-white border border-gray-200',
-              // Enhanced layered shadow - soft and diffused
+              'relative z-50 w-full bg-background-surface border border-default',
+
               'rounded-[20px]',
-              // Default max width
+
               'max-w-lg',
+              'shadow-xl',
               className
             )}
-            style={{
-              boxShadow:
-                '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.1)',
-            }}
             role="dialog"
             aria-modal="true"
           >
-            {/* Close button */}
+            {}
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 z-10"
+                className="absolute right-4 top-4 p-2 rounded-xl text-text-tertiary hover:text-text-secondary hover:bg-background-subtle transition-all duration-200 z-10"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
@@ -125,7 +119,6 @@ const Dialog: React.FC<DialogProps> = ({
     </AnimatePresence>
   )
 
-  // Render to document body to escape any container constraints
   if (typeof document !== 'undefined') {
     return createPortal(content, document.body)
   }
@@ -137,26 +130,26 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
 }
 
 const DialogHeader: React.FC<DialogHeaderProps> = ({ children, className }) => {
-  return <div className={cn('px-8 pt-8 pb-6 border-b border-gray-100', className)}>{children}</div>
+  return <div className={cn('px-8 pt-8 pb-6 border-b border-subtle', className)}>{children}</div>
 }
 
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, className }) => {
   return (
-    <h2 className={cn('text-xl font-semibold text-gray-900 leading-tight', className)}>
+    <h2 className={cn('text-xl font-semibold text-text-primary leading-tight', className)}>
       {children}
     </h2>
   )
 }
 
 const DialogDescription: React.FC<DialogDescriptionProps> = ({ children, className }) => {
-  return <p className={cn('text-sm text-gray-500 mt-1.5', className)}>{children}</p>
+  return <p className={cn('text-sm text-text-tertiary mt-1.5', className)}>{children}</p>
 }
 
 const DialogFooter: React.FC<DialogFooterProps> = ({ children, className }) => {
   return (
     <div
       className={cn(
-        'flex justify-end gap-3 px-8 py-6 bg-gray-50 rounded-b-2xl border-t border-gray-100',
+        'flex justify-end gap-3 px-8 py-6 bg-background-subtle rounded-b-2xl border-t border-subtle',
         className
       )}
     >

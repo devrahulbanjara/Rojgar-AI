@@ -3,7 +3,7 @@ from datetime import date
 
 from app.core import get_datetime
 from app.core.authorization import verify_user_can_edit_job
-from app.db.models.job import JobDescription, JobPosting
+from app.db.models.job import JobDescription, JobPosting, ShortlistStatus
 from app.db.repositories.candidate_repo import CandidateProfileRepository
 from app.db.repositories.job_repo import JobDescriptionRepository, JobRepository
 from app.db.repositories.user_repo import UserRepository
@@ -55,6 +55,7 @@ class JobService:
                     order_by_date = False
             except Exception as e:
                 from app.core.logging_config import logger
+
                 logger.warning(f"Vector search failed for recommendations: {e}")
                 job_ids = None
                 order_by_date = True
@@ -132,7 +133,9 @@ class JobService:
         if job_status == "active":
             job_with_relations = await self.job_repo.get_with_details(job_id)
             if job_with_relations:
-                await self.vector_service.index_job(job_with_relations)
+                await self.vector_service.index_job(
+                    job_with_relations, self.job_repo.db
+                )
 
         # Get final job with relations and user info
         job_posting_with_relations = await self.job_repo.get_with_details(job_id)
@@ -201,22 +204,24 @@ class JobService:
         return await self.job_repo.get_with_details(job_id)
 
     async def delete_job(self, job_id: uuid.UUID, user_id: uuid.UUID):
-        """Delete a job if user has permission"""
-        user = await self.user_repo.get(user_id)
-        if not user:
-            return None
+        """Delete a job if user has permission
 
+        Raises:
+            ValueError: If deletion fails due to database constraints or errors
+        """
         job_posting = await self.job_repo.get(job_id)
         if not job_posting:
             return None
 
-        try:
-            verify_user_can_edit_job(user, job_posting)
-        except ValueError:
-            return None
+        user = await self.user_repo.get(user_id)
+        if not user:
+            raise ValueError("User not found")
 
-        success = await self.job_repo.delete_job_cascade(job_id)
-        return job_posting if success else None
+        verify_user_can_edit_job(user, job_posting)
+
+        # If the repo raises ValueError, it bubbles up to the API
+        await self.job_repo.delete_job_cascade(job_id)
+        return job_posting
 
     async def update_job(self, job_posting: JobPosting, job_data):
         """Update job posting and description"""
@@ -230,7 +235,9 @@ class JobService:
                 job_posting.job_id
             )
             if job_with_relations:
-                await self.vector_service.index_job(job_with_relations)
+                await self.vector_service.index_job(
+                    job_with_relations, self.job_repo.db
+                )
 
         return await self.job_repo.get_with_details(updated_job.job_id)
 
@@ -262,7 +269,8 @@ class JobService:
             salary_currency=job_data.salary_currency,
             status=job_status,
             is_indexed=False,
-            auto_shortlist=getattr(job_data, "auto_shortlist", False),
+            auto_shortlist=job_data.auto_shortlist,
+            shortlist_status=ShortlistStatus.NOT_STARTED,
             posted_date=date.today(),
             application_deadline=application_deadline,
             created_at=get_datetime(),
@@ -280,3 +288,30 @@ class JobService:
             "has_next": False,
             "has_prev": False,
         }
+
+    async def get_auto_shortlist_status(
+        self, job_id: uuid.UUID, user_id: uuid.UUID
+    ) -> bool | None:
+        """Get auto shortlist status for a job"""
+        job = await self.get_job_by_id(job_id)
+        if not job:
+            return None
+
+        user = await self.user_repo.get(user_id)
+        verify_user_can_edit_job(user, job)  # This raises ValueError if unauthorized
+        return job.auto_shortlist
+
+    async def toggle_auto_shortlist(
+        self, job_id: uuid.UUID, user_id: uuid.UUID
+    ) -> bool | None:
+        """Toggle auto shortlist status for a job"""
+        job = await self.get_job_by_id(job_id)
+        if not job:
+            return None
+
+        user = await self.user_repo.get(user_id)
+        verify_user_can_edit_job(user, job)
+
+        new_status = not job.auto_shortlist
+        updated_job = await self.job_repo.update_auto_shortlist(job_id, new_status)
+        return updated_job.auto_shortlist if updated_job else None

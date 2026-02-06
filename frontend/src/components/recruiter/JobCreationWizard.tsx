@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,6 +14,7 @@ import {
   Briefcase,
   Pencil,
   X as XIcon,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useCreateJob, useGenerateJobDraft, useUpdateJob } from '../../hooks/queries/useJobs'
@@ -30,7 +31,6 @@ interface JobCreationWizardProps {
 }
 
 const getSteps = () => {
-  // Unified steps - same order for all modes
   return [
     { id: 1, title: 'Basic Info', icon: Building2 },
     { id: 2, title: 'Job Details', icon: FileText },
@@ -42,13 +42,127 @@ const getSteps = () => {
 function SkeletonLine({ className }: { className?: string }) {
   return (
     <div
-      className={cn('h-4 bg-slate-100 rounded animate-pulse', className)}
+      className={cn('h-4 bg-background-subtle rounded animate-pulse', className)}
       style={{
-        background: 'linear-gradient(90deg, #F1F5F9 25%, #F8FAFC 50%, #F1F5F9 75%)',
+        background:
+          'linear-gradient(90deg, hsl(var(--background-subtle)) 25%, hsl(var(--background-subtle)) 50%, hsl(var(--background-subtle)) 75%)',
         backgroundSize: '200% 100%',
         animation: 'shimmer 1.5s ease-in-out infinite',
       }}
     />
+  )
+}
+
+interface CustomDropdownProps {
+  value: string
+  onChange: (value: string) => void
+  options: { value: string; label: string; disabled?: boolean }[]
+  placeholder: string
+  disabled?: boolean
+  className?: string
+}
+
+function CustomDropdown({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled = false,
+  className,
+}: CustomDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const selectedOption = options.find(option => option.value === value)
+
+  return (
+    <div className={cn('relative', className)} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        onKeyDown={e => {
+          if (disabled) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setIsOpen(!isOpen)
+          } else if (e.key === 'Escape') {
+            setIsOpen(false)
+          }
+        }}
+        className={cn(
+          'w-full h-12 pl-4 pr-10 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]',
+          disabled
+            ? 'opacity-50 cursor-not-allowed border-border-default'
+            : isOpen
+              ? 'border-primary-500 ring-2 ring-primary-500/20 shadow-md'
+              : 'border-border-default hover:border-primary-300 hover:bg-gradient-to-r hover:from-primary-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
+        )}
+      >
+        <div className="flex items-center gap-3 h-full">
+          {selectedOption ? (
+            <span className="font-medium text-text-primary">{selectedOption.label}</span>
+          ) : (
+            <span className="text-text-tertiary">{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown
+          className={cn(
+            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
+            disabled
+              ? 'text-text-muted'
+              : isOpen
+                ? 'rotate-180 text-primary-600'
+                : 'text-text-muted group-hover:text-primary-500'
+          )}
+        />
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-2 bg-background-surface border border-primary-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-primary-100">
+          {options.map((option, index) => (
+            <button
+              key={option.value}
+              type="button"
+              disabled={option.disabled}
+              onClick={() => {
+                if (!option.disabled) {
+                  onChange(option.value)
+                  setIsOpen(false)
+                }
+              }}
+              className={cn(
+                'w-full px-4 py-3 text-left focus:outline-none transition-all duration-200 flex items-center gap-3 text-base',
+                option.disabled
+                  ? 'text-text-muted cursor-not-allowed bg-background-subtle'
+                  : 'text-text-primary hover:text-primary-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-primary-50 focus:to-primary-50 transform hover:scale-[1.01] active:scale-[0.99] group'
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <span className="font-medium">{option.label}</span>
+              {!option.disabled && (
+                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -83,7 +197,6 @@ export function JobCreationWizard({
   } | null>(null)
   const [editValue, setEditValue] = useState('')
 
-  // Reset step when editing
   useEffect(() => {
     if (jobToEdit) {
       setCurrentStep(1)
@@ -97,7 +210,6 @@ export function JobCreationWizard({
   const steps = getSteps()
 
   const getContentStep = (step: number): number => {
-    // Unified step mapping - same for all modes
     return step
   }
 
@@ -124,9 +236,9 @@ export function JobCreationWizard({
     currency: 'NPR',
     benefits: [''],
     applicationDeadline: '',
+    autoShortlist: false,
   })
 
-  // Update reference_jd_id when initialReferenceJdId changes
   useEffect(() => {
     if (initialReferenceJdId) {
       setFormData(prev => ({
@@ -136,10 +248,8 @@ export function JobCreationWizard({
     }
   }, [initialReferenceJdId])
 
-  // Fetch reference JDs for Agent Mode
   const { data: referenceJDsData, isLoading: isLoadingReferenceJDs } = useReferenceJDs()
 
-  // Switch to agent tab if reference JD ID is provided
   useEffect(() => {
     if (initialReferenceJdId && activeTab !== 'agent') {
       setActiveTab('agent')
@@ -149,7 +259,6 @@ export function JobCreationWizard({
 
   useEffect(() => {
     if (jobToEdit) {
-      // Pre-populate keywords with existing requirements for AI revision
       const existingRequirements =
         jobToEdit.requirements && jobToEdit.requirements.length > 0
           ? jobToEdit.requirements.join(', ')
@@ -159,7 +268,8 @@ export function JobCreationWizard({
         title: jobToEdit.title || '',
         department: jobToEdit.department || '',
         level: jobToEdit.level || '',
-        keywords: existingRequirements, // Pre-fill for AI revision
+        keywords: existingRequirements,
+
         reference_jd_id: '',
         description: jobToEdit.description || '',
         jobResponsibilities: (() => {
@@ -188,6 +298,7 @@ export function JobCreationWizard({
         currency: jobToEdit.salary_currency || 'NPR',
         benefits: jobToEdit.benefits && jobToEdit.benefits.length > 0 ? jobToEdit.benefits : [''],
         applicationDeadline: jobToEdit.application_deadline || '',
+        autoShortlist: jobToEdit.auto_shortlist ?? false,
       })
     }
   }, [jobToEdit])
@@ -213,7 +324,6 @@ export function JobCreationWizard({
       setIsGenerating(false)
       setIsGenerated(true)
 
-      // Map new backend fields to form fields (with fallback to legacy fields)
       const description = result.job_summary || result.description || ''
       const jobResponsibilities = result.job_responsibilities || []
       const requiredSkills =
@@ -261,7 +371,6 @@ export function JobCreationWizard({
     setShowRevisionPrompt(false)
 
     try {
-      // Build current draft state to preserve edits (using new backend field names)
       const currentDraft = {
         job_summary: formData.description || '',
         job_responsibilities: formData.jobResponsibilities.filter(item => item.trim() !== ''),
@@ -279,7 +388,6 @@ export function JobCreationWizard({
         current_draft: currentDraft,
       })
 
-      // Map new backend fields to form fields (with fallback to legacy fields)
       const description = result.job_summary || result.description || formData.description
       const jobResponsibilities = result.job_responsibilities || []
       const requiredSkills =
@@ -333,7 +441,6 @@ export function JobCreationWizard({
     const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin, 10) : undefined
     const salaryMax = formData.salaryMax ? parseInt(formData.salaryMax, 10) : undefined
 
-    // Map form data to new backend field names (snake_case)
     const filteredJobResponsibilities = formData.jobResponsibilities.filter(
       item => item.trim() !== ''
     )
@@ -342,13 +449,13 @@ export function JobCreationWizard({
       title: formData.title.trim(),
       department: formData.department.trim() || 'General',
       level: formData.level.trim() || 'Mid',
-      // New backend fields (required by JobDescription schema)
+
       job_summary: formData.description.trim() || '',
       job_responsibilities: filteredJobResponsibilities,
       required_qualifications: filteredRequiredSkills.length > 0 ? filteredRequiredSkills : [],
       preferred: filteredNiceToHave.length > 0 ? filteredNiceToHave : [],
       compensation_and_benefits: filteredBenefits.length > 0 ? filteredBenefits : [],
-      // Backend expects snake_case for these fields
+
       location_city: formData.locationCity.trim() || undefined,
       location_country: formData.locationCountry.trim() || undefined,
       location_type: formData.locationType || 'On-site',
@@ -357,6 +464,7 @@ export function JobCreationWizard({
       salary_max: salaryMax,
       salary_currency: formData.currency || 'NPR',
       application_deadline: formData.applicationDeadline || undefined,
+      auto_shortlist: formData.autoShortlist,
       status: 'active',
       raw_requirements: formData.keywords.trim() || undefined,
     } as CreateJobRequest
@@ -541,8 +649,8 @@ export function JobCreationWizard({
 
   return (
     <div className="flex flex-col h-[70vh]">
-      {/* Progress Steps - Fixed Header */}
-      <div className="flex-shrink-0 px-8 py-5 border-b border-slate-200 bg-white">
+      {}
+      <div className="flex-shrink-0 px-8 py-5 border-b border-border-default bg-background-surface">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           {steps.map((step, index) => {
             const Icon = step.icon
@@ -556,10 +664,10 @@ export function JobCreationWizard({
                     className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm',
                       isCompleted
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/20'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600 text-white shadow-emerald-500/20'
                         : isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/30 scale-110'
-                          : 'bg-slate-100 text-slate-400'
+                          ? 'bg-gradient-to-r from-blue-600 to-primary-600 dark:from-blue-500 dark:to-primary-500 text-white shadow-blue-500/30 scale-110'
+                          : 'bg-background-subtle text-text-muted'
                     )}
                   >
                     {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
@@ -568,10 +676,10 @@ export function JobCreationWizard({
                     className={cn(
                       'text-sm font-semibold hidden sm:block transition-colors duration-200',
                       isActive
-                        ? 'text-indigo-600'
+                        ? 'text-primary-600'
                         : isCompleted
-                          ? 'text-emerald-600'
-                          : 'text-slate-400'
+                          ? 'text-emerald-600 dark:text-emerald-300'
+                          : 'text-text-muted'
                     )}
                   >
                     {step.title}
@@ -582,8 +690,8 @@ export function JobCreationWizard({
                     className={cn(
                       'flex-1 h-1 mx-4 rounded-full transition-all duration-500',
                       currentStep > step.id
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                        : 'bg-slate-100'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600'
+                        : 'bg-background-subtle'
                     )}
                   />
                 )}
@@ -593,22 +701,22 @@ export function JobCreationWizard({
         </div>
       </div>
 
-      {/* Form Content - Scrollable */}
+      {}
       <div className="flex-1 overflow-y-auto px-8 py-6">
-        {/* Step 1: Basic Info with Tabs for Agent/Manual Mode */}
+        {}
         {currentStep === 1 && (
           <div className="space-y-8">
-            {/* Tabs for Agent Mode and Manual Mode */}
+            {}
             {!isGenerated && (
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-background-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
                 <div className="flex">
                   <button
                     onClick={() => setActiveTab('agent')}
                     className={cn(
                       'flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 relative',
                       activeTab === 'agent'
-                        ? 'text-indigo-700 border-b-[3px] border-indigo-600'
-                        : 'text-slate-600 hover:text-slate-900 border-b-[3px] border-transparent'
+                        ? 'text-primary-700 border-b-[3px] border-primary-600'
+                        : 'text-text-secondary hover:text-text-primary border-b-[3px] border-transparent'
                     )}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -621,8 +729,8 @@ export function JobCreationWizard({
                     className={cn(
                       'flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 relative',
                       activeTab === 'manual'
-                        ? 'text-indigo-700 border-b-[3px] border-indigo-600'
-                        : 'text-slate-600 hover:text-slate-900 border-b-[3px] border-transparent'
+                        ? 'text-primary-700 border-b-[3px] border-primary-600'
+                        : 'text-text-secondary hover:text-text-primary border-b-[3px] border-transparent'
                     )}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -632,53 +740,52 @@ export function JobCreationWizard({
                   </button>
                 </div>
 
-                {/* Agent Mode Content */}
+                {}
                 {activeTab === 'agent' && (
                   <div className="px-8 py-6 space-y-6">
-                    {/* Job Title */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Job Title <span className="text-red-400">*</span>
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        Job Title <span className="text-red-400 dark:text-red-300">*</span>
                       </label>
                       <input
                         type="text"
                         value={formData.title}
                         onChange={e => updateField('title', e.target.value)}
                         placeholder="e.g. Senior ML Engineer"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-base"
+                        className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary text-text-primary placeholder:text-text-muted transition-all text-base"
                       />
                     </div>
 
-                    {/* Reference JD Selector */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Reference Job Description <span className="text-red-400">*</span>
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        Reference Job Description{' '}
+                        <span className="text-red-400 dark:text-red-300">*</span>
                       </label>
-                      <select
+                      <CustomDropdown
                         value={formData.reference_jd_id}
-                        onChange={e => updateField('reference_jd_id', e.target.value)}
-                        className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
-                      >
-                        <option value="">Select a reference JD...</option>
-                        {isLoadingReferenceJDs ? (
-                          <option disabled>Loading reference JDs...</option>
-                        ) : referenceJDsData?.reference_jds &&
-                          referenceJDsData.reference_jds.length > 0 ? (
-                          referenceJDsData.reference_jds.map(refJD => {
-                            const jobSummary = refJD.job_summary || refJD.role_overview || ''
-                            return (
-                              <option key={refJD.id} value={refJD.id}>
-                                {refJD.department
-                                  ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
-                                  : jobSummary.slice(0, 80)}
-                              </option>
-                            )
-                          })
-                        ) : (
-                          <option disabled>No reference JDs available</option>
-                        )}
-                      </select>
-                      <p className="text-xs text-slate-500 mt-2">
+                        onChange={value => updateField('reference_jd_id', value)}
+                        placeholder="Select a reference JD..."
+                        disabled={isLoadingReferenceJDs}
+                        options={
+                          isLoadingReferenceJDs
+                            ? [{ value: '', label: 'Loading reference JDs...', disabled: true }]
+                            : referenceJDsData?.reference_jds &&
+                                referenceJDsData.reference_jds.length > 0
+                              ? referenceJDsData.reference_jds.map(refJD => {
+                                  const jobSummary = refJD.job_summary || refJD.role_overview || ''
+                                  return {
+                                    value: refJD.id,
+                                    label: refJD.department
+                                      ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
+                                      : jobSummary.slice(0, 80),
+                                  }
+                                })
+                              : [{ value: '', label: 'No reference JDs available', disabled: true }]
+                        }
+                      />
+                      <p className="text-xs text-text-tertiary mt-2">
                         {referenceJDsData?.reference_jds &&
                         referenceJDsData.reference_jds.length > 0
                           ? 'Select a reference JD to guide the AI in generating a similar job description.'
@@ -686,10 +793,11 @@ export function JobCreationWizard({
                       </p>
                     </div>
 
-                    {/* Keywords */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Keywords & Requirements <span className="text-red-400">*</span>
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        Keywords & Requirements{' '}
+                        <span className="text-red-400 dark:text-red-300">*</span>
                       </label>
                       <textarea
                         value={formData.keywords || ''}
@@ -700,11 +808,11 @@ export function JobCreationWizard({
                             : 'e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience...'
                         }
                         rows={4}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all resize-none text-base"
+                        className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary text-text-primary placeholder:text-text-muted transition-all resize-none text-base"
                       />
                     </div>
 
-                    {/* Generate Button */}
+                    {}
                     <button
                       onClick={handleGenerate}
                       disabled={
@@ -721,8 +829,8 @@ export function JobCreationWizard({
                           formData.title.trim() &&
                           formData.keywords.trim() &&
                           formData.reference_jd_id
-                          ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-indigo-500/25 hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5'
-                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          ? 'bg-gradient-to-r from-primary-600 to-blue-600 dark:from-primary-500 dark:to-blue-500 text-white shadow-primary-500/25 hover:from-primary-700 hover:to-blue-700 dark:hover:from-primary-600 dark:hover:to-blue-600 hover:shadow-primary-500/40 hover:-translate-y-0.5'
+                          : 'bg-background-subtle text-text-muted cursor-not-allowed'
                       )}
                     >
                       {!isGenerating &&
@@ -749,82 +857,82 @@ export function JobCreationWizard({
                   </div>
                 )}
 
-                {/* Manual Mode Content */}
+                {}
                 {activeTab === 'manual' && (
                   <div className="px-8 py-6 space-y-6">
-                    {/* Job Title */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Job Title <span className="text-red-400">*</span>
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        Job Title <span className="text-red-400 dark:text-red-300">*</span>
                       </label>
                       <input
                         type="text"
                         value={formData.title}
                         onChange={e => updateField('title', e.target.value)}
                         placeholder="e.g. Senior Software Engineer"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 placeholder:text-slate-400 transition-all text-base"
+                        className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary text-text-primary placeholder:text-text-muted transition-all text-base"
                       />
                     </div>
 
-                    {/* Department and Level */}
+                    {}
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
-                          Department <span className="text-red-400">*</span>
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
+                          Department <span className="text-red-400 dark:text-red-300">*</span>
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.department}
-                          onChange={e => updateField('department', e.target.value)}
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
-                        >
-                          <option value="">Select department...</option>
-                          <option value="Engineering">Engineering</option>
-                          <option value="Design">Design</option>
-                          <option value="Product">Product</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="Sales">Sales</option>
-                          <option value="Operations">Operations</option>
-                        </select>
+                          onChange={value => updateField('department', value)}
+                          placeholder="Select department..."
+                          options={[
+                            { value: 'Engineering', label: 'Engineering' },
+                            { value: 'Design', label: 'Design' },
+                            { value: 'Product', label: 'Product' },
+                            { value: 'Marketing', label: 'Marketing' },
+                            { value: 'Sales', label: 'Sales' },
+                            { value: 'Operations', label: 'Operations' },
+                          ]}
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
-                          Level <span className="text-red-400">*</span>
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
+                          Level <span className="text-error-400 dark:text-error-300">*</span>
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.level}
-                          onChange={e => updateField('level', e.target.value)}
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200 select-arrow bg-white"
-                        >
-                          <option value="">Select level...</option>
-                          <option value="Junior">Junior</option>
-                          <option value="Mid">Mid-Level</option>
-                          <option value="Senior">Senior</option>
-                          <option value="Lead">Lead</option>
-                          <option value="Principal">Principal</option>
-                        </select>
+                          onChange={value => updateField('level', value)}
+                          placeholder="Select level..."
+                          options={[
+                            { value: 'Junior', label: 'Junior' },
+                            { value: 'Mid', label: 'Mid-Level' },
+                            { value: 'Senior', label: 'Senior' },
+                            { value: 'Lead', label: 'Lead' },
+                            { value: 'Principal', label: 'Principal' },
+                          ]}
+                        />
                       </div>
                     </div>
 
-                    {/* Job Summary */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Job Summary <span className="text-red-400">*</span>
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        Job Summary <span className="text-error-400 dark:text-error-300">*</span>
                       </label>
                       <textarea
                         value={formData.description}
                         onChange={e => updateField('description', e.target.value)}
                         rows={Math.max(4, Math.ceil(formData.description.length / 80))}
                         placeholder="Summarize what this role is about..."
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y text-base leading-relaxed text-slate-800 placeholder:text-slate-400 min-h-[100px] max-h-[300px] overflow-y-auto"
+                        className="w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 resize-y text-base leading-relaxed text-text-primary placeholder:text-text-muted min-h-[100px] max-h-[300px] overflow-y-auto"
                       />
                     </div>
 
-                    {/* Job Responsibilities */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Responsibilities
                       </label>
-                      <p className="text-sm text-slate-500 mb-3">
+                      <p className="text-sm text-text-tertiary mb-3">
                         Add key responsibilities and duties for this role.
                       </p>
                       <div className="space-y-4">
@@ -841,21 +949,21 @@ export function JobCreationWizard({
                                     onChange={e => setEditValue(e.target.value)}
                                     placeholder="e.g. Design and implement scalable backend services"
                                     rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                    className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                                    className="w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
                                     autoFocus
                                   />
                                   <div className="flex gap-2 justify-end">
                                     <button
                                       type="button"
                                       onClick={cancelEdit}
-                                      className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                      className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       type="button"
                                       onClick={saveEdit}
-                                      className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                      className="px-3 py-1.5 text-sm text-text-inverse bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
                                     >
                                       Save
                                     </button>
@@ -871,11 +979,13 @@ export function JobCreationWizard({
                                     placeholder="e.g. Design and implement scalable backend services"
                                     rows={Math.max(2, Math.ceil(item.length / 60))}
                                     className={cn(
-                                      'w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                                      'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                      'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
+                                      'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                       'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                       'whitespace-pre-wrap break-words',
-                                      isGenerated && item && 'bg-indigo-50/50 border-indigo-200'
+                                      isGenerated &&
+                                        item &&
+                                        'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
                                     )}
                                   />
                                   <div className="absolute right-0 top-1/2 -translate-y-1/2">
@@ -884,7 +994,7 @@ export function JobCreationWizard({
                                       onClick={() =>
                                         startEditing('jobResponsibilities', index, item)
                                       }
-                                      className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                      className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
                                       style={{
                                         right: '40px',
                                         top: '50%',
@@ -900,7 +1010,7 @@ export function JobCreationWizard({
                                         onClick={() =>
                                           removeArrayItem('jobResponsibilities', index)
                                         }
-                                        className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                        className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
                                         style={{
                                           right: '12px',
                                           top: '50%',
@@ -920,7 +1030,7 @@ export function JobCreationWizard({
                         <button
                           type="button"
                           onClick={() => addArrayItem('jobResponsibilities')}
-                          className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                          className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
                         >
                           + Add responsibility
                         </button>
@@ -933,19 +1043,19 @@ export function JobCreationWizard({
           </div>
         )}
 
-        {/* Loading Skeleton */}
+        {}
         {isGenerating && (
           <div className="space-y-4 animate-pulse">
-            <div className="bg-white rounded-lg p-5 border border-slate-200">
+            <div className="bg-background-surface rounded-lg p-5 border border-border-default">
               <SkeletonLine className="w-28 h-4 mb-3" />
               <SkeletonLine className="w-full h-9 mb-2" />
               <SkeletonLine className="w-3/4 h-9" />
             </div>
-            <div className="bg-white rounded-lg p-5 border border-slate-200">
+            <div className="bg-background-surface rounded-lg p-5 border border-border-default">
               <SkeletonLine className="w-36 h-4 mb-3" />
               <SkeletonLine className="w-full h-20" />
             </div>
-            <div className="bg-white rounded-lg p-5 border border-slate-200">
+            <div className="bg-background-surface rounded-lg p-5 border border-border-default">
               <SkeletonLine className="w-32 h-4 mb-3" />
               <div className="flex gap-2">
                 <SkeletonLine className="w-20 h-7 rounded-full" />
@@ -953,27 +1063,29 @@ export function JobCreationWizard({
                 <SkeletonLine className="w-16 h-7 rounded-full" />
               </div>
             </div>
-            <p className="text-center text-indigo-500 text-sm font-medium">
+            <p className="text-center text-ai-500 text-sm font-medium">
               AI is generating your job posting...
             </p>
           </div>
         )}
 
-        {/* Form Steps */}
+        {}
         {!isGenerating && (
           <>
-            {/* Step 1: Basic Info - Show form only if content is generated (for editing) */}
+            {}
             {currentStep === 1 && isGenerated && (
               <div className="space-y-8">
-                {/* AI Generated Indicator */}
+                {}
                 {isGenerated && (
-                  <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl px-8 py-6 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-indigo-100">
-                      <Sparkles className="w-5 h-5 text-indigo-600" />
+                  <div className="bg-gradient-to-r from-ai-50 to-ai-100 dark:from-ai-950/30 dark:to-ai-900/30 border border-ai-200 dark:border-ai-800 rounded-xl px-8 py-6 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-background-surface flex items-center justify-center flex-shrink-0 shadow-sm border border-ai-200">
+                      <Sparkles className="w-5 h-5 text-ai-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-xl font-bold text-indigo-900 mb-2">AI Magic Applied!</h4>
-                      <p className="text-sm text-indigo-700 leading-relaxed">
+                      <h4 className="text-xl font-bold text-ai-900 dark:text-ai-100 mb-2">
+                        AI Magic Applied!
+                      </h4>
+                      <p className="text-sm text-ai-700 dark:text-ai-300 leading-relaxed">
                         We&apos;ve generated a professional job description based on your
                         requirements. Review the highlighted fields below and make any edits you
                         need.
@@ -981,13 +1093,13 @@ export function JobCreationWizard({
                     </div>
                   </div>
                 )}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Basic Information</h4>
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Basic Information</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Title *
                       </label>
                       <input
@@ -996,69 +1108,69 @@ export function JobCreationWizard({
                         onChange={e => updateField('title', e.target.value)}
                         placeholder="e.g. Senior Software Engineer"
                         className={cn(
-                          'w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                          'text-base text-slate-800 placeholder:text-slate-400',
+                          'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                          'text-base text-text-primary placeholder:text-text-muted',
                           'transition-colors duration-200',
-                          isGenerated && formData.title && 'bg-indigo-50/50 border-indigo-200'
+                          isGenerated &&
+                            formData.title &&
+                            'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
                         )}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           Department *
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.department}
-                          onChange={e => updateField('department', e.target.value)}
+                          onChange={value => updateField('department', value)}
+                          placeholder="Select department..."
                           className={cn(
-                            'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 transition-colors duration-200',
-                            'select-arrow bg-white',
                             isGenerated &&
                               formData.department &&
-                              '!bg-indigo-50/50 border-indigo-200'
+                              '[&>button]:!bg-primary-50/50 dark:[&>button]:!bg-primary-950/30 [&>button]:border-primary-200 dark:[&>button]:border-primary-800'
                           )}
-                        >
-                          <option value="">Select department...</option>
-                          <option value="Engineering">Engineering</option>
-                          <option value="Design">Design</option>
-                          <option value="Product">Product</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="Sales">Sales</option>
-                          <option value="Operations">Operations</option>
-                        </select>
+                          options={[
+                            { value: 'Engineering', label: 'Engineering' },
+                            { value: 'Design', label: 'Design' },
+                            { value: 'Product', label: 'Product' },
+                            { value: 'Marketing', label: 'Marketing' },
+                            { value: 'Sales', label: 'Sales' },
+                            { value: 'Operations', label: 'Operations' },
+                          ]}
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           Level *
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.level}
-                          onChange={e => updateField('level', e.target.value)}
+                          onChange={value => updateField('level', value)}
+                          placeholder="Select level..."
                           className={cn(
-                            'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 transition-colors duration-200',
-                            'select-arrow bg-white',
-                            isGenerated && formData.level && '!bg-indigo-50/50 border-indigo-200'
+                            isGenerated &&
+                              formData.level &&
+                              '[&>button]:!bg-primary-50/50 dark:[&>button]:!bg-primary-950/30 [&>button]:border-primary-200 dark:[&>button]:border-primary-800'
                           )}
-                        >
-                          <option value="">Select level...</option>
-                          <option value="Junior">Junior</option>
-                          <option value="Mid">Mid-Level</option>
-                          <option value="Senior">Senior</option>
-                          <option value="Lead">Lead</option>
-                          <option value="Principal">Principal</option>
-                        </select>
+                          options={[
+                            { value: 'Junior', label: 'Junior' },
+                            { value: 'Mid', label: 'Mid-Level' },
+                            { value: 'Senior', label: 'Senior' },
+                            { value: 'Lead', label: 'Lead' },
+                            { value: 'Principal', label: 'Principal' },
+                          ]}
+                        />
                       </div>
                     </div>
 
-                    {/* Job Summary */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Summary *
                       </label>
-                      <p className="text-sm text-slate-500 mb-3">
+                      <p className="text-sm text-text-tertiary mb-3">
                         Brief 2-3 sentence summary about this position.
                       </p>
                       <textarea
@@ -1067,20 +1179,22 @@ export function JobCreationWizard({
                         rows={Math.max(4, Math.ceil(formData.description.length / 80))}
                         placeholder="Summarize what this role is about..."
                         className={cn(
-                          'w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y',
-                          'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                          'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 resize-y',
+                          'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                           'min-h-[100px] max-h-[300px] overflow-y-auto',
-                          isGenerated && formData.description && 'bg-indigo-50/50 border-indigo-200'
+                          isGenerated &&
+                            formData.description &&
+                            'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
                         )}
                       />
                     </div>
 
-                    {/* Job Responsibilities */}
+                    {}
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Responsibilities
                       </label>
-                      <p className="text-sm text-slate-500 mb-3">
+                      <p className="text-sm text-text-tertiary mb-3">
                         Add key responsibilities and duties for this role.
                       </p>
                       <div className="space-y-4">
@@ -1097,21 +1211,21 @@ export function JobCreationWizard({
                                     onChange={e => setEditValue(e.target.value)}
                                     placeholder="e.g. Design and implement scalable backend services"
                                     rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                    className="w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                                    className="w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
                                     autoFocus
                                   />
                                   <div className="flex gap-2 justify-end">
                                     <button
                                       type="button"
                                       onClick={cancelEdit}
-                                      className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                      className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       type="button"
                                       onClick={saveEdit}
-                                      className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                      className="px-3 py-1.5 text-sm text-text-inverse bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
                                     >
                                       Save
                                     </button>
@@ -1127,11 +1241,13 @@ export function JobCreationWizard({
                                     placeholder="e.g. Design and implement scalable backend services"
                                     rows={Math.max(2, Math.ceil(item.length / 60))}
                                     className={cn(
-                                      'w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                                      'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                      'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
+                                      'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                       'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                       'whitespace-pre-wrap break-words',
-                                      isGenerated && item && 'bg-indigo-50/50 border-indigo-200'
+                                      isGenerated &&
+                                        item &&
+                                        'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
                                     )}
                                   />
                                   <div className="absolute right-0 top-1/2 -translate-y-1/2">
@@ -1140,7 +1256,7 @@ export function JobCreationWizard({
                                       onClick={() =>
                                         startEditing('jobResponsibilities', index, item)
                                       }
-                                      className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                      className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
                                       style={{
                                         right: '40px',
                                         top: '50%',
@@ -1156,7 +1272,7 @@ export function JobCreationWizard({
                                         onClick={() =>
                                           removeArrayItem('jobResponsibilities', index)
                                         }
-                                        className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                        className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
                                         style={{
                                           right: '12px',
                                           top: '50%',
@@ -1176,7 +1292,7 @@ export function JobCreationWizard({
                         <button
                           type="button"
                           onClick={() => addArrayItem('jobResponsibilities')}
-                          className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                          className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
                         >
                           + Add responsibility
                         </button>
@@ -1187,17 +1303,17 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 2: Job Details */}
+            {}
             {getContentStep(currentStep) === 2 && (
               <div className="space-y-8">
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Job Details</h4>
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Job Details</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           City *
                         </label>
                         <input
@@ -1206,16 +1322,16 @@ export function JobCreationWizard({
                           onChange={e => updateField('locationCity', e.target.value)}
                           placeholder="e.g. "
                           className={cn(
-                            'w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200',
+                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200',
                             isGenerated &&
                               formData.locationCity &&
-                              'bg-indigo-50/50 border-indigo-200'
+                              'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           Country *
                         </label>
                         <input
@@ -1224,74 +1340,68 @@ export function JobCreationWizard({
                           onChange={e => updateField('locationCountry', e.target.value)}
                           placeholder="e.g. Nepal"
                           className={cn(
-                            'w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200',
+                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200',
                             isGenerated &&
                               formData.locationCountry &&
-                              'bg-indigo-50/50 border-indigo-200'
+                              'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
                           )}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Location Type *
                       </label>
-                      <select
+                      <CustomDropdown
                         value={formData.locationType}
-                        onChange={e => updateField('locationType', e.target.value)}
+                        onChange={value => updateField('locationType', value)}
+                        placeholder="Select type..."
                         className={cn(
-                          'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                          'text-base text-slate-800 transition-colors duration-200',
-                          'appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat',
-                          'select-arrow bg-white',
                           isGenerated &&
                             formData.locationType &&
-                            '!bg-indigo-50/50 border-indigo-200'
+                            '[&>button]:!bg-primary-50/50 dark:[&>button]:!bg-primary-950/30 [&>button]:border-primary-200 dark:[&>button]:border-primary-800'
                         )}
-                      >
-                        <option value="">Select type...</option>
-                        <option value="Remote">Remote</option>
-                        <option value="Hybrid">Hybrid</option>
-                        <option value="On-site">On-site</option>
-                      </select>
+                        options={[
+                          { value: 'Remote', label: 'Remote' },
+                          { value: 'Hybrid', label: 'Hybrid' },
+                          { value: 'On-site', label: 'On-site' },
+                        ]}
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Employment Type *
                       </label>
-                      <select
+                      <CustomDropdown
                         value={formData.employmentType}
-                        onChange={e => updateField('employmentType', e.target.value)}
+                        onChange={value => updateField('employmentType', value)}
+                        placeholder="Select type..."
                         className={cn(
-                          'w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                          'text-base text-slate-800 transition-colors duration-200',
-                          'appearance-none bg-white bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat',
-                          'select-arrow bg-white',
                           isGenerated &&
                             formData.employmentType &&
-                            '!bg-indigo-50/50 border-indigo-200'
+                            '[&>button]:!bg-primary-50/50 dark:[&>button]:!bg-primary-950/30 [&>button]:border-primary-200 dark:[&>button]:border-primary-800'
                         )}
-                      >
-                        <option value="">Select type...</option>
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="Contract">Contract</option>
-                        <option value="Internship">Internship</option>
-                      </select>
+                        options={[
+                          { value: 'Full-time', label: 'Full-time' },
+                          { value: 'Part-time', label: 'Part-time' },
+                          { value: 'Contract', label: 'Contract' },
+                          { value: 'Internship', label: 'Internship' },
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Step 3: Requirements and Skills */}
+            {}
             {getContentStep(currentStep) === 3 && (
               <div className="space-y-8">
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Required Qualifications</h4>
-                    <p className="text-sm text-slate-500 mt-2">
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Required Qualifications</h4>
+                    <p className="text-sm text-text-tertiary mt-2">
                       Add requirements, skills, and education here.
                     </p>
                   </div>
@@ -1310,8 +1420,8 @@ export function JobCreationWizard({
                                 placeholder="e.g. Strong experience with Python for backend development"
                                 rows={Math.max(2, Math.ceil(editValue.length / 60))}
                                 className={cn(
-                                  'w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
-                                  'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                  'w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                   'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                   'whitespace-pre-wrap break-words'
                                 )}
@@ -1321,14 +1431,14 @@ export function JobCreationWizard({
                                 <button
                                   type="button"
                                   onClick={cancelEdit}
-                                  className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   type="button"
                                   onClick={saveEdit}
-                                  className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
                                 >
                                   Save
                                 </button>
@@ -1348,11 +1458,13 @@ export function JobCreationWizard({
                                 placeholder="e.g. Strong experience with Python for backend development"
                                 rows={Math.max(2, Math.ceil(item.length / 60))}
                                 className={cn(
-                                  'w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                                  'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                  'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
+                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                   'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                   'whitespace-pre-wrap break-words',
-                                  isGenerated && item && 'bg-indigo-50/50 border-indigo-200'
+                                  isGenerated &&
+                                    item &&
+                                    'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
                                 )}
                               />
                               <div className="absolute right-0 top-1/2 -translate-y-1/2">
@@ -1361,7 +1473,7 @@ export function JobCreationWizard({
                                   onClick={() =>
                                     startEditing('requiredSkillsAndExperience', index, item)
                                   }
-                                  className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                  className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
                                   style={{
                                     right: '40px',
                                     top: '50%',
@@ -1377,7 +1489,7 @@ export function JobCreationWizard({
                                     onClick={() =>
                                       removeArrayItem('requiredSkillsAndExperience', index)
                                     }
-                                    className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                    className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
                                     style={{
                                       right: '12px',
                                       top: '50%',
@@ -1396,17 +1508,17 @@ export function JobCreationWizard({
                     })}
                     <button
                       onClick={() => addArrayItem('requiredSkillsAndExperience')}
-                      className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                      className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
                     >
                       + Add requirements
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Preferred</h4>
-                    <p className="text-sm text-slate-500 mt-2">
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Preferred</h4>
+                    <p className="text-sm text-text-tertiary mt-2">
                       Optional experiences, qualities that would be beneficial but not strictly
                       required for this role.
                     </p>
@@ -1425,8 +1537,8 @@ export function JobCreationWizard({
                                 placeholder="e.g. Experience with Kubernetes and container orchestration"
                                 rows={Math.max(2, Math.ceil(editValue.length / 60))}
                                 className={cn(
-                                  'w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
-                                  'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                  'w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                   'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                   'whitespace-pre-wrap break-words'
                                 )}
@@ -1436,14 +1548,14 @@ export function JobCreationWizard({
                                 <button
                                   type="button"
                                   onClick={cancelEdit}
-                                  className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   type="button"
                                   onClick={saveEdit}
-                                  className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
                                 >
                                   Save
                                 </button>
@@ -1459,18 +1571,20 @@ export function JobCreationWizard({
                                 placeholder="e.g. Experience with Kubernetes and container orchestration"
                                 rows={Math.max(2, Math.ceil(item.length / 60))}
                                 className={cn(
-                                  'w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                                  'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                  'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
+                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                   'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                   'whitespace-pre-wrap break-words',
-                                  isGenerated && item && 'bg-indigo-50/50 border-indigo-200'
+                                  isGenerated &&
+                                    item &&
+                                    'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
                                 )}
                               />
                               <div className="absolute right-0 top-1/2 -translate-y-1/2">
                                 <button
                                   type="button"
                                   onClick={() => startEditing('niceToHave', index, item)}
-                                  className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                  className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
                                   style={{
                                     right: '40px',
                                     top: '50%',
@@ -1484,7 +1598,7 @@ export function JobCreationWizard({
                                   <button
                                     type="button"
                                     onClick={() => removeArrayItem('niceToHave', index)}
-                                    className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                    className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
                                     style={{
                                       right: '12px',
                                       top: '50%',
@@ -1503,7 +1617,7 @@ export function JobCreationWizard({
                     })}
                     <button
                       onClick={() => addArrayItem('niceToHave')}
-                      className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                      className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
                     >
                       + Add nice to have
                     </button>
@@ -1512,17 +1626,17 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 4: Compensation */}
+            {}
             {getContentStep(currentStep) === 4 && (
               <div className="space-y-8">
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Compensation</h4>
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Compensation</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div className="grid grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           Min Salary
                         </label>
                         <input
@@ -1531,13 +1645,13 @@ export function JobCreationWizard({
                           onChange={e => updateField('salaryMin', e.target.value)}
                           placeholder="80000"
                           className={cn(
-                            'w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200'
+                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200'
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           Max Salary
                         </label>
                         <input
@@ -1546,43 +1660,44 @@ export function JobCreationWizard({
                           onChange={e => updateField('salaryMax', e.target.value)}
                           placeholder="120000"
                           className={cn(
-                            'w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                            'text-base text-slate-800 placeholder:text-slate-400 transition-colors duration-200'
+                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200'
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                        <label className="block text-sm font-semibold text-text-secondary mb-3">
                           Currency
                         </label>
-                        <select
+                        <CustomDropdown
                           value={formData.currency}
-                          onChange={e => updateField('currency', e.target.value)}
-                          className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 select-arrow bg-white text-base text-slate-800 transition-colors duration-200"
-                        >
-                          <option value="INR">INR</option>
-                          <option value="USD">USD</option>
-                          <option value="NPR">NPR</option>
-                        </select>
+                          onChange={value => updateField('currency', value)}
+                          placeholder="Select currency..."
+                          options={[
+                            { value: 'INR', label: 'INR' },
+                            { value: 'USD', label: 'USD' },
+                            { value: 'NPR', label: 'NPR' },
+                          ]}
+                        />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">
+                      <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Application Deadline
                       </label>
                       <input
                         type="date"
                         value={formData.applicationDeadline}
                         onChange={e => updateField('applicationDeadline', e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base text-slate-800 transition-colors duration-200"
+                        className="w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-base text-text-primary transition-colors duration-200"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                  <div className="px-8 py-6 border-b border-slate-100">
-                    <h4 className="text-xl font-bold text-slate-900">Compensation & Benefits</h4>
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Compensation & Benefits</h4>
                   </div>
                   <div className="px-8 py-6 space-y-4">
                     {formData.benefits.map((benefit, index) => {
@@ -1598,8 +1713,8 @@ export function JobCreationWizard({
                                 placeholder="Add what we offer..."
                                 rows={Math.max(2, Math.ceil(editValue.length / 60))}
                                 className={cn(
-                                  'w-full px-4 pr-14 py-3 border-2 border-indigo-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
-                                  'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                  'w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                   'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                   'whitespace-pre-wrap break-words'
                                 )}
@@ -1609,14 +1724,14 @@ export function JobCreationWizard({
                                 <button
                                   type="button"
                                   onClick={cancelEdit}
-                                  className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   type="button"
                                   onClick={saveEdit}
-                                  className="px-3 py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
                                 >
                                   Save
                                 </button>
@@ -1630,18 +1745,20 @@ export function JobCreationWizard({
                                 placeholder="Add what we offer..."
                                 rows={Math.max(2, Math.ceil(benefit.length / 60))}
                                 className={cn(
-                                  'w-full px-4 pr-14 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                                  'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                                  'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                                   'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
                                   'whitespace-pre-wrap break-words',
-                                  isGenerated && benefit && 'bg-indigo-50/50 border-indigo-200'
+                                  isGenerated &&
+                                    benefit &&
+                                    'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
                                 )}
                               />
                               <div className="absolute right-0 top-1/2 -translate-y-1/2">
                                 <button
                                   type="button"
                                   onClick={() => startEditing('benefits', index, benefit)}
-                                  className="absolute p-1.5 text-slate-400 hover:text-indigo-600 transition-colors rounded hover:bg-indigo-50"
+                                  className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
                                   style={{
                                     right: '40px',
                                     top: '50%',
@@ -1655,7 +1772,7 @@ export function JobCreationWizard({
                                   <button
                                     type="button"
                                     onClick={() => removeArrayItem('benefits', index)}
-                                    className="absolute p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50"
+                                    className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
                                     style={{
                                       right: '12px',
                                       top: '50%',
@@ -1674,10 +1791,36 @@ export function JobCreationWizard({
                     })}
                     <button
                       onClick={() => addArrayItem('benefits')}
-                      className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer"
+                      className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
                     >
                       + Add offering
                     </button>
+                  </div>
+                </div>
+
+                <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="px-8 py-6 border-b border-border-subtle">
+                    <h4 className="text-xl font-bold text-text-primary">Automatic Shortlisting</h4>
+                  </div>
+                  <div className="px-8 py-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm text-text-tertiary leading-relaxed">
+                          When enabled, candidates will be automatically shortlisted when this job
+                          expires. This helps streamline your recruitment process by identifying top
+                          candidates using AI.
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer ml-6">
+                        <input
+                          type="checkbox"
+                          checked={formData.autoShortlist}
+                          onChange={e => updateField('autoShortlist', e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-background-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-background-surface after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background-surface after:border-border-strong after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600" />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1686,26 +1829,26 @@ export function JobCreationWizard({
         )}
       </div>
 
-      {/* Footer Actions - Fixed */}
+      {}
       {!isGenerating && (
-        <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
+        <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 bg-background-surface border-t border-border-default shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
           <button
             onClick={handlePrev}
-            className="flex items-center gap-2 px-5 py-2.5 text-slate-600 text-sm font-semibold hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200"
+            className="flex items-center gap-2 px-5 py-2.5 text-text-tertiary text-sm font-semibold hover:text-text-primary hover:bg-background-subtle rounded-xl transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
             {currentStep === 1 ? 'Cancel' : 'Back'}
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Save Draft / Publish */}
+            {}
             {currentStep === steps.length ? (
               <div className="flex gap-3">
-                {/* Revision Button - Show when editing a draft job or when AI content exists */}
+                {}
                 {(jobToEdit || isGenerated) && (
                   <button
                     onClick={() => setShowRevisionPrompt(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100"
+                    className="flex items-center gap-2 px-5 py-2.5 text-primary-600 dark:text-primary-400 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-all duration-200 border border-transparent hover:border-primary-100 dark:hover:border-primary-900"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Revise with AI
@@ -1714,10 +1857,10 @@ export function JobCreationWizard({
                 <button
                   onClick={handleSaveDraft}
                   className={cn(
-                    'px-5 py-2.5 text-slate-600 text-sm font-semibold rounded-xl transition-all duration-200 border border-slate-200',
+                    'px-5 py-2.5 text-text-secondary text-sm font-semibold rounded-xl transition-all duration-200 border border-border-default',
                     createJobMutation.isPending || updateJobMutation.isPending
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'
+                      : 'hover:bg-background-subtle hover:border-border-strong hover:text-text-primary'
                   )}
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
                 >
@@ -1736,10 +1879,10 @@ export function JobCreationWizard({
                   onClick={handleSubmit}
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
                   className={cn(
-                    'flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25',
+                    'flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300',
                     createJobMutation.isPending || updateJobMutation.isPending
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5'
+                      : 'hover:-translate-y-0.5'
                   )}
                 >
                   {createJobMutation.isPending || updateJobMutation.isPending ? (
@@ -1761,24 +1904,24 @@ export function JobCreationWizard({
               </div>
             ) : (
               <div className="flex gap-3">
-                {/* Revision Button - Show when editing a draft job */}
+                {}
                 {jobToEdit && (
                   <button
                     onClick={() => setShowRevisionPrompt(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 rounded-xl transition-all duration-200 border border-transparent hover:border-indigo-100"
+                    className="flex items-center gap-2 px-5 py-2.5 text-primary-600 dark:text-primary-400 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-all duration-200 border border-transparent hover:border-primary-100 dark:hover:border-primary-900"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Revise with AI
                   </button>
                 )}
-                {/* Save as Draft button - Available from Step 1 */}
+                {}
                 <button
                   onClick={handleSaveDraft}
                   className={cn(
-                    'px-5 py-2.5 text-slate-600 text-sm font-semibold rounded-xl transition-all duration-200 border border-slate-200',
+                    'px-5 py-2.5 text-text-secondary text-sm font-semibold rounded-xl transition-all duration-200 border border-border-default',
                     createJobMutation.isPending || updateJobMutation.isPending
                       ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'
+                      : 'hover:bg-background-subtle hover:border-border-strong hover:text-text-primary'
                   )}
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
                 >
@@ -1793,10 +1936,10 @@ export function JobCreationWizard({
                     'Save Draft'
                   )}
                 </button>
-                {/* Continue button */}
+                {}
                 <button
                   onClick={handleNext}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold rounded-xl hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
+                  className="flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5"
                 >
                   Continue
                   <ArrowRight className="w-4 h-4" />
@@ -1807,32 +1950,32 @@ export function JobCreationWizard({
         </div>
       )}
 
-      {/* Revision Prompt Modal */}
+      {}
       {showRevisionPrompt && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          {/* Backdrop with blur */}
+          {}
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowRevisionPrompt(false)}
           />
 
-          {/* Modal Content */}
-          <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-lg border border-slate-200/50 overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="bg-white px-10 py-8 border-b border-slate-100">
-              <h3 className="text-3xl font-bold text-slate-900 leading-tight tracking-tight">
+          {}
+          <div className="relative bg-background-surface rounded-[2rem] shadow-2xl w-full max-w-lg border border-border-default/50 overflow-hidden animate-in zoom-in-95 duration-200">
+            {}
+            <div className="bg-background-surface px-10 py-8 border-b border-border-subtle">
+              <h3 className="text-3xl font-bold text-text-primary leading-tight tracking-tight">
                 Request AI Revision
               </h3>
-              <p className="text-slate-500 mt-2 font-medium text-lg">
+              <p className="text-text-tertiary mt-2 font-medium text-lg">
                 Tell the AI what you&apos;d like to change or improve
               </p>
             </div>
 
-            {/* Body */}
+            {}
             <div className="px-10 py-8 space-y-8">
-              {/* Quick Suggestions */}
+              {}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-4">
+                <label className="block text-sm font-semibold text-text-secondary mb-4">
                   Quick Suggestions
                 </label>
                 <div className="flex flex-wrap gap-3 max-h-32 overflow-y-auto pr-2">
@@ -1843,8 +1986,8 @@ export function JobCreationWizard({
                       onClick={() => handleSuggestionClick(suggestion)}
                       className={cn(
                         'px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200',
-                        'border border-slate-200 bg-white text-slate-700',
-                        'hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700',
+                        'border border-border-default bg-background-surface text-text-secondary',
+                        'hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300',
                         'cursor-pointer active:scale-95'
                       )}
                     >
@@ -1854,9 +1997,9 @@ export function JobCreationWizard({
                 </div>
               </div>
 
-              {/* Custom Input */}
+              {}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                <label className="block text-sm font-semibold text-text-secondary mb-3">
                   Or Type Your Own Revision Instructions
                 </label>
                 <textarea
@@ -1866,17 +2009,19 @@ export function JobCreationWizard({
                   rows={5}
                   maxLength={500}
                   className={cn(
-                    'w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500',
-                    'text-base leading-relaxed text-slate-800 placeholder:text-slate-400',
+                    'w-full px-4 py-3 border border-border-default rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                    'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
                     'resize-y min-h-[120px] transition-colors duration-200'
                   )}
                 />
                 <div className="flex justify-between items-center mt-3">
-                  <p className="text-sm text-slate-500">Be specific about what you want changed</p>
+                  <p className="text-sm text-text-tertiary">
+                    Be specific about what you want changed
+                  </p>
                   <span
                     className={cn(
                       'text-sm font-medium',
-                      revisionText.length > 450 ? 'text-amber-600' : 'text-slate-400'
+                      revisionText.length > 450 ? 'text-warning-600' : 'text-text-muted'
                     )}
                   >
                     {revisionText.length}/500
@@ -1885,11 +2030,11 @@ export function JobCreationWizard({
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="px-10 py-6 bg-white border-t border-slate-100 flex justify-end gap-3">
+            {}
+            <div className="px-10 py-6 bg-background-surface border-t border-border-subtle flex justify-end gap-3">
               <button
                 onClick={() => setShowRevisionPrompt(false)}
-                className="px-5 py-2.5 text-slate-600 text-sm font-semibold hover:bg-slate-100 rounded-xl transition-all duration-200 border border-slate-200 hover:border-slate-300"
+                className="px-5 py-2.5 text-text-tertiary text-sm font-semibold hover:bg-background-subtle rounded-xl transition-all duration-200 border border-border-default hover:border-border-strong"
               >
                 Cancel
               </button>
@@ -1897,10 +2042,10 @@ export function JobCreationWizard({
                 onClick={handleRevision}
                 disabled={!revisionText.trim() || generateDraftMutation.isPending}
                 className={cn(
-                  'flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25',
+                  'flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300',
                   revisionText.trim() && !generateDraftMutation.isPending
-                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 hover:shadow-indigo-500/40 hover:-translate-y-0.5'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    ? 'btn-primary-gradient hover:-translate-y-0.5'
+                    : 'bg-background-muted text-text-muted cursor-not-allowed'
                 )}
               >
                 {generateDraftMutation.isPending ? (

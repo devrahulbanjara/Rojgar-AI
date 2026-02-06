@@ -12,14 +12,7 @@
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
-    "clean": "rm -rf .next out dist",
-    "prepare": "cd .. && husky frontend/.husky"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+    "clean": "rm -rf .next out dist"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
@@ -33,32 +26,32 @@
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.544.0",
     "next": "^16.1.4",
+    "next-themes": "^0.4.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-icons": "^5.5.0",
     "recharts": "^3.2.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
     "autoprefixer": "^10.4.21",
     "baseline-browser-mapping": "^2.9.18",
-    "@eslint/eslintrc": "^3.1.0",
     "eslint": "^9",
     "eslint-config-next": "^16.1.4",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.18.0",
-    "@typescript-eslint/parser": "^8.18.0",
     "globals": "^15.13.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "prettier": "^3.3.3",
     "postcss": "^8.5.6",
+    "prettier": "^3.3.3",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
   }

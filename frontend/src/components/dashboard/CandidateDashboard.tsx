@@ -82,39 +82,38 @@ export default function CandidateDashboard() {
     }
   })
 
-  if (error)
-    return <div className="text-center p-20 text-red-500">Failed to load applications.</div>
+  if (error) return <div className="text-center p-20 text-error">Failed to load applications.</div>
 
   if (loading) {
     return (
       <div className="h-full flex flex-col space-y-8 pb-10">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Your Applications</h1>
-          <p className="text-slate-500 mt-2 text-lg">Track your job application journey</p>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Your Applications</h1>
+          <p className="text-text-tertiary mt-2 text-lg">Track your job application journey</p>
         </div>
 
-        {/* Skeleton Kanban Columns */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           <SkeletonDashboardColumn
-            bgColor="bg-blue-50/50"
-            borderColor="border-blue-100/60"
-            iconColor="bg-blue-200"
-            textColor="bg-slate-200"
-            badgeColor="bg-blue-100"
+            bgColor="bg-primary-50/50 dark:bg-primary-950/30"
+            borderColor="border-primary-200/60 dark:border-primary-800/60"
+            iconColor="bg-primary-200 dark:bg-primary-800"
+            textColor="bg-border-default"
+            badgeColor="bg-primary-100 dark:bg-primary-900/30"
           />
           <SkeletonDashboardColumn
-            bgColor="bg-indigo-50/50"
-            borderColor="border-indigo-100/60"
-            iconColor="bg-indigo-200"
-            textColor="bg-slate-200"
-            badgeColor="bg-indigo-100"
+            bgColor="bg-primary-50/50 dark:bg-primary-950/30"
+            borderColor="border-primary-200/60 dark:border-primary-800/60"
+            iconColor="bg-primary-200 dark:bg-primary-800"
+            textColor="bg-border-default"
+            badgeColor="bg-primary-100 dark:bg-primary-900/30"
           />
           <SkeletonDashboardColumn
-            bgColor="bg-emerald-50/50"
-            borderColor="border-emerald-100/60"
-            iconColor="bg-emerald-200"
-            textColor="bg-slate-200"
-            badgeColor="bg-emerald-100"
+            bgColor="bg-success-50/50 dark:bg-success-950/30"
+            borderColor="border-success-200/60 dark:border-success-800/60"
+            iconColor="bg-success-200 dark:bg-success-800"
+            textColor="bg-border-default"
+            badgeColor="bg-success-100 dark:bg-success-900/30"
           />
         </div>
       </div>
@@ -123,21 +122,15 @@ export default function CandidateDashboard() {
 
   return (
     <div className="h-full flex flex-col space-y-8 pb-10">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Your Applications</h1>
-        <p className="text-slate-500 mt-2 text-lg">Track your job application journey</p>
-      </div>
-
-      {/* Kanban Columns - Equal Height via Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-        {/* Applied Column */}
-        <div className="bg-blue-50/50 rounded-2xl p-6 flex flex-col gap-6 border border-blue-100/60 shadow-sm/50">
+        {}
+        <div className="bg-primary-50/50 dark:bg-primary-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-primary-200/60 dark:border-primary-800/60 shadow-sm/50">
           <ColumnHeader
             title="Applied"
             count={columns.Applied.length}
-            icon={<Briefcase className="w-5 h-5 text-blue-600" />}
-            textColor="text-blue-900"
-            badgeColor="bg-blue-100 text-blue-700"
+            icon={<Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
+            textColor="text-primary-900 dark:text-text-primary"
+            badgeColor="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
           />
           <div className="flex-1 flex flex-col gap-4">
             {columns.Applied.map(app => (
@@ -147,14 +140,14 @@ export default function CandidateDashboard() {
           </div>
         </div>
 
-        {/* Interviewing Column */}
-        <div className="bg-indigo-50/50 rounded-2xl p-6 flex flex-col gap-6 border border-indigo-100/60 shadow-sm/50">
+        {}
+        <div className="bg-ai-50/50 dark:bg-ai-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-ai-200/60 dark:border-ai-800/60 shadow-sm/50">
           <ColumnHeader
             title="Interviewing"
             count={columns.Interviewing.length}
-            icon={<Video className="w-5 h-5 text-indigo-600" />}
-            textColor="text-indigo-900"
-            badgeColor="bg-indigo-100 text-indigo-700"
+            icon={<Video className="w-5 h-5 text-ai-600 dark:text-ai-400" />}
+            textColor="text-ai-900 dark:text-text-primary"
+            badgeColor="bg-ai-100 dark:bg-ai-900/30 text-ai-700 dark:text-ai-300"
           />
           <div className="flex-1 flex flex-col gap-4">
             {columns.Interviewing.map(app => (
@@ -164,14 +157,14 @@ export default function CandidateDashboard() {
           </div>
         </div>
 
-        {/* Outcome Column */}
-        <div className="bg-emerald-50/50 rounded-2xl p-6 flex flex-col gap-6 border border-emerald-100/60 shadow-sm/50">
+        {}
+        <div className="bg-success-50/50 dark:bg-success-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-success-200/60 dark:border-success-800/60 shadow-sm/50">
           <ColumnHeader
             title="Outcome"
             count={columns.Outcome.length}
-            icon={<Trophy className="w-5 h-5 text-emerald-600" />}
-            textColor="text-emerald-900"
-            badgeColor="bg-emerald-100 text-emerald-700"
+            icon={<Trophy className="w-5 h-5 text-success-600 dark:text-success-400" />}
+            textColor="text-success-900 dark:text-success-100"
+            badgeColor="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300"
           />
           <div className="flex-1 flex flex-col gap-4">
             {columns.Outcome.map(app => (
@@ -184,8 +177,6 @@ export default function CandidateDashboard() {
     </div>
   )
 }
-
-// Sub-components
 
 function ColumnHeader({
   title,
@@ -214,33 +205,26 @@ function ColumnHeader({
 function ApplicationCard({ app }: { app: ApplicationResponse }) {
   const statusStyle = STATUS_CONFIG[app.current_status] || STATUS_CONFIG.applied
 
-  // Determine left border color based on specific status.
-  // We can map the bg-color from config to a border color roughly, or just use the config's text/border colors.
-  // Let's rely on the config but map it to a border-l color.
-  // Since STATUS_CONFIG has 'color' class string, we can parse it or just use a lookup.
-  // For simplicity and cleanest look, let's use the status color's main hue.
-
-  // Quick helper to extract border color from the status config class or default
   const getBorderColorClass = (statusStr: string) => {
-    if (statusStr === 'interviewing') return 'border-l-indigo-500'
-    if (statusStr === 'outcome') return 'border-l-emerald-500'
-    return 'border-l-blue-500' // Default applied
+    if (statusStr === 'interviewing') return 'border-l-ai-500'
+    if (statusStr === 'outcome') return 'border-l-success-500'
+    return 'border-l-primary-500'
   }
 
   return (
     <div
-      className={`bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-[4px] ${getBorderColorClass(app.current_status)} hover:shadow-md transition-all cursor-default group`}
+      className={`bg-background-surface p-4 rounded-lg shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} hover:shadow-md transition-all cursor-default group`}
     >
-      {/* Header: Title & Company */}
+      {}
       <div className="mb-3">
-        <h4 className="font-bold text-slate-900 text-sm leading-tight mb-1 group-hover:text-blue-600 transition-colors">
+        <h4 className="font-bold text-text-primary text-sm leading-tight mb-1 group-hover:text-primary transition-colors">
           {app.job.title}
         </h4>
-        <p className="text-sm font-medium text-slate-500">{app.organization.name}</p>
+        <p className="text-sm font-medium text-text-tertiary">{app.organization.name}</p>
       </div>
 
-      {/* Metadata: Location & Type */}
-      <div className="flex items-center gap-3 text-xs text-slate-400 mb-4">
+      {}
+      <div className="flex items-center gap-3 text-xs text-text-muted mb-4">
         {app.job.location_city && (
           <div className="flex items-center gap-1">
             <MapPin className="w-3 h-3" />
@@ -255,9 +239,9 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
         )}
       </div>
 
-      {/* Footer: Date & Status Chip */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+      {}
+      <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
+        <div className="flex items-center gap-1 text-[11px] text-text-muted font-medium">
           <CalendarClock className="w-3 h-3" />
           {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
         </div>
@@ -274,7 +258,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="h-32 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
+    <div className="h-32 flex flex-col items-center justify-center text-text-muted border-2 border-dashed border-border-default rounded-lg">
       <div className="text-sm italic">{message}</div>
     </div>
   )
