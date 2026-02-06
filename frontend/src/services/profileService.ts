@@ -59,7 +59,6 @@ export const profileService = {
     return api.candidate.skills.update(id, data)
   },
 
-  // Certifications
   async addCertification(data: CertificationCreate) {
     return api.candidate.certifications.add(data)
   },
@@ -72,7 +71,6 @@ export const profileService = {
     return api.candidate.certifications.update(id, data)
   },
 
-  // Social Links
   async addSocialLink(data: { type: string; url: string }) {
     return api.candidate.socialLinks.add(data)
   },

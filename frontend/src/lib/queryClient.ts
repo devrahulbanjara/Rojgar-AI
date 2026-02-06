@@ -62,17 +62,23 @@ export function restoreQueryCache() {
     if (!cached) return
 
     const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached)
-    const maxAge = 30 * 60 * 1000 // 30 minutes max cache age
+    const maxAge = 30 * 60 * 1000
+
     const now = Date.now()
+    const userKey = JSON.stringify(['auth', 'user'])
 
     Object.entries(cacheData).forEach(([key, { data, timestamp }]) => {
       if (now - timestamp > maxAge) return
+
+      if (key === userKey) {
+        return
+      }
 
       try {
         const queryKey = JSON.parse(key)
         queryClient.setQueryData(queryKey, data)
       } catch {
-        // Ignore invalid cache entries
+        // Ignore invalid query key errors
       }
     })
   } catch {
@@ -93,7 +99,8 @@ export function getCachedUserData() {
 
     if (!userCache) return undefined
 
-    const maxAge = 30 * 60 * 1000 // 30 minutes max cache age
+    const maxAge = 30 * 60 * 1000
+
     if (Date.now() - userCache.timestamp > maxAge) return undefined
 
     return userCache.data

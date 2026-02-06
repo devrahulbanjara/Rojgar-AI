@@ -1,7 +1,3 @@
-/**
- * Application Query Hooks
- */
-
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
@@ -11,12 +7,12 @@ import type { ApplicationTrackingBoard } from '../../types/application'
 
 export const useApplicationQueries = () => {
   const fetchApplicationTrackingBoard = async (): Promise<ApplicationTrackingBoard> => {
-    // Note: This endpoint may need to be created in backend
     const response = await fetch(
       `${API_CONFIG.baseUrl}/api/v1/candidate/applications/tracking-board`,
       {
         method: 'GET',
-        credentials: 'include', // Include cookies for authentication
+        credentials: 'include',
+
         headers: {
           'Content-Type': 'application/json',
         },

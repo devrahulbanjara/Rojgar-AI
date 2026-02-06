@@ -78,29 +78,19 @@ export default function CandidateProfilePage() {
   if (isAuthLoading || (isAuthenticated && isLoadingProfile)) {
     return (
       <AppShell>
-        <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-          <div className="space-y-8 pb-12">
-            {/* Skeleton Header */}
+        <PageTransition className="min-h-screen bg-background-subtle">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
             <AnimatedContainer direction="up" delay={0.1}>
-              <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <SkeletonProfileHeader />
-                </div>
-              </div>
+              <SkeletonProfileHeader />
             </AnimatedContainer>
 
-            {/* Main Content Container */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-              {/* Skeleton Tab Navigation */}
-              <AnimatedContainer direction="up" delay={0.2}>
-                <SkeletonProfileTab />
-              </AnimatedContainer>
+            <AnimatedContainer direction="up" delay={0.2}>
+              <SkeletonProfileTab />
+            </AnimatedContainer>
 
-              {/* Skeleton Tab Content */}
-              <AnimatedContainer direction="up" delay={0.3}>
-                <SkeletonProfileForm />
-              </AnimatedContainer>
-            </div>
+            <AnimatedContainer direction="up" delay={0.3}>
+              <SkeletonProfileForm />
+            </AnimatedContainer>
           </div>
         </PageTransition>
       </AppShell>
@@ -119,22 +109,16 @@ export default function CandidateProfilePage() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-        <div className="space-y-8 pb-12">
-          {/* Enhanced Header with Gradient Background */}
+      <PageTransition className="min-h-screen bg-background-subtle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <ProfileHeader user={user} profile={profile} />
-              </div>
-            </div>
+            <ProfileHeader user={user} profile={profile} />
+            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
-          {/* Main Content Container */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            {/* Tab Navigation */}
+          <div className="space-y-8">
             <AnimatedContainer direction="up" delay={0.2}>
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-1 shadow-sm">
+              <div className="bg-background-surface rounded-2xl border border-border-default p-1 shadow-sm">
                 <div className="flex overflow-x-auto">
                   {[
                     { id: 'profile', label: 'Profile Information', icon: User },
@@ -155,8 +139,8 @@ export default function CandidateProfilePage() {
                         }
                         className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-200 whitespace-nowrap ${
                           activeTab === tab.id
-                            ? 'bg-[#3056F5] text-white shadow-sm'
-                            : 'text-[#475569] hover:bg-[#F9FAFB] hover:text-[#3056F5]'
+                            ? 'bg-primary-600 text-white shadow-sm'
+                            : 'text-text-secondary hover:bg-background-subtle hover:text-primary-600 dark:hover:text-primary-400'
                         }`}
                       >
                         <IconComponent className="w-5 h-5" />
@@ -168,9 +152,9 @@ export default function CandidateProfilePage() {
               </div>
             </AnimatedContainer>
 
-            {/* Tab Content */}
+            {}
             <AnimatedContainer direction="up" delay={0.3}>
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm">
+              <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm">
                 {activeTab === 'profile' && profile && (
                   <ProfileInformationTab profile={profile} onUpdate={handleProfileUpdate} />
                 )}

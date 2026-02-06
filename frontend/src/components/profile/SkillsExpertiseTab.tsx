@@ -8,18 +8,16 @@ import type { Skill, Certification, SkillCreate, CertificationCreate } from '../
 import { toast } from 'sonner'
 import { queryClient } from '../../lib/queryClient'
 
-// Helper function to invalidate job recommendations cache when skills change
 const invalidateRecommendationsCache = () => {
-  // Invalidate all job-related queries
   queryClient.invalidateQueries({ queryKey: ['jobs'] })
-  // Also remove from localStorage
+
   if (typeof window !== 'undefined') {
     const cacheKey = 'convexhire-query-cache'
     try {
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const cacheData = JSON.parse(cached)
-        // Remove recommendation-related entries
+
         const newCache: Record<string, unknown> = {}
         Object.entries(cacheData).forEach(([key, value]) => {
           if (!key.includes('jobs') && !key.includes('recommendations')) {
@@ -29,7 +27,7 @@ const invalidateRecommendationsCache = () => {
         localStorage.setItem(cacheKey, JSON.stringify(newCache))
       }
     } catch {
-      // Ignore errors
+      // Ignore localStorage errors
     }
   }
 }
@@ -43,7 +41,6 @@ export function SkillsExpertiseTab({
   skills: initialSkills,
   certifications: initialCertifications,
 }: SkillsExpertiseTabProps) {
-  // Skills State
   const [skills, setSkills] = useState<Skill[]>(initialSkills)
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null)
@@ -51,7 +48,6 @@ export function SkillsExpertiseTab({
     skill_name: '',
   })
 
-  // Certifications State
   const [certifications, setCertifications] = useState<Certification[]>(initialCertifications)
   const [isAddingCert, setIsAddingCert] = useState(false)
   const [editingCertId, setEditingCertId] = useState<string | null>(null)
@@ -64,8 +60,6 @@ export function SkillsExpertiseTab({
     expiration_date: '',
     does_not_expire: false,
   })
-
-  // --- Skills Handlers ---
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,12 +76,12 @@ export function SkillsExpertiseTab({
           )
         )
         toast.success('Skill updated successfully!')
-        invalidateRecommendationsCache() // Refresh recommendations
+        invalidateRecommendationsCache()
       } else {
         const newSkill = await profileService.addSkill(skillData)
         setSkills(prev => [...prev, newSkill as unknown as Skill])
         toast.success('Skill added successfully!')
-        invalidateRecommendationsCache() // Refresh recommendations
+        invalidateRecommendationsCache()
       }
 
       setSkillForm({
@@ -113,7 +107,8 @@ export function SkillsExpertiseTab({
       await profileService.deleteSkill(id)
       setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
       toast.success('Skill deleted successfully!')
-      invalidateRecommendationsCache() // Refresh recommendations
+      invalidateRecommendationsCache()
+
       if (editingSkillId === id) {
         setIsAddingSkill(false)
         setEditingSkillId(null)
@@ -130,8 +125,6 @@ export function SkillsExpertiseTab({
       skill_name: '',
     })
   }
-
-  // --- Certifications Handlers ---
 
   const handleAddCert = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -223,21 +216,21 @@ export function SkillsExpertiseTab({
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Skills & Expertise</h3>
-        <p className="text-[#475569]">Manage your professional skills and certifications.</p>
+        <h3 className="text-2xl font-bold text-text-primary mb-2">Skills & Expertise</h3>
+        <p className="text-text-secondary">Manage your professional skills and certifications.</p>
       </div>
 
       <div className="space-y-8">
-        {/* Skills Section */}
-        <div className="bg-white rounded-2xl p-8 border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+        {}
+        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+              <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-200 dark:border-primary-800">
                 <Settings className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-[#0F172A]">Skills</h4>
-                <p className="text-sm text-[#64748B]">Your technical competencies</p>
+                <h4 className="text-lg font-bold text-text-primary">Skills</h4>
+                <p className="text-sm text-text-tertiary">Your technical competencies</p>
               </div>
             </div>
             {!isAddingSkill && (
@@ -247,7 +240,7 @@ export function SkillsExpertiseTab({
                   setSkillForm({ skill_name: '' })
                   setIsAddingSkill(true)
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200"
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-md shadow-primary transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 Add Skill
@@ -255,23 +248,23 @@ export function SkillsExpertiseTab({
             )}
           </div>
 
-          {/* Add/Edit Skill Form */}
+          {}
           {isAddingSkill && (
             <form
               onSubmit={handleAddSkill}
-              className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300"
+              className="mb-8 p-6 bg-background-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-top-4 duration-300"
             >
-              <h5 className="text-lg font-bold text-[#0F172A] mb-6 flex items-center gap-2">
+              <h5 className="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
                 {editingSkillId ? (
-                  <Pencil className="w-5 h-5 text-blue-600" />
+                  <Pencil className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 ) : (
-                  <Plus className="w-5 h-5 text-blue-600" />
+                  <Plus className="w-5 h-5 text-primary-600" />
                 )}
                 {editingSkillId ? 'Edit Skill' : 'Add New Skill'}
               </h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="skill_name" className="font-semibold text-gray-700">
+                  <Label htmlFor="skill_name" className="font-semibold text-text-secondary">
                     Skill Name *
                   </Label>
                   <Input
@@ -279,15 +272,15 @@ export function SkillsExpertiseTab({
                     value={skillForm.skill_name}
                     onChange={e => setSkillForm(prev => ({ ...prev, skill_name: e.target.value }))}
                     placeholder="e.g., React, Python, Project Management"
-                    className="h-11 rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                     required
                   />
                 </div>
               </div>
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-border-default">
                 <Button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl font-medium shadow-sm transition-all"
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl font-medium shadow-sm transition-all"
                 >
                   {editingSkillId ? 'Save Changes' : 'Add Skill'}
                 </Button>
@@ -295,7 +288,7 @@ export function SkillsExpertiseTab({
                   type="button"
                   variant="outline"
                   onClick={handleCancelSkill}
-                  className="px-6 py-2.5 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-medium transition-all"
+                  className="px-6 py-2.5 border-border-default text-text-secondary hover:bg-background-subtle rounded-xl font-medium transition-all"
                 >
                   Cancel
                 </Button>
@@ -303,21 +296,21 @@ export function SkillsExpertiseTab({
             </form>
           )}
 
-          {/* Skills List - Pill Layout */}
+          {}
           {skills.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
-                <Settings className="w-8 h-8 text-gray-400" />
+            <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
+              <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
+                <Settings className="w-8 h-8 text-text-muted" />
               </div>
-              <h5 className="text-lg font-semibold text-gray-900 mb-2">No skills added yet</h5>
-              <p className="text-gray-500 max-w-sm mx-auto">
+              <h5 className="text-lg font-semibold text-text-primary mb-2">No skills added yet</h5>
+              <p className="text-text-tertiary max-w-sm mx-auto">
                 Add your key skills to help recruiters find you for relevant opportunities.
               </p>
               {!isAddingSkill && (
                 <Button
                   onClick={() => setIsAddingSkill(true)}
                   variant="outline"
-                  className="mt-6 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 rounded-xl"
+                  className="mt-6 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 rounded-xl"
                 >
                   Add Skill
                 </Button>
@@ -328,20 +321,20 @@ export function SkillsExpertiseTab({
               {skills.map(skill => (
                 <div
                   key={skill.candidate_skill_id}
-                  className="group inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
+                  className="group inline-flex items-center gap-2 px-4 py-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-xl border border-ai-200 dark:border-ai-800 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-300 dark:hover:border-ai-700 hover:shadow-sm transition-all duration-200"
                 >
                   <span className="font-semibold">{skill.skill_name}</span>
-                  <div className="flex items-center gap-1 border-l border-indigo-200 pl-2 ml-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 border-l border-ai-200 pl-2 ml-1 opacity-60 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditSkill(skill)}
-                      className="flex items-center justify-center w-6 h-6 text-indigo-600 hover:bg-white hover:shadow-sm rounded-lg transition-all duration-200"
+                      className="flex items-center justify-center w-6 h-6 text-ai-600 hover:bg-background-surface hover:shadow-sm rounded-lg transition-all duration-200"
                       title="Edit skill"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteSkill(skill.candidate_skill_id)}
-                      className="flex items-center justify-center w-6 h-6 text-indigo-600 hover:text-red-600 hover:bg-white hover:shadow-sm rounded-lg transition-all duration-200"
+                      className="flex items-center justify-center w-6 h-6 text-ai-600 hover:text-error-600 hover:bg-background-surface hover:shadow-sm rounded-lg transition-all duration-200"
                       title="Delete skill"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -353,16 +346,18 @@ export function SkillsExpertiseTab({
           )}
         </div>
 
-        {/* Certifications Section */}
-        <div className="bg-white rounded-2xl p-8 border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+        {}
+        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
+              <div className="w-12 h-12 rounded-xl bg-warning-50 flex items-center justify-center text-warning-600 shadow-sm border border-warning-200">
                 <Award className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-[#0F172A]">Certifications</h4>
-                <p className="text-sm text-[#64748B]">Licenses and professional certifications</p>
+                <h4 className="text-lg font-bold text-text-primary">Certifications</h4>
+                <p className="text-sm text-text-tertiary">
+                  Licenses and professional certifications
+                </p>
               </div>
             </div>
             {!isAddingCert && (
@@ -380,7 +375,7 @@ export function SkillsExpertiseTab({
                   })
                   setIsAddingCert(true)
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-md shadow-blue-500/20 transition-all duration-200"
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-md shadow-primary transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
                 Add Certification
@@ -388,23 +383,23 @@ export function SkillsExpertiseTab({
             )}
           </div>
 
-          {/* Add/Edit Certification Form */}
+          {}
           {isAddingCert && (
             <form
               onSubmit={handleAddCert}
-              className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300"
+              className="mb-8 p-6 bg-background-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-top-4 duration-300"
             >
-              <h5 className="text-lg font-bold text-[#0F172A] mb-6 flex items-center gap-2">
+              <h5 className="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
                 {editingCertId ? (
-                  <Pencil className="w-5 h-5 text-amber-600" />
+                  <Pencil className="w-5 h-5 text-warning-600" />
                 ) : (
-                  <Plus className="w-5 h-5 text-amber-600" />
+                  <Plus className="w-5 h-5 text-warning-600" />
                 )}
                 {editingCertId ? 'Edit Certification' : 'Add New Certification'}
               </h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="cert_name" className="font-semibold text-gray-700">
+                  <Label htmlFor="cert_name" className="font-semibold text-text-secondary">
                     Certification Name *
                   </Label>
                   <Input
@@ -414,12 +409,12 @@ export function SkillsExpertiseTab({
                       setCertForm(prev => ({ ...prev, certification_name: e.target.value }))
                     }
                     placeholder="e.g., AWS Certified Solutions Architect"
-                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-warning-500 focus:ring-warning-500/20"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="issuing_body" className="font-semibold text-gray-700">
+                  <Label htmlFor="issuing_body" className="font-semibold text-text-secondary">
                     Issuing Organization *
                   </Label>
                   <Input
@@ -427,12 +422,12 @@ export function SkillsExpertiseTab({
                     value={certForm.issuing_body}
                     onChange={e => setCertForm(prev => ({ ...prev, issuing_body: e.target.value }))}
                     placeholder="e.g., Amazon Web Services"
-                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-warning-500 focus:ring-warning-500/20"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="issue_date" className="font-semibold text-gray-700">
+                  <Label htmlFor="issue_date" className="font-semibold text-text-secondary">
                     Issue Date
                   </Label>
                   <Input
@@ -440,11 +435,11 @@ export function SkillsExpertiseTab({
                     type="date"
                     value={certForm.issue_date}
                     onChange={e => setCertForm(prev => ({ ...prev, issue_date: e.target.value }))}
-                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-warning-500 focus:ring-warning-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="expiration_date" className="font-semibold text-gray-700">
+                  <Label htmlFor="expiration_date" className="font-semibold text-text-secondary">
                     Expiration Date
                   </Label>
                   <Input
@@ -454,12 +449,12 @@ export function SkillsExpertiseTab({
                     onChange={e =>
                       setCertForm(prev => ({ ...prev, expiration_date: e.target.value }))
                     }
-                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-warning-500 focus:ring-warning-500/20"
                     disabled={certForm.does_not_expire}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="credential_id" className="font-semibold text-gray-700">
+                  <Label htmlFor="credential_id" className="font-semibold text-text-secondary">
                     Credential ID
                   </Label>
                   <Input
@@ -469,11 +464,11 @@ export function SkillsExpertiseTab({
                       setCertForm(prev => ({ ...prev, credential_id: e.target.value }))
                     }
                     placeholder="Optional"
-                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-warning-500 focus:ring-warning-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="credential_url" className="font-semibold text-gray-700">
+                  <Label htmlFor="credential_url" className="font-semibold text-text-secondary">
                     Credential URL
                   </Label>
                   <Input
@@ -483,7 +478,7 @@ export function SkillsExpertiseTab({
                       setCertForm(prev => ({ ...prev, credential_url: e.target.value }))
                     }
                     placeholder="Optional (https://...)"
-                    className="h-11 rounded-xl border-gray-300 focus:border-amber-500 focus:ring-amber-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-warning-500 focus:ring-warning-500/20"
                   />
                 </div>
                 <div className="space-y-2 flex items-center pt-8">
@@ -501,21 +496,21 @@ export function SkillsExpertiseTab({
                             expiration_date: isChecked ? '' : prev.expiration_date,
                           }))
                         }}
-                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-amber-500 checked:bg-amber-500 hover:border-amber-400"
+                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-border-default transition-all checked:border-warning-500 checked:bg-warning-500 hover:border-warning-400"
                       />
                       <CheckCircle2 className="pointer-events-none absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                     </div>
-                    <span className="font-medium text-gray-700 group-hover:text-amber-600 transition-colors">
+                    <span className="font-medium text-text-secondary group-hover:text-warning-600 transition-colors">
                       This certification does not expire
                     </span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-border-default">
                 <Button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl font-medium shadow-sm transition-all"
+                  className="px-6 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl font-medium shadow-sm transition-all"
                 >
                   {editingCertId ? 'Save Changes' : 'Add Certification'}
                 </Button>
@@ -523,7 +518,7 @@ export function SkillsExpertiseTab({
                   type="button"
                   variant="outline"
                   onClick={handleCancelCert}
-                  className="px-6 py-2.5 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl font-medium transition-all"
+                  className="px-6 py-2.5 border-border-default text-text-secondary hover:bg-background-subtle rounded-xl font-medium transition-all"
                 >
                   Cancel
                 </Button>
@@ -531,23 +526,23 @@ export function SkillsExpertiseTab({
             </form>
           )}
 
-          {/* Certifications List */}
+          {}
           {certifications.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
-                <Award className="w-8 h-8 text-gray-400" />
+            <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
+              <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
+                <Award className="w-8 h-8 text-text-muted" />
               </div>
-              <h5 className="text-lg font-semibold text-gray-900 mb-2">
+              <h5 className="text-lg font-semibold text-text-primary mb-2">
                 No certifications added yet
               </h5>
-              <p className="text-gray-500 max-w-sm mx-auto">
+              <p className="text-text-tertiary max-w-sm mx-auto">
                 Add your licenses and certifications to demonstrate your expertise.
               </p>
               {!isAddingCert && (
                 <Button
                   onClick={() => setIsAddingCert(true)}
                   variant="outline"
-                  className="mt-6 border-amber-200 text-amber-600 hover:bg-amber-50 hover:border-amber-300 rounded-xl"
+                  className="mt-6 border-warning-200 text-warning-600 hover:bg-warning-50 hover:border-warning-300 rounded-xl"
                 >
                   Add Certification
                 </Button>
@@ -558,30 +553,30 @@ export function SkillsExpertiseTab({
               {certifications.map(cert => (
                 <div
                   key={cert.candidate_certification_id}
-                  className="group flex items-start justify-between p-5 bg-white border border-[#E5E7EB] rounded-xl hover:border-amber-200 hover:shadow-md transition-all duration-300"
+                  className="group flex items-start justify-between p-5 bg-background-surface border border-border-default rounded-xl hover:border-warning-200 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-100 transition-colors">
+                    <div className="p-2 bg-warning-50 text-warning-600 rounded-lg group-hover:bg-warning-100 transition-colors">
                       <Award className="w-6 h-6" />
                     </div>
                     <div>
-                      <h5 className="text-lg font-bold text-[#0F172A]">
+                      <h5 className="text-lg font-bold text-text-primary">
                         {cert.certification_name}
                       </h5>
-                      <p className="text-[#475569] font-medium">{cert.issuing_body}</p>
-                      <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-[#64748B]">
+                      <p className="text-text-secondary font-medium">{cert.issuing_body}</p>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-text-tertiary">
                         {cert.issue_date && (
-                          <span className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                          <span className="bg-background-subtle px-2 py-0.5 rounded border border-border-subtle">
                             Issued: {new Date(cert.issue_date).toLocaleDateString()}
                           </span>
                         )}
                         {cert.expiration_date && (
-                          <span className="bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                          <span className="bg-background-subtle px-2 py-0.5 rounded border border-border-subtle">
                             Expires: {new Date(cert.expiration_date).toLocaleDateString()}
                           </span>
                         )}
                         {cert.does_not_expire && (
-                          <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100 flex items-center gap-1">
+                          <span className="bg-success-50 text-success-700 px-2 py-0.5 rounded border border-success-200 flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" /> No Expiration
                           </span>
                         )}
@@ -591,7 +586,7 @@ export function SkillsExpertiseTab({
                           href={cert.credential_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-medium text-[#3056F5] hover:underline mt-2 inline-flex items-center gap-1"
+                          className="text-sm font-medium text-primary hover:underline mt-2 inline-flex items-center gap-1"
                         >
                           Show Credential
                           <Award className="w-3 h-3" />
@@ -602,14 +597,14 @@ export function SkillsExpertiseTab({
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
                       onClick={() => handleEditCert(cert)}
-                      className="p-2 text-[#64748B] hover:text-[#3056F5] hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      className="p-2 text-text-tertiary hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg transition-colors duration-200"
                       title="Edit certification"
                     >
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleDeleteCert(cert.candidate_certification_id)}
-                      className="p-2 text-[#64748B] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      className="p-2 text-text-tertiary hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors duration-200"
                       title="Delete certification"
                     >
                       <X className="w-5 h-5" />

@@ -9,10 +9,6 @@ interface StatsGridProps {
   className?: string
 }
 
-/**
- * Responsive stats grid component
- * Displays different stats based on user type (candidate vs recruiter)
- */
 export const StatsGrid = memo<StatsGridProps>(
   ({ stats, userType = 'candidate', className = '' }) => {
     const candidateStats = [
@@ -57,7 +53,8 @@ export const StatsGrid = memo<StatsGridProps>(
       },
       {
         title: 'Hires',
-        value: 0, // This would come from stats in a real app
+        value: 0,
+
         icon: <TrendingUp />,
         description: 'Successful placements',
       },

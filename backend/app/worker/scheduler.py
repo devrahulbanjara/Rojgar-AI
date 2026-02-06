@@ -25,7 +25,7 @@ async def expire_jobs_task():
             user_repo = UserRepository(db)
             vector_service = JobVectorService()
             activity_emitter = ActivityEventEmitter()
-            
+
             job_service = JobService(
                 job_repo,
                 job_description_repo,
@@ -34,7 +34,7 @@ async def expire_jobs_task():
                 vector_service,
                 activity_emitter,
             )
-            
+
             job_ids_to_process = await job_service.auto_expire_jobs()
 
             if job_ids_to_process:
@@ -68,7 +68,7 @@ def start_scheduler():
         replace_existing=True,
     )
     scheduler.start()
-    logger.info("Background Scheduler Started (Nepal Time).")
+    logger.info("Background Scheduler to auto expire jobs started.")
 
 
 def shutdown_scheduler():

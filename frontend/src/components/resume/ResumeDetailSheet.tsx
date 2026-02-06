@@ -17,7 +17,7 @@ import {
   Building,
   X,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import ExperienceFormDialog from './forms/ExperienceFormDialog'
 import EducationFormDialog from './forms/EducationFormDialog'
 import SkillsFormDialog from './forms/SkillsFormDialog'
@@ -25,13 +25,7 @@ import CertificationFormDialog from './forms/CertificationFormDialog'
 import BasicInfoFormDialog from './forms/BasicInfoFormDialog'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import {
-  ResumeResponse,
-  ResumeWorkExperienceResponse,
-  ResumeEducationResponse,
-  ResumeCertificationResponse,
-} from '@/types/resume'
-// import { cn } from '@/lib/utils' // Unused
+import { ResumeDetail, WorkExperience, Education, Certification, Skill } from '@/types/resume'
 import { SkeletonResumeDetail } from '../common/SkeletonLoader'
 
 interface ResumeDetailSheetProps {
@@ -49,22 +43,20 @@ export default function ResumeDetailSheet({
   onClose,
   onUpdate,
 }: ResumeDetailSheetProps) {
-  const [resume, setResume] = useState<ResumeResponse | null>(null)
+  const [resume, setResume] = useState<ResumeDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // State for managing forms
   const [activeForm, setActiveForm] = useState<FormType>(null)
-  const [editingItem, setEditingItem] = useState<
-    ResumeWorkExperienceResponse | ResumeEducationResponse | ResumeCertificationResponse | null
-  >(null)
+  const [editingItem, setEditingItem] = useState<WorkExperience | Education | Certification | null>(
+    null
+  )
 
   const [isCertificationOpen, setIsCertificationOpen] = useState(false)
-  const [editingCertification, setEditingCertification] =
-    useState<ResumeCertificationResponse | null>(null)
+  const [editingCertification, setEditingCertification] = useState<Certification | null>(null)
 
   const [isBasicInfoOpen, setIsBasicInfoOpen] = useState(false)
 
-  const fetchResume = async () => {
+  const fetchResume = useCallback(async () => {
     if (!resumeId) {
       setResume(null)
       return
@@ -75,7 +67,7 @@ export default function ResumeDetailSheet({
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to fetch resume details')
-      const data: ResumeResponse = await res.json()
+      const data: ResumeDetail = await res.json()
       setResume(data)
     } catch (error) {
       console.error('Error fetching resume details:', error)
@@ -84,7 +76,7 @@ export default function ResumeDetailSheet({
     } finally {
       setLoading(false)
     }
-  }
+  }, [resumeId])
 
   useEffect(() => {
     if (isOpen && resumeId) {
@@ -97,8 +89,7 @@ export default function ResumeDetailSheet({
       setIsCertificationOpen(false)
       setEditingCertification(null)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, resumeId])
+  }, [isOpen, resumeId, fetchResume])
 
   const handleDelete = async (type: string, id: string) => {
     if (!confirm('Are you sure you want to remove this item?')) return
@@ -119,18 +110,15 @@ export default function ResumeDetailSheet({
     }
   }
 
-  const handleEdit = (
-    type: FormType,
-    item: ResumeWorkExperienceResponse | ResumeEducationResponse | ResumeCertificationResponse
-  ) => {
+  const handleEdit = (type: FormType, item: WorkExperience | Education | Certification) => {
     if (type === 'certification') {
-      setEditingCertification(item as ResumeCertificationResponse)
+      setEditingCertification(item as Certification)
       setIsCertificationOpen(true)
     } else if (type === 'experience') {
-      setEditingItem(item as ResumeWorkExperienceResponse)
+      setEditingItem(item as WorkExperience)
       setActiveForm(type)
     } else if (type === 'education') {
-      setEditingItem(item as ResumeEducationResponse)
+      setEditingItem(item as Education)
       setActiveForm(type)
     }
   }
@@ -158,7 +146,7 @@ export default function ResumeDetailSheet({
   if (!resume || loading) {
     return (
       <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
-        <SheetContent className="w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl p-0 bg-white border-l shadow-2xl flex flex-col overflow-hidden rounded-l-2xl">
+        <SheetContent className="w-full max-w-4xl p-0 bg-background-surface border-l shadow-2xl flex flex-col overflow-hidden rounded-l-2xl">
           <SkeletonResumeDetail />
         </SheetContent>
       </Sheet>
@@ -168,34 +156,34 @@ export default function ResumeDetailSheet({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={open => !open && onClose()} hideClose>
-        <SheetContent className="w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl p-0 bg-white flex flex-col shadow-2xl border-l overflow-hidden rounded-l-2xl">
-          {/* Header - Aligned with ApplicationModal aesthetics */}
-          <div className="flex-shrink-0 bg-gradient-to-b from-gray-50 to-white px-8 py-8 border-b border-gray-200 relative">
-            {/* Close Button */}
+        <SheetContent className="w-full max-w-4xl p-0 bg-background-surface flex flex-col shadow-2xl border-l overflow-hidden rounded-l-2xl">
+          {}
+          <div className="flex-shrink-0 bg-gradient-to-b from-ai-50/50 dark:from-ai-950/30 to-background-surface px-12 py-12 border-b border-ai-50/50 dark:border-ai-900/30 relative">
+            {}
             <button
               onClick={onClose}
-              className="absolute top-6 right-6 p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 z-10"
-              aria-label="Close"
+              className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
+              aria-label="Close modal"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-text-tertiary group-hover:text-text-primary transition-colors" />
             </button>
 
             <div className="flex items-start gap-4 pr-12">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 group">
-                  <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+              <div className="flex-1 min-w-0 pt-1">
+                <div className="flex items-center gap-3 group mb-2">
+                  <h2 className="text-2xl font-bold text-text-primary leading-tight">
                     {resume.target_job_title || 'General Resume'}
                   </h2>
                   <button
                     onClick={() => setIsBasicInfoOpen(true)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition opacity-0 group-hover:opacity-100"
+                    className="p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition opacity-0 group-hover:opacity-100"
                     title="Edit Basic Info"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 {resume.custom_summary && (
-                  <p className="text-[15px] text-gray-600 leading-relaxed mt-4 max-w-3xl">
+                  <p className="text-text-secondary font-medium leading-relaxed max-w-3xl">
                     {resume.custom_summary}
                   </p>
                 )}
@@ -203,295 +191,392 @@ export default function ResumeDetailSheet({
             </div>
           </div>
 
-          {/* Scrollable Content */}
-          <ScrollArea className="flex-1 bg-white">
-            <div className="px-8 py-8 space-y-8">
-              {/* --- EXPERIENCE SECTION --- */}
-              <section className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-6 bg-blue-600 rounded-full" />
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <Briefcase className="w-4 h-4 text-blue-600" />
+          {}
+          <ScrollArea className="flex-1 bg-background-subtle">
+            <div className="p-8 space-y-8">
+              {}
+              {resume.custom_summary && (
+                <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="flex items-center gap-4 mb-6 pb-4 border-b border-border-subtle">
+                    <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-100 dark:border-primary-900/30">
+                      <Briefcase className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Work Experience</h3>
+                    <div>
+                      <h4 className="text-lg font-bold text-text-primary">Professional Summary</h4>
+                      <p className="text-sm text-text-tertiary">Your professional overview</p>
+                    </div>
+                  </div>
+                  <div className="bg-background-subtle border border-border-default rounded-2xl p-6">
+                    <p className="text-text-secondary leading-relaxed">{resume.custom_summary}</p>
+                  </div>
+                </div>
+              )}
+
+              {}
+              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-100 dark:border-primary-900/30">
+                      <Briefcase className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-text-primary">Work Experience</h4>
+                      <p className="text-sm text-text-tertiary">Professional journey</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleAdd('experience')}
-                    className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 px-3 py-1.5 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
                   >
-                    <Plus className="w-4 h-4" /> Add
+                    <Plus className="w-4 h-4" /> Add Experience
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {resume.work_experiences.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p className="text-sm">No work experience added yet.</p>
+                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
+                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
+                        <Briefcase className="w-8 h-8 text-text-tertiary" />
+                      </div>
+                      <h5 className="text-lg font-semibold text-text-primary mb-2">
+                        No work experience added yet
+                      </h5>
+                      <p className="text-text-secondary max-w-sm mx-auto">
+                        Add your work experience to showcase your professional background.
+                      </p>
                     </div>
                   )}
 
-                  {resume.work_experiences.map(exp => (
+                  {resume.work_experiences.map((exp: WorkExperience) => (
                     <div
                       key={exp.resume_work_experience_id}
-                      className="group relative p-5 rounded-xl border border-gray-200 bg-white hover:border-blue-200 hover:shadow-sm transition-all duration-200"
+                      className="bg-background-surface rounded-xl border border-border-default p-5 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-md transition-all duration-300 group"
                     >
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/80 backdrop-blur-sm p-1 rounded-lg">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                          onClick={() => handleEdit('experience', exp)}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                          onClick={() => handleDelete('experience', exp.resume_work_experience_id)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors">
+                              <Building className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h5 className="font-bold text-text-primary text-lg">
+                                {exp.job_title}
+                              </h5>
+                              <p className="text-text-secondary font-medium">{exp.company}</p>
+                            </div>
+                          </div>
 
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-gray-900 text-base">{exp.job_title}</h4>
-                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap ml-4 flex items-center gap-1.5">
-                          <Calendar className="w-3 h-3" />
-                          {exp.start_date} - {exp.is_current ? 'Present' : exp.end_date}
-                        </span>
-                      </div>
+                          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
+                            <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
+                              <Calendar className="w-4 h-4 text-primary-500 dark:text-primary-400" />
+                              <span className="font-medium">
+                                {exp.start_date} - {exp.is_current ? 'Present' : exp.end_date}
+                              </span>
+                            </div>
+                            {exp.location && (
+                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
+                                <MapPin className="w-4 h-4 text-primary-500 dark:text-primary-400" />
+                                <span className="font-medium">{exp.location}</span>
+                              </div>
+                            )}
+                          </div>
 
-                      <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-3">
-                        <span className="flex items-center gap-1.5">
-                          <Building className="w-3.5 h-3.5 text-blue-500" />
-                          {exp.company}
-                        </span>
-                        {exp.location && (
-                          <>
-                            <span className="text-gray-300">•</span>
-                            <span className="flex items-center gap-1 text-gray-500">
-                              <MapPin className="w-3 h-3" />
-                              {exp.location}
-                            </span>
-                          </>
-                        )}
+                          {exp.description && (
+                            <div className="mt-4 pt-3 border-t border-border-subtle">
+                              <p className="text-sm text-text-secondary leading-relaxed">
+                                {exp.description}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-text-tertiary hover:text-primary dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg"
+                            onClick={() => handleEdit('experience', exp)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-text-tertiary hover:text-error dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg"
+                            onClick={() =>
+                              handleDelete('experience', exp.resume_work_experience_id)
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-
-                      {exp.description && (
-                        <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed border-t border-gray-100 pt-3 mt-1">
-                          {exp.description}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
 
-              {/* --- EDUCATION SECTION --- */}
-              <section className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-6 bg-emerald-500 rounded-full" />
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <GraduationCap className="w-4 h-4 text-emerald-600" />
+              {}
+              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center text-ai-600 dark:text-ai-400 shadow-sm border border-ai-100 dark:border-ai-900/30">
+                      <GraduationCap className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Education</h3>
+                    <div>
+                      <h4 className="text-lg font-bold text-text-primary">Education</h4>
+                      <p className="text-sm text-text-tertiary">Academic background</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleAdd('education')}
-                    className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 hover:bg-emerald-50 rounded-lg transition-colors"
+                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
                   >
-                    <Plus className="w-4 h-4" /> Add
+                    <Plus className="w-4 h-4" /> Add Education
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {resume.educations.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p className="text-sm">No education added yet.</p>
+                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
+                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
+                        <GraduationCap className="w-8 h-8 text-text-tertiary" />
+                      </div>
+                      <h5 className="text-lg font-semibold text-text-primary mb-2">
+                        No education records added yet
+                      </h5>
+                      <p className="text-text-secondary max-w-sm mx-auto">
+                        Add your educational background to complete your profile.
+                      </p>
                     </div>
                   )}
 
-                  {resume.educations.map(edu => (
+                  {resume.educations.map((edu: Education) => (
                     <div
                       key={edu.resume_education_id}
-                      className="group relative p-5 rounded-xl border border-gray-200 bg-white hover:border-emerald-200 hover:shadow-sm transition-all duration-200"
+                      className="bg-background-surface rounded-xl border border-border-default p-5 hover:border-ai-200 dark:hover:border-ai-800 hover:shadow-md transition-all duration-300 group"
                     >
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/80 p-1 rounded-lg">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
-                          onClick={() => handleEdit('education', edu)}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                          onClick={() => handleDelete('education', edu.resume_education_id)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-ai-50 dark:bg-ai-950/30 text-ai-600 dark:text-ai-400 rounded-lg hover:bg-ai-100 dark:hover:bg-ai-900/30 transition-colors">
+                              <GraduationCap className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h5 className="font-bold text-text-primary text-lg">{edu.degree}</h5>
+                              <p className="text-text-secondary font-medium">{edu.college_name}</p>
+                            </div>
+                          </div>
 
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-bold text-gray-900 text-base">{edu.college_name}</h4>
-                          <p className="text-sm text-gray-600 mt-0.5 font-medium">{edu.degree}</p>
-                          {edu.location && (
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {edu.location}
-                            </p>
-                          )}
+                          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
+                            {edu.start_date && (
+                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
+                                <Calendar className="w-4 h-4 text-ai-500 dark:text-ai-400" />
+                                <span className="font-medium">
+                                  {edu.start_date} - {edu.is_current ? 'Present' : edu.end_date}
+                                </span>
+                              </div>
+                            )}
+                            {edu.location && (
+                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
+                                <MapPin className="w-4 h-4 text-ai-500 dark:text-ai-400" />
+                                <span className="font-medium">{edu.location}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap ml-4 flex items-center gap-1.5">
-                          <Calendar className="w-3 h-3" />
-                          {edu.start_date} - {edu.is_current ? 'Present' : edu.end_date}
-                        </span>
+                        <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-text-tertiary hover:text-primary dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg"
+                            onClick={() => handleEdit('education', edu)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-text-tertiary hover:text-error dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg"
+                            onClick={() => handleDelete('education', edu.resume_education_id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
 
-              {/* --- SKILLS SECTION --- */}
-              <section className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-6 bg-violet-500 rounded-full" />
-                    <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                      <Code className="w-4 h-4 text-violet-600" />
+              {}
+              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center text-success-600 dark:text-success-400 shadow-sm border border-success-100 dark:border-success-900/30">
+                      <Code className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Skills</h3>
+                    <div>
+                      <h4 className="text-lg font-bold text-text-primary">Skills & Expertise</h4>
+                      <p className="text-sm text-text-tertiary">
+                        Technical and professional skills
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleAdd('skills')}
-                    className="text-sm font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-1.5 px-3 py-1.5 hover:bg-violet-50 rounded-lg transition-colors"
+                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
                   >
-                    <Plus className="w-4 h-4" /> Add
+                    <Plus className="w-4 h-4" /> Add Skills
                   </button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {resume.skills.length === 0 && (
-                    <span className="text-gray-400 text-sm py-2">No skills listed.</span>
+                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default w-full">
+                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
+                        <Code className="w-8 h-8 text-text-tertiary" />
+                      </div>
+                      <h5 className="text-lg font-semibold text-text-primary mb-2">
+                        No skills added yet
+                      </h5>
+                      <p className="text-text-secondary max-w-sm mx-auto">
+                        Add your skills to showcase your expertise.
+                      </p>
+                    </div>
                   )}
-                  {resume.skills.map(s => (
+                  {resume.skills.map((s: Skill) => (
                     <div
                       key={s.resume_skill_id}
-                      className="group flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 hover:border-violet-200 hover:bg-violet-50/50 rounded-lg text-sm text-gray-700 font-medium transition-colors cursor-default shadow-sm"
+                      className="group inline-flex items-center gap-2 px-4 py-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-xl border border-ai-100 dark:border-ai-900/30 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-200 dark:hover:border-ai-800 hover:shadow-sm transition-all duration-200"
                     >
-                      <span className="ml-1">{s.skill_name}</span>
+                      <span className="font-semibold">{s.skill_name}</span>
                       <button
                         onClick={() => handleDelete('skills', s.resume_skill_id)}
-                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all w-0 group-hover:w-auto -mr-2 group-hover:mr-0 pl-1"
+                        className="text-ai-600 dark:text-ai-400 hover:text-error opacity-0 group-hover:opacity-100 transition-all duration-200 ml-1"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
 
-              {/* --- CERTIFICATIONS SECTION --- */}
-              <section className="bg-gray-50 rounded-xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-6 bg-amber-500 rounded-full" />
-                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                      <Award className="w-4 h-4 text-amber-600" />
+              {}
+              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center text-warning-600 dark:text-warning-400 shadow-sm border border-warning-100 dark:border-warning-900/30">
+                      <Award className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Certifications</h3>
+                    <div>
+                      <h4 className="text-lg font-bold text-text-primary">Certifications</h4>
+                      <p className="text-sm text-text-tertiary">Professional certifications</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleAdd('certification')}
-                    className="text-sm font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1.5 px-3 py-1.5 hover:bg-amber-50 rounded-lg transition-colors"
+                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
                   >
-                    <Plus className="w-4 h-4" /> Add
+                    <Plus className="w-4 h-4" /> Add Certification
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {resume.certifications.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
-                      <p className="text-sm">No certifications added yet.</p>
+                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
+                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
+                        <Award className="w-8 h-8 text-text-tertiary" />
+                      </div>
+                      <h5 className="text-lg font-semibold text-text-primary mb-2">
+                        No certifications added yet
+                      </h5>
+                      <p className="text-text-secondary max-w-sm mx-auto">
+                        Add your certifications to demonstrate your expertise.
+                      </p>
                     </div>
                   )}
 
-                  {resume.certifications.map(cert => (
+                  {resume.certifications.map((cert: Certification) => (
                     <div
                       key={cert.resume_certification_id}
-                      className="group relative p-5 rounded-xl border border-gray-200 bg-white hover:border-amber-200 hover:shadow-sm transition-all duration-200"
+                      className="bg-background-surface rounded-xl border border-border-default p-5 hover:border-warning-200 dark:hover:border-warning-800 hover:shadow-md transition-all duration-300 group"
                     >
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/80 p-1 rounded-lg">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg"
-                          onClick={() => handleEdit('certification', cert)}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                          onClick={() =>
-                            handleDelete('certifications', cert.resume_certification_id)
-                          }
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-
                       <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-bold text-gray-900 text-base">
-                            {cert.certification_name}
-                          </h4>
-                          {cert.issuing_body && (
-                            <p className="text-sm text-gray-600 mt-0.5 font-medium">
-                              {cert.issuing_body}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 font-medium">
-                            <span className="flex items-center gap-1.5">
-                              <Calendar className="w-3 h-3" />
-                              Issued: {cert.issue_date}
-                            </span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-warning-50 dark:bg-warning-950/30 text-warning-600 dark:text-warning-400 rounded-lg hover:bg-warning-100 dark:hover:bg-warning-900/30 transition-colors">
+                              <Award className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h5 className="font-bold text-text-primary text-lg">
+                                {cert.certification_name}
+                              </h5>
+                              <p className="text-text-secondary font-medium">{cert.issuing_body}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
+                            {cert.issue_date && (
+                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
+                                <Calendar className="w-4 h-4 text-warning-500 dark:text-warning-400" />
+                                <span className="font-medium">Issued {cert.issue_date}</span>
+                              </div>
+                            )}
                             {!cert.does_not_expire && cert.expiration_date && (
-                              <span>Expires: {cert.expiration_date}</span>
+                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
+                                <Calendar className="w-4 h-4 text-warning-500 dark:text-warning-400" />
+                                <span className="font-medium">Expires {cert.expiration_date}</span>
+                              </div>
                             )}
                           </div>
+
+                          {cert.credential_url && (
+                            <div className="mt-4">
+                              <a
+                                href={cert.credential_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-sm text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium hover:underline"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                                View Credential
+                              </a>
+                            </div>
+                          )}
                         </div>
-                        {cert.credential_url && (
-                          <a
-                            href={cert.credential_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                        <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-text-tertiary hover:text-primary dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg"
+                            onClick={() => handleEdit('certification', cert)}
                           >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-text-tertiary hover:text-error dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg"
+                            onClick={() =>
+                              handleDelete('certifications', cert.resume_certification_id)
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
             </div>
           </ScrollArea>
 
-          {/* Footer with Done Button */}
-          <div className="border-t border-gray-200 bg-white px-8 py-5 flex items-center justify-end gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+          {}
+          <div className="border-t border-border-default bg-background-surface px-8 py-5 flex items-center justify-end gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
             <Button
               onClick={onClose}
-              className="h-11 px-8 text-base font-semibold bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl text-white"
+              className="btn-primary-gradient h-11 px-8 text-base font-semibold rounded-xl"
             >
               Done
             </Button>
@@ -499,7 +584,7 @@ export default function ResumeDetailSheet({
         </SheetContent>
       </Sheet>
 
-      {/* --- FORMS --- */}
+      {}
       {resume && (
         <>
           <ExperienceFormDialog
@@ -508,7 +593,7 @@ export default function ResumeDetailSheet({
             resumeId={resume.resume_id}
             initialData={
               activeForm === 'experience' && editingItem
-                ? (editingItem as ResumeWorkExperienceResponse)
+                ? (editingItem as WorkExperience)
                 : undefined
             }
             onSuccess={handleFormSuccess}
@@ -518,9 +603,7 @@ export default function ResumeDetailSheet({
             onOpenChange={open => !open && setActiveForm(null)}
             resumeId={resume.resume_id}
             initialData={
-              activeForm === 'education' && editingItem
-                ? (editingItem as ResumeEducationResponse)
-                : undefined
+              activeForm === 'education' && editingItem ? (editingItem as Education) : undefined
             }
             onSuccess={handleFormSuccess}
           />

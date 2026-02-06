@@ -242,7 +242,7 @@ export function useForm<T extends Record<string, unknown>>(
             await submitHandler(values)
           }
         } catch {
-          // Error handled by onError callback
+          // Ignore submission errors
         } finally {
           setIsSubmitting(false)
         }

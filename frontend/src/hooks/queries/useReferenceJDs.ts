@@ -16,6 +16,7 @@ export function useReferenceJDs(enabled: boolean = true) {
     queryFn: () => referenceJDService.getReferenceJDs(),
     enabled,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
   })
 }
 

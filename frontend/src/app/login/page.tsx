@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { SearchParamsWrapper } from '../../components/common/SearchParamsWrapper'
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 import { AuthLayout } from '../../components/layout/AuthLayout'
 import { GoogleOAuthButton } from '../../components/auth/GoogleOAuthButton'
 import { PageTransition } from '../../components/common/PageTransition'
@@ -63,21 +63,14 @@ export default function Login() {
         {searchParams => {
           handleSearchParams(searchParams)
           return (
-            <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
-              {/* Page Title */}
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#0F172A] mb-4 sm:mb-6 text-center">
-                Sign In
-              </h2>
-
-              {/* Auth Error Display */}
+            <AuthLayout title="Welcome Back !" subtitle="Please enter your details">
               {authError && (
-                <div className="mb-4 sm:mb-6 p-3 bg-[#FEF2F2] border border-[#DC2626]/20 rounded-xl flex items-center gap-2 text-[#DC2626] text-xs sm:text-sm">
+                <div className="mb-4 sm:mb-6 p-3 bg-error-50 border border-error/20 rounded-xl flex items-center gap-2 text-error text-xs sm:text-sm">
                   <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                   {authError}
                 </div>
               )}
 
-              {/* Google OAuth Button */}
               <div className="mb-4 sm:mb-6">
                 <GoogleOAuthButton
                   onSuccess={handleGoogleSuccess}
@@ -86,27 +79,24 @@ export default function Login() {
                 />
               </div>
 
-              {/* Divider */}
               <div className="relative mb-4 sm:mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E5E7EB]" />
+                  <div className="w-full border-t border-border-default" />
                 </div>
                 <div className="relative flex justify-center text-xs sm:text-sm">
-                  <span className="bg-white px-3 sm:px-4 text-[#94A3B8]">
+                  <span className="bg-background-surface px-3 sm:px-4 text-text-muted">
                     Or continue with email
                   </span>
                 </div>
               </div>
 
-              {/* Login Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                {/* Email Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="email"
-                    className="block text-xs sm:text-sm font-medium text-[#0F172A]"
+                    className="block text-xs sm:text-sm font-medium text-text-primary"
                   >
-                    Email
+                    Email Address
                   </label>
                   <input
                     id="email"
@@ -116,25 +106,24 @@ export default function Login() {
                     value={values.email}
                     onChange={e => handleChange('email', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                       errors.email
-                        ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
-                        : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
+                        ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
+                        : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
                     }`}
                   />
                   {errors.email && (
-                    <p className="text-xs text-[#DC2626] flex items-center gap-1">
+                    <p className="text-xs text-error flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {errors.email}
                     </p>
                   )}
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="password"
-                    className="block text-xs sm:text-sm font-medium text-[#0F172A]"
+                    className="block text-xs sm:text-sm font-medium text-text-primary"
                   >
                     Password
                   </label>
@@ -147,16 +136,16 @@ export default function Login() {
                       value={values.password}
                       onChange={e => handleChange('password', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-white border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-[#0F172A] placeholder-[#94A3B8] transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                         errors.password
-                          ? 'border-[#DC2626] bg-[#FEF2F2] focus:border-[#DC2626] focus:ring-4 focus:ring-[#DC2626]/10'
-                          : 'border-[#E5E7EB] focus:border-[#3056F5] focus:ring-4 focus:ring-[#3056F5]/10'
+                          ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
+                          : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569] transition-colors"
+                      className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                       aria-label="Toggle password visibility"
                     >
                       {showPassword ? (
@@ -167,60 +156,100 @@ export default function Login() {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-xs text-[#DC2626] flex items-center gap-1">
+                    <p className="text-xs text-error flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {errors.password}
                     </p>
                   )}
                 </div>
 
-                {/* Remember Me & Forgot Password */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="rememberMe"
-                      name="rememberMe"
-                      type="checkbox"
-                      checked={values.rememberMe === 'true'}
-                      onChange={e => handleChange('rememberMe', e.target.checked.toString())}
-                      disabled={isLoading}
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-md border-[1.5px] border-[#E5E7EB] text-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                    <label htmlFor="rememberMe" className="text-xs sm:text-sm text-[#475569]">
+                  <label
+                    htmlFor="rememberMe"
+                    className="flex items-center gap-2.5 py-1 cursor-pointer group"
+                  >
+                    <div className="relative">
+                      <input
+                        id="rememberMe"
+                        name="rememberMe"
+                        type="checkbox"
+                        checked={values.rememberMe === 'true'}
+                        onChange={e => handleChange('rememberMe', e.target.checked.toString())}
+                        disabled={isLoading}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`
+                          w-[18px] h-[18px] rounded border-2 transition-all duration-150 ease-in-out
+                          ${
+                            values.rememberMe === 'true'
+                              ? 'bg-primary border-primary scale-105'
+                              : 'bg-background-surface border-border-strong group-hover:border-text-tertiary'
+                          }
+                          ${!isLoading && 'group-hover:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]'}
+                          ${isLoading && 'opacity-60 cursor-not-allowed'}
+                        `}
+                      >
+                        {values.rememberMe === 'true' && (
+                          <svg
+                            className="w-3 h-3 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                          >
+                            <polyline points="20,6 9,17 4,12" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-text-secondary font-normal select-none">
                       Remember me
-                    </label>
-                  </div>
+                    </span>
+                  </label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs sm:text-sm font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"
+                    className="text-xs sm:text-sm font-medium text-primary hover:text-primary-700 hover:underline transition-colors"
                   >
                     Forgot password?
                   </Link>
                 </div>
 
-                {/* Sign In Button */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 sm:h-12 bg-[#3056F5] hover:bg-[#2B3CF5] text-white text-sm sm:text-[15px] font-semibold rounded-lg sm:rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#3056F5] disabled:hover:shadow-none mt-4 sm:mt-6 flex items-center justify-center gap-2"
-                  style={{
-                    boxShadow: isLoading ? 'none' : '0 4px 12px rgba(48,86,245,0.3)',
-                  }}
+                  className="w-full h-11 sm:h-12 btn-primary-gradient text-white text-sm sm:text-[15px] font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 mt-4 sm:mt-6 flex items-center justify-center gap-2"
                 >
-                  {isLoading && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />}
-                  {isLoading ? 'Signing in...' : 'Sign In'}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  ) : (
+                    <>
+                      Login
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
 
-              {/* Sign Up Link */}
-              <div className="mt-4 sm:mt-6 text-center">
-                <p className="text-xs sm:text-sm text-[#475569]">
+              <p className="mt-6 text-xs text-text-tertiary text-center leading-relaxed">
+                By creating an account, you agree to our{' '}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+              </p>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-text-secondary">
                   Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
-                    className="font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"
+                    className="font-semibold text-text-primary hover:underline transition-colors"
                   >
-                    Sign up
+                    Sign Up
                   </Link>
                 </p>
               </div>

@@ -15,9 +15,12 @@ import {
   MoreVertical,
   Edit,
   Copy,
-  Download,
   ChevronDown,
+  ArrowUpDown,
+  Calendar,
+  Type,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { AppShell } from '@/components/layout/AppShell'
 import { PageTransition, AnimatedContainer, PageHeader } from '@/components/common'
@@ -118,10 +121,13 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
   if (loadingProfile) {
     const loadingContent = (
       <div className="fixed inset-0 z-[100] flex items-center justify-center">
-        <div className="fixed inset-0 bg-black/5 backdrop-blur-[3px]" onClick={onClose} />
-        <div className="relative bg-white p-6 rounded-2xl shadow-2xl border border-gray-200 flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
-          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-          <p className="text-gray-600 font-medium">Initializing...</p>
+        <div
+          className="fixed inset-0 bg-black/5 dark:bg-black/20 backdrop-blur-[3px]"
+          onClick={onClose}
+        />
+        <div className="relative bg-background-surface p-6 rounded-2xl shadow-2xl border border-border-default flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          <p className="text-text-secondary font-medium">Initializing...</p>
         </div>
       </div>
     )
@@ -132,22 +138,22 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
 
   const modalContent = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Very subtle backdrop blur */}
       <div
-        className="fixed inset-0 bg-black/5 backdrop-blur-[3px] animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/5 dark:bg-black/20 backdrop-blur-[3px] animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+      <div className="relative bg-background-surface rounded-xl shadow-2xl border border-border-default w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-6 border-b border-border-default flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-semibold text-[#0F172A]">Create New Resume</h2>
-            <p className="text-sm text-[#475569] mt-1">Start by specifying your target job title</p>
+            <h2 className="text-xl font-semibold text-text-primary">Create New Resume</h2>
+            <p className="text-sm text-text-secondary mt-1">
+              Start by specifying your target job title
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
+            className="p-2 hover:bg-background-subtle rounded-lg transition-colors text-text-muted hover:text-text-secondary"
           >
             <X className="w-5 h-5" />
           </button>
@@ -155,15 +161,15 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#0F172A]">
-              Target Job Title <span className="text-red-500">*</span>
+            <label className="text-sm font-semibold text-text-primary">
+              Target Job Title <span className="text-error">*</span>
             </label>
             <input
               autoFocus
               type="text"
               value={formData.target_job_title || ''}
               onChange={e => setFormData({ ...formData, target_job_title: e.target.value })}
-              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white text-[#0F172A] placeholder:text-slate-400"
+              className="w-full px-4 py-3 border border-border-default rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-background-surface text-text-primary placeholder:text-text-muted"
               placeholder="e.g. Senior Backend Engineer"
               required
             />
@@ -173,7 +179,7 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-3 btn-primary-gradient text-white rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -199,9 +205,34 @@ export default function ResumeListPage() {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date')
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false)
   const [expandedResumeId, setExpandedResumeId] = useState<string | null>(null)
   const [resumeDetails, setResumeDetails] = useState<Record<string, ResumeResponse>>({})
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const sortDropdownRef = useRef<HTMLDivElement>(null)
+
+  const sortOptions = [
+    { value: 'date', label: 'Sort by Date', icon: Calendar },
+    { value: 'title', label: 'Sort by Title', icon: Type },
+  ]
+
+  const getCurrentSortLabel = () => {
+    const option = sortOptions.find(opt => opt.value === sortBy)
+    return option?.label || 'Sort by Date'
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const loadResumes = async () => {
     try {
@@ -231,7 +262,7 @@ export default function ResumeListPage() {
   }
 
   const filteredAndSortedResumes = useMemo(() => {
-    let filtered = resumes.filter(resume =>
+    const filtered = resumes.filter(resume =>
       resume.target_job_title?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
@@ -252,7 +283,7 @@ export default function ResumeListPage() {
     try {
       await resumeService.deleteResume(id)
       toast.success('Resume deleted successfully')
-      loadResumes() // Refresh
+      loadResumes()
     } catch {
       toast.error('Failed to delete resume')
     }
@@ -296,7 +327,7 @@ export default function ResumeListPage() {
           url: l.url,
         })),
       }
-      const newResume = await resumeService.createResumeFork(duplicateData)
+      await resumeService.createResumeFork(duplicateData)
       toast.success('Resume duplicated successfully')
       loadResumes()
     } catch (error) {
@@ -316,7 +347,6 @@ export default function ResumeListPage() {
       }
     }
     if (expandedResumeId) {
-      // Use a small delay to avoid immediate closure when opening
       const timeoutId = setTimeout(() => {
         document.addEventListener('click', handleClickOutside)
       }, 0)
@@ -329,63 +359,104 @@ export default function ResumeListPage() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-        <div className="space-y-8 pb-12">
-          {/* Enhanced Header with Gradient Background */}
+      <PageTransition className="min-h-screen bg-background-subtle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <PageHeader
-                  title="Resume Builder"
-                  subtitle="Create and manage tailored resumes from your profile data"
-                />
-              </div>
-            </div>
+            <PageHeader
+              title="Resume Builder"
+              subtitle="Create and manage tailored resumes from your profile data"
+            />
           </AnimatedContainer>
 
-          {/* Main Content Container */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="space-y-8">
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 flex items-center gap-2 border border-red-100">
+              <div className="bg-error-50 dark:bg-error-950/30 text-error-600 dark:text-error-400 p-4 rounded-lg mb-6 flex items-center gap-2 border border-error-100 dark:border-error-800">
                 <span className="font-medium">!</span> {error}
               </div>
             )}
 
             <AnimatedContainer direction="up" delay={0.2}>
-              <div className="bg-white rounded-xl border border-slate-200 p-6 min-h-[400px]">
-                {/* Header with Search and Actions */}
+              <div className="bg-background-surface rounded-xl border border-border-default p-6 min-h-[400px]">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <h2 className="text-xl font-semibold flex items-center gap-2 text-[#0F172A]">
-                    <FileText className="w-5 h-5 text-indigo-600" /> Your Resumes
+                  <h2 className="text-xl font-semibold flex items-center gap-2 text-text-primary">
+                    <FileText className="w-5 h-5 text-primary" /> Your Resumes
                   </h2>
                   <div className="flex items-center gap-3 w-full sm:w-auto">
-                    {/* Search Bar */}
                     <div className="relative flex-1 sm:flex-initial sm:w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                       <input
                         type="text"
                         placeholder="Search resumes..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white text-[#0F172A] placeholder:text-slate-400"
+                        className="w-full pl-10 pr-4 py-2 text-sm border border-border-default rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-background-surface text-text-primary placeholder:text-text-muted"
                       />
                     </div>
-                    {/* Sort Dropdown */}
-                    <div className="relative">
-                      <select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value as 'date' | 'title')}
-                        className="appearance-none pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 bg-white cursor-pointer text-[#0F172A] hover:border-slate-300 select-arrow"
+                    <div className="relative" ref={sortDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setIsSortDropdownOpen(!isSortDropdownOpen)
+                          } else if (e.key === 'Escape') {
+                            setIsSortDropdownOpen(false)
+                          }
+                        }}
+                        className={cn(
+                          'h-10 pl-3 pr-10 py-2.5 border rounded-xl bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] min-w-[150px]',
+                          isSortDropdownOpen
+                            ? 'border-ai-500 ring-2 ring-ai-500/20 shadow-md'
+                            : 'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
+                        )}
                       >
-                        <option value="date">Sort by Date</option>
-                        <option value="title">Sort by Title</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <div className="flex items-center gap-2 h-full">
+                          <ArrowUpDown className="w-4 h-4 text-ai-500" />
+                          <span className="font-medium text-text-primary">
+                            {getCurrentSortLabel()}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
+                            isSortDropdownOpen ? 'rotate-180 text-ai-600' : 'text-text-muted'
+                          )}
+                        />
+                      </button>
+
+                      {isSortDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-2 bg-background-surface border border-ai-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-ai-100">
+                          {sortOptions.map((option, index) => {
+                            const IconComponent = option.icon
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setSortBy(option.value as 'date' | 'title')
+                                  setIsSortDropdownOpen(false)
+                                }}
+                                className={cn(
+                                  'w-full px-3 py-2.5 text-left hover:bg-gradient-to-r hover:from-ai-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-ai-50 focus:to-primary-50 focus:outline-none transition-all duration-200 flex items-center gap-2.5 text-sm text-text-primary hover:text-ai-700 transform hover:scale-[1.01] active:scale-[0.99] group',
+                                  sortBy === option.value && 'bg-ai-50/50'
+                                )}
+                                style={{ animationDelay: `${index * 50}ms` }}
+                              >
+                                <IconComponent className="w-4 h-4 text-ai-500 transition-transform duration-200 group-hover:scale-110" />
+                                <span className="font-medium">{option.label}</span>
+                                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
+                                </div>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
-                    {/* Create Button */}
                     <button
                       onClick={() => setIsModalOpen(true)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 font-medium text-base whitespace-nowrap"
+                      className="btn-primary-gradient text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 font-medium text-base whitespace-nowrap"
                     >
                       <Plus className="w-5 h-5" /> Create New Resume
                     </button>
@@ -394,35 +465,35 @@ export default function ResumeListPage() {
 
                 {loading ? (
                   <div className="flex justify-center items-center h-64">
-                    <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
                   </div>
                 ) : resumes.length === 0 ? (
-                  <div className="text-center py-20 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200">
-                    <div className="bg-white w-20 h-20 rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-10 h-10 text-indigo-400" />
+                  <div className="text-center py-20 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
+                    <div className="bg-background-surface w-20 h-20 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-10 h-10 text-primary-400 dark:text-primary-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-[#0F172A] mb-2">
+                    <h3 className="text-lg font-semibold text-text-primary mb-2">
                       No resumes created yet
                     </h3>
-                    <p className="text-[#475569] mb-6 max-w-sm mx-auto">
+                    <p className="text-text-secondary mb-6 max-w-sm mx-auto">
                       Create your first resume to get started with your job applications!
                     </p>
                     <button
                       onClick={() => setIsModalOpen(true)}
-                      className="text-indigo-600 font-medium hover:text-indigo-700 hover:underline transition-colors"
+                      className="text-primary font-medium hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
                     >
                       Create your first resume
                     </button>
                   </div>
                 ) : filteredAndSortedResumes.length === 0 ? (
-                  <div className="text-center py-16 bg-slate-50/50 rounded-xl border-2 border-dashed border-slate-200">
-                    <div className="bg-white w-16 h-16 rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-3">
-                      <Search className="w-8 h-8 text-indigo-400" />
+                  <div className="text-center py-16 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
+                    <div className="bg-background-surface w-16 h-16 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-3">
+                      <Search className="w-8 h-8 text-primary-400 dark:text-primary-500" />
                     </div>
-                    <h3 className="text-base font-semibold text-[#0F172A] mb-1">
+                    <h3 className="text-base font-semibold text-text-primary mb-1">
                       No resumes found
                     </h3>
-                    <p className="text-sm text-[#475569]">
+                    <p className="text-sm text-text-secondary">
                       {searchQuery
                         ? 'Try adjusting your search query'
                         : 'Create your first resume to get started!'}
@@ -433,52 +504,12 @@ export default function ResumeListPage() {
                     {filteredAndSortedResumes.map(resume => {
                       const details = resumeDetails[resume.resume_id]
                       const isExpanded = expandedResumeId === resume.resume_id
-                      const topSkills = details?.skills?.slice(0, 5).map(s => s.skill_name) || []
-                      const experienceCount = details?.work_experiences?.length || 0
-                      const educationCount = details?.educations?.length || 0
-                      const totalSections =
-                        experienceCount +
-                        educationCount +
-                        (details?.certifications?.length || 0) +
-                        (details?.skills?.length || 0)
-
-                      // Generate description with more context
-                      const getDescription = () => {
-                        const parts: string[] = []
-                        if (experienceCount > 0) {
-                          parts.push(
-                            `${experienceCount} ${experienceCount === 1 ? 'role' : 'roles'}`
-                          )
-                        }
-                        if (educationCount > 0) {
-                          parts.push(
-                            `${educationCount} ${educationCount === 1 ? 'degree' : 'degrees'}`
-                          )
-                        }
-                        if (topSkills.length > 0) {
-                          parts.push(`${topSkills.length}+ skills`)
-                        }
-                        if (parts.length === 0) {
-                          return 'New resume • Ready to customize'
-                        }
-                        return parts.join(' • ')
-                      }
 
                       return (
                         <div
                           key={resume.resume_id}
                           onClick={() => setSelectedResumeId(resume.resume_id)}
-                          className="group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-6 hover:-translate-y-1 hover:border-indigo-200 border-slate-200 relative"
-                          style={{
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'
-                          }}
+                          className="group cursor-pointer transition-all duration-200 w-full bg-background-surface dark:bg-[#1E293B] rounded-xl border border-border-default dark:border-[#334155] py-5 px-6 hover:border-border-strong dark:hover:border-[#475569] hover:shadow-md relative"
                           role="button"
                           tabIndex={0}
                           aria-label={`View resume for ${resume.target_job_title || 'General Resume'}`}
@@ -489,25 +520,18 @@ export default function ResumeListPage() {
                             }
                           }}
                         >
-                          <div className="flex flex-col h-full">
-                            {/* Header Row: Icon + Title + Menu */}
-                            <div className="flex items-start gap-3 mb-4">
-                              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
-                                <FileText className="w-4 h-4" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-[19px] leading-tight text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-1">
-                                  {resume.target_job_title || 'General Resume'}
-                                </h3>
-                                <p className="text-sm text-slate-600 truncate">
-                                  {getDescription()}
-                                </p>
-                              </div>
-                              {/* Action Menu */}
-                              <div
-                                className="relative flex-shrink-0"
-                                ref={isExpanded ? dropdownRef : null}
-                              >
+                          <div className="flex items-center justify-between gap-4">
+                            <h3 className="font-semibold text-lg text-text-primary group-hover:text-primary transition-colors truncate">
+                              {resume.target_job_title || 'General Resume'}
+                            </h3>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <span className="text-sm text-text-tertiary whitespace-nowrap">
+                                {new Date(resume.updated_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </span>
+                              <div className="relative" ref={isExpanded ? dropdownRef : null}>
                                 <button
                                   onClick={e => {
                                     e.stopPropagation()
@@ -520,14 +544,14 @@ export default function ResumeListPage() {
                                       loadResumeDetails(resume.resume_id)
                                     }
                                   }}
-                                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                  className="p-1.5 text-text-muted hover:text-text-secondary hover:bg-background-subtle dark:hover:bg-background-muted rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                 >
                                   <MoreVertical className="w-4 h-4" />
                                 </button>
                                 {isExpanded && (
                                   <div
                                     onClick={e => e.stopPropagation()}
-                                    className="absolute right-0 top-9 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                                    className="absolute right-0 top-9 bg-background-surface dark:bg-[#1E293B] border border-border-default dark:border-[#334155] rounded-xl shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                                   >
                                     <button
                                       onClick={e => {
@@ -535,63 +559,26 @@ export default function ResumeListPage() {
                                         setSelectedResumeId(resume.resume_id)
                                         setExpandedResumeId(null)
                                       }}
-                                      className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                      className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle dark:hover:bg-background-muted flex items-center gap-2"
                                     >
                                       <Edit className="w-4 h-4" />
                                       Edit
                                     </button>
                                     <button
                                       onClick={e => handleDuplicate(resume.resume_id, e)}
-                                      className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                      className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle dark:hover:bg-background-muted flex items-center gap-2"
                                     >
                                       <Copy className="w-4 h-4" />
                                       Duplicate
                                     </button>
                                     <button
                                       onClick={e => handleDelete(resume.resume_id, e)}
-                                      className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                      className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-50 dark:hover:bg-error-950/30 flex items-center gap-2"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                       Delete
                                     </button>
                                   </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Skills Tags */}
-                            {topSkills.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 mb-4">
-                                {topSkills.map((skill, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="px-2 py-0.5 text-xs bg-slate-100 text-slate-700 rounded-md font-medium border border-slate-200"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Spacer */}
-                            <div className="flex-1" />
-
-                            {/* Footer: Date + Section Count */}
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                              <div className="text-xs text-slate-500 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                <span>
-                                  Updated{' '}
-                                  {new Date(resume.updated_at).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })}
-                                </span>
-                                {totalSections > 0 && (
-                                  <>
-                                    <span className="text-slate-300">•</span>
-                                    <span>{totalSections} sections</span>
-                                  </>
                                 )}
                               </div>
                             </div>
@@ -610,7 +597,7 @@ export default function ResumeListPage() {
                 onCreated={newResume => {
                   setResumes([...(resumes || []), newResume])
                   setIsModalOpen(false)
-                  setSelectedResumeId(newResume.resume_id) // Open editor immediately
+                  setSelectedResumeId(newResume.resume_id)
                 }}
               />
             )}
