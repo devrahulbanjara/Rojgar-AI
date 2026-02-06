@@ -83,14 +83,8 @@ function DiwaliDecoration() {
   return (
     <g>
       <circle cx="13" cy="13" r="8.25" fill="#F59E0B" opacity="0.08" />
-      <path
-        d="M13 -4.5 C11.5 -2, 11 0, 13 1.5 C15 0, 14.5 -2, 13 -4.5 Z"
-        fill="#F59E0B"
-      />
-      <path
-        d="M13 -3.5 C12 -1.5, 11.5 0, 13 0.5 C14.5 0, 14 -1.5, 13 -3.5 Z"
-        fill="#FCD34D"
-      />
+      <path d="M13 -4.5 C11.5 -2, 11 0, 13 1.5 C15 0, 14.5 -2, 13 -4.5 Z" fill="#F59E0B" />
+      <path d="M13 -3.5 C12 -1.5, 11.5 0, 13 0.5 C14.5 0, 14 -1.5, 13 -3.5 Z" fill="#FCD34D" />
       <circle cx="4" cy="6" r="0.8" fill="#FCD34D" opacity="0.6" />
       <circle cx="26" cy="9" r="0.6" fill="#F59E0B" opacity="0.5" />
     </g>
@@ -127,10 +121,7 @@ function TalentSearchIcon({
         strokeLinecap="round"
       />
       <circle cx="13" cy="9" r="3" fill={color} />
-      <path
-        d="M7.5 20 C7.5 16, 10 14, 13 14 C16 14, 18.5 16, 18.5 20"
-        fill={color}
-      />
+      <path d="M7.5 20 C7.5 16, 10 14, 13 14 C16 14, 18.5 16, 18.5 20" fill={color} />
       {event === 'christmas' && <ChristmasDecoration />}
       {event === 'newyear' && <NewYearDecoration />}
       {event === 'halloween' && <HalloweenDecoration />}
