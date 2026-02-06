@@ -28,7 +28,7 @@ const features: Feature[] = [
     description:
       'Our AI reads resumes like humans — understanding that "FastAPI" and "Django" are both Python frameworks, not just matching keywords.',
     iconColor: 'text-primary',
-    bgColor: 'bg-primary-50',
+    bgColor: 'bg-primary-50 dark:bg-primary-950/50',
   },
   {
     icon: FileText,
@@ -36,7 +36,7 @@ const features: Feature[] = [
     description:
       'Describe your ideal candidate in plain English. AI drafts professional, bias-free job descriptions instantly.',
     iconColor: 'text-primary',
-    bgColor: 'bg-primary-50',
+    bgColor: 'bg-primary-50 dark:bg-primary-950/50',
   },
   {
     icon: Users,
@@ -44,7 +44,7 @@ const features: Feature[] = [
     description:
       'Specialized AI agents work together — one screens resumes, another handles interviews, another provides insights.',
     iconColor: 'text-success',
-    bgColor: 'bg-success-50',
+    bgColor: 'bg-success-50 dark:bg-success-950/50',
   },
   {
     icon: MessageSquare,
@@ -52,7 +52,7 @@ const features: Feature[] = [
     description:
       'No more black holes. Every candidate gets constructive feedback explaining why they were selected or what skills to develop.',
     iconColor: 'text-warning-600',
-    bgColor: 'bg-warning-50',
+    bgColor: 'bg-warning-50 dark:bg-warning-950/50',
   },
   {
     icon: Search,
@@ -60,7 +60,7 @@ const features: Feature[] = [
     description:
       'Chat with your candidate database: "Find AWS engineers with startup experience from last year." Get instant, accurate matches.',
     iconColor: 'text-info',
-    bgColor: 'bg-info-50',
+    bgColor: 'bg-info-50 dark:bg-info-950/50',
   },
   {
     icon: Calendar,
@@ -68,7 +68,7 @@ const features: Feature[] = [
     description:
       'AI drafts personalized scheduling emails and integrates with your calendar. You review and approve — it handles the rest.',
     iconColor: 'text-error',
-    bgColor: 'bg-error-50',
+    bgColor: 'bg-error-50 dark:bg-error-950/50',
   },
   {
     icon: Shield,
@@ -84,7 +84,7 @@ const features: Feature[] = [
     description:
       'Every candidate gets a detailed breakdown — skills, experience, education — with natural language explanations for every decision.',
     iconColor: 'text-ai',
-    bgColor: 'bg-ai-50',
+    bgColor: 'bg-ai-50 dark:bg-ai-950/50',
   },
 ]
 

@@ -18,7 +18,7 @@ export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background-subtle via-background-surface to-primary-50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background-subtle via-background-surface to-primary-50 dark:to-primary-950/30" />
 
       {/* Subtle Grid Pattern */}
       <div
@@ -43,7 +43,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 shadow-sm mb-8 backdrop-blur-sm"
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-950/50 dark:to-primary-900/50 border border-primary-200 dark:border-primary-800 shadow-sm mb-8 backdrop-blur-sm"
           >
             <Brain className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold text-text-secondary tracking-wide">
@@ -137,7 +137,7 @@ export function HeroSection() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
-                  className="relative flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-br from-background-subtle/50 to-transparent"
+                  className="relative flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-br from-background-subtle/50 dark:from-background-surface/50 to-transparent"
                 >
                   <div
                     className={`relative w-8 h-8 rounded-lg bg-gradient-to-br ${item.bgGradient} flex items-center justify-center`}
@@ -181,7 +181,7 @@ export function HeroSection() {
               </div>
 
               {/* Dashboard Content */}
-              <div className="p-6 bg-gradient-to-b from-primary-50 to-background-surface min-h-[300px] lg:min-h-[400px]">
+              <div className="p-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/50 to-background-surface min-h-[300px] lg:min-h-[400px]">
                 {/* Welcome Header */}
                 <div className="mb-6">
                   <h1 className="text-2xl font-bold text-text-primary mb-1">Recruiter Dashboard</h1>
@@ -196,7 +196,7 @@ export function HeroSection() {
                       value: '12',
                       icon: BriefcaseIcon,
                       description: 'Jobs currently posted',
-                      color: 'bg-primary-50',
+                      color: 'bg-primary-50 dark:bg-primary-950/50',
                       iconColor: 'text-primary',
                     },
                     {
@@ -204,7 +204,7 @@ export function HeroSection() {
                       value: '847',
                       icon: Users,
                       description: 'Active candidates',
-                      color: 'bg-success-50',
+                      color: 'bg-success-50 dark:bg-success-950/50',
                       iconColor: 'text-success',
                     },
                     {
@@ -212,7 +212,7 @@ export function HeroSection() {
                       value: '156',
                       icon: Target,
                       description: 'Smart recommendations',
-                      color: 'bg-ai-50',
+                      color: 'bg-ai-50 dark:bg-ai-950/50',
                       iconColor: 'text-ai',
                     },
                   ].map((stat, i) => {

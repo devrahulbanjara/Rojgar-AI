@@ -11,7 +11,7 @@ const steps = [
     description:
       'Describe your ideal candidate. AI generates a professional, bias-free job description instantly.',
     color: 'from-primary to-primary-600',
-    bgColor: 'bg-primary-50',
+    bgColor: 'bg-primary-50 dark:bg-primary-950/50',
     iconColor: 'text-primary',
   },
   {
@@ -21,7 +21,7 @@ const steps = [
     description:
       'Our semantic AI analyzes every application, understanding skills by meaning, not just keywords.',
     color: 'from-ai to-ai-600',
-    bgColor: 'bg-ai-50',
+    bgColor: 'bg-ai-50 dark:bg-ai-950/50',
     iconColor: 'text-ai',
   },
   {
@@ -31,7 +31,7 @@ const steps = [
     description:
       'Get a ranked list of candidates with detailed score breakdowns. You stay in control of every decision.',
     color: 'from-success to-success-600',
-    bgColor: 'bg-success-50',
+    bgColor: 'bg-success-50 dark:bg-success-950/50',
     iconColor: 'text-success',
   },
   {
@@ -41,7 +41,7 @@ const steps = [
     description:
       'AI drafts personalized emails and coordinates schedules. You approve, it handles logistics.',
     color: 'from-warning to-warning-600',
-    bgColor: 'bg-warning-50',
+    bgColor: 'bg-warning-50 dark:bg-warning-950/50',
     iconColor: 'text-warning-600',
   },
   {
@@ -51,7 +51,7 @@ const steps = [
     description:
       'Every decision is explainable. Candidates get feedback. Your team builds a transparent hiring reputation.',
     color: 'from-error to-error-600',
-    bgColor: 'bg-error-50',
+    bgColor: 'bg-error-50 dark:bg-error-950/50',
     iconColor: 'text-error',
   },
 ]

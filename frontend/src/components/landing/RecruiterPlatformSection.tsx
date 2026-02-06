@@ -30,7 +30,7 @@ export function RecruiterPlatformSection() {
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
       {/* Background Elements */}
-      <div className="absolute top-0 right-0 w-72 h-72 bg-primary-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-72 h-72 bg-primary-100/30 dark:bg-primary-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -49,7 +49,7 @@ export function RecruiterPlatformSection() {
               {/* AI Shortlisting Dashboard */}
               <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
                 {/* Header */}
-                <div className="px-5 py-3.5 bg-gradient-to-b from-primary-50/50 to-background-surface border-b border-border-subtle">
+                <div className="px-5 py-3.5 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Brain className="w-4 h-4 text-primary" />
                     <h3 className="text-base font-bold text-text-primary">AI Shortlisting</h3>
@@ -67,21 +67,21 @@ export function RecruiterPlatformSection() {
                         value: '24',
                         icon: Users,
                         color: 'text-primary',
-                        bg: 'bg-primary-50',
+                        bg: 'bg-primary-50 dark:bg-primary-950/50',
                       },
                       {
                         label: 'AI Scored',
                         value: '24',
                         icon: Target,
                         color: 'text-ai',
-                        bg: 'bg-ai-50',
+                        bg: 'bg-ai-50 dark:bg-ai-950/50',
                       },
                       {
                         label: 'Shortlisted',
                         value: '8',
                         icon: ListChecks,
                         color: 'text-success',
-                        bg: 'bg-success-50',
+                        bg: 'bg-success-50 dark:bg-success-950/50',
                       },
                     ].map((stat, i) => {
                       const Icon = stat.icon
@@ -170,7 +170,7 @@ export function RecruiterPlatformSection() {
             transition={{ duration: 0.6 }}
             className="order-1 lg:order-2"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 text-primary text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary text-sm font-medium mb-6">
               For Recruiters
             </div>
 
@@ -198,7 +198,7 @@ export function RecruiterPlatformSection() {
                     transition={{ delay: 0.2 + index * 0.05 }}
                     className="flex items-center gap-3 p-3 rounded-xl bg-background-subtle border border-border-subtle"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center flex-shrink-0">
                       <Icon className="w-4 h-4 text-primary" />
                     </div>
                     <span className="text-sm font-medium text-text-secondary">{feature.title}</span>

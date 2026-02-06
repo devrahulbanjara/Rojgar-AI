@@ -42,7 +42,7 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1 p-1 bg-background-muted/80 backdrop-blur-sm rounded-2xl',
+          'inline-flex items-center gap-1 p-1 bg-background-muted/80 dark:bg-background-surface backdrop-blur-sm rounded-2xl border border-border-subtle dark:border-border-default shadow-sm',
           className
         )}
       >
@@ -59,8 +59,14 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
                 'relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium',
                 'transition-all duration-300 ease-out',
                 isActive
-                  ? 'bg-background-surface text-text-primary shadow-sm'
-                  : 'text-text-tertiary hover:text-text-secondary hover:bg-background-surface/50'
+                  ? cn(
+                      'bg-background-surface text-text-primary shadow-sm',
+                      tab.color === 'blue' && 'border border-primary-200 dark:border-primary-700',
+                      tab.color === 'amber' && 'border border-warning-200 dark:border-warning-700',
+                      tab.color === 'rose' && 'border border-error-200 dark:border-error-700',
+                      tab.color === 'purple' && 'border border-primary-200 dark:border-primary-700'
+                    )
+                  : 'text-text-tertiary hover:text-text-secondary hover:bg-background-surface/50 border border-transparent'
               )}
             >
               <Icon

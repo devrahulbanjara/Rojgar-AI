@@ -75,7 +75,7 @@ export function BrandSection() {
             </div>
 
             <Link href="/signup">
-              <Button className="bg-white hover:bg-background-subtle text-primary font-semibold rounded-xl px-8 py-3 h-auto group transition-all duration-200 hover:scale-105 shadow-xl shadow-black/20">
+              <Button className="bg-background-surface hover:bg-background-subtle text-primary font-semibold rounded-xl px-8 py-3 h-auto group transition-all duration-200 hover:scale-105 shadow-xl shadow-black/20">
                 Get Started Free
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -117,7 +117,7 @@ export function BrandSection() {
                 style={{ animation: 'float 4s ease-in-out infinite' }}
               >
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-6 h-6 rounded-md bg-success-100 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-md bg-success-100 dark:bg-success-900/50 flex items-center justify-center">
                     <TrendingUp className="w-3 h-3 text-success" />
                   </div>
                   <span className="text-xs font-semibold text-text-secondary">Match Score</span>
@@ -138,7 +138,7 @@ export function BrandSection() {
                 style={{ animation: 'float 5s ease-in-out infinite 1s' }}
               >
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-6 h-6 rounded-md bg-primary-100 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
                     <Users className="w-3 h-3 text-primary" />
                   </div>
                   <span className="text-xs font-semibold text-text-secondary">Screened</span>
@@ -166,7 +166,7 @@ export function BrandSection() {
                 style={{ animation: 'float 4.5s ease-in-out infinite 0.5s' }}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-md bg-ai-100 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-md bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center">
                     <Brain className="w-3 h-3 text-ai" />
                   </div>
                   <span className="text-xs font-semibold text-text-secondary">AI Analysis</span>
