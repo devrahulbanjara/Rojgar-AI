@@ -36,7 +36,7 @@ export function CandidateCard({
       }}
     >
       <div className="flex items-center gap-5">
-        {/* Avatar */}
+        {}
         <div className="flex-shrink-0">
           <UserAvatar
             name={candidate.name}
@@ -45,21 +45,21 @@ export function CandidateCard({
           />
         </div>
 
-        {/* Main Content - Flex Column */}
+        {}
         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-          {/* Name */}
+          {}
           <h3 className="text-lg font-semibold text-text-primary leading-[1.2]">
             {candidate.name}
           </h3>
 
-          {/* Job Applied For */}
+          {}
           {candidate.job_title && (
             <div className="mt-1">
               <span className="text-sm font-medium text-primary">{candidate.job_title}</span>
             </div>
           )}
 
-          {/* Email | Phone */}
+          {}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-text-muted" strokeWidth={2} />

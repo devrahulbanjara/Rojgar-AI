@@ -27,12 +27,12 @@ export function CandidatePlatformSection() {
       id="candidates"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
     >
-      {/* Background Elements */}
+      {}
       <div className="absolute top-1/2 left-0 w-72 h-72 bg-success-100/20 dark:bg-success-900/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: Content */}
+          {}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -43,18 +43,18 @@ export function CandidatePlatformSection() {
               For Candidates
             </div>
 
-            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
+            <h2 className="text-4xl sm:text-5xl font-display font-bold text-text-primary tracking-tightest mb-6">
               Job search that{' '}
               <span className="bg-gradient-to-r from-success to-success-600 bg-clip-text text-transparent">
                 respects you
               </span>
             </h2>
 
-            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed font-sans">
               Get feedback on every application and tools to stand out in your job search.
             </p>
 
-            {/* Features Grid */}
+            {}
             <div className="grid grid-cols-2 gap-3 mb-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon
@@ -84,7 +84,7 @@ export function CandidatePlatformSection() {
             </Link>
           </motion.div>
 
-          {/* Right: Visual - Application Tracker */}
+          {}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -93,24 +93,26 @@ export function CandidatePlatformSection() {
             className="relative"
           >
             <div className="relative">
-              {/* Glow */}
+              {}
               <div className="absolute -inset-4 bg-gradient-to-r from-success/10 to-success-600/10 rounded-3xl blur-2xl" />
 
-              {/* Application Tracker Card */}
+              {}
               <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
-                {/* Header */}
+                {}
                 <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 dark:from-success-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-success" />
-                    <h3 className="text-base font-bold text-text-primary">Your Applications</h3>
+                    <h3 className="text-base font-display font-bold text-text-primary tracking-tight">
+                      Your Applications
+                    </h3>
                   </div>
                   <p className="text-xs text-text-tertiary mt-0.5">Track your journey</p>
                 </div>
 
-                {/* Kanban Columns */}
+                {}
                 <div className="p-4 bg-background-subtle/50">
                   <div className="grid grid-cols-3 gap-2">
-                    {/* Applied Column */}
+                    {}
                     <motion.div
                       initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -124,23 +126,23 @@ export function CandidatePlatformSection() {
                           <span className="text-xs font-bold text-info-700">Applied</span>
                         </div>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-info-100 text-info-700">
-                          3
+                          4
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {[1, 2].map((_, i) => (
+                        {[1, 2, 3, 4].map((_, i) => (
                           <div
                             key={i}
-                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-info"
+                            className="bg-background-surface p-2.5 rounded-md border border-border-default border-l-2 border-l-info"
                           >
-                            <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
-                            <div className="h-2 bg-border-subtle rounded w-12 animate-pulse" />
+                            <div className="h-2.5 bg-border-default rounded w-[77px] mb-1.5 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-[58px] animate-pulse" />
                           </div>
                         ))}
                       </div>
                     </motion.div>
 
-                    {/* Interviewing Column */}
+                    {}
                     <motion.div
                       initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -154,23 +156,23 @@ export function CandidatePlatformSection() {
                           <span className="text-xs font-bold text-primary-700">Interview</span>
                         </div>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700">
-                          2
+                          4
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {[1, 2].map((_, i) => (
+                        {[1, 2, 3, 4].map((_, i) => (
                           <div
                             key={i}
-                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-primary"
+                            className="bg-background-surface p-2.5 rounded-md border border-border-default border-l-2 border-l-primary"
                           >
-                            <div className="h-2.5 bg-border-default rounded w-14 mb-1 animate-pulse" />
-                            <div className="h-2 bg-border-subtle rounded w-10 animate-pulse" />
+                            <div className="h-2.5 bg-border-default rounded w-[67px] mb-1.5 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-[48px] animate-pulse" />
                           </div>
                         ))}
                       </div>
                     </motion.div>
 
-                    {/* Outcome Column */}
+                    {}
                     <motion.div
                       initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -184,14 +186,19 @@ export function CandidatePlatformSection() {
                           <span className="text-xs font-bold text-success-700">Offers</span>
                         </div>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-success-100 text-success-700">
-                          1
+                          4
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-success">
-                          <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
-                          <div className="h-2 bg-border-subtle rounded w-11 animate-pulse" />
-                        </div>
+                        {[1, 2, 3, 4].map((_, i) => (
+                          <div
+                            key={i}
+                            className="bg-background-surface p-2.5 rounded-md border border-border-default border-l-2 border-l-success"
+                          >
+                            <div className="h-2.5 bg-border-default rounded w-[77px] mb-1.5 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-[53px] animate-pulse" />
+                          </div>
+                        ))}
                       </div>
                     </motion.div>
                   </div>

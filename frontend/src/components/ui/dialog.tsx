@@ -46,7 +46,6 @@ const Dialog: React.FC<DialogProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -57,7 +56,6 @@ const Dialog: React.FC<DialogProps> = ({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
-  // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -73,7 +71,7 @@ const Dialog: React.FC<DialogProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
+          {}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -84,7 +82,7 @@ const Dialog: React.FC<DialogProps> = ({
             aria-hidden="true"
           />
 
-          {/* Dialog Container */}
+          {}
           <motion.div
             ref={dialogRef}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -92,11 +90,10 @@ const Dialog: React.FC<DialogProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
             className={cn(
-              // Base styles
               'relative z-50 w-full bg-background-surface border border-default',
-              // Enhanced layered shadow - soft and diffused
+
               'rounded-[20px]',
-              // Default max width
+
               'max-w-lg',
               'shadow-xl',
               className
@@ -104,7 +101,7 @@ const Dialog: React.FC<DialogProps> = ({
             role="dialog"
             aria-modal="true"
           >
-            {/* Close button */}
+            {}
             {showCloseButton && (
               <button
                 onClick={onClose}
@@ -122,7 +119,6 @@ const Dialog: React.FC<DialogProps> = ({
     </AnimatePresence>
   )
 
-  // Render to document body to escape any container constraints
   if (typeof document !== 'undefined') {
     return createPortal(content, document.body)
   }

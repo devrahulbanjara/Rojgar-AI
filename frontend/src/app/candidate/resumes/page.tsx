@@ -16,7 +16,11 @@ import {
   Edit,
   Copy,
   ChevronDown,
+  ArrowUpDown,
+  Calendar,
+  Type,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { AppShell } from '@/components/layout/AppShell'
 import { PageTransition, AnimatedContainer, PageHeader } from '@/components/common'
@@ -201,9 +205,34 @@ export default function ResumeListPage() {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date')
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false)
   const [expandedResumeId, setExpandedResumeId] = useState<string | null>(null)
   const [resumeDetails, setResumeDetails] = useState<Record<string, ResumeResponse>>({})
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const sortDropdownRef = useRef<HTMLDivElement>(null)
+
+  const sortOptions = [
+    { value: 'date', label: 'Sort by Date', icon: Calendar },
+    { value: 'title', label: 'Sort by Title', icon: Type },
+  ]
+
+  const getCurrentSortLabel = () => {
+    const option = sortOptions.find(opt => opt.value === sortBy)
+    return option?.label || 'Sort by Date'
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const loadResumes = async () => {
     try {
@@ -254,7 +283,7 @@ export default function ResumeListPage() {
     try {
       await resumeService.deleteResume(id)
       toast.success('Resume deleted successfully')
-      loadResumes() // Refresh
+      loadResumes()
     } catch {
       toast.error('Failed to delete resume')
     }
@@ -331,19 +360,15 @@ export default function ResumeListPage() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="space-y-8 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/30 to-background-surface border-b border-primary-50/50 dark:border-primary-900/30 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <PageHeader
-                  title="Resume Builder"
-                  subtitle="Create and manage tailored resumes from your profile data"
-                />
-              </div>
-            </div>
+            <PageHeader
+              title="Resume Builder"
+              subtitle="Create and manage tailored resumes from your profile data"
+            />
           </AnimatedContainer>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="space-y-8">
             {error && (
               <div className="bg-error-50 dark:bg-error-950/30 text-error-600 dark:text-error-400 p-4 rounded-lg mb-6 flex items-center gap-2 border border-error-100 dark:border-error-800">
                 <span className="font-medium">!</span> {error}
@@ -367,16 +392,67 @@ export default function ResumeListPage() {
                         className="w-full pl-10 pr-4 py-2 text-sm border border-border-default rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-background-surface text-text-primary placeholder:text-text-muted"
                       />
                     </div>
-                    <div className="relative">
-                      <select
-                        value={sortBy}
-                        onChange={e => setSortBy(e.target.value as 'date' | 'title')}
-                        className="appearance-none pl-4 pr-10 py-2.5 text-sm border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-background-surface cursor-pointer text-text-primary hover:border-border-strong select-arrow"
+                    <div className="relative" ref={sortDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setIsSortDropdownOpen(!isSortDropdownOpen)
+                          } else if (e.key === 'Escape') {
+                            setIsSortDropdownOpen(false)
+                          }
+                        }}
+                        className={cn(
+                          'h-10 pl-3 pr-10 py-2.5 border rounded-xl bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] min-w-[150px]',
+                          isSortDropdownOpen
+                            ? 'border-ai-500 ring-2 ring-ai-500/20 shadow-md'
+                            : 'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
+                        )}
                       >
-                        <option value="date">Sort by Date</option>
-                        <option value="title">Sort by Title</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                        <div className="flex items-center gap-2 h-full">
+                          <ArrowUpDown className="w-4 h-4 text-ai-500" />
+                          <span className="font-medium text-text-primary">
+                            {getCurrentSortLabel()}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
+                            isSortDropdownOpen ? 'rotate-180 text-ai-600' : 'text-text-muted'
+                          )}
+                        />
+                      </button>
+
+                      {isSortDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-2 bg-background-surface border border-ai-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-ai-100">
+                          {sortOptions.map((option, index) => {
+                            const IconComponent = option.icon
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setSortBy(option.value as 'date' | 'title')
+                                  setIsSortDropdownOpen(false)
+                                }}
+                                className={cn(
+                                  'w-full px-3 py-2.5 text-left hover:bg-gradient-to-r hover:from-ai-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-ai-50 focus:to-primary-50 focus:outline-none transition-all duration-200 flex items-center gap-2.5 text-sm text-text-primary hover:text-ai-700 transform hover:scale-[1.01] active:scale-[0.99] group',
+                                  sortBy === option.value && 'bg-ai-50/50'
+                                )}
+                                style={{ animationDelay: `${index * 50}ms` }}
+                              >
+                                <IconComponent className="w-4 h-4 text-ai-500 transition-transform duration-200 group-hover:scale-110" />
+                                <span className="font-medium">{option.label}</span>
+                                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
+                                </div>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => setIsModalOpen(true)}

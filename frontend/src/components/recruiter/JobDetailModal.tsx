@@ -55,7 +55,6 @@ export function JobDetailModal({
   onDelete,
   onConvertToReferenceJD,
 }: JobDetailModalProps) {
-  // Get job ID for auto shortlist (prefer job_id, fallback to id as string)
   const jobId = job ? job.job_id || job.id?.toString() || null : null
   const {
     autoShortlist,
@@ -100,9 +99,9 @@ export function JobDetailModal({
       showCloseButton={false}
     >
       <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col rounded-[20px] bg-background-surface">
-        {/* Enhanced Header with subtle background */}
+        {}
         <div className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-12 py-12 border-b border-border-subtle relative">
-          {/* Close Button */}
+          {}
           <button
             onClick={onClose}
             className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
@@ -111,7 +110,7 @@ export function JobDetailModal({
             <X className="w-5 h-5 text-text-muted group-hover:text-text-secondary transition-colors" />
           </button>
 
-          {/* Company Logo & Title */}
+          {}
           <div className="flex items-start gap-4 mb-6">
             {job.company?.logo && (
               <div className="flex-shrink-0">
@@ -210,9 +209,9 @@ export function JobDetailModal({
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
+        {}
         <div className="flex-1 overflow-y-auto px-12 py-12">
-          {/* Key Information Grid with dividers */}
+          {}
           <div className="grid grid-cols-3 gap-10 mb-12 p-6 bg-background-subtle rounded-xl border border-border-subtle">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-11 h-11 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
@@ -259,7 +258,7 @@ export function JobDetailModal({
             </div>
           </div>
 
-          {/* About the Company - Enhanced */}
+          {}
           {job.company && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -315,7 +314,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Job Summary - Enhanced */}
+          {}
           {job.description && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -335,7 +334,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Job Responsibilities - Enhanced */}
+          {}
           {(() => {
             const jobWithExtras = job as JobWithExtras
             return jobWithExtras.job_responsibilities &&
@@ -366,7 +365,7 @@ export function JobDetailModal({
             ) : null
           })()}
 
-          {/* Required Qualifications - Enhanced */}
+          {}
           {job.requirements && job.requirements.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -393,7 +392,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Preferred - Enhanced */}
+          {}
           {job.nice_to_have && job.nice_to_have.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -420,7 +419,7 @@ export function JobDetailModal({
             </section>
           )}
 
-          {/* Compensation & Benefits - Enhanced */}
+          {}
           {job.benefits && job.benefits.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -448,7 +447,7 @@ export function JobDetailModal({
           )}
         </div>
 
-        {/* Sticky Footer with Edit, Expire, Delete, and Save as Template Buttons */}
+        {}
         <div className="border-t border-border-default bg-background-surface px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
           <div className="flex items-center gap-4">
             {onDelete && (

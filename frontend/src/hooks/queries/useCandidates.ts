@@ -12,9 +12,11 @@ export function useCandidates(
     queryKey: ['candidates', page, limit, filters],
     queryFn: () => CandidateService.getCandidates(page, limit, filters),
     enabled,
-    staleTime: 0, // Always consider data stale, fetch fresh data
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: true, // Refetch when component mounts
+    staleTime: 0,
+
+    refetchOnWindowFocus: true,
+
+    refetchOnMount: true,
   })
 }
 
@@ -28,8 +30,10 @@ export function useCandidateSearch(
     queryKey: ['candidates', 'search', query, page, limit],
     queryFn: () => CandidateService.searchCandidates(query, page, limit),
     enabled: enabled && query.trim().length > 0,
-    staleTime: 0, // Always consider data stale, fetch fresh data
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: true, // Refetch when component mounts
+    staleTime: 0,
+
+    refetchOnWindowFocus: true,
+
+    refetchOnMount: true,
   })
 }

@@ -60,13 +60,13 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
 
   return (
     <section className="flex flex-col">
-      {/* Column Header - No background, just border-bottom */}
+      {}
       <header className={`pb-4 mb-5 border-b-2 ${borderColor}`}>
         <h3 className={`font-semibold text-lg ${textColor} mb-1`}>{title}</h3>
         <p className="text-[13px] text-text-muted">{description}</p>
       </header>
 
-      {/* Column Content */}
+      {}
       <div className="flex-1 space-y-4 min-h-[200px]">
         {applications.length === 0 ? (
           <div className="bg-background-subtle border border-dashed border-border-default rounded-xl p-8 text-center">
@@ -80,7 +80,7 @@ export const ApplicationTrackingColumn: React.FC<ApplicationTrackingColumnProps>
         )}
       </div>
 
-      {/* Column Footer - Application Count */}
+      {}
       {applications.length > 0 && (
         <footer className="mt-4 px-4 py-3 bg-background-subtle rounded-lg">
           <p className={`text-[13px] font-semibold ${textColor} text-center`}>

@@ -62,21 +62,25 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-text-primary mb-2">Profile Information</h3>
+        <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-2">
+          Profile Information
+        </h3>
         <p className="text-text-secondary">
           Manage your personal information and professional identity.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Contact Details Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
             <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-200 dark:border-primary-800">
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-text-primary">Contact Details</h4>
+              <h4 className="text-lg font-display font-bold text-text-primary tracking-tight">
+                Contact Details
+              </h4>
               <p className="text-sm text-text-tertiary">Your basic contact information</p>
             </div>
           </div>
@@ -101,7 +105,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 Email Address
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-hover:bg-primary-50 dark:group-hover:bg-primary-950/30 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-hover:bg-primary-50 dark:group-hover:bg-primary-950/30 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-200">
                   <Mail className="w-4 h-4" />
                 </div>
                 <Input
@@ -119,7 +123,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 Phone Number
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
                   <Phone className="w-4 h-4" />
                 </div>
                 <Input
@@ -139,7 +143,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 City
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <Input
@@ -162,7 +166,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 Country
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
                   <Globe className="w-4 h-4" />
                 </div>
                 <Input
@@ -179,14 +183,16 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
           </div>
         </div>
 
-        {/* Professional Summary Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
             <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center text-ai-600 dark:text-ai-400 shadow-sm border border-ai-200 dark:border-ai-800">
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-text-primary">Professional Summary</h4>
+              <h4 className="text-lg font-display font-bold text-text-primary tracking-tight">
+                Professional Summary
+              </h4>
               <p className="text-sm text-text-tertiary">Highlight your professional background</p>
             </div>
           </div>
@@ -230,7 +236,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
           </div>
         </div>
 
-        {/* Social Links Section */}
+        {}
         <SocialLinksSection
           socialLinks={profile.social_links}
           onUpdate={async () => {

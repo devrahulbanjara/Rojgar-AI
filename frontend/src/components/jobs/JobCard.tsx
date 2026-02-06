@@ -13,7 +13,6 @@ interface JobCardProps {
   className?: string
 }
 
-// Department color schemes matching Reference JD cards
 const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
     bg: 'bg-blue-50/80 dark:bg-blue-950/30',
@@ -67,7 +66,6 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
   },
 }
 
-// Job level color schemes
 const levelColors: Record<string, { bg: string; text: string; border: string }> = {
   Senior: {
     bg: 'bg-primary-50/80 dark:bg-primary-950/30',
@@ -114,7 +112,6 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
   const deptColor = departmentColors[job.department || ''] || departmentColors.Default
   const levelColor = levelColors[job.level || ''] || levelColors.Default
 
-  // Format deadline
   const formatDeadline = (deadline: string): string => {
     if (!deadline) return ''
     try {
@@ -164,7 +161,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
       }}
     >
       <div className="flex flex-col h-full">
-        {/* Header Row: Department Badge + Level Badge + Saved Indicator */}
+        {}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-2">
             {job.department && (
@@ -194,7 +191,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
           </div>
         </div>
 
-        {/* Job Title & Company - Refined Typography */}
+        {}
         <div className="mb-5">
           <h3
             className={cn(
@@ -211,9 +208,9 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
           </p>
         </div>
 
-        {/* Metadata - Cleanly Organized */}
+        {}
         <div className="space-y-2.5 text-sm text-text-secondary mb-6">
-          {/* Row 1: Location + Time */}
+          {}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <MapPin className="w-[14px] h-[14px] text-text-muted" />
@@ -225,7 +222,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
             </div>
           </div>
 
-          {/* Row 2: Salary + Type + Work Mode */}
+          {}
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1.5">
               <DollarSign className="w-[14px] h-[14px] text-text-muted" />
@@ -242,10 +239,10 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
           </div>
         </div>
 
-        {/* Spacer */}
+        {}
         <div className="flex-1" />
 
-        {/* Bottom Stats Row - Colored Badges */}
+        {}
         <div className="flex items-center justify-between gap-3 pt-6 border-t border-subtle">
           <div className="flex items-center gap-3">
             {job.applicant_count !== undefined && (

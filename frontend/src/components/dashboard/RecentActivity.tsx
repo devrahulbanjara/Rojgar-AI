@@ -4,7 +4,6 @@ import { cn } from '../../lib/utils'
 import { useRecentActivity, type ActivityItem } from '../../hooks/useRecentActivity'
 import { LoadingSpinner } from '../common/LoadingSpinner'
 
-// Format timestamp to display format
 const formatTimestamp = (timestamp: string): { date: string; time: string } => {
   const date = new Date(timestamp)
   const now = new Date()
@@ -103,13 +102,13 @@ export function RecentActivity() {
                 key={activity.id}
                 className="group p-4 hover:bg-background-subtle transition-colors duration-200 flex items-start gap-4"
               >
-                {/* Date/Time Column */}
+                {}
                 <div className="flex-shrink-0 w-16 text-right pt-1">
                   <div className="text-sm font-semibold text-text-primary">{date}</div>
                   <div className="text-xs text-text-tertiary">{time}</div>
                 </div>
 
-                {/* Icon Timeline */}
+                {}
                 <div className="relative flex flex-col items-center">
                   <div
                     className={cn(
@@ -119,13 +118,13 @@ export function RecentActivity() {
                   >
                     <ActivityIcon type={activity.type} />
                   </div>
-                  {/* Vertical Line */}
+                  {}
                   {index < activities.length - 1 && (
                     <div className="absolute top-10 bottom-[-24px] w-px bg-border-default" />
                   )}
                 </div>
 
-                {/* Content */}
+                {}
                 <div className="flex-1 pt-1">
                   <p className="text-sm text-text-secondary">
                     <span className="font-semibold text-text-primary">{activity.user}</span>{' '}

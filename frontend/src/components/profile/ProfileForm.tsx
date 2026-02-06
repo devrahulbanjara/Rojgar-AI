@@ -75,7 +75,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Contact Details Section */}
+        {}
         <div className="bg-background-subtle rounded-xl p-6 border border-border-default">
           <div className="flex items-center gap-2 mb-4">
             <UserIcon className="w-5 h-5 text-primary" />
