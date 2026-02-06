@@ -83,10 +83,10 @@ export function HowItWorksSection() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background-subtle text-text-secondary text-sm font-medium mb-6">
             Simple Process
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight mb-6">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-text-primary tracking-tightest mb-6">
             How ConvexHire works
           </h2>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed font-sans">
             From job posting to hiring, our AI streamlines every step while keeping you in control.
           </p>
         </motion.div>
@@ -128,7 +128,7 @@ export function HowItWorksSection() {
                         {step.number}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-bold text-text-primary mt-4 mb-2">{step.title}</h3>
+                    <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mt-4 mb-2">{step.title}</h3>
                     <p className="text-text-secondary leading-relaxed max-w-md mx-auto lg:mx-0">
                       {step.description}
                     </p>

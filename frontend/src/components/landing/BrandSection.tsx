@@ -40,7 +40,7 @@ export function BrandSection() {
               <span className="text-sm font-medium text-white/90 tracking-wide">Why Choose Us</span>
             </div>
 
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-6 leading-[1.1]">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-white tracking-tightest mb-6 leading-[1.1]">
               Hiring is broken.
               <br />
               <span className="bg-gradient-to-r from-white/90 via-white to-white/90 bg-clip-text text-transparent">
@@ -48,7 +48,7 @@ export function BrandSection() {
               </span>
             </h2>
 
-            <p className="text-lg text-white/80 mb-10 max-w-lg leading-relaxed">
+            <p className="text-lg text-white/80 mb-10 max-w-lg leading-relaxed font-sans">
               Traditional ATS systems reject qualified candidates over keywords. ConvexHire uses AI
               that reads resumes like a human recruiter would.
             </p>
@@ -68,7 +68,7 @@ export function BrandSection() {
                   transition={{ delay: 0.3 + i * 0.1 }}
                   className="text-center"
                 >
-                  <div className="text-3xl lg:text-4xl font-bold text-white mb-1">{stat.value}</div>
+                  <div className="text-3xl lg:text-4xl font-mono font-bold text-white mb-1">{stat.value}</div>
                   <div className="text-sm text-white/70 font-medium">{stat.label}</div>
                 </motion.div>
               ))}
@@ -120,10 +120,10 @@ export function BrandSection() {
                   <div className="w-6 h-6 rounded-md bg-success-100 dark:bg-success-900/50 flex items-center justify-center">
                     <TrendingUp className="w-3 h-3 text-success" />
                   </div>
-                  <span className="text-xs font-semibold text-text-secondary">Match Score</span>
+                  <span className="text-xs font-mono font-semibold text-text-secondary tracking-wide uppercase">Match Score</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-bold text-success">95%</span>
+                  <span className="text-xl font-mono font-bold text-success">95%</span>
                   <span className="text-xs text-text-tertiary">accuracy</span>
                 </div>
               </motion.div>
@@ -169,17 +169,17 @@ export function BrandSection() {
                   <div className="w-6 h-6 rounded-md bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center">
                     <Brain className="w-3 h-3 text-ai" />
                   </div>
-                  <span className="text-xs font-semibold text-text-secondary">AI Analysis</span>
+                  <span className="text-xs font-mono font-semibold text-text-secondary tracking-wide uppercase">AI Analysis</span>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-text-tertiary">Skills</span>
+                    <span className="text-xs font-mono text-text-tertiary">Skills</span>
                     <div className="w-20 h-1.5 rounded-full bg-background-subtle overflow-hidden">
                       <div className="w-[90%] h-full bg-success rounded-full" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-text-tertiary">Experience</span>
+                    <span className="text-xs font-mono text-text-tertiary">Experience</span>
                     <div className="w-20 h-1.5 rounded-full bg-background-subtle overflow-hidden">
                       <div className="w-[75%] h-full bg-primary rounded-full" />
                     </div>

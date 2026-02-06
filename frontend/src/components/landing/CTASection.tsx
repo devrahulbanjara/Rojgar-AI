@@ -45,14 +45,14 @@ export function CTASection() {
           </div>
 
           {/* Headline */}
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-6">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-white tracking-tightest mb-6">
             Ready to transform
             <br />
             your hiring process?
           </h2>
 
           {/* Subheadline */}
-          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed font-sans">
             Start using AI that understands your candidates. Get your first job posted in under 5
             minutes.
           </p>

@@ -43,14 +43,14 @@ export function CandidatePlatformSection() {
               For Candidates
             </div>
 
-            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
+            <h2 className="text-4xl sm:text-5xl font-display font-bold text-text-primary tracking-tightest mb-6">
               Job search that{' '}
               <span className="bg-gradient-to-r from-success to-success-600 bg-clip-text text-transparent">
                 respects you
               </span>
             </h2>
 
-            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed font-sans">
               Get feedback on every application and tools to stand out in your job search.
             </p>
 
@@ -102,7 +102,7 @@ export function CandidatePlatformSection() {
                 <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 dark:from-success-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-success" />
-                    <h3 className="text-base font-bold text-text-primary">Your Applications</h3>
+                    <h3 className="text-base font-display font-bold text-text-primary tracking-tight">Your Applications</h3>
                   </div>
                   <p className="text-xs text-text-tertiary mt-0.5">Track your journey</p>
                 </div>

@@ -56,7 +56,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.05] tracking-tight mb-8"
+            className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-text-primary leading-[1.05] tracking-tightest mb-8"
           >
             Hiring that{' '}
             <span className="relative">
@@ -79,7 +79,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-lg sm:text-xl lg:text-2xl text-text-secondary mb-12 max-w-2xl mx-auto leading-relaxed"
+            className="text-lg sm:text-xl lg:text-2xl text-text-secondary mb-12 max-w-2xl mx-auto leading-relaxed font-sans"
           >
             ConvexHire uses AI agents that read resumes like humans do — matching skills by meaning,
             not just keywords.
@@ -184,7 +184,7 @@ export function HeroSection() {
               <div className="p-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/50 to-background-surface min-h-[300px] lg:min-h-[400px]">
                 {/* Welcome Header */}
                 <div className="mb-6">
-                  <h1 className="text-2xl font-bold text-text-primary mb-1">Recruiter Dashboard</h1>
+                  <h1 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-1">Recruiter Dashboard</h1>
                   <p className="text-sm text-text-secondary">Smart candidate matching</p>
                 </div>
 
@@ -261,8 +261,8 @@ export function HeroSection() {
                           <div className="h-2 bg-border-subtle rounded w-24" />
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-success">{score}%</div>
-                          <div className="text-sm text-success-600">AI Match</div>
+                          <div className="text-lg font-mono font-bold text-success">{score}%</div>
+                          <div className="text-sm font-mono text-success-600">AI Match</div>
                         </div>
                       </motion.div>
                     ))}
