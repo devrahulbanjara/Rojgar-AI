@@ -46,7 +46,15 @@ async def websocket_activity(websocket: WebSocket):
                 )
             else:
                 message = str(e)
-            logger.warning(f"WS Connection Refused: {message}")
+            if not any(
+                expected_msg in message
+                for expected_msg in [
+                    "User not found",
+                    "Not authenticated",
+                    "Invalid token",
+                ]
+            ):
+                logger.warning(f"WS Connection Refused: {message}")
             if websocket.client_state != WebSocketState.DISCONNECTED:
                 await websocket.close(code=1008)
 

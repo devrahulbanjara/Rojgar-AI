@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(f"{password}{settings.SECRET_KEY}".encode()).hexdigest()
+    return hashlib.sha256(
+        f"{password}{settings.SECRET_KEY.get_secret_value()}".encode()
+    ).hexdigest()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -35,14 +37,18 @@ def create_token(
     else:
         expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token_data = {"sub": entity_id, "entity_type": entity_type, "exp": expire}
-    token = jwt.encode(token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    token = jwt.encode(
+        token_data, settings.SECRET_KEY.get_secret_value(), algorithm=settings.ALGORITHM
+    )
     return token
 
 
 def verify_token(token: str) -> tuple[uuid.UUID, str]:
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token,
+            settings.SECRET_KEY.get_secret_value(),
+            algorithms=[settings.ALGORITHM],
         )
         entity_id = payload.get("sub")
         entity_type = payload.get("entity_type", "user")

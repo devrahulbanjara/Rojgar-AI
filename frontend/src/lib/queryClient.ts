@@ -64,9 +64,15 @@ export function restoreQueryCache() {
     const cacheData: Record<string, { data: unknown; timestamp: number }> = JSON.parse(cached)
     const maxAge = 30 * 60 * 1000 // 30 minutes max cache age
     const now = Date.now()
+    const userKey = JSON.stringify(['auth', 'user'])
 
     Object.entries(cacheData).forEach(([key, { data, timestamp }]) => {
       if (now - timestamp > maxAge) return
+      
+      // Don't restore user data from cache - always fetch fresh to prevent showing wrong user
+      if (key === userKey) {
+        return
+      }
 
       try {
         const queryKey = JSON.parse(key)

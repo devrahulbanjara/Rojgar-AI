@@ -66,11 +66,17 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
     <div className={cn('relative', className)}>
       <div
         className={cn(
-          'relative flex items-center bg-white border-[1.5px] rounded-xl transition-all duration-200',
+          'relative flex items-center bg-white border transition-all duration-200',
           isFocused
             ? 'border-[#3056F5] ring-4 ring-[#3056F5]/10 shadow-sm'
-            : 'border-[#E5E7EB] hover:border-[#CBD5E1]'
+            : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
         )}
+        style={{
+          borderWidth: '1px',
+          borderStyle: 'solid',
+          borderColor: isFocused ? '#3056F5' : '#E2E8F0',
+          borderRadius: '8px',
+        }}
       >
         {/* Search Icon */}
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -97,7 +103,13 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           aria-label="Search jobs, companies, or skills"
-          className="w-full h-12 pl-12 pr-12 bg-transparent text-[#0F172A] placeholder-[#94A3B8] text-[15px] focus:outline-none"
+          className="w-full bg-transparent text-[#0F172A] placeholder-[#94A3B8] text-[15px] focus:outline-none"
+          style={{
+            paddingTop: '12px',
+            paddingBottom: '12px',
+            paddingLeft: '40px', // 16px (left-4 icon position) + 20px (icon width) + 4px gap = 40px
+            paddingRight: value ? '44px' : '16px', // 16px when no clear button, 44px when clear button visible (16px + 20px icon + 8px gap)
+          }}
         />
 
         {/* Clear Button */}
@@ -107,6 +119,9 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
             className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
             aria-label="Clear search"
             type="button"
+            style={{
+              right: '16px', // Match the 16px right padding
+            }}
           >
             <X className="w-4 h-4 text-[#94A3B8] hover:text-[#475569]" />
           </button>
