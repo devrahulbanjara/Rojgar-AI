@@ -68,7 +68,7 @@ export function restoreQueryCache() {
 
     Object.entries(cacheData).forEach(([key, { data, timestamp }]) => {
       if (now - timestamp > maxAge) return
-      
+
       // Don't restore user data from cache - always fetch fresh to prevent showing wrong user
       if (key === userKey) {
         return

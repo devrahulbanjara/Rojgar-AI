@@ -13,11 +13,7 @@ import { JobCard, JobSearchBar, FilterChips, type FilterType } from '../../../co
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
 import { Button } from '../../../components/ui/button'
-import {
-  AnimatedContainer,
-  LoadingSpinner,
-  SkeletonJobCard,
-} from '../../../components/common'
+import { AnimatedContainer, LoadingSpinner, SkeletonJobCard } from '../../../components/common'
 import { RefreshCw, AlertCircle, Search, Filter } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
@@ -311,7 +307,10 @@ export default function Jobs() {
               </div>
 
               {/* Enhanced Search & Filter Section */}
-              <div className="space-y-6 bg-white rounded-2xl p-6 border border-slate-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div
+                className="space-y-6 bg-white rounded-2xl p-6 border border-slate-200"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+              >
                 <JobSearchBar
                   value={searchQuery}
                   onChange={handleSearchChange}

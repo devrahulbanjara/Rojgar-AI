@@ -1,17 +1,17 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { 
-  X, 
-  MapPin, 
-  Calendar, 
-  GraduationCap, 
-  Award, 
+import {
+  X,
+  MapPin,
+  Calendar,
+  GraduationCap,
+  Award,
   ExternalLink,
   User,
   Briefcase,
   Wrench,
   Building,
-  Globe
+  Globe,
 } from 'lucide-react'
 import { SiGithub, SiLinkedin } from 'react-icons/si'
 import { UserAvatar } from '../ui/UserAvatar'
@@ -31,22 +31,22 @@ interface ResumeDetailModalProps {
   }>
 }
 
-export function ResumeDetailModal({ 
-  isOpen, 
-  onClose, 
-  applicationId, 
+export function ResumeDetailModal({
+  isOpen,
+  onClose,
+  applicationId,
   candidateName,
   candidatePhoto,
-  candidateSocialLinks = []
+  candidateSocialLinks = [],
 }: ResumeDetailModalProps) {
   const { data: resume, isLoading, error } = useResume(applicationId, isOpen)
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return ''
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
     })
   }
 
@@ -76,18 +76,18 @@ export function ResumeDetailModal({
   if (!isOpen) return null
 
   return createPortal(
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white w-full mx-4 max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200 ease-out rounded-[20px]"
-        style={{ 
+        style={{
           maxWidth: '900px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         {/* Enhanced Header with gradient background */}
         <div className="bg-gradient-to-b from-indigo-50/50 to-white px-12 py-12 border-b border-indigo-50/50 relative">
@@ -103,15 +103,11 @@ export function ResumeDetailModal({
           {/* Candidate Header */}
           <div className="flex items-center gap-5">
             <div className="relative">
-              <div 
+              <div
                 className="w-20 h-20 rounded-full border-2 border-gray-200"
                 style={{ boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' }}
               >
-                <UserAvatar
-                  name={candidateName}
-                  src={candidatePhoto}
-                  className="w-20 h-20"
-                />
+                <UserAvatar name={candidateName} src={candidatePhoto} className="w-20 h-20" />
               </div>
             </div>
             <div>
@@ -119,20 +115,21 @@ export function ResumeDetailModal({
                 {candidateName}
               </h2>
               {resume?.target_job_title && (
-                <p className="text-[#475569] font-medium">
-                  {resume.target_job_title}
-                </p>
+                <p className="text-[#475569] font-medium">{resume.target_job_title}</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto p-8" style={{ 
-          maxHeight: 'calc(90vh - 200px)',
-          scrollBehavior: 'smooth',
-          background: '#F9FAFB'
-        }}>
+        <div
+          className="overflow-y-auto p-8"
+          style={{
+            maxHeight: 'calc(90vh - 200px)',
+            scrollBehavior: 'smooth',
+            background: '#F9FAFB',
+          }}
+        >
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner />
@@ -168,9 +165,7 @@ export function ResumeDetailModal({
                     </div>
                   </div>
                   <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                    <p className="text-[#475569] leading-relaxed">
-                      {resume.custom_summary}
-                    </p>
+                    <p className="text-[#475569] leading-relaxed">{resume.custom_summary}</p>
                   </div>
                 </div>
               )}
@@ -188,9 +183,9 @@ export function ResumeDetailModal({
                     </div>
                   </div>
                   <div className="space-y-4">
-                    {resume.work_experiences.map((exp) => (
-                      <div 
-                        key={exp.resume_work_experience_id} 
+                    {resume.work_experiences.map(exp => (
+                      <div
+                        key={exp.resume_work_experience_id}
                         className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:border-blue-200 hover:shadow-md transition-all duration-300"
                       >
                         <div className="flex items-start justify-between">
@@ -211,7 +206,8 @@ export function ResumeDetailModal({
                               <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                                 <Calendar className="w-4 h-4 text-blue-500" />
                                 <span className="font-medium">
-                                  {formatDate(exp.start_date)} - {exp.is_current ? 'Present' : formatDate(exp.end_date)}
+                                  {formatDate(exp.start_date)} -{' '}
+                                  {exp.is_current ? 'Present' : formatDate(exp.end_date)}
                                 </span>
                               </div>
                               {exp.location && (
@@ -234,7 +230,8 @@ export function ResumeDetailModal({
                       </div>
                     ))}
                   </div>
-                </div>              )}
+                </div>
+              )}
 
               {/* Education */}
               {resume.educations.length > 0 && (
@@ -249,9 +246,9 @@ export function ResumeDetailModal({
                     </div>
                   </div>
                   <div className="space-y-4">
-                    {resume.educations.map((edu) => (
-                      <div 
-                        key={edu.resume_education_id} 
+                    {resume.educations.map(edu => (
+                      <div
+                        key={edu.resume_education_id}
                         className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:border-indigo-200 hover:shadow-md transition-all duration-300"
                       >
                         <div className="flex items-start justify-between">
@@ -271,7 +268,8 @@ export function ResumeDetailModal({
                                 <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                                   <Calendar className="w-4 h-4 text-indigo-500" />
                                   <span className="font-medium">
-                                    {formatDate(edu.start_date)} - {edu.is_current ? 'Present' : formatDate(edu.end_date)}
+                                    {formatDate(edu.start_date)} -{' '}
+                                    {edu.is_current ? 'Present' : formatDate(edu.end_date)}
                                   </span>
                                 </div>
                               )}
@@ -303,7 +301,7 @@ export function ResumeDetailModal({
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    {resume.skills.map((skill) => (
+                    {resume.skills.map(skill => (
                       <div
                         key={skill.resume_skill_id}
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
@@ -328,9 +326,9 @@ export function ResumeDetailModal({
                     </div>
                   </div>
                   <div className="space-y-4">
-                    {resume.certifications.map((cert) => (
-                      <div 
-                        key={cert.resume_certification_id} 
+                    {resume.certifications.map(cert => (
+                      <div
+                        key={cert.resume_certification_id}
                         className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:border-yellow-200 hover:shadow-md transition-all duration-300"
                       >
                         <div className="flex items-start justify-between">
@@ -340,7 +338,9 @@ export function ResumeDetailModal({
                                 <Award className="w-5 h-5" />
                               </div>
                               <div>
-                                <h5 className="font-bold text-[#0F172A] text-lg">{cert.certification_name}</h5>
+                                <h5 className="font-bold text-[#0F172A] text-lg">
+                                  {cert.certification_name}
+                                </h5>
                                 <p className="text-[#475569] font-medium">{cert.issuing_body}</p>
                               </div>
                             </div>
@@ -349,13 +349,17 @@ export function ResumeDetailModal({
                               {cert.issue_date && (
                                 <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                                   <Calendar className="w-4 h-4 text-yellow-500" />
-                                  <span className="font-medium">Issued {formatDate(cert.issue_date)}</span>
+                                  <span className="font-medium">
+                                    Issued {formatDate(cert.issue_date)}
+                                  </span>
                                 </div>
                               )}
                               {!cert.does_not_expire && cert.expiration_date && (
                                 <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
                                   <Calendar className="w-4 h-4 text-yellow-500" />
-                                  <span className="font-medium">Expires {formatDate(cert.expiration_date)}</span>
+                                  <span className="font-medium">
+                                    Expires {formatDate(cert.expiration_date)}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -394,9 +398,9 @@ export function ResumeDetailModal({
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {candidateSocialLinks.map((link) => {
+                    {candidateSocialLinks.map(link => {
                       const cleanUrl = link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')
-                      
+
                       return (
                         <a
                           key={link.social_link_id}
@@ -408,18 +412,14 @@ export function ResumeDetailModal({
                           {/* Content Layout */}
                           <div className="flex items-center gap-3 h-full">
                             {/* Icon */}
-                            <div className="flex-shrink-0">
-                              {getSocialIcon(link.type)}
-                            </div>
-                            
+                            <div className="flex-shrink-0">{getSocialIcon(link.type)}</div>
+
                             {/* Text Content */}
                             <div className="flex-1 min-w-0">
                               <div className="font-bold text-sm text-gray-900">
                                 {getPlatformName(link.type)}
                               </div>
-                              <div className="text-xs text-gray-600 truncate">
-                                {cleanUrl}
-                              </div>
+                              <div className="text-xs text-gray-600 truncate">{cleanUrl}</div>
                             </div>
                           </div>
 
@@ -431,11 +431,9 @@ export function ResumeDetailModal({
                   </div>
                 </div>
               )}
-
             </div>
           )}
         </div>
-
       </div>
     </div>,
     document.body

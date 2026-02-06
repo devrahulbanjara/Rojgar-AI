@@ -37,21 +37,28 @@ export function ShortlistFiltersComponent({
     filters.dateSort !== undefined ||
     filters.aiStatus !== undefined
 
-  const handleFilterChange = (
-    key: keyof ShortlistFilters,
-    value: string
-  ) => {
+  const handleFilterChange = (key: keyof ShortlistFilters, value: string) => {
     onFiltersChange({
       ...filters,
       [key]:
         value === 'all'
           ? undefined
-          : (value as 'high' | 'medium' | 'low' | 'newest' | 'oldest' | 'recommended' | 'not_recommended'),
+          : (value as
+              | 'high'
+              | 'medium'
+              | 'low'
+              | 'newest'
+              | 'oldest'
+              | 'recommended'
+              | 'not_recommended'),
     })
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+    <div
+      className="bg-white rounded-2xl p-6 border border-slate-200"
+      style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+    >
       <div className="flex flex-wrap items-center gap-6">
         {/* Score Range Filter */}
         <div className="flex items-center gap-3">
@@ -63,14 +70,13 @@ export function ShortlistFiltersComponent({
                 onClick={() => handleFilterChange('scoreRange', option.value)}
                 className={cn(
                   'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
-                  filters.scoreRange === option.value || (option.value === 'all' && !filters.scoreRange)
+                  filters.scoreRange === option.value ||
+                    (option.value === 'all' && !filters.scoreRange)
                     ? 'bg-indigo-100 text-indigo-700 border border-indigo-300'
                     : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                 )}
               >
-                {option.color && (
-                  <div className={cn('w-2 h-2 rounded-full', option.color)} />
-                )}
+                {option.color && <div className={cn('w-2 h-2 rounded-full', option.color)} />}
                 {option.label}
               </button>
             ))}
@@ -104,7 +110,7 @@ export function ShortlistFiltersComponent({
           <div className="relative">
             <select
               value={filters.dateSort || 'newest'}
-              onChange={(e) => handleFilterChange('dateSort', e.target.value)}
+              onChange={e => handleFilterChange('dateSort', e.target.value)}
               className="appearance-none bg-white border border-slate-200 rounded-lg px-3 py-1.5 pr-8 text-sm font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
             >
               {dateSortOptions.map(option => (

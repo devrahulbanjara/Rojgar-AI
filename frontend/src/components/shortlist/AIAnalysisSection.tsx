@@ -15,17 +15,19 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
   const extractTags = (text: string) => {
     const strengths: string[] = []
     const concerns: string[] = []
-    
+
     // Simple keyword-based extraction (can be enhanced with NLP)
     const strengthKeywords = ['strong', 'excellent', 'outstanding', 'impressive', 'proven', 'good']
     const concernKeywords = ['lacks', 'limited', 'gap', 'minor', 'consideration', 'may need']
-    
+
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10)
-    
+
     sentences.forEach(sentence => {
       const lowerSentence = sentence.toLowerCase()
       if (strengthKeywords.some(keyword => lowerSentence.includes(keyword))) {
-        const cleanSentence = sentence.trim().replace(/^(strong|excellent|outstanding|impressive|proven|good)\s*/i, '')
+        const cleanSentence = sentence
+          .trim()
+          .replace(/^(strong|excellent|outstanding|impressive|proven|good)\s*/i, '')
         if (cleanSentence.length > 5 && strengths.length < 3) {
           strengths.push(cleanSentence.charAt(0).toUpperCase() + cleanSentence.slice(1))
         }
@@ -37,7 +39,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
         }
       }
     })
-    
+
     return { strengths, concerns }
   }
 
@@ -51,11 +53,8 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
       >
         <Sparkles className="w-4 h-4" />
         <span>AI Analysis</span>
-        <ChevronDown 
-          className={cn(
-            'w-4 h-4 transition-transform duration-200',
-            isExpanded && 'rotate-180'
-          )} 
+        <ChevronDown
+          className={cn('w-4 h-4 transition-transform duration-200', isExpanded && 'rotate-180')}
         />
       </button>
 
@@ -78,7 +77,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
                   {strengths.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {strengths.map((strength, index) => (
-                        <span 
+                        <span
                           key={index}
                           className="bg-emerald-50/80 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-1 rounded-full"
                           style={{ animationDelay: `${index * 100}ms` }}
@@ -91,7 +90,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
                   {concerns.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {concerns.map((concern, index) => (
-                        <span 
+                        <span
                           key={index}
                           className="bg-amber-50/80 text-amber-700 border border-amber-200 text-xs px-2.5 py-1 rounded-full"
                           style={{ animationDelay: `${(strengths.length + index) * 100}ms` }}

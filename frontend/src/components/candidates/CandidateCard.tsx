@@ -11,8 +11,12 @@ interface CandidateCardProps {
   index?: number
 }
 
-export function CandidateCard({ candidate, onClick, className, index: _index = 0 }: CandidateCardProps) {
-
+export function CandidateCard({
+  candidate,
+  onClick,
+  className,
+  index: _index = 0,
+}: CandidateCardProps) {
   return (
     <div
       className={cn(
@@ -58,16 +62,12 @@ export function CandidateCard({ candidate, onClick, className, index: _index = 0
         {/* Main Content - Flex Column */}
         <div className="flex-1 min-w-0 flex flex-col" style={{ gap: '6px' }}>
           {/* Name */}
-          <h3 className="text-lg font-semibold text-[#1E293B] leading-[1.2]">
-            {candidate.name}
-          </h3>
+          <h3 className="text-lg font-semibold text-[#1E293B] leading-[1.2]">{candidate.name}</h3>
 
           {/* Job Applied For */}
           {candidate.job_title && (
             <div style={{ marginTop: '4px' }}>
-              <span className="text-sm font-medium text-[#5B7FFF]">
-                {candidate.job_title}
-              </span>
+              <span className="text-sm font-medium text-[#5B7FFF]">{candidate.job_title}</span>
             </div>
           )}
 

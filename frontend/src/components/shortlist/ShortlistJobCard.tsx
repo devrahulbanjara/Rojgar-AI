@@ -28,26 +28,21 @@ const getDepartmentBadgeStyle = (department: string) => {
   }
 }
 
-export function ShortlistJobCard({
-  job,
-  isSelected,
-  onClick,
-  className,
-}: ShortlistJobCardProps) {
+export function ShortlistJobCard({ job, isSelected, onClick, className }: ShortlistJobCardProps) {
   return (
     <div
       className={cn(
         'group cursor-pointer transition-all duration-300 w-full bg-white rounded-xl border p-6 relative',
         'hover:-translate-y-1 hover:border-indigo-200',
         isSelected
-          ? 'border-indigo-400 bg-gradient-to-br from-indigo-50/80 to-blue-50/60 shadow-lg shadow-indigo-500/20'
+          ? 'border-indigo-300 bg-gradient-to-br from-indigo-50/50 to-blue-50/40 shadow-md shadow-indigo-500/10'
           : 'border-slate-200 hover:shadow-lg',
         className
       )}
       style={{
-        borderWidth: isSelected ? '3px' : '1px',
-        boxShadow: isSelected 
-          ? '0 8px 24px rgba(99, 102, 241, 0.2), 0 4px 16px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1)' 
+        borderWidth: isSelected ? '2px' : '1px',
+        boxShadow: isSelected
+          ? '0 4px 12px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.08)'
           : '0 2px 8px rgba(0,0,0,0.08)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
@@ -68,8 +63,8 @@ export function ShortlistJobCard({
       }}
       onMouseLeave={e => {
         if (!isSelected) {
-          e.currentTarget.style.boxShadow = isSelected 
-            ? '0 4px 16px rgba(99, 102, 241, 0.15)' 
+          e.currentTarget.style.boxShadow = isSelected
+            ? '0 4px 12px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.08)'
             : '0 2px 8px rgba(0,0,0,0.08)'
         }
       }}

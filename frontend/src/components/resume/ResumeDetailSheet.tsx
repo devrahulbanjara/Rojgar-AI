@@ -25,13 +25,7 @@ import CertificationFormDialog from './forms/CertificationFormDialog'
 import BasicInfoFormDialog from './forms/BasicInfoFormDialog'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import {
-  ResumeDetail,
-  WorkExperience,
-  Education,
-  Certification,
-  Skill,
-} from '@/types/resume'
+import { ResumeDetail, WorkExperience, Education, Certification, Skill } from '@/types/resume'
 import { SkeletonResumeDetail } from '../common/SkeletonLoader'
 
 interface ResumeDetailSheetProps {
@@ -54,13 +48,12 @@ export default function ResumeDetailSheet({
 
   // State for managing forms
   const [activeForm, setActiveForm] = useState<FormType>(null)
-  const [editingItem, setEditingItem] = useState<
-    WorkExperience | Education | Certification | null
-  >(null)
+  const [editingItem, setEditingItem] = useState<WorkExperience | Education | Certification | null>(
+    null
+  )
 
   const [isCertificationOpen, setIsCertificationOpen] = useState(false)
-  const [editingCertification, setEditingCertification] =
-    useState<Certification | null>(null)
+  const [editingCertification, setEditingCertification] = useState<Certification | null>(null)
 
   const [isBasicInfoOpen, setIsBasicInfoOpen] = useState(false)
 
@@ -119,10 +112,7 @@ export default function ResumeDetailSheet({
     }
   }
 
-  const handleEdit = (
-    type: FormType,
-    item: WorkExperience | Education | Certification
-  ) => {
+  const handleEdit = (type: FormType, item: WorkExperience | Education | Certification) => {
     if (type === 'certification') {
       setEditingCertification(item as Certification)
       setIsCertificationOpen(true)
@@ -219,9 +209,7 @@ export default function ResumeDetailSheet({
                     </div>
                   </div>
                   <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                    <p className="text-[#475569] leading-relaxed">
-                      {resume.custom_summary}
-                    </p>
+                    <p className="text-[#475569] leading-relaxed">{resume.custom_summary}</p>
                   </div>
                 </div>
               )}
@@ -252,8 +240,12 @@ export default function ResumeDetailSheet({
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
                         <Briefcase className="w-8 h-8 text-gray-400" />
                       </div>
-                      <h5 className="text-lg font-semibold text-gray-900 mb-2">No work experience added yet</h5>
-                      <p className="text-gray-500 max-w-sm mx-auto">Add your work experience to showcase your professional background.</p>
+                      <h5 className="text-lg font-semibold text-gray-900 mb-2">
+                        No work experience added yet
+                      </h5>
+                      <p className="text-gray-500 max-w-sm mx-auto">
+                        Add your work experience to showcase your professional background.
+                      </p>
                     </div>
                   )}
 
@@ -269,9 +261,7 @@ export default function ResumeDetailSheet({
                               <Building className="w-5 h-5" />
                             </div>
                             <div>
-                              <h5 className="font-bold text-[#0F172A] text-lg">
-                                {exp.job_title}
-                              </h5>
+                              <h5 className="font-bold text-[#0F172A] text-lg">{exp.job_title}</h5>
                               <p className="text-[#475569] font-medium">{exp.company}</p>
                             </div>
                           </div>
@@ -312,7 +302,9 @@ export default function ResumeDetailSheet({
                             size="icon"
                             variant="ghost"
                             className="h-9 w-9 p-0 text-[#64748B] hover:text-red-600 hover:bg-red-50 rounded-lg"
-                            onClick={() => handleDelete('experience', exp.resume_work_experience_id)}
+                            onClick={() =>
+                              handleDelete('experience', exp.resume_work_experience_id)
+                            }
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -349,8 +341,12 @@ export default function ResumeDetailSheet({
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
                         <GraduationCap className="w-8 h-8 text-gray-400" />
                       </div>
-                      <h5 className="text-lg font-semibold text-gray-900 mb-2">No education records added yet</h5>
-                      <p className="text-gray-500 max-w-sm mx-auto">Add your educational background to complete your profile.</p>
+                      <h5 className="text-lg font-semibold text-gray-900 mb-2">
+                        No education records added yet
+                      </h5>
+                      <p className="text-gray-500 max-w-sm mx-auto">
+                        Add your educational background to complete your profile.
+                      </p>
                     </div>
                   )}
 
@@ -438,8 +434,12 @@ export default function ResumeDetailSheet({
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
                         <Code className="w-8 h-8 text-gray-400" />
                       </div>
-                      <h5 className="text-lg font-semibold text-gray-900 mb-2">No skills added yet</h5>
-                      <p className="text-gray-500 max-w-sm mx-auto">Add your skills to showcase your expertise.</p>
+                      <h5 className="text-lg font-semibold text-gray-900 mb-2">
+                        No skills added yet
+                      </h5>
+                      <p className="text-gray-500 max-w-sm mx-auto">
+                        Add your skills to showcase your expertise.
+                      </p>
                     </div>
                   )}
                   {resume.skills.map((s: Skill) => (
@@ -485,8 +485,12 @@ export default function ResumeDetailSheet({
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
                         <Award className="w-8 h-8 text-gray-400" />
                       </div>
-                      <h5 className="text-lg font-semibold text-gray-900 mb-2">No certifications added yet</h5>
-                      <p className="text-gray-500 max-w-sm mx-auto">Add your certifications to demonstrate your expertise.</p>
+                      <h5 className="text-lg font-semibold text-gray-900 mb-2">
+                        No certifications added yet
+                      </h5>
+                      <p className="text-gray-500 max-w-sm mx-auto">
+                        Add your certifications to demonstrate your expertise.
+                      </p>
                     </div>
                   )}
 
@@ -502,7 +506,9 @@ export default function ResumeDetailSheet({
                               <Award className="w-5 h-5" />
                             </div>
                             <div>
-                              <h5 className="font-bold text-[#0F172A] text-lg">{cert.certification_name}</h5>
+                              <h5 className="font-bold text-[#0F172A] text-lg">
+                                {cert.certification_name}
+                              </h5>
                               <p className="text-[#475569] font-medium">{cert.issuing_body}</p>
                             </div>
                           </div>
@@ -595,9 +601,7 @@ export default function ResumeDetailSheet({
             onOpenChange={open => !open && setActiveForm(null)}
             resumeId={resume.resume_id}
             initialData={
-              activeForm === 'education' && editingItem
-                ? (editingItem as Education)
-                : undefined
+              activeForm === 'education' && editingItem ? (editingItem as Education) : undefined
             }
             onSuccess={handleFormSuccess}
           />

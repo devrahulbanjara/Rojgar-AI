@@ -71,7 +71,8 @@ export default function FinalSelectionPage() {
                   Final Selection Process Coming Soon
                 </h3>
                 <p className="text-base text-gray-500 max-w-md">
-                  Review final candidates, make hiring decisions, and send job offers with automated workflows.
+                  Review final candidates, make hiring decisions, and send job offers with automated
+                  workflows.
                 </p>
               </div>
             </AnimatedContainer>
