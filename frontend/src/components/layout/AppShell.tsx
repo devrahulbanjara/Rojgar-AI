@@ -1,10 +1,12 @@
 'use client'
+
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import { Topbar } from './Topbar'
 import { Sidebar } from './Sidebar'
 import { MainContentContainer } from '../common/MainContentContainer'
 import { useAuth } from '../../hooks/useAuth'
+import { cn } from '../../lib/utils'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -13,136 +15,109 @@ interface AppShellProps {
 
 export function AppShell({ children, hideSidebar = false }: AppShellProps) {
   const { user } = useAuth()
+  const pathname = usePathname()
 
   const [isHydrated, setIsHydrated] = React.useState(false)
 
-  const prevCollapsedRef = React.useRef<boolean | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState<boolean | null>(null)
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false)
+  const [isMobileOpen, setIsMobileOpen] = React.useState(false)
 
   React.useEffect(() => {
-    if (hideSidebar) {
-      setIsHydrated(true)
-      return
-    }
-
+    let collapsed = false
     try {
-      const storedPreference = window.localStorage.getItem('sidebarCollapsed')
-      if (storedPreference !== null) {
-        const collapsed = storedPreference === 'true'
-        setIsSidebarCollapsed(collapsed)
-        prevCollapsedRef.current = collapsed
+      const stored = window.localStorage.getItem('sidebarCollapsed')
+      if (stored !== null) {
+        collapsed = stored === 'true'
       } else {
-        const collapsed = window.innerWidth < 1024
-        setIsSidebarCollapsed(collapsed)
-        prevCollapsedRef.current = collapsed
+        collapsed = window.innerWidth < 1280
       }
     } catch {
-      const collapsed = window.innerWidth < 1024
-      setIsSidebarCollapsed(collapsed)
-      prevCollapsedRef.current = collapsed
+      collapsed = false
     }
 
-    const timer = setTimeout(() => {
+    setIsSidebarCollapsed(collapsed)
+
+    const raf = requestAnimationFrame(() => {
       setIsHydrated(true)
-    }, 50)
-
-    return () => clearTimeout(timer)
-  }, [hideSidebar])
-
-  React.useEffect(() => {
-    prevCollapsedRef.current = isSidebarCollapsed
-  }, [isSidebarCollapsed])
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
+    setIsMobileOpen(false)
+  }, [pathname])
 
+  React.useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        return
+        setIsMobileOpen(false)
       }
-      setIsSidebarCollapsed(true)
     }
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const handleSidebarToggle = React.useCallback(() => {
+  const handleDesktopToggle = React.useCallback(() => {
     setIsSidebarCollapsed(prev => {
-      const nextState = !prev
-      if (typeof window !== 'undefined') {
-        try {
-          window.localStorage.setItem('sidebarCollapsed', String(nextState))
-        } catch {
-          // Ignore localStorage errors
-        }
+      const nextState = prev === null ? true : !prev
+      try {
+        window.localStorage.setItem('sidebarCollapsed', String(nextState))
+      } catch {
+        // Ignore localStorage errors
       }
       return nextState
     })
   }, [])
 
-  const sidebarMarginClass = React.useMemo(() => {
-    if (hideSidebar) return ''
-    return isSidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[252px]'
-  }, [isSidebarCollapsed, hideSidebar])
+  const handleMobileToggle = React.useCallback(() => {
+    setIsMobileOpen(prev => !prev)
+  }, [])
 
-  const getTransitionDuration = React.useCallback(() => {
-    if (!isHydrated) {
-      return '0ms'
+  const handleMenuClick = React.useCallback(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      handleMobileToggle()
+    } else {
+      handleDesktopToggle()
     }
+  }, [handleDesktopToggle, handleMobileToggle])
 
-    if (prevCollapsedRef.current === null) {
-      return '500ms'
-    }
-
-    const isCollapsing = !prevCollapsedRef.current && isSidebarCollapsed
-    const isExpanding = prevCollapsedRef.current && !isSidebarCollapsed
-
-    if (isCollapsing) {
-      return '700ms'
-    } else if (isExpanding) {
-      return '350ms'
-    }
-
-    return '500ms'
-  }, [isSidebarCollapsed, isHydrated])
-
-  const pathname = usePathname()
   const isOrganizationRoute =
     pathname?.startsWith('/dashboard/organization') || pathname?.startsWith('/organization/')
 
+  const sidebarRole = isOrganizationRoute ? 'organization' : user?.role || 'candidate'
+
+  const sidebarMarginClass = React.useMemo(() => {
+    if (hideSidebar) return ''
+    if (isSidebarCollapsed === null) return 'lg:ml-[220px]'
+    return isSidebarCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[220px]'
+  }, [isSidebarCollapsed, hideSidebar])
+
   return (
     <div className="min-h-screen bg-background-subtle">
-      <Topbar onMenuClick={hideSidebar ? () => {} : handleSidebarToggle} user={user} />
+      <Topbar onMenuClick={hideSidebar ? undefined : handleMenuClick} user={user} />
 
-      <div className="flex min-h-[calc(100vh-72px)] pt-[72px]">
-        {!hideSidebar && (
-          <>
-            <Sidebar
-              isCollapsed={isSidebarCollapsed}
-              onToggle={handleSidebarToggle}
-              role={isOrganizationRoute ? 'organization' : user?.role || 'candidate'}
-              disableAnimation={!isHydrated}
-            />
-
-            {!isSidebarCollapsed && (
-              <div
-                className="fixed inset-0 z-30 bg-black/40 lg:hidden"
-                onClick={handleSidebarToggle}
-                aria-hidden="true"
-              />
-            )}
-          </>
+      <div className="flex min-h-[calc(100vh-64px)] pt-16">
+        {!hideSidebar && isSidebarCollapsed !== null && (
+          <Sidebar
+            isCollapsed={isSidebarCollapsed}
+            onToggle={handleDesktopToggle}
+            role={sidebarRole}
+            isMobileOpen={isMobileOpen}
+            onMobileClose={handleMobileToggle}
+            disableAnimation={!isHydrated}
+          />
         )}
 
         <main
-          className={`flex-1 ${isHydrated ? 'transition-all' : ''} ${sidebarMarginClass} max-lg:ml-0`}
+          className={cn(
+            'flex-1 max-lg:ml-0',
+            sidebarMarginClass,
+            isHydrated && 'transition-[margin] duration-300 ease-out'
+          )}
           style={{
-            transitionDuration: getTransitionDuration(),
-            transitionTimingFunction: 'ease-in-out',
+            transitionDuration: isHydrated ? undefined : '0ms',
           }}
         >
           <MainContentContainer maxWidth="full" padding="none">

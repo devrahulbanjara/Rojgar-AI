@@ -56,7 +56,6 @@ export function usePersonalizedRecommendations(
 ) {
   const isEnabled = !!userId && userId.length > 0
 
-  // Always run the query request, even if it might fail
   console.warn('usePersonalizedRecommendations hook:', {
     userId,
     isEnabled,
@@ -73,10 +72,10 @@ export function usePersonalizedRecommendations(
     },
     staleTime: 0,
     gcTime: 0,
-    // Disable caching completely to ensure fresh requests
+
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-    // Force network request even if key changed
+
     networkMode: 'always',
   })
 }

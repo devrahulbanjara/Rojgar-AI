@@ -37,7 +37,7 @@ class ApiClient {
         ...this.defaultHeaders,
         ...options.headers,
       },
-      credentials: 'include', // Always include cookies for authentication
+      credentials: 'include',
     }
 
     try {
@@ -165,8 +165,6 @@ export const endpoints = {
   },
 
   dashboard: {
-    // Note: Dashboard stats are fetched via useDashboardStats hook which calls multiple endpoints
-    // This endpoint definition is kept for backward compatibility but may not be used
     stats: '/api/v1/recruiter/stats/active-jobs',
     recentActivity: '/api/v1/recruiter/stats/recent-activity',
   },
@@ -192,17 +190,22 @@ export const endpoints = {
     list: '/api/v1/candidate/applications',
     detail: (id: string) => `/api/v1/candidate/applications/${id}`,
     create: '/api/v1/candidate/applications',
-    update: (id: string) => `/api/v1/candidate/applications/${id}`, // Note: Update endpoint may not exist
-    delete: (id: string) => `/api/v1/candidate/applications/${id}`, // Note: Delete endpoint may not exist
+    update: (id: string) => `/api/v1/candidate/applications/${id}`,
+
+    delete: (id: string) => `/api/v1/candidate/applications/${id}`,
+
     byJob: (jobId: string) => `/api/v1/candidate/applications/job/${jobId}`,
-    byCandidate: (candidateId: string) => `/api/v1/candidate/applications/candidate/${candidateId}`, // Note: This endpoint may not exist
-    trackingBoard: '/api/v1/recruiter/applications/tracking-board', // Note: This endpoint may not exist, check backend
-    stats: '/api/v1/candidate/applications/stats', // Note: This endpoint may not exist, check backend
+    byCandidate: (candidateId: string) => `/api/v1/candidate/applications/candidate/${candidateId}`,
+
+    trackingBoard: '/api/v1/recruiter/applications/tracking-board',
+
+    stats: '/api/v1/candidate/applications/stats',
   },
 
   candidates: {
     list: '/api/v1/recruiter/candidates',
-    search: '/api/v1/recruiter/candidates/search', // Note: This might be handled via query params
+    search: '/api/v1/recruiter/candidates/search',
+
     resume: (applicationId: string) =>
       `/api/v1/recruiter/candidates/applications/${applicationId}/resume`,
   },
@@ -236,7 +239,6 @@ export const endpoints = {
     },
   },
 
-  // Resume endpoints (Tailored views)
   resumes: {
     list: '/api/v1/candidate/resumes',
     detail: (id: string) => `/api/v1/candidate/resumes/${id}`,

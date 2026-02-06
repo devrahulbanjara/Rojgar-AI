@@ -1,9 +1,3 @@
-/**
- * FilterChips Component
- * Quick filter chips for job search (Remote, Full-time, etc.)
- * Shows available filters for quick access and active filters with remove option
- */
-
 import React from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -15,7 +9,7 @@ interface FilterChipsProps {
   onFilterToggle: (filter: FilterType) => void
   onClearAll: () => void
   className?: string
-  showAvailable?: boolean // Show all available filters, not just active ones
+  showAvailable?: boolean
 }
 
 const filterLabels: Record<FilterType, string> = {
@@ -35,7 +29,6 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
 }) => {
   const allFilters: FilterType[] = ['remote', 'full-time', 'part-time', 'contract', 'hybrid']
 
-  // If showAvailable is true, show all filters; otherwise only show active ones
   const filtersToShow = showAvailable ? allFilters : activeFilters
 
   if (filtersToShow.length === 0) {

@@ -10,7 +10,8 @@ export function useResume(applicationId: string, enabled: boolean = true) {
       return response as ResumeDetail
     },
     enabled: enabled && !!applicationId,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
+
     refetchOnWindowFocus: false,
   })
 }

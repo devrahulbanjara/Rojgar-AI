@@ -8,17 +8,17 @@ import Link from 'next/link'
 export function CTASection() {
   return (
     <section className="py-24 lg:py-32 px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Gradient */}
+      {}
       <div className="absolute inset-0 bg-gradient-primary" />
 
-      {/* Decorative Elements */}
+      {}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
         <div className="absolute top-10 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary-700/20 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-600/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Grid Pattern */}
+      {}
       <div
         className="absolute inset-0 opacity-[0.05]"
         style={{
@@ -34,7 +34,7 @@ export function CTASection() {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          {/* Badge */}
+          {}
           <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-8">
             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
               <Users className="w-3.5 h-3.5 text-white" />
@@ -44,20 +44,20 @@ export function CTASection() {
             </span>
           </div>
 
-          {/* Headline */}
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-6">
+          {}
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-white tracking-tightest mb-6">
             Ready to transform
             <br />
             your hiring process?
           </h2>
 
-          {/* Subheadline */}
-          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+          {}
+          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed font-sans">
             Start using AI that understands your candidates. Get your first job posted in under 5
             minutes.
           </p>
 
-          {/* CTA Button */}
+          {}
           <div className="flex justify-center">
             <Link href="/signup">
               <Button
@@ -70,7 +70,7 @@ export function CTASection() {
             </Link>
           </div>
 
-          {/* Trust Indicators */}
+          {}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

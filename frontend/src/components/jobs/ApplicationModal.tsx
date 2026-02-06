@@ -75,7 +75,7 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
+          {}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -85,7 +85,7 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
             onClick={handleClose}
           />
 
-          {/* Modal */}
+          {}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -93,7 +93,7 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
             transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
             className="relative z-50 w-full max-w-lg bg-background-surface border border-default rounded-[20px] overflow-hidden shadow-xl"
           >
-            {/* Close button */}
+            {}
             <button
               onClick={handleClose}
               className="absolute right-4 top-4 p-2 rounded-xl text-text-tertiary hover:text-text-secondary hover:bg-background-subtle transition-all duration-200 z-10"
@@ -101,14 +101,14 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
               <X className="w-5 h-5" />
             </button>
 
-            {/* Header - Clean white like screenshot */}
+            {}
             <div className="px-8 pt-8 pb-6">
               <h2 className="text-2xl font-bold text-text-primary leading-tight mb-1">
                 {job.title}
               </h2>
               <p className="text-base text-text-tertiary">{job.company?.name || 'Company'}</p>
 
-              {/* Badges - matching the pill style from screenshot */}
+              {}
               <div className="flex flex-wrap gap-2 mt-4">
                 {job.level && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-background-subtle text-text-secondary border border-default">
@@ -128,7 +128,7 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
               </div>
             </div>
 
-            {/* Resume Selection Section - Gray background like info card in screenshot */}
+            {}
             <div className="mx-6 mb-6 p-5 bg-background-subtle rounded-xl border border-subtle">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-1 h-6 bg-primary rounded-full" />
@@ -197,7 +197,7 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
               )}
             </div>
 
-            {/* Footer - matching the Apply Now button style */}
+            {}
             <div className="border-t border-default bg-background-surface px-8 py-5 flex items-center justify-between gap-4">
               <button
                 onClick={handleClose}

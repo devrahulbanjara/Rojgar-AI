@@ -1,13 +1,3 @@
-/**
- * ConvexHire Design System - Application Status Colors
- *
- * Status colors follow a visual journey:
- * Cool blues (early stages) → Warm ambers (active) →
- * Positive greens/teals (success) or Reds (rejection)
- *
- * Each status includes an icon for accessibility (never rely on color alone)
- */
-
 export type ApplicationStatus =
   | 'applied'
   | 'screening'
@@ -161,32 +151,20 @@ export const STATUS_COLORS: Record<ApplicationStatus, StatusColorConfig> = {
   },
 } as const
 
-/**
- * Get status color config with fallback to applied
- */
 export function getStatusColor(status: string): StatusColorConfig {
   const normalizedStatus = status.toLowerCase() as ApplicationStatus
   return STATUS_COLORS[normalizedStatus] ?? STATUS_COLORS.applied
 }
 
-/**
- * Get Tailwind classes for status badge
- */
 export function getStatusBadgeClasses(status: string): string {
   const colors = getStatusColor(status)
   return `${colors.light.bg} ${colors.light.text} ${colors.light.border} dark:${colors.dark.bg} dark:${colors.dark.text} dark:${colors.dark.border}`
 }
 
-/**
- * Get status label (human-readable)
- */
 export function getStatusLabel(status: string): string {
   return getStatusColor(status).label
 }
 
-/**
- * Get status icon
- */
 export function getStatusIcon(status: string): string {
   return getStatusColor(status).light.icon
 }

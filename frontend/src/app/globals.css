@@ -1,5 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+/* =============================================================================
+   PREMIUM TYPOGRAPHY SYSTEM - Dual-Font AI-Enterprise Aesthetic
+   
+   Font Roles:
+   - Inter: Global UI & Body (SaaS gold standard, crisp in light/dark modes)
+   - Plus Jakarta Sans: Headings & Branding (premium geometric sans-serif)
+   - JetBrains Mono: Agentic/AI Data (signals computed agent data)
+   ============================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -348,23 +357,61 @@
     @apply border-border;
   }
 
+  /* ==========================================================================
+     BODY - Inter for Global UI (crisp in light/dark, handles high-density data)
+     ========================================================================== */
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-optical-sizing: auto; /* Variable font optical sizing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
+  /* ==========================================================================
+     HEADINGS - Plus Jakarta Sans for Premium Branding
+     Tighter letter-spacing for luxury tech brand feel (Apple/Stripe aesthetic)
+     ========================================================================== */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    @apply font-semibold;
-    letter-spacing: -0.5%;
+    @apply font-display font-semibold;
+    letter-spacing: -0.02em; /* Premium tight headings */
+    font-optical-sizing: auto;
   }
 
+  /* Extra tight for large hero headings */
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  h2 {
+    letter-spacing: -0.03em;
+  }
+
+  /* ==========================================================================
+     BODY TEXT - The 1.5x Rule for readability
+     Prevents "text-wall fatigue" for recruiters reading profiles
+     ========================================================================== */
   p {
+    line-height: 1.6; /* Optimal for job descriptions & candidate summaries */
+  }
+
+  /* Job descriptions and long-form content */
+  .prose p,
+  .job-description p,
+  .candidate-summary p {
     line-height: 1.7;
   }
+
+  /* ==========================================================================
+     COLOR-CONTRAST HIERARCHY
+     Primary Text: Slate-800 (#1E293B) instead of pure black
+     Secondary Text: Slate-500 (#64748B) for metadata
+     ========================================================================== */
 
   /* Smooth scrolling for anchor links */
   html {
@@ -440,6 +487,45 @@
   .ai-content-accent {
     @apply border-l-[3px];
     border-left-color: hsl(var(--ai-500));
+  }
+
+  /* ==========================================================================
+     AI/AGENTIC TYPOGRAPHY - JetBrains Mono for Machine Logic
+     Use for: Score Breakdowns, AI Logs, Reasoning sections, Match Scores
+     Signals to user: "This data was computed by an agent"
+     ========================================================================== */
+  .ai-text,
+  .agent-text,
+  .ai-reasoning,
+  .ai-score,
+  .ai-log {
+    @apply font-mono;
+    font-feature-settings:
+      'liga' 1,
+      'calt' 1; /* Enable ligatures */
+  }
+
+  /* AI Score Display - Prominent monospace for match percentages */
+  .ai-score-display {
+    @apply font-mono font-semibold;
+    color: hsl(var(--ai-500));
+    letter-spacing: 0.02em;
+  }
+
+  /* AI Labels - Small caps for "AI Suggestion", "Match Score" labels */
+  .ai-label {
+    @apply font-mono text-xs font-medium uppercase;
+    color: hsl(var(--ai-500));
+    letter-spacing: 0.1em;
+  }
+
+  /* AI Reasoning Block - For explanations and breakdowns */
+  .ai-reasoning-block {
+    @apply font-mono text-sm;
+    @apply bg-ai-50 dark:bg-ai-900/20 rounded-lg p-4;
+    @apply border-l-[3px];
+    border-left-color: hsl(var(--ai-500));
+    line-height: 1.6;
   }
 
   /* AI Pulse Animation for processing states */
@@ -757,6 +843,64 @@
     -webkit-line-clamp: 3;
   }
 
+  /* ==========================================================================
+     PREMIUM HEADING UTILITIES
+     For hero sections, landing pages, and high-impact areas
+     ========================================================================== */
+
+  /* Hero heading - Extra tight for maximum impact */
+  .heading-hero {
+    @apply font-display font-bold;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+
+  /* Section heading - Standard premium heading */
+  .heading-section {
+    @apply font-display font-semibold;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+
+  /* Card heading - Slightly less tight */
+  .heading-card {
+    @apply font-display font-semibold;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+
+  /* Subheading - Inter for body-adjacent headings */
+  .heading-sub {
+    @apply font-sans font-medium;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+
+  /* ==========================================================================
+     TEXT HIERARCHY UTILITIES
+     Semantic text styles following 60-30-10 rule
+     ========================================================================== */
+
+  /* Primary text - Main content (Slate-800 instead of pure black) */
+  .text-content-primary {
+    @apply text-text-primary;
+  }
+
+  /* Secondary text - Supporting content */
+  .text-content-secondary {
+    @apply text-text-secondary;
+  }
+
+  /* Tertiary text - Metadata, timestamps, labels */
+  .text-content-tertiary {
+    @apply text-text-tertiary;
+  }
+
+  /* AI accent text - Purple for AI-related labels */
+  .text-ai-accent {
+    color: hsl(var(--ai-500));
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -949,7 +1093,7 @@
 }
 
 /* =============================================================================
-   Dark Mode Transitions
+   Dark Mode Transitions & Typography Adjustments
    Smooth color transitions when switching between light and dark themes
    ============================================================================= */
 html.dark {
@@ -958,6 +1102,30 @@ html.dark {
 
 html {
   color-scheme: light;
+}
+
+/* =============================================================================
+   DARK MODE TYPOGRAPHY - "Premium Sharpness"
+   White text on dark backgrounds appears thicker than it is.
+   Drop font weight by one level to maintain premium sharpness.
+   ============================================================================= */
+.dark body {
+  font-weight: 400; /* Lighter for dark mode */
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  font-weight: 500; /* Semi-bold becomes medium in dark mode */
+}
+
+/* Ensure crisp rendering in dark mode */
+.dark * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Smooth theme transitions */

@@ -3,25 +3,21 @@ import React, { memo } from 'react'
 interface WelcomeMessageProps {
   firstName?: string
   organizationName?: string
+  subtitle?: string
   className?: string
 }
 
-/**
- * Personalized welcome message component
- * Updated with new design system
- */
 export const WelcomeMessage = memo<WelcomeMessageProps>(
-  ({ firstName, organizationName, className = '' }) => {
+  ({ firstName, organizationName, subtitle, className = '' }) => {
     const displayName = firstName || 'there'
 
     return (
-      <div className={`mb-6 ${className}`}>
-        <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight">
-          Welcome back, <span className="text-primary">{displayName}</span>!
+      <div className={className}>
+        <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+          Welcome back, <span className="text-primary">{displayName}</span>
         </h1>
-        {organizationName && (
-          <p className="text-lg text-text-tertiary mt-1.5">{organizationName}</p>
-        )}
+        {organizationName && <p className="text-sm text-text-muted mt-1">{organizationName}</p>}
+        {subtitle && <p className="text-base text-text-secondary mt-2">{subtitle}</p>}
       </div>
     )
   }

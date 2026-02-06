@@ -54,9 +54,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
     onClose()
   }
 
-  const handleShare = () => {
-    // TODO: Implement share functionality
-  }
+  const handleShare = () => {}
 
   const daysLeft = job.application_deadline
     ? Math.ceil((new Date(job.application_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -70,9 +68,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
       showCloseButton={false}
     >
       <DialogContent className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col rounded-[20px]">
-        {/* Enhanced Header with subtle background */}
+        {}
         <div className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-12 py-12 border-b border-subtle relative">
-          {/* Close Button - More prominent */}
+          {}
           <button
             onClick={handleClose}
             className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
@@ -81,7 +79,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             <X className="w-5 h-5 text-text-tertiary group-hover:text-text-secondary transition-colors" />
           </button>
 
-          {/* Company Logo & Title */}
+          {}
           <div className="flex items-start gap-4 mb-6">
             {job.company?.logo && (
               <div className="flex-shrink-0">
@@ -106,7 +104,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             </div>
           </div>
 
-          {/* Enhanced Badges with icons */}
+          {}
           <div className="flex flex-wrap gap-3">
             <Badge
               className={cn(
@@ -162,9 +160,9 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
+        {}
         <div className="flex-1 overflow-y-auto px-12 py-12">
-          {/* Key Information Grid with dividers */}
+          {}
           <div className="grid grid-cols-3 gap-10 mb-12 p-6 bg-background-subtle rounded-xl border border-subtle">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-11 h-11 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
@@ -211,7 +209,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             </div>
           </div>
 
-          {/* Deadline Warning if applicable */}
+          {}
           {daysLeft !== null && daysLeft <= 7 && daysLeft > 0 && (
             <div className="mb-10 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3">
               <Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
@@ -232,7 +230,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             </div>
           )}
 
-          {/* About the Company - Enhanced */}
+          {}
           {(() => {
             const organization = (
               job as unknown as {
@@ -320,7 +318,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             )
           })()}
 
-          {/* Job Summary - Enhanced */}
+          {}
           {(() => {
             const jobWithExtras = job as JobWithExtras
             return (
@@ -345,7 +343,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             )
           })()}
 
-          {/* Job Responsibilities - Enhanced */}
+          {}
           {(() => {
             const jobWithExtras = job as JobWithExtras
             return (
@@ -378,7 +376,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             )
           })()}
 
-          {/* Required Qualifications - Enhanced with checkmarks */}
+          {}
           {(() => {
             const jobWithExtras = job as JobWithExtras
             const requiredQuals = jobWithExtras.required_qualifications || job.requirements
@@ -414,7 +412,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             )
           })()}
 
-          {/* Preferred - Enhanced */}
+          {}
           {(() => {
             const jobWithExtras = job as JobWithExtras
             const preferred = jobWithExtras.preferred || job.nice_to_have
@@ -451,7 +449,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             )
           })()}
 
-          {/* Compensation & Benefits - Enhanced */}
+          {}
           {(() => {
             const jobWithExtras = job as JobWithExtras
             const benefits = jobWithExtras.compensation_and_benefits || job.benefits
@@ -489,7 +487,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           })()}
         </div>
 
-        {/* Sticky Footer with CTAs */}
+        {}
         <div className="border-t border-default bg-background-surface px-12 py-6 flex items-center justify-between gap-4 shadow-lg">
           <div className="flex items-center gap-3">
             <Button
@@ -519,8 +517,6 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
         isOpen={isApplicationModalOpen}
         onClose={() => {
           setIsApplicationModalOpen(false)
-          // Optionally close the details modal too after successful application
-          // onClose();
         }}
       />
     </Dialog>
