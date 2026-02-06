@@ -107,3 +107,4 @@ backend/tests/test_resumes/
 .cursor
 qdrant_data/
 .vscode
+postgres_data/

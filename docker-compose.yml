@@ -1,7 +1,38 @@
 services:
   qdrant:
     image: qdrant/qdrant:latest
+    container_name: convexhire-qdrant
     ports:
       - "6333:6333"
     volumes:
       - ./qdrant_data:/qdrant/data
+
+  postgres:
+    image: postgres:latest
+    container_name: convexhire-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: rahul
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: convexhire
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: convexhire-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: rdbanjara08@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: password123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  pgadmin_data:

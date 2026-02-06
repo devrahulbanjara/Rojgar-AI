@@ -183,6 +183,11 @@ export const endpoints = {
     expire: (id: string) => `/api/v1/recruiter/jobs/${id}/expire`,
   },
 
+  autoShortlist: {
+    get: (jobId: string) => `/api/v1/recruiter/auto-shortlist/${jobId}`,
+    toggle: (jobId: string) => `/api/v1/recruiter/auto-shortlist/${jobId}/toggle`,
+  },
+
   applications: {
     list: '/api/v1/candidate/applications',
     detail: (id: string) => `/api/v1/candidate/applications/${id}`,
@@ -193,6 +198,12 @@ export const endpoints = {
     byCandidate: (candidateId: string) => `/api/v1/candidate/applications/candidate/${candidateId}`, // Note: This endpoint may not exist
     trackingBoard: '/api/v1/recruiter/applications/tracking-board', // Note: This endpoint may not exist, check backend
     stats: '/api/v1/candidate/applications/stats', // Note: This endpoint may not exist, check backend
+  },
+
+  candidates: {
+    list: '/api/v1/recruiter/candidates',
+    search: '/api/v1/recruiter/candidates/search', // Note: This might be handled via query params
+    resume: (applicationId: string) => `/api/v1/recruiter/candidates/applications/${applicationId}/resume`,
   },
 
   candidate: {
@@ -311,6 +322,11 @@ export const api = {
     delete: (id: string) => apiClient.delete(endpoints.jobs.delete(id)),
   },
 
+  autoShortlist: {
+    get: (jobId: string) => apiClient.get<{ auto_shortlist: boolean }>(endpoints.autoShortlist.get(jobId)),
+    toggle: (jobId: string) => apiClient.put<{ auto_shortlist: boolean }>(endpoints.autoShortlist.toggle(jobId)),
+  },
+
   applications: {
     list: (params?: Record<string, unknown>) =>
       apiClient.get(
@@ -325,6 +341,19 @@ export const api = {
       apiClient.get(endpoints.applications.byCandidate(candidateId)),
     getTrackingBoard: () => apiClient.get(endpoints.applications.trackingBoard),
     getStats: () => apiClient.get(endpoints.applications.stats),
+  },
+
+  candidates: {
+    list: (params?: Record<string, unknown>) =>
+      apiClient.get(
+        `${endpoints.candidates.list}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`
+      ),
+    search: (params?: Record<string, unknown>) =>
+      apiClient.get(
+        `${endpoints.candidates.search}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`
+      ),
+    getResume: (applicationId: string) =>
+      apiClient.get(endpoints.candidates.resume(applicationId)),
   },
 
   candidate: {

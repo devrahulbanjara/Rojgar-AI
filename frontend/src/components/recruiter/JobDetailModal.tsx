@@ -22,6 +22,7 @@ import {
   Ban,
   Trash2,
   BookmarkPlus,
+  Zap,
 } from 'lucide-react'
 import type { Job } from '../../types/job'
 
@@ -33,6 +34,7 @@ import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
 import { jobUtils } from '../../services/jobService'
 import { cn } from '../../lib/utils'
+import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 
 interface JobDetailModalProps {
   job: Job | null
@@ -53,6 +55,10 @@ export function JobDetailModal({
   onDelete,
   onConvertToReferenceJD,
 }: JobDetailModalProps) {
+  // Get job ID for auto shortlist (prefer job_id, fallback to id as string)
+  const jobId = job ? (job.job_id || job.id?.toString() || null) : null
+  const { autoShortlist, isLoading: isLoadingAutoShortlist, toggle, isToggling } = useAutoShortlist(jobId)
+
   if (!job) return null
 
   const handleEdit = () => {
@@ -125,56 +131,75 @@ export function JobDetailModal({
             </div>
           </div>
 
-          {/* Enhanced Badges with icons */}
-          <div className="flex flex-wrap gap-3">
-            {job.department && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-3">
+              {job.department && (
+                <Badge
+                  className={cn(
+                    'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                    'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  )}
+                >
+                  {job.department}
+                </Badge>
+              )}
               <Badge
                 className={cn(
                   'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
                   'bg-blue-50 text-blue-700 hover:bg-blue-100'
                 )}
               >
-                {job.department}
+                <UserCircle2 className="w-4 h-4 mr-1.5" />
+                {job.level}
               </Badge>
-            )}
-            <Badge
-              className={cn(
-                'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
-                'bg-blue-50 text-blue-700 hover:bg-blue-100'
-              )}
-            >
-              <UserCircle2 className="w-4 h-4 mr-1.5" />
-              {job.level}
-            </Badge>
-            <Badge
-              className={cn(
-                'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
-                'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-              )}
-            >
-              <MapPinned className="w-4 h-4 mr-1.5" />
-              {job.location_type}
-            </Badge>
-            <Badge
-              className={cn(
-                'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
-                'bg-purple-50 text-purple-700 hover:bg-purple-100'
-              )}
-            >
-              <ClockIcon className="w-4 h-4 mr-1.5" />
-              {job.employment_type}
-            </Badge>
-            {job.applicant_count !== undefined && job.applicant_count > 0 && (
               <Badge
                 className={cn(
                   'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
-                  'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                  'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                 )}
               >
-                <TrendingUp className="w-4 h-4 mr-1.5" />
-                {job.applicant_count} applicants
+                <MapPinned className="w-4 h-4 mr-1.5" />
+                {job.location_type}
               </Badge>
-            )}
+              <Badge
+                className={cn(
+                  'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                  'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                )}
+              >
+                <ClockIcon className="w-4 h-4 mr-1.5" />
+                {job.employment_type}
+              </Badge>
+              {job.applicant_count !== undefined && job.applicant_count > 0 && (
+                <Badge
+                  className={cn(
+                    'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                    'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                  )}
+                >
+                  <TrendingUp className="w-4 h-4 mr-1.5" />
+                  {job.applicant_count} applicants
+                </Badge>
+              )}
+            </div>
+
+            <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 group relative">
+              <Zap className={cn(
+                "w-4 h-4 transition-colors",
+                autoShortlist ? "text-orange-600" : "text-gray-400"
+              )} />
+              <span className="text-sm font-medium text-gray-900">Auto Shortlist</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoShortlist}
+                  onChange={toggle}
+                  disabled={isLoadingAutoShortlist || isToggling || !jobId}
+                  className="sr-only peer"
+                />
+                <div className="w-5 h-3 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-2 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2 after:w-2 after:transition-all peer-checked:bg-orange-600" />
+              </label>
+            </div>
           </div>
         </div>
 
@@ -377,7 +402,7 @@ export function JobDetailModal({
 
           {/* Compensation & Benefits - Enhanced */}
           {job.benefits && job.benefits.length > 0 && (
-            <section className="mb-8">
+            <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 bg-violet-600 rounded-full" />
                 <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-50">
@@ -398,6 +423,7 @@ export function JobDetailModal({
               </div>
             </section>
           )}
+
         </div>
 
         {/* Sticky Footer with Edit, Expire, Delete, and Save as Template Buttons */}
