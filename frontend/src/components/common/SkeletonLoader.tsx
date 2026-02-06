@@ -77,7 +77,7 @@ export const SkeletonJobCard: React.FC<{ className?: string }> = ({ className })
     )}
   >
     <div className="flex flex-col h-full">
-      {/* Header Row: Department Badge + Level Badge + Saved Indicator */}
+      {}
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-center gap-2">
           <SkeletonLoader
@@ -93,11 +93,11 @@ export const SkeletonJobCard: React.FC<{ className?: string }> = ({ className })
             className="rounded-full bg-background-muted"
           />
         </div>
-        {/* Bookmark icon placeholder - sometimes shown */}
+        {}
         <SkeletonLoader variant="circular" width={20} height={20} className="bg-background-muted" />
       </div>
 
-      {/* Job Title & Company - Refined Typography */}
+      {}
       <div className="mb-5">
         <SkeletonLoader
           variant="text"
@@ -108,9 +108,9 @@ export const SkeletonJobCard: React.FC<{ className?: string }> = ({ className })
         <SkeletonLoader variant="text" width="60%" height={20} className="bg-background-subtle" />
       </div>
 
-      {/* Metadata - Cleanly Organized */}
+      {}
       <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-        {/* Row 1: Location + Time */}
+        {}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <SkeletonLoader
@@ -142,7 +142,7 @@ export const SkeletonJobCard: React.FC<{ className?: string }> = ({ className })
           </div>
         </div>
 
-        {/* Row 2: Salary + Type + Work Mode */}
+        {}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1.5">
             <SkeletonLoader
@@ -189,10 +189,10 @@ export const SkeletonJobCard: React.FC<{ className?: string }> = ({ className })
         </div>
       </div>
 
-      {/* Spacer */}
+      {}
       <div className="flex-1" />
 
-      {/* Bottom Stats Row - Colored Badges */}
+      {}
       <div className="flex items-center justify-between gap-3 pt-6 border-t border-border-subtle">
         <div className="flex items-center gap-3">
           <SkeletonLoader
@@ -243,7 +243,7 @@ export const SkeletonApplicationCard: React.FC<{ className?: string }> = ({ clas
       className
     )}
   >
-    {/* Header: Title & Company */}
+    {}
     <div className="mb-3">
       <SkeletonLoader
         variant="text"
@@ -254,7 +254,7 @@ export const SkeletonApplicationCard: React.FC<{ className?: string }> = ({ clas
       <SkeletonLoader variant="text" width="60%" height={14} className="bg-background-muted" />
     </div>
 
-    {/* Metadata: Location & Type */}
+    {}
     <div className="flex items-center gap-3 mb-4">
       <div className="flex items-center gap-1">
         <SkeletonLoader
@@ -276,7 +276,7 @@ export const SkeletonApplicationCard: React.FC<{ className?: string }> = ({ clas
       </div>
     </div>
 
-    {/* Footer: Date & Status Chip */}
+    {}
     <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
       <div className="flex items-center gap-1">
         <SkeletonLoader
@@ -318,7 +318,7 @@ export const SkeletonDashboardColumn: React.FC<{
       className
     )}
   >
-    {/* Column Header */}
+    {}
     <div className="flex items-center justify-between px-1">
       <div className="flex items-center gap-3">
         <SkeletonLoader variant="circular" width={20} height={20} className={iconColor} />
@@ -332,7 +332,7 @@ export const SkeletonDashboardColumn: React.FC<{
       />
     </div>
 
-    {/* Application Cards */}
+    {}
     <div className="flex-1 flex flex-col gap-4">
       <SkeletonApplicationCard />
       <SkeletonApplicationCard />
@@ -348,12 +348,12 @@ export const SkeletonProfileHeader: React.FC<{ className?: string }> = ({ classN
       className
     )}
   >
-    {/* Decorative Background */}
+    {}
     <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-primary-50 via-primary-50 to-primary-50 dark:from-primary-950/30 dark:via-primary-950/30 dark:to-primary-950/30 opacity-50" />
 
     <div className="p-8 relative">
       <div className="flex flex-col md:flex-row items-center gap-8">
-        {/* Profile Picture */}
+        {}
         <div className="relative flex-shrink-0">
           <div className="absolute -inset-2 bg-gradient-to-br from-primary/20 to-primary-200/20 rounded-full blur-md" />
           <div className="relative p-1 bg-background-surface rounded-full ring-1 ring-primary-100 dark:ring-primary-900/30">
@@ -366,7 +366,7 @@ export const SkeletonProfileHeader: React.FC<{ className?: string }> = ({ classN
           </div>
         </div>
 
-        {/* User Info */}
+        {}
         <div className="flex-1 flex flex-col justify-center space-y-4 text-center md:text-left">
           <SkeletonLoader variant="text" width="60%" height={36} className="bg-background-subtle" />
           <SkeletonLoader variant="text" width="40%" height={24} className="bg-background-muted" />
@@ -411,7 +411,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
     )}
   >
     <div className="p-8">
-      {/* Header */}
+      {}
       <div className="mb-8">
         <SkeletonLoader
           variant="text"
@@ -422,7 +422,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
         <SkeletonLoader variant="text" width="60%" height={16} className="bg-background-muted" />
       </div>
 
-      {/* Contact Details Section */}
+      {}
       <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm mb-8">
         <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
           <SkeletonLoader
@@ -467,7 +467,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
         </div>
       </div>
 
-      {/* Professional Summary Section */}
+      {}
       <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm mb-8">
         <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
           <SkeletonLoader
@@ -524,7 +524,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
         </div>
       </div>
 
-      {/* Social Links Section */}
+      {}
       <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm mb-8">
         <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
           <SkeletonLoader
@@ -561,7 +561,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
         </div>
       </div>
 
-      {/* Save Button */}
+      {}
       <div className="flex justify-end pt-6 border-t border-border-default">
         <SkeletonLoader
           variant="rectangular"
@@ -576,7 +576,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
 
 export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ className }) => (
   <div className={cn('h-full flex flex-col', className)}>
-    {/* Header */}
+    {}
     <div className="flex-shrink-0 bg-gradient-to-b from-background-subtle to-background-surface px-8 py-8 border-b border-border-default relative">
       <div className="flex items-start gap-4 pr-12">
         <div className="flex-1 min-w-0 space-y-4">
@@ -600,9 +600,9 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
       </div>
     </div>
 
-    {/* Content Sections */}
+    {}
     <div className="flex-1 bg-background-surface px-8 py-8 space-y-8 overflow-auto">
-      {/* Experience Section */}
+      {}
       <div className="bg-background-subtle rounded-xl border border-border-subtle p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -680,7 +680,7 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
         </div>
       </div>
 
-      {/* Education Section */}
+      {}
       <div className="bg-background-subtle rounded-xl border border-border-subtle p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -740,7 +740,7 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
         </div>
       </div>
 
-      {/* Skills Section */}
+      {}
       <div className="bg-background-subtle rounded-xl border border-border-subtle p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -774,7 +774,7 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
         </div>
       </div>
 
-      {/* Certifications Section */}
+      {}
       <div className="bg-background-subtle rounded-xl border border-border-subtle p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -848,7 +848,7 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
       </div>
     </div>
 
-    {/* Footer */}
+    {}
     <div className="border-t border-border-default bg-background-surface px-8 py-5 flex items-center justify-end">
       <SkeletonLoader
         variant="rectangular"
@@ -893,7 +893,7 @@ export const SkeletonRecentActivity: React.FC<{ className?: string }> = ({ class
     <div className="divide-y divide-border-subtle">
       {[1, 2, 3, 4, 5].map(index => (
         <div key={index} className="p-4 flex items-start gap-4">
-          {/* Date/Time Column */}
+          {}
           <div className="flex-shrink-0 w-16 text-right pt-1 space-y-1">
             <SkeletonLoader
               variant="text"
@@ -909,7 +909,7 @@ export const SkeletonRecentActivity: React.FC<{ className?: string }> = ({ class
             />
           </div>
 
-          {/* Icon */}
+          {}
           <div className="relative flex flex-col items-center">
             <SkeletonLoader
               variant="rectangular"
@@ -919,7 +919,7 @@ export const SkeletonRecentActivity: React.FC<{ className?: string }> = ({ class
             />
           </div>
 
-          {/* Content */}
+          {}
           <div className="flex-1 pt-1 space-y-1">
             <SkeletonLoader
               variant="text"
@@ -951,7 +951,7 @@ export const SkeletonRecruiterJobCard: React.FC<{ className?: string }> = ({ cla
     )}
   >
     <div className="flex flex-col h-full">
-      {/* Header Row: Department Badge + Status Indicator */}
+      {}
       <div className="flex items-start justify-between mb-5">
         <SkeletonLoader
           variant="rectangular"
@@ -965,14 +965,14 @@ export const SkeletonRecruiterJobCard: React.FC<{ className?: string }> = ({ cla
         </div>
       </div>
 
-      {/* Job Title */}
+      {}
       <div className="mb-5">
         <SkeletonLoader variant="text" width="85%" height={19} className="bg-background-muted" />
       </div>
 
-      {/* Metadata */}
+      {}
       <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-        {/* Row 1: Location + Time */}
+        {}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <SkeletonLoader
@@ -994,7 +994,7 @@ export const SkeletonRecruiterJobCard: React.FC<{ className?: string }> = ({ cla
           </div>
         </div>
 
-        {/* Row 2: Salary + Type + Work Mode */}
+        {}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1.5">
             <SkeletonLoader
@@ -1026,10 +1026,10 @@ export const SkeletonRecruiterJobCard: React.FC<{ className?: string }> = ({ cla
         </div>
       </div>
 
-      {/* Spacer */}
+      {}
       <div className="flex-1" />
 
-      {/* Bottom Action Row */}
+      {}
       <div className="flex items-center justify-between pt-6 border-t border-border-subtle">
         <div className="flex items-center gap-3">
           <SkeletonLoader

@@ -94,11 +94,11 @@ export function FeaturesSection() {
       id="features"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
     >
-      {/* Background Decoration */}
+      {}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-default to-transparent" />
 
       <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -123,7 +123,7 @@ export function FeaturesSection() {
           </p>
         </motion.div>
 
-        {/* Features Grid */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon
@@ -137,19 +137,19 @@ export function FeaturesSection() {
                 className="group relative"
               >
                 <div className="flex flex-col h-full min-h-[240px] p-8 rounded-2xl bg-background-surface border border-border-default hover:border-border-strong transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                  {/* Icon */}
+                  {}
                   <div
                     className={`w-12 h-12 rounded-xl ${feature.bgColor} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
                   >
                     <Icon className={`w-6 h-6 ${feature.iconColor}`} />
                   </div>
 
-                  {/* Title */}
+                  {}
                   <h3 className="text-lg font-display font-semibold text-text-primary tracking-tight mb-3">
                     {feature.title}
                   </h3>
 
-                  {/* Description */}
+                  {}
                   <p className="text-sm text-text-secondary leading-relaxed line-clamp-3">
                     {feature.description}
                   </p>

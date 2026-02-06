@@ -32,7 +32,6 @@ interface Recruiter {
   avatar: string
 }
 
-// Helper function to convert backend recruiter to frontend format
 const transformRecruiter = (backendRecruiter: BackendRecruiter): Recruiter => {
   const joinedDate = new Date(backendRecruiter.created_at).toLocaleDateString('en-US', {
     month: 'short',
@@ -44,8 +43,10 @@ const transformRecruiter = (backendRecruiter: BackendRecruiter): Recruiter => {
     id: backendRecruiter.id,
     name: backendRecruiter.name,
     email: backendRecruiter.email,
-    status: 'Active', // Backend doesn't have status, defaulting to Active
-    activeJobs: 0, // Backend doesn't provide this, defaulting to 0
+    status: 'Active',
+
+    activeJobs: 0,
+
     joinedDate,
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(backendRecruiter.name)}&background=random`,
   }
@@ -58,13 +59,11 @@ export default function RecruitersPage() {
   const [selectedRecruiter, setSelectedRecruiter] = useState<Recruiter | null>(null)
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null)
 
-  // Fetch recruiters from API
   const { data: backendRecruiters, isLoading, error, refetch: refetchRecruiters } = useRecruiters()
   const createRecruiterMutation = useCreateRecruiter()
   const updateRecruiterMutation = useUpdateRecruiter()
   const deleteRecruiterMutation = useDeleteRecruiter()
 
-  // Transform backend data to frontend format
   const recruiters = useMemo(() => {
     if (!backendRecruiters) return []
     return backendRecruiters.map(transformRecruiter)
@@ -150,38 +149,35 @@ export default function RecruitersPage() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="space-y-8 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-primary-50/50 to-background-surface border-b border-primary-50/50 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight tracking-tight">
-                      Recruiters
-                    </h1>
-                    <p className="text-lg text-text-secondary mt-2 max-w-2xl">
-                      Manage your recruitment team and their access.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleAddRecruiter}
-                    disabled={
-                      isLoading ||
-                      createRecruiterMutation.isPending ||
-                      updateRecruiterMutation.isPending ||
-                      deleteRecruiterMutation.isPending
-                    }
-                    className="btn-primary-gradient inline-flex items-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add Recruiter
-                  </button>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+                  Recruiters
+                </h1>
+                <p className="text-base text-text-secondary">
+                  Manage your recruitment team and their access.
+                </p>
               </div>
+              <button
+                onClick={handleAddRecruiter}
+                disabled={
+                  isLoading ||
+                  createRecruiterMutation.isPending ||
+                  updateRecruiterMutation.isPending ||
+                  deleteRecruiterMutation.isPending
+                }
+                className="btn-primary-gradient inline-flex items-center gap-2 px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4" />
+                Add Recruiter
+              </button>
             </div>
+            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="space-y-8">
             <AnimatedContainer direction="up" delay={0.2}>
               <div className="flex items-center gap-4 bg-background-surface p-4 rounded-2xl border border-border-default shadow-sm">
                 <div className="relative flex-1">
@@ -198,7 +194,7 @@ export default function RecruitersPage() {
             </AnimatedContainer>
 
             <AnimatedContainer direction="up" delay={0.3}>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-text-primary">Recruiter Team</h2>
                   <span className="text-sm font-medium text-text-tertiary bg-background-subtle px-3 py-1 rounded-full">
@@ -235,7 +231,7 @@ export default function RecruitersPage() {
                         key={recruiter.id}
                         className="group relative bg-background-surface rounded-[24px] border border-border-default p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] hover:border-primary-200"
                       >
-                        {/* Action Menu */}
+                        {}
                         <div className="absolute top-6 right-6 z-10">
                           <button
                             onClick={() =>
@@ -275,10 +271,11 @@ export default function RecruitersPage() {
                           )}
                         </div>
 
-                        {/* Card Content */}
+                        {}
                         <div className="flex flex-col h-full">
                           <div className="flex flex-col items-center text-center gap-4 mb-8">
                             <div className="relative">
+                              {}
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={recruiter.avatar}

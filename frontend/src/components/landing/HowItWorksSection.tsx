@@ -62,7 +62,7 @@ export function HowItWorksSection() {
       id="how-it-works"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
-      {/* Background Pattern */}
+      {}
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -72,7 +72,7 @@ export function HowItWorksSection() {
       />
 
       <div className="max-w-6xl mx-auto relative">
-        {/* Section Header */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -91,9 +91,9 @@ export function HowItWorksSection() {
           </p>
         </motion.div>
 
-        {/* Steps */}
+        {}
         <div className="relative">
-          {/* Connecting Line */}
+          {}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary-200 via-ai-200 via-success-200 via-warning-200 to-error-200 -translate-x-1/2" />
 
           <div className="space-y-8 lg:space-y-0">
@@ -110,7 +110,7 @@ export function HowItWorksSection() {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className={`relative lg:grid lg:grid-cols-2 lg:gap-16 ${index > 0 ? 'lg:mt-8' : ''}`}
                 >
-                  {/* Content - alternates sides on desktop */}
+                  {}
                   <div
                     className={`${isEven ? 'lg:text-right lg:pr-16' : 'lg:col-start-2 lg:pl-16'}`}
                   >
@@ -128,20 +128,22 @@ export function HowItWorksSection() {
                         {step.number}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mt-4 mb-2">{step.title}</h3>
+                    <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mt-4 mb-2">
+                      {step.title}
+                    </h3>
                     <p className="text-text-secondary leading-relaxed max-w-md mx-auto lg:mx-0">
                       {step.description}
                     </p>
                   </div>
 
-                  {/* Center Dot on Timeline */}
+                  {}
                   <div className="hidden lg:flex absolute left-1/2 top-6 -translate-x-1/2 items-center justify-center">
                     <div
                       className={`w-4 h-4 rounded-full bg-gradient-to-br ${step.color} ring-4 ring-background-surface shadow-lg`}
                     />
                   </div>
 
-                  {/* Empty space for alternating layout */}
+                  {}
                   <div
                     className={`hidden lg:block ${isEven ? 'lg:col-start-2' : 'lg:col-start-1 lg:row-start-1'}`}
                   />

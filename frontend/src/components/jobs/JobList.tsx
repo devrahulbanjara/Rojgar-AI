@@ -29,7 +29,7 @@ export const JobList = memo<JobListProps>(
     if (loading) {
       return (
         <>
-          {/* Enhanced Loading Skeletons for Grid */}
+          {}
           {Array.from({ length: 8 }).map((_, index) => (
             <SkeletonJobCard key={index} className="bg-card border border-border rounded-xl" />
           ))}
@@ -86,7 +86,7 @@ export const JobList = memo<JobListProps>(
             isSelected={selectedJob?.id === job.id}
             onSelect={onJobSelect}
             onApply={onApply}
-            showApplyButton={false} // Apply button is now in the detail view
+            showApplyButton={false}
           />
         ))}
       </>

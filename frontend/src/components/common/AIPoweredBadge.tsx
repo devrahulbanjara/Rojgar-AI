@@ -10,12 +10,12 @@ export default function AIPoweredBadge() {
         <span className="text-sm font-semibold text-text-secondary">AI Powered</span>
       </div>
 
-      {/* Tooltip */}
+      {}
       <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 ease-out pointer-events-none z-50">
-        {/* Arrow pointing up to badge */}
+        {}
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-background-surface drop-shadow-sm" />
 
-        {/* Tooltip content */}
+        {}
         <div className="relative bg-background-surface text-text-secondary text-base leading-relaxed px-5 py-4 rounded-2xl shadow-xl max-w-sm text-center whitespace-normal">
           Our AI understands your skills and suggests you with the right opportunities.
         </div>

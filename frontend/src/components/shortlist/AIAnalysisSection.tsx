@@ -11,12 +11,10 @@ interface AIAnalysisSectionProps {
 export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysisSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Extract strengths and concerns from analysis
   const extractTags = (text: string) => {
     const strengths: string[] = []
     const concerns: string[] = []
 
-    // Simple keyword-based extraction (can be enhanced with NLP)
     const strengthKeywords = ['strong', 'excellent', 'outstanding', 'impressive', 'proven', 'good']
     const concernKeywords = ['lacks', 'limited', 'gap', 'minor', 'consideration', 'may need']
 
@@ -65,13 +63,13 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
         )}
       >
         <div className="bg-gradient-to-br from-ai-50/30 to-ai-100/30 dark:from-ai-950/30 dark:to-ai-900/30 rounded-lg p-5 border border-ai-200 dark:border-ai-800">
-          {/* Purple Sparkles Badge */}
+          {}
           <div className="flex items-start gap-3 mb-4">
             <div className="w-6 h-6 bg-ai-100 rounded-full flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-3 h-3 text-ai-600" />
             </div>
             <div className="flex-1 space-y-3">
-              {/* Tags */}
+              {}
               {(strengths.length > 0 || concerns.length > 0) && (
                 <div className="space-y-2">
                   {strengths.length > 0 && (
@@ -103,14 +101,14 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
                 </div>
               )}
 
-              {/* Full Analysis - AI Reasoning in Monospace */}
+              {}
               <div className="text-sm text-text-secondary leading-relaxed space-y-3 font-mono">
                 {analysis.split('\n').map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
                 ))}
               </div>
 
-              {/* Applied Timestamp */}
+              {}
               {appliedAt && (
                 <div className="pt-3 border-t border-ai-200/50 dark:border-ai-800/50">
                   <span className="bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5">

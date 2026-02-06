@@ -19,25 +19,24 @@ export function PageHeader({
   children,
 }: PageHeaderProps) {
   return (
-    <div className={cn('space-y-2', className)}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
+    <div className={cn('', className)}>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="space-y-2">
           <h1
             className={cn(
-              'text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight',
+              'text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight',
               titleClassName
             )}
           >
             {title}
           </h1>
           {subtitle && (
-            <p className={cn('text-base text-text-secondary mt-2', subtitleClassName)}>
-              {subtitle}
-            </p>
+            <p className={cn('text-base text-text-secondary', subtitleClassName)}>{subtitle}</p>
           )}
         </div>
-        {children && <div className="ml-6 flex-shrink-0">{children}</div>}
+        {children && <div className="flex-shrink-0">{children}</div>}
       </div>
+      <div className="mt-6 border-b border-border-default/60" />
     </div>
   )
 }

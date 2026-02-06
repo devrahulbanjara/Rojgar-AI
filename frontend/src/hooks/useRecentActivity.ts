@@ -33,8 +33,10 @@ export const useRecentActivity = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.activity,
     queryFn: fetchRecentActivity,
-    staleTime: 0, // Always consider stale to allow immediate refetch on WebSocket events
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+
+    gcTime: 5 * 60 * 1000,
+
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   })

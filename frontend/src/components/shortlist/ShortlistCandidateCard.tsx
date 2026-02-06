@@ -99,7 +99,9 @@ export function ShortlistCandidateCard({
           <div className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}>
             {candidate.ai_score}
           </div>
-          <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">AI Score</div>
+          <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">
+            AI Score
+          </div>
           {scoreInterpretation && (
             <div
               className={`text-xs font-semibold ${scoreInterpretation.color}`}
@@ -194,7 +196,7 @@ export function ShortlistCandidateCard({
         </div>
       </div>
 
-      {/* Resume Detail Modal */}
+      {}
       <ResumeDetailModal
         isOpen={isResumeModalOpen}
         onClose={() => setIsResumeModalOpen(false)}

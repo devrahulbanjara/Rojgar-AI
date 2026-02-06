@@ -10,7 +10,6 @@ interface ReferenceJDCardProps {
   className?: string
 }
 
-// Department color schemes matching RecruiterJobCard
 const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
     bg: 'bg-blue-50/80 dark:bg-blue-950/30',
@@ -67,7 +66,6 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
 export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: ReferenceJDCardProps) {
   const deptColor = departmentColors[jd.department || ''] || departmentColors.Default
 
-  // Map new backend fields to display fields (with backward compatibility)
   const jobResponsibilities = jd.job_responsibilities || []
   const requiredQualifications = jd.required_qualifications || jd.requiredSkillsAndExperience || []
 
@@ -97,9 +95,9 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
         }
       }}
     >
-      {/* Card Content */}
+      {}
       <div className="flex-1 flex flex-col">
-        {/* Header: Department Badge */}
+        {}
         <div className="flex items-start justify-between mb-6">
           {jd.department && (
             <span
@@ -115,7 +113,7 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
           )}
         </div>
 
-        {/* Skill Pills - First 2 + Counter */}
+        {}
         {requiredQualifications.length > 0 && (
           <div className="mb-8">
             <div className="flex flex-wrap gap-2">
@@ -136,7 +134,7 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
           </div>
         )}
 
-        {/* Statistics Badges - Primary Focus */}
+        {}
         <div className="flex flex-wrap items-center gap-3 mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50/50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded-lg">
             <Briefcase className="w-4 h-4" />
@@ -153,10 +151,10 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
           </div>
         </div>
 
-        {/* Spacer to push button to bottom */}
+        {}
         <div className="flex-1" />
 
-        {/* Use Template Button - Understated until hover */}
+        {}
         <button
           onClick={onUseTemplate}
           className={cn(

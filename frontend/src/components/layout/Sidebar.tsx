@@ -35,6 +35,7 @@ const sidebarSpring = {
   damping: 30,
 }
 
+// Text animation variants
 const textVariants = {
   expanded: {
     opacity: 1,
@@ -50,25 +51,14 @@ const textVariants = {
   },
 }
 
-const tooltipVariants = {
-  hidden: {
-    opacity: 0,
-    x: -8,
-    scale: 0.95,
-  },
-  visible: {
-    opacity: 1,
-    x: 0,
-    scale: 1,
-    transition: {
-      type: 'spring' as const,
-      stiffness: 400,
-      damping: 25,
-    },
-  },
-}
-
-export function Sidebar({ isCollapsed, onToggle, role, isMobileOpen = false, onMobileClose, disableAnimation = false }: SidebarProps) {
+export function Sidebar({
+  isCollapsed,
+  onToggle,
+  role,
+  isMobileOpen = false,
+  onMobileClose,
+  disableAnimation = false,
+}: SidebarProps) {
   const pathname = usePathname()
 
   const recruiterItems = [
@@ -105,22 +95,22 @@ export function Sidebar({ isCollapsed, onToggle, role, isMobileOpen = false, onM
     <>
       <motion.aside
         initial={false}
-        animate={{ width: isCollapsed ? 80 : 260 }}
+        animate={{ width: isCollapsed ? 80 : 220 }}
         transition={disableAnimation ? { duration: 0 } : sidebarSpring}
+        suppressHydrationWarning
         className={cn(
-          'fixed left-0 top-[72px] z-40 h-[calc(100vh-72px)] flex-col',
-          'bg-background-surface/95 backdrop-blur-xl',
-          'border-r border-border-default shadow-sm',
+          'fixed left-0 top-16 z-40 h-[calc(100vh-64px)] flex-col',
+          'bg-background-subtle dark:bg-[#1E293B]',
+          'border-r border-border-default dark:border-[#334155]',
           'hidden lg:flex'
         )}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-primary-50/30 dark:from-primary-950/20 via-transparent to-ai-50/30 dark:to-ai-950/20 pointer-events-none" />
-
         <motion.button
           type="button"
           onClick={onToggle}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          suppressHydrationWarning
           className={cn(
             'absolute -right-3.5 top-8 z-50 flex h-7 w-7 items-center justify-center rounded-full',
             'border border-border-default bg-background-surface text-text-tertiary',
@@ -151,7 +141,6 @@ export function Sidebar({ isCollapsed, onToggle, role, isMobileOpen = false, onM
         <nav className="relative flex-1 px-3 pt-6 space-y-1.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {items.map((item, index) => {
             const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`)
-            const Icon = item.icon
 
             return (
               <NavItem
@@ -201,14 +190,12 @@ export function Sidebar({ isCollapsed, onToggle, role, isMobileOpen = false, onM
               exit={{ x: '-100%' }}
               transition={sidebarSpring}
               className={cn(
-                'fixed left-0 top-[72px] z-50 h-[calc(100vh-72px)] w-72 flex-col',
-                'bg-background-surface/98 backdrop-blur-xl',
-                'border-r border-border-default shadow-2xl',
+                'fixed left-0 top-16 z-50 h-[calc(100vh-64px)] w-72 flex-col',
+                'bg-background-subtle dark:bg-[#1E293B]',
+                'border-r border-border-default dark:border-[#334155] shadow-2xl',
                 'lg:hidden flex'
               )}
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-primary-50/30 dark:from-primary-950/20 via-transparent to-ai-50/30 dark:to-ai-950/20 pointer-events-none" />
-
               <nav className="relative flex-1 px-4 pt-6 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-hide">
                 {items.map((item, index) => {
                   const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`)
@@ -241,66 +228,54 @@ interface NavItemProps {
   onNavigate?: () => void
 }
 
-function NavItem({ item, isActive, isCollapsed, index, onNavigate }: NavItemProps) {
-  const [isHovered, setIsHovered] = React.useState(false)
+function NavItem({ item, isActive, isCollapsed, index: _index, onNavigate }: NavItemProps) {
   const Icon = item.icon
 
   return (
     <Link
       href={item.path}
       onClick={onNavigate}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       aria-label={item.title}
       className={cn(
-        'group relative flex items-center rounded-xl cursor-pointer overflow-visible',
-        'transition-colors duration-200',
+        'group relative flex items-center rounded-xl cursor-pointer',
+        'transition-all duration-200',
         isCollapsed ? 'h-12 w-12 justify-center mx-auto' : 'h-12 w-full px-4 gap-3',
         isActive
-          ? 'bg-gradient-primary text-white shadow-lg shadow-primary/25'
+          ? 'bg-primary-50 dark:bg-primary-900/20 border-l-[3px] border-l-primary-600 dark:border-l-primary-500 rounded-l-none'
           : 'text-text-tertiary hover:bg-primary-50/60 dark:hover:bg-primary-950/40 hover:text-primary'
       )}
     >
-      {isActive && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      )}
-
       <div
         className={cn(
-          'flex-shrink-0 transition-transform duration-200',
-          isActive ? 'text-white' : 'text-text-tertiary group-hover:text-primary group-hover:scale-110'
+          'flex-shrink-0 transition-all duration-200 ease-out',
+          isActive
+            ? 'text-primary-600 dark:text-primary-400'
+            : 'text-text-tertiary group-hover:text-primary group-hover:scale-105'
         )}
       >
-        <Icon className={cn('transition-colors duration-200', isCollapsed ? 'h-6 w-6' : 'h-5 w-5')} />
+        <Icon
+          className={cn('transition-colors duration-200', isCollapsed ? 'h-6 w-6' : 'h-5 w-5')}
+        />
       </div>
 
-      <span
-        className={cn(
-          'text-[15px] font-medium whitespace-nowrap transition-all duration-200',
-          isCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'w-auto opacity-100',
-          isActive ? 'text-white font-semibold' : 'text-text-secondary group-hover:text-primary'
-        )}
-      >
-        {item.title}
-      </span>
-
-      <AnimatePresence>
-        {isCollapsed && isHovered && (
-          <motion.div
-            variants={tooltipVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
+      {/* Label with AnimatePresence for smooth transitions */}
+      <AnimatePresence mode="wait" initial={false}>
+        {!isCollapsed && (
+          <motion.span
+            key="label"
+            variants={textVariants}
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
             className={cn(
-              'absolute left-full ml-3 px-3 py-2 rounded-lg z-[100]',
-              'bg-text-primary dark:bg-slate-800 text-white',
-              'text-sm font-medium whitespace-nowrap',
-              'shadow-xl pointer-events-none'
+              'text-[15px] font-medium whitespace-nowrap overflow-hidden',
+              isActive
+                ? 'text-primary-600 dark:text-primary-400 font-semibold'
+                : 'text-text-secondary group-hover:text-primary'
             )}
           >
             {item.title}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-text-primary dark:border-r-slate-800" />
-          </motion.div>
+          </motion.span>
         )}
       </AnimatePresence>
     </Link>

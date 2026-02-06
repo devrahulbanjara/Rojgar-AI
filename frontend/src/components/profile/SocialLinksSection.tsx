@@ -23,7 +23,6 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
   const dropdownRef = useRef<HTMLDivElement>(null)
   const addDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Handle clicking outside the dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -44,7 +43,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
     {
       value: 'GitHub',
       label: 'GitHub',
-      icon: <SiGithub className="w-4 h-4 text-social-github" />,
+      icon: <SiGithub className="w-4 h-4 text-social-github dark:text-white" />,
     },
     {
       value: 'LinkedIn',
@@ -66,9 +65,9 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
       return <SiLinkedin className={`${iconSize} text-social-linkedin`} />
     }
     if (iconType.includes('github')) {
-      return <SiGithub className={`${iconSize} text-social-github`} />
+      return <SiGithub className={`${iconSize} text-social-github dark:text-white`} />
     }
-    // Portfolio/Website
+
     return <Globe className={`${iconSize} text-ai-500`} />
   }
 
@@ -181,7 +180,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
         )}
       </div>
 
-      {/* Existing Social Links - Premium Horizontal Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
         {socialLinks.map(link => (
           <div
@@ -302,23 +301,23 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
               </div>
             ) : (
               <div className="relative h-15 p-3 group">
-                {/* Premium Horizontal Card Layout */}
+                {}
                 <div className="flex items-center gap-3 h-full">
-                  {/* Icon */}
+                  {}
                   <div className="flex-shrink-0">{getIconForType(link.type, 'md')}</div>
 
-                  {/* Text Content */}
+                  {}
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-text-primary">
                       {getPlatformName(link.type)}
                     </div>
                     <div className="text-xs text-text-secondary truncate">
-                      {link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')}
+                      {link.url.replace(/^https?:\/\//, '')}
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons - Top Right */}
+                {}
                 <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     type="button"
@@ -340,7 +339,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                   </Button>
                 </div>
 
-                {/* External Link Icon - Bottom Right */}
+                {}
                 <a
                   href={link.url}
                   target="_blank"
@@ -355,7 +354,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
         ))}
       </div>
 
-      {/* Add New Social Link Form */}
+      {}
       {isAdding && (
         <div className="bg-background-surface rounded-lg p-4 border border-primary shadow-sm col-span-full">
           <div className="space-y-4">

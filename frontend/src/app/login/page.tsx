@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { SearchParamsWrapper } from '../../components/common/SearchParamsWrapper'
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 import { AuthLayout } from '../../components/layout/AuthLayout'
 import { GoogleOAuthButton } from '../../components/auth/GoogleOAuthButton'
 import { PageTransition } from '../../components/common/PageTransition'
@@ -63,13 +63,7 @@ export default function Login() {
         {searchParams => {
           handleSearchParams(searchParams)
           return (
-            <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
-              {/* Page Title */}
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4 sm:mb-6 text-center">
-                Sign In
-              </h2>
-
-              {/* Auth Error Display */}
+            <AuthLayout title="Welcome Back !" subtitle="Please enter your details">
               {authError && (
                 <div className="mb-4 sm:mb-6 p-3 bg-error-50 border border-error/20 rounded-xl flex items-center gap-2 text-error text-xs sm:text-sm">
                   <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
@@ -77,7 +71,6 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Google OAuth Button */}
               <div className="mb-4 sm:mb-6">
                 <GoogleOAuthButton
                   onSuccess={handleGoogleSuccess}
@@ -86,7 +79,6 @@ export default function Login() {
                 />
               </div>
 
-              {/* Divider */}
               <div className="relative mb-4 sm:mb-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border-default" />
@@ -98,15 +90,13 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Login Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                {/* Email Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="email"
                     className="block text-xs sm:text-sm font-medium text-text-primary"
                   >
-                    Email
+                    Email Address
                   </label>
                   <input
                     id="email"
@@ -130,7 +120,6 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="password"
@@ -174,7 +163,6 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Remember Me & Forgot Password */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                   <label
                     htmlFor="rememberMe"
@@ -227,26 +215,41 @@ export default function Login() {
                   </Link>
                 </div>
 
-                {/* Sign In Button */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 sm:h-12 btn-primary-gradient text-sm sm:text-[15px] font-semibold rounded-lg sm:rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none mt-4 sm:mt-6 flex items-center justify-center gap-2"
+                  className="w-full h-11 sm:h-12 btn-primary-gradient text-white text-sm sm:text-[15px] font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 mt-4 sm:mt-6 flex items-center justify-center gap-2"
                 >
-                  {isLoading && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />}
-                  {isLoading ? 'Signing in...' : 'Sign In'}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  ) : (
+                    <>
+                      Login
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
 
-              {/* Sign Up Link */}
-              <div className="mt-4 sm:mt-6 text-center">
-                <p className="text-xs sm:text-sm text-text-secondary">
+              <p className="mt-6 text-xs text-text-tertiary text-center leading-relaxed">
+                By creating an account, you agree to our{' '}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+              </p>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-text-secondary">
                   Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
-                    className="font-medium text-primary hover:text-primary-700 hover:underline transition-colors"
+                    className="font-semibold text-text-primary hover:underline transition-colors"
                   >
-                    Sign up
+                    Sign Up
                   </Link>
                 </p>
               </div>

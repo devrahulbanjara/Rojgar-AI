@@ -22,7 +22,6 @@ export function PostJobModal({
   jobToEdit,
   initialReferenceJdId,
 }: PostJobModalProps) {
-  // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -34,7 +33,6 @@ export function PostJobModal({
     }
   }, [isOpen])
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -51,13 +49,13 @@ export function PostJobModal({
 
   const content = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      {/* Backdrop with blur */}
+      {}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {}
       <div
         className={cn(
           'relative bg-background-surface rounded-3xl shadow-2xl border border-background-surface/20',
@@ -69,9 +67,9 @@ export function PostJobModal({
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
         }}
       >
-        {/* Clean Header */}
+        {}
         <div className="bg-background-surface px-10 py-8 border-b border-border-subtle relative">
-          {/* Close Button */}
+          {}
           <button
             onClick={onClose}
             className="absolute top-6 right-6 p-2 rounded-full hover:bg-background-subtle text-text-muted hover:text-text-tertiary transition-all duration-200 hover:scale-110 active:scale-95 border border-border-subtle"
@@ -80,7 +78,7 @@ export function PostJobModal({
             <X className="w-5 h-5" />
           </button>
 
-          {/* Title */}
+          {}
           <div className="relative z-10">
             <h2 className="text-3xl font-bold text-text-primary leading-tight tracking-tight">
               {jobToEdit ? 'Edit Job Posting' : 'Create New Job'}
@@ -93,7 +91,7 @@ export function PostJobModal({
           </div>
         </div>
 
-        {/* Content - Always show wizard directly */}
+        {}
         <div className="flex-1 overflow-y-auto bg-background-subtle">
           <JobCreationWizard
             mode={initialMode || 'agent'}
@@ -109,7 +107,6 @@ export function PostJobModal({
     </div>
   )
 
-  // Render using portal
   if (typeof document !== 'undefined') {
     return createPortal(content, document.body)
   }

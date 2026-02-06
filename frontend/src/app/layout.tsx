@@ -5,12 +5,6 @@ import './globals.css'
 import { Providers } from '../components/Providers'
 import { Toaster } from 'sonner'
 
-// =============================================================================
-// PREMIUM TYPOGRAPHY SYSTEM - Dual-Font AI-Enterprise Aesthetic
-// =============================================================================
-
-// Global UI & Body - The gold standard for SaaS
-// Handles high-density data (recruiter tables) perfectly, crisp in light/dark
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -18,8 +12,6 @@ const inter = Inter({
   display: 'swap',
 })
 
-// Headings & Branding - Premium geometric sans-serif
-// Modern, energetic personality for landing pages and job seeker views
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-display',
@@ -27,8 +19,6 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 })
 
-// Agentic/AI Data - For Score Breakdowns, AI Logs, Reasoning sections
-// Signals to user: "This specific data was computed by an agent"
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
@@ -62,7 +52,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-right" richColors theme="system" />
         </Providers>
       </body>
     </html>

@@ -53,10 +53,10 @@ export function LandingNavbar() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo */}
+            {}
             <LogoLink variant="full" size="md" />
 
-            {/* Desktop Navigation */}
+            {}
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map(link => (
                 <a
@@ -69,7 +69,7 @@ export function LandingNavbar() {
               ))}
             </div>
 
-            {/* Desktop CTA */}
+            {}
             <div className="hidden lg:flex items-center gap-3">
               <ThemeToggle variant="compact" showLabel={false} />
               <Link href="/login">
@@ -88,7 +88,7 @@ export function LandingNavbar() {
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
+            {}
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-background-subtle transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -103,11 +103,11 @@ export function LandingNavbar() {
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
+      {}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* Backdrop */}
+            {}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -116,7 +116,7 @@ export function LandingNavbar() {
               onClick={() => setMobileMenuOpen(false)}
             />
 
-            {/* Sidebar */}
+            {}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -125,7 +125,7 @@ export function LandingNavbar() {
               className="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-background-surface shadow-2xl z-50 lg:hidden"
             >
               <div className="flex flex-col h-full">
-                {/* Header */}
+                {}
                 <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                   <LogoLink variant="full" size="sm" />
                   <button
@@ -136,7 +136,7 @@ export function LandingNavbar() {
                   </button>
                 </div>
 
-                {/* Navigation */}
+                {}
                 <div className="flex-1 px-6 py-8 overflow-y-auto">
                   <div className="space-y-1">
                     {navLinks.map(link => (
@@ -151,7 +151,7 @@ export function LandingNavbar() {
                     ))}
                   </div>
 
-                  {/* Theme Toggle */}
+                  {}
                   <div className="mt-8 pt-6 border-t border-border-subtle">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-text-secondary">Theme</span>
@@ -159,7 +159,7 @@ export function LandingNavbar() {
                     </div>
                   </div>
 
-                  {/* CTA */}
+                  {}
                   <div className="mt-6 space-y-3">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block">
                       <Button

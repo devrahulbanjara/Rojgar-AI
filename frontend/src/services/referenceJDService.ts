@@ -2,13 +2,13 @@ import { apiClient } from '../lib/api'
 
 export interface ReferenceJD {
   id: string
-  // New backend fields
+
   job_summary?: string
   job_responsibilities?: string[]
   required_qualifications?: string[]
   preferred?: string[]
   compensation_and_benefits?: string[]
-  // Legacy fields (for backward compatibility)
+
   role_overview?: string
   requiredSkillsAndExperience?: string[]
   niceToHave?: string[]
@@ -40,44 +40,26 @@ const referenceJDEndpoints = {
 } as const
 
 export class ReferenceJDService {
-  /**
-   * Get all reference JDs for the authenticated user's organization
-   */
   static async getReferenceJDs(): Promise<ReferenceJDListResponse> {
     return apiClient.get<ReferenceJDListResponse>(referenceJDEndpoints.list)
   }
 
-  /**
-   * Get a specific reference JD by ID
-   */
   static async getReferenceJDById(id: string): Promise<ReferenceJD> {
     return apiClient.get<ReferenceJD>(referenceJDEndpoints.detail(id))
   }
 
-  /**
-   * Create a new reference JD
-   */
   static async createReferenceJD(data: CreateReferenceJDRequest): Promise<ReferenceJD> {
     return apiClient.post<ReferenceJD>(referenceJDEndpoints.create, data)
   }
 
-  /**
-   * Update an existing reference JD
-   */
   static async updateReferenceJD(id: string, data: CreateReferenceJDRequest): Promise<ReferenceJD> {
     return apiClient.put<ReferenceJD>(referenceJDEndpoints.update(id), data)
   }
 
-  /**
-   * Delete a reference JD by ID
-   */
   static async deleteReferenceJD(id: string): Promise<void> {
     return apiClient.delete<void>(referenceJDEndpoints.delete(id))
   }
 
-  /**
-   * Convert a job to a reference JD request format
-   */
   static convertJobToReferenceJD(job: {
     description?: string
     job_summary?: string
