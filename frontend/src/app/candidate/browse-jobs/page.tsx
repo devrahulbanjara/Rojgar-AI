@@ -15,7 +15,6 @@ import { AppShell } from '../../../components/layout/AppShell'
 import { Button } from '../../../components/ui/button'
 import {
   AnimatedContainer,
-  AIPoweredBadge,
   LoadingSpinner,
   SkeletonJobCard,
 } from '../../../components/common'
@@ -312,7 +311,7 @@ export default function Jobs() {
               </div>
 
               {/* Enhanced Search & Filter Section */}
-              <div className="space-y-6 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <div className="space-y-6 bg-white rounded-2xl p-6 border border-slate-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <JobSearchBar
                   value={searchQuery}
                   onChange={handleSearchChange}
@@ -353,11 +352,6 @@ export default function Jobs() {
                   </p>
                 </div>
               </div>
-              {!isLoading && jobs.length > 0 && !isSearchMode && (
-                <div className="hidden sm:block">
-                  <AIPoweredBadge />
-                </div>
-              )}
             </div>
 
             {/* Job Cards Grid with larger gap */}

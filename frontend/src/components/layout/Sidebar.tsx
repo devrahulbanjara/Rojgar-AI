@@ -11,10 +11,10 @@ import {
   FileText,
   Calendar,
   BarChart3,
-  MessageSquare,
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  ListChecks,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -36,17 +36,13 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
   const recruiterItems = [
     { title: 'Dashboard', path: '/dashboard/recruiter', icon: LayoutDashboard },
     { title: 'Jobs', path: '/recruiter/jobs', icon: BriefcaseIcon },
-    { title: 'Shortlist', path: '/recruiter/shortlist', icon: Users },
+    { title: 'Candidates', path: '/recruiter/candidates', icon: Users },
+    { title: 'Shortlist', path: '/recruiter/shortlist', icon: ListChecks },
     { title: 'Interviews', path: '/recruiter/interviews', icon: Calendar },
     {
       title: 'Final Selection',
       path: '/recruiter/final-selection',
       icon: BarChart3,
-    },
-    {
-      title: 'Candidate Pool',
-      path: '/recruiter/candidate-pool',
-      icon: MessageSquare,
     },
   ]
 

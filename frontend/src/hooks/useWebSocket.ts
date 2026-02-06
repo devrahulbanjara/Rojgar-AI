@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../lib/queryClient'
 import { API_BASE_URL } from '../config/constants'
 import { useAuth } from './useAuth'
@@ -22,17 +22,51 @@ interface ActivityEvent {
   organization_id?: string
 }
 
-export function useWebSocket() {
-  const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const reconnectAttemptsRef = useRef(0)
-  const queryClient = useQueryClient()
-  const { isAuthenticated } = useAuth()
+class WebSocketManager {
+  private static instance: WebSocketManager
+  private ws: WebSocket | null = null
+  private isConnecting = false
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+  private reconnectAttempts = 0
+  private subscribers = new Set<(connected: boolean, error?: Error) => void>()
+  private queryClientRef: QueryClient | null = null
+  private isAuthenticatedRef: { current: boolean } = { current: false }
 
-  const connect = useCallback(() => {
-    if (!isAuthenticated) return
+  static getInstance(): WebSocketManager {
+    if (!WebSocketManager.instance) {
+      WebSocketManager.instance = new WebSocketManager()
+    }
+    return WebSocketManager.instance
+  }
+
+  subscribe(callback: (connected: boolean, error?: Error) => void) {
+    this.subscribers.add(callback)
+    callback(this.ws?.readyState === WebSocket.OPEN, undefined)
+    
+    return () => {
+      this.subscribers.delete(callback)
+    }
+  }
+
+  private notifySubscribers(connected: boolean, error?: Error) {
+    this.subscribers.forEach(callback => callback(connected, error))
+  }
+
+  setRefs(queryClientRef: QueryClient, isAuthenticatedRef: { current: boolean }) {
+    this.queryClientRef = queryClientRef
+    this.isAuthenticatedRef = isAuthenticatedRef
+  }
+
+  connect() {
+    if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
+      return
+    }
+
+    if (!this.isAuthenticatedRef.current) {
+      return
+    }
+
+    this.isConnecting = true
 
     const apiUrl = new URL(API_BASE_URL)
     const protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -52,13 +86,16 @@ export function useWebSocket() {
 
     try {
       const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
+      this.ws = ws
 
       ws.onopen = () => {
-        setIsConnected(true)
-        setError(null)
-        reconnectAttemptsRef.current = 0
-        console.warn('WebSocket connected')
+        this.isConnecting = false
+        this.reconnectAttempts = 0
+        if (this.reconnectTimeout) {
+          clearTimeout(this.reconnectTimeout)
+          this.reconnectTimeout = null
+        }
+        this.notifySubscribers(true)
       }
 
       ws.onmessage = event => {
@@ -70,93 +107,158 @@ export function useWebSocket() {
           const data: ActivityEvent = JSON.parse(event.data)
 
           if (data.type === 'connection' && data.status === 'connected') {
-            console.warn('WebSocket connection confirmed')
             return
           }
 
-          if (data.type === 'activity' && data.data) {
-            // Invalidate and immediately refetch activity queries
-            queryClient.invalidateQueries({
+          if (data.type === 'activity' && data.data && this.queryClientRef) {
+            this.queryClientRef.invalidateQueries({
               queryKey: queryKeys.dashboard.activity,
             })
-            queryClient.refetchQueries({
+            this.queryClientRef.refetchQueries({
               queryKey: queryKeys.dashboard.activity,
             })
-            // Also invalidate stats
-            queryClient.invalidateQueries({
+            this.queryClientRef.invalidateQueries({
               queryKey: queryKeys.dashboard.stats,
             })
-            queryClient.refetchQueries({
+            this.queryClientRef.refetchQueries({
               queryKey: queryKeys.dashboard.stats,
             })
           }
         } catch (err) {
-          console.error('Error parsing WebSocket message:', err)
+          console.error('WebSocket: Error parsing message:', err)
         }
       }
 
-      ws.onerror = () => {}
+      ws.onerror = () => {
+        this.isConnecting = false
+        console.error('WebSocket: Connection error')
+      }
 
       ws.onclose = event => {
-        setIsConnected(false)
-        reconnectAttemptsRef.current += 1
-
+        if (this.ws !== ws) return
+        
+        this.isConnecting = false
+        this.ws = null
+        this.notifySubscribers(false)
+        
+        if (event.code === 1000) {
+          return
+        }
+        
         if (event.code === 1008) {
-          console.error('WebSocket authentication failed')
-          setError(new Error('WebSocket authentication failed'))
-        } else if (event.code === 1006 && reconnectAttemptsRef.current <= 1) {
-          console.warn('WebSocket connection failed - retrying...')
+          console.error('WebSocket: Authentication failed')
+          this.notifySubscribers(false, new Error('WebSocket authentication failed'))
+          return
+        }
+        
+        this.reconnectAttempts += 1
+        
+        if (event.code === 1006 && this.reconnectAttempts <= 1) {
+          console.warn('WebSocket: Connection failed - retrying...')
         }
 
-        if (isAuthenticated && event.code !== 1000) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect()
+        if (this.isAuthenticatedRef.current && event.code !== 1000) {
+          this.reconnectTimeout = setTimeout(() => {
+            if (this.isAuthenticatedRef.current && !this.ws && !this.isConnecting) {
+              this.connect()
+            }
           }, 3000)
         }
       }
     } catch (err) {
-      console.error('Error creating WebSocket:', err)
-      setError(err as Error)
-      setIsConnected(false)
+      this.isConnecting = false
+      console.error('WebSocket: Error creating connection:', err)
+      this.notifySubscribers(false, err as Error)
     }
-  }, [isAuthenticated, queryClient])
-
-  const disconnect = () => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    setIsConnected(false)
-    reconnectAttemptsRef.current = 0
   }
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      connect()
-    } else {
-      disconnect()
+  disconnect() {
+    this.isConnecting = false
+    
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+      this.reconnectTimeout = null
     }
-
-    return () => {
-      disconnect()
+    
+    if (this.ws) {
+      const ws = this.ws
+      this.ws = null
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close(1000, 'Disconnecting')
+      }
     }
-  }, [isAuthenticated, connect])
+    
+    this.notifySubscribers(false)
+    this.reconnectAttempts = 0
+  }
 
-  useEffect(() => {
-    if (!isConnected || !wsRef.current) return
-
+  startPing() {
     const pingInterval = setInterval(() => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send('ping')
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send('ping')
+      } else {
+        clearInterval(pingInterval)
       }
     }, 30000)
-
     return () => clearInterval(pingInterval)
-  }, [isConnected])
+  }
+}
+
+export function useWebSocket() {
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const queryClient = useQueryClient()
+  const { isAuthenticated } = useAuth()
+  const isAuthenticatedRef = useRef(isAuthenticated)
+  const queryClientRef = useRef(queryClient)
+  const managerRef = useRef<WebSocketManager | null>(null)
+  const pingCleanupRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    queryClientRef.current = queryClient
+  }, [queryClient])
+
+  useEffect(() => {
+    if (!managerRef.current) {
+      managerRef.current = WebSocketManager.getInstance()
+    }
+
+    const unsubscribe = managerRef.current.subscribe((connected, error) => {
+      setIsConnected(connected)
+      setError(error || null)
+      
+      if (connected && !pingCleanupRef.current && managerRef.current) {
+        pingCleanupRef.current = managerRef.current.startPing()
+      } else if (!connected && pingCleanupRef.current) {
+        pingCleanupRef.current()
+        pingCleanupRef.current = null
+      }
+    })
+
+    return () => {
+      unsubscribe()
+      if (pingCleanupRef.current) {
+        pingCleanupRef.current()
+        pingCleanupRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!managerRef.current) return
+
+    managerRef.current.setRefs(queryClientRef.current, isAuthenticatedRef)
+
+    if (isAuthenticated) {
+      managerRef.current.connect()
+    } else {
+      managerRef.current.disconnect()
+    }
+  }, [isAuthenticated])
 
   return { isConnected, error }
 }
