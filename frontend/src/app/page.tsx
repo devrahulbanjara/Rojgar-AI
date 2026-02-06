@@ -3,11 +3,12 @@
 import {
   LandingNavbar,
   HeroSection,
+  FeaturesSection,
   RecruiterPlatformSection,
   CandidatePlatformSection,
-  InsightsSection,
-  NeuralIntelligenceSection,
+  HowItWorksSection,
   PricingSection,
+  CTASection,
   LandingFooter,
 } from '../components/landing'
 
@@ -17,11 +18,12 @@ export default function LandingPage() {
       <LandingNavbar />
       <main>
         <HeroSection />
+        <FeaturesSection />
         <RecruiterPlatformSection />
         <CandidatePlatformSection />
-        <InsightsSection />
-        <NeuralIntelligenceSection />
+        <HowItWorksSection />
         <PricingSection />
+        <CTASection />
       </main>
       <LandingFooter />
     </div>

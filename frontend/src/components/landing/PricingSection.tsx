@@ -1,145 +1,188 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
-import { Rocket, Zap, ShieldCheck, Check } from 'lucide-react'
+import { Check, Crown, Rocket, Building2, Zap, Star } from 'lucide-react'
 import Link from 'next/link'
 
 const tiers = [
   {
-    icon: Rocket,
     name: 'Starter',
+    description: 'Perfect for small teams getting started',
     price: 'Free',
-    description: 'Perfect for getting started',
+    period: '',
+    icon: Rocket,
+    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-50',
     features: [
       'Up to 3 active job postings',
       'AI Job Description Generator',
-      'Basic AI Resume Screening and Scoring',
+      'Basic AI Resume Screening',
       'Candidate portal with Resume Builder',
-      'Transparent, automated feedback for candidates',
-      'Community and Email support',
+      'Automated feedback for candidates',
+      'Community & Email support',
     ],
+    cta: 'Get Started Free',
+    highlighted: false,
   },
   {
-    icon: Zap,
     name: 'Pro',
+    description: 'For growing teams who need more power',
     price: '$49',
     period: '/month',
-    description: 'For growing teams',
+    icon: Zap,
+    iconColor: 'text-indigo-600',
+    iconBg: 'bg-indigo-50',
     features: [
       'Everything in Starter, plus:',
       'Unlimited job postings',
-      'Automated Interview Scheduling Agent',
-      'Offer Letter Automation and Management',
-      'Candidate Dashboard with explainable AI scores',
+      'Advanced semantic screening',
+      'Automated Interview Scheduling',
+      'Offer letter automation',
+      'Priority support',
     ],
+    cta: 'Start Pro Trial',
     highlighted: true,
   },
   {
-    icon: ShieldCheck,
     name: 'Enterprise',
+    description: 'For large organizations with custom needs',
     price: 'Custom',
-    description: 'For large organizations',
+    period: '',
+    icon: Building2,
+    iconColor: 'text-purple-600',
+    iconBg: 'bg-purple-50',
     features: [
       'Everything in Pro, plus:',
-      'RAG-based search to query past candidate data',
-      'Interview evaluation using Speech-to-Text analysis',
-      'Custom fairness and bias reporting',
+      'RAG-based talent pool search',
+      'Speech-to-text interview analysis',
+      'Custom bias & fairness reporting',
+      'Dedicated account manager',
+      'SLA & custom integrations',
     ],
+    cta: 'Contact Sales',
+    highlighted: false,
   },
 ]
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-16 sm:py-24 lg:py-32 px-6 lg:px-8 bg-[#F9FAFB]">
-      <div className="w-full max-w-7xl mx-auto">
+    <section id="pricing" className="py-20 lg:py-24 px-6 lg:px-8 bg-white relative overflow-hidden">
+      {/* Subtle Background */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
+      <div className="max-w-6xl mx-auto relative">
+        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10 sm:mb-16 lg:mb-20 px-3"
+          className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#0F172A] mb-4 sm:mb-6 tracking-tight">
-            Pricing
+          <div className="mb-5">
+            <div className="inline-flex items-center gap-3">
+              <div className="w-6 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+              <span className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">Pricing</span>
+              <div className="w-6 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+            </div>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-5">
+            Start free, scale as you grow
           </h2>
-          <p className="text-lg sm:text-xl lg:text-2xl text-[#475569] max-w-3xl mx-auto leading-relaxed">
-            Choose the plan that fits your needs. No hidden fees, no surprises.
+          <p className="text-lg text-slate-600 max-w-xl mx-auto">
+            No hidden fees. Choose the plan that fits your needs.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8 max-w-7xl mx-auto px-3">
+        {/* Compact Pricing Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {tiers.map((tier, index) => {
             const Icon = tier.icon
             return (
               <motion.div
                 key={tier.name}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.15 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                className="relative group"
               >
-                <Card
-                  className={`h-full rounded-2xl sm:rounded-3xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 ${
-                    tier.highlighted
-                      ? 'bg-white border-2 border-brand-blue shadow-xl'
-                      : 'bg-white border border-[#E5E7EB] shadow-lg'
-                  }`}
-                >
-                  <CardContent className="p-6 sm:p-8 lg:p-10">
-                    {tier.highlighted && (
-                      <div className="inline-block mb-3 sm:mb-4 px-3 sm:px-4 py-1 bg-brand-blue/10 text-brand-blue text-xs sm:text-sm font-semibold rounded-full">
-                        Most Popular
-                      </div>
+                {/* Popular Badge */}
+                {tier.highlighted && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-semibold">
+                      <Crown className="w-3 h-3" />
+                      Popular
+                    </div>
+                  </div>
+                )}
+
+                <div className={`h-full rounded-2xl p-8 ${
+                  tier.highlighted
+                    ? 'bg-white border-2 border-indigo-200 shadow-lg'
+                    : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md'
+                } transition-all duration-200`}>
+                  
+                  {/* Icon & Header */}
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className={`w-10 h-10 ${tier.iconBg} rounded-xl flex items-center justify-center`}>
+                      <Icon className={`w-5 h-5 ${tier.iconColor}`} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">{tier.name}</h3>
+                      <p className="text-xs text-slate-500">{tier.description}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Price */}
+                  <div className="flex items-baseline gap-1 mb-8">
+                    <span className="text-3xl font-bold text-slate-900">{tier.price}</span>
+                    {tier.period && (
+                      <span className="text-slate-500 text-sm">{tier.period}</span>
                     )}
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl sm:rounded-2xl bg-brand-blue/10 flex items-center justify-center mb-4 sm:mb-6">
-                      <Icon className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-brand-blue" />
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-semibold text-[#0F172A] mb-2">
-                      {tier.name}
-                    </h3>
-                    <p className="text-sm sm:text-base text-[#475569] mb-4 sm:mb-6">
-                      {tier.description}
-                    </p>
-                    <div className="mb-6 sm:mb-8">
-                      <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0F172A]">
-                        {tier.price}
-                      </span>
-                      {tier.period && (
-                        <span className="text-[#475569] text-base sm:text-lg">{tier.period}</span>
-                      )}
-                    </div>
-                    <Link href="/signup">
-                      <Button
-                        className={`w-full rounded-xl py-4 sm:py-5 lg:py-6 text-sm sm:text-base font-medium transition-all duration-200 ${
-                          tier.highlighted
-                            ? 'bg-brand-blue hover:bg-[#2B3CF5] text-white shadow-lg hover:shadow-xl hover:scale-105'
-                            : 'bg-[#F9FAFB] hover:bg-brand-blue text-[#0F172A] hover:text-white'
-                        }`}
-                      >
-                        Get Started
-                      </Button>
-                    </Link>
-                    <ul className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
-                      {tier.features.map(feature => (
-                        <li
-                          key={feature}
-                          className="flex items-start gap-2 sm:gap-3 text-[#475569]"
-                        >
-                          <Check className="h-4 w-4 sm:h-5 sm:w-5 text-brand-blue flex-shrink-0 mt-0.5" />
-                          <span className="text-sm sm:text-base leading-relaxed break-words">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  {/* CTA Button */}
+                  <Link href="/signup" className="block mb-8">
+                    <Button
+                      className={`w-full rounded-lg py-2.5 h-auto font-medium text-sm transition-all duration-200 ${
+                        tier.highlighted
+                          ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                      }`}
+                    >
+                      {tier.cta}
+                    </Button>
+                  </Link>
+
+                  {/* Features */}
+                  <div className="space-y-4">
+                    {tier.features.map((feature, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
+                          tier.highlighted ? 'text-indigo-600' : 'text-emerald-500'
+                        }`} />
+                        <span className="text-sm text-slate-600">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </motion.div>
             )
           })}
         </div>
+
+        {/* Trust Note */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-sm text-slate-500 mt-14"
+        >
+          14-day free trial • No credit card required • Cancel anytime
+        </motion.p>
       </div>
     </section>
   )
