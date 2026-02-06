@@ -1,6 +1,7 @@
 export { LandingNavbar } from './LandingNavbar'
 export { HeroSection } from './HeroSection'
 export { FeaturesSection } from './FeaturesSection'
+export { BrandSection } from './BrandSection'
 export { RecruiterPlatformSection } from './RecruiterPlatformSection'
 export { CandidatePlatformSection } from './CandidatePlatformSection'
 export { HowItWorksSection } from './HowItWorksSection'

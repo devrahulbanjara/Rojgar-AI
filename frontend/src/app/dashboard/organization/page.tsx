@@ -12,11 +12,11 @@ export default function OrganizationDashboard() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
+      <PageTransition className="min-h-screen bg-background-subtle">
         <div className="space-y-8 pb-12">
           {/* Header with Gradient Background */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-8 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-6 transition-all duration-300 ease-out">
+            <div className="relative py-8 bg-gradient-to-b from-primary-50/50 to-background-surface border-b border-primary-200/50 mb-6 transition-all duration-300 ease-out">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
                 <WelcomeMessage
                   firstName={user?.name}

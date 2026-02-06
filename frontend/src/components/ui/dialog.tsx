@@ -93,17 +93,14 @@ const Dialog: React.FC<DialogProps> = ({
             transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
             className={cn(
               // Base styles
-              'relative z-50 w-full bg-white border border-gray-200',
+              'relative z-50 w-full bg-background-surface border border-default',
               // Enhanced layered shadow - soft and diffused
               'rounded-[20px]',
               // Default max width
               'max-w-lg',
+              'shadow-xl',
               className
             )}
-            style={{
-              boxShadow:
-                '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 40px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.1)',
-            }}
             role="dialog"
             aria-modal="true"
           >
@@ -111,7 +108,7 @@ const Dialog: React.FC<DialogProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 z-10"
+                className="absolute right-4 top-4 p-2 rounded-xl text-text-tertiary hover:text-text-secondary hover:bg-background-subtle transition-all duration-200 z-10"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
@@ -137,26 +134,26 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
 }
 
 const DialogHeader: React.FC<DialogHeaderProps> = ({ children, className }) => {
-  return <div className={cn('px-8 pt-8 pb-6 border-b border-gray-100', className)}>{children}</div>
+  return <div className={cn('px-8 pt-8 pb-6 border-b border-subtle', className)}>{children}</div>
 }
 
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, className }) => {
   return (
-    <h2 className={cn('text-xl font-semibold text-gray-900 leading-tight', className)}>
+    <h2 className={cn('text-xl font-semibold text-text-primary leading-tight', className)}>
       {children}
     </h2>
   )
 }
 
 const DialogDescription: React.FC<DialogDescriptionProps> = ({ children, className }) => {
-  return <p className={cn('text-sm text-gray-500 mt-1.5', className)}>{children}</p>
+  return <p className={cn('text-sm text-text-tertiary mt-1.5', className)}>{children}</p>
 }
 
 const DialogFooter: React.FC<DialogFooterProps> = ({ children, className }) => {
   return (
     <div
       className={cn(
-        'flex justify-end gap-3 px-8 py-6 bg-gray-50 rounded-b-2xl border-t border-gray-100',
+        'flex justify-end gap-3 px-8 py-6 bg-background-subtle rounded-b-2xl border-t border-subtle',
         className
       )}
     >

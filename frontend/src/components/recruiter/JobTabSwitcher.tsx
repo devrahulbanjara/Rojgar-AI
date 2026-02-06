@@ -42,7 +42,7 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1 p-1 bg-gray-100/80 backdrop-blur-sm rounded-2xl',
+          'inline-flex items-center gap-1 p-1 bg-background-muted/80 backdrop-blur-sm rounded-2xl',
           className
         )}
       >
@@ -59,18 +59,18 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
                 'relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium',
                 'transition-all duration-300 ease-out',
                 isActive
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                  ? 'bg-background-surface text-text-primary shadow-sm'
+                  : 'text-text-tertiary hover:text-text-secondary hover:bg-background-surface/50'
               )}
             >
               <Icon
                 className={cn(
                   'w-4 h-4 transition-colors duration-300',
-                  isActive && tab.color === 'blue' && 'text-blue-600',
-                  isActive && tab.color === 'amber' && 'text-amber-600',
-                  isActive && tab.color === 'rose' && 'text-rose-600',
-                  isActive && tab.color === 'purple' && 'text-purple-600',
-                  !isActive && 'text-gray-400'
+                  isActive && tab.color === 'blue' && 'text-primary',
+                  isActive && tab.color === 'amber' && 'text-warning',
+                  isActive && tab.color === 'rose' && 'text-error',
+                  isActive && tab.color === 'purple' && 'text-primary',
+                  !isActive && 'text-text-muted'
                 )}
               />
               <span>{tab.label}</span>
@@ -78,11 +78,19 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
                 <span
                   className={cn(
                     'px-2 py-0.5 rounded-full text-xs font-semibold transition-all duration-300',
-                    isActive && tab.color === 'blue' && 'bg-blue-100 text-blue-700',
-                    isActive && tab.color === 'amber' && 'bg-amber-100 text-amber-700',
-                    isActive && tab.color === 'rose' && 'bg-rose-100 text-rose-700',
-                    isActive && tab.color === 'purple' && 'bg-purple-100 text-purple-700',
-                    !isActive && 'bg-gray-200/80 text-gray-500'
+                    isActive &&
+                      tab.color === 'blue' &&
+                      'bg-primary-100 dark:bg-primary-900/30 text-primary',
+                    isActive &&
+                      tab.color === 'amber' &&
+                      'bg-warning-100 dark:bg-warning-900/30 text-warning',
+                    isActive &&
+                      tab.color === 'rose' &&
+                      'bg-error-100 dark:bg-error-900/30 text-error',
+                    isActive &&
+                      tab.color === 'purple' &&
+                      'bg-primary-100 dark:bg-primary-900/30 text-primary',
+                    !isActive && 'bg-background-muted/80 text-text-tertiary'
                   )}
                 >
                   {count}

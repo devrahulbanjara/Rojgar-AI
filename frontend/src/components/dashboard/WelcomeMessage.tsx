@@ -16,10 +16,12 @@ export const WelcomeMessage = memo<WelcomeMessageProps>(
 
     return (
       <div className={`mb-6 ${className}`}>
-        <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight">
-          Welcome back, <span className="text-[#3056F5]">{displayName}</span>!
+        <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight">
+          Welcome back, <span className="text-primary">{displayName}</span>!
         </h1>
-        {organizationName && <p className="text-lg text-slate-600 mt-1.5">{organizationName}</p>}
+        {organizationName && (
+          <p className="text-lg text-text-tertiary mt-1.5">{organizationName}</p>
+        )}
       </div>
     )
   }

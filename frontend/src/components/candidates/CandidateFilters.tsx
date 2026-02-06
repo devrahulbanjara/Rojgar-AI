@@ -39,7 +39,7 @@ export function CandidateFilters({
   return (
     <div className={cn('flex flex-wrap items-center gap-3', className)}>
       {activeFilters.length > 0 && (
-        <span className="text-sm text-slate-500 font-medium">Filters:</span>
+        <span className="text-sm text-text-tertiary font-medium">Filters:</span>
       )}
       {filtersToShow.map(filter => {
         const isActive = activeFilters.includes(filter)
@@ -51,8 +51,8 @@ export function CandidateFilters({
             className={cn(
               'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer border',
               isActive
-                ? 'bg-indigo-600 text-white hover:bg-indigo-700 border-indigo-600 shadow-sm'
-                : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-slate-200 hover:border-slate-300'
+                ? 'bg-primary-600 text-text-inverse hover:bg-primary-700 border-primary-600 shadow-sm'
+                : 'bg-background-surface text-text-tertiary hover:text-text-primary hover:bg-background-subtle border-border-default hover:border-border-strong'
             )}
             aria-label={
               isActive
@@ -68,7 +68,7 @@ export function CandidateFilters({
       {activeFilters.length > 0 && (
         <button
           onClick={onClearAll}
-          className="text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors cursor-pointer px-2"
+          className="text-sm text-text-tertiary hover:text-text-secondary font-medium transition-colors cursor-pointer px-2"
         >
           Clear all
         </button>

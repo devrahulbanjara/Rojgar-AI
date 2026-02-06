@@ -17,42 +17,38 @@ export const StatCard = memo<StatCardProps>(({ title, value, icon, description, 
   return (
     <div
       className={cn(
-        'group bg-white rounded-2xl p-8 border border-[#E5E7EB] transition-all duration-300 hover:scale-[1.02] relative overflow-hidden',
+        'group bg-background-surface rounded-2xl p-8 border border-border-default transition-all duration-300 hover:scale-[1.02] relative overflow-hidden shadow-sm',
         className
       )}
-      style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
       onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = '0 12px 24px -8px rgba(48, 86, 245, 0.15)'
-        e.currentTarget.style.borderColor = 'rgba(48, 86, 245, 0.2)'
+        e.currentTarget.classList.add('shadow-lg')
+        e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.2)'
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'
-        e.currentTarget.style.borderColor = '#E5E7EB'
+        e.currentTarget.classList.remove('shadow-lg')
+        e.currentTarget.style.borderColor = ''
       }}
     >
       {/* Hover Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 via-blue-50/0 to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-50/0 via-primary-50/0 to-primary-50/30 dark:from-primary-950/0 dark:via-primary-950/0 dark:to-primary-950/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
       {/* Icon Container */}
       {icon && (
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
-          style={{ background: 'rgba(48, 86, 245, 0.08)' }}
-        >
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 bg-primary/8">
           {React.isValidElement(icon) &&
             React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
-              className: 'h-6 w-6 text-[#3056F5]',
+              className: 'h-6 w-6 text-primary',
             })}
         </div>
       )}
 
       {/* Number */}
-      <p className="text-[40px] max-lg:text-4xl font-bold text-[#0F172A] leading-none mb-2 tracking-tight">
+      <p className="text-[40px] max-lg:text-4xl font-bold text-text-primary leading-none mb-2 tracking-tight">
         {value}
       </p>
 
       {/* Label */}
-      <p className="text-sm font-medium text-[#475569]">{description || title}</p>
+      <p className="text-sm font-medium text-text-secondary">{description || title}</p>
     </div>
   )
 })

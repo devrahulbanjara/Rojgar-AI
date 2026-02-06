@@ -33,34 +33,34 @@ const formatTimestamp = (timestamp: string): { date: string; time: string } => {
 const ActivityIcon = ({ type }: { type: ActivityItem['type'] }) => {
   switch (type) {
     case 'application':
-      return <FileText className="w-5 h-5 text-blue-600" />
+      return <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
     case 'interview':
-      return <Calendar className="w-5 h-5 text-purple-600" />
+      return <Calendar className="w-5 h-5 text-ai-600 dark:text-ai-400" />
     case 'offer':
-      return <CheckCircle2 className="w-5 h-5 text-green-600" />
+      return <CheckCircle2 className="w-5 h-5 text-success-600 dark:text-success-400" />
     case 'job_post':
-      return <Briefcase className="w-5 h-5 text-indigo-600" />
+      return <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
     case 'status_change':
-      return <Clock className="w-5 h-5 text-amber-600" />
+      return <Clock className="w-5 h-5 text-warning-600 dark:text-warning-400" />
     default:
-      return <User className="w-5 h-5 text-gray-600" />
+      return <User className="w-5 h-5 text-text-tertiary" />
   }
 }
 
 const ActivityColor = ({ type }: { type: ActivityItem['type'] }) => {
   switch (type) {
     case 'application':
-      return 'bg-blue-50 border-blue-100'
+      return 'bg-primary-50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
     case 'interview':
-      return 'bg-purple-50 border-purple-100'
+      return 'bg-ai-50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
     case 'offer':
-      return 'bg-green-50 border-green-100'
+      return 'bg-success-50 dark:bg-success-950/30 border-success-200 dark:border-success-800'
     case 'job_post':
-      return 'bg-indigo-50 border-indigo-100'
+      return 'bg-primary-50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
     case 'status_change':
-      return 'bg-amber-50 border-amber-100'
+      return 'bg-warning-50 dark:bg-warning-950/30 border-warning-200 dark:border-warning-800'
     default:
-      return 'bg-gray-50 border-gray-100'
+      return 'bg-background-subtle border-border-subtle'
   }
 }
 
@@ -69,10 +69,12 @@ export function RecentActivity() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-[#E5E7EB] bg-gray-50/50">
-          <h2 className="text-lg font-bold text-[#0F172A]">Recent Activity</h2>
-          <p className="text-sm text-[#64748B]">Latest updates from your recruitment pipeline</p>
+      <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border-default bg-background-subtle/50">
+          <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
+          <p className="text-sm text-text-tertiary">
+            Latest updates from your recruitment pipeline
+          </p>
         </div>
         <div className="p-8 flex items-center justify-center">
           <LoadingSpinner />
@@ -82,29 +84,29 @@ export function RecentActivity() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-[#E5E7EB] bg-gray-50/50">
-        <h2 className="text-lg font-bold text-[#0F172A]">Recent Activity</h2>
-        <p className="text-sm text-[#64748B]">Latest updates from your recruitment pipeline</p>
+    <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-border-default bg-background-subtle/50">
+        <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
+        <p className="text-sm text-text-tertiary">Latest updates from your recruitment pipeline</p>
       </div>
 
       {activities.length === 0 ? (
-        <div className="p-8 text-center text-[#64748B]">
+        <div className="p-8 text-center text-text-tertiary">
           <p>No recent activity</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-border-subtle">
           {activities.map((activity, index) => {
             const { date, time } = formatTimestamp(activity.timestamp)
             return (
               <div
                 key={activity.id}
-                className="group p-4 hover:bg-gray-50 transition-colors duration-200 flex items-start gap-4"
+                className="group p-4 hover:bg-background-subtle transition-colors duration-200 flex items-start gap-4"
               >
                 {/* Date/Time Column */}
                 <div className="flex-shrink-0 w-16 text-right pt-1">
-                  <div className="text-sm font-semibold text-[#0F172A]">{date}</div>
-                  <div className="text-xs text-[#64748B]">{time}</div>
+                  <div className="text-sm font-semibold text-text-primary">{date}</div>
+                  <div className="text-xs text-text-tertiary">{time}</div>
                 </div>
 
                 {/* Icon Timeline */}
@@ -119,16 +121,18 @@ export function RecentActivity() {
                   </div>
                   {/* Vertical Line */}
                   {index < activities.length - 1 && (
-                    <div className="absolute top-10 bottom-[-24px] w-px bg-gray-200" />
+                    <div className="absolute top-10 bottom-[-24px] w-px bg-border-default" />
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 pt-1">
-                  <p className="text-sm text-[#334155]">
-                    <span className="font-semibold text-[#0F172A]">{activity.user}</span>{' '}
-                    <span className="text-[#64748B]">{activity.action}</span>{' '}
-                    <span className="font-medium text-[#3056F5]">{activity.target}</span>
+                  <p className="text-sm text-text-secondary">
+                    <span className="font-semibold text-text-primary">{activity.user}</span>{' '}
+                    <span className="text-text-tertiary">{activity.action}</span>{' '}
+                    <span className="font-medium text-primary-600 dark:text-primary-400">
+                      {activity.target}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -137,8 +141,8 @@ export function RecentActivity() {
         </div>
       )}
 
-      <div className="p-4 bg-gray-50/50 border-t border-[#E5E7EB] text-center">
-        <button className="text-sm font-medium text-[#3056F5] hover:text-[#1E40AF] transition-colors">
+      <div className="p-4 bg-background-subtle/50 border-t border-border-default text-center">
+        <button className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
           View All Activity
         </button>
       </div>
