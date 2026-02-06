@@ -26,16 +26,16 @@ export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  
+
   const { data: candidatesData, isLoading: isCandidatesLoading, error } = useCandidates()
   const jobsData = useMemo(() => {
     if (!candidatesData?.candidates) return []
-    
+
     const jobsMap = new Map<string, ShortlistJob>()
-    
-    candidatesData.candidates.forEach((candidate) => {
+
+    candidatesData.candidates.forEach(candidate => {
       const jobId = candidate.job_id
-      
+
       if (!jobsMap.has(jobId)) {
         jobsMap.set(jobId, {
           job_id: jobId,
@@ -43,16 +43,16 @@ export default function ShortlistPage() {
           department: undefined,
           applicant_count: 0,
           pending_ai_reviews: 0,
-          candidates: []
+          candidates: [],
         })
       }
-      
+
       const job = jobsMap.get(jobId)
       if (!job) return
-      
+
       const score = Math.floor(Math.random() * 31) + 65
       const analysisIndex = Math.floor(Math.random() * analysisTemplates.length)
-      
+
       const shortlistCandidate: ShortlistCandidate = {
         application_id: candidate.application_id,
         job_id: candidate.job_id,
@@ -68,12 +68,12 @@ export default function ShortlistPage() {
         job_title: candidate.job_title,
         social_links: candidate.social_links,
       }
-      
+
       job.candidates.push(shortlistCandidate)
       job.applicant_count = job.candidates.length
       job.pending_ai_reviews = job.candidates.filter(c => c.ai_recommendation === 'review').length
     })
-    
+
     return Array.from(jobsMap.values())
   }, [candidatesData])
 
@@ -94,17 +94,16 @@ export default function ShortlistPage() {
   }, [selectedJob])
 
   const getScoreInterpretation = (score: number) => {
-    if (score >= 90) return { text: 'Excellent Match', color: 'text-emerald-600' }
-    if (score >= 80) return { text: 'Great Match', color: 'text-blue-600' }
-    if (score >= 70) return { text: 'Good Match', color: 'text-indigo-600' }
-    return { text: 'Fair Match', color: 'text-orange-600' }
+    if (score >= 90)
+      return { text: 'Excellent Match', color: 'text-emerald-600 dark:text-emerald-400' }
+    if (score >= 80) return { text: 'Great Match', color: 'text-blue-600 dark:text-blue-400' }
+    if (score >= 70) return { text: 'Good Match', color: 'text-primary-600 dark:text-primary-400' }
+    return { text: 'Fair Match', color: 'text-orange-600 dark:text-orange-400' }
   }
 
-  const handleApprove = useCallback((_candidateId: string) => {
-  }, [])
+  const handleApprove = useCallback((_candidateId: string) => {}, [])
 
-  const handleReject = useCallback((_candidateId: string) => {
-  }, [])
+  const handleReject = useCallback((_candidateId: string) => {}, [])
 
   const handleAcceptAIRecommendations = useCallback(() => {
     setShowConfirmModal(true)
@@ -115,7 +114,7 @@ export default function ShortlistPage() {
       handleApprove(candidate.candidate_id)
     })
     setShowConfirmModal(false)
-    
+
     toast.success(`AI recommendations accepted for ${recommendedCandidates.length} candidates`)
   }, [recommendedCandidates, handleApprove])
 
@@ -149,8 +148,10 @@ export default function ShortlistPage() {
       <AppShell>
         <PageTransition className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load candidates</h2>
-            <p className="text-gray-600">Please try refreshing the page</p>
+            <h2 className="text-xl font-semibold text-text-primary mb-2">
+              Failed to load candidates
+            </h2>
+            <p className="text-text-secondary">Please try refreshing the page</p>
           </div>
         </PageTransition>
       </AppShell>
@@ -159,27 +160,27 @@ export default function ShortlistPage() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
+      <PageTransition className="min-h-screen bg-background-subtle">
         <div className="space-y-8 pb-12">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
+            <div className="relative py-12 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/30 to-background-surface border-b border-primary-50/50 dark:border-primary-900/30 mb-8 transition-all duration-300 ease-out">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div>
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight tracking-tight">
+                    <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight tracking-tight">
                       Shortlist
                     </h1>
-                    <p className="text-lg text-[#475569] mt-2 max-w-2xl">
+                    <p className="text-lg text-text-secondary mt-2 max-w-2xl">
                       Review AI-analyzed candidates and make hiring decisions
                     </p>
                   </div>
                   {recommendedCandidates.length > 0 && selectedJob && (
                     <button
                       onClick={handleAcceptAIRecommendations}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 text-base rounded-lg transition-all duration-150 active:scale-95"
-                      style={{ 
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-base rounded-lg transition-all duration-150 active:scale-95"
+                      style={{
                         fontWeight: 500,
-                        borderWidth: '1.5px'
+                        borderWidth: '1.5px',
                       }}
                     >
                       <ShieldCheck className="w-4 h-4" />
@@ -198,8 +199,10 @@ export default function ShortlistPage() {
                   <div className="space-y-4">
                     {jobsData.length === 0 ? (
                       <div className="text-center py-8">
-                        <div className="text-gray-500 mb-2">No jobs with candidates found</div>
-                        <div className="text-sm text-gray-400">Candidates will appear here once they apply to jobs</div>
+                        <div className="text-text-tertiary mb-2">No jobs with candidates found</div>
+                        <div className="text-sm text-text-muted">
+                          Candidates will appear here once they apply to jobs
+                        </div>
                       </div>
                     ) : (
                       jobsData.map(job => (
@@ -220,22 +223,24 @@ export default function ShortlistPage() {
                   {selectedJob ? (
                     <div className="space-y-6">
                       <div className="flex items-baseline gap-3 mb-6">
-                        <h2 className="text-2xl font-semibold text-[#1F2937] inline">
+                        <h2 className="text-2xl font-semibold text-text-primary inline">
                           Candidates for {selectedJob.title}
                         </h2>
-                        <div className="inline-flex items-center gap-2 bg-[#EEF2FF] text-[#6366F1] border border-[#E0E7FF] rounded-md px-3 py-1 text-base font-semibold">
+                        <div className="inline-flex items-center gap-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 rounded-md px-3 py-1 text-base font-semibold">
                           <Users className="w-4 h-4" />
                           {selectedJob.candidates.length}
                         </div>
                       </div>
 
                       {selectedJob.candidates.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
-                          <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                            <Users className="w-10 h-10 text-indigo-300" />
+                        <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
+                          <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
+                            <Users className="w-10 h-10 text-primary-300" />
                           </div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">No candidates found</h3>
-                          <p className="text-base text-gray-500 max-w-md">
+                          <h3 className="text-xl font-bold text-text-primary mb-2">
+                            No candidates found
+                          </h3>
+                          <p className="text-base text-text-tertiary max-w-md">
                             No candidates have applied for this job yet
                           </p>
                         </div>
@@ -256,12 +261,14 @@ export default function ShortlistPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
-                      <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                        <Sparkles className="w-10 h-10 text-indigo-300" />
+                    <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
+                      <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
+                        <Sparkles className="w-10 h-10 text-primary-300 dark:text-primary-600" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">Select a job posting</h3>
-                      <p className="text-base text-gray-500 max-w-md">
+                      <h3 className="text-xl font-bold text-text-primary mb-2">
+                        Select a job posting
+                      </h3>
+                      <p className="text-base text-text-tertiary max-w-md">
                         Choose a job from the sidebar to start reviewing candidates
                       </p>
                     </div>
@@ -274,56 +281,61 @@ export default function ShortlistPage() {
       </PageTransition>
 
       {showConfirmModal && (
-        <div 
-          className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
+        <div
+          className="fixed inset-0 bg-text-primary/50 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={handleCancelAcceptAI}
         >
-          <div 
-            className="bg-white rounded-2xl max-w-md w-full mx-4 border border-slate-200 animate-in zoom-in-95 duration-200 ease-out"
-            style={{ 
+          <div
+            className="bg-background-surface rounded-2xl max-w-md w-full mx-4 border border-border-default animate-in zoom-in-95 duration-200 ease-out shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]"
+            style={{
               padding: '40px',
               borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-center mb-5">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <Brain className="w-6 h-6 text-indigo-600" />
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                <Brain className="w-6 h-6 text-primary-600" />
               </div>
             </div>
 
             <div className="text-center mb-8">
-              <h3 
-                className="text-gray-900 mb-4"
-                style={{ 
-                  fontSize: '24px', 
+              <h3
+                className="text-text-primary mb-4"
+                style={{
+                  fontSize: '24px',
                   fontWeight: 700,
-                  lineHeight: 1.2
+                  lineHeight: 1.2,
                 }}
               >
                 Accept AI Recommendations
               </h3>
-              
-              <p 
-                className="text-gray-600 mb-3"
-                style={{ 
-                  fontSize: '16px', 
+
+              <p
+                className="text-text-secondary mb-3"
+                style={{
+                  fontSize: '16px',
                   fontWeight: 400,
-                  lineHeight: 1.5
+                  lineHeight: 1.5,
                 }}
               >
                 You're about to accept AI recommendations for{' '}
-                <span className="font-bold text-gray-900">{recommendedCandidates.length} candidates</span>{' '}
-                for <span className="font-bold text-indigo-600">{selectedJob?.title}</span>.
+                <span className="font-bold text-text-primary">
+                  {recommendedCandidates.length} candidates
+                </span>{' '}
+                for{' '}
+                <span className="font-bold text-primary-600 dark:text-primary-400">
+                  {selectedJob?.title}
+                </span>
+                .
               </p>
-              
-              <p 
-                className="text-gray-400"
-                style={{ 
-                  fontSize: '14px', 
+
+              <p
+                className="text-text-muted"
+                style={{
+                  fontSize: '14px',
                   fontWeight: 400,
-                  lineHeight: 1.5
+                  lineHeight: 1.5,
                 }}
               >
                 This will approve all AI-recommended candidates. This action cannot be undone.
@@ -333,26 +345,25 @@ export default function ShortlistPage() {
             <div className="flex justify-center gap-3">
               <button
                 onClick={handleCancelAcceptAI}
-                className="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all duration-200"
-                style={{ 
+                className="border border-border-default text-text-secondary bg-background-surface hover:bg-background-subtle hover:border-border-strong rounded-lg transition-all duration-200"
+                style={{
                   minWidth: '120px',
                   height: '44px',
                   fontSize: '15px',
                   fontWeight: 500,
-                  borderWidth: '1.5px'
+                  borderWidth: '1.5px',
                 }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmAcceptAI}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200"
-                style={{ 
+                className="btn-primary-gradient rounded-lg transition-all duration-200 shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
+                style={{
                   minWidth: '200px',
                   height: '44px',
                   fontSize: '15px',
                   fontWeight: 600,
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                 }}
               >
                 Accept Recommendations
@@ -361,7 +372,6 @@ export default function ShortlistPage() {
           </div>
         </div>
       )}
-
     </AppShell>
   )
 }

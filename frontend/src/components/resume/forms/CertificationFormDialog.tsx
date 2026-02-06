@@ -110,8 +110,8 @@ export default function CertificationFormDialog({
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
       <DialogHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-            <Award className="w-5 h-5 text-amber-600" />
+          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
+            <Award className="w-5 h-5 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
             <DialogTitle>{initialData ? 'Edit Certification' : 'Add Certification'}</DialogTitle>
@@ -127,7 +127,7 @@ export default function CertificationFormDialog({
       <DialogContent className="pt-0">
         <form id="certification-form" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-text-secondary">
               Certification Name <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -135,12 +135,12 @@ export default function CertificationFormDialog({
               value={formData.certification_name}
               onChange={e => setFormData({ ...formData, certification_name: e.target.value })}
               placeholder="e.g. AWS Certified Solutions Architect"
-              className="h-11 rounded-xl border-gray-200 focus:border-amber-500 focus:ring-amber-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-text-secondary">
               Issuing Organization <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -148,28 +148,28 @@ export default function CertificationFormDialog({
               value={formData.issuing_body}
               onChange={e => setFormData({ ...formData, issuing_body: e.target.value })}
               placeholder="e.g. Amazon Web Services"
-              className="h-11 rounded-xl border-gray-200 focus:border-amber-500 focus:ring-amber-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Issue Date</Label>
+              <Label className="text-sm font-medium text-text-secondary">Issue Date</Label>
               <Input
                 type="date"
                 value={formData.issue_date}
                 onChange={e => setFormData({ ...formData, issue_date: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-amber-500 focus:ring-amber-500/20"
+                className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Expiration Date</Label>
+              <Label className="text-sm font-medium text-text-secondary">Expiration Date</Label>
               <Input
                 type="date"
                 disabled={formData.does_not_expire}
                 value={formData.expiration_date}
                 onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-amber-500 focus:ring-amber-500/20 disabled:opacity-50"
+                className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20 disabled:opacity-50"
               />
             </div>
           </div>
@@ -179,20 +179,20 @@ export default function CertificationFormDialog({
               id="no_expire"
               checked={formData.does_not_expire}
               onCheckedChange={c => setFormData({ ...formData, does_not_expire: c as boolean })}
-              className="rounded border-gray-300"
+              className="rounded border-border-default"
             />
-            <label htmlFor="no_expire" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="no_expire" className="text-sm text-text-secondary cursor-pointer">
               This certification does not expire
             </label>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Credential URL</Label>
+            <Label className="text-sm font-medium text-text-secondary">Credential URL</Label>
             <Input
               value={formData.credential_url}
               onChange={e => setFormData({ ...formData, credential_url: e.target.value })}
               placeholder="https://..."
-              className="h-11 rounded-xl border-gray-200 focus:border-amber-500 focus:ring-amber-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
             />
           </div>
         </form>
@@ -211,7 +211,7 @@ export default function CertificationFormDialog({
           type="submit"
           form="certification-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/25"
+          className="btn-primary-gradient rounded-xl px-6"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Certification'}

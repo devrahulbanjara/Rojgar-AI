@@ -37,9 +37,9 @@ export function CandidateFilters({
   }
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('flex flex-wrap items-center gap-3', className)}>
       {activeFilters.length > 0 && (
-        <span className="text-sm text-[#64748B] font-medium">Filters:</span>
+        <span className="text-sm text-text-tertiary font-medium">Filters:</span>
       )}
       {filtersToShow.map(filter => {
         const isActive = activeFilters.includes(filter)
@@ -49,10 +49,10 @@ export function CandidateFilters({
             key={filter}
             onClick={() => onFilterToggle(filter)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer',
+              'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer border',
               isActive
-                ? 'bg-[#3056F5] text-white hover:bg-[#2545D4] border border-[#3056F5]'
-                : 'bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] border border-[#E5E7EB] hover:border-[#CBD5E1]'
+                ? 'bg-primary-600 text-text-inverse hover:bg-primary-700 border-primary-600 shadow-sm'
+                : 'bg-background-surface text-text-tertiary hover:text-text-primary hover:bg-background-subtle border-border-default hover:border-border-strong'
             )}
             aria-label={
               isActive
@@ -68,7 +68,7 @@ export function CandidateFilters({
       {activeFilters.length > 0 && (
         <button
           onClick={onClearAll}
-          className="text-sm text-[#64748B] hover:text-[#475569] font-medium transition-colors cursor-pointer"
+          className="text-sm text-text-tertiary hover:text-text-secondary font-medium transition-colors cursor-pointer px-2"
         >
           Clear all
         </button>

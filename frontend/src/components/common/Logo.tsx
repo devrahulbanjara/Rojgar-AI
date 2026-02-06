@@ -32,20 +32,20 @@ export function Logo({
 
   const config = sizes[size]
 
-  // Color configurations based on variant
+  // Use CSS custom properties so colors adapt to light/dark theme automatically
   const getColors = () => {
     switch (variant) {
       case 'icon':
         return {
-          icon: '#3056F5',
-          convex: '#0F172A',
-          hire: '#3056F5',
+          icon: 'hsl(var(--primary))',
+          convex: 'hsl(var(--text-primary))',
+          hire: 'hsl(var(--primary))',
         }
       case 'monochrome-dark':
         return {
-          icon: '#0F172A',
-          convex: '#0F172A',
-          hire: '#0F172A',
+          icon: 'hsl(var(--text-primary))',
+          convex: 'hsl(var(--text-primary))',
+          hire: 'hsl(var(--text-primary))',
         }
       case 'monochrome-white':
         return {
@@ -55,9 +55,9 @@ export function Logo({
         }
       default: // 'full'
         return {
-          icon: '#3056F5',
-          convex: '#0F172A',
-          hire: '#3056F5',
+          icon: 'hsl(var(--primary))',
+          convex: 'hsl(var(--text-primary))',
+          hire: 'hsl(var(--primary))',
         }
     }
   }

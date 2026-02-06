@@ -78,8 +78,8 @@ export function SkillsManagement() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Skills & Expertise</h3>
-        <p className="text-[#475569]">
+        <h3 className="text-2xl font-bold text-text-primary mb-2">Skills & Expertise</h3>
+        <p className="text-text-secondary">
           Manage your professional skills to help recruiters find you.
         </p>
       </div>
@@ -88,8 +88,8 @@ export function SkillsManagement() {
         <div
           className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-700 border-green-200'
-              : 'bg-red-50 text-red-700 border-red-200'
+              ? 'bg-success-50 text-success-700 border-success-200'
+              : 'bg-error-50 text-error-700 border-error-200'
           }`}
         >
           {message.type === 'success' ? (
@@ -102,10 +102,10 @@ export function SkillsManagement() {
       )}
 
       {/* Add New Skill */}
-      <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB] mb-6">
+      <div className="bg-background-subtle rounded-xl p-6 border border-border-default mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-[#3056F5]" />
-          <h4 className="text-lg font-semibold text-[#0F172A]">Add New Skill</h4>
+          <Settings className="w-5 h-5 text-primary" />
+          <h4 className="text-lg font-semibold text-text-primary">Add New Skill</h4>
         </div>
 
         {isAdding ? (
@@ -114,12 +114,12 @@ export function SkillsManagement() {
               value={newSkill}
               onChange={e => setNewSkill(e.target.value)}
               placeholder="Enter a new skill"
-              className="flex-1 h-12 px-4 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 rounded-xl transition-all duration-200"
+              className="flex-1 h-12 px-4 border-border-default focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all duration-200"
               autoFocus
             />
             <Button
               type="submit"
-              className="px-6 h-12 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl"
+              className="px-6 h-12 bg-primary hover:bg-primary-700 text-white rounded-xl"
             >
               Add
             </Button>
@@ -127,7 +127,7 @@ export function SkillsManagement() {
               type="button"
               variant="outline"
               onClick={() => setIsAdding(false)}
-              className="px-6 h-12 border-[#D1D5DB] hover:bg-gray-50 rounded-xl"
+              className="px-6 h-12 border-border-default hover:bg-background-subtle rounded-xl"
             >
               Cancel
             </Button>
@@ -135,7 +135,7 @@ export function SkillsManagement() {
         ) : (
           <Button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[#3056F5] hover:bg-[#1E40AF] text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+            className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
           >
             <Plus className="w-4 h-4" />
             Add Skill
@@ -146,8 +146,8 @@ export function SkillsManagement() {
       {/* Skills List */}
       <div>
         {skills.length === 0 ? (
-          <div className="text-center py-12 text-[#6B7280] bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
-            <Settings className="w-12 h-12 mx-auto mb-4 text-[#9CA3AF]" />
+          <div className="text-center py-12 text-text-muted bg-background-subtle rounded-xl border border-border-default">
+            <Settings className="w-12 h-12 mx-auto mb-4 text-text-muted" />
             <p className="text-lg font-medium mb-2">No skills added yet</p>
             <p className="text-sm">Add your first skill to get started!</p>
           </div>
@@ -156,12 +156,12 @@ export function SkillsManagement() {
             {skills.map(skill => (
               <div
                 key={skill.id}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#F3F4F6] text-[#0F172A] rounded-full border border-[#E5E7EB] hover:bg-[#E5E7EB] transition-colors duration-200"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-background-subtle text-text-primary rounded-full border border-border-default hover:bg-background-muted transition-colors duration-200"
               >
                 <span className="text-sm font-medium">{skill.skill}</span>
                 <button
                   onClick={() => handleDeleteSkill(skill.id)}
-                  className="flex items-center justify-center w-5 h-5 text-[#6B7280] hover:text-red-600 hover:bg-red-100 rounded-full transition-colors duration-200"
+                  className="flex items-center justify-center w-5 h-5 text-text-muted hover:text-error-600 hover:bg-error-100 rounded-full transition-colors duration-200"
                   title="Delete skill"
                 >
                   <X className="w-3 h-3" />
@@ -173,7 +173,7 @@ export function SkillsManagement() {
       </div>
 
       {skills.length > 0 && (
-        <div className="pt-6 border-t border-[#E5E7EB] mt-6">
+        <div className="pt-6 border-t border-border-default mt-6">
           <Button
             variant="outline"
             onClick={() => {
@@ -189,7 +189,7 @@ export function SkillsManagement() {
                   })
               }
             }}
-            className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800 px-6 py-3 rounded-xl transition-colors duration-200"
+            className="bg-error-50 text-error-700 border-error-200 hover:bg-error-100 hover:text-error-800 px-6 py-3 rounded-xl transition-colors duration-200"
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete All Skills

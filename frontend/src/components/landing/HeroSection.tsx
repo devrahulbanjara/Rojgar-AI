@@ -3,112 +3,275 @@
 import { motion } from 'framer-motion'
 import { Button } from '../ui/button'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import {
+  ArrowRight,
+  Brain,
+  Network,
+  FileSearch,
+  ShieldCheck,
+  BriefcaseIcon,
+  Users,
+  Target,
+} from 'lucide-react'
 
 export function HeroSection() {
   return (
-    <section
-      className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center px-6 lg:px-8 py-8 sm:py-16 lg:py-20"
-      style={{
-        background: 'linear-gradient(180deg, #F9FAFB 0%, #FFFFFF 100%)',
-      }}
-    >
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center">
-          {/* Left Content */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background-subtle via-background-surface to-primary-50 dark:to-primary-950/30" />
+
+      {/* Subtle Grid Pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232563EB' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Floating Gradient Orbs */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-3xl animate-pulse" />
+      <div
+        className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"
+        style={{ animationDelay: '1s' }}
+      />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+
+      <div className="relative w-full max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
+        <div className="text-center max-w-4xl mx-auto">
+          {/* Badge */}
           <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-950/50 dark:to-primary-900/50 border border-primary-200 dark:border-primary-800 shadow-sm mb-8 backdrop-blur-sm"
+          >
+            <Brain className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-text-secondary tracking-wide">
+              AI-Powered Recruitment Platform
+            </span>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="px-2 sm:px-4 xl:px-0 text-center xl:text-left"
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-text-primary leading-[1.05] tracking-tight mb-8"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[76px] leading-[1.1] font-bold text-[#0F172A] mb-3 sm:mb-4 lg:mb-6 tracking-tight">
-              Use AI to Recruit <span className="text-brand-blue">Humans</span>
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-[#475569] mb-6 sm:mb-8 lg:mb-10 leading-relaxed max-w-2xl mx-auto xl:mx-0 break-words">
-              Smarter hiring. Better matches. Happier candidates.
-            </p>
+            Hiring that{' '}
+            <span className="relative">
+              <span className="bg-gradient-to-r from-primary via-primary to-primary-600 bg-clip-text text-transparent">
+                understands
+              </span>
+              <motion.div
+                className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-primary/30 via-primary/40 to-primary/30 -z-10 rounded-full opacity-60"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              />
+            </span>
+            <br />
+            your candidates
+          </motion.h1>
 
-            <motion.div
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center xl:justify-start"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <Link href="/signup">
-                <Button
-                  size="lg"
-                  className="bg-brand-blue hover:bg-[#2B3CF5] text-white text-sm sm:text-base font-medium rounded-xl px-6 sm:px-8 py-4 sm:py-6 h-auto transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto"
-                >
-                  Start for Free
-                </Button>
-              </Link>
-              <a href="#platform">
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  className="text-[#475569] hover:text-brand-blue text-sm sm:text-base font-medium rounded-xl px-6 sm:px-8 py-4 sm:py-6 h-auto group w-full sm:w-auto"
-                >
-                  Explore Platform
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </a>
-            </motion.div>
+          {/* Subheadline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-lg sm:text-xl lg:text-2xl text-text-secondary mb-12 max-w-2xl mx-auto leading-relaxed"
+          >
+            ConvexHire uses AI agents that read resumes like humans do — matching skills by meaning,
+            not just keywords.
+          </motion.p>
+
+          {/* CTA Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="flex justify-center mb-16"
+          >
+            <Link href="/signup">
+              <Button
+                size="lg"
+                className="btn-primary-gradient text-base font-semibold rounded-xl px-10 py-6 h-auto transition-all duration-300 hover:scale-105 group"
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </motion.div>
 
-          {/* Right Visual - Placeholder for Dashboard Mock */}
+          {/* Trust Indicators */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative px-2 sm:px-4 xl:px-0 order-first xl:order-last"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mt-12 pt-8 border-t border-border-subtle"
           >
-            <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-[#E5E7EB] max-w-sm sm:max-w-md lg:max-w-none mx-auto">
-              {/* Mock Dashboard */}
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-[#E5E7EB]">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-semibold text-[#0F172A]">
-                      Recruiter Dashboard
-                    </h3>
-                    <p className="text-xs sm:text-sm text-[#475569]">Smart candidate matching</p>
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-blue/10 flex items-center justify-center">
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-blue" />
-                  </div>
-                </div>
-
-                {/* Candidate Cards */}
-                {[1, 2, 3].map(i => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + i * 0.1 }}
-                    className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#F9FAFB] border border-[#E5E7EB]"
-                  >
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-brand-blue to-[#2B3CF5]" />
-                    <div className="flex-1">
-                      <div className="h-2 sm:h-3 bg-[#E5E7EB] rounded w-24 sm:w-32 mb-1 sm:mb-2" />
-                      <div className="h-1.5 sm:h-2 bg-[#E5E7EB] rounded w-16 sm:w-20" />
-                    </div>
-                    <div className="text-xs sm:text-sm font-semibold text-brand-blue">
-                      {95 - i * 5}%
-                    </div>
-                  </motion.div>
-                ))}
-
-                {/* Animated Connection Lines */}
+            {[
+              {
+                icon: Network,
+                label: 'Multi-Agent AI System',
+                iconColor: 'text-primary',
+                bgGradient: 'from-primary-100 to-primary-50',
+              },
+              {
+                icon: FileSearch,
+                label: 'Semantic Resume Analysis',
+                iconColor: 'text-primary',
+                bgGradient: 'from-primary-100 to-primary-50',
+              },
+              {
+                icon: ShieldCheck,
+                label: 'Explainable Decisions',
+                iconColor: 'text-success',
+                bgGradient: 'from-success-100 to-success-50',
+              },
+            ].map((item, index) => {
+              const Icon = item.icon
+              return (
                 <motion.div
-                  className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-blue/30 to-transparent"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                />
-              </div>
-            </div>
+                  key={item.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
+                  className="relative flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-br from-background-subtle/50 dark:from-background-surface/50 to-transparent"
+                >
+                  <div
+                    className={`relative w-8 h-8 rounded-lg bg-gradient-to-br ${item.bgGradient} flex items-center justify-center`}
+                  >
+                    <Icon className={`w-4 h-4 ${item.iconColor} relative z-10`} />
+                  </div>
+                  <span className="text-sm font-medium text-text-secondary tracking-wide">
+                    {item.label}
+                  </span>
+                </motion.div>
+              )
+            })}
           </motion.div>
         </div>
+
+        {/* Dashboard Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 60 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="mt-20 relative"
+        >
+          <div className="relative mx-auto max-w-5xl">
+            {/* Glow Effect */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/25 to-primary/20 rounded-3xl blur-2xl opacity-60" />
+
+            {/* Dashboard Mock */}
+            <div className="relative bg-background-surface rounded-2xl shadow-2xl border border-border-default overflow-hidden">
+              {/* Browser Bar */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-background-subtle border-b border-border-default">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                </div>
+                <div className="flex-1 mx-4">
+                  <div className="w-full max-w-md mx-auto h-6 bg-background-surface rounded-md border border-border-default flex items-center px-3">
+                    <span className="text-xs text-text-muted">convexhire.app/dashboard</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard Content */}
+              <div className="p-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/50 to-background-surface min-h-[300px] lg:min-h-[400px]">
+                {/* Welcome Header */}
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold text-text-primary mb-1">Recruiter Dashboard</h1>
+                  <p className="text-sm text-text-secondary">Smart candidate matching</p>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {[
+                    {
+                      title: 'Active Jobs',
+                      value: '12',
+                      icon: BriefcaseIcon,
+                      description: 'Jobs currently posted',
+                      color: 'bg-primary-50 dark:bg-primary-950/50',
+                      iconColor: 'text-primary',
+                    },
+                    {
+                      title: 'Candidates',
+                      value: '847',
+                      icon: Users,
+                      description: 'Active candidates',
+                      color: 'bg-success-50 dark:bg-success-950/50',
+                      iconColor: 'text-success',
+                    },
+                    {
+                      title: 'AI Matches',
+                      value: '156',
+                      icon: Target,
+                      description: 'Smart recommendations',
+                      color: 'bg-ai-50 dark:bg-ai-950/50',
+                      iconColor: 'text-ai',
+                    },
+                  ].map((stat, i) => {
+                    const Icon = stat.icon
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.2 + i * 0.1 }}
+                        className="bg-background-surface rounded-2xl p-4 border border-border-default shadow-sm hover:shadow-md transition-all duration-300 group"
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
+                        >
+                          <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                        </div>
+                        <div className="text-2xl font-bold text-text-primary mb-1">
+                          {stat.value}
+                        </div>
+                        <div className="text-sm font-medium text-text-secondary">
+                          {stat.description}
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+
+                {/* Top AI Matches Table */}
+                <div className="bg-background-surface rounded-2xl border border-border-default overflow-hidden">
+                  <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-background-subtle to-background-surface">
+                    <h3 className="text-sm font-semibold text-text-secondary">Top AI Matches</h3>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {[95, 92, 88].map((score, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.5 + i * 0.1 }}
+                        className="flex items-center gap-4 p-3 rounded-xl bg-background-subtle/50 hover:bg-primary-50 transition-colors duration-200 group"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-600" />
+                        <div className="flex-1 min-w-0">
+                          <div className="h-3 bg-border-default rounded w-32 mb-1" />
+                          <div className="h-2 bg-border-subtle rounded w-24" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-success">{score}%</div>
+                          <div className="text-sm text-success-600">AI Match</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   )

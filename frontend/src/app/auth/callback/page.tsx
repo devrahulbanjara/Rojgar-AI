@@ -49,7 +49,7 @@ function AuthCallbackContent() {
 
         // After successful OAuth, invalidate user query to force fresh fetch
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.user })
-        
+
         // Fetch user data immediately to update the cache
         try {
           const userResponse = await fetch(
@@ -58,7 +58,7 @@ function AuthCallbackContent() {
               credentials: 'include',
             }
           )
-          
+
           if (userResponse.ok) {
             const userData = await userResponse.json()
             const processedUser = {
@@ -82,17 +82,16 @@ function AuthCallbackContent() {
     }
 
     handleCallback()
-     
   }, [searchParams, queryClient, router])
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+      <div className="min-h-screen flex items-center justify-center bg-background-subtle">
+        <div className="max-w-md w-full bg-background-surface shadow-lg rounded-lg p-6">
           <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-error-100 mb-4">
               <svg
-                className="h-6 w-6 text-red-600"
+                className="h-6 w-6 text-error"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -105,11 +104,11 @@ function AuthCallbackContent() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Authentication Failed</h3>
-            <p className="text-sm text-gray-500 mb-4">{error}</p>
+            <h3 className="text-lg font-medium text-text-primary mb-2">Authentication Failed</h3>
+            <p className="text-sm text-text-tertiary mb-4">{error}</p>
             <button
               onClick={() => router.push(ROUTES.LOGIN)}
-              className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
+              className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors"
             >
               Back to Login
             </button>
@@ -120,12 +119,12 @@ function AuthCallbackContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+    <div className="min-h-screen flex items-center justify-center bg-background-subtle">
+      <div className="max-w-md w-full bg-background-surface shadow-lg rounded-lg p-6">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Completing Authentication</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="text-lg font-medium text-text-primary mb-2">Completing Authentication</h3>
+          <p className="text-sm text-text-tertiary">
             Please wait while we complete your Google sign-in...
           </p>
         </div>
@@ -138,12 +137,12 @@ export default function AuthCallback() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+        <div className="min-h-screen flex items-center justify-center bg-background-subtle">
+          <div className="max-w-md w-full bg-background-surface shadow-lg rounded-lg p-6">
             <div className="text-center">
               <LoadingSpinner size="lg" className="mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Loading...</h3>
-              <p className="text-sm text-gray-500">Please wait...</p>
+              <h3 className="text-lg font-medium text-text-primary mb-2">Loading...</h3>
+              <p className="text-sm text-text-tertiary">Please wait...</p>
             </div>
           </div>
         </div>

@@ -203,7 +203,8 @@ export const endpoints = {
   candidates: {
     list: '/api/v1/recruiter/candidates',
     search: '/api/v1/recruiter/candidates/search', // Note: This might be handled via query params
-    resume: (applicationId: string) => `/api/v1/recruiter/candidates/applications/${applicationId}/resume`,
+    resume: (applicationId: string) =>
+      `/api/v1/recruiter/candidates/applications/${applicationId}/resume`,
   },
 
   candidate: {
@@ -323,8 +324,10 @@ export const api = {
   },
 
   autoShortlist: {
-    get: (jobId: string) => apiClient.get<{ auto_shortlist: boolean }>(endpoints.autoShortlist.get(jobId)),
-    toggle: (jobId: string) => apiClient.put<{ auto_shortlist: boolean }>(endpoints.autoShortlist.toggle(jobId)),
+    get: (jobId: string) =>
+      apiClient.get<{ auto_shortlist: boolean }>(endpoints.autoShortlist.get(jobId)),
+    toggle: (jobId: string) =>
+      apiClient.put<{ auto_shortlist: boolean }>(endpoints.autoShortlist.toggle(jobId)),
   },
 
   applications: {
@@ -352,8 +355,7 @@ export const api = {
       apiClient.get(
         `${endpoints.candidates.search}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`
       ),
-    getResume: (applicationId: string) =>
-      apiClient.get(endpoints.candidates.resume(applicationId)),
+    getResume: (applicationId: string) => apiClient.get(endpoints.candidates.resume(applicationId)),
   },
 
   candidate: {

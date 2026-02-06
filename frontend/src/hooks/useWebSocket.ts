@@ -42,7 +42,7 @@ class WebSocketManager {
   subscribe(callback: (connected: boolean, error?: Error) => void) {
     this.subscribers.add(callback)
     callback(this.ws?.readyState === WebSocket.OPEN, undefined)
-    
+
     return () => {
       this.subscribers.delete(callback)
     }
@@ -136,23 +136,23 @@ class WebSocketManager {
 
       ws.onclose = event => {
         if (this.ws !== ws) return
-        
+
         this.isConnecting = false
         this.ws = null
         this.notifySubscribers(false)
-        
+
         if (event.code === 1000) {
           return
         }
-        
+
         if (event.code === 1008) {
           console.error('WebSocket: Authentication failed')
           this.notifySubscribers(false, new Error('WebSocket authentication failed'))
           return
         }
-        
+
         this.reconnectAttempts += 1
-        
+
         if (event.code === 1006 && this.reconnectAttempts <= 1) {
           console.warn('WebSocket: Connection failed - retrying...')
         }
@@ -174,12 +174,12 @@ class WebSocketManager {
 
   disconnect() {
     this.isConnecting = false
-    
+
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
       this.reconnectTimeout = null
     }
-    
+
     if (this.ws) {
       const ws = this.ws
       this.ws = null
@@ -187,7 +187,7 @@ class WebSocketManager {
         ws.close(1000, 'Disconnecting')
       }
     }
-    
+
     this.notifySubscribers(false)
     this.reconnectAttempts = 0
   }
@@ -230,7 +230,7 @@ export function useWebSocket() {
     const unsubscribe = managerRef.current.subscribe((connected, error) => {
       setIsConnected(connected)
       setError(error || null)
-      
+
       if (connected && !pingCleanupRef.current && managerRef.current) {
         pingCleanupRef.current = managerRef.current.startPing()
       } else if (!connected && pingCleanupRef.current) {

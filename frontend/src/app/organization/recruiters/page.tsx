@@ -149,17 +149,17 @@ export default function RecruitersPage() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
+      <PageTransition className="min-h-screen bg-background-subtle">
         <div className="space-y-8 pb-12">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
+            <div className="relative py-12 bg-gradient-to-b from-primary-50/50 to-background-surface border-b border-primary-50/50 mb-8 transition-all duration-300 ease-out">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight tracking-tight">
+                    <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight tracking-tight">
                       Recruiters
                     </h1>
-                    <p className="text-lg text-[#475569] mt-2 max-w-2xl">
+                    <p className="text-lg text-text-secondary mt-2 max-w-2xl">
                       Manage your recruitment team and their access.
                     </p>
                   </div>
@@ -171,7 +171,7 @@ export default function RecruitersPage() {
                       updateRecruiterMutation.isPending ||
                       deleteRecruiterMutation.isPending
                     }
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                    className="btn-primary-gradient inline-flex items-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                   >
                     <Plus className="w-5 h-5" />
                     Add Recruiter
@@ -183,15 +183,15 @@ export default function RecruitersPage() {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <AnimatedContainer direction="up" delay={0.2}>
-              <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-4 bg-background-surface p-4 rounded-2xl border border-border-default shadow-sm">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
                   <input
                     type="text"
                     placeholder="Search recruiters by name or email..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="w-full pl-10 pr-4 py-2 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
               </div>
@@ -200,27 +200,27 @@ export default function RecruitersPage() {
             <AnimatedContainer direction="up" delay={0.3}>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-slate-900">Recruiter Team</h2>
-                  <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                  <h2 className="text-xl font-bold text-text-primary">Recruiter Team</h2>
+                  <span className="text-sm font-medium text-text-tertiary bg-background-subtle px-3 py-1 rounded-full">
                     Total: {filteredRecruiters.length}
                   </span>
                 </div>
 
                 {isLoading && (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                  <div className="bg-background-surface rounded-2xl border border-border-default p-12 text-center shadow-sm">
+                    <div className="w-16 h-16 bg-background-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-900">Loading recruiters...</h3>
+                    <h3 className="text-lg font-medium text-text-primary">Loading recruiters...</h3>
                   </div>
                 )}
 
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center shadow-sm">
-                    <h3 className="text-lg font-medium text-red-900 mb-2">
+                  <div className="bg-error-50 border border-error-200 rounded-2xl p-6 text-center shadow-sm">
+                    <h3 className="text-lg font-medium text-error-900 mb-2">
                       Failed to load recruiters
                     </h3>
-                    <p className="text-red-700 text-sm">
+                    <p className="text-error-700 text-sm">
                       {error instanceof Error
                         ? error.message
                         : 'An error occurred. Please try again.'}
@@ -233,7 +233,7 @@ export default function RecruitersPage() {
                     {filteredRecruiters.map(recruiter => (
                       <div
                         key={recruiter.id}
-                        className="group relative bg-white rounded-[24px] border border-slate-200 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] hover:border-indigo-200"
+                        className="group relative bg-background-surface rounded-[24px] border border-border-default p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] hover:border-primary-200"
                       >
                         {/* Action Menu */}
                         <div className="absolute top-6 right-6 z-10">
@@ -241,7 +241,7 @@ export default function RecruitersPage() {
                             onClick={() =>
                               setActiveMenuId(activeMenuId === recruiter.id ? null : recruiter.id)
                             }
-                            className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100"
+                            className="p-2 text-text-muted hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200 opacity-0 group-hover:opacity-100"
                           >
                             <MoreVertical className="w-5 h-5" />
                           </button>
@@ -252,22 +252,22 @@ export default function RecruitersPage() {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setActiveMenuId(null)}
                               />
-                              <div className="absolute right-0 mt-3 mr-1 w-52 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-slate-100 z-20 py-1.5 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200">
+                              <div className="absolute right-0 mt-3 mr-1 w-52 bg-background-surface/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-border-subtle z-20 py-1.5 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200">
                                 <button
                                   onClick={() => handleEditRecruiter(recruiter)}
-                                  className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-3 transition-colors group/item"
+                                  className="w-full px-4 py-3 text-left text-sm text-text-secondary hover:bg-background-subtle hover:text-primary-600 flex items-center gap-3 transition-colors group/item"
                                 >
-                                  <Pencil className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-indigo-500 transition-colors" />
+                                  <Pencil className="w-3.5 h-3.5 text-text-muted group-hover/item:text-primary-500 transition-colors" />
                                   <span className="font-medium">Edit Details</span>
                                 </button>
 
-                                <div className="h-px bg-slate-100/60 my-1 mx-2" />
+                                <div className="h-px bg-border-subtle/60 my-1 mx-2" />
 
                                 <button
                                   onClick={() => handleDeleteRecruiter(recruiter.id)}
-                                  className="w-full px-4 py-3 text-left text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-3 transition-colors group/item"
+                                  className="w-full px-4 py-3 text-left text-sm text-error-600 hover:bg-error-50 flex items-center gap-3 transition-colors group/item"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 text-rose-500 group-hover/item:scale-110 transition-transform" />
+                                  <Trash2 className="w-3.5 h-3.5 text-error-500 group-hover/item:scale-110 transition-transform" />
                                   <span className="font-medium">Delete Recruiter</span>
                                 </button>
                               </div>
@@ -283,26 +283,26 @@ export default function RecruitersPage() {
                               <img
                                 src={recruiter.avatar}
                                 alt={recruiter.name}
-                                className="w-20 h-20 rounded-[20px] border-4 border-white shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1)] object-cover transition-transform duration-300 group-hover:scale-105"
+                                className="w-20 h-20 rounded-[20px] border-4 border-background-surface shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1)] object-cover transition-transform duration-300 group-hover:scale-105"
                               />
-                              <div className="absolute inset-0 rounded-[20px] ring-1 ring-slate-900/5 ring-inset" />
+                              <div className="absolute inset-0 rounded-[20px] ring-1 ring-text-primary/5 ring-inset" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-xl font-extrabold text-slate-900 truncate group-hover:text-indigo-600 transition-colors tracking-tight mb-1">
+                              <h3 className="text-xl font-extrabold text-text-primary truncate group-hover:text-primary-600 transition-colors tracking-tight mb-1">
                                 {recruiter.name}
                               </h3>
-                              <div className="flex items-center justify-center gap-1.5 text-sm text-slate-500 font-medium">
-                                <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              <div className="flex items-center justify-center gap-1.5 text-sm text-text-tertiary font-medium">
+                                <Mail className="w-3.5 h-3.5 text-text-muted" />
                                 {recruiter.email}
                               </div>
                             </div>
                           </div>
 
-                          <div className="mt-auto pt-6 border-t border-slate-50">
+                          <div className="mt-auto pt-6 border-t border-border-subtle">
                             <div className="flex items-center justify-center">
-                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-full">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-background-subtle rounded-full">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-text-muted" />
+                                <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
                                   Joined {recruiter.joinedDate}
                                 </span>
                               </div>
@@ -315,12 +315,12 @@ export default function RecruitersPage() {
                 )}
 
                 {!isLoading && !error && filteredRecruiters.length === 0 && (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Search className="w-8 h-8 text-slate-400" />
+                  <div className="bg-background-surface rounded-2xl border border-border-default p-12 text-center shadow-sm">
+                    <div className="w-16 h-16 bg-background-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Search className="w-8 h-8 text-text-muted" />
                     </div>
-                    <h3 className="text-lg font-medium text-slate-900">No recruiters found</h3>
-                    <p className="text-slate-500 mt-1">Try adjusting your search terms.</p>
+                    <h3 className="text-lg font-medium text-text-primary">No recruiters found</h3>
+                    <p className="text-text-tertiary mt-1">Try adjusting your search terms.</p>
                   </div>
                 )}
               </div>
