@@ -7,7 +7,7 @@ import {
   Users,
   MessageSquare,
   Shield,
-  Sparkles,
+  FileSearch,
   Search,
   Calendar,
   LucideIcon,
@@ -26,7 +26,7 @@ const features: Feature[] = [
     icon: Brain,
     title: 'Semantic Understanding',
     description:
-      'Our AI reads resumes like humans — understanding that "FastAPI" and "Django" are both Python frameworks, not just matching keywords.',
+      'AI understands resume context, recognizing "FastAPI" and "Django" as related Python frameworks, not just matching keywords.',
     iconColor: 'text-primary',
     bgColor: 'bg-primary-50 dark:bg-primary-950/50',
   },
@@ -34,7 +34,7 @@ const features: Feature[] = [
     icon: FileText,
     title: 'Smart JD Generator',
     description:
-      'Describe your ideal candidate in plain English. AI drafts professional, bias-free job descriptions instantly.',
+      'Describe your ideal candidate in plain English. AI instantly drafts professional, unbiased job descriptions for you.',
     iconColor: 'text-primary',
     bgColor: 'bg-primary-50 dark:bg-primary-950/50',
   },
@@ -42,7 +42,7 @@ const features: Feature[] = [
     icon: Users,
     title: 'Multi-Agent System',
     description:
-      'Specialized AI agents work together — one screens resumes, another handles interviews, another provides insights.',
+      'Specialized AI agents work together, one screens resumes, another handles interviews, and another delivers insights.',
     iconColor: 'text-success',
     bgColor: 'bg-success-50 dark:bg-success-950/50',
   },
@@ -50,7 +50,7 @@ const features: Feature[] = [
     icon: MessageSquare,
     title: 'Candidate Feedback',
     description:
-      'No more black holes. Every candidate gets constructive feedback explaining why they were selected or what skills to develop.',
+      'Every candidate receives constructive feedback explaining selection decisions and specific areas for skill development.',
     iconColor: 'text-warning-600',
     bgColor: 'bg-warning-50 dark:bg-warning-950/50',
   },
@@ -58,7 +58,7 @@ const features: Feature[] = [
     icon: Search,
     title: 'Talent Pool RAG',
     description:
-      'Chat with your candidate database: "Find AWS engineers with startup experience from last year." Get instant, accurate matches.',
+      'Chat with your candidate database conversationally. Ask "Find AWS engineers with startup experience" for instant matches.',
     iconColor: 'text-info',
     bgColor: 'bg-info-50 dark:bg-info-950/50',
   },
@@ -66,7 +66,7 @@ const features: Feature[] = [
     icon: Calendar,
     title: 'Interview Automation',
     description:
-      'AI drafts personalized scheduling emails and integrates with your calendar. You review and approve — it handles the rest.',
+      'AI drafts personalized scheduling emails with calendar integration. You review and approve, AI handles the execution.',
     iconColor: 'text-error',
     bgColor: 'bg-error-50 dark:bg-error-950/50',
   },
@@ -74,15 +74,15 @@ const features: Feature[] = [
     icon: Shield,
     title: 'Bias Reduction',
     description:
-      'PII redaction during screening ensures fair evaluation. Every AI decision comes with an audit trail for transparency.',
+      'PII redaction ensures fair candidate screening. Every AI decision includes a complete audit trail for full transparency.',
     iconColor: 'text-text-secondary',
     bgColor: 'bg-background-subtle',
   },
   {
-    icon: Sparkles,
+    icon: FileSearch,
     title: 'Explainable Scores',
     description:
-      'Every candidate gets a detailed breakdown — skills, experience, education — with natural language explanations for every decision.',
+      'Detailed breakdowns of skills, experience, and education with natural language explanations for every candidate score.',
     iconColor: 'text-ai',
     bgColor: 'bg-ai-50 dark:bg-ai-950/50',
   },
@@ -124,7 +124,7 @@ export function FeaturesSection() {
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
@@ -136,19 +136,21 @@ export function FeaturesSection() {
                 transition={{ duration: 0.5, delay: index * 0.05 }}
                 className="group relative"
               >
-                <div className="h-full p-6 rounded-2xl bg-background-surface border border-border-default hover:border-border-strong transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <div className="flex flex-col h-full min-h-[240px] p-8 rounded-2xl bg-background-surface border border-border-default hover:border-border-strong transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   {/* Icon */}
                   <div
-                    className={`w-12 h-12 rounded-xl ${feature.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+                    className={`w-12 h-12 rounded-xl ${feature.bgColor} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
                   >
                     <Icon className={`w-6 h-6 ${feature.iconColor}`} />
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-display font-semibold text-text-primary tracking-tight mb-3">{feature.title}</h3>
+                  <h3 className="text-lg font-display font-semibold text-text-primary tracking-tight mb-3">
+                    {feature.title}
+                  </h3>
 
                   {/* Description */}
-                  <p className="text-sm text-text-secondary leading-relaxed">
+                  <p className="text-sm text-text-secondary leading-relaxed line-clamp-3">
                     {feature.description}
                   </p>
                 </div>
