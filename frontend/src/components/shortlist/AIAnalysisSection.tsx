@@ -103,8 +103,8 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
                 </div>
               )}
 
-              {/* Full Analysis */}
-              <div className="text-sm text-text-secondary leading-relaxed space-y-3">
+              {/* Full Analysis - AI Reasoning in Monospace */}
+              <div className="text-sm text-text-secondary leading-relaxed space-y-3 font-mono">
                 {analysis.split('\n').map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
                 ))}

@@ -109,7 +109,7 @@ export function Logo({
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <NeuralIcon />
-      <span className={`${config.text} font-bold tracking-tight`}>
+      <span className={`${config.text} font-display font-bold tracking-tighter`}>
         <span style={{ color: colors.convex }}>Convex</span>
         <span style={{ color: colors.hire }}>Hire</span>
       </span>

@@ -110,14 +110,14 @@ export function FeaturesSection() {
             <Brain className="w-4 h-4" />
             Powered by AI
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight mb-6">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-text-primary tracking-tightest mb-6">
             Everything you need to hire
             <br />
             <span className="bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent">
               smarter, not harder
             </span>
           </h2>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed font-sans">
             A complete AI-powered recruitment suite that transforms how you find, evaluate, and hire
             the best talent.
           </p>
@@ -145,7 +145,7 @@ export function FeaturesSection() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-semibold text-text-primary mb-3">{feature.title}</h3>
+                  <h3 className="text-xl font-display font-semibold text-text-primary tracking-tight mb-3">{feature.title}</h3>
 
                   {/* Description */}
                   <p className="text-sm text-text-secondary leading-relaxed">

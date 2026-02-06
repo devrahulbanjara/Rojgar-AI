@@ -52,7 +52,7 @@ export function RecruiterPlatformSection() {
                 <div className="px-5 py-3.5 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Brain className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-bold text-text-primary">AI Shortlisting</h3>
+                    <h3 className="text-base font-display font-bold text-text-primary tracking-tight">AI Shortlisting</h3>
                   </div>
                   <p className="text-xs text-text-tertiary mt-0.5">Smart candidate evaluation</p>
                 </div>
@@ -135,8 +135,8 @@ export function RecruiterPlatformSection() {
                             <div className="h-2 bg-border-subtle rounded w-16 animate-pulse" />
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-primary">{candidate.score}</div>
-                            <div className="text-xs text-text-tertiary">AI Score</div>
+                            <div className="text-lg font-mono font-bold text-primary">{candidate.score}</div>
+                            <div className="text-xs font-mono text-text-tertiary">AI Score</div>
                           </div>
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-subtle">
@@ -174,14 +174,14 @@ export function RecruiterPlatformSection() {
               For Recruiters
             </div>
 
-            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
+            <h2 className="text-4xl sm:text-5xl font-display font-bold text-text-primary tracking-tightest mb-6">
               Hire faster with{' '}
               <span className="bg-gradient-to-r from-primary to-ai bg-clip-text text-transparent">
                 AI automation
               </span>
             </h2>
 
-            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed font-sans">
               AI agents handle screening, scheduling, and matching while you stay in control.
             </p>
 

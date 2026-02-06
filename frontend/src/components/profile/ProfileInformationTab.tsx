@@ -62,7 +62,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-text-primary mb-2">Profile Information</h3>
+        <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-2">Profile Information</h3>
         <p className="text-text-secondary">
           Manage your personal information and professional identity.
         </p>
@@ -76,7 +76,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-text-primary">Contact Details</h4>
+              <h4 className="text-lg font-display font-bold text-text-primary tracking-tight">Contact Details</h4>
               <p className="text-sm text-text-tertiary">Your basic contact information</p>
             </div>
           </div>
@@ -186,7 +186,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
               <UserIcon className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-text-primary">Professional Summary</h4>
+              <h4 className="text-lg font-display font-bold text-text-primary tracking-tight">Professional Summary</h4>
               <p className="text-sm text-text-tertiary">Highlight your professional background</p>
             </div>
           </div>

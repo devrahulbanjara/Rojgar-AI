@@ -76,7 +76,7 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h4 className="text-sm font-semibold text-text-primary mb-4">Product</h4>
+            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">Product</h4>
             <ul className="space-y-3">
               {footerLinks.product.map(link => (
                 <li key={link.label}>
@@ -98,7 +98,7 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h4 className="text-sm font-semibold text-text-primary mb-4">Company</h4>
+            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map(link => (
                 <li key={link.label}>
@@ -120,7 +120,7 @@ export function LandingFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h4 className="text-sm font-semibold text-text-primary mb-4">Legal</h4>
+            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">Legal</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map(link => (
                 <li key={link.label}>

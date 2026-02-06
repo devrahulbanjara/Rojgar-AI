@@ -126,7 +126,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
             {candidate.ai_score && (
               <Badge
                 className={cn(
-                  'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105',
+                  'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105 font-mono',
                   'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/30'
                 )}
               >
@@ -274,8 +274,8 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                 </h3>
               </div>
               <div className="pl-14">
-                <div className="bg-gradient-to-br from-warning-50 to-warning-100 dark:from-warning-950/30 dark:to-warning-900/30 border border-warning-200 dark:border-warning-700 rounded-xl p-6">
-                  <p className="text-[15px] text-text-secondary leading-relaxed">
+                <div className="bg-gradient-to-br from-ai-50 to-ai-100 dark:from-ai-950/30 dark:to-ai-900/30 border border-ai-200 dark:border-ai-700 border-l-4 border-l-ai-500 rounded-xl p-6">
+                  <p className="text-[14px] text-text-secondary leading-relaxed font-mono">
                     {candidate.ai_analysis}
                   </p>
                 </div>
