@@ -19,10 +19,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle }) => {
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-6 lg:px-8 py-6 sm:py-8"
-      style={{ background: '#F9FAFB' }}
-    >
+    <div className="min-h-screen flex items-center justify-center px-6 lg:px-8 py-6 sm:py-8 bg-background-subtle">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -36,19 +33,16 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
 
         {/* Header - Inside would be part of card, but placing here per spec */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-[#0F172A] mb-2 leading-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-text-primary mb-2 leading-tight">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-sm sm:text-base text-[#475569] leading-relaxed">{subtitle}</p>
+            <p className="text-sm sm:text-base text-text-secondary leading-relaxed">{subtitle}</p>
           )}
         </div>
 
         {/* Content Card */}
-        <div
-          className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 border border-[#E5E7EB]"
-          style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}
-        >
+        <div className="bg-background-surface rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 border border-border-default shadow-lg">
           {children}
         </div>
 
@@ -56,7 +50,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
         <div className="text-center mt-4 sm:mt-6">
           <Link
             href={ROUTES.HOME}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-[#3056F5] hover:text-[#2B3CF5] transition-colors"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-primary hover:text-primary-700 transition-colors"
           >
             <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             Back to home

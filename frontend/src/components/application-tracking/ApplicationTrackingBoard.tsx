@@ -47,7 +47,7 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-red-400"
+            className="text-error-400 dark:text-error-300"
           >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
@@ -60,7 +60,7 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
           onRetry && (
             <button
               onClick={onRetry}
-              className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors"
             >
               Try Again
             </button>
@@ -84,7 +84,7 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-slate-400"
+            className="text-text-muted"
           >
             <rect width="18" height="18" x="3" y="3" rx="2" />
             <path d="M3 9h18" />

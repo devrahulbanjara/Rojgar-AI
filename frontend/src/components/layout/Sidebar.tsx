@@ -75,8 +75,8 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
     <aside
       className={cn(
         'fixed left-0 top-[72px] z-40 flex h-[calc(100vh-72px)] flex-col',
-        'bg-white/80 backdrop-blur-xl',
-        'border-r border-[#E2E8F0] shadow-sm',
+        'bg-background-surface/80 backdrop-blur-xl',
+        'border-r border-border-default shadow-sm',
         !disableAnimation && 'transition-all duration-500 ease-in-out',
         isCollapsed ? 'w-[72px]' : 'w-[252px]',
         'max-lg:w-[252px] max-lg:transition-transform max-lg:duration-300 max-lg:shadow-xl',
@@ -90,18 +90,18 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
       }}
     >
       {/* Decorative Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 via-transparent to-indigo-50/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-primary-50/30 dark:from-primary-950/20 via-transparent to-ai-50/30 dark:to-ai-950/20 pointer-events-none" />
 
       <button
         type="button"
         onClick={onToggle}
         className={cn(
           'group absolute z-50 hidden h-8 w-8 items-center justify-center rounded-full',
-          'border border-[#E2E8F0] bg-white text-[#64748B]',
+          'border border-border-default bg-background-surface text-text-tertiary',
           'shadow-sm hover:shadow-md transition-all duration-200 ease-in-out lg:flex cursor-pointer',
-          'hover:border-[#3056F5] hover:text-[#3056F5]',
+          'hover:border-primary hover:text-primary',
           'active:scale-95 active:shadow-sm',
-          'focus:outline-none focus:ring-2 focus:ring-[#3056F5] focus:ring-offset-2',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
           isCollapsed ? 'bottom-6 left-1/2 -translate-x-1/2' : 'top-6 -right-4'
         )}
         aria-label={toggleAriaLabel}
@@ -110,8 +110,8 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
       >
         {showPulse && (
           <div className="absolute inset-0 z-40">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3056F5] opacity-20" />
-            <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-[#3056F5] opacity-10" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-20" />
+            <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-primary opacity-10" />
           </div>
         )}
 
@@ -147,8 +147,8 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
                 'group relative flex items-center rounded-xl transition-all duration-300 cursor-pointer overflow-hidden flex-shrink-0',
                 isCollapsed ? 'w-12 h-12 justify-center' : 'w-full h-12 px-4 gap-3',
                 isActive
-                  ? 'bg-gradient-to-r from-[#3056F5] to-[#6366F1] text-white shadow-md shadow-blue-500/20'
-                  : 'text-[#64748B] hover:bg-blue-50/50 hover:text-[#3056F5]'
+                  ? 'bg-gradient-primary text-white shadow-md shadow-primary/20'
+                  : 'text-text-tertiary hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:text-primary'
               )}
             >
               {isActive && (
@@ -161,7 +161,7 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
                   isCollapsed ? 'h-6 w-6' : 'h-5 w-5',
                   isActive
                     ? 'text-white'
-                    : 'text-[#64748B] group-hover:text-[#3056F5] group-hover:scale-110'
+                    : 'text-text-tertiary group-hover:text-primary group-hover:scale-110'
                 )}
               />
 
@@ -171,16 +171,16 @@ export function Sidebar({ isCollapsed, onToggle, role, disableAnimation = false 
                   isCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100',
                   isActive
                     ? 'text-white font-semibold'
-                    : 'text-[#475569] group-hover:text-[#3056F5]'
+                    : 'text-text-secondary group-hover:text-primary'
                 )}
               >
                 {item.title}
               </span>
 
               {isCollapsed && (
-                <div className="absolute left-full ml-4 px-3 py-1.5 bg-[#1E293B] text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl z-50">
+                <div className="absolute left-full ml-4 px-3 py-1.5 bg-text-primary text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl z-50">
                   {item.title}
-                  <div className="absolute right-full top-1/2 -translate-y-1/2 -mr-1 border-4 border-transparent border-r-[#1E293B]" />
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 -mr-1 border-4 border-transparent border-r-text-primary" />
                 </div>
               )}
             </Link>

@@ -24,14 +24,16 @@ export function PageHeader({
         <div className="flex-1">
           <h1
             className={cn(
-              'text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight',
+              'text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight',
               titleClassName
             )}
           >
             {title}
           </h1>
           {subtitle && (
-            <p className={cn('text-base text-[#475569] mt-2', subtitleClassName)}>{subtitle}</p>
+            <p className={cn('text-base text-text-secondary mt-2', subtitleClassName)}>
+              {subtitle}
+            </p>
           )}
         </div>
         {children && <div className="ml-6 flex-shrink-0">{children}</div>}
