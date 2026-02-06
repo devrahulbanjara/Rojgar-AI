@@ -8,6 +8,7 @@
 
 ## Table of Contents
 
+- [Logo](#logo)
 - [Design Philosophy](#design-philosophy)
 - [Typography System](#typography-system)
 - [Color System](#color-system)
@@ -20,6 +21,92 @@
 - [Component Patterns](#component-patterns)
 - [Accessibility](#accessibility)
 - [Implementation Reference](#implementation-reference)
+
+---
+
+## Logo
+
+### Concept: "Talent Search"
+
+The ConvexHire logo is a **magnifying glass with a person silhouette inside**, communicating the platform's core purpose at a glance:
+
+- **Magnifying glass** — Represents AI-powered search and discovery of talent
+- **Person silhouette** — Represents hiring, people, and the human-centered approach
+- **Combined** — "Finding the right talent with intelligent precision"
+
+### Icon Construction (SVG, 32x32 viewBox)
+
+| Element | SVG Shape | Coordinates | Style |
+|---------|-----------|-------------|-------|
+| **Glass ring** | `<circle>` | cx=13, cy=13, r=10 | stroke: primary, strokeWidth: 3.5, no fill |
+| **Handle** | `<line>` | (21,21) to (25,25) | stroke: primary, strokeWidth: 3.5, round cap |
+| **Person head** | `<circle>` | cx=13, cy=9, r=3 | fill: primary |
+| **Person body** | `<path>` | Cubic bezier from (7.5,20) through (13,14) to (18.5,20) | fill: primary |
+
+The entire icon uses a **single color** (the primary brand color), making it work cleanly on any background by simply changing the color value.
+
+### Logo Composition: [Icon] [Text]
+
+| Property | Value |
+|----------|-------|
+| **Layout** | Horizontal flex, `items-center` |
+| **Gap** | `gap-1.5` (6px) between icon and text |
+| **Icon offset** | `translate-y-0.5` (2px down) for optical alignment with text baseline |
+| **Font** | Plus Jakarta Sans (`font-display`), **bold (700)**, `tracking-tighter` (-0.02em) |
+| **"Convex" color** | `text-primary` — Slate-900 (#0F172A) light / Slate-100 (#F1F5F9) dark |
+| **"Hire" color** | `primary` — Blue-600 (#2563EB) light / Blue-500 (#3B82F6) dark |
+
+### Color per Variant
+
+| Variant | Icon | "Convex" | "Hire" |
+|---------|------|----------|--------|
+| `full` (default) | Primary (#2563EB) | Text-primary (#0F172A) | Primary (#2563EB) |
+| `icon` | Primary (#2563EB) | Text-primary (#0F172A) | Primary (#2563EB) |
+| `monochrome-dark` | Text-primary (#0F172A) | Text-primary (#0F172A) | Text-primary (#0F172A) |
+| `monochrome-white` | White (#FFFFFF) | White (#FFFFFF) | White (#FFFFFF) |
+
+### Sizes
+
+| Size | Icon (px) | Text class |
+|------|-----------|------------|
+| `sm` | 20 | `text-lg` (18px) |
+| `md` | 28 | `text-xl` (20px) |
+| `lg` | 32 | `text-2xl` (24px) |
+
+### Seasonal Event Decorations
+
+Small SVG decorations are layered on top of the base icon (via `overflow: visible`) during specific date ranges. The core icon never changes.
+
+| Event | Date Range | Decoration |
+|-------|-----------|------------|
+| Christmas | Dec 20 – Dec 26 | Santa hat on glass top + snowflake dots |
+| New Year | Dec 27 – Jan 3 | Party hat on glass top + confetti dots |
+| Halloween | Oct 25 – Oct 31 | Bat silhouette + orange tint inside glass |
+| Diwali | ~±2 days around known dates (2025–2030) | Diya flame above glass + amber glow |
+
+### Static Assets
+
+| File | Purpose |
+|------|---------|
+| `public/favicon.svg` | Browser tab icon (icon only, primary blue) |
+| `public/logo-icon.svg` | Manifest/PWA icon (icon only, primary blue) |
+| `public/logo-light.svg` | Full logo on white background (for README, docs) |
+| `public/logo-dark.svg` | Full logo on dark background (for README, docs) |
+
+### Implementation
+
+Source: `frontend/src/components/common/Logo.tsx`
+
+```tsx
+// Icon only
+<Logo variant="full" size="md" showWordmark={false} />
+
+// Full logo (icon + text)
+<Logo variant="full" size="lg" />
+
+// As a link to home
+<LogoLink variant="full" size="lg" />
+```
 
 ---
 

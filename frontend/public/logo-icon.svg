@@ -1,24 +1,10 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- ConvexHire Neural Node Logo Icon -->
-  <!-- Connection Lines -->
-  <line x1="16" y1="6" x2="8" y2="16" stroke="#3056F5" stroke-width="1.5" opacity="0.6"/>
-  <line x1="16" y1="6" x2="24" y2="16" stroke="#3056F5" stroke-width="1.5" opacity="0.6"/>
-  <line x1="8" y1="16" x2="16" y2="26" stroke="#3056F5" stroke-width="1.5" opacity="0.6"/>
-  <line x1="24" y1="16" x2="16" y2="26" stroke="#3056F5" stroke-width="1.5" opacity="0.6"/>
-
-  <!-- Top Node -->
-  <circle cx="16" cy="6" r="3" fill="#3056F5" opacity="0.2"/>
-  <circle cx="16" cy="6" r="3" stroke="#3056F5" stroke-width="1.5" fill="none"/>
-
-  <!-- Left Node -->
-  <circle cx="8" cy="16" r="3" fill="#3056F5" opacity="0.2"/>
-  <circle cx="8" cy="16" r="3" stroke="#3056F5" stroke-width="1.5" fill="none"/>
-
-  <!-- Right Node -->
-  <circle cx="24" cy="16" r="3" fill="#3056F5" opacity="0.2"/>
-  <circle cx="24" cy="16" r="3" stroke="#3056F5" stroke-width="1.5" fill="none"/>
-
-  <!-- Bottom Node -->
-  <circle cx="16" cy="26" r="3" fill="#3056F5" opacity="0.2"/>
-  <circle cx="16" cy="26" r="3" stroke="#3056F5" stroke-width="1.5" fill="none"/>
+  <!-- ConvexHire Talent Search Logo -->
+  <!-- Magnifying glass = AI-powered search -->
+  <circle cx="13" cy="13" r="10" stroke="#2563EB" stroke-width="3.5" fill="none"/>
+  <!-- Handle -->
+  <line x1="21" y1="21" x2="25" y2="25" stroke="#2563EB" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Person silhouette = talent/hiring -->
+  <circle cx="13" cy="9" r="3" fill="#2563EB"/>
+  <path d="M7.5 20 C7.5 16, 10 14, 13 14 C16 14, 18.5 16, 18.5 20" fill="#2563EB"/>
 </svg>
