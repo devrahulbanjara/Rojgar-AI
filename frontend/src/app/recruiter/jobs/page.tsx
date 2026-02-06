@@ -114,7 +114,6 @@ interface BackendJobResponse {
 }
 
 const transformJob = (job: BackendJobResponse): Job => {
-  // Map new backend fields to frontend fields
   const requirements =
     job.required_qualifications || job.requirements || job.required_skills_experience || []
   const preferred = job.preferred || job.nice_to_have || []
@@ -153,11 +152,9 @@ const transformJob = (job: BackendJobResponse): Job => {
     department: job.department || '',
     level: (job.level || 'Mid') as Job['level'],
     location: (() => {
-      // Prioritize location_city and location_country - they are the source of truth
       const city = job.location_city?.trim()
       const country = job.location_country?.trim()
 
-      // Check if city/country are actually set (not empty strings or null)
       if (city && city.length > 0 && country && country.length > 0) {
         return `${city}, ${country}`
       }
@@ -168,23 +165,18 @@ const transformJob = (job: BackendJobResponse): Job => {
         return country
       }
 
-      // Fallback: Check if job.location contains a valid city/country format
-      // (e.g., "Kathmandu, Nepal") and doesn't match location_type
       const jobLocation = (job.location || '').trim()
       const locationType = (job.location_type || '').toLowerCase()
       const jobLocationLower = jobLocation.toLowerCase()
 
-      // Check if location matches location_type keywords (these should not be shown as location)
       const locationTypeKeywords = ['remote', 'hybrid', 'on-site', 'onsite']
       const isLocationType = locationTypeKeywords.includes(jobLocationLower)
 
-      // If location doesn't match location_type keywords and is different from location_type, use it
       if (jobLocation && !isLocationType && jobLocationLower !== locationType) {
-        // If it contains a comma, it's likely "City, Country" format - use it
         if (jobLocation.includes(',')) {
           return jobLocation
         }
-        // Otherwise, only use if it's clearly not a location type
+
         return jobLocation
       }
 
@@ -204,7 +196,7 @@ const transformJob = (job: BackendJobResponse): Job => {
     nice_to_have: Array.isArray(preferred) ? preferred : [],
     benefits: Array.isArray(benefits) ? benefits : [],
     posted_date: job.posted_date || job.created_at || new Date().toISOString(),
-    // Add new backend fields for access via type casting
+
     job_responsibilities: job.job_responsibilities || [],
     application_deadline: job.application_deadline || '',
     status: mapJobStatus(job.status || 'draft'),
@@ -241,7 +233,6 @@ export default function RecruiterJobsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
 
-  // Fetch reference JDs from API
   const {
     data: referenceJDData,
     isLoading: isLoadingReferenceJDs,
@@ -350,7 +341,6 @@ export default function RecruiterJobsPage() {
       return false
     })
 
-    // Sort by latest posted date first
     return filtered.sort((a, b) => {
       const dateA = new Date(a.posted_date || a.created_at).getTime()
       const dateB = new Date(b.posted_date || b.created_at).getTime()
@@ -369,7 +359,6 @@ export default function RecruiterJobsPage() {
     [referenceJDData]
   )
 
-  // Handlers
   const handleJobClick = useCallback((job: Job) => {
     setSelectedJob(job)
     setIsDetailOpen(true)
@@ -448,7 +437,8 @@ export default function RecruiterJobsPage() {
   }, [jobToDelete, deleteJobMutation, refetchJobs])
 
   const handlePostNewJob = useCallback(() => {
-    setPostJobMode(null) // Let user choose mode (agent or manual)
+    setPostJobMode(null)
+
     setIsPostJobModalOpen(true)
   }, [])
 
@@ -571,35 +561,32 @@ export default function RecruiterJobsPage() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="space-y-8 pb-12">
-          {/* Enhanced Header with Gradient Background */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+          {/* Minimalist Page Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/30 to-background-surface border-b border-primary-50/50 dark:border-primary-900/30 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div>
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight tracking-tight">
-                      Jobs
-                    </h1>
-                    <p className="text-lg text-text-secondary mt-2 max-w-2xl">
-                      Manage your job postings and track applicants
-                    </p>
-                  </div>
-                  <button
-                    onClick={handlePostNewJob}
-                    className="btn-primary-gradient inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Post New Job
-                  </button>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+                  Jobs
+                </h1>
+                <p className="text-base text-text-secondary">
+                  Manage your job postings and track applicants
+                </p>
               </div>
+              <button
+                onClick={handlePostNewJob}
+                className="btn-primary-gradient inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4" />
+                Post New Job
+              </button>
             </div>
+            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
-          {/* Main Content Container */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            {/* Tab Switcher */}
+          {/* Content */}
+          <div className="space-y-8">
+            {}
             <div>
               {isLoadingJobs && isLoadingReferenceJDs ? (
                 <SkeletonJobTabSwitcher />
@@ -615,7 +602,7 @@ export default function RecruiterJobsPage() {
               )}
             </div>
 
-            {/* Content Area */}
+            {}
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs || (activeTab === 'reference-jds' && isLoadingReferenceJDs) ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -627,7 +614,6 @@ export default function RecruiterJobsPage() {
                   <SkeletonRecruiterJobCard />
                 </div>
               ) : activeTab === 'reference-jds' ? (
-                /* Reference JDs Grid */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {referenceJDData?.reference_jds?.map(jd => (
                     <ReferenceJDCard
@@ -658,7 +644,7 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              {/* Empty State for Jobs */}
+              {}
               {activeTab !== 'reference-jds' && filteredJobs.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
                   {activeTab === 'expired' ? (
@@ -696,7 +682,7 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              {/* Empty State for Reference JDs */}
+              {}
               {activeTab === 'reference-jds' &&
                 (!referenceJDData?.reference_jds || referenceJDData.reference_jds.length === 0) && (
                   <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
@@ -717,7 +703,7 @@ export default function RecruiterJobsPage() {
         </div>
       </PageTransition>
 
-      {/* Modals */}
+      {}
       <JobDetailModal
         job={selectedJob}
         isOpen={isDetailOpen}

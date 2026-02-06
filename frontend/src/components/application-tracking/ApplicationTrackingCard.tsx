@@ -50,15 +50,15 @@ export const ApplicationTrackingCard: React.FC<ApplicationTrackingCardProps> = (
 
   return (
     <article className="bg-background-surface rounded-xl border border-border-default p-5 transition-all duration-200 hover:border-border-strong cursor-pointer group hover:shadow-md hover:-translate-y-0.5">
-      {/* Job Title */}
+      {}
       <h4 className="font-semibold text-base text-text-primary mb-2 leading-tight group-hover:text-primary transition-colors">
         {application.job_title}
       </h4>
 
-      {/* Company Name */}
+      {}
       <p className="text-sm text-text-secondary mb-4">{application.company_name}</p>
 
-      {/* Status Badge */}
+      {}
       <div
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium mb-4 ${statusInfo.bgClass} ${statusInfo.textClass}`}
         role="status"
@@ -68,7 +68,7 @@ export const ApplicationTrackingCard: React.FC<ApplicationTrackingCardProps> = (
         <span>{statusInfo.label}</span>
       </div>
 
-      {/* Timestamp - Footer with border */}
+      {}
       <div className="pt-3 mt-3 border-t border-border-subtle">
         <time
           className="text-xs text-text-muted"

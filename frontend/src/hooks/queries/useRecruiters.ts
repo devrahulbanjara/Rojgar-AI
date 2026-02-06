@@ -1,8 +1,3 @@
-/**
- * Recruiters Query Hooks
- * React Query hooks for organization recruiters API calls
- */
-
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -14,19 +9,18 @@ import {
 } from '../../services/organizationService'
 import { queryKeys } from '../../lib/queryClient'
 
-// Get all recruiters query
 export const useRecruiters = () => {
   return useQuery({
     queryKey: queryKeys.organization.recruiters.all,
     queryFn: async (): Promise<Recruiter[]> => {
       return await OrganizationService.getRecruiters()
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+
+    gcTime: 10 * 60 * 1000,
   })
 }
 
-// Get a specific recruiter query
 export const useRecruiter = (id: string) => {
   return useQuery({
     queryKey: queryKeys.organization.recruiters.detail(id),
@@ -39,7 +33,6 @@ export const useRecruiter = (id: string) => {
   })
 }
 
-// Create recruiter mutation
 export const useCreateRecruiter = () => {
   const queryClient = useQueryClient()
 
@@ -48,7 +41,6 @@ export const useCreateRecruiter = () => {
       return await OrganizationService.createRecruiter(data)
     },
     onSuccess: () => {
-      // Invalidate and refetch recruiters list
       queryClient.invalidateQueries({
         queryKey: queryKeys.organization.recruiters.all,
       })
@@ -56,7 +48,6 @@ export const useCreateRecruiter = () => {
   })
 }
 
-// Update recruiter mutation
 export const useUpdateRecruiter = () => {
   const queryClient = useQueryClient()
 
@@ -71,7 +62,6 @@ export const useUpdateRecruiter = () => {
       return await OrganizationService.updateRecruiter(id, data)
     },
     onSuccess: data => {
-      // Invalidate both list and detail queries
       queryClient.invalidateQueries({
         queryKey: queryKeys.organization.recruiters.all,
       })
@@ -82,7 +72,6 @@ export const useUpdateRecruiter = () => {
   })
 }
 
-// Delete recruiter mutation
 export const useDeleteRecruiter = () => {
   const queryClient = useQueryClient()
 
@@ -91,7 +80,6 @@ export const useDeleteRecruiter = () => {
       return await OrganizationService.deleteRecruiter(id)
     },
     onSuccess: () => {
-      // Invalidate and refetch recruiters list
       queryClient.invalidateQueries({
         queryKey: queryKeys.organization.recruiters.all,
       })

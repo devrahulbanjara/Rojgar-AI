@@ -8,18 +8,16 @@ import type { Skill, Certification, SkillCreate, CertificationCreate } from '../
 import { toast } from 'sonner'
 import { queryClient } from '../../lib/queryClient'
 
-// Helper function to invalidate job recommendations cache when skills change
 const invalidateRecommendationsCache = () => {
-  // Invalidate all job-related queries
   queryClient.invalidateQueries({ queryKey: ['jobs'] })
-  // Also remove from localStorage
+
   if (typeof window !== 'undefined') {
     const cacheKey = 'convexhire-query-cache'
     try {
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const cacheData = JSON.parse(cached)
-        // Remove recommendation-related entries
+
         const newCache: Record<string, unknown> = {}
         Object.entries(cacheData).forEach(([key, value]) => {
           if (!key.includes('jobs') && !key.includes('recommendations')) {
@@ -29,7 +27,7 @@ const invalidateRecommendationsCache = () => {
         localStorage.setItem(cacheKey, JSON.stringify(newCache))
       }
     } catch {
-      // Ignore errors
+      // Ignore localStorage errors
     }
   }
 }
@@ -43,7 +41,6 @@ export function SkillsExpertiseTab({
   skills: initialSkills,
   certifications: initialCertifications,
 }: SkillsExpertiseTabProps) {
-  // Skills State
   const [skills, setSkills] = useState<Skill[]>(initialSkills)
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null)
@@ -51,7 +48,6 @@ export function SkillsExpertiseTab({
     skill_name: '',
   })
 
-  // Certifications State
   const [certifications, setCertifications] = useState<Certification[]>(initialCertifications)
   const [isAddingCert, setIsAddingCert] = useState(false)
   const [editingCertId, setEditingCertId] = useState<string | null>(null)
@@ -64,8 +60,6 @@ export function SkillsExpertiseTab({
     expiration_date: '',
     does_not_expire: false,
   })
-
-  // --- Skills Handlers ---
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,12 +76,12 @@ export function SkillsExpertiseTab({
           )
         )
         toast.success('Skill updated successfully!')
-        invalidateRecommendationsCache() // Refresh recommendations
+        invalidateRecommendationsCache()
       } else {
         const newSkill = await profileService.addSkill(skillData)
         setSkills(prev => [...prev, newSkill as unknown as Skill])
         toast.success('Skill added successfully!')
-        invalidateRecommendationsCache() // Refresh recommendations
+        invalidateRecommendationsCache()
       }
 
       setSkillForm({
@@ -113,7 +107,8 @@ export function SkillsExpertiseTab({
       await profileService.deleteSkill(id)
       setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
       toast.success('Skill deleted successfully!')
-      invalidateRecommendationsCache() // Refresh recommendations
+      invalidateRecommendationsCache()
+
       if (editingSkillId === id) {
         setIsAddingSkill(false)
         setEditingSkillId(null)
@@ -130,8 +125,6 @@ export function SkillsExpertiseTab({
       skill_name: '',
     })
   }
-
-  // --- Certifications Handlers ---
 
   const handleAddCert = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -228,7 +221,7 @@ export function SkillsExpertiseTab({
       </div>
 
       <div className="space-y-8">
-        {/* Skills Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
@@ -255,7 +248,7 @@ export function SkillsExpertiseTab({
             )}
           </div>
 
-          {/* Add/Edit Skill Form */}
+          {}
           {isAddingSkill && (
             <form
               onSubmit={handleAddSkill}
@@ -303,7 +296,7 @@ export function SkillsExpertiseTab({
             </form>
           )}
 
-          {/* Skills List - Pill Layout */}
+          {}
           {skills.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
@@ -353,7 +346,7 @@ export function SkillsExpertiseTab({
           )}
         </div>
 
-        {/* Certifications Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
@@ -390,7 +383,7 @@ export function SkillsExpertiseTab({
             )}
           </div>
 
-          {/* Add/Edit Certification Form */}
+          {}
           {isAddingCert && (
             <form
               onSubmit={handleAddCert}
@@ -533,7 +526,7 @@ export function SkillsExpertiseTab({
             </form>
           )}
 
-          {/* Certifications List */}
+          {}
           {certifications.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">

@@ -29,7 +29,6 @@ export function CandidateFilters({
   className,
   statusCounts: _statusCounts,
 }: CandidateFiltersProps) {
-  // Show all filters (like candidate jobs page with showAvailable)
   const filtersToShow = allFilters
 
   if (filtersToShow.length === 0) {

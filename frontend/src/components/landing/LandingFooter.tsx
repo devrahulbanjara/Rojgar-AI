@@ -39,7 +39,7 @@ export function LandingFooter() {
     <footer className="bg-background-subtle border-t border-border-default">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
-          {/* Brand Column */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -52,7 +52,7 @@ export function LandingFooter() {
               fairer.
             </p>
 
-            {/* Social Links */}
+            {}
             <div className="flex items-center gap-3">
               {socialLinks.map(({ icon: Icon, href, label }) => (
                 <a
@@ -69,14 +69,16 @@ export function LandingFooter() {
             </div>
           </motion.div>
 
-          {/* Product Links */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">Product</h4>
+            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">
+              Product
+            </h4>
             <ul className="space-y-3">
               {footerLinks.product.map(link => (
                 <li key={link.label}>
@@ -91,14 +93,16 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          {/* Company Links */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">Company</h4>
+            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">
+              Company
+            </h4>
             <ul className="space-y-3">
               {footerLinks.company.map(link => (
                 <li key={link.label}>
@@ -113,14 +117,16 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          {/* Legal Links */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">Legal</h4>
+            <h4 className="text-sm font-display font-semibold text-text-primary tracking-tight mb-4">
+              Legal
+            </h4>
             <ul className="space-y-3">
               {footerLinks.legal.map(link => (
                 <li key={link.label}>
@@ -136,7 +142,7 @@ export function LandingFooter() {
           </motion.div>
         </div>
 
-        {/* Bottom Bar */}
+        {}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}

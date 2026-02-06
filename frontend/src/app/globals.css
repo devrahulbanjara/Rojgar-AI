@@ -412,7 +412,7 @@
      Primary Text: Slate-800 (#1E293B) instead of pure black
      Secondary Text: Slate-500 (#64748B) for metadata
      ========================================================================== */
-  
+
   /* Smooth scrolling for anchor links */
   html {
     scroll-behavior: smooth;
@@ -500,7 +500,9 @@
   .ai-score,
   .ai-log {
     @apply font-mono;
-    font-feature-settings: 'liga' 1, 'calt' 1; /* Enable ligatures */
+    font-feature-settings:
+      'liga' 1,
+      'calt' 1; /* Enable ligatures */
   }
 
   /* AI Score Display - Prominent monospace for match percentages */
@@ -845,7 +847,7 @@
      PREMIUM HEADING UTILITIES
      For hero sections, landing pages, and high-impact areas
      ========================================================================== */
-  
+
   /* Hero heading - Extra tight for maximum impact */
   .heading-hero {
     @apply font-display font-bold;
@@ -878,7 +880,7 @@
      TEXT HIERARCHY UTILITIES
      Semantic text styles following 60-30-10 rule
      ========================================================================== */
-  
+
   /* Primary text - Main content (Slate-800 instead of pure black) */
   .text-content-primary {
     @apply text-text-primary;

@@ -31,7 +31,6 @@ interface JobCreationWizardProps {
 }
 
 const getSteps = () => {
-  // Unified steps - same order for all modes
   return [
     { id: 1, title: 'Basic Info', icon: Building2 },
     { id: 2, title: 'Job Details', icon: FileText },
@@ -74,7 +73,6 @@ function CustomDropdown({
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Handle clicking outside the dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -199,7 +197,6 @@ export function JobCreationWizard({
   } | null>(null)
   const [editValue, setEditValue] = useState('')
 
-  // Reset step when editing
   useEffect(() => {
     if (jobToEdit) {
       setCurrentStep(1)
@@ -213,7 +210,6 @@ export function JobCreationWizard({
   const steps = getSteps()
 
   const getContentStep = (step: number): number => {
-    // Unified step mapping - same for all modes
     return step
   }
 
@@ -243,7 +239,6 @@ export function JobCreationWizard({
     autoShortlist: false,
   })
 
-  // Update reference_jd_id when initialReferenceJdId changes
   useEffect(() => {
     if (initialReferenceJdId) {
       setFormData(prev => ({
@@ -253,10 +248,8 @@ export function JobCreationWizard({
     }
   }, [initialReferenceJdId])
 
-  // Fetch reference JDs for Agent Mode
   const { data: referenceJDsData, isLoading: isLoadingReferenceJDs } = useReferenceJDs()
 
-  // Switch to agent tab if reference JD ID is provided
   useEffect(() => {
     if (initialReferenceJdId && activeTab !== 'agent') {
       setActiveTab('agent')
@@ -266,7 +259,6 @@ export function JobCreationWizard({
 
   useEffect(() => {
     if (jobToEdit) {
-      // Pre-populate keywords with existing requirements for AI revision
       const existingRequirements =
         jobToEdit.requirements && jobToEdit.requirements.length > 0
           ? jobToEdit.requirements.join(', ')
@@ -276,7 +268,8 @@ export function JobCreationWizard({
         title: jobToEdit.title || '',
         department: jobToEdit.department || '',
         level: jobToEdit.level || '',
-        keywords: existingRequirements, // Pre-fill for AI revision
+        keywords: existingRequirements,
+
         reference_jd_id: '',
         description: jobToEdit.description || '',
         jobResponsibilities: (() => {
@@ -331,7 +324,6 @@ export function JobCreationWizard({
       setIsGenerating(false)
       setIsGenerated(true)
 
-      // Map new backend fields to form fields (with fallback to legacy fields)
       const description = result.job_summary || result.description || ''
       const jobResponsibilities = result.job_responsibilities || []
       const requiredSkills =
@@ -379,7 +371,6 @@ export function JobCreationWizard({
     setShowRevisionPrompt(false)
 
     try {
-      // Build current draft state to preserve edits (using new backend field names)
       const currentDraft = {
         job_summary: formData.description || '',
         job_responsibilities: formData.jobResponsibilities.filter(item => item.trim() !== ''),
@@ -397,7 +388,6 @@ export function JobCreationWizard({
         current_draft: currentDraft,
       })
 
-      // Map new backend fields to form fields (with fallback to legacy fields)
       const description = result.job_summary || result.description || formData.description
       const jobResponsibilities = result.job_responsibilities || []
       const requiredSkills =
@@ -451,7 +441,6 @@ export function JobCreationWizard({
     const salaryMin = formData.salaryMin ? parseInt(formData.salaryMin, 10) : undefined
     const salaryMax = formData.salaryMax ? parseInt(formData.salaryMax, 10) : undefined
 
-    // Map form data to new backend field names (snake_case)
     const filteredJobResponsibilities = formData.jobResponsibilities.filter(
       item => item.trim() !== ''
     )
@@ -460,13 +449,13 @@ export function JobCreationWizard({
       title: formData.title.trim(),
       department: formData.department.trim() || 'General',
       level: formData.level.trim() || 'Mid',
-      // New backend fields (required by JobDescription schema)
+
       job_summary: formData.description.trim() || '',
       job_responsibilities: filteredJobResponsibilities,
       required_qualifications: filteredRequiredSkills.length > 0 ? filteredRequiredSkills : [],
       preferred: filteredNiceToHave.length > 0 ? filteredNiceToHave : [],
       compensation_and_benefits: filteredBenefits.length > 0 ? filteredBenefits : [],
-      // Backend expects snake_case for these fields
+
       location_city: formData.locationCity.trim() || undefined,
       location_country: formData.locationCountry.trim() || undefined,
       location_type: formData.locationType || 'On-site',
@@ -660,7 +649,7 @@ export function JobCreationWizard({
 
   return (
     <div className="flex flex-col h-[70vh]">
-      {/* Progress Steps - Fixed Header */}
+      {}
       <div className="flex-shrink-0 px-8 py-5 border-b border-border-default bg-background-surface">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           {steps.map((step, index) => {
@@ -712,12 +701,12 @@ export function JobCreationWizard({
         </div>
       </div>
 
-      {/* Form Content - Scrollable */}
+      {}
       <div className="flex-1 overflow-y-auto px-8 py-6">
-        {/* Step 1: Basic Info with Tabs for Agent/Manual Mode */}
+        {}
         {currentStep === 1 && (
           <div className="space-y-8">
-            {/* Tabs for Agent Mode and Manual Mode */}
+            {}
             {!isGenerated && (
               <div className="bg-background-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
                 <div className="flex">
@@ -751,10 +740,10 @@ export function JobCreationWizard({
                   </button>
                 </div>
 
-                {/* Agent Mode Content */}
+                {}
                 {activeTab === 'agent' && (
                   <div className="px-8 py-6 space-y-6">
-                    {/* Job Title */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Title <span className="text-red-400 dark:text-red-300">*</span>
@@ -768,7 +757,7 @@ export function JobCreationWizard({
                       />
                     </div>
 
-                    {/* Reference JD Selector */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Reference Job Description{' '}
@@ -804,7 +793,7 @@ export function JobCreationWizard({
                       </p>
                     </div>
 
-                    {/* Keywords */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Keywords & Requirements{' '}
@@ -823,7 +812,7 @@ export function JobCreationWizard({
                       />
                     </div>
 
-                    {/* Generate Button */}
+                    {}
                     <button
                       onClick={handleGenerate}
                       disabled={
@@ -868,10 +857,10 @@ export function JobCreationWizard({
                   </div>
                 )}
 
-                {/* Manual Mode Content */}
+                {}
                 {activeTab === 'manual' && (
                   <div className="px-8 py-6 space-y-6">
-                    {/* Job Title */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Title <span className="text-red-400 dark:text-red-300">*</span>
@@ -885,7 +874,7 @@ export function JobCreationWizard({
                       />
                     </div>
 
-                    {/* Department and Level */}
+                    {}
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-semibold text-text-secondary mb-3">
@@ -924,7 +913,7 @@ export function JobCreationWizard({
                       </div>
                     </div>
 
-                    {/* Job Summary */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Summary <span className="text-error-400 dark:text-error-300">*</span>
@@ -938,7 +927,7 @@ export function JobCreationWizard({
                       />
                     </div>
 
-                    {/* Job Responsibilities */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Responsibilities
@@ -1054,7 +1043,7 @@ export function JobCreationWizard({
           </div>
         )}
 
-        {/* Loading Skeleton */}
+        {}
         {isGenerating && (
           <div className="space-y-4 animate-pulse">
             <div className="bg-background-surface rounded-lg p-5 border border-border-default">
@@ -1080,13 +1069,13 @@ export function JobCreationWizard({
           </div>
         )}
 
-        {/* Form Steps */}
+        {}
         {!isGenerating && (
           <>
-            {/* Step 1: Basic Info - Show form only if content is generated (for editing) */}
+            {}
             {currentStep === 1 && isGenerated && (
               <div className="space-y-8">
-                {/* AI Generated Indicator */}
+                {}
                 {isGenerated && (
                   <div className="bg-gradient-to-r from-ai-50 to-ai-100 dark:from-ai-950/30 dark:to-ai-900/30 border border-ai-200 dark:border-ai-800 rounded-xl px-8 py-6 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
                     <div className="w-10 h-10 rounded-full bg-background-surface flex items-center justify-center flex-shrink-0 shadow-sm border border-ai-200">
@@ -1176,7 +1165,7 @@ export function JobCreationWizard({
                       </div>
                     </div>
 
-                    {/* Job Summary */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Summary *
@@ -1200,7 +1189,7 @@ export function JobCreationWizard({
                       />
                     </div>
 
-                    {/* Job Responsibilities */}
+                    {}
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-3">
                         Job Responsibilities
@@ -1314,7 +1303,7 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 2: Job Details */}
+            {}
             {getContentStep(currentStep) === 2 && (
               <div className="space-y-8">
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
@@ -1406,7 +1395,7 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 3: Requirements and Skills */}
+            {}
             {getContentStep(currentStep) === 3 && (
               <div className="space-y-8">
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
@@ -1637,7 +1626,7 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {/* Step 4: Compensation */}
+            {}
             {getContentStep(currentStep) === 4 && (
               <div className="space-y-8">
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
@@ -1840,7 +1829,7 @@ export function JobCreationWizard({
         )}
       </div>
 
-      {/* Footer Actions - Fixed */}
+      {}
       {!isGenerating && (
         <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 bg-background-surface border-t border-border-default shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
           <button
@@ -1852,10 +1841,10 @@ export function JobCreationWizard({
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Save Draft / Publish */}
+            {}
             {currentStep === steps.length ? (
               <div className="flex gap-3">
-                {/* Revision Button - Show when editing a draft job or when AI content exists */}
+                {}
                 {(jobToEdit || isGenerated) && (
                   <button
                     onClick={() => setShowRevisionPrompt(true)}
@@ -1915,7 +1904,7 @@ export function JobCreationWizard({
               </div>
             ) : (
               <div className="flex gap-3">
-                {/* Revision Button - Show when editing a draft job */}
+                {}
                 {jobToEdit && (
                   <button
                     onClick={() => setShowRevisionPrompt(true)}
@@ -1925,7 +1914,7 @@ export function JobCreationWizard({
                     Revise with AI
                   </button>
                 )}
-                {/* Save as Draft button - Available from Step 1 */}
+                {}
                 <button
                   onClick={handleSaveDraft}
                   className={cn(
@@ -1947,7 +1936,7 @@ export function JobCreationWizard({
                     'Save Draft'
                   )}
                 </button>
-                {/* Continue button */}
+                {}
                 <button
                   onClick={handleNext}
                   className="flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5"
@@ -1961,18 +1950,18 @@ export function JobCreationWizard({
         </div>
       )}
 
-      {/* Revision Prompt Modal */}
+      {}
       {showRevisionPrompt && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          {/* Backdrop with blur */}
+          {}
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowRevisionPrompt(false)}
           />
 
-          {/* Modal Content */}
+          {}
           <div className="relative bg-background-surface rounded-[2rem] shadow-2xl w-full max-w-lg border border-border-default/50 overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Header */}
+            {}
             <div className="bg-background-surface px-10 py-8 border-b border-border-subtle">
               <h3 className="text-3xl font-bold text-text-primary leading-tight tracking-tight">
                 Request AI Revision
@@ -1982,9 +1971,9 @@ export function JobCreationWizard({
               </p>
             </div>
 
-            {/* Body */}
+            {}
             <div className="px-10 py-8 space-y-8">
-              {/* Quick Suggestions */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-text-secondary mb-4">
                   Quick Suggestions
@@ -2008,7 +1997,7 @@ export function JobCreationWizard({
                 </div>
               </div>
 
-              {/* Custom Input */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-text-secondary mb-3">
                   Or Type Your Own Revision Instructions
@@ -2041,7 +2030,7 @@ export function JobCreationWizard({
               </div>
             </div>
 
-            {/* Footer */}
+            {}
             <div className="px-10 py-6 bg-background-surface border-t border-border-subtle flex justify-end gap-3">
               <button
                 onClick={() => setShowRevisionPrompt(false)}

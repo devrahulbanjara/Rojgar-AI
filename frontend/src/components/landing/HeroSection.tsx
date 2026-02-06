@@ -23,7 +23,6 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-// Floating icon configuration for recruitment-themed decorative elements
 interface FloatingIconConfig {
   Icon: LucideIcon
   position: { x: string; y: string }
@@ -37,24 +36,125 @@ interface FloatingIconConfig {
 }
 
 const floatingIcons: FloatingIconConfig[] = [
-  // Left side icons
-  { Icon: BriefcaseIcon, position: { x: '8%', y: '15%' }, size: 32, opacity: 0.15, delay: 0, duration: 12, layer: 'background' },
-  { Icon: FileText, position: { x: '12%', y: '35%' }, size: 28, opacity: 0.25, delay: 1.5, duration: 10, layer: 'middle' },
-  { Icon: Search, position: { x: '6%', y: '55%' }, size: 24, opacity: 0.2, delay: 0.8, duration: 14, layer: 'background', hideOnMobile: true },
-  { Icon: Target, position: { x: '15%', y: '72%' }, size: 36, opacity: 0.18, delay: 2.2, duration: 11, layer: 'middle', hideOnTablet: true },
-  { Icon: Brain, position: { x: '10%', y: '88%' }, size: 30, opacity: 0.22, delay: 3.5, duration: 9, layer: 'foreground', hideOnMobile: true },
-  
-  // Right side icons
-  { Icon: Handshake, position: { x: '88%', y: '12%' }, size: 34, opacity: 0.16, delay: 0.5, duration: 13, layer: 'background' },
-  { Icon: Star, position: { x: '92%', y: '30%' }, size: 26, opacity: 0.28, delay: 1.8, duration: 9, layer: 'foreground', hideOnMobile: true },
-  { Icon: CheckCircle, position: { x: '85%', y: '48%' }, size: 28, opacity: 0.2, delay: 2.8, duration: 11, layer: 'middle' },
-  { Icon: BarChart3, position: { x: '90%', y: '65%' }, size: 32, opacity: 0.18, delay: 0.3, duration: 12, layer: 'background', hideOnTablet: true },
-  { Icon: Zap, position: { x: '86%', y: '82%' }, size: 24, opacity: 0.24, delay: 4, duration: 10, layer: 'foreground', hideOnMobile: true },
-  { Icon: Calendar, position: { x: '82%', y: '92%' }, size: 28, opacity: 0.14, delay: 1.2, duration: 14, layer: 'background', hideOnMobile: true },
-  { Icon: Users, position: { x: '94%', y: '78%' }, size: 30, opacity: 0.2, delay: 2.5, duration: 11, layer: 'middle', hideOnTablet: true },
+  {
+    Icon: BriefcaseIcon,
+    position: { x: '8%', y: '15%' },
+    size: 32,
+    opacity: 0.15,
+    delay: 0,
+    duration: 12,
+    layer: 'background',
+  },
+  {
+    Icon: FileText,
+    position: { x: '12%', y: '35%' },
+    size: 28,
+    opacity: 0.25,
+    delay: 1.5,
+    duration: 10,
+    layer: 'middle',
+  },
+  {
+    Icon: Search,
+    position: { x: '6%', y: '55%' },
+    size: 24,
+    opacity: 0.2,
+    delay: 0.8,
+    duration: 14,
+    layer: 'background',
+    hideOnMobile: true,
+  },
+  {
+    Icon: Target,
+    position: { x: '15%', y: '72%' },
+    size: 36,
+    opacity: 0.18,
+    delay: 2.2,
+    duration: 11,
+    layer: 'middle',
+    hideOnTablet: true,
+  },
+  {
+    Icon: Brain,
+    position: { x: '10%', y: '88%' },
+    size: 30,
+    opacity: 0.22,
+    delay: 3.5,
+    duration: 9,
+    layer: 'foreground',
+    hideOnMobile: true,
+  },
+
+  {
+    Icon: Handshake,
+    position: { x: '88%', y: '12%' },
+    size: 34,
+    opacity: 0.16,
+    delay: 0.5,
+    duration: 13,
+    layer: 'background',
+  },
+  {
+    Icon: Star,
+    position: { x: '92%', y: '30%' },
+    size: 26,
+    opacity: 0.28,
+    delay: 1.8,
+    duration: 9,
+    layer: 'foreground',
+    hideOnMobile: true,
+  },
+  {
+    Icon: CheckCircle,
+    position: { x: '85%', y: '48%' },
+    size: 28,
+    opacity: 0.2,
+    delay: 2.8,
+    duration: 11,
+    layer: 'middle',
+  },
+  {
+    Icon: BarChart3,
+    position: { x: '90%', y: '65%' },
+    size: 32,
+    opacity: 0.18,
+    delay: 0.3,
+    duration: 12,
+    layer: 'background',
+    hideOnTablet: true,
+  },
+  {
+    Icon: Zap,
+    position: { x: '86%', y: '82%' },
+    size: 24,
+    opacity: 0.24,
+    delay: 4,
+    duration: 10,
+    layer: 'foreground',
+    hideOnMobile: true,
+  },
+  {
+    Icon: Calendar,
+    position: { x: '82%', y: '92%' },
+    size: 28,
+    opacity: 0.14,
+    delay: 1.2,
+    duration: 14,
+    layer: 'background',
+    hideOnMobile: true,
+  },
+  {
+    Icon: Users,
+    position: { x: '94%', y: '78%' },
+    size: 30,
+    opacity: 0.2,
+    delay: 2.5,
+    duration: 11,
+    layer: 'middle',
+    hideOnTablet: true,
+  },
 ]
 
-// CSS custom properties for layer-specific animations
 const layerConfig = {
   background: { moveRange: 25, rotateRange: 3 },
   middle: { moveRange: 35, rotateRange: 4 },
@@ -64,10 +164,10 @@ const layerConfig = {
 export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Gradient Background */}
+      {}
       <div className="absolute inset-0 bg-gradient-to-b from-background-subtle via-background-surface to-primary-50 dark:to-primary-950/30" />
 
-      {/* Subtle Grid Pattern */}
+      {}
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -75,16 +175,22 @@ export function HeroSection() {
         }}
       />
 
-      {/* Floating Decorative Icons */}
-      <div 
-        className="absolute inset-0 pointer-events-none z-0" 
-        aria-hidden="true"
-      >
+      {}
+      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
         {floatingIcons.map((config, index) => {
-          const { Icon, position, size, opacity, delay, duration, layer, hideOnMobile, hideOnTablet } = config
+          const {
+            Icon,
+            position,
+            size,
+            opacity,
+            delay,
+            duration,
+            layer,
+            hideOnMobile,
+            hideOnTablet,
+          } = config
           const { moveRange, rotateRange } = layerConfig[layer]
-          
-          // Build responsive visibility classes
+
           let visibilityClass = ''
           if (hideOnMobile && hideOnTablet) {
             visibilityClass = 'hidden lg:block'
@@ -93,7 +199,7 @@ export function HeroSection() {
           } else if (hideOnTablet) {
             visibilityClass = 'hidden lg:block'
           }
-          
+
           return (
             <motion.div
               key={index}
@@ -104,14 +210,14 @@ export function HeroSection() {
                 willChange: 'transform',
               }}
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ 
-                opacity: opacity,
+              animate={{
+                opacity,
                 scale: 1,
               }}
-              transition={{ 
+              transition={{
                 delay: delay * 0.3 + 0.5,
                 duration: 0.8,
-                ease: 'easeOut'
+                ease: 'easeOut',
               }}
             >
               <motion.div
@@ -121,17 +227,17 @@ export function HeroSection() {
                   rotate: [0, rotateRange, 0, -rotateRange, 0],
                 }}
                 transition={{
-                  duration: duration,
-                  delay: delay,
+                  duration,
+                  delay,
                   repeat: Infinity,
                   ease: [0.4, 0.0, 0.6, 1],
                 }}
                 className="motion-reduce:animate-none"
               >
-                <Icon 
+                <Icon
                   className={`text-primary dark:text-primary-400 ${layer === 'foreground' ? 'drop-shadow-sm' : ''}`}
-                  style={{ 
-                    width: size, 
+                  style={{
+                    width: size,
                     height: size,
                   }}
                   strokeWidth={1.5}
@@ -142,7 +248,7 @@ export function HeroSection() {
         })}
       </div>
 
-      {/* Floating Gradient Orbs */}
+      {}
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-3xl animate-pulse" />
       <div
         className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"
@@ -152,7 +258,7 @@ export function HeroSection() {
 
       <div className="relative w-full max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Badge */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -165,7 +271,7 @@ export function HeroSection() {
             </span>
           </motion.div>
 
-          {/* Main Headline */}
+          {}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -188,7 +294,7 @@ export function HeroSection() {
             your candidates
           </motion.h1>
 
-          {/* Subheadline */}
+          {}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -199,7 +305,7 @@ export function HeroSection() {
             not just keywords.
           </motion.p>
 
-          {/* CTA Button */}
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -217,7 +323,7 @@ export function HeroSection() {
             </Link>
           </motion.div>
 
-          {/* Trust Indicators */}
+          {}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -267,7 +373,7 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Dashboard Preview */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
@@ -275,12 +381,12 @@ export function HeroSection() {
           className="mt-20 relative"
         >
           <div className="relative mx-auto max-w-5xl">
-            {/* Glow Effect */}
+            {}
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/25 to-primary/20 rounded-3xl blur-2xl opacity-60" />
 
-            {/* Dashboard Mock */}
+            {}
             <div className="relative bg-background-surface rounded-2xl shadow-2xl border border-border-default overflow-hidden">
-              {/* Browser Bar */}
+              {}
               <div className="flex items-center gap-2 px-4 py-3 bg-background-subtle border-b border-border-default">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -294,15 +400,17 @@ export function HeroSection() {
                 </div>
               </div>
 
-              {/* Dashboard Content */}
+              {}
               <div className="p-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/50 to-background-surface min-h-[300px] lg:min-h-[400px]">
-                {/* Welcome Header */}
+                {}
                 <div className="mb-6">
-                  <h1 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-1">Recruiter Dashboard</h1>
+                  <h1 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-1">
+                    Recruiter Dashboard
+                  </h1>
                   <p className="text-sm text-text-secondary">Smart candidate matching</p>
                 </div>
 
-                {/* Stats Grid */}
+                {}
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   {[
                     {
@@ -355,7 +463,7 @@ export function HeroSection() {
                   })}
                 </div>
 
-                {/* Top AI Matches Table */}
+                {}
                 <div className="bg-background-surface rounded-2xl border border-border-default overflow-hidden">
                   <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-background-subtle to-background-surface">
                     <h3 className="text-sm font-semibold text-text-secondary">Top AI Matches</h3>

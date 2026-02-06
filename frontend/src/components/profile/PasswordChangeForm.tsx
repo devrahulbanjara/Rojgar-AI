@@ -84,7 +84,6 @@ export function PasswordChangeForm() {
       [name]: value,
     }))
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -118,7 +117,7 @@ export function PasswordChangeForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Security Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
             <div className="w-12 h-12 rounded-xl bg-error-50 flex items-center justify-center text-error-600 shadow-sm border border-error-200">

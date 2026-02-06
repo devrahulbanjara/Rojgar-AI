@@ -1,21 +1,3 @@
-/**
- * ConvexHire Premium Color System - Central Export
- *
- * This file exports all color-related constants and utilities.
- * Import from this file for any color-related needs.
- *
- * @example
- * import {
- *   getDepartmentColor,
- *   getStatusColor,
- *   getScoreColor,
- *   getJobLevelColor,
- *   CHART_COLORS,
- *   SOCIAL_COLORS
- * } from '@/constants/colors'
- */
-
-// Department Colors
 export {
   DEPARTMENT_COLORS,
   getDepartmentColor,
@@ -25,7 +7,6 @@ export {
   type DepartmentColorConfig,
 } from './departmentColors'
 
-// Application Status Colors
 export {
   STATUS_COLORS,
   getStatusColor,
@@ -36,7 +17,6 @@ export {
   type StatusColorConfig,
 } from './statusColors'
 
-// AI Score Colors
 export {
   AI_SCORE_COLORS,
   getScoreCategory,
@@ -49,7 +29,6 @@ export {
   type AIScoreColorConfig,
 } from './aiScoreColors'
 
-// Job Level Colors
 export {
   JOB_LEVEL_COLORS,
   getJobLevelColor,
@@ -60,7 +39,6 @@ export {
   type JobLevelColorConfig,
 } from './jobLevelColors'
 
-// Chart/Data Visualization Colors
 export {
   CHART_COLORS,
   getChartColors,
@@ -72,7 +50,6 @@ export {
   type ChartColorPalette,
 } from './chartColors'
 
-// Social Media Colors
 export {
   SOCIAL_COLORS,
   getSocialColor,

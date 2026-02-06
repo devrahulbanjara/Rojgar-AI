@@ -36,17 +36,17 @@ export function ReferenceJDModal({
 
   const content = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {}
       <div className="relative w-full max-w-[900px] max-h-[90vh] flex flex-col rounded-[20px] bg-background-surface shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-        {/* Enhanced Header with gradient background */}
+        {}
         <div className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-12 py-12 border-b border-border-subtle relative rounded-t-[20px]">
-          {/* Close Button */}
+          {}
           <button
             onClick={onClose}
             className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
@@ -55,7 +55,7 @@ export function ReferenceJDModal({
             <X className="w-5 h-5 text-text-muted group-hover:text-text-secondary transition-colors" />
           </button>
 
-          {/* Job Title & Department */}
+          {}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-3">
               <span className="inline-flex items-center px-3 py-1.5 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 text-sm font-semibold rounded-lg border border-primary-200 dark:border-primary-800">
@@ -71,9 +71,9 @@ export function ReferenceJDModal({
           </div>
         </div>
 
-        {/* Scrollable Content */}
+        {}
         <div className="flex-1 overflow-y-auto px-12 py-12">
-          {/* Job Summary */}
+          {}
           {(jd.job_summary || jd.role_overview) && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -93,7 +93,7 @@ export function ReferenceJDModal({
             </section>
           )}
 
-          {/* Job Responsibilities */}
+          {}
           {jd.job_responsibilities && jd.job_responsibilities.length > 0 && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -117,7 +117,7 @@ export function ReferenceJDModal({
             </section>
           )}
 
-          {/* Required Qualifications */}
+          {}
           {(jd.required_qualifications || jd.requiredSkillsAndExperience) &&
             (jd.required_qualifications?.length > 0 ||
               jd.requiredSkillsAndExperience?.length > 0) && (
@@ -148,7 +148,7 @@ export function ReferenceJDModal({
               </section>
             )}
 
-          {/* Preferred */}
+          {}
           {(jd.preferred || jd.niceToHave) &&
             (jd.preferred?.length > 0 || jd.niceToHave?.length > 0) && (
               <section className="mb-12">
@@ -173,7 +173,7 @@ export function ReferenceJDModal({
               </section>
             )}
 
-          {/* Compensation & Benefits */}
+          {}
           {(jd.compensation_and_benefits || jd.benefits) &&
             (jd.compensation_and_benefits?.length > 0 || jd.benefits?.length > 0) && (
               <section className="mb-12">
@@ -198,7 +198,7 @@ export function ReferenceJDModal({
               </section>
             )}
 
-          {/* About the Company */}
+          {}
           {jd.about_the_company && (
             <section className="mb-8">
               <div className="flex items-center gap-3 mb-6">
@@ -219,7 +219,7 @@ export function ReferenceJDModal({
           )}
         </div>
 
-        {/* Sticky Footer */}
+        {}
         <div className="border-t border-border-default bg-background-surface px-12 py-6 flex items-center justify-between gap-4 shadow-lg rounded-b-[20px]">
           <div className="flex items-center gap-4">
             {onEdit && (

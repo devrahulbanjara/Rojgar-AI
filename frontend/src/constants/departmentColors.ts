@@ -1,12 +1,3 @@
-/**
- * ConvexHire Design System - Department Colors
- *
- * Department colors are FUNCTIONAL, not decorative. They help users quickly
- * categorize jobs but should never overwhelm the interface.
- *
- * Usage: Badges, card accents, NOT full backgrounds
- */
-
 export type DepartmentName =
   | 'Engineering'
   | 'Product'
@@ -170,25 +161,16 @@ export const DEPARTMENT_COLORS: Record<DepartmentName, DepartmentColorConfig> = 
   },
 } as const
 
-/**
- * Get department color config with fallback to Legal (neutral gray)
- */
 export function getDepartmentColor(department: string): DepartmentColorConfig {
   const normalizedDept = department.trim() as DepartmentName
   return DEPARTMENT_COLORS[normalizedDept] ?? DEPARTMENT_COLORS.Legal
 }
 
-/**
- * Get Tailwind classes for department badge (light mode)
- */
 export function getDepartmentBadgeClasses(department: string): string {
   const colors = getDepartmentColor(department)
   return `${colors.light.bg} ${colors.light.text} ${colors.light.border} dark:${colors.dark.bg} dark:${colors.dark.text} dark:${colors.dark.border}`
 }
 
-/**
- * Get hex colors for department (useful for charts/canvas)
- */
 export function getDepartmentHexColors(department: string): {
   bg: string
   text: string

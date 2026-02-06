@@ -58,7 +58,7 @@ export function ResumeDetailModal({
     if (iconType.includes('github')) {
       return <SiGithub className="w-6 h-6 text-social-github" />
     }
-    // Portfolio/Website for all other links
+
     return <Globe className="w-6 h-6 text-primary-500" />
   }
 
@@ -87,9 +87,9 @@ export function ResumeDetailModal({
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Enhanced Header with gradient background */}
+        {}
         <div className="bg-gradient-to-b from-primary-50/50 to-background-surface px-12 py-12 border-b border-primary-200/50 relative">
-          {/* Close Button */}
+          {}
           <button
             onClick={onClose}
             className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
@@ -98,7 +98,7 @@ export function ResumeDetailModal({
             <X className="w-5 h-5 text-text-muted group-hover:text-text-secondary transition-colors" />
           </button>
 
-          {/* Candidate Header */}
+          {}
           <div className="flex items-center gap-5">
             <div className="relative">
               <div className="w-20 h-20 rounded-full border-2 border-border-default shadow-sm">
@@ -116,7 +116,7 @@ export function ResumeDetailModal({
           </div>
         </div>
 
-        {/* Scrollable Content */}
+        {}
         <div
           className="overflow-y-auto p-8 bg-background-subtle"
           style={{

@@ -17,7 +17,7 @@ import {
   Building,
   X,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import ExperienceFormDialog from './forms/ExperienceFormDialog'
 import EducationFormDialog from './forms/EducationFormDialog'
 import SkillsFormDialog from './forms/SkillsFormDialog'
@@ -46,7 +46,6 @@ export default function ResumeDetailSheet({
   const [resume, setResume] = useState<ResumeDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // State for managing forms
   const [activeForm, setActiveForm] = useState<FormType>(null)
   const [editingItem, setEditingItem] = useState<WorkExperience | Education | Certification | null>(
     null
@@ -57,7 +56,7 @@ export default function ResumeDetailSheet({
 
   const [isBasicInfoOpen, setIsBasicInfoOpen] = useState(false)
 
-  const fetchResume = async () => {
+  const fetchResume = useCallback(async () => {
     if (!resumeId) {
       setResume(null)
       return
@@ -77,7 +76,7 @@ export default function ResumeDetailSheet({
     } finally {
       setLoading(false)
     }
-  }
+  }, [resumeId])
 
   useEffect(() => {
     if (isOpen && resumeId) {
@@ -90,8 +89,7 @@ export default function ResumeDetailSheet({
       setIsCertificationOpen(false)
       setEditingCertification(null)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, resumeId])
+  }, [isOpen, resumeId, fetchResume])
 
   const handleDelete = async (type: string, id: string) => {
     if (!confirm('Are you sure you want to remove this item?')) return
@@ -159,9 +157,9 @@ export default function ResumeDetailSheet({
     <>
       <Sheet open={isOpen} onOpenChange={open => !open && onClose()} hideClose>
         <SheetContent className="w-full max-w-4xl p-0 bg-background-surface flex flex-col shadow-2xl border-l overflow-hidden rounded-l-2xl">
-          {/* Enhanced Header with gradient background */}
+          {}
           <div className="flex-shrink-0 bg-gradient-to-b from-ai-50/50 dark:from-ai-950/30 to-background-surface px-12 py-12 border-b border-ai-50/50 dark:border-ai-900/30 relative">
-            {/* Close Button */}
+            {}
             <button
               onClick={onClose}
               className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
@@ -193,10 +191,10 @@ export default function ResumeDetailSheet({
             </div>
           </div>
 
-          {/* Scrollable Content */}
+          {}
           <ScrollArea className="flex-1 bg-background-subtle">
             <div className="p-8 space-y-8">
-              {/* Professional Summary */}
+              {}
               {resume.custom_summary && (
                 <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
                   <div className="flex items-center gap-4 mb-6 pb-4 border-b border-border-subtle">
@@ -214,7 +212,7 @@ export default function ResumeDetailSheet({
                 </div>
               )}
 
-              {/* --- EXPERIENCE SECTION --- */}
+              {}
               <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
                   <div className="flex items-center gap-4">
@@ -317,7 +315,7 @@ export default function ResumeDetailSheet({
                 </div>
               </div>
 
-              {/* --- EDUCATION SECTION --- */}
+              {}
               <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
                   <div className="flex items-center gap-4">
@@ -410,7 +408,7 @@ export default function ResumeDetailSheet({
                 </div>
               </div>
 
-              {/* --- SKILLS SECTION --- */}
+              {}
               <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
                   <div className="flex items-center gap-4">
@@ -463,7 +461,7 @@ export default function ResumeDetailSheet({
                 </div>
               </div>
 
-              {/* --- CERTIFICATIONS SECTION --- */}
+              {}
               <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
                   <div className="flex items-center gap-4">
@@ -574,7 +572,7 @@ export default function ResumeDetailSheet({
             </div>
           </ScrollArea>
 
-          {/* Footer with Done Button */}
+          {}
           <div className="border-t border-border-default bg-background-surface px-8 py-5 flex items-center justify-end gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
             <Button
               onClick={onClose}
@@ -586,7 +584,7 @@ export default function ResumeDetailSheet({
         </SheetContent>
       </Sheet>
 
-      {/* --- FORMS --- */}
+      {}
       {resume && (
         <>
           <ExperienceFormDialog

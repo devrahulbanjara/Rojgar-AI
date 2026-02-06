@@ -72,7 +72,7 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
             : 'border-default hover:border-strong'
         )}
       >
-        {/* Search Icon */}
+        {}
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
           {loading ? (
             <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
@@ -86,7 +86,7 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
           )}
         </div>
 
-        {/* Input */}
+        {}
         <input
           ref={inputRef}
           type="text"
@@ -100,7 +100,7 @@ export const JobSearchBar: React.FC<JobSearchBarProps> = ({
           className="w-full bg-transparent text-text-primary placeholder-text-muted text-[15px] focus:outline-none py-3 pl-[40px] pr-[44px]"
         />
 
-        {/* Clear Button */}
+        {}
         {value && (
           <button
             onClick={handleClear}

@@ -101,7 +101,7 @@ export function SkillsManagement() {
         </div>
       )}
 
-      {/* Add New Skill */}
+      {}
       <div className="bg-background-subtle rounded-xl p-6 border border-border-default mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Settings className="w-5 h-5 text-primary" />
@@ -143,7 +143,7 @@ export function SkillsManagement() {
         )}
       </div>
 
-      {/* Skills List */}
+      {}
       <div>
         {skills.length === 0 ? (
           <div className="text-center py-12 text-text-muted bg-background-subtle rounded-xl border border-border-default">
