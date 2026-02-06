@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Megaphone, Brain, Star, TrendingUp, Users, Zap, Shield, ArrowRight } from 'lucide-react'
+import { Briefcase, Brain, Star, TrendingUp, Users, Zap, Shield, ArrowRight } from 'lucide-react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 
@@ -33,17 +33,10 @@ export function BrandSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-8">
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                <Megaphone className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-sm font-medium text-white/90 tracking-wide">Why Choose Us</span>
-            </div>
-
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-white tracking-tightest mb-6 leading-[1.1]">
               Hiring is broken.
               <br />
-              <span className="bg-gradient-to-r from-white/90 via-white to-white/90 bg-clip-text text-transparent">
+              <span className="text-white drop-shadow-sm mt-5 inline-block">
                 We&apos;re fixing it.
               </span>
             </h2>
@@ -91,29 +84,50 @@ export function BrandSection() {
             className="relative hidden lg:block"
           >
             <div className="relative w-full h-[420px]">
-              {/* Large Decorative Circle */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-white/5 border border-white/10" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 h-52 rounded-full bg-white/5 border border-white/10" />
+              {/* Focus Lens - Represents Understanding & Clarity */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                {/* Outer Ring - Peripheral Vision */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full border border-white/10"
+                />
+                {/* Middle Ring - Narrowing Focus */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-white/15 bg-white/[0.02]"
+                />
+                {/* Inner Ring - Sharp Focus */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/25 bg-white/[0.04] shadow-lg"
+                />
+                {/* Center Point - Crystal Clear Understanding */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white/60"
+                />
+              </div>
 
-              {/* Central Megaphone Icon */}
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                whileInView={{ scale: 1, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-2xl"
-              >
-                <Megaphone className="w-10 h-10 text-white" />
-              </motion.div>
-
-              {/* Floating Card: AI Score */}
+              {/* Floating Card: AI Score - Aligned to panel */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.4 }}
                 animate={{ y: [0, -8, 0] }}
-                className="absolute top-4 right-8 bg-background-surface rounded-xl p-3 shadow-xl border border-border-default w-44"
+                className="absolute top-8 right-4 bg-background-surface rounded-xl p-3 shadow-xl border border-border-default w-44 z-10"
                 style={{ animation: 'float 4s ease-in-out infinite' }}
               >
                 <div className="flex items-center gap-2 mb-1.5">
@@ -128,13 +142,13 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Card: Candidates */}
+              {/* Floating Card: Candidates - Aligned to panel */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.5 }}
-                className="absolute top-16 left-0 bg-background-surface rounded-xl p-3 shadow-xl border border-border-default w-40"
+                className="absolute top-20 left-4 bg-background-surface rounded-xl p-3 shadow-xl border border-border-default w-40 z-10"
                 style={{ animation: 'float 5s ease-in-out infinite 1s' }}
               >
                 <div className="flex items-center gap-2 mb-1.5">
@@ -156,13 +170,13 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Card: AI Analysis */}
+              {/* Floating Card: AI Analysis - Aligned to panel */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.6 }}
-                className="absolute bottom-16 right-0 bg-background-surface rounded-xl p-3 shadow-xl border border-border-default w-48"
+                className="absolute bottom-12 right-4 bg-background-surface rounded-xl p-3 shadow-xl border border-border-default w-48 z-10"
                 style={{ animation: 'float 4.5s ease-in-out infinite 0.5s' }}
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -187,13 +201,13 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Badge: Fast */}
+              {/* Floating Badge: Fast - Aligned to panel */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.7 }}
-                className="absolute bottom-8 left-10 bg-background-surface/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border-default"
+                className="absolute bottom-8 left-8 bg-background-surface/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border-default z-10"
                 style={{ animation: 'float 3.5s ease-in-out infinite 2s' }}
               >
                 <div className="flex items-center gap-2">
@@ -202,13 +216,13 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Badge: Secure */}
+              {/* Floating Badge: Secure - Aligned to panel */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.8 }}
-                className="absolute top-1 left-1/2 -translate-x-1/2 bg-background-surface/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border-default"
+                className="absolute top-4 left-1/2 -translate-x-1/2 bg-background-surface/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-border-default z-10"
                 style={{ animation: 'float 4s ease-in-out infinite 1.5s' }}
               >
                 <div className="flex items-center gap-2">
