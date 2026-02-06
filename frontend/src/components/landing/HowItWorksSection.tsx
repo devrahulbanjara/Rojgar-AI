@@ -123,7 +123,7 @@ export function HowItWorksSection() {
                         <Icon className={`w-6 h-6 ${step.iconColor}`} />
                       </div>
                       <span
-                        className={`text-5xl font-bold bg-gradient-to-br ${step.color} bg-clip-text text-transparent opacity-30`}
+                        className={`text-5xl font-bold bg-gradient-to-br ${step.color} bg-clip-text text-transparent opacity-50 dark:opacity-60`}
                       >
                         {step.number}
                       </span>

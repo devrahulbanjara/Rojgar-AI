@@ -124,17 +124,17 @@ export function CandidatePlatformSection() {
                           <span className="text-xs font-bold text-info-700">Applied</span>
                         </div>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-info-100 text-info-700">
-                          3
+                          4
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {[1, 2].map((_, i) => (
+                        {[1, 2, 3, 4].map((_, i) => (
                           <div
                             key={i}
-                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-info"
+                            className="bg-background-surface p-2.5 rounded-md border border-border-default border-l-2 border-l-info"
                           >
-                            <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
-                            <div className="h-2 bg-border-subtle rounded w-12 animate-pulse" />
+                            <div className="h-2.5 bg-border-default rounded w-[77px] mb-1.5 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-[58px] animate-pulse" />
                           </div>
                         ))}
                       </div>
@@ -154,17 +154,17 @@ export function CandidatePlatformSection() {
                           <span className="text-xs font-bold text-primary-700">Interview</span>
                         </div>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700">
-                          2
+                          4
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {[1, 2].map((_, i) => (
+                        {[1, 2, 3, 4].map((_, i) => (
                           <div
                             key={i}
-                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-primary"
+                            className="bg-background-surface p-2.5 rounded-md border border-border-default border-l-2 border-l-primary"
                           >
-                            <div className="h-2.5 bg-border-default rounded w-14 mb-1 animate-pulse" />
-                            <div className="h-2 bg-border-subtle rounded w-10 animate-pulse" />
+                            <div className="h-2.5 bg-border-default rounded w-[67px] mb-1.5 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-[48px] animate-pulse" />
                           </div>
                         ))}
                       </div>
@@ -184,14 +184,19 @@ export function CandidatePlatformSection() {
                           <span className="text-xs font-bold text-success-700">Offers</span>
                         </div>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-success-100 text-success-700">
-                          1
+                          4
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-success">
-                          <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
-                          <div className="h-2 bg-border-subtle rounded w-11 animate-pulse" />
-                        </div>
+                        {[1, 2, 3, 4].map((_, i) => (
+                          <div
+                            key={i}
+                            className="bg-background-surface p-2.5 rounded-md border border-border-default border-l-2 border-l-success"
+                          >
+                            <div className="h-2.5 bg-border-default rounded w-[77px] mb-1.5 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-[53px] animate-pulse" />
+                          </div>
+                        ))}
                       </div>
                     </motion.div>
                   </div>
