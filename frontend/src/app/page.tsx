@@ -4,6 +4,7 @@ import {
   LandingNavbar,
   HeroSection,
   FeaturesSection,
+  BrandSection,
   RecruiterPlatformSection,
   CandidatePlatformSection,
   HowItWorksSection,
@@ -19,6 +20,7 @@ export default function LandingPage() {
       <main>
         <HeroSection />
         <FeaturesSection />
+        <BrandSection />
         <RecruiterPlatformSection />
         <CandidatePlatformSection />
         <HowItWorksSection />

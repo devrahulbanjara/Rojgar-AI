@@ -44,17 +44,41 @@ function formatFullDate(dateString: string): string {
 function getStatusStyles(status: string): { bg: string; text: string; border: string } {
   switch (status.toLowerCase()) {
     case 'applied':
-      return { bg: '#EEF2FF', text: '#6366F1', border: '#C7D2FE' }
+      return {
+        bg: 'bg-primary-50 dark:bg-primary-950/30',
+        text: 'text-primary-600 dark:text-primary-400',
+        border: 'border-primary-200 dark:border-primary-800',
+      }
     case 'interviewing':
-      return { bg: '#FEF3C7', text: '#D97706', border: '#FDE68A' }
+      return {
+        bg: 'bg-warning-50 dark:bg-warning-950/30',
+        text: 'text-warning-600 dark:text-warning-400',
+        border: 'border-warning-200 dark:border-warning-800',
+      }
     case 'shortlisted':
-      return { bg: '#D1FAE5', text: '#059669', border: '#A7F3D0' }
+      return {
+        bg: 'bg-success-50 dark:bg-success-950/30',
+        text: 'text-success-600 dark:text-success-400',
+        border: 'border-success-200 dark:border-success-800',
+      }
     case 'rejected':
-      return { bg: '#FEE2E2', text: '#DC2626', border: '#FECACA' }
+      return {
+        bg: 'bg-error-50 dark:bg-error-950/30',
+        text: 'text-error-600 dark:text-error-400',
+        border: 'border-error-200 dark:border-error-800',
+      }
     case 'outcome':
-      return { bg: '#D1FAE5', text: '#059669', border: '#A7F3D0' }
+      return {
+        bg: 'bg-success-50 dark:bg-success-950/30',
+        text: 'text-success-600 dark:text-success-400',
+        border: 'border-success-200 dark:border-success-800',
+      }
     default:
-      return { bg: '#F9FAFB', text: '#6B7280', border: '#E5E7EB' }
+      return {
+        bg: 'bg-background-subtle',
+        text: 'text-text-tertiary',
+        border: 'border-border-default',
+      }
   }
 }
 
@@ -80,8 +104,7 @@ function ActionDropdown({ candidate: _candidate, onClose }: ActionDropdownProps)
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 z-50 bg-white border border-slate-200 rounded-xl shadow-lg py-2 min-w-[160px]"
-      style={{ boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.1)' }}
+      className="absolute right-0 top-full mt-2 z-50 bg-background-surface border border-border-default rounded-xl shadow-lg py-2 min-w-[160px] shadow-[0_4px_6px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_rgba(0,0,0,0.2),0_10px_20px_rgba(0,0,0,0.4)]"
     >
       {menuItems.map((item, index) => (
         <button
@@ -94,8 +117,8 @@ function ActionDropdown({ candidate: _candidate, onClose }: ActionDropdownProps)
           className={cn(
             'w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200',
             item.isDanger
-              ? 'text-slate-700 hover:text-red-600 hover:bg-red-50'
-              : 'text-slate-700 hover:text-indigo-600 hover:bg-indigo-50'
+              ? 'text-text-secondary hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30'
+              : 'text-text-secondary hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
           )}
         >
           <item.icon className="w-4 h-4" />
@@ -108,33 +131,33 @@ function ActionDropdown({ candidate: _candidate, onClose }: ActionDropdownProps)
 
 export function SkeletonTableRow() {
   return (
-    <tr className="border-b border-slate-100 animate-pulse">
+    <tr className="border-b border-border-subtle animate-pulse">
       <td className="py-6 px-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-slate-200 rounded-xl" />
+          <div className="w-12 h-12 bg-background-muted rounded-xl" />
           <div className="space-y-2">
-            <div className="h-4 bg-slate-200 rounded w-32" />
-            <div className="h-3 bg-slate-200 rounded w-24" />
+            <div className="h-4 bg-background-muted rounded w-32" />
+            <div className="h-3 bg-background-muted rounded w-24" />
           </div>
         </div>
       </td>
       <td className="py-6 px-6">
         <div className="space-y-2">
-          <div className="h-4 bg-slate-200 rounded w-28" />
-          <div className="h-3 bg-slate-200 rounded w-20" />
+          <div className="h-4 bg-background-muted rounded w-28" />
+          <div className="h-3 bg-background-muted rounded w-20" />
         </div>
       </td>
       <td className="py-6 px-6">
         <div className="space-y-2">
-          <div className="h-3 bg-slate-200 rounded w-36" />
-          <div className="h-3 bg-slate-200 rounded w-24" />
+          <div className="h-3 bg-background-muted rounded w-36" />
+          <div className="h-3 bg-background-muted rounded w-24" />
         </div>
       </td>
       <td className="py-6 px-6">
-        <div className="h-6 bg-slate-200 rounded-full w-20" />
+        <div className="h-6 bg-background-muted rounded-full w-20" />
       </td>
       <td className="py-6 px-6">
-        <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+        <div className="w-8 h-8 bg-background-muted rounded-lg" />
       </td>
     </tr>
   )
@@ -167,17 +190,14 @@ export function CandidatesTable({
 
   return (
     <div className={cn('w-full', className)}>
-      <div
-        className="bg-white border border-slate-200 rounded-2xl overflow-hidden"
-        style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)' }}
-      >
+      <div className="bg-background-surface border border-border-default rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_8px_rgba(0,0,0,0.02)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15)]">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gradient-to-r from-slate-50 to-slate-50/50 border-b border-slate-200">
+            <tr className="bg-gradient-to-r from-background-subtle to-background-subtle/50 border-b border-border-default">
               <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
                 <button
                   onClick={() => handleSort('name')}
-                  className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:text-slate-900 transition-colors duration-200"
+                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Candidate
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -187,7 +207,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
                 <button
                   onClick={() => handleSort('job_title')}
-                  className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:text-slate-900 transition-colors duration-200"
+                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Applied For
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -195,7 +215,7 @@ export function CandidatesTable({
               </th>
 
               <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Contact
                 </span>
               </th>
@@ -203,7 +223,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
                 <button
                   onClick={() => handleSort('current_status')}
-                  className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:text-slate-900 transition-colors duration-200"
+                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Status
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -211,7 +231,7 @@ export function CandidatesTable({
               </th>
 
               <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
-                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Actions
                 </span>
               </th>
@@ -228,9 +248,9 @@ export function CandidatesTable({
                   key={candidate.application_id}
                   onClick={() => onCandidateClick(candidate)}
                   className={cn(
-                    'border-b border-slate-100 cursor-pointer transition-all duration-200 group',
-                    isEven ? 'bg-white' : 'bg-slate-50/30',
-                    'hover:bg-indigo-50/50 hover:border-indigo-200 hover:shadow-sm'
+                    'border-b border-border-subtle cursor-pointer transition-all duration-200 group',
+                    isEven ? 'bg-background-surface' : 'bg-background-subtle/30',
+                    'hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-sm'
                   )}
                   style={{ minHeight: '80px' }}
                 >
@@ -239,13 +259,13 @@ export function CandidatesTable({
                       <UserAvatar
                         name={candidate.name}
                         src={candidate.picture || undefined}
-                        className="w-12 h-12 border-2 border-white shadow-sm ring-1 ring-slate-200"
+                        className="w-12 h-12 border-2 border-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[15px] font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors duration-200 truncate">
+                        <p className="text-[15px] font-semibold text-text-primary group-hover:text-primary-600 transition-colors duration-200 truncate">
                           {candidate.name}
                         </p>
-                        <p className="text-xs text-[#9CA3AF] mt-0.5">
+                        <p className="text-xs text-text-muted mt-0.5">
                           {formatFullDate(candidate.applied_at)}
                         </p>
                       </div>
@@ -253,7 +273,7 @@ export function CandidatesTable({
                   </td>
 
                   <td className="py-6 px-6">
-                    <p className="text-sm font-medium text-slate-900 truncate">
+                    <p className="text-sm font-medium text-text-primary truncate">
                       {candidate.job_title}
                     </p>
                   </td>
@@ -261,9 +281,9 @@ export function CandidatesTable({
                   <td className="py-6 px-6">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                        <Mail className="w-3.5 h-3.5 text-text-muted" />
                         <span
-                          className="text-[13px] text-slate-600 font-medium"
+                          className="text-[13px] text-text-secondary font-medium"
                           title={candidate.email}
                         >
                           {truncateEmail(candidate.email)}
@@ -271,8 +291,8 @@ export function CandidatesTable({
                       </div>
                       {candidate.phone && (
                         <div className="flex items-center gap-2">
-                          <Phone className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[13px] text-slate-600">{candidate.phone}</span>
+                          <Phone className="w-3.5 h-3.5 text-text-muted" />
+                          <span className="text-[13px] text-text-secondary">{candidate.phone}</span>
                         </div>
                       )}
                     </div>
@@ -280,12 +300,12 @@ export function CandidatesTable({
 
                   <td className="py-6 px-6">
                     <span
-                      className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold capitalize border"
-                      style={{
-                        backgroundColor: statusStyles.bg,
-                        color: statusStyles.text,
-                        borderColor: statusStyles.border,
-                      }}
+                      className={cn(
+                        'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold capitalize border',
+                        statusStyles.bg,
+                        statusStyles.text,
+                        statusStyles.border
+                      )}
                     >
                       {candidate.current_status}
                     </span>
@@ -302,7 +322,7 @@ export function CandidatesTable({
                               : candidate.application_id
                           )
                         }}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all duration-200 group-hover:bg-indigo-100 group-hover:text-indigo-600"
+                        className="w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:bg-background-subtle hover:text-text-secondary transition-all duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 group-hover:text-primary-600 dark:group-hover:text-primary-400"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
@@ -320,10 +340,10 @@ export function CandidatesTable({
           </tbody>
         </table>
 
-        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50 to-slate-50/50 border-t border-slate-200">
+        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-background-subtle to-background-subtle/50 border-t border-border-default">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-slate-500" />
-            <p className="text-sm font-medium text-slate-600">
+            <Users className="w-4 h-4 text-text-tertiary" />
+            <p className="text-sm font-medium text-text-secondary">
               Showing {startIndex}-{endIndex} of {totalCandidates} candidates
             </p>
           </div>
@@ -334,8 +354,8 @@ export function CandidatesTable({
               className={cn(
                 'w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200',
                 currentPage === 1
-                  ? 'bg-white border-slate-200 text-slate-300 cursor-not-allowed'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+                  ? 'bg-background-surface border-border-default text-text-muted cursor-not-allowed'
+                  : 'bg-background-surface border-border-default text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-600 dark:hover:text-primary-400'
               )}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -360,8 +380,8 @@ export function CandidatesTable({
                   className={cn(
                     'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200',
                     currentPage === pageNum
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+                      ? 'bg-primary-600 text-text-inverse shadow-sm'
+                      : 'bg-background-surface border border-border-default text-text-secondary hover:bg-primary-50 hover:border-primary-200 hover:text-primary-600'
                   )}
                 >
                   {pageNum}
@@ -375,8 +395,8 @@ export function CandidatesTable({
               className={cn(
                 'w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200',
                 currentPage === totalPages || totalPages === 0
-                  ? 'bg-white border-slate-200 text-slate-300 cursor-not-allowed'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+                  ? 'bg-background-surface border-border-default text-text-muted cursor-not-allowed'
+                  : 'bg-background-surface border-border-default text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-600 dark:hover:text-primary-400'
               )}
             >
               <ChevronRight className="w-4 h-4" />
@@ -396,18 +416,15 @@ export function EmptyTableState({
   searchQuery: string
 }) {
   return (
-    <div
-      className="bg-white border border-slate-200 rounded-2xl overflow-hidden"
-      style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)' }}
-    >
+    <div className="bg-background-surface border border-border-default rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_8px_rgba(0,0,0,0.02)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15)]">
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 flex items-center justify-center mb-6 bg-slate-100 rounded-2xl">
-          <Users className="w-8 h-8 text-slate-400" />
+        <div className="w-16 h-16 flex items-center justify-center mb-6 bg-background-subtle rounded-2xl">
+          <Users className="w-8 h-8 text-text-muted" />
         </div>
-        <h3 className="text-xl font-semibold text-slate-900 mb-2">
+        <h3 className="text-xl font-semibold text-text-primary mb-2">
           {isSearchMode ? 'No candidates found' : 'No candidates yet'}
         </h3>
-        <p className="text-sm text-slate-500 max-w-md leading-relaxed">
+        <p className="text-sm text-text-tertiary max-w-md leading-relaxed">
           {isSearchMode
             ? `No candidates match your search for "${searchQuery}". Try adjusting your search terms.`
             : 'Candidates will appear here once they apply to your job postings.'}

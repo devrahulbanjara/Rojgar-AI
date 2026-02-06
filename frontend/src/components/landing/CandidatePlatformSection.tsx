@@ -1,7 +1,16 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, Briefcase, Video, Trophy, FileEdit, MessageSquareText, Search, Users } from 'lucide-react'
+import {
+  ArrowRight,
+  Briefcase,
+  Video,
+  Trophy,
+  FileEdit,
+  MessageSquareText,
+  Search,
+  Users,
+} from 'lucide-react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 
@@ -14,9 +23,12 @@ const features = [
 
 export function CandidatePlatformSection() {
   return (
-    <section id="candidates" className="py-20 lg:py-28 px-6 lg:px-8 bg-white relative overflow-hidden">
+    <section
+      id="candidates"
+      className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
+    >
       {/* Background Elements */}
-      <div className="absolute top-1/2 left-0 w-72 h-72 bg-emerald-100/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
+      <div className="absolute top-1/2 left-0 w-72 h-72 bg-success-100/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -27,22 +39,18 @@ export function CandidatePlatformSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="mb-4">
-              <div className="inline-flex items-center gap-3">
-                <div className="w-6 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
-                <span className="text-sm font-semibold text-emerald-600 uppercase tracking-wider">For Candidates</span>
-                <div className="w-6 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
-              </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 text-success text-sm font-medium mb-6">
+              For Candidates
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
               Job search that{' '}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-success to-success-600 bg-clip-text text-transparent">
                 respects you
               </span>
             </h2>
 
-            <p className="text-base text-slate-600 mb-8 max-w-md">
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
               Get feedback on every application and tools to stand out in your job search.
             </p>
 
@@ -57,19 +65,19 @@ export function CandidatePlatformSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2 + index * 0.05 }}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-background-subtle border border-border-subtle"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-4 h-4 text-emerald-600" />
+                    <div className="w-9 h-9 rounded-lg bg-success-100 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-success" />
                     </div>
-                    <span className="text-sm font-medium text-slate-700">{feature.title}</span>
+                    <span className="text-sm font-medium text-text-secondary">{feature.title}</span>
                   </motion.div>
                 )
               })}
             </div>
 
             <Link href="/signup">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl px-6 py-2.5 h-auto group">
+              <Button className="bg-success hover:bg-success-600 text-white font-semibold rounded-xl px-6 py-2.5 h-auto group">
                 Create Your Profile
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -86,21 +94,21 @@ export function CandidatePlatformSection() {
           >
             <div className="relative">
               {/* Glow */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-3xl blur-2xl" />
-              
+              <div className="absolute -inset-4 bg-gradient-to-r from-success/10 to-success-600/10 rounded-3xl blur-2xl" />
+
               {/* Application Tracker Card */}
-              <div className="relative bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+              <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
                 {/* Header */}
-                <div className="px-5 py-3.5 bg-gradient-to-b from-emerald-50/50 to-white border-b border-slate-100">
+                <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-emerald-600" />
-                    <h3 className="text-base font-bold text-slate-900">Your Applications</h3>
+                    <Briefcase className="w-4 h-4 text-success" />
+                    <h3 className="text-base font-bold text-text-primary">Your Applications</h3>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">Track your journey</p>
+                  <p className="text-xs text-text-tertiary mt-0.5">Track your journey</p>
                 </div>
 
                 {/* Kanban Columns */}
-                <div className="p-4 bg-slate-50/50">
+                <div className="p-4 bg-background-subtle/50">
                   <div className="grid grid-cols-3 gap-2">
                     {/* Applied Column */}
                     <motion.div
@@ -108,20 +116,25 @@ export function CandidatePlatformSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.3 }}
-                      className="bg-blue-50/50 rounded-lg p-2.5 border border-blue-100/60"
+                      className="bg-info-50/50 rounded-lg p-2.5 border border-info-100/60"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
-                          <Briefcase className="w-3 h-3 text-blue-600" />
-                          <span className="text-[10px] font-bold text-blue-900">Applied</span>
+                          <Briefcase className="w-3 h-3 text-info" />
+                          <span className="text-xs font-bold text-info-700">Applied</span>
                         </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">3</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-info-100 text-info-700">
+                          3
+                        </span>
                       </div>
                       <div className="space-y-1.5">
                         {[1, 2].map((_, i) => (
-                          <div key={i} className="bg-white p-2 rounded-md border border-slate-200 border-l-2 border-l-blue-500">
-                            <div className="h-2.5 bg-slate-200 rounded w-16 mb-1 animate-pulse" />
-                            <div className="h-2 bg-slate-100 rounded w-12 animate-pulse" />
+                          <div
+                            key={i}
+                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-info"
+                          >
+                            <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-12 animate-pulse" />
                           </div>
                         ))}
                       </div>
@@ -133,20 +146,25 @@ export function CandidatePlatformSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.4 }}
-                      className="bg-indigo-50/50 rounded-lg p-2.5 border border-indigo-100/60"
+                      className="bg-primary-50/50 rounded-lg p-2.5 border border-primary-100/60"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
-                          <Video className="w-3 h-3 text-indigo-600" />
-                          <span className="text-[10px] font-bold text-indigo-900">Interview</span>
+                          <Video className="w-3 h-3 text-primary" />
+                          <span className="text-xs font-bold text-primary-700">Interview</span>
                         </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">2</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700">
+                          2
+                        </span>
                       </div>
                       <div className="space-y-1.5">
                         {[1, 2].map((_, i) => (
-                          <div key={i} className="bg-white p-2 rounded-md border border-slate-200 border-l-2 border-l-indigo-500">
-                            <div className="h-2.5 bg-slate-200 rounded w-14 mb-1 animate-pulse" />
-                            <div className="h-2 bg-slate-100 rounded w-10 animate-pulse" />
+                          <div
+                            key={i}
+                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-primary"
+                          >
+                            <div className="h-2.5 bg-border-default rounded w-14 mb-1 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-10 animate-pulse" />
                           </div>
                         ))}
                       </div>
@@ -158,19 +176,21 @@ export function CandidatePlatformSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.5 }}
-                      className="bg-emerald-50/50 rounded-lg p-2.5 border border-emerald-100/60"
+                      className="bg-success-50/50 rounded-lg p-2.5 border border-success-100/60"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
-                          <Trophy className="w-3 h-3 text-emerald-600" />
-                          <span className="text-[10px] font-bold text-emerald-900">Offers</span>
+                          <Trophy className="w-3 h-3 text-success" />
+                          <span className="text-xs font-bold text-success-700">Offers</span>
                         </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">1</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-success-100 text-success-700">
+                          1
+                        </span>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="bg-white p-2 rounded-md border border-slate-200 border-l-2 border-l-emerald-500">
-                          <div className="h-2.5 bg-slate-200 rounded w-16 mb-1 animate-pulse" />
-                          <div className="h-2 bg-slate-100 rounded w-11 animate-pulse" />
+                        <div className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-success">
+                          <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
+                          <div className="h-2 bg-border-subtle rounded w-11 animate-pulse" />
                         </div>
                       </div>
                     </motion.div>

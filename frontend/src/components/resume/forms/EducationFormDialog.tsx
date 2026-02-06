@@ -110,8 +110,8 @@ export default function EducationFormDialog({
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
       <DialogHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-emerald-600" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
             <DialogTitle>{initialData ? 'Edit Education' : 'Add Education'}</DialogTitle>
@@ -125,59 +125,59 @@ export default function EducationFormDialog({
       <DialogContent className="pt-0">
         <form id="education-form" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
-              School / College <span className="text-red-500">*</span>
+            <Label className="text-sm font-medium text-text-primary">
+              School / College <span className="text-error">*</span>
             </Label>
             <Input
               required
               value={formData.college_name}
               onChange={e => setFormData({ ...formData, college_name: e.target.value })}
               placeholder="e.g. Herald College Kathmandu"
-              className="h-11 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
-              Degree <span className="text-red-500">*</span>
+            <Label className="text-sm font-medium text-text-primary">
+              Degree <span className="text-error">*</span>
             </Label>
             <Input
               required
               value={formData.degree}
               onChange={e => setFormData({ ...formData, degree: e.target.value })}
               placeholder="e.g. B(Hons) in Computer Science"
-              className="h-11 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Location</Label>
+            <Label className="text-sm font-medium text-text-primary">Location</Label>
             <Input
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
               placeholder="e.g. Kathmandu, Nepal"
-              className="h-11 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Start Date</Label>
+              <Label className="text-sm font-medium text-text-primary">Start Date</Label>
               <Input
                 type="date"
                 value={formData.start_date}
                 onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20"
+                className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">End Date</Label>
+              <Label className="text-sm font-medium text-text-primary">End Date</Label>
               <Input
                 type="date"
                 disabled={formData.is_current}
                 value={formData.end_date}
                 onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 disabled:opacity-50"
+                className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20 disabled:opacity-50"
               />
             </div>
           </div>
@@ -187,9 +187,9 @@ export default function EducationFormDialog({
               id="current_edu"
               checked={formData.is_current}
               onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
-              className="rounded border-gray-300"
+              className="rounded border-border-default"
             />
-            <label htmlFor="current_edu" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="current_edu" className="text-sm text-text-primary cursor-pointer">
               I am currently studying here
             </label>
           </div>
@@ -209,7 +209,7 @@ export default function EducationFormDialog({
           type="submit"
           form="education-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/25"
+          className="btn-primary-gradient rounded-xl px-6"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Education'}

@@ -21,31 +21,178 @@ const config: Config = {
         inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
-        'brand-blue': '#3056F5',
-        border: 'hsl(var(--border))',
+        // =======================================================================
+        // FOUNDATION - Backgrounds
+        // =======================================================================
+        background: {
+          DEFAULT: 'hsl(var(--background))',
+          base: 'hsl(var(--background-base))',
+          surface: 'hsl(var(--background-surface))',
+          subtle: 'hsl(var(--background-subtle))',
+          muted: 'hsl(var(--background-muted))',
+          elevated: 'hsl(var(--background-elevated))',
+        },
+
+        // =======================================================================
+        // FOUNDATION - Foreground & Text
+        // =======================================================================
+        foreground: 'hsl(var(--foreground))',
+        text: {
+          primary: 'hsl(var(--text-primary))',
+          secondary: 'hsl(var(--text-secondary))',
+          tertiary: 'hsl(var(--text-tertiary))',
+          muted: 'hsl(var(--text-muted))',
+          inverse: 'hsl(var(--text-inverse))',
+        },
+
+        // =======================================================================
+        // FOUNDATION - Borders
+        // =======================================================================
+        border: {
+          DEFAULT: 'hsl(var(--border))',
+          subtle: 'hsl(var(--border-subtle))',
+          default: 'hsl(var(--border-default))',
+          strong: 'hsl(var(--border-strong))',
+        },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+
+        // =======================================================================
+        // BRAND - Professional Intelligence
+        // =======================================================================
         brand: {
           DEFAULT: 'hsl(var(--brand))',
           dark: 'hsl(var(--brand-dark))',
           light: 'hsl(var(--brand-light))',
           foreground: 'hsl(var(--brand-foreground))',
         },
+
+        // =======================================================================
+        // PRIMARY - Professional Blue
+        // =======================================================================
         primary: {
           DEFAULT: 'hsl(var(--primary))',
+          50: 'hsl(var(--primary-50))',
+          100: 'hsl(var(--primary-100))',
+          200: 'hsl(var(--primary-200))',
+          300: 'hsl(var(--primary-300))',
+          400: 'hsl(var(--primary-400))',
+          500: 'hsl(var(--primary-500))',
+          600: 'hsl(var(--primary-600))',
+          700: 'hsl(var(--primary-700))',
+          800: 'hsl(var(--primary-800))',
+          900: 'hsl(var(--primary-900))',
           foreground: 'hsl(var(--primary-foreground))',
           hover: 'hsl(var(--primary-hover))',
+        },
+
+        // =======================================================================
+        // AI - Intelligent Assistance (Purple)
+        // =======================================================================
+        ai: {
+          DEFAULT: 'hsl(var(--ai))',
+          50: 'hsl(var(--ai-50))',
+          100: 'hsl(var(--ai-100))',
+          200: 'hsl(var(--ai-200))',
+          300: 'hsl(var(--ai-300))',
+          400: 'hsl(var(--ai-400))',
+          500: 'hsl(var(--ai-500))',
+          600: 'hsl(var(--ai-600))',
+          700: 'hsl(var(--ai-700))',
+          800: 'hsl(var(--ai-800))',
+          900: 'hsl(var(--ai-900))',
+          foreground: 'hsl(var(--ai-foreground))',
+        },
+
+        // =======================================================================
+        // SUCCESS - Positive Outcomes (Teal)
+        // =======================================================================
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          50: 'hsl(var(--success-50))',
+          100: 'hsl(var(--success-100))',
+          200: 'hsl(var(--success-200))',
+          300: 'hsl(var(--success-300))',
+          400: 'hsl(var(--success-400))',
+          500: 'hsl(var(--success-500))',
+          600: 'hsl(var(--success-600))',
+          700: 'hsl(var(--success-700))',
+          800: 'hsl(var(--success-800))',
+          900: 'hsl(var(--success-900))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+
+        // =======================================================================
+        // WARNING - Requires Attention (Amber)
+        // =======================================================================
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          50: 'hsl(var(--warning-50))',
+          100: 'hsl(var(--warning-100))',
+          200: 'hsl(var(--warning-200))',
+          300: 'hsl(var(--warning-300))',
+          400: 'hsl(var(--warning-400))',
+          500: 'hsl(var(--warning-500))',
+          600: 'hsl(var(--warning-600))',
+          700: 'hsl(var(--warning-700))',
+          800: 'hsl(var(--warning-800))',
+          900: 'hsl(var(--warning-900))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+
+        // =======================================================================
+        // DESTRUCTIVE/ERROR - Critical Actions (Red)
+        // =======================================================================
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        error: {
+          DEFAULT: 'hsl(var(--error))',
+          50: 'hsl(var(--error-50))',
+          100: 'hsl(var(--error-100))',
+          200: 'hsl(var(--error-200))',
+          300: 'hsl(var(--error-300))',
+          400: 'hsl(var(--error-400))',
+          500: 'hsl(var(--error-500))',
+          600: 'hsl(var(--error-600))',
+          700: 'hsl(var(--error-700))',
+          800: 'hsl(var(--error-800))',
+          900: 'hsl(var(--error-900))',
+        },
+
+        // =======================================================================
+        // INFO - Neutral Actions (Sky Blue)
+        // =======================================================================
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          50: 'hsl(var(--info-50))',
+          100: 'hsl(var(--info-100))',
+          200: 'hsl(var(--info-200))',
+          300: 'hsl(var(--info-300))',
+          400: 'hsl(var(--info-400))',
+          500: 'hsl(var(--info-500))',
+          600: 'hsl(var(--info-600))',
+          700: 'hsl(var(--info-700))',
+          foreground: 'hsl(var(--info-foreground))',
+        },
+
+        // =======================================================================
+        // SEMANTIC UI COLORS
+        // =======================================================================
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+          hover: 'hsl(var(--card-hover))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
           hover: 'hsl(var(--secondary-hover))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -56,26 +203,27 @@ const config: Config = {
           foreground: 'hsl(var(--accent-foreground))',
           hover: 'hsl(var(--accent-hover))',
         },
-        success: {
-          DEFAULT: 'hsl(var(--success))',
-          foreground: 'hsl(var(--success-foreground))',
-        },
-        warning: {
-          DEFAULT: 'hsl(var(--warning))',
-          foreground: 'hsl(var(--warning-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-          hover: 'hsl(var(--card-hover))',
+
+        // =======================================================================
+        // SOCIAL MEDIA - Exact Brand Colors
+        // =======================================================================
+        social: {
+          linkedin: '#0A66C2',
+          github: '#24292e',
+          twitter: '#1DA1F2',
+          facebook: '#1877F2',
+          youtube: '#FF0000',
+          dribbble: '#EA4C89',
+          behance: '#1769FF',
         },
       },
       backgroundImage: {
         'gradient-brand': 'var(--gradient-brand)',
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-primary-hover': 'var(--gradient-primary-hover)',
+        'gradient-ai': 'var(--gradient-ai)',
+        'gradient-ai-hover': 'var(--gradient-ai-hover)',
+        'gradient-success': 'var(--gradient-success)',
         'gradient-subtle': 'var(--gradient-subtle)',
         'gradient-hero': 'var(--gradient-hero)',
       },
@@ -88,10 +236,19 @@ const config: Config = {
         '3xl': '2rem',
       },
       boxShadow: {
+        xs: 'var(--shadow-xs)',
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
         xl: 'var(--shadow-xl)',
+        '2xl': 'var(--shadow-2xl)',
+        primary: 'var(--shadow-primary)',
+        ai: 'var(--shadow-ai)',
+        success: 'var(--shadow-success)',
+        'focus-primary': 'var(--focus-ring-primary)',
+        'focus-ai': 'var(--focus-ring-ai)',
+        'focus-success': 'var(--focus-ring-success)',
+        'focus-error': 'var(--focus-ring-error)',
       },
       transitionDuration: {
         fast: 'var(--transition-fast)',
@@ -185,6 +342,10 @@ const config: Config = {
           '0%, 50%': { opacity: '1' },
           '51%, 100%': { opacity: '0' },
         },
+        'ai-pulse': {
+          '0%, 100%': { boxShadow: '0 0 0 4px rgba(168, 85, 247, 0.15)' },
+          '50%': { boxShadow: '0 0 0 8px rgba(168, 85, 247, 0.05)' },
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -208,6 +369,7 @@ const config: Config = {
         gradient: 'gradient 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite',
         typing: 'typing 3.5s steps(40, end)',
         blink: 'blink 1s step-end infinite',
+        'ai-pulse': 'ai-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },

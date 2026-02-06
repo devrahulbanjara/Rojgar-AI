@@ -17,8 +17,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div className={`space-y-2 ${alignmentClass} ${className}`}>
-      <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-      {subtitle && <p className="text-slate-600">{subtitle}</p>}
+      <h2 className="text-2xl font-bold text-text-primary">{title}</h2>
+      {subtitle && <p className="text-text-secondary">{subtitle}</p>}
     </div>
   )
 }

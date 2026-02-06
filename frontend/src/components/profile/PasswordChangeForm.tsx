@@ -96,16 +96,16 @@ export function PasswordChangeForm() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Change Password</h3>
-        <p className="text-[#475569]">Update your password to keep your account secure.</p>
+        <h3 className="text-2xl font-bold text-text-primary mb-2">Change Password</h3>
+        <p className="text-text-secondary">Update your password to keep your account secure.</p>
       </div>
 
       {message && (
         <div
           className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-700 border-green-200'
-              : 'bg-red-50 text-red-700 border-red-200'
+              ? 'bg-success-50 text-success-700 border-success-200'
+              : 'bg-error-50 text-error-700 border-error-200'
           }`}
         >
           {message.type === 'success' ? (
@@ -119,24 +119,27 @@ export function PasswordChangeForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Security Section */}
-        <div className="bg-white rounded-2xl p-8 border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center gap-4 mb-8 pb-4 border-b border-gray-100">
-            <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-sm border border-rose-100">
+        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
+            <div className="w-12 h-12 rounded-xl bg-error-50 flex items-center justify-center text-error-600 shadow-sm border border-error-200">
               <Shield className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-[#0F172A]">Password Security</h4>
-              <p className="text-sm text-[#64748B]">Ensure your account stays protected</p>
+              <h4 className="text-lg font-bold text-text-primary">Password Security</h4>
+              <p className="text-sm text-text-tertiary">Ensure your account stays protected</p>
             </div>
           </div>
 
           <div className="space-y-6 max-w-2xl">
             <div className="space-y-3">
-              <Label htmlFor="currentPassword" className="text-sm font-semibold text-[#374151]">
+              <Label
+                htmlFor="currentPassword"
+                className="text-sm font-semibold text-text-secondary"
+              >
                 Current Password
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-focus-within:bg-rose-50 group-focus-within:text-rose-500 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-focus-within:bg-error-50 group-focus-within:text-error-500 transition-colors duration-200">
                   <KeyRound className="w-4 h-4" />
                 </div>
                 <Input
@@ -146,16 +149,16 @@ export function PasswordChangeForm() {
                   value={formData.currentPassword}
                   onChange={handleChange}
                   placeholder="Enter your current password"
-                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${
+                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${
                     errors.currentPassword
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                      ? 'border-error-300 focus:border-error-500 focus:ring-error-500/10'
                       : ''
                   }`}
                   required
                 />
               </div>
               {errors.currentPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-left-1">
+                <p className="text-sm text-error-600 flex items-center gap-1 animate-in slide-in-from-left-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.currentPassword}
                 </p>
@@ -163,11 +166,11 @@ export function PasswordChangeForm() {
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="newPassword" className="text-sm font-semibold text-[#374151]">
+              <Label htmlFor="newPassword" className="text-sm font-semibold text-text-secondary">
                 New Password
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-focus-within:bg-rose-50 group-focus-within:text-rose-500 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-focus-within:bg-error-50 group-focus-within:text-error-500 transition-colors duration-200">
                   <Lock className="w-4 h-4" />
                 </div>
                 <Input
@@ -177,32 +180,35 @@ export function PasswordChangeForm() {
                   value={formData.newPassword}
                   onChange={handleChange}
                   placeholder="Enter your new password"
-                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${
+                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${
                     errors.newPassword
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                      ? 'border-error-300 focus:border-error-500 focus:ring-error-500/10'
                       : ''
                   }`}
                   required
                 />
               </div>
               {errors.newPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-left-1">
+                <p className="text-sm text-error-600 flex items-center gap-1 animate-in slide-in-from-left-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.newPassword}
                 </p>
               )}
-              <p className="text-xs text-[#64748B] flex items-center gap-1.5 ml-1">
+              <p className="text-xs text-text-tertiary flex items-center gap-1.5 ml-1">
                 <Shield className="w-3 h-3" />
                 Password must be at least 8 characters long
               </p>
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#374151]">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-sm font-semibold text-text-secondary"
+              >
                 Confirm New Password
               </Label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-focus-within:bg-rose-50 group-focus-within:text-rose-500 transition-colors duration-200">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted group-focus-within:bg-error-50 group-focus-within:text-error-500 transition-colors duration-200">
                   <Lock className="w-4 h-4" />
                 </div>
                 <Input
@@ -212,16 +218,16 @@ export function PasswordChangeForm() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your new password"
-                  className={`w-full h-12 pl-14 border-[#E2E8F0] bg-gray-50/50 focus:bg-white focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 rounded-xl transition-all duration-200 font-medium ${
+                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${
                     errors.confirmPassword
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10'
+                      ? 'border-error-300 focus:border-error-500 focus:ring-error-500/10'
                       : ''
                   }`}
                   required
                 />
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1 animate-in slide-in-from-left-1">
+                <p className="text-sm text-error-600 flex items-center gap-1 animate-in slide-in-from-left-1">
                   <AlertCircle className="w-3 h-3" />
                   {errors.confirmPassword}
                 </p>
@@ -230,11 +236,11 @@ export function PasswordChangeForm() {
           </div>
         </div>
 
-        <div className="flex justify-end pt-6 border-t border-[#E5E7EB]">
+        <div className="flex justify-end pt-6 border-t border-border-default">
           <Button
             type="submit"
             disabled={isLoading}
-            className="px-8 py-4 bg-gradient-to-r from-[#3056F5] to-[#6366F1] hover:from-[#2541B2] hover:to-[#4F46E5] text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+            className="px-8 py-4 bg-gradient-primary hover:bg-gradient-primary-hover text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-primary hover:shadow-primary disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
