@@ -2,10 +2,6 @@
 
 # ConvexHire Design System
 
-### "Sophisticated Intelligence"
-
-*A premium AI-enterprise design system for the next generation of recruitment*
-
 </div>
 
 ---
@@ -49,7 +45,7 @@ ConvexHire follows a **"Sophisticated Intelligence"** design philosophy that com
 
 ## Typography System
 
-ConvexHire uses a **dual-font system** that separates "human" interface from "machine" logic — essential for a Multi-Agent System (MAS).
+ConvexHire uses a **tri-font system** that separates "human" interface from "machine" logic — essential for a Multi-Agent System (MAS).
 
 ### Font Families
 
@@ -122,108 +118,108 @@ ConvexHire uses a **dual-font system** that separates "human" interface from "ma
 
 #### Backgrounds
 
-| Token | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| `background` | 210 20% 98% | `#FAFBFC` | Page background |
-| `background-base` | 210 20% 98% | `#FAFBFC` | Base layer |
-| `background-surface` | 0 0% 100% | `#FFFFFF` | Cards, modals, elevated surfaces |
-| `background-subtle` | 210 40% 96% | `#F1F5F9` | Hover states, disabled fields |
-| `background-muted` | 214 32% 91% | `#E2E8F0` | Active/selected subtle states |
+| Token | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| `background` | 210 20% 98% | `#FAFBFC` | ![](https://img.shields.io/badge/%20-FAFBFC?style=flat-square) | Page background |
+| `background-base` | 210 20% 98% | `#FAFBFC` | ![](https://img.shields.io/badge/%20-FAFBFC?style=flat-square) | Base layer |
+| `background-surface` | 0 0% 100% | `#FFFFFF` | ![](https://img.shields.io/badge/%20-FFFFFF?style=flat-square) | Cards, modals, elevated surfaces |
+| `background-subtle` | 210 40% 96% | `#F1F5F9` | ![](https://img.shields.io/badge/%20-F1F5F9?style=flat-square) | Hover states, disabled fields |
+| `background-muted` | 214 32% 91% | `#E2E8F0` | ![](https://img.shields.io/badge/%20-E2E8F0?style=flat-square) | Active/selected subtle states |
 
 #### Text Colors
 
-| Token | HSL | Hex | Use Case | Hierarchy |
-|-------|-----|-----|----------|-----------|
-| `text-primary` | 222 47% 11% | `#0F172A` | Headings, primary content | 60% |
-| `text-secondary` | 215 25% 27% | `#334155` | Body text, descriptions | 30% |
-| `text-tertiary` | 215 16% 47% | `#64748B` | Metadata, labels, timestamps | 10% |
-| `text-muted` | 215 20% 65% | `#94A3B8` | Disabled, placeholders | — |
-| `text-inverse` | 0 0% 100% | `#FFFFFF` | Text on dark backgrounds | — |
+| Token | HSL | Hex | Preview | Use Case | Hierarchy |
+|-------|-----|-----|---------|----------|-----------|
+| `text-primary` | 222 47% 11% | `#0F172A` | ![](https://img.shields.io/badge/%20-0F172A?style=flat-square) | Headings, primary content | 60% |
+| `text-secondary` | 215 25% 27% | `#334155` | ![](https://img.shields.io/badge/%20-334155?style=flat-square) | Body text, descriptions | 30% |
+| `text-tertiary` | 215 16% 47% | `#64748B` | ![](https://img.shields.io/badge/%20-64748B?style=flat-square) | Metadata, labels, timestamps | 10% |
+| `text-muted` | 215 20% 65% | `#94A3B8` | ![](https://img.shields.io/badge/%20-94A3B8?style=flat-square) | Disabled, placeholders | — |
+| `text-inverse` | 0 0% 100% | `#FFFFFF` | ![](https://img.shields.io/badge/%20-FFFFFF?style=flat-square) | Text on dark backgrounds | — |
 
 #### Border Colors
 
-| Token | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| `border-subtle` | 210 40% 96% | `#F1F5F9` | Barely visible dividers |
-| `border-default` | 214 32% 91% | `#E2E8F0` | Standard borders, inputs |
-| `border-strong` | 215 20% 82% | `#CBD5E1` | Emphasis, active states |
+| Token | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| `border-subtle` | 210 40% 96% | `#F1F5F9` | ![](https://img.shields.io/badge/%20-F1F5F9?style=flat-square) | Barely visible dividers |
+| `border-default` | 214 32% 91% | `#E2E8F0` | ![](https://img.shields.io/badge/%20-E2E8F0?style=flat-square) | Standard borders, inputs |
+| `border-strong` | 215 20% 82% | `#CBD5E1` | ![](https://img.shields.io/badge/%20-CBD5E1?style=flat-square) | Emphasis, active states |
 
 #### Primary (Professional Blue)
 
-| Shade | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| 50 | 214 100% 97% | `#EFF6FF` | Subtle backgrounds |
-| 100 | 214 95% 93% | `#DBEAFE` | Hover backgrounds |
-| 200 | 213 97% 87% | `#BFDBFE` | Borders, dividers |
-| 300 | 212 96% 78% | `#93C5FD` | Disabled states |
-| 400 | 213 94% 68% | `#60A5FA` | Subtle accents |
-| **500** | 217 91% 60% | `#3B82F6` | **Primary brand** |
-| **600** | 221 83% 53% | `#2563EB` | **Hover, active (DEFAULT)** |
-| 700 | 224 76% 48% | `#1D4ED8` | Pressed states |
-| 800 | 226 71% 40% | `#1E40AF` | Depth |
-| 900 | 224 64% 33% | `#1E3A8A` | Darkest variant |
+| Shade | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| 50 | 214 100% 97% | `#EFF6FF` | ![](https://img.shields.io/badge/%20-EFF6FF?style=flat-square) | Subtle backgrounds |
+| 100 | 214 95% 93% | `#DBEAFE` | ![](https://img.shields.io/badge/%20-DBEAFE?style=flat-square) | Hover backgrounds |
+| 200 | 213 97% 87% | `#BFDBFE` | ![](https://img.shields.io/badge/%20-BFDBFE?style=flat-square) | Borders, dividers |
+| 300 | 212 96% 78% | `#93C5FD` | ![](https://img.shields.io/badge/%20-93C5FD?style=flat-square) | Disabled states |
+| 400 | 213 94% 68% | `#60A5FA` | ![](https://img.shields.io/badge/%20-60A5FA?style=flat-square) | Subtle accents |
+| **500** | 217 91% 60% | `#3B82F6` | ![](https://img.shields.io/badge/%20-3B82F6?style=flat-square) | **Primary brand** |
+| **600** | 221 83% 53% | `#2563EB` | ![](https://img.shields.io/badge/%20-2563EB?style=flat-square) | **Hover, active (DEFAULT)** |
+| 700 | 224 76% 48% | `#1D4ED8` | ![](https://img.shields.io/badge/%20-1D4ED8?style=flat-square) | Pressed states |
+| 800 | 226 71% 40% | `#1E40AF` | ![](https://img.shields.io/badge/%20-1E40AF?style=flat-square) | Depth |
+| 900 | 224 64% 33% | `#1E3A8A` | ![](https://img.shields.io/badge/%20-1E3A8A?style=flat-square) | Darkest variant |
 
 #### AI Purple (Intelligent Assistance)
 
-| Shade | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| 50 | 270 100% 98% | `#FAF5FF` | AI insight backgrounds |
-| 100 | 269 100% 95% | `#F3E8FF` | AI card backgrounds |
-| 200 | 269 100% 92% | `#E9D5FF` | AI borders |
-| 300 | 269 97% 85% | `#D8B4FE` | Disabled AI features |
-| 400 | 270 95% 75% | `#C084FC` | Subtle AI accents |
-| **500** | 271 91% 65% | `#A855F7` | **AI accent (DEFAULT)** |
-| 600 | 271 81% 56% | `#9333EA` | AI hover |
-| 700 | 272 72% 47% | `#7E22CE` | AI active |
-| 800 | 273 67% 39% | `#6B21A8` | Deep AI |
-| 900 | 274 66% 32% | `#581C87` | Darkest |
+| Shade | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| 50 | 270 100% 98% | `#FAF5FF` | ![](https://img.shields.io/badge/%20-FAF5FF?style=flat-square) | AI insight backgrounds |
+| 100 | 269 100% 95% | `#F3E8FF` | ![](https://img.shields.io/badge/%20-F3E8FF?style=flat-square) | AI card backgrounds |
+| 200 | 269 100% 92% | `#E9D5FF` | ![](https://img.shields.io/badge/%20-E9D5FF?style=flat-square) | AI borders |
+| 300 | 269 97% 85% | `#D8B4FE` | ![](https://img.shields.io/badge/%20-D8B4FE?style=flat-square) | Disabled AI features |
+| 400 | 270 95% 75% | `#C084FC` | ![](https://img.shields.io/badge/%20-C084FC?style=flat-square) | Subtle AI accents |
+| **500** | 271 91% 65% | `#A855F7` | ![](https://img.shields.io/badge/%20-A855F7?style=flat-square) | **AI accent (DEFAULT)** |
+| 600 | 271 81% 56% | `#9333EA` | ![](https://img.shields.io/badge/%20-9333EA?style=flat-square) | AI hover |
+| 700 | 272 72% 47% | `#7E22CE` | ![](https://img.shields.io/badge/%20-7E22CE?style=flat-square) | AI active |
+| 800 | 273 67% 39% | `#6B21A8` | ![](https://img.shields.io/badge/%20-6B21A8?style=flat-square) | Deep AI |
+| 900 | 274 66% 32% | `#581C87` | ![](https://img.shields.io/badge/%20-581C87?style=flat-square) | Darkest |
 
 #### Success (Teal)
 
-| Shade | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| 50 | 166 76% 97% | `#F0FDFA` | Success backgrounds |
-| **500** | 173 80% 40% | `#14B8A6` | **Success (DEFAULT)** |
-| 600 | 175 84% 32% | `#0D9488` | Hover/Active |
-| 700 | 175 77% 26% | `#0F766E` | Pressed |
+| Shade | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| 50 | 166 76% 97% | `#F0FDFA` | ![](https://img.shields.io/badge/%20-F0FDFA?style=flat-square) | Success backgrounds |
+| **500** | 173 80% 40% | `#14B8A6` | ![](https://img.shields.io/badge/%20-14B8A6?style=flat-square) | **Success (DEFAULT)** |
+| 600 | 175 84% 32% | `#0D9488` | ![](https://img.shields.io/badge/%20-0D9488?style=flat-square) | Hover/Active |
+| 700 | 175 77% 26% | `#0F766E` | ![](https://img.shields.io/badge/%20-0F766E?style=flat-square) | Pressed |
 
 #### Warning (Amber)
 
-| Shade | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| 50 | 48 100% 96% | `#FFFBEB` | Warning backgrounds |
-| **500** | 38 92% 50% | `#F59E0B` | **Warning (DEFAULT)** |
-| 600 | 32 95% 44% | `#D97706` | Hover |
-| 700 | 26 90% 37% | `#B45309` | Active |
+| Shade | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| 50 | 48 100% 96% | `#FFFBEB` | ![](https://img.shields.io/badge/%20-FFFBEB?style=flat-square) | Warning backgrounds |
+| **500** | 38 92% 50% | `#F59E0B` | ![](https://img.shields.io/badge/%20-F59E0B?style=flat-square) | **Warning (DEFAULT)** |
+| 600 | 32 95% 44% | `#D97706` | ![](https://img.shields.io/badge/%20-D97706?style=flat-square) | Hover |
+| 700 | 26 90% 37% | `#B45309` | ![](https://img.shields.io/badge/%20-B45309?style=flat-square) | Active |
 
 #### Error (Red)
 
-| Shade | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| 50 | 0 86% 97% | `#FEF2F2` | Error backgrounds |
-| **500** | 0 84% 60% | `#EF4444` | **Error (DEFAULT)** |
-| 600 | 0 72% 51% | `#DC2626` | Hover |
-| 700 | 0 74% 42% | `#B91C1C` | Active |
+| Shade | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| 50 | 0 86% 97% | `#FEF2F2` | ![](https://img.shields.io/badge/%20-FEF2F2?style=flat-square) | Error backgrounds |
+| **500** | 0 84% 60% | `#EF4444` | ![](https://img.shields.io/badge/%20-EF4444?style=flat-square) | **Error (DEFAULT)** |
+| 600 | 0 72% 51% | `#DC2626` | ![](https://img.shields.io/badge/%20-DC2626?style=flat-square) | Hover |
+| 700 | 0 74% 42% | `#B91C1C` | ![](https://img.shields.io/badge/%20-B91C1C?style=flat-square) | Active |
 
 #### Info (Sky Blue)
 
-| Shade | HSL | Hex | Use Case |
-|-------|-----|-----|----------|
-| 50 | 204 100% 97% | `#F0F9FF` | Info backgrounds |
-| **500** | 199 89% 48% | `#0EA5E9` | **Info (DEFAULT)** |
-| 600 | 200 98% 39% | `#0284C7` | Hover |
+| Shade | HSL | Hex | Preview | Use Case |
+|-------|-----|-----|---------|----------|
+| 50 | 204 100% 97% | `#F0F9FF` | ![](https://img.shields.io/badge/%20-F0F9FF?style=flat-square) | Info backgrounds |
+| **500** | 199 89% 48% | `#0EA5E9` | ![](https://img.shields.io/badge/%20-0EA5E9?style=flat-square) | **Info (DEFAULT)** |
+| 600 | 200 98% 39% | `#0284C7` | ![](https://img.shields.io/badge/%20-0284C7?style=flat-square) | Hover |
 
 ### Social Media Colors
 
-| Platform | Hex |
-|----------|-----|
-| LinkedIn | `#0A66C2` |
-| GitHub | `#24292E` |
-| Twitter/X | `#1DA1F2` |
-| Facebook | `#1877F2` |
-| YouTube | `#FF0000` |
-| Dribbble | `#EA4C89` |
-| Behance | `#1769FF` |
+| Platform | Hex | Preview |
+|----------|-----|---------|
+| LinkedIn | `#0A66C2` | ![](https://img.shields.io/badge/%20-0A66C2?style=flat-square) |
+| GitHub | `#24292E` | ![](https://img.shields.io/badge/%20-24292E?style=flat-square) |
+| Twitter/X | `#1DA1F2` | ![](https://img.shields.io/badge/%20-1DA1F2?style=flat-square) |
+| Facebook | `#1877F2` | ![](https://img.shields.io/badge/%20-1877F2?style=flat-square) |
+| YouTube | `#FF0000` | ![](https://img.shields.io/badge/%20-FF0000?style=flat-square) |
+| Dribbble | `#EA4C89` | ![](https://img.shields.io/badge/%20-EA4C89?style=flat-square) |
+| Behance | `#1769FF` | ![](https://img.shields.io/badge/%20-1769FF?style=flat-square) |
 
 ---
 
@@ -427,12 +423,12 @@ In dark mode, colors are adjusted for eye comfort:
 
 ### Dark Mode Backgrounds
 
-| Token | Light | Dark | Hex (Dark) |
-|-------|-------|------|------------|
-| `background` | #FAFBFC | Slate-950 | `#020617` |
-| `background-surface` | #FFFFFF | Slate-900 | `#0F172A` |
-| `background-elevated` | — | Slate-800 | `#1E293B` |
-| `background-subtle` | #F1F5F9 | Slate-800 | `#1E293B` |
+| Token | Light | Dark | Hex (Dark) | Preview |
+|-------|-------|------|------------|---------|
+| `background` | #FAFBFC | Slate-950 | `#020617` | ![](https://img.shields.io/badge/%20-020617?style=flat-square) |
+| `background-surface` | #FFFFFF | Slate-900 | `#0F172A` | ![](https://img.shields.io/badge/%20-0F172A?style=flat-square) |
+| `background-elevated` | — | Slate-800 | `#1E293B` | ![](https://img.shields.io/badge/%20-1E293B?style=flat-square) |
+| `background-subtle` | #F1F5F9 | Slate-800 | `#1E293B` | ![](https://img.shields.io/badge/%20-1E293B?style=flat-square) |
 
 ### Dark Mode Typography
 
@@ -631,13 +627,13 @@ AI Data: JetBrains Mono, for scores/logs/reasoning
 
 ### Colors
 
-```
-Primary: #3B82F6 (Blue-500) — Trust, CTAs
-AI:      #A855F7 (Purple-500) — AI features
-Success: #14B8A6 (Teal-500) — Positive
-Warning: #F59E0B (Amber-500) — Attention
-Error:   #EF4444 (Red-500) — Critical
-```
+| Role | Hex | Preview | Purpose |
+|------|-----|---------|---------|
+| Primary | `#3B82F6` | ![](https://img.shields.io/badge/%20-3B82F6?style=flat-square) | Trust, CTAs |
+| AI | `#A855F7` | ![](https://img.shields.io/badge/%20-A855F7?style=flat-square) | AI features |
+| Success | `#14B8A6` | ![](https://img.shields.io/badge/%20-14B8A6?style=flat-square) | Positive |
+| Warning | `#F59E0B` | ![](https://img.shields.io/badge/%20-F59E0B?style=flat-square) | Attention |
+| Error | `#EF4444` | ![](https://img.shields.io/badge/%20-EF4444?style=flat-square) | Critical |
 
 ### Spacing
 
@@ -659,7 +655,7 @@ Inputs: 12px (rounded-xl)
 
 <div align="center">
 
-### Built with precision for ConvexHire
+### Built with precision for ConvexHire by [Rahul Dev Banjara](https://np.linkedin.com/in/devrahulbanjara)
 
 *Where AI meets Human Judgment*
 
