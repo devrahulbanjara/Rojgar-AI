@@ -28,7 +28,7 @@ export function CandidatePlatformSection() {
       className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
     >
       {/* Background Elements */}
-      <div className="absolute top-1/2 left-0 w-72 h-72 bg-success-100/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
+      <div className="absolute top-1/2 left-0 w-72 h-72 bg-success-100/20 dark:bg-success-900/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -39,7 +39,7 @@ export function CandidatePlatformSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 text-success text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 dark:bg-success-950/50 text-success text-sm font-medium mb-6">
               For Candidates
             </div>
 
@@ -67,7 +67,7 @@ export function CandidatePlatformSection() {
                     transition={{ delay: 0.2 + index * 0.05 }}
                     className="flex items-center gap-3 p-3 rounded-xl bg-background-subtle border border-border-subtle"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-success-100 flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-success-100 dark:bg-success-900/50 flex items-center justify-center flex-shrink-0">
                       <Icon className="w-4 h-4 text-success" />
                     </div>
                     <span className="text-sm font-medium text-text-secondary">{feature.title}</span>
@@ -99,7 +99,7 @@ export function CandidatePlatformSection() {
               {/* Application Tracker Card */}
               <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
                 {/* Header */}
-                <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 to-background-surface border-b border-border-subtle">
+                <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 dark:from-success-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-success" />
                     <h3 className="text-base font-bold text-text-primary">Your Applications</h3>
@@ -116,7 +116,7 @@ export function CandidatePlatformSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.3 }}
-                      className="bg-info-50/50 rounded-lg p-2.5 border border-info-100/60"
+                      className="bg-info-50/50 dark:bg-info-950/30 rounded-lg p-2.5 border border-info-100/60 dark:border-info-800/60"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
@@ -146,7 +146,7 @@ export function CandidatePlatformSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.4 }}
-                      className="bg-primary-50/50 rounded-lg p-2.5 border border-primary-100/60"
+                      className="bg-primary-50/50 dark:bg-primary-950/30 rounded-lg p-2.5 border border-primary-100/60 dark:border-primary-800/60"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
@@ -176,7 +176,7 @@ export function CandidatePlatformSection() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: 0.5 }}
-                      className="bg-success-50/50 rounded-lg p-2.5 border border-success-100/60"
+                      className="bg-success-50/50 dark:bg-success-950/30 rounded-lg p-2.5 border border-success-100/60 dark:border-success-800/60"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">

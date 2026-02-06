@@ -52,7 +52,7 @@ export function Providers({ children }: { children: ReactNode }) {
       attribute="class"
       defaultTheme="light"
       enableSystem
-      disableTransitionOnChange={false}
+      disableTransitionOnChange
       storageKey="convexhire-theme"
     >
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

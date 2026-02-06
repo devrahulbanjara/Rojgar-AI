@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../ui/button'
 import { LogoLink } from '../common/Logo'
+import { ThemeToggle } from '../common/ThemeToggle'
 import { useEffect, useState } from 'react'
 import { Menu, X, ArrowRight } from 'lucide-react'
 
@@ -70,6 +71,7 @@ export function LandingNavbar() {
 
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-3">
+              <ThemeToggle variant="compact" showLabel={false} />
               <Link href="/login">
                 <Button
                   variant="ghost"
@@ -149,8 +151,16 @@ export function LandingNavbar() {
                     ))}
                   </div>
 
+                  {/* Theme Toggle */}
+                  <div className="mt-8 pt-6 border-t border-border-subtle">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-text-secondary">Theme</span>
+                      <ThemeToggle variant="compact" />
+                    </div>
+                  </div>
+
                   {/* CTA */}
-                  <div className="mt-8 space-y-3">
+                  <div className="mt-6 space-y-3">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block">
                       <Button
                         variant="outline"

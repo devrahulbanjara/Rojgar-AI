@@ -13,7 +13,7 @@ const tiers = [
     period: '',
     icon: Rocket,
     iconColor: 'text-success',
-    iconBg: 'bg-success-50',
+    iconBg: 'bg-success-50 dark:bg-success-950/50',
     features: [
       'Up to 3 active job postings',
       'AI Job Description Generator',
@@ -32,7 +32,7 @@ const tiers = [
     period: '/month',
     icon: Zap,
     iconColor: 'text-primary',
-    iconBg: 'bg-primary-50',
+    iconBg: 'bg-primary-50 dark:bg-primary-950/50',
     features: [
       'Everything in Starter, plus:',
       'Unlimited job postings',
@@ -51,7 +51,7 @@ const tiers = [
     period: '',
     icon: Building2,
     iconColor: 'text-ai',
-    iconBg: 'bg-ai-50',
+    iconBg: 'bg-ai-50 dark:bg-ai-950/50',
     features: [
       'Everything in Pro, plus:',
       'RAG-based talent pool search',

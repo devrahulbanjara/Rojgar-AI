@@ -1,8 +1,8 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, LogOut, Sun, Moon, Monitor } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { Menu, LogOut } from 'lucide-react'
 import { LogoLink } from '../common/Logo'
+import { ThemeToggle } from '../common/ThemeToggle'
 import { authService } from '../../services/authService'
 import { ROUTES } from '../../config/constants'
 
@@ -20,10 +20,6 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick, user }: TopbarProps) {
   const router = useRouter()
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => setMounted(true), [])
 
   const handleLogout = async () => {
     try {
@@ -33,27 +29,6 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
       router.push(ROUTES.HOME)
     }
   }
-
-  const cycleTheme = () => {
-    if (theme === 'light') setTheme('dark')
-    else if (theme === 'dark') setTheme('system')
-    else setTheme('light')
-  }
-
-  const ThemeIcon = () => {
-    if (!mounted) return <Sun className="h-4 w-4" />
-    if (theme === 'system') return <Monitor className="h-4 w-4" />
-    if (resolvedTheme === 'dark') return <Moon className="h-4 w-4" />
-    return <Sun className="h-4 w-4" />
-  }
-
-  const themeLabel = !mounted
-    ? 'Light'
-    : theme === 'system'
-      ? 'System'
-      : resolvedTheme === 'dark'
-        ? 'Dark'
-        : 'Light'
 
   return (
     <header
@@ -83,17 +58,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
         {/* Right: Theme Toggle + User Profile + Logout */}
         <div className="flex items-center gap-4">
           {/* Theme Toggle */}
-          <button
-            onClick={cycleTheme}
-            className="group relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-50/10 transition-all duration-200"
-            aria-label={`Switch theme (current: ${themeLabel})`}
-            title={`Theme: ${themeLabel}`}
-          >
-            <div className="p-1.5 rounded-lg bg-background-subtle group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors duration-200">
-              <ThemeIcon />
-            </div>
-            <span className="hidden lg:inline">{themeLabel}</span>
-          </button>
+          <ThemeToggle />
 
           {/* Vertical Divider */}
           <div className="h-8 w-px bg-border-default hidden sm:block" />

@@ -55,7 +55,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
     >
       <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col rounded-[20px] bg-background-surface">
         {/* Enhanced Header with subtle background */}
-        <div className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-12 py-12 border-b border-border-subtle relative">
+        <div className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-12 py-12 border-b border-border-subtle dark:border-border-default relative">
           {/* Close Button */}
           <button
             onClick={onClose}
@@ -140,7 +140,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-12 py-12">
           {/* Key Information Grid with dividers */}
-          <div className="mb-12 p-6 bg-background-subtle rounded-xl border border-border-subtle">
+          <div className="mb-12 p-6 bg-background-subtle dark:bg-background-surface rounded-xl border border-border-subtle dark:border-border-default">
             {/* Single Row: Application Date and Contact */}
             <div className="grid grid-cols-2 gap-6">
               <div className="flex items-center gap-3 min-w-0">
@@ -157,7 +157,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 border-l border-border-default pl-6 min-w-0">
+              <div className="flex items-center gap-3 border-l border-border-default dark:border-border-strong pl-6 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-ai-100 dark:bg-ai-900/30 flex items-center justify-center flex-shrink-0">
                   <Mail className="w-5 h-5 text-ai-600 dark:text-ai-400" />
                 </div>
@@ -227,7 +227,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group relative h-15 p-3 bg-background-subtle border border-border-default rounded-lg transition-all duration-200 hover:border-primary-500 dark:hover:border-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/30 active:scale-[0.98]"
+                      className="group relative h-15 p-3 bg-background-subtle dark:bg-background-surface border border-border-default dark:border-border-default rounded-lg transition-all duration-200 hover:border-primary-500 dark:hover:border-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/30 active:scale-[0.98]"
                     >
                       {/* Content Layout */}
                       <div className="flex items-center gap-3 h-full">
@@ -254,7 +254,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
 
           {/* Professional Summary */}
           {candidate.professional_summary && (
-            <section className="mb-12">
+            <section className="mb-12 p-6 bg-background-subtle dark:bg-background-surface rounded-xl border border-border-subtle dark:border-border-default">
               <p className="text-[15px] text-text-secondary leading-relaxed">
                 {candidate.professional_summary}
               </p>
@@ -274,7 +274,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                 </h3>
               </div>
               <div className="pl-14">
-                <div className="bg-gradient-to-br from-warning-50 to-warning-100 dark:from-warning-950/30 dark:to-warning-900/30 border border-warning-200 dark:border-warning-800 rounded-xl p-6">
+                <div className="bg-gradient-to-br from-warning-50 to-warning-100 dark:from-warning-950/30 dark:to-warning-900/30 border border-warning-200 dark:border-warning-700 rounded-xl p-6">
                   <p className="text-[15px] text-text-secondary leading-relaxed">
                     {candidate.ai_analysis}
                   </p>

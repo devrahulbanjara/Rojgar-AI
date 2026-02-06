@@ -62,7 +62,7 @@ export function CTASection() {
             <Link href="/signup">
               <Button
                 size="lg"
-                className="bg-white hover:bg-background-subtle text-primary text-base font-semibold rounded-xl px-10 py-6 h-auto transition-all duration-300 hover:scale-105 shadow-xl group"
+                className="bg-background-surface hover:bg-background-subtle text-primary text-base font-semibold rounded-xl px-10 py-6 h-auto transition-all duration-300 hover:scale-105 shadow-xl group"
               >
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
