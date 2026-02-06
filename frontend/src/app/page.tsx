@@ -15,7 +15,7 @@ import {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background transition-colors duration-200">
       <LandingNavbar />
       <main>
         <HeroSection />
