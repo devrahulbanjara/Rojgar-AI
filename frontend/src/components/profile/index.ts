@@ -1,8 +1,3 @@
-/**
- * Profile Components Index
- * Centralized exports for profile-related components
- */
-
 export { ProfileHeader } from './ProfileHeader'
 export { ProfileForm } from './ProfileForm'
 export { ProfileInformationTab } from './ProfileInformationTab'

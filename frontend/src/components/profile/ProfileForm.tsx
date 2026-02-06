@@ -53,16 +53,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-[#0F172A] mb-2">Profile Information</h3>
-        <p className="text-[#475569]">Update your personal information and profile details.</p>
+        <h3 className="text-2xl font-bold text-text-primary mb-2">Profile Information</h3>
+        <p className="text-text-secondary">Update your personal information and profile details.</p>
       </div>
 
       {message && (
         <div
           className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-700 border-green-200'
-              : 'bg-red-50 text-red-700 border-red-200'
+              ? 'bg-success-50 text-success-700 border-success-200'
+              : 'bg-error-50 text-error-700 border-error-200'
           }`}
         >
           {message.type === 'success' ? (
@@ -75,16 +75,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Contact Details Section */}
-        <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
+        {}
+        <div className="bg-background-subtle rounded-xl p-6 border border-border-default">
           <div className="flex items-center gap-2 mb-4">
-            <UserIcon className="w-5 h-5 text-[#3056F5]" />
-            <h4 className="text-lg font-semibold text-[#0F172A]">Contact Details</h4>
+            <UserIcon className="w-5 h-5 text-primary" />
+            <h4 className="text-lg font-semibold text-text-primary">Contact Details</h4>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-[#374151]">
+              <Label htmlFor="name" className="text-sm font-medium text-text-secondary">
                 Full Name
               </Label>
               <Input
@@ -94,26 +94,26 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter your full name"
-                className="w-full h-12 px-4 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 rounded-xl transition-all duration-200"
+                className="w-full h-12 px-4 border-border-default focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all duration-200"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-[#374151]">
+              <Label htmlFor="email" className="text-sm font-medium text-text-secondary">
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-text-muted" />
                 <Input
                   id="email"
                   type="email"
                   value={user.email}
                   disabled
-                  className="w-full h-12 pl-10 bg-gray-50 text-gray-500 border-[#D1D5DB] rounded-xl"
+                  className="w-full h-12 pl-10 bg-background-subtle text-text-muted border-border-default rounded-xl"
                 />
               </div>
-              <p className="text-xs text-[#6B7280] flex items-center gap-1">
+              <p className="text-xs text-text-muted flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
                 Email cannot be changed. Contact support if needed.
               </p>
@@ -121,11 +121,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-[#E5E7EB]">
+        <div className="flex justify-end pt-4 border-t border-border-default">
           <Button
             type="submit"
             disabled={isLoading}
-            className="px-8 py-3 bg-[#3056F5] hover:bg-[#1E40AF] text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 bg-primary hover:bg-primary-700 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">

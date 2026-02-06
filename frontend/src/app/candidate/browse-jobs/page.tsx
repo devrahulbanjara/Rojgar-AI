@@ -9,16 +9,11 @@ import {
   useJobSearch,
 } from '../../../hooks/queries/useJobs'
 import { useAuth } from '../../../hooks/useAuth'
-import { JobCard, JobSearchBar, FilterChips, type FilterType } from '../../../components/jobs'
+import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
 import { Button } from '../../../components/ui/button'
-import {
-  AnimatedContainer,
-  AIPoweredBadge,
-  LoadingSpinner,
-  SkeletonJobCard,
-} from '../../../components/common'
+import { AnimatedContainer, LoadingSpinner, SkeletonJobCard } from '../../../components/common'
 import { RefreshCw, AlertCircle, Search, Filter } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
@@ -106,7 +101,6 @@ export default function Jobs() {
       isLoadingRecommendations,
     })
 
-    // Force immediate fetch when user is authenticated and has ID - this is the key fix
     if (
       user?.id &&
       !isSearchMode &&
@@ -187,10 +181,14 @@ export default function Jobs() {
     setSearchQuery(value)
   }, [])
 
-  const handleDebouncedSearchChange = useCallback((value: string) => {
-    setDebouncedSearchQuery(value)
-    setCurrentPage(1)
-  }, [])
+  // Debounce search query (matches recruiter/candidates pattern)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setCurrentPage(1)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const handleFilterToggle = useCallback((filter: FilterType) => {
     setActiveFilters(prev => {
@@ -231,7 +229,7 @@ export default function Jobs() {
           job_id: job.id.toString(),
         })
       } catch {
-        // Error handled by mutation
+        // Ignore application errors
       }
     },
     [createApplicationMutation]
@@ -281,123 +279,122 @@ export default function Jobs() {
 
   return (
     <AppShell>
-      <div className="space-y-8 pb-12">
-        {/* Enhanced Header with Gradient */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+        {/* Minimalist Page Header */}
         <AnimatedContainer direction="up" delay={0.1}>
-          <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 transition-all duration-300 ease-out">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                    {isSearchMode ? 'Search Results' : 'Find Your Next Role'}
-                  </h1>
-                  <p className="text-lg text-slate-600 max-w-2xl">
-                    {isSearchMode
-                      ? debouncedSearchQuery
-                        ? `Found ${totalJobs} matches for "${debouncedSearchQuery}"`
-                        : 'Search results based on your criteria'
-                      : 'Discover opportunities matched to your skills and experience'}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing || isLoading}
-                  className="flex items-center gap-2 bg-white hover:bg-indigo-50 text-indigo-600 border-indigo-100 hover:border-indigo-200 shadow-sm transition-all duration-200"
-                >
-                  <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
-                  Refresh Jobs
-                </Button>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+                {isSearchMode ? 'Search Results' : 'Find Your Next Role'}
+              </h1>
+              <p className="text-base text-text-secondary max-w-2xl">
+                {isSearchMode
+                  ? debouncedSearchQuery
+                    ? `Found ${totalJobs} matches for "${debouncedSearchQuery}"`
+                    : 'Search results based on your criteria'
+                  : 'Discover opportunities matched to your skills and experience'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className="flex items-center gap-2 bg-background-surface hover:bg-primary-50 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:border-primary-300 dark:hover:border-primary-700 shadow-sm transition-all duration-200"
+            >
+              <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+              Refresh Jobs
+            </Button>
+          </div>
+          <div className="mt-6 border-b border-border-default/60" />
+        </AnimatedContainer>
 
-              {/* Enhanced Search & Filter Section */}
-              <div className="space-y-6 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                <JobSearchBar
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onDebouncedChange={handleDebouncedSearchChange}
-                  loading={isLoadingSearch}
-                  placeholder="Search by job title, company, or skills..."
-                />
+        {/* Search & Filters */}
+        <AnimatedContainer direction="up" delay={0.15}>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
+            <div className="relative w-full lg:w-[420px]">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => handleSearchChange(e.target.value)}
+                placeholder="Search by job title, company, or skills..."
+                className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
+              />
+            </div>
 
-                {/* Filter Chips with more breathing room */}
-                <FilterChips
-                  activeFilters={activeFilters}
-                  onFilterToggle={handleFilterToggle}
-                  onClearAll={handleClearFilters}
-                  showAvailable
-                />
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <FilterChips
+                activeFilters={activeFilters}
+                onFilterToggle={handleFilterToggle}
+                onClearAll={handleClearFilters}
+                showAvailable
+              />
             </div>
           </div>
         </AnimatedContainer>
 
-        {/* Main Content - Job Cards Grid */}
+        {/* Jobs Grid */}
         <AnimatedContainer direction="up" delay={0.3}>
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Section Header */}
+          <div className="w-full">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1 h-8 bg-indigo-600 rounded-full" />
+                <div className="w-1 h-8 bg-primary-600 rounded-full" />
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">
+                  <h2 className="text-xl font-bold text-text-primary">
                     {isLoading
                       ? 'Loading...'
                       : isSearchMode
                         ? 'Search Results'
                         : 'Recommended For You'}
                   </h2>
-                  <p className="text-sm text-slate-500 font-medium">
+                  <p className="text-sm text-text-tertiary font-medium">
                     {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} available
                   </p>
                 </div>
               </div>
-              {!isLoading && jobs.length > 0 && !isSearchMode && (
-                <div className="hidden sm:block">
-                  <AIPoweredBadge />
-                </div>
-              )}
             </div>
 
-            {/* Job Cards Grid with larger gap */}
+            {}
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {isLoading ? (
                 <>
                   {Array.from({ length: 9 }).map((_, index) => (
                     <SkeletonJobCard
                       key={index}
-                      className="h-full hover:shadow-lg hover:border-indigo-200 transition-all duration-300"
+                      className="h-full hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
                     />
                   ))}
                 </>
               ) : error ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-20 space-y-6 bg-red-50/30 rounded-3xl border border-red-100">
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-red-100">
-                    <AlertCircle className="w-10 h-10 text-red-500" />
+                <div className="col-span-full flex flex-col items-center justify-center py-20 space-y-6 bg-error-50/30 dark:bg-error-950/30 rounded-3xl border border-error-100 dark:border-error-900">
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-background-surface shadow-sm border border-error-100 dark:border-error-900">
+                    <AlertCircle className="w-10 h-10 text-error-500" />
                   </div>
                   <div className="text-center max-w-md px-4">
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">Unable to load jobs</h3>
-                    <p className="text-slate-600 mb-6">
+                    <h3 className="text-xl font-bold text-text-primary mb-2">
+                      Unable to load jobs
+                    </h3>
+                    <p className="text-text-secondary mb-6">
                       {error.message ||
                         'Something went wrong while fetching jobs. Please try again.'}
                     </p>
                     <Button
                       onClick={() => window.location.reload()}
-                      className="bg-red-600 hover:bg-red-700 text-white px-8"
+                      className="bg-error-600 hover:bg-error-700 text-white px-8"
                     >
                       Try again
                     </Button>
                   </div>
                 </div>
               ) : jobs.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-24 space-y-6 bg-slate-50/50 rounded-3xl border border-slate-100">
-                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center bg-white shadow-sm border border-indigo-100">
-                    <Search className="w-12 h-12 text-indigo-500" />
+                <div className="col-span-full flex flex-col items-center justify-center py-24 space-y-6 bg-background-subtle/50 rounded-3xl border border-border-subtle">
+                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center bg-background-surface shadow-sm border border-primary-100 dark:border-primary-900">
+                    <Search className="w-12 h-12 text-primary-500" />
                   </div>
                   <div className="text-center max-w-md px-4">
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">No jobs found</h3>
-                    <p className="text-slate-600 mb-6">
+                    <h3 className="text-xl font-bold text-text-primary mb-2">No jobs found</h3>
+                    <p className="text-text-secondary mb-6">
                       We couldn&apos;t find any jobs matching your criteria. Try adjusting your
                       filters or search terms.
                     </p>
@@ -405,7 +402,7 @@ export default function Jobs() {
                       <Button
                         variant="outline"
                         onClick={handleClearFilters}
-                        className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300"
+                        className="flex items-center gap-2 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700"
                       >
                         <Filter className="w-4 h-4" />
                         Clear all filters
@@ -423,23 +420,23 @@ export default function Jobs() {
                       onSelect={handleJobSelect}
                       onApply={handleJobApply}
                       showApplyButton={false}
-                      className="h-full hover:shadow-lg hover:border-indigo-200 transition-all duration-300"
+                      className="h-full hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
                     />
                   ))}
                 </>
               )}
             </div>
 
-            {/* Enhanced Pagination */}
+            {}
             {totalPages > 1 && totalJobs > 0 && (
               <div className="mt-16 flex justify-center">
-                <div className="flex items-center gap-2 bg-white rounded-2xl p-2 shadow-sm border border-slate-100">
+                <div className="flex items-center gap-2 bg-background-surface rounded-2xl p-2 shadow-sm border border-border-subtle">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="h-10 w-10 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 transition-colors"
+                    className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 disabled:opacity-30 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -473,8 +470,8 @@ export default function Jobs() {
                           className={cn(
                             'h-10 w-10 rounded-xl text-sm font-semibold transition-all duration-200',
                             currentPage === pageNum
-                              ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700'
-                              : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
+                              ? 'bg-primary-600 text-white shadow-md hover:bg-primary-700'
+                              : 'text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400'
                           )}
                         >
                           {pageNum}
@@ -488,7 +485,7 @@ export default function Jobs() {
                     size="icon"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
-                    className="h-10 w-10 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 transition-colors"
+                    className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 disabled:opacity-30 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -505,7 +502,7 @@ export default function Jobs() {
           </div>
         </AnimatedContainer>
 
-        {/* Job Details Modal */}
+        {}
         <JobDetailsModal
           job={selectedJob}
           isOpen={isDetailModalOpen}

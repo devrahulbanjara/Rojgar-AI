@@ -48,6 +48,7 @@ from app.services.job_service import JobService
 from app.services.organization.organization_service import OrganizationService
 from app.services.organization.recruiter_crud import RecruiterCrudService
 from app.services.recruiter.activity_events import ActivityEventEmitter
+from app.services.recruiter.candidate_service import RecruiterCandidateService
 from app.services.recruiter.job_generation_service import JobGenerationService
 from app.services.recruiter.reference_jd_service import ReferenceJDService
 from app.services.recruiter.shortlist_service import ShortlistService
@@ -356,3 +357,9 @@ def get_stats_service(
     application_repo: JobApplicationRepository = Depends(get_job_application_repo),
 ) -> StatsService:
     return StatsService(job_repo, application_repo)
+
+
+def get_recruiter_candidate_service(
+    application_repo: JobApplicationRepository = Depends(get_job_application_repo),
+) -> RecruiterCandidateService:
+    return RecruiterCandidateService(application_repo)

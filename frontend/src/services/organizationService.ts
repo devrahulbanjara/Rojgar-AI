@@ -23,46 +23,31 @@ export interface UpdateRecruiterRequest {
 
 const organizationEndpoints = {
   recruiters: {
-    list: '/api/v1/organization/recruiters',
-    detail: (id: string) => `/api/v1/organization/recruiters/${id}`,
-    create: '/api/v1/organization/recruiters',
-    update: (id: string) => `/api/v1/organization/recruiters/${id}`,
-    delete: (id: string) => `/api/v1/organization/recruiters/${id}`,
+    list: '/api/v1/recruiter/organization/recruiters',
+    detail: (id: string) => `/api/v1/recruiter/organization/recruiters/${id}`,
+    create: '/api/v1/recruiter/organization/recruiters',
+    update: (id: string) => `/api/v1/recruiter/organization/recruiters/${id}`,
+    delete: (id: string) => `/api/v1/recruiter/organization/recruiters/${id}`,
   },
 } as const
 
 export class OrganizationService {
-  /**
-   * Get all recruiters for the authenticated organization
-   */
   static async getRecruiters(): Promise<Recruiter[]> {
     return apiClient.get<Recruiter[]>(organizationEndpoints.recruiters.list)
   }
 
-  /**
-   * Get a specific recruiter by ID
-   */
   static async getRecruiterById(id: string): Promise<Recruiter> {
     return apiClient.get<Recruiter>(organizationEndpoints.recruiters.detail(id))
   }
 
-  /**
-   * Create a new recruiter
-   */
   static async createRecruiter(data: CreateRecruiterRequest): Promise<Recruiter> {
     return apiClient.post<Recruiter>(organizationEndpoints.recruiters.create, data)
   }
 
-  /**
-   * Update a recruiter
-   */
   static async updateRecruiter(id: string, data: UpdateRecruiterRequest): Promise<Recruiter> {
     return apiClient.put<Recruiter>(organizationEndpoints.recruiters.update(id), data)
   }
 
-  /**
-   * Delete a recruiter
-   */
   static async deleteRecruiter(id: string): Promise<void> {
     return apiClient.delete<void>(organizationEndpoints.recruiters.delete(id))
   }

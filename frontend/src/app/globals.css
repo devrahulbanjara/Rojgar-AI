@@ -1,83 +1,228 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+/* =============================================================================
+   PREMIUM TYPOGRAPHY SYSTEM - Dual-Font AI-Enterprise Aesthetic
+   
+   Font Roles:
+   - Inter: Global UI & Body (SaaS gold standard, crisp in light/dark modes)
+   - Plus Jakarta Sans: Headings & Branding (premium geometric sans-serif)
+   - JetBrains Mono: Agentic/AI Data (signals computed agent data)
+   ============================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ConvexHire Design System - Professional recruitment platform with modern aesthetics */
+/* =============================================================================
+   ConvexHire Premium Design System
+   "Sophisticated Intelligence" - Premium AI-powered recruitment platform
+   ============================================================================= */
 
 @layer base {
   :root {
-    /* Core Colors */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* =========================================================================
+       FOUNDATION - Background Hierarchy
+       ========================================================================= */
+    --background: 210 20% 98%; /* #FAFBFC - Softer than pure white */
+    --background-base: 210 20% 98%; /* #FAFBFC */
+    --background-surface: 0 0% 100%; /* #FFFFFF - Cards, modals, elevated surfaces */
+    --background-subtle: 210 40% 96%; /* #F1F5F9 - Hover states, disabled fields */
+    --background-muted: 214 32% 91%; /* #E2E8F0 - Active/selected subtle states */
 
-    /* Brand Colors */
-    --brand: 221 83% 53%;
-    --brand-dark: 221 83% 43%;
-    --brand-light: 221 83% 63%;
-    --brand-foreground: 0 0% 100%;
+    /* =========================================================================
+       FOUNDATION - Text Hierarchy (60-30-10 Rule)
+       ========================================================================= */
+    --foreground: 222 47% 11%; /* #0F172A - Primary content */
+    --text-primary: 222 47% 11%; /* #0F172A - Headings (60% of text) */
+    --text-secondary: 215 25% 27%; /* #334155 - Body text (30%) */
+    --text-tertiary: 215 16% 47%; /* #64748B - Metadata, labels (10%) */
+    --text-muted: 215 20% 65%; /* #94A3B8 - Disabled, placeholders */
+    --text-inverse: 0 0% 100%; /* #FFFFFF - Text on dark backgrounds */
 
-    /* Card & Surface */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --card-hover: 210 40% 98%;
+    /* =========================================================================
+       FOUNDATION - Border System
+       ========================================================================= */
+    --border: 214 32% 91%; /* #E2E8F0 - Standard borders */
+    --border-subtle: 210 40% 96%; /* #F1F5F9 - Barely visible dividers */
+    --border-default: 214 32% 91%; /* #E2E8F0 - Standard borders, inputs */
+    --border-strong: 215 20% 82%; /* #CBD5E1 - Emphasis, active states */
+    --input: 214 32% 91%; /* #E2E8F0 - Input borders */
+    --ring: 221 83% 53%; /* #3B82F6 - Focus rings */
 
-    /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    /* =========================================================================
+       BRAND & PRIMARY - "Professional Intelligence"
+       Royal blue, not bright - communicates trust and professionalism
+       ========================================================================= */
+    --brand: 221 83% 53%; /* #3B82F6 - Brand color */
+    --brand-dark: 224 76% 48%; /* #1D4ED8 - Darker brand */
+    --brand-light: 213 94% 68%; /* #60A5FA - Lighter brand */
+    --brand-foreground: 0 0% 100%; /* White text on brand */
 
-    /* Primary - Deep professional blue */
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 221 83% 43%;
+    --primary: 221 83% 53%; /* #3B82F6 - Blue-500 PRIMARY */
+    --primary-50: 214 100% 97%; /* #EFF6FF - Subtle backgrounds */
+    --primary-100: 214 95% 93%; /* #DBEAFE - Hover backgrounds */
+    --primary-200: 213 97% 87%; /* #BFDBFE - Borders, dividers */
+    --primary-300: 212 96% 78%; /* #93C5FD - Disabled states */
+    --primary-400: 213 94% 68%; /* #60A5FA - Subtle accents */
+    --primary-500: 217 91% 60%; /* #3B82F6 - PRIMARY BRAND */
+    --primary-600: 221 83% 53%; /* #2563EB - Hover, active (DEFAULT) */
+    --primary-700: 224 76% 48%; /* #1D4ED8 - Pressed states */
+    --primary-800: 226 71% 40%; /* #1E40AF - Depth */
+    --primary-900: 224 64% 33%; /* #1E3A8A - Darkest variant */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary-hover: 224 76% 48%; /* #1D4ED8 */
 
-    /* Secondary - Soft neutral */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --secondary-hover: 210 40% 91%;
+    /* =========================================================================
+       AI AGENT PURPLE - "Intelligent Assistance"
+       Sophisticated purple for AI-powered features
+       ========================================================================= */
+    --ai: 271 91% 65%; /* #A855F7 - Purple-500 AI ACCENT */
+    --ai-50: 270 100% 98%; /* #FAF5FF - AI insight backgrounds */
+    --ai-100: 269 100% 95%; /* #F3E8FF - AI card backgrounds */
+    --ai-200: 269 100% 92%; /* #E9D5FF - AI borders */
+    --ai-300: 269 97% 85%; /* #D8B4FE - Disabled AI features */
+    --ai-400: 270 95% 75%; /* #C084FC - Subtle AI accents */
+    --ai-500: 271 91% 65%; /* #A855F7 - AI ACCENT (DEFAULT) */
+    --ai-600: 271 81% 56%; /* #9333EA - AI hover */
+    --ai-700: 272 72% 47%; /* #7E22CE - AI active */
+    --ai-800: 273 67% 39%; /* #6B21A8 - Deep AI */
+    --ai-900: 274 66% 32%; /* #581C87 - Darkest */
+    --ai-foreground: 0 0% 100%; /* White text on AI purple */
 
-    /* Muted - For subtle backgrounds */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* =========================================================================
+       SUCCESS - "Positive Outcomes" (Teal System - Sophisticated)
+       ========================================================================= */
+    --success: 173 80% 40%; /* #14B8A6 - Teal-500 SUCCESS */
+    --success-50: 166 76% 97%; /* #F0FDFA */
+    --success-100: 167 85% 89%; /* #CCFBF1 */
+    --success-200: 168 84% 78%; /* #99F6E4 */
+    --success-300: 171 77% 64%; /* #5EEAD4 */
+    --success-400: 172 66% 50%; /* #2DD4BF */
+    --success-500: 173 80% 40%; /* #14B8A6 - SUCCESS (DEFAULT) */
+    --success-600: 175 84% 32%; /* #0D9488 - Hover/Active */
+    --success-700: 175 77% 26%; /* #0F766E - Pressed */
+    --success-800: 176 69% 22%; /* #115E59 - Deep */
+    --success-900: 176 61% 19%; /* #134E4A - Darkest */
+    --success-foreground: 0 0% 100%; /* White text on success */
 
-    /* Accent - Fresh green for success/positive */
-    --accent: 142 71% 45%;
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 142 71% 35%;
+    /* =========================================================================
+       WARNING - "Requires Attention" (Amber System)
+       ========================================================================= */
+    --warning: 38 92% 50%; /* #F59E0B - Amber-500 WARNING */
+    --warning-50: 48 100% 96%; /* #FFFBEB */
+    --warning-100: 48 96% 89%; /* #FEF3C7 */
+    --warning-200: 48 97% 77%; /* #FDE68A */
+    --warning-300: 46 97% 65%; /* #FCD34D */
+    --warning-400: 43 96% 56%; /* #FBBF24 */
+    --warning-500: 38 92% 50%; /* #F59E0B - WARNING (DEFAULT) */
+    --warning-600: 32 95% 44%; /* #D97706 - Hover */
+    --warning-700: 26 90% 37%; /* #B45309 - Active */
+    --warning-800: 23 83% 31%; /* #92400E */
+    --warning-900: 22 78% 26%; /* #78350F */
+    --warning-foreground: 0 0% 100%; /* White text on warning */
 
-    /* Success/Warning/Destructive */
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* =========================================================================
+       DESTRUCTIVE/ERROR - "Critical Actions" (Red System)
+       ========================================================================= */
+    --destructive: 0 84% 60%; /* #EF4444 - Red-500 ERROR */
+    --error: 0 84% 60%; /* #EF4444 - Alias */
+    --error-50: 0 86% 97%; /* #FEF2F2 */
+    --error-100: 0 93% 94%; /* #FEE2E2 */
+    --error-200: 0 96% 89%; /* #FECACA */
+    --error-300: 0 94% 82%; /* #FCA5A5 */
+    --error-400: 0 91% 71%; /* #F87171 */
+    --error-500: 0 84% 60%; /* #EF4444 - ERROR (DEFAULT) */
+    --error-600: 0 72% 51%; /* #DC2626 - Hover */
+    --error-700: 0 74% 42%; /* #B91C1C - Active */
+    --error-800: 0 70% 35%; /* #991B1B */
+    --error-900: 0 63% 31%; /* #7F1D1D */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
-    /* Borders & Inputs */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    /* =========================================================================
+       INFORMATION - "Neutral Actions" (Sky Blue System)
+       ========================================================================= */
+    --info: 199 89% 48%; /* #0EA5E9 - Sky-500 INFO */
+    --info-50: 204 100% 97%; /* #F0F9FF */
+    --info-100: 204 94% 94%; /* #E0F2FE */
+    --info-200: 201 94% 86%; /* #BAE6FD */
+    --info-300: 199 95% 74%; /* #7DD3FC */
+    --info-400: 198 93% 60%; /* #38BDF8 */
+    --info-500: 199 89% 48%; /* #0EA5E9 - INFO (DEFAULT) */
+    --info-600: 200 98% 39%; /* #0284C7 - Hover */
+    --info-700: 201 96% 32%; /* #0369A1 */
+    --info-foreground: 0 0% 100%; /* White text on info */
 
-    /* Gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(221 83% 53%), hsl(217 91% 60%));
+    /* =========================================================================
+       SEMANTIC UI COLORS
+       ========================================================================= */
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 222 47% 11%; /* Dark text on cards */
+    --card-hover: 210 40% 98%; /* Subtle hover state */
+
+    --popover: 0 0% 100%; /* White popovers */
+    --popover-foreground: 222 47% 11%; /* Dark text on popovers */
+
+    --secondary: 210 40% 96%; /* #F1F5F9 - Soft neutral */
+    --secondary-foreground: 222 47% 11%; /* Dark text */
+    --secondary-hover: 214 32% 91%; /* #E2E8F0 */
+
+    --muted: 210 40% 96%; /* #F1F5F9 - Subtle backgrounds */
+    --muted-foreground: 215 16% 47%; /* #64748B - Muted text */
+
+    --accent: 173 80% 40%; /* Teal accent (same as success) */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --accent-hover: 175 84% 32%; /* Darker teal */
+
+    /* =========================================================================
+       GRADIENTS
+       ========================================================================= */
+    --gradient-brand: linear-gradient(135deg, hsl(221 83% 53%), hsl(224 76% 48%));
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(224 76% 48%));
+    --gradient-primary-hover: linear-gradient(135deg, hsl(224 76% 48%), hsl(226 71% 40%));
+    --gradient-ai: linear-gradient(135deg, hsl(271 91% 65%), hsl(271 81% 56%));
+    --gradient-ai-hover: linear-gradient(135deg, hsl(271 81% 56%), hsl(272 72% 47%));
+    --gradient-success: linear-gradient(135deg, hsl(173 80% 40%), hsl(175 84% 32%));
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
     --gradient-hero: linear-gradient(135deg, hsl(221 83% 53%), hsl(217 91% 60%), hsl(213 94% 68%));
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.07);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.1);
+    /* =========================================================================
+       OVERLAYS
+       ========================================================================= */
+    --overlay-soft: rgba(15, 23, 42, 0.05);
+    --overlay-medium: rgba(15, 23, 42, 0.25);
+    --overlay-strong: rgba(15, 23, 42, 0.5);
+    --overlay-intense: rgba(15, 23, 42, 0.75);
 
-    /* Radius */
+    /* =========================================================================
+       SHADOWS
+       ========================================================================= */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --shadow-primary: 0 4px 14px 0 rgba(37, 99, 235, 0.2);
+    --shadow-ai: 0 4px 14px 0 rgba(168, 85, 247, 0.15);
+    --shadow-success: 0 4px 14px 0 rgba(20, 184, 166, 0.15);
+
+    /* =========================================================================
+       FOCUS RINGS
+       ========================================================================= */
+    --focus-ring-primary: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    --focus-ring-ai: 0 0 0 3px rgba(168, 85, 247, 0.15);
+    --focus-ring-success: 0 0 0 3px rgba(20, 184, 166, 0.15);
+    --focus-ring-error: 0 0 0 3px rgba(239, 68, 68, 0.2);
+
+    /* =========================================================================
+       RADIUS & TRANSITIONS
+       ========================================================================= */
     --radius: 0.75rem;
     --radius-sm: 0.5rem;
     --radius-lg: 1rem;
     --radius-xl: 1.5rem;
 
-    /* Animations - Clean, smooth, fluid, minimal */
     --transition-fast: 120ms;
     --transition-base: 200ms;
     --transition-slow: 300ms;
@@ -86,56 +231,124 @@
     --ease-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
+  /* ===========================================================================
+     DARK THEME
+     Elevation through lightness, not shadows
+     =========================================================================== */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 0 0% 95%;
+    /* Backgrounds - Slate palette, elevation through lighter surfaces */
+    --background: 222 84% 5%; /* #020617 - Slate-950 deepest */
+    --background-base: 222 84% 5%; /* #020617 */
+    --background-surface: 222 47% 11%; /* #0F172A - Slate-900 cards */
+    --background-elevated: 215 25% 27%; /* #1E293B - Slate-800 modals */
+    --background-subtle: 215 25% 27%; /* #1E293B - Hover states */
+    --background-muted: 215 25% 27%; /* #1E293B */
 
-    --brand: 217 91% 60%;
-    --brand-dark: 221 83% 53%;
-    --brand-light: 213 94% 68%;
-    --brand-foreground: 222 47% 11%;
+    /* Text - Lighter for dark backgrounds */
+    --foreground: 210 40% 96%; /* #F1F5F9 - Slate-100 */
+    --text-primary: 210 40% 96%; /* #F1F5F9 */
+    --text-secondary: 215 20% 82%; /* #CBD5E1 - Slate-300 */
+    --text-tertiary: 215 20% 65%; /* #94A3B8 - Slate-400 */
+    --text-muted: 215 16% 47%; /* #64748B - Slate-500 */
+    --text-inverse: 222 47% 11%; /* #0F172A */
 
-    --card: 222 47% 15%;
-    --card-foreground: 0 0% 95%;
-    --card-hover: 222 47% 18%;
+    /* Borders - Darker */
+    --border: 215 25% 27%; /* #1E293B - Slate-800 */
+    --border-subtle: 215 25% 27%; /* #1E293B */
+    --border-default: 215 25% 27%; /* #334155 - Slate-700 */
+    --border-strong: 215 20% 35%; /* #475569 - Slate-600 */
+    --input: 215 25% 27%; /* #1E293B */
+    --ring: 213 94% 68%; /* #60A5FA - Blue-400 */
 
-    --popover: 222 47% 15%;
-    --popover-foreground: 0 0% 95%;
+    /* Brand - Lighter for dark backgrounds */
+    --brand: 213 94% 68%; /* #60A5FA */
+    --brand-dark: 217 91% 60%; /* #3B82F6 */
+    --brand-light: 212 96% 78%; /* #93C5FD */
+    --brand-foreground: 222 47% 11%; /* Dark text on light brand */
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --primary-hover: 217 91% 70%;
+    /* Primary - Desaturated for eye comfort */
+    --primary: 213 94% 68%; /* #60A5FA - Blue-400 */
+    --primary-50: 217 33% 17%; /* Dark variant */
+    --primary-100: 217 33% 22%;
+    --primary-600: 213 94% 68%; /* Blue-400 - Lighter for dark */
+    --primary-700: 217 91% 60%; /* Blue-500 - Hover */
+    --primary-foreground: 222 47% 11%; /* Dark text */
+    --primary-hover: 217 91% 60%;
+
+    /* AI Purple - Lighter for dark backgrounds */
+    --ai: 270 95% 75%; /* #C084FC - Purple-400 */
+    --ai-50: 274 66% 12%; /* Dark variant */
+    --ai-100: 274 66% 17%;
+    --ai-600: 270 95% 75%; /* Purple-400 - Lighter */
+    --ai-700: 271 91% 65%; /* Purple-500 */
+    --ai-foreground: 222 47% 11%;
+
+    /* Success - Lighter teal */
+    --success: 172 66% 50%; /* #2DD4BF - Teal-400 */
+    --success-50: 176 61% 12%;
+    --success-600: 172 66% 50%;
+    --success-foreground: 222 47% 11%;
+
+    /* Warning - Lighter amber */
+    --warning: 43 96% 56%; /* #FBBF24 - Amber-400 */
+    --warning-50: 22 78% 12%;
+    --warning-600: 43 96% 56%;
+    --warning-foreground: 222 47% 11%;
+
+    /* Error - Softer red */
+    --destructive: 0 91% 71%; /* #F87171 - Red-400 */
+    --error: 0 91% 71%;
+    --error-50: 0 63% 15%;
+    --error-600: 0 91% 71%;
+    --destructive-foreground: 222 47% 11%;
+
+    /* Info - Lighter sky */
+    --info: 198 93% 60%; /* #38BDF8 - Sky-400 */
+    --info-50: 201 96% 12%;
+    --info-600: 198 93% 60%;
+    --info-foreground: 222 47% 11%;
+
+    /* Semantic UI */
+    --card: 222 47% 11%; /* Slate-900 */
+    --card-foreground: 210 40% 96%;
+    --card-hover: 215 25% 15%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 96%;
 
     --secondary: 217 33% 17%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary-foreground: 210 40% 96%;
     --secondary-hover: 217 33% 22%;
 
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 142 71% 45%;
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 142 71% 55%;
+    --accent: 172 66% 50%;
+    --accent-foreground: 222 47% 11%;
+    --accent-hover: 173 80% 40%;
 
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 95%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
-
-    --gradient-brand: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    /* Gradients - Lighter for dark mode */
+    --gradient-brand: linear-gradient(135deg, hsl(213 94% 68%), hsl(217 91% 60%));
+    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(217 91% 60%));
+    --gradient-ai: linear-gradient(135deg, hsl(270 95% 75%), hsl(271 91% 65%));
     --gradient-subtle: linear-gradient(180deg, hsl(222 47% 11%), hsl(222 47% 15%));
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%), hsl(209 97% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(213 94% 68%), hsl(217 91% 60%), hsl(212 96% 78%));
 
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.2);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.4);
+    /* Overlays - Adjusted for dark */
+    --overlay-soft: rgba(248, 250, 252, 0.05);
+    --overlay-medium: rgba(248, 250, 252, 0.1);
+    --overlay-strong: rgba(0, 0, 0, 0.6);
+    --overlay-intense: rgba(0, 0, 0, 0.8);
+
+    /* Shadows - Darker for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+
+    /* Focus Rings - Stronger for dark */
+    --focus-ring-primary: 0 0 0 3px rgba(96, 165, 250, 0.3);
+    --focus-ring-ai: 0 0 0 3px rgba(192, 132, 252, 0.25);
   }
 }
 
@@ -144,23 +357,61 @@
     @apply border-border;
   }
 
+  /* ==========================================================================
+     BODY - Inter for Global UI (crisp in light/dark, handles high-density data)
+     ========================================================================== */
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-optical-sizing: auto; /* Variable font optical sizing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
+  /* ==========================================================================
+     HEADINGS - Plus Jakarta Sans for Premium Branding
+     Tighter letter-spacing for luxury tech brand feel (Apple/Stripe aesthetic)
+     ========================================================================== */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    @apply font-semibold;
-    letter-spacing: -0.5%;
+    @apply font-display font-semibold;
+    letter-spacing: -0.02em; /* Premium tight headings */
+    font-optical-sizing: auto;
   }
 
+  /* Extra tight for large hero headings */
+  h1 {
+    letter-spacing: -0.04em;
+  }
+
+  h2 {
+    letter-spacing: -0.03em;
+  }
+
+  /* ==========================================================================
+     BODY TEXT - The 1.5x Rule for readability
+     Prevents "text-wall fatigue" for recruiters reading profiles
+     ========================================================================== */
   p {
+    line-height: 1.6; /* Optimal for job descriptions & candidate summaries */
+  }
+
+  /* Job descriptions and long-form content */
+  .prose p,
+  .job-description p,
+  .candidate-summary p {
     line-height: 1.7;
   }
+
+  /* ==========================================================================
+     COLOR-CONTRAST HIERARCHY
+     Primary Text: Slate-800 (#1E293B) instead of pure black
+     Secondary Text: Slate-500 (#64748B) for metadata
+     ========================================================================== */
 
   /* Smooth scrolling for anchor links */
   html {
@@ -230,6 +481,95 @@
       linear-gradient(white, white) padding-box,
       var(--gradient-brand) border-box;
     border: 2px solid transparent;
+  }
+
+  /* AI Content Accent - Purple left border for AI-generated content */
+  .ai-content-accent {
+    @apply border-l-[3px];
+    border-left-color: hsl(var(--ai-500));
+  }
+
+  /* ==========================================================================
+     AI/AGENTIC TYPOGRAPHY - JetBrains Mono for Machine Logic
+     Use for: Score Breakdowns, AI Logs, Reasoning sections, Match Scores
+     Signals to user: "This data was computed by an agent"
+     ========================================================================== */
+  .ai-text,
+  .agent-text,
+  .ai-reasoning,
+  .ai-score,
+  .ai-log {
+    @apply font-mono;
+    font-feature-settings:
+      'liga' 1,
+      'calt' 1; /* Enable ligatures */
+  }
+
+  /* AI Score Display - Prominent monospace for match percentages */
+  .ai-score-display {
+    @apply font-mono font-semibold;
+    color: hsl(var(--ai-500));
+    letter-spacing: 0.02em;
+  }
+
+  /* AI Labels - Small caps for "AI Suggestion", "Match Score" labels */
+  .ai-label {
+    @apply font-mono text-xs font-medium uppercase;
+    color: hsl(var(--ai-500));
+    letter-spacing: 0.1em;
+  }
+
+  /* AI Reasoning Block - For explanations and breakdowns */
+  .ai-reasoning-block {
+    @apply font-mono text-sm;
+    @apply bg-ai-50 dark:bg-ai-900/20 rounded-lg p-4;
+    @apply border-l-[3px];
+    border-left-color: hsl(var(--ai-500));
+    line-height: 1.6;
+  }
+
+  /* AI Pulse Animation for processing states */
+  .ai-pulse {
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+    animation: ai-pulse-animation 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes ai-pulse-animation {
+    0%,
+    100% {
+      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(168, 85, 247, 0.05);
+    }
+  }
+
+  /* Primary CTA Button with gradient */
+  .btn-primary-gradient {
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-primary);
+    @apply text-white font-medium transition-all duration-200;
+  }
+
+  .btn-primary-gradient:hover {
+    background: var(--gradient-primary-hover);
+    @apply shadow-lg -translate-y-0.5;
+  }
+
+  .btn-primary-gradient:active {
+    @apply translate-y-0 shadow-sm;
+  }
+
+  /* AI Button with gradient */
+  .btn-ai-gradient {
+    background: var(--gradient-ai);
+    box-shadow: var(--shadow-ai);
+    @apply text-white font-medium transition-all duration-200;
+  }
+
+  .btn-ai-gradient:hover {
+    background: var(--gradient-ai-hover);
+    @apply shadow-lg -translate-y-0.5;
   }
 }
 
@@ -350,6 +690,10 @@
     box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
   }
 
+  .hover-glow-ai:hover {
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.2);
+  }
+
   .hover-rotate {
     transition: transform var(--transition-base) var(--ease-smooth);
   }
@@ -370,6 +714,11 @@
   /* Focus states */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2;
+  }
+
+  .focus-ring-ai {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: hsl(var(--ai-500) / 0.2);
   }
 
   /* Smooth transitions - Clean, smooth, fluid, minimal */
@@ -494,6 +843,64 @@
     -webkit-line-clamp: 3;
   }
 
+  /* ==========================================================================
+     PREMIUM HEADING UTILITIES
+     For hero sections, landing pages, and high-impact areas
+     ========================================================================== */
+
+  /* Hero heading - Extra tight for maximum impact */
+  .heading-hero {
+    @apply font-display font-bold;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+
+  /* Section heading - Standard premium heading */
+  .heading-section {
+    @apply font-display font-semibold;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+
+  /* Card heading - Slightly less tight */
+  .heading-card {
+    @apply font-display font-semibold;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+
+  /* Subheading - Inter for body-adjacent headings */
+  .heading-sub {
+    @apply font-sans font-medium;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+
+  /* ==========================================================================
+     TEXT HIERARCHY UTILITIES
+     Semantic text styles following 60-30-10 rule
+     ========================================================================== */
+
+  /* Primary text - Main content (Slate-800 instead of pure black) */
+  .text-content-primary {
+    @apply text-text-primary;
+  }
+
+  /* Secondary text - Supporting content */
+  .text-content-secondary {
+    @apply text-text-secondary;
+  }
+
+  /* Tertiary text - Metadata, timestamps, labels */
+  .text-content-tertiary {
+    @apply text-text-tertiary;
+  }
+
+  /* AI accent text - Purple for AI-related labels */
+  .text-ai-accent {
+    color: hsl(var(--ai-500));
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -516,10 +923,32 @@
     }
   }
 
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @keyframes slideInRight {
     from {
       opacity: 0;
       transform: translateX(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
     }
     to {
       opacity: 1;
@@ -538,6 +967,121 @@
     }
   }
 
+  @keyframes scaleOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.02);
+    }
+    70% {
+      transform: scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes zoomOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes gradient {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
   @keyframes shimmer {
     0% {
       background-position: -200px 0;
@@ -546,4 +1090,80 @@
       background-position: calc(200px + 100%) 0;
     }
   }
+}
+
+/* =============================================================================
+   Dark Mode Transitions & Typography Adjustments
+   Smooth color transitions when switching between light and dark themes
+   ============================================================================= */
+html.dark {
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: light;
+}
+
+/* =============================================================================
+   DARK MODE TYPOGRAPHY - "Premium Sharpness"
+   White text on dark backgrounds appears thicker than it is.
+   Drop font weight by one level to maintain premium sharpness.
+   ============================================================================= */
+.dark body {
+  font-weight: 400; /* Lighter for dark mode */
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  font-weight: 500; /* Semi-bold becomes medium in dark mode */
+}
+
+/* Ensure crisp rendering in dark mode */
+.dark * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth theme transitions */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Disable transitions on page load to prevent flash */
+html.no-transitions *,
+html.no-transitions *::before,
+html.no-transitions *::after {
+  transition: none !important;
+}
+
+/* Dark mode skeleton shimmer */
+.dark .animate-pulse {
+  opacity: 0.3;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(var(--background-base));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--border-strong));
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--text-muted));
 }

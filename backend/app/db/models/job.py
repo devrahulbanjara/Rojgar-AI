@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
@@ -9,6 +10,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core import get_datetime
 
 from . import Base
+
+
+class ShortlistStatus(StrEnum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
 
 if TYPE_CHECKING:
     from .organization import Organization
@@ -67,6 +75,9 @@ class JobPosting(Base):
     status: Mapped[str] = mapped_column(String, default="active", nullable=False)
     is_indexed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     auto_shortlist: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    shortlist_status: Mapped[str] = mapped_column(
+        String, default=ShortlistStatus.NOT_STARTED, nullable=False
+    )
     posted_date: Mapped[date] = mapped_column(Date, nullable=False)
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

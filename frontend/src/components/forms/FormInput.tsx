@@ -1,8 +1,3 @@
-/**
- * Form Input Component
- * Reusable form input with validation and icons
- */
-
 import React, { useState, memo, useCallback } from 'react'
 import { Input } from '../ui/input'
 import { Eye, EyeOff } from 'lucide-react'
@@ -57,7 +52,7 @@ export const FormInput = memo<FormInputProps>(
             onChange={onChange}
             disabled={disabled}
             className={`${IconComponent ? 'pl-10' : ''} ${isPassword ? 'pr-10' : ''} ${
-              error ? 'border-red-500' : ''
+              error ? 'border-red-500 dark:border-red-400' : ''
             } transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1) hover:scale-[1.01] focus:scale-[1.01]`}
             required={required}
           />
@@ -71,7 +66,9 @@ export const FormInput = memo<FormInputProps>(
             </button>
           )}
         </div>
-        {error && <p className="text-sm text-red-600 animate-fade-in-down">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in-down">{error}</p>
+        )}
       </div>
     )
   }

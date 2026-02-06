@@ -1,5 +1,3 @@
-"""Public job browsing endpoints for candidates."""
-
 import uuid
 from typing import Annotated
 

@@ -26,20 +26,20 @@ export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
 
   const content = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Very subtle backdrop blur - covers entire viewport */}
+      {}
       <div
         className="fixed inset-0 bg-black/5 backdrop-blur-[3px] animate-in fade-in duration-200"
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Centered Panel */}
-      <div className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
+      {}
+      <div className="relative w-full max-w-3xl max-h-[90vh] bg-background-surface rounded-2xl shadow-2xl border border-default animate-in fade-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
         {!hideClose && (
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 p-2 rounded-xl hover:bg-gray-100 transition-colors z-50"
+            className="absolute right-4 top-4 p-2 rounded-xl hover:bg-background-subtle transition-colors z-50"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-text-tertiary" />
           </button>
         )}
         {children}
@@ -47,7 +47,6 @@ export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
     </div>
   )
 
-  // Render to document body to escape sidebar container
   if (typeof document !== 'undefined') {
     return createPortal(content, document.body)
   }
@@ -74,7 +73,7 @@ export function SheetHeader({
   return (
     <div
       className={cn(
-        'px-8 py-6 border-b bg-gradient-to-b from-gray-50 to-white flex-shrink-0',
+        'px-8 py-6 border-b bg-gradient-to-b from-background-subtle to-background-surface flex-shrink-0',
         className
       )}
     >
@@ -90,7 +89,7 @@ export function SheetTitle({
   children: React.ReactNode
   className?: string
 }) {
-  return <h2 className={cn('text-xl font-bold text-gray-900', className)}>{children}</h2>
+  return <h2 className={cn('text-xl font-bold text-text-primary', className)}>{children}</h2>
 }
 
 export function SheetDescription({
@@ -100,5 +99,5 @@ export function SheetDescription({
   children: React.ReactNode
   className?: string
 }) {
-  return <p className={cn('text-sm text-gray-500 mt-1', className)}>{children}</p>
+  return <p className={cn('text-sm text-text-tertiary mt-1', className)}>{children}</p>
 }

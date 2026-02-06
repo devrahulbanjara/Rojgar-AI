@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="docs/ConvexHire.png" alt="ConvexHire Logo" width="800"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="frontend/public/logo-light.svg">
+    <img src="frontend/public/logo-light.svg" alt="ConvexHire Logo" width="400"/>
+  </picture>
   
   ### Use AI to Recruit Humans
   
@@ -71,6 +75,23 @@ cd frontend && bun install && bun run dev
 
 > [!NOTE]
 > The backend runs on port 8000 and the frontend on port 3000 by default.
+
+---
+
+## 🎨 Design System
+
+<table>
+<tr>
+<td width="80" align="center">
+<img src="https://api.iconify.design/fluent:design-ideas-24-filled.svg?color=%233b82f6" width="40" height="40" alt="Design"/>
+</td>
+<td>
+ConvexHire features a premium <strong>"Sophisticated Intelligence"</strong> design system with a tri-font typography system (Inter for UI, Plus Jakarta Sans for headings, JetBrains Mono for AI data), carefully crafted color palettes for light/dark modes, and AI-specific visual patterns that distinguish human interface from machine logic.
+</td>
+</tr>
+</table>
+
+> 📖 **[View Full Design Documentation →](./DESIGN.md)** — Typography, colors, spacing, shadows, animations, dark mode, and component patterns.
 
 ---
 
