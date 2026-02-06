@@ -17,8 +17,23 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
+        // =======================================================================
+        // PREMIUM TYPOGRAPHY SYSTEM - Dual-font for AI-Enterprise Aesthetic
+        // =======================================================================
+        // Global UI & Body - The gold standard for SaaS
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Headings & Branding - Premium geometric sans-serif
+        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        // Agentic/AI Data - For Score Breakdowns, AI Logs, Reasoning sections
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        // Legacy aliases for backward compatibility
         jakarta: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
         inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      letterSpacing: {
+        // Premium tight headings (-0.02em to -0.04em for luxury tech brand feel)
+        tightest: '-0.04em',
+        tighter: '-0.02em',
       },
       colors: {
         // =======================================================================

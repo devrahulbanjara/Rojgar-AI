@@ -86,10 +86,10 @@ export function PricingSection() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background-subtle text-text-secondary text-sm font-medium mb-6">
             Pricing
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight mb-6">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-text-primary tracking-tightest mb-6">
             Start free, scale as you grow
           </h2>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed font-sans">
             No hidden fees. Choose the plan that fits your needs.
           </p>
         </motion.div>
@@ -132,14 +132,14 @@ export function PricingSection() {
                       <Icon className={`w-5 h-5 ${tier.iconColor}`} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-text-primary">{tier.name}</h3>
+                      <h3 className="text-lg font-display font-bold text-text-primary tracking-tight">{tier.name}</h3>
                       <p className="text-sm text-text-tertiary">{tier.description}</p>
                     </div>
                   </div>
 
                   {/* Price */}
                   <div className="flex items-baseline gap-1 mb-8">
-                    <span className="text-3xl font-bold text-text-primary">{tier.price}</span>
+                    <span className="text-3xl font-display font-bold text-text-primary tracking-tight">{tier.price}</span>
                     {tier.period && (
                       <span className="text-text-tertiary text-sm">{tier.period}</span>
                     )}
