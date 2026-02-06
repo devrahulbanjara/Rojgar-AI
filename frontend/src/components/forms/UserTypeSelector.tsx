@@ -24,8 +24,8 @@ export const UserTypeSelector: React.FC<UserTypeSelectorProps> = ({
         disabled={disabled}
         className={`h-12 rounded-xl border-[1.5px] flex items-center justify-center gap-2 text-[15px] font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
           value === USER_TYPES.CANDIDATE
-            ? 'bg-[#3056F5] border-[#3056F5] text-white shadow-md'
-            : 'bg-white border-[#E5E7EB] text-[#475569] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
+            ? 'bg-primary border-primary text-primary-foreground shadow-md'
+            : 'bg-background-surface border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle'
         }`}
       >
         <User className="h-4 w-4" />
@@ -37,8 +37,8 @@ export const UserTypeSelector: React.FC<UserTypeSelectorProps> = ({
         disabled={disabled}
         className={`h-12 rounded-xl border-[1.5px] flex items-center justify-center gap-2 text-[15px] font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
           value === 'organization'
-            ? 'bg-[#3056F5] border-[#3056F5] text-white shadow-md'
-            : 'bg-white border-[#E5E7EB] text-[#475569] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
+            ? 'bg-primary border-primary text-primary-foreground shadow-md'
+            : 'bg-background-surface border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle'
         }`}
       >
         <Building2 className="h-4 w-4" />

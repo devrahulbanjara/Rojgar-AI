@@ -41,23 +41,35 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
   }, [])
 
   const socialPlatforms = [
-    { value: 'GitHub', label: 'GitHub', icon: <SiGithub className="w-4 h-4" style={{ color: '#24292e' }} /> },
-    { value: 'LinkedIn', label: 'LinkedIn', icon: <SiLinkedin className="w-4 h-4" style={{ color: '#0A66C2' }} /> },
-    { value: 'Portfolio', label: 'Portfolio', icon: <Globe className="w-4 h-4" style={{ color: '#6366F1' }} /> }
+    {
+      value: 'GitHub',
+      label: 'GitHub',
+      icon: <SiGithub className="w-4 h-4 text-social-github" />,
+    },
+    {
+      value: 'LinkedIn',
+      label: 'LinkedIn',
+      icon: <SiLinkedin className="w-4 h-4 text-social-linkedin" />,
+    },
+    {
+      value: 'Portfolio',
+      label: 'Portfolio',
+      icon: <Globe className="w-4 h-4 text-ai-500" />,
+    },
   ]
 
   const getIconForType = (type: string, size: 'sm' | 'md' = 'sm') => {
     const iconSize = size === 'sm' ? 'w-5 h-5' : 'w-6 h-6'
     const iconType = type.toLowerCase()
-    
+
     if (iconType.includes('linkedin')) {
-      return <SiLinkedin className={iconSize} style={{ color: '#0A66C2' }} />
+      return <SiLinkedin className={`${iconSize} text-social-linkedin`} />
     }
     if (iconType.includes('github')) {
-      return <SiGithub className={iconSize} style={{ color: '#24292e' }} />
+      return <SiGithub className={`${iconSize} text-social-github`} />
     }
     // Portfolio/Website
-    return <Globe className={iconSize} style={{ color: '#6366F1' }} />
+    return <Globe className={`${iconSize} text-ai-500`} />
   }
 
   const getPlatformName = (type: string) => {
@@ -144,15 +156,15 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
   }
 
   return (
-    <div className="bg-[#F9FAFB] rounded-xl p-6 border border-[#E5E7EB]">
+    <div className="bg-background-subtle rounded-xl p-6 border border-border-default">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Globe className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
+            <Globe className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <h4 className="text-lg font-semibold text-[#0F172A]">Social Links</h4>
-            <p className="text-sm text-[#64748B]">Connect your professional profiles</p>
+            <h4 className="text-lg font-semibold text-text-primary">Social Links</h4>
+            <p className="text-sm text-text-tertiary">Connect your professional profiles</p>
           </div>
         </div>
         {!isAdding && !editingId && (
@@ -161,7 +173,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
             variant="outline"
             size="sm"
             onClick={() => setIsAdding(true)}
-            className="h-9 px-4 border-[#D1D5DB] hover:border-[#3056F5] hover:text-[#3056F5] transition-all duration-200"
+            className="h-9 px-4 border-border-default hover:border-primary hover:text-primary transition-all duration-200"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Link
@@ -174,19 +186,19 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
         {socialLinks.map(link => (
           <div
             key={link.social_link_id}
-            className="bg-white rounded-lg border border-[#E5E7EB] hover:border-[#3056F5] transition-all duration-200"
+            className="bg-background-surface rounded-lg border border-border-default hover:border-primary transition-all duration-200"
           >
             {editingId === link.social_link_id ? (
               <div className="p-4">
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-[#374151]">Type</Label>
+                      <Label className="text-sm font-medium text-text-secondary">Type</Label>
                       <div className="relative" ref={dropdownRef}>
                         <button
                           type="button"
                           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                          onKeyDown={(e) => {
+                          onKeyDown={e => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault()
                               setIsDropdownOpen(!isDropdownOpen)
@@ -194,10 +206,10 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                               setIsDropdownOpen(false)
                             }
                           }}
-                          className={`w-full h-10 pl-4 pr-10 py-3 border rounded-xl bg-white text-left focus:outline-none text-base text-slate-800 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] ${
-                            isDropdownOpen 
-                              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md' 
-                              : 'border-[#D1D5DB] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                          className={`w-full h-10 pl-4 pr-10 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] ${
+                            isDropdownOpen
+                              ? 'border-ai-500 ring-2 ring-ai-500/20 shadow-md'
+                              : 'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
                           }`}
                         >
                           <div className="flex items-center gap-3 h-full">
@@ -206,24 +218,28 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                                 <div className="transition-transform duration-200 hover:scale-110">
                                   {socialPlatforms.find(p => p.value === formData.type)?.icon}
                                 </div>
-                                <span className="font-medium text-slate-800">{formData.type}</span>
+                                <span className="font-medium text-text-primary">
+                                  {formData.type}
+                                </span>
                               </>
                             ) : (
                               <>
-                                <div className="w-4 h-4 rounded-full border-2 border-dashed border-slate-300" />
-                                <span className="text-slate-500">Select platform...</span>
+                                <div className="w-4 h-4 rounded-full border-2 border-dashed border-border-default" />
+                                <span className="text-text-tertiary">Select platform...</span>
                               </>
                             )}
                           </div>
-                          <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
-                            isDropdownOpen 
-                              ? 'rotate-180 text-indigo-600' 
-                              : 'text-slate-400 group-hover:text-indigo-500'
-                          }`} />
+                          <ChevronDown
+                            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
+                              isDropdownOpen
+                                ? 'rotate-180 text-ai-600'
+                                : 'text-text-muted group-hover:text-ai-500'
+                            }`}
+                          />
                         </button>
-                        
+
                         {isDropdownOpen && (
-                          <div className="absolute z-50 w-full mt-2 bg-white border border-indigo-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-indigo-100">
+                          <div className="absolute z-50 w-full mt-2 bg-background-surface border border-ai-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-ai-100">
                             {socialPlatforms.map((platform, index) => (
                               <button
                                 key={platform.value}
@@ -232,7 +248,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                                   setFormData({ ...formData, type: platform.value })
                                   setIsDropdownOpen(false)
                                 }}
-                                className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 focus:bg-gradient-to-r focus:from-indigo-50 focus:to-blue-50 focus:outline-none transition-all duration-200 flex items-center gap-3 text-base text-slate-800 hover:text-indigo-700 transform hover:scale-[1.01] active:scale-[0.99] group"
+                                className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-ai-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-ai-50 focus:to-primary-50 focus:outline-none transition-all duration-200 flex items-center gap-3 text-base text-text-primary hover:text-ai-700 transform hover:scale-[1.01] active:scale-[0.99] group"
                                 style={{ animationDelay: `${index * 50}ms` }}
                               >
                                 <div className="transition-transform duration-200 group-hover:scale-110">
@@ -240,7 +256,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                                 </div>
                                 <span className="font-medium">{platform.label}</span>
                                 <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
                                 </div>
                               </button>
                             ))}
@@ -249,13 +265,13 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-[#374151]">URL</Label>
+                      <Label className="text-sm font-medium text-text-secondary">URL</Label>
                       <Input
                         type="url"
                         placeholder="https://..."
                         value={formData.url}
                         onChange={e => setFormData({ ...formData, url: e.target.value })}
-                        className="h-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20"
+                        className="h-10 border-border-default focus:border-primary focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                   </div>
@@ -276,7 +292,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                       size="sm"
                       onClick={() => handleUpdate(link.social_link_id)}
                       disabled={isSaving}
-                      className="h-8 px-3 bg-[#3056F5] hover:bg-[#1E40AF]"
+                      className="h-8 px-3 bg-primary hover:bg-primary-700"
                     >
                       <Check className="w-4 h-4 mr-1" />
                       {isSaving ? 'Saving...' : 'Save'}
@@ -289,16 +305,14 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                 {/* Premium Horizontal Card Layout */}
                 <div className="flex items-center gap-3 h-full">
                   {/* Icon */}
-                  <div className="flex-shrink-0">
-                    {getIconForType(link.type, 'md')}
-                  </div>
-                  
+                  <div className="flex-shrink-0">{getIconForType(link.type, 'md')}</div>
+
                   {/* Text Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm text-gray-900">
+                    <div className="font-bold text-sm text-text-primary">
                       {getPlatformName(link.type)}
                     </div>
-                    <div className="text-xs text-gray-600 truncate">
+                    <div className="text-xs text-text-secondary truncate">
                       {link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')}
                     </div>
                   </div>
@@ -311,7 +325,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                     variant="ghost"
                     size="sm"
                     onClick={() => startEdit(link)}
-                    className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-600"
+                    className="h-6 w-6 p-0 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:text-primary-600 dark:hover:text-primary-400"
                   >
                     <Edit2 className="w-3 h-3" />
                   </Button>
@@ -320,7 +334,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(link.social_link_id)}
-                    className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                    className="h-6 w-6 p-0 hover:bg-error-50 hover:text-error-600"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
@@ -333,7 +347,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                   rel="noopener noreferrer"
                   className="absolute bottom-2 right-2 opacity-60 hover:opacity-100 transition-opacity"
                 >
-                  <ExternalLink className="w-3 h-3 text-gray-400 hover:text-indigo-600" />
+                  <ExternalLink className="w-3 h-3 text-text-muted hover:text-ai-600" />
                 </a>
               </div>
             )}
@@ -343,16 +357,16 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
 
       {/* Add New Social Link Form */}
       {isAdding && (
-        <div className="bg-white rounded-lg p-4 border border-[#3056F5] shadow-sm col-span-full">
+        <div className="bg-background-surface rounded-lg p-4 border border-primary shadow-sm col-span-full">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-[#374151]">Type</Label>
+                <Label className="text-sm font-medium text-text-secondary">Type</Label>
                 <div className="relative" ref={addDropdownRef}>
                   <button
                     type="button"
                     onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
                         setIsAddDropdownOpen(!isAddDropdownOpen)
@@ -360,10 +374,10 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                         setIsAddDropdownOpen(false)
                       }
                     }}
-                    className={`w-full h-10 pl-4 pr-10 py-3 border rounded-xl bg-white text-left focus:outline-none text-base text-slate-800 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] ${
-                      isAddDropdownOpen 
-                        ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md' 
-                        : 'border-[#D1D5DB] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                    className={`w-full h-10 pl-4 pr-10 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] ${
+                      isAddDropdownOpen
+                        ? 'border-ai-500 ring-2 ring-ai-500/20 shadow-md'
+                        : 'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
                     }`}
                   >
                     <div className="flex items-center gap-3 h-full">
@@ -372,24 +386,26 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                           <div className="transition-transform duration-200 hover:scale-110">
                             {socialPlatforms.find(p => p.value === formData.type)?.icon}
                           </div>
-                          <span className="font-medium text-slate-800">{formData.type}</span>
+                          <span className="font-medium text-text-primary">{formData.type}</span>
                         </>
                       ) : (
                         <>
-                          <div className="w-4 h-4 rounded-full border-2 border-dashed border-slate-300" />
-                          <span className="text-slate-500">Select platform...</span>
+                          <div className="w-4 h-4 rounded-full border-2 border-dashed border-border-default" />
+                          <span className="text-text-tertiary">Select platform...</span>
                         </>
                       )}
                     </div>
-                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
-                      isAddDropdownOpen 
-                        ? 'rotate-180 text-indigo-600' 
-                        : 'text-slate-400 group-hover:text-indigo-500'
-                    }`} />
+                    <ChevronDown
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
+                        isAddDropdownOpen
+                          ? 'rotate-180 text-ai-600'
+                          : 'text-text-muted group-hover:text-ai-500'
+                      }`}
+                    />
                   </button>
-                  
+
                   {isAddDropdownOpen && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border border-indigo-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-indigo-100">
+                    <div className="absolute z-50 w-full mt-2 bg-background-surface border border-ai-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-ai-100">
                       {socialPlatforms.map((platform, index) => (
                         <button
                           key={platform.value}
@@ -398,7 +414,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                             setFormData({ ...formData, type: platform.value })
                             setIsAddDropdownOpen(false)
                           }}
-                          className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 focus:bg-gradient-to-r focus:from-indigo-50 focus:to-blue-50 focus:outline-none transition-all duration-200 flex items-center gap-3 text-base text-slate-800 hover:text-indigo-700 transform hover:scale-[1.01] active:scale-[0.99] group"
+                          className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-ai-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-ai-50 focus:to-primary-50 focus:outline-none transition-all duration-200 flex items-center gap-3 text-base text-text-primary hover:text-ai-700 transform hover:scale-[1.01] active:scale-[0.99] group"
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <div className="transition-transform duration-200 group-hover:scale-110">
@@ -406,7 +422,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                           </div>
                           <span className="font-medium">{platform.label}</span>
                           <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
-                            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                            <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
                           </div>
                         </button>
                       ))}
@@ -415,13 +431,13 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-[#374151]">URL</Label>
+                <Label className="text-sm font-medium text-text-secondary">URL</Label>
                 <Input
                   type="url"
                   placeholder="https://..."
                   value={formData.url}
                   onChange={e => setFormData({ ...formData, url: e.target.value })}
-                  className="h-10 border-[#D1D5DB] focus:border-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20"
+                  className="h-10 border-border-default focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -442,7 +458,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                 size="sm"
                 onClick={handleAdd}
                 disabled={isSaving}
-                className="h-8 px-3 bg-[#3056F5] hover:bg-[#1E40AF]"
+                className="h-8 px-3 bg-primary hover:bg-primary-700"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 {isSaving ? 'Adding...' : 'Add Link'}
@@ -454,11 +470,11 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
 
       {socialLinks.length === 0 && !isAdding && (
         <div className="text-center py-8">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-            <Globe className="w-6 h-6 text-gray-400" />
+          <div className="w-12 h-12 rounded-full bg-background-subtle flex items-center justify-center mx-auto mb-3">
+            <Globe className="w-6 h-6 text-text-muted" />
           </div>
-          <p className="text-sm text-[#64748B] mb-2">No social links added yet</p>
-          <p className="text-xs text-[#94A3B8]">
+          <p className="text-sm text-text-tertiary mb-2">No social links added yet</p>
+          <p className="text-xs text-text-muted">
             Add your professional profiles to showcase your online presence
           </p>
         </div>

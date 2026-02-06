@@ -1,100 +1,219 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent } from '../ui/card'
-import { FileText, Users2, CalendarClock } from 'lucide-react'
-import Image from 'next/image'
+import {
+  ArrowRight,
+  Brain,
+  ThumbsUp,
+  ThumbsDown,
+  Users,
+  ListChecks,
+  FileText,
+  Calendar,
+  Database,
+  Target,
+} from 'lucide-react'
+import { Button } from '../ui/button'
+import Link from 'next/link'
 
 const features = [
-  {
-    icon: FileText,
-    title: 'Smart Job Description',
-    description:
-      'AI agents craft job descriptions that understand roles, market trends, and tone — attracting the perfect talent with zero manual tweaking.',
-  },
-  {
-    icon: CalendarClock,
-    title: 'Interview Automation',
-    description:
-      'Autonomous scheduling agents coordinate interviews end-to-end — no reminders, no emails, just effortless precision.',
-  },
-  {
-    icon: Users2,
-    title: 'Intelligent Scoring',
-    description:
-      'AI-powered evaluators analyze responses, voice cues, and context to score candidates with unmatched accuracy — decisions made smarter, not slower.',
-  },
+  { title: 'AI Resume Screening', icon: Brain },
+  { title: 'Smart JD Generator', icon: FileText },
+  { title: 'Auto Scheduling', icon: Calendar },
+  { title: 'Talent Pool Search', icon: Database },
 ]
 
 export function RecruiterPlatformSection() {
   return (
-    <section id="platform" className="py-16 sm:py-24 lg:py-32 px-6 lg:px-8 bg-white">
-      <div className="w-full max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 sm:mb-16 lg:mb-20 px-4"
-        >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#0F172A] mb-4 sm:mb-6 tracking-tight">
-            For Recruiters
-          </h2>
-          <p className="text-lg sm:text-xl lg:text-2xl text-[#475569] max-w-3xl mx-auto leading-relaxed">
-            Everything you need to find, evaluate, and hire the best talent
-          </p>
-        </motion.div>
+    <section
+      id="platform"
+      className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
+    >
+      {/* Background Elements */}
+      <div className="absolute top-0 right-0 w-72 h-72 bg-primary-100/30 dark:bg-primary-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
-          {/* Left: Recruiter Illustration */}
+      <div className="max-w-7xl mx-auto relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left: Visual */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="hidden xl:block px-4"
+            transition={{ duration: 0.6 }}
+            className="relative order-2 lg:order-1"
           >
-            <div className="relative w-full max-w-[500px] mx-auto">
-              <Image
-                src="/illustrations/recruiter.svg"
-                alt="Recruiter using AI-powered hiring platform"
-                width={500}
-                height={500}
-                className="w-full h-auto drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)]"
-                priority
-              />
+            <div className="relative">
+              {/* Glow */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-ai/10 rounded-3xl blur-2xl" />
+
+              {/* AI Shortlisting Dashboard */}
+              <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
+                {/* Header */}
+                <div className="px-5 py-3.5 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/50 to-background-surface border-b border-border-subtle">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-bold text-text-primary">AI Shortlisting</h3>
+                  </div>
+                  <p className="text-xs text-text-tertiary mt-0.5">Smart candidate evaluation</p>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-3 bg-background-subtle/30">
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      {
+                        label: 'Candidates',
+                        value: '24',
+                        icon: Users,
+                        color: 'text-primary',
+                        bg: 'bg-primary-50 dark:bg-primary-950/50',
+                      },
+                      {
+                        label: 'AI Scored',
+                        value: '24',
+                        icon: Target,
+                        color: 'text-ai',
+                        bg: 'bg-ai-50 dark:bg-ai-950/50',
+                      },
+                      {
+                        label: 'Shortlisted',
+                        value: '8',
+                        icon: ListChecks,
+                        color: 'text-success',
+                        bg: 'bg-success-50 dark:bg-success-950/50',
+                      },
+                    ].map((stat, i) => {
+                      const Icon = stat.icon
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.3 + i * 0.1 }}
+                          className="bg-background-surface p-2.5 rounded-lg border border-border-subtle shadow-sm"
+                        >
+                          <div
+                            className={`w-6 h-6 ${stat.bg} rounded-md flex items-center justify-center mb-1.5`}
+                          >
+                            <Icon className={`w-3 h-3 ${stat.color}`} />
+                          </div>
+                          <div className="text-lg font-bold text-text-primary">{stat.value}</div>
+                          <div className="text-xs text-text-tertiary">{stat.label}</div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Candidate Cards */}
+                  <div className="space-y-2">
+                    {[
+                      {
+                        score: 92,
+                        color: 'border-l-success',
+                        badgeColor: 'bg-success-50 text-success-700',
+                      },
+                      {
+                        score: 78,
+                        color: 'border-l-warning',
+                        badgeColor: 'bg-warning-50 text-warning-700',
+                      },
+                    ].map((candidate, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -15 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 + i * 0.1 }}
+                        className={`bg-background-surface p-3 rounded-lg border border-border-default border-l-[3px] ${candidate.color}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-border-default animate-pulse flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="h-3 bg-border-default rounded w-24 mb-1 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-16 animate-pulse" />
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-primary">{candidate.score}</div>
+                            <div className="text-xs text-text-tertiary">AI Score</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-subtle">
+                          <span
+                            className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${candidate.badgeColor}`}
+                          >
+                            {candidate.score >= 85 ? 'Recommended' : 'Review'}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <button className="w-6 h-6 rounded-md bg-success-50 flex items-center justify-center">
+                              <ThumbsUp className="w-3 h-3 text-success" />
+                            </button>
+                            <button className="w-6 h-6 rounded-md bg-error-50 flex items-center justify-center">
+                              <ThumbsDown className="w-3 h-3 text-error" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
 
-          {/* Right: Feature Cards */}
-          <div className="space-y-6 sm:space-y-8 px-2 xl:px-0 xl:text-left text-center">
-            {features.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.15 }}
-                >
-                  <Card className="h-full bg-white rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 sm:hover:-translate-y-2 border border-[#E5E7EB] group">
-                    <CardContent className="p-6 sm:p-8">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl sm:rounded-2xl bg-brand-blue/10 flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-brand-blue transition-colors duration-300">
-                        <Icon className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-brand-blue group-hover:text-white transition-colors duration-300" />
-                      </div>
-                      <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#0F172A] mb-3 sm:mb-4">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm sm:text-base text-[#475569] leading-relaxed break-words">
-                        {feature.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            })}
-          </div>
+          {/* Right: Content */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="order-1 lg:order-2"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary text-sm font-medium mb-6">
+              For Recruiters
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
+              Hire faster with{' '}
+              <span className="bg-gradient-to-r from-primary to-ai bg-clip-text text-transparent">
+                AI automation
+              </span>
+            </h2>
+
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
+              AI agents handle screening, scheduling, and matching while you stay in control.
+            </p>
+
+            {/* Features Grid */}
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              {features.map((feature, index) => {
+                const Icon = feature.icon
+                return (
+                  <motion.div
+                    key={feature.title}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + index * 0.05 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-background-subtle border border-border-subtle"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-text-secondary">{feature.title}</span>
+                  </motion.div>
+                )
+              })}
+            </div>
+
+            <Link href="/signup">
+              <Button className="btn-primary-gradient font-semibold rounded-xl px-6 py-2.5 h-auto group">
+                Start Hiring Smarter
+                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </div>
     </section>

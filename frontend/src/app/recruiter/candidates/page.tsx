@@ -5,16 +5,16 @@ import { usePathname } from 'next/navigation'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
-import { JobSearchBar } from '../../../components/jobs'
 import { useCandidates, useCandidateSearch } from '../../../hooks/queries/useCandidates'
 import {
-  CandidateCard,
   CandidateFilters,
   CandidateDetailModal,
-  SkeletonCandidateCard,
+  CandidatesTable,
+  SkeletonTableRow,
+  EmptyTableState,
 } from '../../../components/candidates'
 import { CandidateApplication } from '../../../types/candidate'
-import { FolderOpen, Users } from 'lucide-react'
+import { Search, FolderOpen, Users } from 'lucide-react'
 
 export default function RecruiterCandidatesPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
@@ -25,6 +25,7 @@ export default function RecruiterCandidatesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateApplication | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const pageSize = 20
 
   const isSearchMode = debouncedSearchQuery.trim().length > 0
 
@@ -36,7 +37,7 @@ export default function RecruiterCandidatesPage() {
     refetch: refetchCandidates,
   } = useCandidates(
     currentPage,
-    20,
+    pageSize,
     { status: activeFilters.length > 0 ? activeFilters[0] : undefined },
     !isSearchMode && isAuthenticated && !isAuthLoading
   )
@@ -49,7 +50,7 @@ export default function RecruiterCandidatesPage() {
   } = useCandidateSearch(
     debouncedSearchQuery,
     currentPage,
-    20,
+    pageSize,
     isSearchMode && isAuthenticated && !isAuthLoading
   )
 
@@ -123,20 +124,18 @@ export default function RecruiterCandidatesPage() {
     }
   }, [pathname, isSearchMode, refetchCandidates, refetchSearch])
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value)
-  }, [])
-
-  const handleDebouncedSearchChange = useCallback((value: string) => {
-    setDebouncedSearchQuery(value)
-    setCurrentPage(1) // Reset to first page on search
-  }, [])
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setCurrentPage(1)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const handleFilterToggle = useCallback((filterId: string) => {
     setActiveFilters(prev => {
-      const newFilters = prev.includes(filterId)
-        ? prev.filter(f => f !== filterId)
-        : [filterId] // Only allow one status filter at a time
+      const newFilters = prev.includes(filterId) ? prev.filter(f => f !== filterId) : [filterId] // Only allow one status filter at a time
       setCurrentPage(1) // Reset to first page on filter change
       return newFilters
     })
@@ -157,6 +156,10 @@ export default function RecruiterCandidatesPage() {
     setTimeout(() => setSelectedCandidate(null), 300)
   }, [])
 
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page)
+  }, [])
+
   if (isAuthLoading || !isAuthenticated) {
     return (
       <AppShell>
@@ -169,39 +172,51 @@ export default function RecruiterCandidatesPage() {
 
   return (
     <AppShell>
-      <PageTransition className="min-h-screen" style={{ background: '#F9FAFB' }}>
-        <div className="space-y-6 pb-12">
-          {/* Enhanced Header with Gradient Background */}
-          <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-indigo-50/50 to-white border-b border-indigo-50/50 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 transition-all duration-300 ease-out">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight tracking-tight">
-                      Candidates
-                    </h1>
-                    <p className="text-lg text-[#475569] max-w-2xl">
-                      Review and manage candidate applications for your job postings
-                    </p>
+      <PageTransition className="min-h-screen bg-background-subtle">
+        {/* Page Header - Full Width */}
+        <AnimatedContainer direction="up" delay={0.1}>
+          <div className="relative py-16 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/30 to-background-surface border-b border-primary-50/50 dark:border-primary-900/30">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight tracking-tight">
+                    Candidates
+                  </h1>
+                  <p className="text-lg text-text-secondary max-w-2xl">
+                    Review and manage candidate applications for your job postings
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 px-6 py-3 bg-background-surface rounded-xl border border-border-default shadow-sm">
+                  <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-200 shadow-sm">
-                    <Users className="w-5 h-5 text-indigo-600" />
-                    <span className="font-semibold text-[#0F172A]">{totalCandidates}</span>
-                    <span className="text-sm text-[#475569]">Total</span>
+                  <div>
+                    <p className="text-2xl font-bold text-text-primary">{totalCandidates}</p>
+                    <p className="text-sm text-text-secondary">Total Candidates</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </AnimatedContainer>
 
-                {/* Search Bar Section */}
-                <div className="space-y-6 bg-white rounded-2xl p-6 border border-slate-200" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                  <JobSearchBar
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          <AnimatedContainer direction="up" delay={0.15}>
+            <div className="mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
+                <div className="relative w-full lg:w-[420px]">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
+                  <input
+                    type="text"
                     value={searchQuery}
-                    onChange={handleSearchChange}
-                    onDebouncedChange={handleDebouncedSearchChange}
-                    loading={isLoading}
-                    placeholder="Search by candidate name, email, skills, or job title..."
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search by name, email, skills, or job title..."
+                    className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
                   />
+                </div>
 
-                  {/* Filters */}
+                <div className="flex flex-wrap items-center gap-3">
                   <CandidateFilters
                     activeFilters={activeFilters}
                     onFilterToggle={handleFilterToggle}
@@ -213,69 +228,95 @@ export default function RecruiterCandidatesPage() {
             </div>
           </AnimatedContainer>
 
-          {/* Main Content Container */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <AnimatedContainer direction="up" delay={0.2}>
-              {/* Loading State */}
+          <AnimatedContainer direction="up" delay={0.2}>
+            <div className="w-full">
               {isLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <SkeletonCandidateCard key={index} index={index} />
-                  ))}
+                <div
+                  className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"
+                  style={{
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-background-subtle to-background-subtle/50 border-b border-border-default">
+                        <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
+                          <div className="h-3 bg-border-default rounded w-20" />
+                        </th>
+                        <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
+                          <div className="h-3 bg-border-default rounded w-24" />
+                        </th>
+                        <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
+                          <div className="h-3 bg-border-default rounded w-16" />
+                        </th>
+                        <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
+                          <div className="h-3 bg-border-default rounded w-14" />
+                        </th>
+                        <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
+                          <div className="h-3 bg-border-default rounded w-12 mx-auto" />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <SkeletonTableRow key={index} />
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-background-subtle to-background-subtle/50 border-t border-border-default">
+                    <div className="h-4 bg-border-default rounded w-48" />
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="w-9 h-9 bg-border-default rounded-lg" />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : error ? (
-                /* Error State */
-                <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-slate-200">
-                  <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center mb-6">
-                    <FolderOpen className="w-10 h-10 text-red-400" />
+                <div
+                  className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"
+                  style={{
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-16 h-16 bg-error-50 dark:bg-error-950/30 border border-error-100 dark:border-error-800 rounded-2xl flex items-center justify-center mb-6">
+                      <FolderOpen className="w-8 h-8 text-error-400 dark:text-error-300" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">
+                      Error loading candidates
+                    </h3>
+                    <p className="text-sm text-text-tertiary max-w-md mb-6 leading-relaxed">
+                      There was an error loading the candidates. Please try again.
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (isSearchMode) {
+                          refetchSearch()
+                        } else {
+                          refetchCandidates()
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
+                    >
+                      Try Again
+                    </button>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Error loading candidates</h3>
-                  <p className="text-base text-gray-500 max-w-md mb-8">
-                    There was an error loading the candidates. Please try again.
-                  </p>
-                  <button
-                    onClick={() => {
-                      if (isSearchMode) {
-                        refetchSearch()
-                      } else {
-                        refetchCandidates()
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-200 shadow-sm"
-                  >
-                    Try Again
-                  </button>
                 </div>
               ) : candidates.length === 0 ? (
-                /* Empty State */
-                <div className="flex flex-col items-center justify-center py-24 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200">
-                  <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
-                    <Users className="w-10 h-10 text-indigo-300" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {isSearchMode ? 'No candidates found' : 'No candidates yet'}
-                  </h3>
-                  <p className="text-base text-gray-500 max-w-md">
-                    {isSearchMode
-                      ? `No candidates match your search for "${debouncedSearchQuery}". Try adjusting your search terms.`
-                      : 'Candidates who apply to your job postings will appear here.'}
-                  </p>
-                </div>
+                <EmptyTableState isSearchMode={isSearchMode} searchQuery={debouncedSearchQuery} />
               ) : (
-                /* Candidates List - Full Width Cards */
-                <div className="space-y-4">
-                  {candidates.map((candidate, index) => (
-                    <CandidateCard
-                      key={candidate.application_id}
-                      candidate={candidate}
-                      onClick={() => handleCandidateClick(candidate)}
-                      index={index}
-                    />
-                  ))}
-                </div>
+                <CandidatesTable
+                  candidates={candidates}
+                  onCandidateClick={handleCandidateClick}
+                  currentPage={currentPage}
+                  totalCandidates={totalCandidates}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                />
               )}
-            </AnimatedContainer>
-          </div>
+            </div>
+          </AnimatedContainer>
         </div>
       </PageTransition>
 

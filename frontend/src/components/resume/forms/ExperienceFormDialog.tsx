@@ -115,8 +115,8 @@ export default function ExperienceFormDialog({
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
       <DialogHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Briefcase className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
+            <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <DialogTitle>
@@ -135,7 +135,7 @@ export default function ExperienceFormDialog({
         <form id="experience-form" onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+              <Label className="text-sm font-medium text-text-secondary">
                 Job Title <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -143,11 +143,11 @@ export default function ExperienceFormDialog({
                 value={formData.job_title}
                 onChange={e => setFormData({ ...formData, job_title: e.target.value })}
                 placeholder="e.g. Senior Developer"
-                className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+              <Label className="text-sm font-medium text-text-secondary">
                 Company <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -155,39 +155,39 @@ export default function ExperienceFormDialog({
                 value={formData.company}
                 onChange={e => setFormData({ ...formData, company: e.target.value })}
                 placeholder="e.g. Acme Inc."
-                className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Location</Label>
+            <Label className="text-sm font-medium text-text-secondary">Location</Label>
             <Input
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
               placeholder="e.g. New York, NY (Remote)"
-              className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Start Date</Label>
+              <Label className="text-sm font-medium text-text-secondary">Start Date</Label>
               <Input
                 type="date"
                 value={formData.start_date}
                 onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">End Date</Label>
+              <Label className="text-sm font-medium text-text-secondary">End Date</Label>
               <Input
                 type="date"
                 disabled={formData.is_current}
                 value={formData.end_date}
                 onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 disabled:opacity-50"
+                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20 disabled:opacity-50"
               />
             </div>
           </div>
@@ -197,17 +197,17 @@ export default function ExperienceFormDialog({
               id="current"
               checked={formData.is_current}
               onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
-              className="rounded border-gray-300"
+              className="rounded border-border-default"
             />
-            <label htmlFor="current" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="current" className="text-sm text-text-secondary cursor-pointer">
               I currently work here
             </label>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Description</Label>
+            <Label className="text-sm font-medium text-text-secondary">Description</Label>
             <Textarea
-              className="min-h-[120px] resize-none rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+              className="min-h-[120px] resize-none rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
               placeholder="Describe your achievements and responsibilities..."
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -229,7 +229,7 @@ export default function ExperienceFormDialog({
           type="submit"
           form="experience-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25"
+          className="rounded-xl px-6 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-400/15"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Experience'}

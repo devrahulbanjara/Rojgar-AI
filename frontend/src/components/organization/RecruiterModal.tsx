@@ -64,13 +64,13 @@ export function RecruiterModal({
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} className="max-w-md mx-4 rounded-[20px]">
-      <div className="flex flex-col bg-white rounded-[20px] overflow-hidden">
+      <div className="flex flex-col bg-background-surface rounded-[20px] overflow-hidden">
         {/* Enhanced Header with subtle background */}
-        <DialogHeader className="bg-gradient-to-b from-gray-50/80 to-white px-8 py-8 border-b border-gray-100">
-          <DialogTitle className="text-2xl font-bold text-gray-900 leading-tight">
+        <DialogHeader className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-8 py-8 border-b border-border-subtle">
+          <DialogTitle className="text-2xl font-bold text-text-primary leading-tight">
             {mode === 'add' ? 'Add Recruiter' : 'Edit Recruiter'}
           </DialogTitle>
-          <DialogDescription className="text-gray-500 mt-2 text-sm font-medium">
+          <DialogDescription className="text-text-tertiary mt-2 text-sm font-medium">
             {mode === 'add'
               ? 'Enter details to add a new recruiter to your team.'
               : 'Update recruiter information and access details.'}
@@ -79,47 +79,49 @@ export function RecruiterModal({
 
         {/* Form Content */}
         <form onSubmit={handleSubmit}>
-          <DialogContent className="p-8 space-y-6 bg-white">
+          <DialogContent className="p-8 space-y-6 bg-background-surface">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Full Name</label>
+              <label className="text-sm font-semibold text-text-secondary ml-1">Full Name</label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted group-focus-within:text-primary transition-colors" />
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  className="w-full pl-12 pr-4 py-3 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-primary placeholder:text-text-muted"
                   placeholder="e.g. Sarah Wilson"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Email Address</label>
+              <label className="text-sm font-semibold text-text-secondary ml-1">
+                Email Address
+              </label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted group-focus-within:text-primary transition-colors" />
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  className="w-full pl-12 pr-4 py-3 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-primary placeholder:text-text-muted"
                   placeholder="e.g. sarah@company.com"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
+              <label className="text-sm font-semibold text-text-secondary ml-1">Password</label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted group-focus-within:text-primary transition-colors" />
                 <input
                   type="password"
                   required={mode === 'add'}
                   value={formData.password}
                   onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  className="w-full pl-12 pr-4 py-3 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-primary placeholder:text-text-muted"
                   placeholder={mode === 'edit' ? 'Leave blank to keep current' : 'Enter password'}
                 />
               </div>
@@ -127,18 +129,18 @@ export function RecruiterModal({
           </DialogContent>
 
           {/* Sticky Footer */}
-          <DialogFooter className="border-t border-gray-100 bg-gray-50/50 px-8 py-6 flex items-center justify-end gap-3">
+          <DialogFooter className="border-t border-border-subtle bg-background-subtle/50 px-8 py-6 flex items-center justify-end gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="h-11 px-6 text-sm font-semibold border-gray-200 hover:bg-white hover:border-gray-300 transition-all duration-200"
+              className="h-11 px-6 text-sm font-semibold border-border-default hover:bg-background-surface hover:border-border-strong transition-all duration-200"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="h-11 px-6 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center gap-2"
+              className="h-11 px-6 text-sm font-semibold bg-primary hover:bg-primary-hover text-primary-foreground transition-all duration-200 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center gap-2"
             >
               {mode === 'add' ? (
                 <>

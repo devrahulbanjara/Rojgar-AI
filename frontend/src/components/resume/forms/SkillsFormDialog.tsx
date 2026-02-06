@@ -76,8 +76,8 @@ export default function SkillsFormDialog({
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-md">
       <DialogHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-violet-600" />
+          <div className="w-10 h-10 rounded-xl bg-ai-50 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-ai-600" />
           </div>
           <div>
             <DialogTitle>{initialData ? 'Edit Skill' : 'Add Skill'}</DialogTitle>
@@ -91,8 +91,8 @@ export default function SkillsFormDialog({
       <DialogContent className="pt-0">
         <form id="skill-form" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
-              Skill Name <span className="text-red-500">*</span>
+            <Label className="text-sm font-medium text-text-primary">
+              Skill Name <span className="text-error">*</span>
             </Label>
             <Input
               required
@@ -100,7 +100,7 @@ export default function SkillsFormDialog({
               onChange={e => setSkillName(e.target.value)}
               placeholder="e.g. Python, React, Leadership"
               autoFocus
-              className="h-11 rounded-xl border-gray-200 focus:border-violet-500 focus:ring-violet-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-ai focus:ring-ai/20"
             />
           </div>
         </form>
@@ -119,7 +119,7 @@ export default function SkillsFormDialog({
           type="submit"
           form="skill-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25"
+          className="btn-primary-gradient rounded-xl px-6"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Skill'}

@@ -13,8 +13,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   return (
     <div className={`mb-12 ${className}`}>
-      <h1 className="text-4xl max-lg:text-3xl font-bold text-[#0F172A] leading-tight">{title}</h1>
-      {subtitle && <p className="text-base text-[#475569] mt-2 leading-relaxed">{subtitle}</p>}
+      <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight">
+        {title}
+      </h1>
+      {subtitle && <p className="text-base text-text-secondary mt-2 leading-relaxed">{subtitle}</p>}
     </div>
   )
 }

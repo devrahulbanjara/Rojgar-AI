@@ -1,102 +1,202 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FileEdit, Brain, Eye, Clock } from 'lucide-react'
-import Image from 'next/image'
+import {
+  ArrowRight,
+  Briefcase,
+  Video,
+  Trophy,
+  FileEdit,
+  MessageSquareText,
+  Search,
+  Users,
+} from 'lucide-react'
+import { Button } from '../ui/button'
+import Link from 'next/link'
 
 const features = [
-  {
-    icon: FileEdit,
-    title: 'Adaptive Resume Builder',
-    description:
-      'Build job-specific resumes in just a few clicks — AI agents adapt content, suggest missing skills, and optimize keywords for every opportunity.',
-  },
-  {
-    icon: Brain,
-    title: 'Intelligent Interview Preparation',
-    description:
-      'Prepare smarter with AI-driven insights — tailored questions, guidance, and simulations based on job descriptions, past interviews, and your own resume.',
-  },
-  {
-    icon: Eye,
-    title: 'Transparent Hiring Process',
-    description:
-      'Know exactly why you were shortlisted, selected, or rejected — AI explains every decision with clear, data-backed reasoning.',
-  },
-  {
-    icon: Clock,
-    title: 'Future-fit Hiring',
-    description:
-      'Your past interviews fuel tomorrow’s opportunities — get automatically rediscovered by companies for future roles.',
-  },
+  { title: 'Smart Resume Builder', icon: FileEdit },
+  { title: 'Application Feedback', icon: MessageSquareText },
+  { title: 'AI Job Matching', icon: Search },
+  { title: 'Talent Pool Access', icon: Users },
 ]
 
 export function CandidatePlatformSection() {
   return (
-    <section id="candidates" className="py-16 sm:py-24 lg:py-32 px-6 lg:px-8 bg-[#F9FAFB]">
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 lg:gap-16 xl:gap-20 items-center">
-          {/* Left: Text Content */}
+    <section
+      id="candidates"
+      className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
+    >
+      {/* Background Elements */}
+      <div className="absolute top-1/2 left-0 w-72 h-72 bg-success-100/20 dark:bg-success-900/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
+
+      <div className="max-w-7xl mx-auto relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left: Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="order-1 xl:order-1 px-2 xl:px-0 xl:text-left text-center"
+            transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-[#0F172A] mb-4 sm:mb-6 tracking-tight">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 dark:bg-success-950/50 text-success text-sm font-medium mb-6">
               For Candidates
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
+              Job search that{' '}
+              <span className="bg-gradient-to-r from-success to-success-600 bg-clip-text text-transparent">
+                respects you
+              </span>
             </h2>
-            <p className="text-lg sm:text-xl lg:text-2xl text-[#475569] mb-8 sm:mb-10 leading-relaxed">
-              Tools that help you stand out and land your dream job faster
+
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
+              Get feedback on every application and tools to stand out in your job search.
             </p>
 
-            <div className="space-y-4 sm:space-y-6 xl:items-start items-center">
+            {/* Features Grid */}
+            <div className="grid grid-cols-2 gap-3 mb-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon
                 return (
                   <motion.div
                     key={feature.title}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="flex xl:items-start items-center gap-3 sm:gap-4 xl:flex-row flex-col"
+                    transition={{ delay: 0.2 + index * 0.05 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-background-subtle border border-border-subtle"
                   >
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-brand-blue/10 flex items-center justify-center flex-shrink-0">
-                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-brand-blue" />
+                    <div className="w-9 h-9 rounded-lg bg-success-100 dark:bg-success-900/50 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-success" />
                     </div>
-                    <div className="xl:text-left text-center">
-                      <h3 className="text-base sm:text-lg font-semibold text-[#0F172A] mb-1 sm:mb-2">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm sm:text-base text-[#475569] leading-relaxed break-words">
-                        {feature.description}
-                      </p>
-                    </div>
+                    <span className="text-sm font-medium text-text-secondary">{feature.title}</span>
                   </motion.div>
                 )
               })}
             </div>
+
+            <Link href="/signup">
+              <Button className="bg-success hover:bg-success-600 text-white font-semibold rounded-xl px-6 py-2.5 h-auto group">
+                Create Your Profile
+                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </motion.div>
 
-          {/* Right: Candidate Illustration */}
+          {/* Right: Visual - Application Tracker */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="order-2 xl:order-2 hidden xl:block px-4"
+            transition={{ duration: 0.6 }}
+            className="relative"
           >
-            <div className="relative w-full max-w-[500px] mx-auto">
-              <Image
-                src="/illustrations/candidate.svg"
-                alt="Candidate using AI-powered job search tools"
-                width={500}
-                height={500}
-                className="w-full h-auto drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)]"
-                priority
-              />
+            <div className="relative">
+              {/* Glow */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-success/10 to-success-600/10 rounded-3xl blur-2xl" />
+
+              {/* Application Tracker Card */}
+              <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
+                {/* Header */}
+                <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 dark:from-success-950/50 to-background-surface border-b border-border-subtle">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-success" />
+                    <h3 className="text-base font-bold text-text-primary">Your Applications</h3>
+                  </div>
+                  <p className="text-xs text-text-tertiary mt-0.5">Track your journey</p>
+                </div>
+
+                {/* Kanban Columns */}
+                <div className="p-4 bg-background-subtle/50">
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Applied Column */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 15 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 }}
+                      className="bg-info-50/50 dark:bg-info-950/30 rounded-lg p-2.5 border border-info-100/60 dark:border-info-800/60"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Briefcase className="w-3 h-3 text-info" />
+                          <span className="text-xs font-bold text-info-700">Applied</span>
+                        </div>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-info-100 text-info-700">
+                          3
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {[1, 2].map((_, i) => (
+                          <div
+                            key={i}
+                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-info"
+                          >
+                            <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-12 animate-pulse" />
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Interviewing Column */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 15 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.4 }}
+                      className="bg-primary-50/50 dark:bg-primary-950/30 rounded-lg p-2.5 border border-primary-100/60 dark:border-primary-800/60"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Video className="w-3 h-3 text-primary" />
+                          <span className="text-xs font-bold text-primary-700">Interview</span>
+                        </div>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700">
+                          2
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {[1, 2].map((_, i) => (
+                          <div
+                            key={i}
+                            className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-primary"
+                          >
+                            <div className="h-2.5 bg-border-default rounded w-14 mb-1 animate-pulse" />
+                            <div className="h-2 bg-border-subtle rounded w-10 animate-pulse" />
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Outcome Column */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 15 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.5 }}
+                      className="bg-success-50/50 dark:bg-success-950/30 rounded-lg p-2.5 border border-success-100/60 dark:border-success-800/60"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Trophy className="w-3 h-3 text-success" />
+                          <span className="text-xs font-bold text-success-700">Offers</span>
+                        </div>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-success-100 text-success-700">
+                          1
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="bg-background-surface p-2 rounded-md border border-border-default border-l-2 border-l-success">
+                          <div className="h-2.5 bg-border-default rounded w-16 mb-1 animate-pulse" />
+                          <div className="h-2 bg-border-subtle rounded w-11 animate-pulse" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>

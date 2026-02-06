@@ -15,36 +15,36 @@ export interface ReferenceJD {
   keywords: string
 }
 
-export const departmentColors: Record<string, { bg: string; text: string; gradient: string }> = {
+export const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
-    bg: '#EFF6FF',
-    text: '#1E40AF',
-    gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)',
+    bg: 'bg-blue-50 dark:bg-blue-950/30',
+    text: 'text-blue-700 dark:text-blue-300',
+    border: 'border-blue-200 dark:border-blue-800',
   },
   Product: {
-    bg: '#F0FDF4',
-    text: '#166534',
-    gradient: 'linear-gradient(135deg, #10B981, #34D399)',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    border: 'border-emerald-200 dark:border-emerald-800',
   },
   Design: {
-    bg: '#FDF4FF',
-    text: '#86198F',
-    gradient: 'linear-gradient(135deg, #A855F7, #C084FC)',
+    bg: 'bg-purple-50 dark:bg-purple-950/30',
+    text: 'text-purple-700 dark:text-purple-300',
+    border: 'border-purple-200 dark:border-purple-800',
   },
   Marketing: {
-    bg: '#FFF7ED',
-    text: '#9A3412',
-    gradient: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
+    bg: 'bg-orange-50 dark:bg-orange-950/30',
+    text: 'text-orange-700 dark:text-orange-300',
+    border: 'border-orange-200 dark:border-orange-800',
   },
   'Data Science': {
-    bg: '#F0F9FF',
-    text: '#0C4A6E',
-    gradient: 'linear-gradient(135deg, #0EA5E9, #38BDF8)',
+    bg: 'bg-cyan-50 dark:bg-cyan-950/30',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    border: 'border-cyan-200 dark:border-cyan-800',
   },
   Sales: {
-    bg: '#FEF2F2',
-    text: '#991B1B',
-    gradient: 'linear-gradient(135deg, #EF4444, #F87171)',
+    bg: 'bg-red-50 dark:bg-red-950/30',
+    text: 'text-red-700 dark:text-red-300',
+    border: 'border-red-200 dark:border-red-800',
   },
 }
 

@@ -83,8 +83,8 @@ export default function BasicInfoFormDialog({
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-lg">
       <DialogHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center">
+            <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <DialogTitle>
@@ -102,7 +102,7 @@ export default function BasicInfoFormDialog({
       <DialogContent className="pt-0">
         <form id="basic-info-form" onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-text-secondary">
               Target Job Title <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -110,17 +110,19 @@ export default function BasicInfoFormDialog({
               onChange={e => setFormData({ ...formData, target_job_title: e.target.value })}
               required
               placeholder="e.g. Senior Software Engineer"
-              className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+              className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
             />
           </div>
 
           {mode === 'edit' && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Professional Summary</Label>
+              <Label className="text-sm font-medium text-text-secondary">
+                Professional Summary
+              </Label>
               <Textarea
                 value={formData.custom_summary}
                 onChange={e => setFormData({ ...formData, custom_summary: e.target.value })}
-                className="min-h-[120px] resize-none rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="min-h-[120px] resize-none rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                 placeholder="Write a brief summary of your professional background..."
               />
             </div>
@@ -141,7 +143,7 @@ export default function BasicInfoFormDialog({
           type="submit"
           form="basic-info-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25"
+          className="rounded-xl px-6 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-400/15"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {mode === 'create' ? 'Create Resume' : 'Save Changes'}

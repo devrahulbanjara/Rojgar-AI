@@ -115,7 +115,7 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
     pathname?.startsWith('/dashboard/organization') || pathname?.startsWith('/organization/')
 
   return (
-    <div className="min-h-screen" style={{ background: '#F9FAFB' }}>
+    <div className="min-h-screen bg-background-subtle">
       <Topbar onMenuClick={hideSidebar ? () => {} : handleSidebarToggle} user={user} />
 
       <div className="flex min-h-[calc(100vh-72px)] pt-[72px]">
