@@ -56,8 +56,13 @@ export function JobDetailModal({
   onConvertToReferenceJD,
 }: JobDetailModalProps) {
   // Get job ID for auto shortlist (prefer job_id, fallback to id as string)
-  const jobId = job ? (job.job_id || job.id?.toString() || null) : null
-  const { autoShortlist, isLoading: isLoadingAutoShortlist, toggle, isToggling } = useAutoShortlist(jobId)
+  const jobId = job ? job.job_id || job.id?.toString() || null : null
+  const {
+    autoShortlist,
+    isLoading: isLoadingAutoShortlist,
+    toggle,
+    isToggling,
+  } = useAutoShortlist(jobId)
 
   if (!job) return null
 
@@ -184,10 +189,12 @@ export function JobDetailModal({
             </div>
 
             <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 group relative">
-              <Zap className={cn(
-                "w-4 h-4 transition-colors",
-                autoShortlist ? "text-orange-600" : "text-gray-400"
-              )} />
+              <Zap
+                className={cn(
+                  'w-4 h-4 transition-colors',
+                  autoShortlist ? 'text-orange-600' : 'text-gray-400'
+                )}
+              />
               <span className="text-sm font-medium text-gray-900">Auto Shortlist</span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -423,7 +430,6 @@ export function JobDetailModal({
               </div>
             </section>
           )}
-
         </div>
 
         {/* Sticky Footer with Edit, Expire, Delete, and Save as Template Buttons */}

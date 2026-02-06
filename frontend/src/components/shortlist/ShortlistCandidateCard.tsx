@@ -33,19 +33,19 @@ export function ShortlistCandidateCard({
       return {
         scoreColor: 'text-red-600',
         bgColor: 'from-red-50/80 via-red-50/40 to-red-50/60',
-        borderColor: 'border-red-200/60'
+        borderColor: 'border-red-200/60',
       }
     } else if (score >= 50 && score < 70) {
       return {
         scoreColor: 'text-orange-600',
         bgColor: 'from-orange-50/80 via-orange-50/40 to-orange-50/60',
-        borderColor: 'border-orange-200/60'
+        borderColor: 'border-orange-200/60',
       }
     } else {
       return {
         scoreColor: 'text-emerald-600',
         bgColor: 'from-emerald-50/80 via-emerald-50/40 to-emerald-50/60',
-        borderColor: 'border-emerald-200/60'
+        borderColor: 'border-emerald-200/60',
       }
     }
   }
@@ -86,24 +86,21 @@ export function ShortlistCandidateCard({
           </div>
 
           <div className="flex-1 min-w-0 space-y-2">
-            <h3 className="text-lg font-semibold text-[#1E293B] leading-[1.2]">
-              {candidate.name}
-            </h3>
+            <h3 className="text-lg font-semibold text-[#1E293B] leading-[1.2]">{candidate.name}</h3>
             {showJobTitle && (
               <div className="text-sm font-medium text-indigo-600">
                 Applied for: {candidate.job_title}
               </div>
             )}
             {candidate.professional_headline && (
-              <div className="text-sm text-slate-600">
-                {candidate.professional_headline}
-              </div>
+              <div className="text-sm text-slate-600">{candidate.professional_headline}</div>
             )}
             <div className="text-xs text-slate-500 mt-1">
-              Applied {new Date(candidate.applied_at).toLocaleDateString('en-US', { 
-                month: 'short', 
+              Applied{' '}
+              {new Date(candidate.applied_at).toLocaleDateString('en-US', {
+                month: 'short',
                 day: 'numeric',
-                year: 'numeric'
+                year: 'numeric',
               })}
             </div>
           </div>
@@ -113,11 +110,12 @@ export function ShortlistCandidateCard({
           <div className={`text-3xl font-bold ${scoreStyles.scoreColor} leading-none`}>
             {candidate.ai_score}
           </div>
-          <div className="text-xs text-slate-500 font-medium">
-            AI Score
-          </div>
+          <div className="text-xs text-slate-500 font-medium">AI Score</div>
           {scoreInterpretation && (
-            <div className={`text-xs font-semibold ${scoreInterpretation.color}`} style={{ fontWeight: 600 }}>
+            <div
+              className={`text-xs font-semibold ${scoreInterpretation.color}`}
+              style={{ fontWeight: 600 }}
+            >
               {scoreInterpretation.text}
             </div>
           )}
@@ -173,11 +171,11 @@ export function ShortlistCandidateCard({
             <div className="text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
               AI
             </div>
-            <ChevronDown 
+            <ChevronDown
               className={cn(
                 'w-5 h-5 text-indigo-500 transition-all duration-300 group-hover:text-indigo-600',
                 isAnalysisExpanded && 'rotate-180 scale-110'
-              )} 
+              )}
             />
           </div>
         </button>
@@ -188,13 +186,14 @@ export function ShortlistCandidateCard({
             isAnalysisExpanded ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
           )}
         >
-          <div className={`relative p-6 bg-gray-50 rounded-2xl border-l-4 ${candidate.ai_score >= 70 ? 'border-l-emerald-500' : candidate.ai_score >= 50 ? 'border-l-orange-500' : 'border-l-red-500'} shadow-inner`}>
+          <div
+            className={`relative p-6 bg-gray-50 rounded-2xl border-l-4 ${candidate.ai_score >= 70 ? 'border-l-emerald-500' : candidate.ai_score >= 50 ? 'border-l-orange-500' : 'border-l-red-500'} shadow-inner`}
+          >
             <div className="prose prose-sm max-w-none">
               <p className="text-slate-700 leading-relaxed font-medium text-[15px] mb-0">
                 {candidate.ai_analysis}
               </p>
             </div>
-            
           </div>
         </div>
       </div>

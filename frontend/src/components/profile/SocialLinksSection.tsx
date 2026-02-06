@@ -41,15 +41,27 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
   }, [])
 
   const socialPlatforms = [
-    { value: 'GitHub', label: 'GitHub', icon: <SiGithub className="w-4 h-4" style={{ color: '#24292e' }} /> },
-    { value: 'LinkedIn', label: 'LinkedIn', icon: <SiLinkedin className="w-4 h-4" style={{ color: '#0A66C2' }} /> },
-    { value: 'Portfolio', label: 'Portfolio', icon: <Globe className="w-4 h-4" style={{ color: '#6366F1' }} /> }
+    {
+      value: 'GitHub',
+      label: 'GitHub',
+      icon: <SiGithub className="w-4 h-4" style={{ color: '#24292e' }} />,
+    },
+    {
+      value: 'LinkedIn',
+      label: 'LinkedIn',
+      icon: <SiLinkedin className="w-4 h-4" style={{ color: '#0A66C2' }} />,
+    },
+    {
+      value: 'Portfolio',
+      label: 'Portfolio',
+      icon: <Globe className="w-4 h-4" style={{ color: '#6366F1' }} />,
+    },
   ]
 
   const getIconForType = (type: string, size: 'sm' | 'md' = 'sm') => {
     const iconSize = size === 'sm' ? 'w-5 h-5' : 'w-6 h-6'
     const iconType = type.toLowerCase()
-    
+
     if (iconType.includes('linkedin')) {
       return <SiLinkedin className={iconSize} style={{ color: '#0A66C2' }} />
     }
@@ -186,7 +198,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                         <button
                           type="button"
                           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                          onKeyDown={(e) => {
+                          onKeyDown={e => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault()
                               setIsDropdownOpen(!isDropdownOpen)
@@ -195,8 +207,8 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                             }
                           }}
                           className={`w-full h-10 pl-4 pr-10 py-3 border rounded-xl bg-white text-left focus:outline-none text-base text-slate-800 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] ${
-                            isDropdownOpen 
-                              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md' 
+                            isDropdownOpen
+                              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
                               : 'border-[#D1D5DB] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                           }`}
                         >
@@ -215,13 +227,15 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                               </>
                             )}
                           </div>
-                          <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
-                            isDropdownOpen 
-                              ? 'rotate-180 text-indigo-600' 
-                              : 'text-slate-400 group-hover:text-indigo-500'
-                          }`} />
+                          <ChevronDown
+                            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
+                              isDropdownOpen
+                                ? 'rotate-180 text-indigo-600'
+                                : 'text-slate-400 group-hover:text-indigo-500'
+                            }`}
+                          />
                         </button>
-                        
+
                         {isDropdownOpen && (
                           <div className="absolute z-50 w-full mt-2 bg-white border border-indigo-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-indigo-100">
                             {socialPlatforms.map((platform, index) => (
@@ -289,10 +303,8 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                 {/* Premium Horizontal Card Layout */}
                 <div className="flex items-center gap-3 h-full">
                   {/* Icon */}
-                  <div className="flex-shrink-0">
-                    {getIconForType(link.type, 'md')}
-                  </div>
-                  
+                  <div className="flex-shrink-0">{getIconForType(link.type, 'md')}</div>
+
                   {/* Text Content */}
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-gray-900">
@@ -352,7 +364,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                   <button
                     type="button"
                     onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
                         setIsAddDropdownOpen(!isAddDropdownOpen)
@@ -361,8 +373,8 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                       }
                     }}
                     className={`w-full h-10 pl-4 pr-10 py-3 border rounded-xl bg-white text-left focus:outline-none text-base text-slate-800 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] ${
-                      isAddDropdownOpen 
-                        ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md' 
+                      isAddDropdownOpen
+                        ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
                         : 'border-[#D1D5DB] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-blue-50/30 hover:shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                     }`}
                   >
@@ -381,13 +393,15 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                         </>
                       )}
                     </div>
-                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
-                      isAddDropdownOpen 
-                        ? 'rotate-180 text-indigo-600' 
-                        : 'text-slate-400 group-hover:text-indigo-500'
-                    }`} />
+                    <ChevronDown
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200 ${
+                        isAddDropdownOpen
+                          ? 'rotate-180 text-indigo-600'
+                          : 'text-slate-400 group-hover:text-indigo-500'
+                      }`}
+                    />
                   </button>
-                  
+
                   {isAddDropdownOpen && (
                     <div className="absolute z-50 w-full mt-2 bg-white border border-indigo-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-indigo-100">
                       {socialPlatforms.map((platform, index) => (

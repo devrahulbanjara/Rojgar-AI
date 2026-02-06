@@ -49,7 +49,7 @@ function AuthCallbackContent() {
 
         // After successful OAuth, invalidate user query to force fresh fetch
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.user })
-        
+
         // Fetch user data immediately to update the cache
         try {
           const userResponse = await fetch(
@@ -58,7 +58,7 @@ function AuthCallbackContent() {
               credentials: 'include',
             }
           )
-          
+
           if (userResponse.ok) {
             const userData = await userResponse.json()
             const processedUser = {
@@ -82,7 +82,6 @@ function AuthCallbackContent() {
     }
 
     handleCallback()
-     
   }, [searchParams, queryClient, router])
 
   if (error) {

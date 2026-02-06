@@ -26,16 +26,16 @@ export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  
+
   const { data: candidatesData, isLoading: isCandidatesLoading, error } = useCandidates()
   const jobsData = useMemo(() => {
     if (!candidatesData?.candidates) return []
-    
+
     const jobsMap = new Map<string, ShortlistJob>()
-    
-    candidatesData.candidates.forEach((candidate) => {
+
+    candidatesData.candidates.forEach(candidate => {
       const jobId = candidate.job_id
-      
+
       if (!jobsMap.has(jobId)) {
         jobsMap.set(jobId, {
           job_id: jobId,
@@ -43,16 +43,16 @@ export default function ShortlistPage() {
           department: undefined,
           applicant_count: 0,
           pending_ai_reviews: 0,
-          candidates: []
+          candidates: [],
         })
       }
-      
+
       const job = jobsMap.get(jobId)
       if (!job) return
-      
+
       const score = Math.floor(Math.random() * 31) + 65
       const analysisIndex = Math.floor(Math.random() * analysisTemplates.length)
-      
+
       const shortlistCandidate: ShortlistCandidate = {
         application_id: candidate.application_id,
         job_id: candidate.job_id,
@@ -68,12 +68,12 @@ export default function ShortlistPage() {
         job_title: candidate.job_title,
         social_links: candidate.social_links,
       }
-      
+
       job.candidates.push(shortlistCandidate)
       job.applicant_count = job.candidates.length
       job.pending_ai_reviews = job.candidates.filter(c => c.ai_recommendation === 'review').length
     })
-    
+
     return Array.from(jobsMap.values())
   }, [candidatesData])
 
@@ -100,11 +100,9 @@ export default function ShortlistPage() {
     return { text: 'Fair Match', color: 'text-orange-600' }
   }
 
-  const handleApprove = useCallback((_candidateId: string) => {
-  }, [])
+  const handleApprove = useCallback((_candidateId: string) => {}, [])
 
-  const handleReject = useCallback((_candidateId: string) => {
-  }, [])
+  const handleReject = useCallback((_candidateId: string) => {}, [])
 
   const handleAcceptAIRecommendations = useCallback(() => {
     setShowConfirmModal(true)
@@ -115,7 +113,7 @@ export default function ShortlistPage() {
       handleApprove(candidate.candidate_id)
     })
     setShowConfirmModal(false)
-    
+
     toast.success(`AI recommendations accepted for ${recommendedCandidates.length} candidates`)
   }, [recommendedCandidates, handleApprove])
 
@@ -177,9 +175,9 @@ export default function ShortlistPage() {
                     <button
                       onClick={handleAcceptAIRecommendations}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 text-base rounded-lg transition-all duration-150 active:scale-95"
-                      style={{ 
+                      style={{
                         fontWeight: 500,
-                        borderWidth: '1.5px'
+                        borderWidth: '1.5px',
                       }}
                     >
                       <ShieldCheck className="w-4 h-4" />
@@ -199,7 +197,9 @@ export default function ShortlistPage() {
                     {jobsData.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="text-gray-500 mb-2">No jobs with candidates found</div>
-                        <div className="text-sm text-gray-400">Candidates will appear here once they apply to jobs</div>
+                        <div className="text-sm text-gray-400">
+                          Candidates will appear here once they apply to jobs
+                        </div>
                       </div>
                     ) : (
                       jobsData.map(job => (
@@ -234,7 +234,9 @@ export default function ShortlistPage() {
                           <div className="w-20 h-20 bg-white shadow-sm border border-gray-100 rounded-2xl flex items-center justify-center mb-6">
                             <Users className="w-10 h-10 text-indigo-300" />
                           </div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">No candidates found</h3>
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            No candidates found
+                          </h3>
                           <p className="text-base text-gray-500 max-w-md">
                             No candidates have applied for this job yet
                           </p>
@@ -274,18 +276,18 @@ export default function ShortlistPage() {
       </PageTransition>
 
       {showConfirmModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={handleCancelAcceptAI}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl max-w-md w-full mx-4 border border-slate-200 animate-in zoom-in-95 duration-200 ease-out"
-            style={{ 
+            style={{
               padding: '40px',
               borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-center mb-5">
               <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -294,36 +296,38 @@ export default function ShortlistPage() {
             </div>
 
             <div className="text-center mb-8">
-              <h3 
+              <h3
                 className="text-gray-900 mb-4"
-                style={{ 
-                  fontSize: '24px', 
+                style={{
+                  fontSize: '24px',
                   fontWeight: 700,
-                  lineHeight: 1.2
+                  lineHeight: 1.2,
                 }}
               >
                 Accept AI Recommendations
               </h3>
-              
-              <p 
+
+              <p
                 className="text-gray-600 mb-3"
-                style={{ 
-                  fontSize: '16px', 
+                style={{
+                  fontSize: '16px',
                   fontWeight: 400,
-                  lineHeight: 1.5
+                  lineHeight: 1.5,
                 }}
               >
                 You're about to accept AI recommendations for{' '}
-                <span className="font-bold text-gray-900">{recommendedCandidates.length} candidates</span>{' '}
+                <span className="font-bold text-gray-900">
+                  {recommendedCandidates.length} candidates
+                </span>{' '}
                 for <span className="font-bold text-indigo-600">{selectedJob?.title}</span>.
               </p>
-              
-              <p 
+
+              <p
                 className="text-gray-400"
-                style={{ 
-                  fontSize: '14px', 
+                style={{
+                  fontSize: '14px',
                   fontWeight: 400,
-                  lineHeight: 1.5
+                  lineHeight: 1.5,
                 }}
               >
                 This will approve all AI-recommended candidates. This action cannot be undone.
@@ -334,12 +338,12 @@ export default function ShortlistPage() {
               <button
                 onClick={handleCancelAcceptAI}
                 className="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all duration-200"
-                style={{ 
+                style={{
                   minWidth: '120px',
                   height: '44px',
                   fontSize: '15px',
                   fontWeight: 500,
-                  borderWidth: '1.5px'
+                  borderWidth: '1.5px',
                 }}
               >
                 Cancel
@@ -347,12 +351,12 @@ export default function ShortlistPage() {
               <button
                 onClick={handleConfirmAcceptAI}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200"
-                style={{ 
+                style={{
                   minWidth: '200px',
                   height: '44px',
                   fontSize: '15px',
                   fontWeight: 600,
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                 }}
               >
                 Accept Recommendations
@@ -361,7 +365,6 @@ export default function ShortlistPage() {
           </div>
         </div>
       )}
-
     </AppShell>
   )
 }

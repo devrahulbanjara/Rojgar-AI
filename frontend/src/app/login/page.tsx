@@ -176,20 +176,49 @@ export default function Login() {
 
                 {/* Remember Me & Forgot Password */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="rememberMe"
-                      name="rememberMe"
-                      type="checkbox"
-                      checked={values.rememberMe === 'true'}
-                      onChange={e => handleChange('rememberMe', e.target.checked.toString())}
-                      disabled={isLoading}
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-md border-[1.5px] border-[#E5E7EB] text-[#3056F5] focus:ring-2 focus:ring-[#3056F5]/20 disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                    <label htmlFor="rememberMe" className="text-xs sm:text-sm text-[#475569]">
+                  <label
+                    htmlFor="rememberMe"
+                    className="flex items-center gap-2.5 py-1 cursor-pointer group"
+                  >
+                    <div className="relative">
+                      <input
+                        id="rememberMe"
+                        name="rememberMe"
+                        type="checkbox"
+                        checked={values.rememberMe === 'true'}
+                        onChange={e => handleChange('rememberMe', e.target.checked.toString())}
+                        disabled={isLoading}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`
+                          w-[18px] h-[18px] rounded border-2 transition-all duration-150 ease-in-out
+                          ${
+                            values.rememberMe === 'true'
+                              ? 'bg-[#6366F1] border-[#6366F1] scale-105'
+                              : 'bg-white border-[#D1D5DB] group-hover:border-[#9CA3AF]'
+                          }
+                          ${!isLoading && 'group-hover:shadow-[0_0_0_3px_rgba(99,102,241,0.1)]'}
+                          ${isLoading && 'opacity-60 cursor-not-allowed'}
+                        `}
+                      >
+                        {values.rememberMe === 'true' && (
+                          <svg
+                            className="w-3 h-3 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2.5"
+                          >
+                            <polyline points="20,6 9,17 4,12" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-[#374151] font-normal select-none">
                       Remember me
-                    </label>
-                  </div>
+                    </span>
+                  </label>
                   <Link
                     href="/forgot-password"
                     className="text-xs sm:text-sm font-medium text-[#3056F5] hover:text-[#2B3CF5] hover:underline transition-colors"

@@ -22,7 +22,7 @@ export function useAutoShortlist(jobId: string | null) {
       if (!jobId) throw new Error('Job ID is required')
       return await api.autoShortlist.toggle(jobId)
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.setQueryData(['autoShortlist', jobId], data)
       toast.success(`Auto shortlist ${data.auto_shortlist ? 'enabled' : 'disabled'}`)
     },
