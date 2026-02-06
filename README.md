@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="frontend/public/logo-light.svg">
-    <img src="frontend/public/logo-light.svg" alt="ConvexHire Logo" width="280"/>
+    <img src="frontend/public/logo-light.svg" alt="ConvexHire Logo" width="400"/>
   </picture>
   
   ### Use AI to Recruit Humans
