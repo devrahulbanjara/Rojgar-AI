@@ -74,6 +74,23 @@ cd frontend && bun install && bun run dev
 
 ---
 
+## 🎨 Design System
+
+<table>
+<tr>
+<td width="80" align="center">
+<img src="https://api.iconify.design/fluent:design-ideas-24-filled.svg?color=%233b82f6" width="40" height="40" alt="Design"/>
+</td>
+<td>
+ConvexHire features a premium <strong>"Sophisticated Intelligence"</strong> design system with a tri-font typography system (Inter for UI, Plus Jakarta Sans for headings, JetBrains Mono for AI data), carefully crafted color palettes for light/dark modes, and AI-specific visual patterns that distinguish human interface from machine logic.
+</td>
+</tr>
+</table>
+
+> 📖 **[View Full Design Documentation →](./DESIGN.md)** — Typography, colors, spacing, shadows, animations, dark mode, and component patterns.
+
+---
+
 ## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=date&legend=top-left)](https://www.star-history.com/#devrahulbanjara/ConvexHire&type=date&legend=top-left)

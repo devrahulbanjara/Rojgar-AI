@@ -99,7 +99,7 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
 
   return (
     <div className="w-full" role="region" aria-label="Application tracking board">
-      {/* Mobile: Horizontal scroll */}
+      {}
       <div className="block md:hidden">
         <div
           className="flex gap-4 overflow-x-auto pb-4 px-1"
@@ -133,7 +133,7 @@ export const ApplicationTrackingBoard: React.FC<ApplicationTrackingBoardProps> =
         </div>
       </div>
 
-      {/* Desktop: Full width grid */}
+      {}
       <div
         className="hidden md:grid md:grid-cols-3 gap-6"
         role="list"

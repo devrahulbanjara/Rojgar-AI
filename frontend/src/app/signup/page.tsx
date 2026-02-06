@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { SearchParamsWrapper } from '../../components/common/SearchParamsWrapper'
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 import { AuthLayout } from '../../components/layout/AuthLayout'
 import { UserTypeSelector } from '../../components/forms/UserTypeSelector'
 import { GoogleOAuthButton } from '../../components/auth/GoogleOAuthButton'
@@ -111,16 +111,7 @@ export default function Signup() {
         {searchParams => {
           handleSearchParams(searchParams)
           return (
-            <AuthLayout
-              title="Create your account"
-              subtitle="Join ConvexHire and start your journey"
-            >
-              {/* Page Title */}
-              <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-4 sm:mb-6 text-center">
-                Sign Up
-              </h2>
-
-              {/* Auth Error Display */}
+            <AuthLayout title="Create Account" subtitle="Join ConvexHire to start hiring smarter">
               {authError && (
                 <div className="mb-4 sm:mb-6 p-3 bg-error-50 border border-error/20 rounded-xl flex items-center gap-2 text-error text-xs sm:text-sm">
                   <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
@@ -128,7 +119,6 @@ export default function Signup() {
                 </div>
               )}
 
-              {/* Google OAuth Button - Only for Candidate */}
               {values.userType === 'candidate' && (
                 <div className="mb-4 sm:mb-6">
                   <GoogleOAuthButton
@@ -139,7 +129,6 @@ export default function Signup() {
                 </div>
               )}
 
-              {/* Divider - Only show for Candidate */}
               {values.userType === 'candidate' && (
                 <div className="relative mb-4 sm:mb-6">
                   <div className="absolute inset-0 flex items-center">
@@ -153,9 +142,7 @@ export default function Signup() {
                 </div>
               )}
 
-              {/* Signup Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                {/* Role Selection */}
                 <div className="space-y-1 sm:space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-text-primary">
                     I am a
@@ -167,7 +154,6 @@ export default function Signup() {
                   />
                 </div>
 
-                {/* Name Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="name"
@@ -180,7 +166,7 @@ export default function Signup() {
                     name="name"
                     type="text"
                     placeholder={
-                      values.userType === 'organization' ? 'ABC Corporation' : 'John Doe'
+                      values.userType === 'organization' ? 'ABC Corporation' : 'Rahul Banjara'
                     }
                     value={values.name}
                     onChange={e => handleChange('name', e.target.value)}
@@ -199,7 +185,6 @@ export default function Signup() {
                   )}
                 </div>
 
-                {/* Email Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="email"
@@ -229,7 +214,6 @@ export default function Signup() {
                   )}
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="password"
@@ -275,7 +259,7 @@ export default function Signup() {
                   )}
                 </div>
 
-                {/* Confirm Password Field */}
+                {}
                 <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="confirmPassword"
@@ -319,26 +303,41 @@ export default function Signup() {
                   )}
                 </div>
 
-                {/* Create Account Button */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 sm:h-12 btn-primary-gradient text-sm sm:text-[15px] font-semibold rounded-lg sm:rounded-xl transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none mt-4 sm:mt-6 flex items-center justify-center gap-2"
+                  className="w-full h-11 sm:h-12 btn-primary-gradient text-white text-sm sm:text-[15px] font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 mt-4 sm:mt-6 flex items-center justify-center gap-2"
                 >
-                  {isLoading && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />}
-                  {isLoading ? 'Creating account...' : 'Create Account'}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                  ) : (
+                    <>
+                      Create Account
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
 
-              {/* Sign In Link */}
-              <div className="mt-4 sm:mt-6 text-center">
-                <p className="text-xs sm:text-sm text-text-secondary">
+              <p className="mt-6 text-xs text-text-tertiary text-center leading-relaxed">
+                By creating an account, you agree to our{' '}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+              </p>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-text-secondary">
                   Already have an account?{' '}
                   <Link
                     href="/login"
-                    className="font-medium text-primary hover:text-primary-700 hover:underline transition-colors"
+                    className="font-semibold text-text-primary hover:underline transition-colors"
                   >
-                    Sign in
+                    Sign In
                   </Link>
                 </p>
               </div>

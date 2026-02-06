@@ -101,7 +101,6 @@ function formatDeadline(deadline: string): string {
   }
 }
 
-// Department color schemes matching Reference JD cards
 const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
     bg: 'bg-blue-50/80 dark:bg-blue-950/30',
@@ -158,11 +157,10 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
   ({ job, onClick, onConvertToReferenceJD, className }) => {
     const status = job.status || 'Draft'
-    // Normalize status: map "Closed" to "Expired" for display
+
     const displayStatus = status === 'Closed' ? 'Expired' : status
     const deptColor = departmentColors[job.department || ''] || departmentColors.Default
 
-    // Auto shortlist hook
     const jobId = job.job_id || job.id?.toString() || null
     const {
       autoShortlist,
@@ -181,7 +179,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
       if (!jobId || isLoadingAutoShortlist || isToggling) return
 
       toggle()
-      // Custom toast message
+
       setTimeout(() => {
         toast.success(
           autoShortlist
@@ -217,7 +215,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Header Row: Department Badge + Auto Shortlist Toggle */}
+          {}
           <div className="flex items-start justify-between mb-5">
             {job.department && (
               <span
@@ -232,7 +230,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               </span>
             )}
 
-            {/* Auto Shortlist Toggle */}
+            {}
             <div className="relative group/tooltip">
               <button
                 onClick={handleAutoShortlistToggle}
@@ -259,7 +257,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                 />
               </button>
 
-              {/* Tooltip */}
+              {}
               <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-text-inverse bg-text-primary rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                 {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
                 <div className="absolute bottom-full right-2 border-4 border-transparent border-b-text-primary" />
@@ -267,16 +265,16 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
             </div>
           </div>
 
-          {/* Job Title - Refined Size */}
+          {}
           <div className="mb-5">
             <h3 className="font-semibold text-[19px] leading-tight text-text-primary group-hover:text-primary-600 transition-colors line-clamp-2">
               {job.title}
             </h3>
           </div>
 
-          {/* Metadata - Cleanly Organized */}
+          {}
           <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-            {/* Row 1: Location + Time */}
+            {}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-[14px] h-[14px] text-text-muted" />
@@ -288,7 +286,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               </div>
             </div>
 
-            {/* Row 2: Salary + Type + Work Mode */}
+            {}
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <DollarSign className="w-[14px] h-[14px] text-text-muted" />
@@ -305,12 +303,12 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
             </div>
           </div>
 
-          {/* Spacer */}
+          {}
           <div className="flex-1" />
 
-          {/* Bottom Action Row - Statistics + Deadline/Action */}
+          {}
           <div className="flex items-center justify-between pt-6 border-t border-border-subtle">
-            {/* Left: Statistics - Colored Badges */}
+            {}
             <div className="flex items-center gap-3">
               {job.applicant_count !== undefined && (
                 <div className="inline-flex items-center gap-2 px-3 py-2 bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-lg border border-ai-200 dark:border-ai-800">
@@ -326,7 +324,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               )}
             </div>
 
-            {/* Right: Deadline Badge or Save Template Button */}
+            {}
             <div className="flex items-center">
               {job.application_deadline ? (
                 displayStatus === 'Expired' ? (

@@ -161,38 +161,31 @@ export default function ShortlistPage() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="space-y-8 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="relative py-12 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/30 to-background-surface border-b border-primary-50/50 dark:border-primary-900/30 mb-8 transition-all duration-300 ease-out">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-out">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div>
-                    <h1 className="text-4xl max-lg:text-3xl font-bold text-text-primary leading-tight tracking-tight">
-                      Shortlist
-                    </h1>
-                    <p className="text-lg text-text-secondary mt-2 max-w-2xl">
-                      Review AI-analyzed candidates and make hiring decisions
-                    </p>
-                  </div>
-                  {recommendedCandidates.length > 0 && selectedJob && (
-                    <button
-                      onClick={handleAcceptAIRecommendations}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-base rounded-lg transition-all duration-150 active:scale-95"
-                      style={{
-                        fontWeight: 500,
-                        borderWidth: '1.5px',
-                      }}
-                    >
-                      <ShieldCheck className="w-4 h-4" />
-                      Accept AI Recommendations ({recommendedCandidates.length})
-                    </button>
-                  )}
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+                  Shortlist
+                </h1>
+                <p className="text-base text-text-secondary">
+                  Review AI-analyzed candidates and make hiring decisions
+                </p>
               </div>
+              {recommendedCandidates.length > 0 && selectedJob && (
+                <button
+                  onClick={handleAcceptAIRecommendations}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Accept AI Recommendations ({recommendedCandidates.length})
+                </button>
+              )}
             </div>
+            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="space-y-8">
             <div className="flex gap-8">
               <div className="w-72 flex-shrink-0">
                 <AnimatedContainer direction="up" delay={0.2}>

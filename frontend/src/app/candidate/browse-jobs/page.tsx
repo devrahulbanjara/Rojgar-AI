@@ -9,7 +9,7 @@ import {
   useJobSearch,
 } from '../../../hooks/queries/useJobs'
 import { useAuth } from '../../../hooks/useAuth'
-import { JobCard, JobSearchBar, FilterChips, type FilterType } from '../../../components/jobs'
+import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
 import { Button } from '../../../components/ui/button'
@@ -101,7 +101,6 @@ export default function Jobs() {
       isLoadingRecommendations,
     })
 
-    // Force immediate fetch when user is authenticated and has ID - this is the key fix
     if (
       user?.id &&
       !isSearchMode &&
@@ -182,10 +181,14 @@ export default function Jobs() {
     setSearchQuery(value)
   }, [])
 
-  const handleDebouncedSearchChange = useCallback((value: string) => {
-    setDebouncedSearchQuery(value)
-    setCurrentPage(1)
-  }, [])
+  // Debounce search query (matches recruiter/candidates pattern)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setCurrentPage(1)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const handleFilterToggle = useCallback((filter: FilterType) => {
     setActiveFilters(prev => {
@@ -226,7 +229,7 @@ export default function Jobs() {
           job_id: job.id.toString(),
         })
       } catch {
-        // Error handled by mutation
+        // Ignore application errors
       }
     },
     [createApplicationMutation]
@@ -276,62 +279,64 @@ export default function Jobs() {
 
   return (
     <AppShell>
-      <div className="space-y-8 pb-12">
-        {/* Enhanced Header with Gradient */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+        {/* Minimalist Page Header */}
         <AnimatedContainer direction="up" delay={0.1}>
-          <div className="relative py-12 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/30 to-background-surface border-b border-primary-50/50 dark:border-primary-900/30 mb-8 transition-all duration-300 ease-out">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 transition-all duration-300 ease-out">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold text-text-primary tracking-tight">
-                    {isSearchMode ? 'Search Results' : 'Find Your Next Role'}
-                  </h1>
-                  <p className="text-lg text-text-secondary max-w-2xl">
-                    {isSearchMode
-                      ? debouncedSearchQuery
-                        ? `Found ${totalJobs} matches for "${debouncedSearchQuery}"`
-                        : 'Search results based on your criteria'
-                      : 'Discover opportunities matched to your skills and experience'}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing || isLoading}
-                  className="flex items-center gap-2 bg-background-surface hover:bg-primary-50 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:border-primary-300 dark:hover:border-primary-700 shadow-sm transition-all duration-200"
-                >
-                  <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
-                  Refresh Jobs
-                </Button>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+                {isSearchMode ? 'Search Results' : 'Find Your Next Role'}
+              </h1>
+              <p className="text-base text-text-secondary max-w-2xl">
+                {isSearchMode
+                  ? debouncedSearchQuery
+                    ? `Found ${totalJobs} matches for "${debouncedSearchQuery}"`
+                    : 'Search results based on your criteria'
+                  : 'Discover opportunities matched to your skills and experience'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className="flex items-center gap-2 bg-background-surface hover:bg-primary-50 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:border-primary-300 dark:hover:border-primary-700 shadow-sm transition-all duration-200"
+            >
+              <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+              Refresh Jobs
+            </Button>
+          </div>
+          <div className="mt-6 border-b border-border-default/60" />
+        </AnimatedContainer>
 
-              {/* Enhanced Search & Filter Section */}
-              <div className="space-y-6 bg-background-surface rounded-2xl p-6 border border-border-default shadow-sm">
-                <JobSearchBar
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onDebouncedChange={handleDebouncedSearchChange}
-                  loading={isLoadingSearch}
-                  placeholder="Search by job title, company, or skills..."
-                />
+        {/* Search & Filters */}
+        <AnimatedContainer direction="up" delay={0.15}>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
+            <div className="relative w-full lg:w-[420px]">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => handleSearchChange(e.target.value)}
+                placeholder="Search by job title, company, or skills..."
+                className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
+              />
+            </div>
 
-                {/* Filter Chips with more breathing room */}
-                <FilterChips
-                  activeFilters={activeFilters}
-                  onFilterToggle={handleFilterToggle}
-                  onClearAll={handleClearFilters}
-                  showAvailable
-                />
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <FilterChips
+                activeFilters={activeFilters}
+                onFilterToggle={handleFilterToggle}
+                onClearAll={handleClearFilters}
+                showAvailable
+              />
             </div>
           </div>
         </AnimatedContainer>
 
-        {/* Main Content - Job Cards Grid */}
+        {/* Jobs Grid */}
         <AnimatedContainer direction="up" delay={0.3}>
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Section Header */}
+          <div className="w-full">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-1 h-8 bg-primary-600 rounded-full" />
@@ -350,7 +355,7 @@ export default function Jobs() {
               </div>
             </div>
 
-            {/* Job Cards Grid with larger gap */}
+            {}
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {isLoading ? (
                 <>
@@ -422,7 +427,7 @@ export default function Jobs() {
               )}
             </div>
 
-            {/* Enhanced Pagination */}
+            {}
             {totalPages > 1 && totalJobs > 0 && (
               <div className="mt-16 flex justify-center">
                 <div className="flex items-center gap-2 bg-background-surface rounded-2xl p-2 shadow-sm border border-border-subtle">
@@ -497,7 +502,7 @@ export default function Jobs() {
           </div>
         </AnimatedContainer>
 
-        {/* Job Details Modal */}
+        {}
         <JobDetailsModal
           job={selectedJob}
           isOpen={isDetailModalOpen}

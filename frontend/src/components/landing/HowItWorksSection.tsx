@@ -62,7 +62,7 @@ export function HowItWorksSection() {
       id="how-it-works"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
-      {/* Background Pattern */}
+      {}
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -72,7 +72,7 @@ export function HowItWorksSection() {
       />
 
       <div className="max-w-6xl mx-auto relative">
-        {/* Section Header */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -83,17 +83,17 @@ export function HowItWorksSection() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background-subtle text-text-secondary text-sm font-medium mb-6">
             Simple Process
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight mb-6">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-text-primary tracking-tightest mb-6">
             How ConvexHire works
           </h2>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed font-sans">
             From job posting to hiring, our AI streamlines every step while keeping you in control.
           </p>
         </motion.div>
 
-        {/* Steps */}
+        {}
         <div className="relative">
-          {/* Connecting Line */}
+          {}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary-200 via-ai-200 via-success-200 via-warning-200 to-error-200 -translate-x-1/2" />
 
           <div className="space-y-8 lg:space-y-0">
@@ -110,7 +110,7 @@ export function HowItWorksSection() {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className={`relative lg:grid lg:grid-cols-2 lg:gap-16 ${index > 0 ? 'lg:mt-8' : ''}`}
                 >
-                  {/* Content - alternates sides on desktop */}
+                  {}
                   <div
                     className={`${isEven ? 'lg:text-right lg:pr-16' : 'lg:col-start-2 lg:pl-16'}`}
                   >
@@ -123,25 +123,27 @@ export function HowItWorksSection() {
                         <Icon className={`w-6 h-6 ${step.iconColor}`} />
                       </div>
                       <span
-                        className={`text-5xl font-bold bg-gradient-to-br ${step.color} bg-clip-text text-transparent opacity-30`}
+                        className={`text-5xl font-bold bg-gradient-to-br ${step.color} bg-clip-text text-transparent opacity-50 dark:opacity-60`}
                       >
                         {step.number}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-bold text-text-primary mt-4 mb-2">{step.title}</h3>
+                    <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mt-4 mb-2">
+                      {step.title}
+                    </h3>
                     <p className="text-text-secondary leading-relaxed max-w-md mx-auto lg:mx-0">
                       {step.description}
                     </p>
                   </div>
 
-                  {/* Center Dot on Timeline */}
+                  {}
                   <div className="hidden lg:flex absolute left-1/2 top-6 -translate-x-1/2 items-center justify-center">
                     <div
                       className={`w-4 h-4 rounded-full bg-gradient-to-br ${step.color} ring-4 ring-background-surface shadow-lg`}
                     />
                   </div>
 
-                  {/* Empty space for alternating layout */}
+                  {}
                   <div
                     className={`hidden lg:block ${isEven ? 'lg:col-start-2' : 'lg:col-start-1 lg:row-start-1'}`}
                   />

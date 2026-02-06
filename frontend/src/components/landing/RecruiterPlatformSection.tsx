@@ -29,12 +29,12 @@ export function RecruiterPlatformSection() {
       id="platform"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
-      {/* Background Elements */}
+      {}
       <div className="absolute top-0 right-0 w-72 h-72 bg-primary-100/30 dark:bg-primary-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: Visual */}
+          {}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -43,23 +43,25 @@ export function RecruiterPlatformSection() {
             className="relative order-2 lg:order-1"
           >
             <div className="relative">
-              {/* Glow */}
+              {}
               <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-ai/10 rounded-3xl blur-2xl" />
 
-              {/* AI Shortlisting Dashboard */}
+              {}
               <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
-                {/* Header */}
+                {}
                 <div className="px-5 py-3.5 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Brain className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-bold text-text-primary">AI Shortlisting</h3>
+                    <h3 className="text-base font-display font-bold text-text-primary tracking-tight">
+                      AI Shortlisting
+                    </h3>
                   </div>
                   <p className="text-xs text-text-tertiary mt-0.5">Smart candidate evaluation</p>
                 </div>
 
-                {/* Content */}
+                {}
                 <div className="p-4 space-y-3 bg-background-subtle/30">
-                  {/* Stats Row */}
+                  {}
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       {
@@ -106,7 +108,7 @@ export function RecruiterPlatformSection() {
                     })}
                   </div>
 
-                  {/* Candidate Cards */}
+                  {}
                   <div className="space-y-2">
                     {[
                       {
@@ -135,8 +137,10 @@ export function RecruiterPlatformSection() {
                             <div className="h-2 bg-border-subtle rounded w-16 animate-pulse" />
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-primary">{candidate.score}</div>
-                            <div className="text-xs text-text-tertiary">AI Score</div>
+                            <div className="text-lg font-mono font-bold text-primary">
+                              {candidate.score}
+                            </div>
+                            <div className="text-xs font-mono text-text-tertiary">AI Score</div>
                           </div>
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-subtle">
@@ -162,7 +166,7 @@ export function RecruiterPlatformSection() {
             </div>
           </motion.div>
 
-          {/* Right: Content */}
+          {}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -174,18 +178,18 @@ export function RecruiterPlatformSection() {
               For Recruiters
             </div>
 
-            <h2 className="text-4xl sm:text-5xl font-bold text-text-primary tracking-tight mb-6">
+            <h2 className="text-4xl sm:text-5xl font-display font-bold text-text-primary tracking-tightest mb-6">
               Hire faster with{' '}
               <span className="bg-gradient-to-r from-primary to-ai bg-clip-text text-transparent">
                 AI automation
               </span>
             </h2>
 
-            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed">
+            <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed font-sans">
               AI agents handle screening, scheduling, and matching while you stay in control.
             </p>
 
-            {/* Features Grid */}
+            {}
             <div className="grid grid-cols-2 gap-3 mb-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon

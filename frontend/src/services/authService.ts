@@ -159,96 +159,81 @@ class AuthService {
   }
 
   async signup(data: SignupData): Promise<AuthResponse> {
-    // eslint-disable-next-line no-useless-catch
-    try {
-      const response = await fetch(`${this.baseUrl}/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
-      })
+    const response = await fetch(`${this.baseUrl}/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      }),
+    })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Signup failed')
-      }
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || 'Signup failed')
+    }
 
-      const responseData = await response.json()
-      return {
-        user: responseData.user,
-        token: responseData.access_token,
-      }
-    } catch (error) {
-      throw error
+    const responseData = await response.json()
+    return {
+      user: responseData.user,
+      token: responseData.access_token,
     }
   }
 
   async organizationSignup(data: OrganizationSignupData): Promise<OrganizationAuthResponse> {
-    // eslint-disable-next-line no-useless-catch
-    try {
-      const response = await fetch(`${this.baseUrl}/organization/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          name: data.name,
-          location_city: data.locationCity,
-          location_country: data.locationCountry,
-        }),
-      })
+    const response = await fetch(`${this.baseUrl}/organization/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        location_city: data.locationCity,
+        location_country: data.locationCountry,
+      }),
+    })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Organization signup failed')
-      }
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || 'Organization signup failed')
+    }
 
-      const responseData = await response.json()
-      return {
-        organization: responseData.organization,
-        token: responseData.access_token,
-      }
-    } catch (error) {
-      throw error
+    const responseData = await response.json()
+    return {
+      organization: responseData.organization,
+      token: responseData.access_token,
     }
   }
 
   async organizationLogin(credentials: LoginCredentials): Promise<OrganizationAuthResponse> {
-    // eslint-disable-next-line no-useless-catch
-    try {
-      const response = await fetch(`${this.baseUrl}/organization/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password,
-          remember_me: credentials.rememberMe || false,
-        }),
-      })
+    const response = await fetch(`${this.baseUrl}/organization/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        email: credentials.email,
+        password: credentials.password,
+        remember_me: credentials.rememberMe || false,
+      }),
+    })
 
-      if (!response.ok) {
-        throw new Error('Invalid email or password')
-      }
+    if (!response.ok) {
+      throw new Error('Invalid email or password')
+    }
 
-      const data = await response.json()
-      return {
-        organization: data.organization,
-        token: data.access_token,
-      }
-    } catch (error) {
-      throw error
+    const data = await response.json()
+    return {
+      organization: data.organization,
+      token: data.access_token,
     }
   }
 
@@ -256,7 +241,8 @@ class AuthService {
     try {
       await fetch(`${this.baseUrl}/logout`, {
         method: 'POST',
-        credentials: 'include', // Include cookies
+        credentials: 'include',
+
         headers: {
           'Content-Type': 'application/json',
         },
@@ -266,7 +252,9 @@ class AuthService {
     }
   }
 
-  handleGoogleCallback(): void {}
+  handleGoogleCallback(): void {
+    // Not implemented
+  }
 
   async isAuthenticated(): Promise<boolean> {
     try {

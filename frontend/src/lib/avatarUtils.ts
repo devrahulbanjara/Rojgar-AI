@@ -19,7 +19,7 @@ const AVATAR_COLORS = [
 ]
 
 export function getAvatarColor(name: string | null | undefined): string {
-  if (!name) return 'bg-background-subtle text-text-secondary' // Default fallback
+  if (!name) return 'bg-background-subtle text-text-secondary'
 
   let hash = 0
   for (let i = 0; i < name.length; i++) {
