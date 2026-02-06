@@ -1,17 +1,3 @@
-/**
- * ConvexHire Design System - AI Score Colors
- *
- * Score-to-color mapping for AI match scores.
- * Colors communicate the quality of candidate-job match.
- *
- * 90-100: Excellent (Emerald) - Top tier candidates
- * 80-89: Great (Teal) - Strong matches
- * 70-79: Good (Blue) - Solid candidates
- * 60-69: Moderate (Amber) - Needs attention
- * 40-59: Weak (Orange) - Significant gaps
- * 0-39: Poor (Red) - Not recommended
- */
-
 export type ScoreCategory = 'excellent' | 'great' | 'good' | 'moderate' | 'weak' | 'poor'
 
 export interface AIScoreColorConfig {
@@ -37,7 +23,6 @@ export interface AIScoreColorConfig {
 
 export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
   excellent: {
-    // 90-100
     light: {
       bg: 'bg-emerald-50',
       text: 'text-emerald-700',
@@ -54,7 +39,6 @@ export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
     icon: '🌟',
   },
   great: {
-    // 80-89
     light: {
       bg: 'bg-teal-50',
       text: 'text-teal-700',
@@ -71,7 +55,6 @@ export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
     icon: '⭐',
   },
   good: {
-    // 70-79
     light: {
       bg: 'bg-blue-50',
       text: 'text-blue-700',
@@ -88,7 +71,6 @@ export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
     icon: '👍',
   },
   moderate: {
-    // 60-69
     light: {
       bg: 'bg-amber-50',
       text: 'text-amber-700',
@@ -105,7 +87,6 @@ export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
     icon: '⚠️',
   },
   weak: {
-    // 40-59
     light: {
       bg: 'bg-orange-50',
       text: 'text-orange-700',
@@ -122,7 +103,6 @@ export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
     icon: '📊',
   },
   poor: {
-    // 0-39
     light: {
       bg: 'bg-red-50',
       text: 'text-red-700',
@@ -140,9 +120,6 @@ export const AI_SCORE_COLORS: Record<ScoreCategory, AIScoreColorConfig> = {
   },
 } as const
 
-/**
- * Get the score category based on numeric score
- */
 export function getScoreCategory(score: number): ScoreCategory {
   if (score >= 90) return 'excellent'
   if (score >= 80) return 'great'
@@ -152,38 +129,23 @@ export function getScoreCategory(score: number): ScoreCategory {
   return 'poor'
 }
 
-/**
- * Get color config for a numeric score
- */
 export function getScoreColor(score: number): AIScoreColorConfig {
   return AI_SCORE_COLORS[getScoreCategory(score)]
 }
 
-/**
- * Get Tailwind classes for AI score badge
- */
 export function getScoreBadgeClasses(score: number): string {
   const colors = getScoreColor(score)
   return `${colors.light.bg} ${colors.light.text} ${colors.light.border} ${colors.light.ring} dark:${colors.dark.bg} dark:${colors.dark.text} dark:${colors.dark.border}`
 }
 
-/**
- * Get human-readable label for score
- */
 export function getScoreLabel(score: number): string {
   return getScoreColor(score).label
 }
 
-/**
- * Get icon for score
- */
 export function getScoreIcon(score: number): string {
   return getScoreColor(score).icon
 }
 
-/**
- * Get hex colors for score (useful for charts/canvas)
- */
 export function getScoreHexColors(score: number): {
   bg: string
   text: string

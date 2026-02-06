@@ -47,15 +47,13 @@ export function ThemeToggle({
       <button
         onClick={cycleTheme}
         className={cn(
-          'group p-2 rounded-xl text-text-secondary hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-50/10 transition-all duration-200',
+          'p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background-subtle transition-colors duration-200',
           className
         )}
         aria-label={`Switch theme (current: ${themeLabel})`}
         title={`Theme: ${themeLabel}`}
       >
-        <div className="p-1 rounded-lg bg-background-subtle group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors duration-200">
-          <ThemeIcon />
-        </div>
+        <ThemeIcon />
       </button>
     )
   }
@@ -77,7 +75,6 @@ export function ThemeToggle({
     )
   }
 
-  // Default variant
   return (
     <button
       onClick={cycleTheme}

@@ -53,7 +53,7 @@ export function ShortlistJobCard({ job, isSelected, onClick, className }: Shortl
       }}
     >
       <div className="flex flex-col h-full">
-        {/* Header Row: Department Badge */}
+        {}
         <div className="flex items-start justify-between mb-5">
           {job.department && (
             <span
@@ -67,17 +67,17 @@ export function ShortlistJobCard({ job, isSelected, onClick, className }: Shortl
           )}
         </div>
 
-        {/* Job Title */}
+        {}
         <div className="mb-5">
           <h3 className="font-semibold text-[19px] leading-tight text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
             {job.title}
           </h3>
         </div>
 
-        {/* Spacer */}
+        {}
         <div className="flex-1" />
 
-        {/* Bottom Stats Row */}
+        {}
         <div className="flex items-center gap-4 pt-4 border-t border-border-subtle">
           <div className="inline-flex items-center gap-2 px-3 py-2 bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-lg border border-ai-200 dark:border-ai-800">
             <Users className="w-4 h-4" />

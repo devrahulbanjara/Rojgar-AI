@@ -13,34 +13,35 @@ interface AppShellProps {
   hideSidebar?: boolean
 }
 
-function getInitialSidebarState(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const stored = window.localStorage.getItem('sidebarCollapsed')
-    if (stored !== null) {
-      return stored === 'true'
-    }
-    return window.innerWidth < 1280
-  } catch {
-    return false
-  }
-}
-
 export function AppShell({ children, hideSidebar = false }: AppShellProps) {
   const { user } = useAuth()
   const pathname = usePathname()
 
   const [isHydrated, setIsHydrated] = React.useState(false)
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(getInitialSidebarState)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState<boolean | null>(null)
 
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
+    let collapsed = false
+    try {
+      const stored = window.localStorage.getItem('sidebarCollapsed')
+      if (stored !== null) {
+        collapsed = stored === 'true'
+      } else {
+        collapsed = window.innerWidth < 1280
+      }
+    } catch {
+      collapsed = false
+    }
+
+    setIsSidebarCollapsed(collapsed)
+
+    const raf = requestAnimationFrame(() => {
       setIsHydrated(true)
-    }, 50)
-    return () => clearTimeout(timer)
+    })
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   React.useEffect(() => {
@@ -60,10 +61,11 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
 
   const handleDesktopToggle = React.useCallback(() => {
     setIsSidebarCollapsed(prev => {
-      const nextState = !prev
+      const nextState = prev === null ? true : !prev
       try {
         window.localStorage.setItem('sidebarCollapsed', String(nextState))
       } catch {
+        // Ignore localStorage errors
       }
       return nextState
     })
@@ -88,15 +90,16 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
 
   const sidebarMarginClass = React.useMemo(() => {
     if (hideSidebar) return ''
-    return isSidebarCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[260px]'
+    if (isSidebarCollapsed === null) return 'lg:ml-[220px]'
+    return isSidebarCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[220px]'
   }, [isSidebarCollapsed, hideSidebar])
 
   return (
     <div className="min-h-screen bg-background-subtle">
       <Topbar onMenuClick={hideSidebar ? undefined : handleMenuClick} user={user} />
 
-      <div className="flex min-h-[calc(100vh-72px)] pt-[72px]">
-        {!hideSidebar && (
+      <div className="flex min-h-[calc(100vh-64px)] pt-16">
+        {!hideSidebar && isSidebarCollapsed !== null && (
           <Sidebar
             isCollapsed={isSidebarCollapsed}
             onToggle={handleDesktopToggle}

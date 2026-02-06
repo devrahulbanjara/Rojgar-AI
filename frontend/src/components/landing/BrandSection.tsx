@@ -1,21 +1,21 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Briefcase, Brain, Star, TrendingUp, Users, Zap, Shield, ArrowRight } from 'lucide-react'
+import { Brain, Star, TrendingUp, Users, Zap, Shield, ArrowRight } from 'lucide-react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 
 export function BrandSection() {
   return (
     <section className="py-24 lg:py-32 px-6 lg:px-8 relative overflow-hidden bg-gradient-primary">
-      {/* Background Decorations */}
+      {}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-full h-full">
           <div className="absolute top-10 left-[10%] w-64 h-64 bg-white/5 rounded-full blur-3xl" />
           <div className="absolute bottom-10 right-[5%] w-80 h-80 bg-primary-700/15 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary-600/10 rounded-full blur-3xl" />
         </div>
-        {/* Grid */}
+        {}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -26,7 +26,7 @@ export function BrandSection() {
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: Content */}
+          {}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -46,7 +46,7 @@ export function BrandSection() {
               that reads resumes like a human recruiter would.
             </p>
 
-            {/* Stats Row */}
+            {}
             <div className="flex items-center gap-8 mb-10 pb-10 border-b border-white/10">
               {[
                 { value: '10x', label: 'Faster' },
@@ -61,7 +61,9 @@ export function BrandSection() {
                   transition={{ delay: 0.3 + i * 0.1 }}
                   className="text-center"
                 >
-                  <div className="text-3xl lg:text-4xl font-mono font-bold text-white mb-1">{stat.value}</div>
+                  <div className="text-3xl lg:text-4xl font-mono font-bold text-white mb-1">
+                    {stat.value}
+                  </div>
                   <div className="text-sm text-white/70 font-medium">{stat.label}</div>
                 </motion.div>
               ))}
@@ -75,7 +77,7 @@ export function BrandSection() {
             </Link>
           </motion.div>
 
-          {/* Right: Abstract Visual Composition */}
+          {}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -84,9 +86,9 @@ export function BrandSection() {
             className="relative hidden lg:block"
           >
             <div className="relative w-full h-[420px]">
-              {/* Focus Lens - Represents Understanding & Clarity */}
+              {}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                {/* Outer Ring - Peripheral Vision */}
+                {}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -94,7 +96,7 @@ export function BrandSection() {
                   transition={{ delay: 0.2, duration: 0.6 }}
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full border border-white/10"
                 />
-                {/* Middle Ring - Narrowing Focus */}
+                {}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -102,7 +104,7 @@ export function BrandSection() {
                   transition={{ delay: 0.3, duration: 0.6 }}
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-white/15 bg-white/[0.02]"
                 />
-                {/* Inner Ring - Sharp Focus */}
+                {}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -110,7 +112,7 @@ export function BrandSection() {
                   transition={{ delay: 0.4, duration: 0.6 }}
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/25 bg-white/[0.04] shadow-lg"
                 />
-                {/* Center Point - Crystal Clear Understanding */}
+                {}
                 <motion.div
                   initial={{ opacity: 0, scale: 0 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -120,7 +122,7 @@ export function BrandSection() {
                 />
               </div>
 
-              {/* Floating Card: AI Score - Aligned to panel */}
+              {}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -134,7 +136,9 @@ export function BrandSection() {
                   <div className="w-6 h-6 rounded-md bg-success-100 dark:bg-success-900/50 flex items-center justify-center">
                     <TrendingUp className="w-3 h-3 text-success" />
                   </div>
-                  <span className="text-xs font-mono font-semibold text-text-secondary tracking-wide uppercase">Match Score</span>
+                  <span className="text-xs font-mono font-semibold text-text-secondary tracking-wide uppercase">
+                    Match Score
+                  </span>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-xl font-mono font-bold text-success">95%</span>
@@ -142,7 +146,7 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Card: Candidates - Aligned to panel */}
+              {}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -170,7 +174,7 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Card: AI Analysis - Aligned to panel */}
+              {}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -183,7 +187,9 @@ export function BrandSection() {
                   <div className="w-6 h-6 rounded-md bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center">
                     <Brain className="w-3 h-3 text-ai" />
                   </div>
-                  <span className="text-xs font-mono font-semibold text-text-secondary tracking-wide uppercase">AI Analysis</span>
+                  <span className="text-xs font-mono font-semibold text-text-secondary tracking-wide uppercase">
+                    AI Analysis
+                  </span>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -201,7 +207,7 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Badge: Fast - Aligned to panel */}
+              {}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -216,7 +222,7 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Floating Badge: Secure - Aligned to panel */}
+              {}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -231,7 +237,7 @@ export function BrandSection() {
                 </div>
               </motion.div>
 
-              {/* Star Decorations */}
+              {}
               <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
@@ -255,7 +261,7 @@ export function BrandSection() {
         </div>
       </div>
 
-      {/* CSS Animation */}
+      {}
       <style jsx>{`
         @keyframes float {
           0%,

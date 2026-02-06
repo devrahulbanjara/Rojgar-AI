@@ -92,7 +92,7 @@ export default function CandidateDashboard() {
           <p className="text-text-tertiary mt-2 text-lg">Track your job application journey</p>
         </div>
 
-        {/* Skeleton Kanban Columns */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           <SkeletonDashboardColumn
             bgColor="bg-primary-50/50 dark:bg-primary-950/30"
@@ -122,14 +122,8 @@ export default function CandidateDashboard() {
 
   return (
     <div className="h-full flex flex-col space-y-8 pb-10">
-      <div>
-        <h1 className="text-3xl font-bold text-text-primary tracking-tight">Your Applications</h1>
-        <p className="text-text-tertiary mt-2 text-lg">Track your job application journey</p>
-      </div>
-
-      {/* Kanban Columns - Equal Height via Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-        {/* Applied Column */}
+        {}
         <div className="bg-primary-50/50 dark:bg-primary-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-primary-200/60 dark:border-primary-800/60 shadow-sm/50">
           <ColumnHeader
             title="Applied"
@@ -146,7 +140,7 @@ export default function CandidateDashboard() {
           </div>
         </div>
 
-        {/* Interviewing Column */}
+        {}
         <div className="bg-ai-50/50 dark:bg-ai-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-ai-200/60 dark:border-ai-800/60 shadow-sm/50">
           <ColumnHeader
             title="Interviewing"
@@ -163,7 +157,7 @@ export default function CandidateDashboard() {
           </div>
         </div>
 
-        {/* Outcome Column */}
+        {}
         <div className="bg-success-50/50 dark:bg-success-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-success-200/60 dark:border-success-800/60 shadow-sm/50">
           <ColumnHeader
             title="Outcome"
@@ -183,8 +177,6 @@ export default function CandidateDashboard() {
     </div>
   )
 }
-
-// Sub-components
 
 function ColumnHeader({
   title,
@@ -213,24 +205,17 @@ function ColumnHeader({
 function ApplicationCard({ app }: { app: ApplicationResponse }) {
   const statusStyle = STATUS_CONFIG[app.current_status] || STATUS_CONFIG.applied
 
-  // Determine left border color based on specific status.
-  // We can map the bg-color from config to a border color roughly, or just use the config's text/border colors.
-  // Let's rely on the config but map it to a border-l color.
-  // Since STATUS_CONFIG has 'color' class string, we can parse it or just use a lookup.
-  // For simplicity and cleanest look, let's use the status color's main hue.
-
-  // Quick helper to extract border color from the status config class or default
   const getBorderColorClass = (statusStr: string) => {
     if (statusStr === 'interviewing') return 'border-l-ai-500'
     if (statusStr === 'outcome') return 'border-l-success-500'
-    return 'border-l-primary-500' // Default applied
+    return 'border-l-primary-500'
   }
 
   return (
     <div
       className={`bg-background-surface p-4 rounded-lg shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} hover:shadow-md transition-all cursor-default group`}
     >
-      {/* Header: Title & Company */}
+      {}
       <div className="mb-3">
         <h4 className="font-bold text-text-primary text-sm leading-tight mb-1 group-hover:text-primary transition-colors">
           {app.job.title}
@@ -238,7 +223,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
         <p className="text-sm font-medium text-text-tertiary">{app.organization.name}</p>
       </div>
 
-      {/* Metadata: Location & Type */}
+      {}
       <div className="flex items-center gap-3 text-xs text-text-muted mb-4">
         {app.job.location_city && (
           <div className="flex items-center gap-1">
@@ -254,7 +239,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
         )}
       </div>
 
-      {/* Footer: Date & Status Chip */}
+      {}
       <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
         <div className="flex items-center gap-1 text-[11px] text-text-muted font-medium">
           <CalendarClock className="w-3 h-3" />

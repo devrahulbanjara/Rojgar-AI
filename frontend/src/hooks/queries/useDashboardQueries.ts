@@ -1,25 +1,14 @@
-/**
- * Dashboard Query Hooks
- * React Query hooks for dashboard-related data fetching
- */
-
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
 import type { DashboardStats, UserType } from '../../types'
 import { queryKeys } from '../../lib/queryClient'
 
-// Get dashboard stats
 export const useDashboardStats = (userType?: UserType) => {
   return useQuery({
     queryKey: [...queryKeys.dashboard.stats, userType || 'recruiter'],
     queryFn: async (): Promise<DashboardStats> => {
-      // TODO: Replace with actual API call when backend is ready
-      // const response = await apiService.get(`/dashboard/stats?userType=${userType}`);
-      // return response.data;
-
-      // Mock implementation for demo
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
       if (userType === 'recruiter') {
         return {
@@ -37,23 +26,19 @@ export const useDashboardStats = (userType?: UserType) => {
         }
       }
     },
-    enabled: !!userType, // Only run if userType is provided
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!userType,
+
+    staleTime: 5 * 60 * 1000,
+
+    gcTime: 10 * 60 * 1000,
   })
 }
 
-// Get dashboard activity
 export const useDashboardActivity = (userId?: string) => {
   return useQuery({
     queryKey: [...queryKeys.dashboard.activity, userId || ''],
     queryFn: async (): Promise<unknown[]> => {
-      // TODO: Replace with actual API call when backend is ready
-      // const response = await apiService.get(`/dashboard/activity/${userId}`);
-      // return response.data;
-
-      // Mock implementation for demo
-      await new Promise(resolve => setTimeout(resolve, 800)) // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800))
 
       return [
         {
@@ -76,8 +61,10 @@ export const useDashboardActivity = (userId?: string) => {
         },
       ]
     },
-    enabled: !!userId, // Only run if userId is provided
-    staleTime: 2 * 60 * 1000, // 2 minutes (activity is more dynamic)
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!userId,
+
+    staleTime: 2 * 60 * 1000,
+
+    gcTime: 5 * 60 * 1000,
   })
 }

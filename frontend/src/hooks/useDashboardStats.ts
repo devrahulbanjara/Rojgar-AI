@@ -61,11 +61,12 @@ export const useDashboardStats = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.stats,
     queryFn: fetchDashboardStats,
-    staleTime: 30 * 1000, // 30 seconds - refresh more frequently for dynamic updates
+    staleTime: 30 * 1000,
+
     gcTime: 10 * 60 * 1000,
     retry: 2,
     retryDelay: 1000,
     refetchOnMount: true,
-    refetchOnWindowFocus: true, // Refetch when user returns to the tab
+    refetchOnWindowFocus: true,
   })
 }

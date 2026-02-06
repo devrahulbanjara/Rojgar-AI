@@ -1,8 +1,3 @@
-/**
- * Form Input Component
- * Reusable form input with validation and icons
- */
-
 import React, { useState, memo, useCallback } from 'react'
 import { Input } from '../ui/input'
 import { Eye, EyeOff } from 'lucide-react'

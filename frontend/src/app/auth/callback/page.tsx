@@ -29,10 +29,9 @@ function AuthCallbackContent() {
           return
         }
 
-        // Clear any old cached data before authenticating
         clearQueryCache()
         queryClient.clear()
-        // Remove any cached user data
+
         queryClient.setQueryData(queryKeys.auth.user, null)
 
         const response = await fetch(
@@ -47,10 +46,8 @@ function AuthCallbackContent() {
           throw new Error(`Authentication failed: ${response.statusText}`)
         }
 
-        // After successful OAuth, invalidate user query to force fresh fetch
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.user })
 
-        // Fetch user data immediately to update the cache
         try {
           const userResponse = await fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/users/me`,
@@ -72,8 +69,6 @@ function AuthCallbackContent() {
           console.error('Failed to fetch user after OAuth:', err)
         }
 
-        // Redirect based on response or default to candidate dashboard
-        // The backend redirects, but we handle it client-side for better control
         const redirectUrl = ROUTES.CANDIDATE_DASHBOARD
         router.push(redirectUrl)
       } catch (err) {

@@ -84,7 +84,7 @@ export const referenceJDs: ReferenceJD[] = [
     keywords:
       'senior backend engineer, python, fastapi, postgresql, redis, kubernetes, aws, microservices',
   },
-  // Marketing
+
   {
     id: 'marketing-growth-senior',
     title: 'Senior Growth Marketing Manager',
@@ -118,7 +118,7 @@ export const referenceJDs: ReferenceJD[] = [
     salaryRange: { min: 115000, max: 155000, currency: 'USD' },
     keywords: 'senior growth marketing, b2b saas, seo sem, analytics, ab testing, 5 years',
   },
-  // Sales (Business)
+
   {
     id: 'sales-enterprise-senior',
     title: 'Senior Enterprise Sales Executive',

@@ -247,7 +247,7 @@ export function CareerHistoryTab({
       </div>
 
       <div className="space-y-8">
-        {/* Work Experience Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
@@ -282,7 +282,7 @@ export function CareerHistoryTab({
             )}
           </div>
 
-          {/* Add/Edit Experience Form */}
+          {}
           {isAddingExperience && (
             <form
               onSubmit={handleAddExperience}
@@ -448,7 +448,7 @@ export function CareerHistoryTab({
             </form>
           )}
 
-          {/* Work Experience List */}
+          {}
           {workExperiences.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
@@ -545,7 +545,7 @@ export function CareerHistoryTab({
           )}
         </div>
 
-        {/* Education Section */}
+        {}
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
@@ -579,7 +579,7 @@ export function CareerHistoryTab({
             )}
           </div>
 
-          {/* Add/Edit Education Form */}
+          {}
           {isAddingEducation && (
             <form
               onSubmit={handleAddEducation}
@@ -726,7 +726,7 @@ export function CareerHistoryTab({
             </form>
           )}
 
-          {/* Education List */}
+          {}
           {educationRecords.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">

@@ -45,7 +45,7 @@ export function RecruiterModal({
       setFormData({
         name: initialData.name || '',
         email: initialData.email || '',
-        password: '', // Don't populate password for security/UX
+        password: '',
       })
     } else if (isOpen && mode === 'add') {
       setFormData({
@@ -65,7 +65,7 @@ export function RecruiterModal({
   return (
     <Dialog isOpen={isOpen} onClose={onClose} className="max-w-md mx-4 rounded-[20px]">
       <div className="flex flex-col bg-background-surface rounded-[20px] overflow-hidden">
-        {/* Enhanced Header with subtle background */}
+        {}
         <DialogHeader className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-8 py-8 border-b border-border-subtle">
           <DialogTitle className="text-2xl font-bold text-text-primary leading-tight">
             {mode === 'add' ? 'Add Recruiter' : 'Edit Recruiter'}
@@ -77,7 +77,7 @@ export function RecruiterModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Form Content */}
+        {}
         <form onSubmit={handleSubmit}>
           <DialogContent className="p-8 space-y-6 bg-background-surface">
             <div className="space-y-2">
@@ -128,7 +128,7 @@ export function RecruiterModal({
             </div>
           </DialogContent>
 
-          {/* Sticky Footer */}
+          {}
           <DialogFooter className="border-t border-border-subtle bg-background-subtle/50 px-8 py-6 flex items-center justify-end gap-3">
             <Button
               type="button"

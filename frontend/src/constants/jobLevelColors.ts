@@ -1,10 +1,3 @@
-/**
- * ConvexHire Design System - Job Level/Seniority Colors
- *
- * Colors progress from fresh greens (entry level) to sophisticated purples (executive)
- * Creating a visual hierarchy that communicates career progression.
- */
-
 export type JobLevel =
   | 'Entry Level'
   | 'Junior'
@@ -134,32 +127,20 @@ export const JOB_LEVEL_COLORS: Record<JobLevel, JobLevelColorConfig> = {
   },
 } as const
 
-/**
- * Get job level color config with fallback to Mid-Level
- */
 export function getJobLevelColor(level: string): JobLevelColorConfig {
   const normalizedLevel = level.trim() as JobLevel
   return JOB_LEVEL_COLORS[normalizedLevel] ?? JOB_LEVEL_COLORS['Mid-Level']
 }
 
-/**
- * Get Tailwind classes for job level badge
- */
 export function getJobLevelBadgeClasses(level: string): string {
   const colors = getJobLevelColor(level)
   return `${colors.light.bg} ${colors.light.text} ${colors.light.border} dark:${colors.dark.bg} dark:${colors.dark.text} dark:${colors.dark.border}`
 }
 
-/**
- * Get icon for job level
- */
 export function getJobLevelIcon(level: string): string {
   return getJobLevelColor(level).icon
 }
 
-/**
- * Get hex colors for job level (useful for charts/canvas)
- */
 export function getJobLevelHexColors(level: string): {
   bg: string
   text: string

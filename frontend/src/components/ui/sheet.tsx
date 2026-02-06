@@ -26,13 +26,13 @@ export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
 
   const content = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Very subtle backdrop blur - covers entire viewport */}
+      {}
       <div
         className="fixed inset-0 bg-black/5 backdrop-blur-[3px] animate-in fade-in duration-200"
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Centered Panel */}
+      {}
       <div className="relative w-full max-w-3xl max-h-[90vh] bg-background-surface rounded-2xl shadow-2xl border border-default animate-in fade-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
         {!hideClose && (
           <button
@@ -47,7 +47,6 @@ export function Sheet({ open, onOpenChange, children, hideClose }: SheetProps) {
     </div>
   )
 
-  // Render to document body to escape sidebar container
   if (typeof document !== 'undefined') {
     return createPortal(content, document.body)
   }
