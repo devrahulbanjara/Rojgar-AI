@@ -1,5 +1,6 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { Menu, LogOut } from 'lucide-react'
 import { LogoLink } from '../common/Logo'
 import { ThemeToggle } from '../common/ThemeToggle'
@@ -41,13 +42,15 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
         {/* Left: Menu + Logo */}
         <div className="flex items-center gap-6">
           {onMenuClick && (
-            <button
+            <motion.button
               onClick={onMenuClick}
-              className="lg:hidden p-2.5 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 text-text-secondary hover:text-primary dark:hover:text-primary-400 transition-all duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="lg:hidden p-2.5 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 text-text-secondary hover:text-primary dark:hover:text-primary-400 transition-colors duration-200"
               aria-label="Toggle menu"
             >
               <Menu className="h-5 w-5" />
-            </button>
+            </motion.button>
           )}
 
           <div className="hover:scale-[1.02] transition-transform duration-200">
