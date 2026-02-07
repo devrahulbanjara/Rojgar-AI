@@ -31,7 +31,13 @@ const getDepartmentBadgeStyle = (department: string) => {
   }
 }
 
-export function ShortlistJobCard({ job, isSelected, onClick, onAutoShortlistChange, className }: ShortlistJobCardProps) {
+export function ShortlistJobCard({
+  job,
+  isSelected,
+  onClick,
+  onAutoShortlistChange,
+  className,
+}: ShortlistJobCardProps) {
   const {
     autoShortlist,
     isLoading: isLoadingAutoShortlist,

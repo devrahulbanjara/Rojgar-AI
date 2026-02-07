@@ -43,7 +43,9 @@ export const StatCard = memo<StatCardProps>(({ title, value, icon, description, 
             {value}
           </p>
           {/* Description */}
-          <p className="text-sm font-medium text-text-secondary mt-1 truncate">{description || title}</p>
+          <p className="text-sm font-medium text-text-secondary mt-1 truncate">
+            {description || title}
+          </p>
         </div>
       </div>
     </div>

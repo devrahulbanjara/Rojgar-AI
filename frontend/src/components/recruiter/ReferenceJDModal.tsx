@@ -1,6 +1,16 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { X, Briefcase, FileText, CheckCircle2, Gift, Trash2, Edit, Award, Building2 } from 'lucide-react'
+import {
+  X,
+  Briefcase,
+  FileText,
+  CheckCircle2,
+  Gift,
+  Trash2,
+  Edit,
+  Award,
+  Building2,
+} from 'lucide-react'
 import { ReferenceJD } from '../../services/referenceJDService'
 
 interface ReferenceJDModalProps {

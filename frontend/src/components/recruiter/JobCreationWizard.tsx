@@ -28,6 +28,7 @@ import {
   ClipboardList,
   ListChecks,
   Coins,
+  Sparkles,
   Plus,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -109,7 +110,7 @@ function CustomDropdown({
       const spaceBelow = viewportHeight - buttonRect.bottom
       const spaceAbove = buttonRect.top
       const dropdownHeight = options.length * 48 + 16 // Approximate height
-      
+
       // Position above if not enough space below but enough space above
       if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
         setPositionAbove(true)
@@ -817,8 +818,7 @@ export function JobCreationWizard({
                         <div>
                           <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
                             <FileText className="w-4 h-4 text-text-tertiary" />
-                            Reference Job Description{' '}
-                            <span className="text-error">*</span>
+                            Reference Job Description <span className="text-error">*</span>
                           </label>
                           <CustomDropdown
                             value={formData.reference_jd_id}
@@ -831,7 +831,8 @@ export function JobCreationWizard({
                                 : referenceJDsData?.reference_jds &&
                                     referenceJDsData.reference_jds.length > 0
                                   ? referenceJDsData.reference_jds.map(refJD => {
-                                      const jobSummary = refJD.job_summary || refJD.role_overview || ''
+                                      const jobSummary =
+                                        refJD.job_summary || refJD.role_overview || ''
                                       return {
                                         value: refJD.id,
                                         label: refJD.department
@@ -839,7 +840,13 @@ export function JobCreationWizard({
                                           : jobSummary.slice(0, 80),
                                       }
                                     })
-                                  : [{ value: '', label: 'No reference JDs available', disabled: true }]
+                                  : [
+                                      {
+                                        value: '',
+                                        label: 'No reference JDs available',
+                                        disabled: true,
+                                      },
+                                    ]
                             }
                           />
                           <p className="text-xs text-text-tertiary mt-2">
@@ -854,8 +861,7 @@ export function JobCreationWizard({
                         <div>
                           <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
                             <Target className="w-4 h-4 text-text-tertiary" />
-                            Keywords & Requirements{' '}
-                            <span className="text-error">*</span>
+                            Keywords & Requirements <span className="text-error">*</span>
                           </label>
                           <textarea
                             value={formData.keywords || ''}
@@ -1014,7 +1020,9 @@ export function JobCreationWizard({
                           <ClipboardList className="w-5 h-5 text-ai-600 dark:text-ai-400" />
                         </div>
                         <div>
-                          <h4 className="text-lg font-bold text-text-primary">Job Responsibilities</h4>
+                          <h4 className="text-lg font-bold text-text-primary">
+                            Job Responsibilities
+                          </h4>
                           <p className="text-sm text-text-tertiary mt-0.5">
                             Add key responsibilities and duties for this role.
                           </p>
@@ -1055,9 +1063,7 @@ export function JobCreationWizard({
                                   </div>
                                 </div>
                               ) : (
-                                <div
-                                  className="flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 hover:shadow-sm hover:border-ai-200 dark:hover:border-ai-800 bg-background-subtle border-border-default"
-                                >
+                                <div className="flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 hover:shadow-sm hover:border-ai-200 dark:hover:border-ai-800 bg-background-subtle border-border-default">
                                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center mt-0.5">
                                     <span className="text-xs font-semibold text-ai-600 dark:text-ai-400">
                                       {index + 1}
@@ -1067,7 +1073,11 @@ export function JobCreationWizard({
                                     <textarea
                                       value={item}
                                       onChange={e =>
-                                        updateArrayField('jobResponsibilities', index, e.target.value)
+                                        updateArrayField(
+                                          'jobResponsibilities',
+                                          index,
+                                          e.target.value
+                                        )
                                       }
                                       placeholder="e.g. Design and implement scalable backend services"
                                       rows={Math.max(1, Math.ceil(item.length / 70))}
@@ -1280,7 +1290,9 @@ export function JobCreationWizard({
                           <ClipboardList className="w-5 h-5 text-ai-600 dark:text-ai-400" />
                         </div>
                         <div>
-                          <h4 className="text-lg font-bold text-text-primary">Job Responsibilities</h4>
+                          <h4 className="text-lg font-bold text-text-primary">
+                            Job Responsibilities
+                          </h4>
                           <p className="text-sm text-text-tertiary mt-0.5">
                             Key responsibilities and duties for this role.
                           </p>
@@ -1339,7 +1351,11 @@ export function JobCreationWizard({
                                     <textarea
                                       value={item}
                                       onChange={e =>
-                                        updateArrayField('jobResponsibilities', index, e.target.value)
+                                        updateArrayField(
+                                          'jobResponsibilities',
+                                          index,
+                                          e.target.value
+                                        )
                                       }
                                       placeholder="e.g. Design and implement scalable backend services"
                                       rows={Math.max(1, Math.ceil(item.length / 70))}
@@ -1498,7 +1514,9 @@ export function JobCreationWizard({
                       <ListChecks className="w-5 h-5 text-ai-600 dark:text-ai-400" />
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold text-text-primary">Required Qualifications</h4>
+                      <h4 className="text-xl font-bold text-text-primary">
+                        Required Qualifications
+                      </h4>
                       <p className="text-sm text-text-tertiary mt-0.5">
                         Add requirements, skills, and education here.
                       </p>
@@ -1847,7 +1865,9 @@ export function JobCreationWizard({
                               <div className="flex-1 min-w-0">
                                 <textarea
                                   value={benefit}
-                                  onChange={e => updateArrayField('benefits', index, e.target.value)}
+                                  onChange={e =>
+                                    updateArrayField('benefits', index, e.target.value)
+                                  }
                                   placeholder="e.g. Flexible work hours and remote work options"
                                   rows={Math.max(1, Math.ceil(benefit.length / 70))}
                                   className="w-full bg-transparent border-none focus:outline-none text-base leading-relaxed text-text-primary placeholder:text-text-muted resize-none"

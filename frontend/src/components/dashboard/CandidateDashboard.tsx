@@ -199,7 +199,9 @@ function ColumnHeader({
         </div>
         <h3 className={`text-lg font-bold ${textColor}`}>{title}</h3>
       </div>
-      <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${badgeColor}`}>{count}</span>
+      <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${badgeColor}`}>
+        {count}
+      </span>
     </div>
   )
 }

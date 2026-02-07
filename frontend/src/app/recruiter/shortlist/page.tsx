@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
@@ -28,11 +28,14 @@ export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const queryClient = useQueryClient()
 
   const { data: candidatesData, isLoading: isCandidatesLoading, error } = useCandidates()
-  
-  const { data: jobsResponse, isLoading: isJobsLoading, refetch: refetchJobs } = useQuery({
+
+  const {
+    data: jobsResponse,
+    isLoading: isJobsLoading,
+    refetch: refetchJobs,
+  } = useQuery({
     queryKey: ['jobs', 'shortlist', user?.id],
     queryFn: async () => {
       if (!user?.id) return null
@@ -249,15 +252,16 @@ export default function ShortlistPage() {
                             {selectedJob.candidates.length}
                           </div>
                         </div>
-                        {recommendedCandidates.length > 0 && selectedJob.auto_shortlist === true && (
-                          <button
-                            onClick={handleAcceptAIRecommendations}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                            Accept AI Recommendations ({recommendedCandidates.length})
-                          </button>
-                        )}
+                        {recommendedCandidates.length > 0 &&
+                          selectedJob.auto_shortlist === true && (
+                            <button
+                              onClick={handleAcceptAIRecommendations}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
+                            >
+                              <ShieldCheck className="w-4 h-4" />
+                              Accept AI Recommendations ({recommendedCandidates.length})
+                            </button>
+                          )}
                       </div>
 
                       {selectedJob.candidates.length === 0 ? (
@@ -275,7 +279,9 @@ export default function ShortlistPage() {
                       ) : (
                         <div className="space-y-6">
                           {selectedJob.candidates
-                            .sort((a, b) => (selectedJob.auto_shortlist ? b.ai_score - a.ai_score : 0))
+                            .sort((a, b) =>
+                              selectedJob.auto_shortlist ? b.ai_score - a.ai_score : 0
+                            )
                             .map(candidate => (
                               <ShortlistCandidateCard
                                 key={candidate.application_id}
