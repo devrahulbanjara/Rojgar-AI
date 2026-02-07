@@ -150,12 +150,23 @@ class JobRepository(BaseRepository[JobPosting]):
         return job_posting
 
     async def get_jobs_to_auto_shortlist(self) -> list[uuid.UUID]:
-        """Get job IDs that should be auto-shortlisted (expired and auto_shortlist=True)"""
+        """Get job IDs that should be auto-shortlisted.
+
+        Includes:
+        1. Active jobs past their deadline with auto_shortlist=True
+        2. Already expired jobs with auto_shortlist=True and shortlist_status='not_started'
+        """
         today = date.today()
         query = select(JobPosting.job_id).where(
-            JobPosting.status == "active",
-            JobPosting.application_deadline < today,
             JobPosting.auto_shortlist == True,
+            JobPosting.shortlist_status == "not_started",
+            or_(
+                # Active jobs that need to be expired
+                (JobPosting.status == "active")
+                & (JobPosting.application_deadline < today),
+                # Already expired jobs that haven't been shortlisted yet
+                JobPosting.status == "expired",
+            ),
         )
         result = await self.db.execute(query)
         return list(result.scalars().all())
@@ -278,10 +289,11 @@ class JobRepository(BaseRepository[JobPosting]):
         }
 
     async def expire_job(self, job_id: uuid.UUID) -> JobPosting | None:
-        """Expire a specific job"""
+        """Expire a specific job and set application_deadline to today"""
         job = await self.get(job_id)
         if job:
             job.status = "expired"
+            job.application_deadline = date.today()
             job.updated_at = get_datetime()
             await self.db.flush()
         return job
@@ -298,8 +310,6 @@ class JobRepository(BaseRepository[JobPosting]):
 
         try:
             # 1. Cleanup related data (Use explicit deletes for clarity)
-            # Note: In a larger app, setting 'ondelete="CASCADE"' in Models is better
-            # but for manual code, this order is correct:
 
             # Delete history via subquery
             await self.db.execute(

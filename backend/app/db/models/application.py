@@ -15,6 +15,8 @@ from .resume import Resume
 
 class ApplicationStatus(StrEnum):
     APPLIED = "applied"
+    SHORTLISTED = "shortlisted"
+    REJECTED = "rejected"
     INTERVIEWING = "interviewing"
     OUTCOME = "outcome"
 
@@ -43,9 +45,10 @@ class JobApplication(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime, nullable=False
     )
-    # AI Enrichment Columns
-    ai_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    ai_analysis: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Shortlisting Columns (AI or Human)
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    feedback: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Relationships
     job: Mapped["JobPosting"] = relationship("JobPosting")
     organization: Mapped["Organization"] = relationship("Organization")
     resume: Mapped["Resume"] = relationship("Resume")

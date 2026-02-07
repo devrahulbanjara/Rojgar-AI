@@ -128,6 +128,7 @@ class JobVectorService:
                 successful += 1
             else:
                 failed += 1
+        await db.commit()
         logger.success(
             f"Completed indexing: {successful} successful, {failed} failed out of {len(pending_jobs)} total jobs"
         )
