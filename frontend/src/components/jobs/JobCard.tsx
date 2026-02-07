@@ -15,24 +15,24 @@ interface JobCardProps {
 
 const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
-    bg: 'bg-blue-50/80 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-primary-50/80 dark:bg-primary-950/30',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-800',
   },
   Sales: {
-    bg: 'bg-green-50/80 dark:bg-green-950/30',
-    text: 'text-green-700 dark:text-green-300',
-    border: 'border-green-200 dark:border-green-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
   },
   Marketing: {
-    bg: 'bg-orange-50/80 dark:bg-orange-950/30',
-    text: 'text-orange-700 dark:text-orange-300',
-    border: 'border-orange-200 dark:border-orange-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
   },
   Product: {
-    bg: 'bg-purple-50/80 dark:bg-purple-950/30',
-    text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-200 dark:border-purple-800',
+    bg: 'bg-info-50/80 dark:bg-info-950/30',
+    text: 'text-info-700 dark:text-info-300',
+    border: 'border-info-200 dark:border-info-800',
   },
   Design: {
     bg: 'bg-pink-50/80 dark:bg-pink-950/30',
@@ -40,9 +40,9 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
     border: 'border-pink-200 dark:border-pink-800',
   },
   'Data Science': {
-    bg: 'bg-cyan-50/80 dark:bg-cyan-950/30',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    border: 'border-cyan-200 dark:border-cyan-800',
+    bg: 'bg-info-50/80 dark:bg-info-950/30',
+    text: 'text-info-700 dark:text-info-300',
+    border: 'border-info-200 dark:border-info-800',
   },
   HR: {
     bg: 'bg-rose-50/80 dark:bg-rose-950/30',
@@ -50,14 +50,14 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
     border: 'border-rose-200 dark:border-rose-800',
   },
   Finance: {
-    bg: 'bg-emerald-50/80 dark:bg-emerald-950/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
   },
   Operations: {
-    bg: 'bg-amber-50/80 dark:bg-amber-950/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
   },
   Default: {
     bg: 'bg-background-subtle/80',
@@ -73,29 +73,29 @@ const levelColors: Record<string, { bg: string; text: string; border: string }> 
     border: 'border-primary-200 dark:border-primary-800',
   },
   Mid: {
-    bg: 'bg-blue-50/80 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-info-50/80 dark:bg-info-950/30',
+    text: 'text-info-700 dark:text-info-300',
+    border: 'border-info-200 dark:border-info-800',
   },
   Junior: {
-    bg: 'bg-emerald-50/80 dark:bg-emerald-950/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
   },
   Lead: {
-    bg: 'bg-violet-50/80 dark:bg-violet-950/30',
-    text: 'text-violet-700 dark:text-violet-300',
-    border: 'border-violet-200 dark:border-violet-800',
+    bg: 'bg-primary-50/80 dark:bg-primary-950/30',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-800',
   },
   Principal: {
-    bg: 'bg-amber-50/80 dark:bg-amber-950/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
   },
   Entry: {
-    bg: 'bg-teal-50/80 dark:bg-teal-950/30',
-    text: 'text-teal-700 dark:text-teal-300',
-    border: 'border-teal-200 dark:border-teal-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
   },
   Default: {
     bg: 'bg-background-subtle/80',
@@ -139,20 +139,33 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
     }
   }
 
+  const hasFooterStats = job.applicant_count !== undefined || job.views_count !== undefined
+
+  // Build location string from available fields
+  const locationDisplay = 
+    job.location_city && job.location_country
+      ? `${job.location_city}, ${job.location_country}`
+      : job.location_city || job.location_country || job.location || 'Location not specified'
+
+  const companyName = job.company?.name ||
+    (job as unknown as { organization?: { name?: string } }).organization?.name ||
+    'Company'
+
   return (
     <div
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-xl border p-6',
-        'hover:-translate-y-1',
+        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border',
+        'px-6 py-6',
+        'hover:-translate-y-0.5 shadow-sm hover:shadow-lg',
         isSelected
-          ? 'border-primary shadow-lg bg-primary-50/5'
-          : 'border-default hover:border-primary-200 dark:hover:border-primary-800',
+          ? 'border-primary shadow-lg bg-primary-50/5 dark:bg-primary-950/10'
+          : 'border-border-default hover:border-primary-200 dark:hover:border-primary-800',
         className
       )}
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      aria-label={`View details for ${job.title} at ${job.company?.name || 'Company'}`}
+      aria-label={`View details for ${job.title} at ${companyName}`}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -160,114 +173,93 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
         }
       }}
     >
-      <div className="flex flex-col h-full">
-        {}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-2">
-            {job.department && (
-              <span
-                className={cn(
-                  'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
-                  deptColor.bg,
-                  deptColor.text,
-                  deptColor.border
-                )}
-              >
-                {job.department}
-              </span>
-            )}
-            {job.level && (
-              <span
-                className={cn(
-                  'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
-                  levelColor.bg,
-                  levelColor.text,
-                  levelColor.border
-                )}
-              >
-                {job.level}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {}
-        <div className="mb-5">
-          <h3
+      {/* Row 1: Badges - Single horizontal line, no wrap */}
+      <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+        {job.department && (
+          <span
             className={cn(
-              'font-semibold text-[19px] leading-tight text-text-primary transition-colors line-clamp-2 mb-2',
-              isSelected ? 'text-primary' : 'group-hover:text-primary'
+              'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
+              deptColor.bg,
+              deptColor.text,
+              deptColor.border
             )}
           >
-            {job.title}
-          </h3>
-          <p className="text-base text-text-secondary font-semibold">
-            {job.company?.name ||
-              (job as unknown as { organization?: { name?: string } }).organization?.name ||
-              'Company'}
-          </p>
-        </div>
-
-        {}
-        <div className="space-y-2.5 text-sm text-text-secondary mb-6">
-          {}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="w-[14px] h-[14px] text-text-muted" />
-              <span className="truncate">{job.location}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-[14px] h-[14px] text-text-muted" />
-              <span>{jobUtils.formatPostedDate(job.created_at || job.posted_date)}</span>
-            </div>
-          </div>
-
-          {}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <DollarSign className="w-[14px] h-[14px] text-text-muted" />
-              <span className="font-medium">{jobUtils.formatJobSalary(job)}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Briefcase className="w-[14px] h-[14px] text-text-muted" />
-              <span>{job.employment_type}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Building2 className="w-[14px] h-[14px] text-text-muted" />
-              <span>{job.location_type || 'On-site'}</span>
-            </div>
-          </div>
-        </div>
-
-        {}
-        <div className="flex-1" />
-
-        {}
-        <div className="flex items-center justify-between gap-3 pt-6 border-t border-subtle">
-          <div className="flex items-center gap-3">
-            {job.applicant_count !== undefined && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-50/80 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-purple-800">
-                <Users className="w-4 h-4" />
-                <span className="text-xs font-semibold">{job.applicant_count}</span>
-              </div>
+            {job.department}
+          </span>
+        )}
+        {job.level && (
+          <span
+            className={cn(
+              'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
+              levelColor.bg,
+              levelColor.text,
+              levelColor.border
             )}
-            {job.views_count !== undefined && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50/80 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800">
-                <Eye className="w-4 h-4" />
-                <span className="text-xs font-semibold">{job.views_count}</span>
-              </div>
-            )}
-          </div>
-          {job.application_deadline && (
-            <div className="inline-flex items-center gap-2 px-3 py-2 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded-lg border border-warning-200 dark:border-warning-800">
-              <Calendar className="w-4 h-4" />
-              <span className="text-xs font-semibold">
-                {formatDeadline(job.application_deadline)}
-              </span>
+          >
+            {job.level}
+          </span>
+        )}
+        {job.application_deadline && (
+          <span className="inline-flex items-center h-6 px-2.5 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded text-[11px] font-semibold border border-warning-200 dark:border-warning-800 whitespace-nowrap">
+            {formatDeadline(job.application_deadline)}
+          </span>
+        )}
+      </div>
+
+      {/* Row 2: Title */}
+      <h3
+        className={cn(
+          'mt-5 font-semibold text-base leading-snug text-text-primary transition-colors line-clamp-2',
+          isSelected ? 'text-primary-600 dark:text-primary-400' : 'group-hover:text-primary-600 dark:group-hover:text-primary-400'
+        )}
+      >
+        {job.title}
+      </h3>
+
+      {/* Row 3: Company */}
+      <p className="mt-1 text-[13px] text-text-muted font-medium">
+        {companyName}
+      </p>
+
+      {/* Row 4: Metadata - Single horizontal line with separators, no wrap */}
+      <div className="mt-4 flex items-center flex-nowrap overflow-hidden text-[13px] text-text-secondary">
+        <MapPin className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+        <span className="ml-1 truncate max-w-[140px]">{locationDisplay}</span>
+        <span className="mx-2 text-text-muted flex-shrink-0">·</span>
+        <DollarSign className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+        <span className="ml-0.5 font-medium whitespace-nowrap">{jobUtils.formatJobSalary(job)}</span>
+        <span className="mx-2 text-text-muted flex-shrink-0">·</span>
+        <Clock className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+        <span className="ml-1 whitespace-nowrap">{jobUtils.formatPostedDate(job.created_at || job.posted_date)}</span>
+      </div>
+
+      {/* Row 5: Work Type - Single horizontal line, no wrap */}
+      <div className="mt-4 flex items-center gap-2 flex-nowrap">
+        <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          {job.employment_type}
+        </span>
+        <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          {job.location_type || 'On-site'}
+        </span>
+      </div>
+
+      {/* Row 6: Stats (Optional) - Single horizontal line */}
+      {hasFooterStats && (
+        <div className="mt-4 pt-4 border-t border-border-subtle flex items-center gap-4 flex-nowrap">
+          {job.applicant_count !== undefined && (
+            <div className="inline-flex items-center gap-1 text-[11px] text-text-muted whitespace-nowrap">
+              <Users className="w-3.5 h-3.5" />
+              <span className="font-medium">{job.applicant_count} applicants</span>
+            </div>
+          )}
+          {job.views_count !== undefined && (
+            <div className="inline-flex items-center gap-1 text-[11px] text-text-muted whitespace-nowrap">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="font-medium">{job.views_count} views</span>
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   )
 })

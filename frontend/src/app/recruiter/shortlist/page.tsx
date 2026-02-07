@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
 import { useCandidates } from '../../../hooks/useCandidates'
+import { jobService } from '../../../services/jobService'
 import { ShortlistJobCard } from '../../../components/shortlist/ShortlistJobCard'
 import { ShortlistCandidateCard } from '../../../components/shortlist/ShortlistCandidateCard'
 import { Users, Sparkles, ShieldCheck, Brain } from 'lucide-react'
@@ -23,11 +25,37 @@ const analysisTemplates = [
 ]
 
 export default function ShortlistPage() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const queryClient = useQueryClient()
 
   const { data: candidatesData, isLoading: isCandidatesLoading, error } = useCandidates()
+  
+  const { data: jobsResponse, isLoading: isJobsLoading, refetch: refetchJobs } = useQuery({
+    queryKey: ['jobs', 'shortlist', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null
+      return await jobService.getJobsByCompany(user.id, { limit: 1000 })
+    },
+    enabled: !!user?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  })
+
+  const jobsAutoShortlistMap = useMemo(() => {
+    const map = new Map<string, boolean>()
+    if (jobsResponse?.jobs) {
+      jobsResponse.jobs.forEach(job => {
+        const jobId = job.job_id?.toString() || job.id?.toString()
+        if (jobId) {
+          map.set(jobId, job.auto_shortlist ?? false)
+        }
+      })
+    }
+    return map
+  }, [jobsResponse])
+
   const jobsData = useMemo(() => {
     if (!candidatesData?.candidates) return []
 
@@ -37,6 +65,7 @@ export default function ShortlistPage() {
       const jobId = candidate.job_id
 
       if (!jobsMap.has(jobId)) {
+        const auto_shortlist = jobsAutoShortlistMap.get(jobId) ?? false
         jobsMap.set(jobId, {
           job_id: jobId,
           title: candidate.job_title,
@@ -44,6 +73,7 @@ export default function ShortlistPage() {
           applicant_count: 0,
           pending_ai_reviews: 0,
           candidates: [],
+          auto_shortlist,
         })
       }
 
@@ -75,7 +105,7 @@ export default function ShortlistPage() {
     })
 
     return Array.from(jobsMap.values())
-  }, [candidatesData])
+  }, [candidatesData, jobsAutoShortlistMap])
 
   useEffect(() => {
     if (jobsData.length > 0 && !selectedJobId) {
@@ -133,7 +163,7 @@ export default function ShortlistPage() {
     return () => document.removeEventListener('keydown', handleEscKey)
   }, [showConfirmModal, handleCancelAcceptAI])
 
-  if (isAuthLoading || !isAuthenticated || isCandidatesLoading) {
+  if (isAuthLoading || !isAuthenticated || isCandidatesLoading || (user?.id && isJobsLoading)) {
     return (
       <AppShell>
         <PageTransition className="min-h-screen flex items-center justify-center">
@@ -172,15 +202,6 @@ export default function ShortlistPage() {
                   Review AI-analyzed candidates and make hiring decisions
                 </p>
               </div>
-              {recommendedCandidates.length > 0 && selectedJob && (
-                <button
-                  onClick={handleAcceptAIRecommendations}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  Accept AI Recommendations ({recommendedCandidates.length})
-                </button>
-              )}
             </div>
             <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
@@ -204,6 +225,9 @@ export default function ShortlistPage() {
                           job={job}
                           isSelected={selectedJobId === job.job_id}
                           onClick={() => setSelectedJobId(job.job_id)}
+                          onAutoShortlistChange={() => {
+                            setTimeout(() => refetchJobs(), 500)
+                          }}
                         />
                       ))
                     )}
@@ -215,14 +239,25 @@ export default function ShortlistPage() {
                 <AnimatedContainer direction="up" delay={0.3}>
                   {selectedJob ? (
                     <div className="space-y-6">
-                      <div className="flex items-baseline gap-3 mb-6">
-                        <h2 className="text-2xl font-semibold text-text-primary inline">
-                          Candidates for {selectedJob.title}
-                        </h2>
-                        <div className="inline-flex items-center gap-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 rounded-md px-3 py-1 text-base font-semibold">
-                          <Users className="w-4 h-4" />
-                          {selectedJob.candidates.length}
+                      <div className="flex items-baseline justify-between gap-3 mb-6">
+                        <div className="flex items-baseline gap-3">
+                          <h2 className="text-2xl font-semibold text-text-primary inline">
+                            Candidates for {selectedJob.title}
+                          </h2>
+                          <div className="inline-flex items-center gap-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 rounded-md px-3 py-1 text-base font-semibold">
+                            <Users className="w-4 h-4" />
+                            {selectedJob.candidates.length}
+                          </div>
                         </div>
+                        {recommendedCandidates.length > 0 && selectedJob.auto_shortlist === true && (
+                          <button
+                            onClick={handleAcceptAIRecommendations}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                            Accept AI Recommendations ({recommendedCandidates.length})
+                          </button>
+                        )}
                       </div>
 
                       {selectedJob.candidates.length === 0 ? (
@@ -240,7 +275,7 @@ export default function ShortlistPage() {
                       ) : (
                         <div className="space-y-6">
                           {selectedJob.candidates
-                            .sort((a, b) => b.ai_score - a.ai_score)
+                            .sort((a, b) => (selectedJob.auto_shortlist ? b.ai_score - a.ai_score : 0))
                             .map(candidate => (
                               <ShortlistCandidateCard
                                 key={candidate.application_id}
@@ -248,6 +283,7 @@ export default function ShortlistPage() {
                                 onApprove={handleApprove}
                                 onReject={handleReject}
                                 scoreInterpretation={getScoreInterpretation(candidate.ai_score)}
+                                showAIScores={selectedJob.auto_shortlist ?? false}
                               />
                             ))}
                         </div>

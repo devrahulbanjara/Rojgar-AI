@@ -577,7 +577,7 @@ export const SkeletonProfileForm: React.FC<{ className?: string }> = ({ classNam
 export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ className }) => (
   <div className={cn('h-full flex flex-col', className)}>
     {}
-    <div className="flex-shrink-0 bg-gradient-to-b from-background-subtle to-background-surface px-8 py-8 border-b border-border-default relative">
+    <div className="flex-shrink-0 bg-background-surface px-8 py-8 border-b border-border-default relative">
       <div className="flex items-start gap-4 pr-12">
         <div className="flex-1 min-w-0 space-y-4">
           <div className="flex items-center gap-3">

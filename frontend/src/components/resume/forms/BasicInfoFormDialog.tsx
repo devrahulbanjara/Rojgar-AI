@@ -8,13 +8,10 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { ResumeResponse, ResumeCreate } from '@/types/resume'
 import { resumeService } from '@/services/resumeService'
-import { Loader2, FileText } from 'lucide-react'
+import { Loader2, FileText, Target, AlignLeft } from 'lucide-react'
 
 interface BasicInfoFormDialogProps {
   open: boolean
@@ -82,15 +79,15 @@ export default function BasicInfoFormDialog({
   return (
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-lg">
       <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center shadow-sm border border-primary-100 dark:border-primary-900/30">
+            <FileText className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <DialogTitle>
+            <DialogTitle className="text-xl">
               {mode === 'create' ? 'Create New Resume' : 'Edit Resume Details'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-text-tertiary">
               {mode === 'create'
                 ? 'Start by specifying your target job title'
                 : 'Update your target position and summary'}
@@ -99,31 +96,46 @@ export default function BasicInfoFormDialog({
         </div>
       </DialogHeader>
 
-      <DialogContent className="pt-0">
+      <DialogContent className="pt-2">
         <form id="basic-info-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* Target Job Title */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-secondary">
-              Target Job Title <span className="text-red-500">*</span>
-            </Label>
-            <Input
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <Target className="w-4 h-4 text-text-tertiary" />
+              Target Job Title <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
               value={formData.target_job_title}
               onChange={e => setFormData({ ...formData, target_job_title: e.target.value })}
               required
               placeholder="e.g. Senior Software Engineer"
-              className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
+              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted"
             />
+            <p className="text-xs text-text-tertiary mt-1.5">
+              This helps tailor your resume for specific job applications
+            </p>
           </div>
 
+          {/* Professional Summary */}
           {mode === 'edit' && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <AlignLeft className="w-4 h-4 text-text-tertiary" />
                 Professional Summary
-              </Label>
-              <Textarea
+              </label>
+              <textarea
                 value={formData.custom_summary}
                 onChange={e => setFormData({ ...formData, custom_summary: e.target.value })}
-                className="min-h-[120px] resize-none rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                 placeholder="Write a brief summary of your professional background..."
+                rows={4}
+                className="w-full px-4 py-3 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary placeholder:text-text-muted resize-none"
               />
             </div>
           )}
@@ -135,7 +147,7 @@ export default function BasicInfoFormDialog({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="rounded-xl px-5"
+          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
         >
           Cancel
         </Button>
@@ -143,7 +155,7 @@ export default function BasicInfoFormDialog({
           type="submit"
           form="basic-info-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-400/15"
+          className="h-11 px-6 rounded-xl bg-primary-600 dark:bg-primary-500 hover:bg-primary-700 dark:hover:bg-primary-600 text-white font-semibold shadow-lg shadow-primary/25 dark:shadow-primary/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {mode === 'create' ? 'Create Resume' : 'Save Changes'}

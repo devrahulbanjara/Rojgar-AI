@@ -15,6 +15,7 @@ interface ShortlistCandidateCardProps {
     text: string
     color: string
   }
+  showAIScores?: boolean
 }
 
 export function ShortlistCandidateCard({
@@ -24,6 +25,7 @@ export function ShortlistCandidateCard({
   className,
   showJobTitle = false,
   scoreInterpretation,
+  showAIScores = true,
 }: ShortlistCandidateCardProps) {
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false)
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
@@ -95,22 +97,24 @@ export function ShortlistCandidateCard({
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex flex-col items-center gap-1 text-center w-24">
-          <div className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}>
-            {candidate.ai_score}
-          </div>
-          <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">
-            AI Score
-          </div>
-          {scoreInterpretation && (
-            <div
-              className={`text-xs font-semibold ${scoreInterpretation.color}`}
-              style={{ fontWeight: 600 }}
-            >
-              {scoreInterpretation.text}
+        {showAIScores && (
+          <div className="flex-shrink-0 flex flex-col items-center gap-1 text-center w-24">
+            <div className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}>
+              {candidate.ai_score}
             </div>
-          )}
-        </div>
+            <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">
+              AI Score
+            </div>
+            {scoreInterpretation && (
+              <div
+                className={`text-xs font-semibold ${scoreInterpretation.color}`}
+                style={{ fontWeight: 600 }}
+              >
+                {scoreInterpretation.text}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex-shrink-0 flex items-center gap-4">
           <button
@@ -137,64 +141,66 @@ export function ShortlistCandidateCard({
         </div>
       </div>
 
-      <div className="mt-8 pt-6 border-t border-border-subtle">
-        <button
-          onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
-          className="group w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-ai-50/80 via-ai-100/60 to-ai-50/80 dark:from-ai-950/30 dark:via-ai-900/20 dark:to-ai-950/30 hover:from-ai-100/90 hover:via-ai-200/70 hover:to-ai-100/90 dark:hover:from-ai-900/40 dark:hover:via-ai-800/30 dark:hover:to-ai-900/40 border border-ai-200/60 dark:border-ai-800/60 hover:border-ai-300/80 dark:hover:border-ai-700/80 transition-all duration-300 hover:shadow-md hover:shadow-ai/10"
-        >
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-8 h-8 bg-gradient-to-br from-ai-600 to-ai-700 rounded-xl flex items-center justify-center shadow-lg shadow-ai/30">
-                <Brain className="w-4.5 h-4.5 text-white" />
+      {showAIScores && (
+        <div className="mt-8 pt-6 border-t border-border-subtle">
+          <button
+            onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
+            className="group w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-ai-50/80 via-ai-100/60 to-ai-50/80 dark:from-ai-950/30 dark:via-ai-900/20 dark:to-ai-950/30 hover:from-ai-100/90 hover:via-ai-200/70 hover:to-ai-100/90 dark:hover:from-ai-900/40 dark:hover:via-ai-800/30 dark:hover:to-ai-900/40 border border-ai-200/60 dark:border-ai-800/60 hover:border-ai-300/80 dark:hover:border-ai-700/80 transition-all duration-300 hover:shadow-md hover:shadow-ai/10"
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-8 h-8 bg-gradient-to-br from-ai-600 to-ai-700 rounded-xl flex items-center justify-center shadow-lg shadow-ai/30">
+                  <Brain className="w-4.5 h-4.5 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-success-400 to-success-500 rounded-full animate-pulse" />
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-success-400 to-success-500 rounded-full animate-pulse" />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold text-text-primary group-hover:text-ai-700 transition-colors">
-                AI Insights & Analysis
+              <div className="text-left">
+                <div className="font-semibold text-text-primary group-hover:text-ai-700 transition-colors">
+                  AI Insights & Analysis
+                </div>
+                <div className="text-xs text-text-tertiary mt-0.5">
+                  {isAnalysisExpanded ? 'Click to collapse' : 'Click to view detailed feedback'}
+                </div>
               </div>
-              <div className="text-xs text-text-tertiary mt-0.5">
-                {isAnalysisExpanded ? 'Click to collapse' : 'Click to view detailed feedback'}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-medium text-ai-600 dark:text-ai-400 bg-ai-100 dark:bg-ai-900/30 px-2 py-1 rounded-full">
+                AI
               </div>
+              <ChevronDown
+                className={cn(
+                  'w-5 h-5 text-ai-500 dark:text-ai-400 transition-all duration-300 group-hover:text-ai-600 dark:group-hover:text-ai-300',
+                  isAnalysisExpanded && 'rotate-180 scale-110'
+                )}
+              />
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xs font-medium text-ai-600 dark:text-ai-400 bg-ai-100 dark:bg-ai-900/30 px-2 py-1 rounded-full">
-              AI
-            </div>
-            <ChevronDown
-              className={cn(
-                'w-5 h-5 text-ai-500 dark:text-ai-400 transition-all duration-300 group-hover:text-ai-600 dark:group-hover:text-ai-300',
-                isAnalysisExpanded && 'rotate-180 scale-110'
-              )}
-            />
-          </div>
-        </button>
+          </button>
 
-        <div
-          className={cn(
-            'overflow-hidden transition-all duration-300 ease-in-out',
-            isAnalysisExpanded ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
-          )}
-        >
           <div
             className={cn(
-              'relative p-6 bg-background-subtle rounded-2xl shadow-inner border-l-4',
-              candidate.ai_score >= 70
-                ? 'border-l-success-500'
-                : candidate.ai_score >= 50
-                  ? 'border-l-warning-500'
-                  : 'border-l-error-500'
+              'overflow-hidden transition-all duration-300 ease-in-out',
+              isAnalysisExpanded ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
             )}
           >
-            <div className="prose prose-sm max-w-none">
-              <p className="text-text-secondary leading-relaxed font-mono text-[14px] mb-0">
-                {candidate.ai_analysis}
-              </p>
+            <div
+              className={cn(
+                'relative p-6 bg-background-subtle rounded-2xl shadow-inner border-l-4',
+                candidate.ai_score >= 70
+                  ? 'border-l-success-500'
+                  : candidate.ai_score >= 50
+                    ? 'border-l-warning-500'
+                    : 'border-l-error-500'
+              )}
+            >
+              <div className="prose prose-sm max-w-none">
+                <p className="text-text-secondary leading-relaxed font-mono text-[14px] mb-0">
+                  {candidate.ai_analysis}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {}
       <ResumeDetailModal

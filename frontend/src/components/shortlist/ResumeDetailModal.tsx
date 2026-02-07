@@ -88,7 +88,7 @@ export function ResumeDetailModal({
         onClick={e => e.stopPropagation()}
       >
         {}
-        <div className="bg-gradient-to-b from-primary-50/50 to-background-surface px-12 py-12 border-b border-primary-200/50 relative">
+        <div className="bg-background-surface px-12 py-12 border-b border-primary-200/50 relative">
           {}
           <button
             onClick={onClose}

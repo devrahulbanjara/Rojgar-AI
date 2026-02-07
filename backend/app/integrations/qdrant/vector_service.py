@@ -74,8 +74,8 @@ class JobVectorService:
             text_content = self._construct_job_text(job)
             org_name = self._get_organization_name(job)
             metadata = {
-                "job_id": job.job_id,
-                "organization_id": job.organization_id,
+                "job_id": str(job.job_id),
+                "organization_id": str(job.organization_id),
                 "organization_name": org_name,
                 "title": job.title,
                 "city": job.location_city,

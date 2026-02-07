@@ -73,7 +73,7 @@ export function SheetHeader({
   return (
     <div
       className={cn(
-        'px-8 py-6 border-b bg-gradient-to-b from-background-subtle to-background-surface flex-shrink-0',
+        'px-8 py-6 border-b bg-background-surface flex-shrink-0',
         className
       )}
     >
