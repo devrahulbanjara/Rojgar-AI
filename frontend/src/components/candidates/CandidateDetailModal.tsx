@@ -55,7 +55,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
     >
       <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col rounded-[20px] bg-background-surface">
         {}
-        <div className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-12 py-12 border-b border-border-subtle dark:border-border-default relative">
+        <div className="bg-background-surface px-12 py-12 border-b border-border-subtle dark:border-border-default relative">
           {}
           <button
             onClick={onClose}

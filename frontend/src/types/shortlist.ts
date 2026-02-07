@@ -27,6 +27,7 @@ export interface ShortlistJob {
   applicant_count: number
   pending_ai_reviews: number
   candidates: ShortlistCandidate[]
+  auto_shortlist?: boolean
 }
 
 export interface ShortlistFilters {

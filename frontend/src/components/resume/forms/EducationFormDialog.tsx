@@ -9,13 +9,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, GraduationCap } from 'lucide-react'
+import { Loader2, GraduationCap, Building2, BookOpen, MapPin, Calendar } from 'lucide-react'
 import type { ResumeEducationResponse } from '@/types/resume'
 
 interface EducationFormProps {
@@ -109,87 +107,131 @@ export default function EducationFormDialog({
   return (
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
       <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center shadow-sm border border-ai-100 dark:border-ai-900/30">
+            <GraduationCap className="w-6 h-6 text-ai-600 dark:text-ai-400" />
           </div>
           <div>
-            <DialogTitle>{initialData ? 'Edit Education' : 'Add Education'}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl">
+              {initialData ? 'Edit Education' : 'Add Education'}
+            </DialogTitle>
+            <DialogDescription className="text-text-tertiary">
               {initialData ? 'Update your education details' : 'Add your academic background'}
             </DialogDescription>
           </div>
         </div>
       </DialogHeader>
 
-      <DialogContent className="pt-0">
+      <DialogContent className="pt-2">
         <form id="education-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* School / College */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-primary">
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-text-tertiary" />
               School / College <span className="text-error">*</span>
-            </Label>
-            <Input
-              required
-              value={formData.college_name}
-              onChange={e => setFormData({ ...formData, college_name: e.target.value })}
-              placeholder="e.g. Herald College Kathmandu"
-              className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
-            />
+            </label>
+            <div className="relative group">
+              <input
+                type="text"
+                required
+                value={formData.college_name}
+                onChange={e => setFormData({ ...formData, college_name: e.target.value })}
+                placeholder="e.g. Herald College Kathmandu"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary placeholder:text-text-muted"
+              />
+            </div>
           </div>
 
+          {/* Degree */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-primary">
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4 text-text-tertiary" />
               Degree <span className="text-error">*</span>
-            </Label>
-            <Input
-              required
-              value={formData.degree}
-              onChange={e => setFormData({ ...formData, degree: e.target.value })}
-              placeholder="e.g. B(Hons) in Computer Science"
-              className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
-            />
+            </label>
+            <div className="relative group">
+              <input
+                type="text"
+                required
+                value={formData.degree}
+                onChange={e => setFormData({ ...formData, degree: e.target.value })}
+                placeholder="e.g. B(Hons) in Computer Science"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary placeholder:text-text-muted"
+              />
+            </div>
           </div>
 
+          {/* Location */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-primary">Location</Label>
-            <Input
-              value={formData.location}
-              onChange={e => setFormData({ ...formData, location: e.target.value })}
-              placeholder="e.g. Kathmandu, Nepal"
-              className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
-            />
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-text-tertiary" />
+              Location
+            </label>
+            <div className="relative group">
+              <input
+                type="text"
+                value={formData.location}
+                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                placeholder="e.g. Kathmandu, Nepal"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary placeholder:text-text-muted"
+              />
+            </div>
           </div>
 
+          {/* Date Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-primary">Start Date</Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-text-tertiary" />
+                Start Date
+              </label>
+              <input
                 type="date"
                 value={formData.start_date}
                 onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-primary">End Date</Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-text-tertiary" />
+                End Date
+              </label>
+              <input
                 type="date"
                 disabled={formData.is_current}
                 value={formData.end_date}
                 onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                className="h-11 rounded-xl border-border-default focus:border-success focus:ring-success/20 disabled:opacity-50"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 py-1">
+          {/* Currently Studying Checkbox */}
+          <div className="flex items-center gap-3 pt-1 pb-2">
             <Checkbox
               id="current_edu"
               checked={formData.is_current}
               onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
-              className="rounded border-border-default"
             />
-            <label htmlFor="current_edu" className="text-sm text-text-primary cursor-pointer">
+            <label
+              htmlFor="current_edu"
+              className="text-sm font-medium text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+            >
               I am currently studying here
             </label>
           </div>
@@ -201,7 +243,7 @@ export default function EducationFormDialog({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="rounded-xl px-5"
+          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
         >
           Cancel
         </Button>
@@ -209,7 +251,7 @@ export default function EducationFormDialog({
           type="submit"
           form="education-form"
           disabled={loading}
-          className="btn-primary-gradient rounded-xl px-6"
+          className="h-11 px-6 rounded-xl bg-ai-600 dark:bg-ai-500 hover:bg-ai-700 dark:hover:bg-ai-600 text-white font-semibold shadow-lg shadow-ai-500/25 dark:shadow-ai-400/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Education'}

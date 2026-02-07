@@ -9,14 +9,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, Briefcase } from 'lucide-react'
+import { Loader2, Briefcase, Building2, MapPin, Calendar, FileText } from 'lucide-react'
 import type { ResumeWorkExperienceResponse } from '@/types/resume'
 
 interface ExperienceFormProps {
@@ -114,15 +111,15 @@ export default function ExperienceFormDialog({
   return (
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
       <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
-            <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center shadow-sm border border-primary-100 dark:border-primary-900/30">
+            <Briefcase className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <DialogTitle>
+            <DialogTitle className="text-xl">
               {initialData ? 'Edit Work Experience' : 'Add Work Experience'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-text-tertiary">
               {initialData
                 ? 'Update your work history details'
                 : 'Add your professional experience'}
@@ -131,86 +128,129 @@ export default function ExperienceFormDialog({
         </div>
       </DialogHeader>
 
-      <DialogContent className="pt-0">
+      <DialogContent className="pt-2">
         <form id="experience-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* Job Title and Company Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">
-                Job Title <span className="text-red-500">*</span>
-              </Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Briefcase className="w-4 h-4 text-text-tertiary" />
+                Job Title <span className="text-error">*</span>
+              </label>
+              <input
+                type="text"
                 required
                 value={formData.job_title}
                 onChange={e => setFormData({ ...formData, job_title: e.target.value })}
                 placeholder="e.g. Senior Developer"
-                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary placeholder:text-text-muted"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">
-                Company <span className="text-red-500">*</span>
-              </Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-text-tertiary" />
+                Company <span className="text-error">*</span>
+              </label>
+              <input
+                type="text"
                 required
                 value={formData.company}
                 onChange={e => setFormData({ ...formData, company: e.target.value })}
                 placeholder="e.g. Acme Inc."
-                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary placeholder:text-text-muted"
               />
             </div>
           </div>
 
+          {/* Location */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-secondary">Location</Label>
-            <Input
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-text-tertiary" />
+              Location
+            </label>
+            <input
+              type="text"
               value={formData.location}
               onChange={e => setFormData({ ...formData, location: e.target.value })}
               placeholder="e.g. New York, NY (Remote)"
-              className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
+              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted"
             />
           </div>
 
+          {/* Date Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">Start Date</Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-text-tertiary" />
+                Start Date
+              </label>
+              <input
                 type="date"
                 value={formData.start_date}
                 onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">End Date</Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-text-tertiary" />
+                End Date
+              </label>
+              <input
                 type="date"
                 disabled={formData.is_current}
                 value={formData.end_date}
                 onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20 disabled:opacity-50"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 py-1">
+          {/* Currently Working Checkbox */}
+          <div className="flex items-center gap-3 pt-1">
             <Checkbox
               id="current"
               checked={formData.is_current}
               onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
-              className="rounded border-border-default"
             />
-            <label htmlFor="current" className="text-sm text-text-secondary cursor-pointer">
+            <label
+              htmlFor="current"
+              className="text-sm font-medium text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+            >
               I currently work here
             </label>
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-secondary">Description</Label>
-            <Textarea
-              className="min-h-[120px] resize-none rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
-              placeholder="Describe your achievements and responsibilities..."
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-text-tertiary" />
+              Description
+            </label>
+            <textarea
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe your achievements and responsibilities..."
+              rows={4}
+              className="w-full px-4 py-3 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted resize-none"
             />
           </div>
         </form>
@@ -221,7 +261,7 @@ export default function ExperienceFormDialog({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="rounded-xl px-5"
+          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
         >
           Cancel
         </Button>
@@ -229,7 +269,7 @@ export default function ExperienceFormDialog({
           type="submit"
           form="experience-form"
           disabled={loading}
-          className="rounded-xl px-6 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-400/15"
+          className="h-11 px-6 rounded-xl bg-primary-600 dark:bg-primary-500 hover:bg-primary-700 dark:hover:bg-primary-600 text-white font-semibold shadow-lg shadow-primary/25 dark:shadow-primary/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Experience'}
