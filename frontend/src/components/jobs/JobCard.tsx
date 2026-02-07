@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react'
-import { MapPin, DollarSign, Building2, Users, Clock, Briefcase, Eye, Calendar } from 'lucide-react'
+import { MapPin, DollarSign, Users, Clock, Eye } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { jobUtils } from '../../services/jobService'
 import type { Job } from '../../types/job'
@@ -142,23 +142,24 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
   const hasFooterStats = job.applicant_count !== undefined || job.views_count !== undefined
 
   // Build location string from available fields
-  const locationDisplay = 
+  const locationDisplay =
     job.location_city && job.location_country
       ? `${job.location_city}, ${job.location_country}`
       : job.location_city || job.location_country || job.location || 'Location not specified'
 
-  const companyName = job.company?.name ||
+  const companyName =
+    job.company?.name ||
     (job as unknown as { organization?: { name?: string } }).organization?.name ||
     'Company'
 
   return (
     <div
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border',
-        'px-6 py-6',
-        'hover:-translate-y-0.5 shadow-sm hover:shadow-lg',
+        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border relative overflow-hidden',
+        'p-6',
+        'hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm hover:shadow-md',
         isSelected
-          ? 'border-primary shadow-lg bg-primary-50/5 dark:bg-primary-950/10'
+          ? 'border-primary shadow-md bg-primary-50/5 dark:bg-primary-950/10'
           : 'border-border-default hover:border-primary-200 dark:hover:border-primary-800',
         className
       )}
@@ -173,93 +174,103 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
         }
       }}
     >
-      {/* Row 1: Badges - Single horizontal line, no wrap */}
-      <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
-        {job.department && (
-          <span
-            className={cn(
-              'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
-              deptColor.bg,
-              deptColor.text,
-              deptColor.border
-            )}
-          >
-            {job.department}
-          </span>
-        )}
-        {job.level && (
-          <span
-            className={cn(
-              'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
-              levelColor.bg,
-              levelColor.text,
-              levelColor.border
-            )}
-          >
-            {job.level}
-          </span>
-        )}
-        {job.application_deadline && (
-          <span className="inline-flex items-center h-6 px-2.5 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded text-[11px] font-semibold border border-warning-200 dark:border-warning-800 whitespace-nowrap">
-            {formatDeadline(job.application_deadline)}
-          </span>
-        )}
-      </div>
+      {/* Subtle gradient overlay on hover - matches StatCard pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-50/0 via-primary-50/0 to-primary-50/20 dark:from-primary-950/0 dark:via-primary-950/0 dark:to-primary-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-      {/* Row 2: Title */}
-      <h3
-        className={cn(
-          'mt-5 font-semibold text-base leading-snug text-text-primary transition-colors line-clamp-2',
-          isSelected ? 'text-primary-600 dark:text-primary-400' : 'group-hover:text-primary-600 dark:group-hover:text-primary-400'
-        )}
-      >
-        {job.title}
-      </h3>
-
-      {/* Row 3: Company */}
-      <p className="mt-1 text-[13px] text-text-muted font-medium">
-        {companyName}
-      </p>
-
-      {/* Row 4: Metadata - Single horizontal line with separators, no wrap */}
-      <div className="mt-4 flex items-center flex-nowrap overflow-hidden text-[13px] text-text-secondary">
-        <MapPin className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-        <span className="ml-1 truncate max-w-[140px]">{locationDisplay}</span>
-        <span className="mx-2 text-text-muted flex-shrink-0">·</span>
-        <DollarSign className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-        <span className="ml-0.5 font-medium whitespace-nowrap">{jobUtils.formatJobSalary(job)}</span>
-        <span className="mx-2 text-text-muted flex-shrink-0">·</span>
-        <Clock className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-        <span className="ml-1 whitespace-nowrap">{jobUtils.formatPostedDate(job.created_at || job.posted_date)}</span>
-      </div>
-
-      {/* Row 5: Work Type - Single horizontal line, no wrap */}
-      <div className="mt-4 flex items-center gap-2 flex-nowrap">
-        <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
-          {job.employment_type}
-        </span>
-        <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
-          {job.location_type || 'On-site'}
-        </span>
-      </div>
-
-      {/* Row 6: Stats (Optional) - Single horizontal line */}
-      {hasFooterStats && (
-        <div className="mt-4 pt-4 border-t border-border-subtle flex items-center gap-4 flex-nowrap">
-          {job.applicant_count !== undefined && (
-            <div className="inline-flex items-center gap-1 text-[11px] text-text-muted whitespace-nowrap">
-              <Users className="w-3.5 h-3.5" />
-              <span className="font-medium">{job.applicant_count} applicants</span>
-            </div>
+      {/* Content wrapper for z-index */}
+      <div className="relative z-10">
+        {/* Row 1: Badges - Single horizontal line, no wrap */}
+        <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+          {job.department && (
+            <span
+              className={cn(
+                'inline-flex items-center h-6 px-2.5 rounded-md text-[11px] font-semibold border whitespace-nowrap',
+                deptColor.bg,
+                deptColor.text,
+                deptColor.border
+              )}
+            >
+              {job.department}
+            </span>
           )}
-          {job.views_count !== undefined && (
-            <div className="inline-flex items-center gap-1 text-[11px] text-text-muted whitespace-nowrap">
-              <Eye className="w-3.5 h-3.5" />
-              <span className="font-medium">{job.views_count} views</span>
-            </div>
+          {job.level && (
+            <span
+              className={cn(
+                'inline-flex items-center h-6 px-2.5 rounded-md text-[11px] font-semibold border whitespace-nowrap',
+                levelColor.bg,
+                levelColor.text,
+                levelColor.border
+              )}
+            >
+              {job.level}
+            </span>
+          )}
+          {job.application_deadline && (
+            <span className="inline-flex items-center h-6 px-2.5 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded-md text-[11px] font-semibold border border-warning-200 dark:border-warning-800 whitespace-nowrap">
+              {formatDeadline(job.application_deadline)}
+            </span>
           )}
         </div>
-      )}
+
+        {/* Row 2: Title */}
+        <h3
+          className={cn(
+            'mt-4 font-semibold text-base leading-snug text-text-primary transition-colors duration-200 line-clamp-2',
+            isSelected
+              ? 'text-primary-600 dark:text-primary-400'
+              : 'group-hover:text-primary-600 dark:group-hover:text-primary-400'
+          )}
+        >
+          {job.title}
+        </h3>
+
+        {/* Row 3: Company */}
+        <p className="mt-1.5 text-sm text-text-secondary font-medium">{companyName}</p>
+
+        {/* Row 4: Metadata - Single horizontal line with separators, no wrap */}
+        <div className="mt-4 flex items-center flex-nowrap overflow-hidden text-sm text-text-secondary">
+          <MapPin className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+          <span className="ml-1.5 truncate max-w-[140px]">{locationDisplay}</span>
+          <span className="mx-2 text-text-muted/60 flex-shrink-0">·</span>
+          <DollarSign className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+          <span className="ml-1 font-medium whitespace-nowrap">
+            {jobUtils.formatJobSalary(job)}
+          </span>
+          <span className="mx-2 text-text-muted/60 flex-shrink-0">·</span>
+          <Clock className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+          <span className="ml-1.5 whitespace-nowrap">
+            {jobUtils.formatPostedDate(job.created_at || job.posted_date)}
+          </span>
+        </div>
+
+        {/* Row 5: Work Type - Single horizontal line, no wrap */}
+        <div className="mt-4 flex items-center gap-2 flex-nowrap">
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+            {job.employment_type}
+          </span>
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+            {job.location_type || 'On-site'}
+          </span>
+        </div>
+
+        {/* Row 6: Stats (Optional) - Single horizontal line */}
+        {hasFooterStats && (
+          <div className="mt-4 pt-4 border-t border-border-subtle flex items-center gap-4 flex-nowrap">
+            {job.applicant_count !== undefined && (
+              <div className="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap">
+                <Users className="w-3.5 h-3.5" />
+                <span className="font-medium">{job.applicant_count} applicants</span>
+              </div>
+            )}
+            {job.views_count !== undefined && (
+              <div className="inline-flex items-center gap-1.5 text-xs text-text-muted whitespace-nowrap">
+                <Eye className="w-3.5 h-3.5" />
+                <span className="font-medium">{job.views_count} views</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 })

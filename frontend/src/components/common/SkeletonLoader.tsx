@@ -72,148 +72,94 @@ export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) =>
 export const SkeletonJobCard: React.FC<{ className?: string }> = ({ className }) => (
   <div
     className={cn(
-      'group transition-all duration-300 w-full bg-background-surface rounded-xl border p-6 border-border-default shadow-sm',
+      'group transition-all duration-300 w-full bg-background-surface rounded-2xl border p-6 border-border-default shadow-sm',
       className
     )}
   >
-    <div className="flex flex-col h-full">
-      {}
-      <div className="flex items-start justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <SkeletonLoader
-            variant="rectangular"
-            width={85}
-            height={24}
-            className="rounded-full bg-background-muted"
-          />
-          <SkeletonLoader
-            variant="rectangular"
-            width={65}
-            height={24}
-            className="rounded-full bg-background-muted"
-          />
-        </div>
-        {}
-        <SkeletonLoader variant="circular" width={20} height={20} className="bg-background-muted" />
-      </div>
+    {/* Row 1: Badges */}
+    <div className="flex items-center gap-2">
+      <SkeletonLoader
+        variant="rectangular"
+        width={85}
+        height={24}
+        className="rounded-md bg-background-muted"
+      />
+      <SkeletonLoader
+        variant="rectangular"
+        width={55}
+        height={24}
+        className="rounded-md bg-background-muted"
+      />
+    </div>
 
-      {}
-      <div className="mb-5">
+    {/* Row 2: Title */}
+    <div className="mt-4">
+      <SkeletonLoader variant="text" width="85%" height={20} className="bg-background-subtle" />
+    </div>
+
+    {/* Row 3: Company */}
+    <div className="mt-1.5">
+      <SkeletonLoader variant="text" width="50%" height={16} className="bg-background-muted" />
+    </div>
+
+    {/* Row 4: Metadata */}
+    <div className="mt-4 flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <SkeletonLoader
-          variant="text"
-          width="90%"
-          height={26}
-          className="mb-2 bg-background-subtle"
+          variant="circular"
+          width={14}
+          height={14}
+          className="bg-background-subtle"
         />
-        <SkeletonLoader variant="text" width="60%" height={20} className="bg-background-subtle" />
+        <SkeletonLoader variant="text" width={80} height={14} className="bg-background-subtle" />
       </div>
-
-      {}
-      <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-        {}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-subtle"
-            />
-            <SkeletonLoader
-              variant="text"
-              width={100}
-              height={14}
-              className="bg-background-subtle"
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-subtle"
-            />
-            <SkeletonLoader
-              variant="text"
-              width={60}
-              height={14}
-              className="bg-background-subtle"
-            />
-          </div>
-        </div>
-
-        {}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-subtle"
-            />
-            <SkeletonLoader
-              variant="text"
-              width={90}
-              height={14}
-              className="bg-background-subtle"
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-subtle"
-            />
-            <SkeletonLoader
-              variant="text"
-              width={70}
-              height={14}
-              className="bg-background-subtle"
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-subtle"
-            />
-            <SkeletonLoader
-              variant="text"
-              width={60}
-              height={14}
-              className="bg-background-subtle"
-            />
-          </div>
-        </div>
-      </div>
-
-      {}
-      <div className="flex-1" />
-
-      {}
-      <div className="flex items-center justify-between gap-3 pt-6 border-t border-border-subtle">
-        <div className="flex items-center gap-3">
-          <SkeletonLoader
-            variant="rectangular"
-            width={75}
-            height={36}
-            className="rounded-lg bg-ai-50 dark:bg-ai-950/30"
-          />
-          <SkeletonLoader
-            variant="rectangular"
-            width={70}
-            height={36}
-            className="rounded-lg bg-primary-50 dark:bg-primary-950/30"
-          />
-        </div>
+      <SkeletonLoader variant="text" width={8} height={14} className="bg-background-muted" />
+      <div className="flex items-center gap-1.5">
         <SkeletonLoader
-          variant="rectangular"
-          width={80}
-          height={36}
-          className="rounded-lg bg-warning-50 dark:bg-warning-950/30"
+          variant="circular"
+          width={14}
+          height={14}
+          className="bg-background-subtle"
         />
+        <SkeletonLoader variant="text" width={60} height={14} className="bg-background-subtle" />
+      </div>
+      <SkeletonLoader variant="text" width={8} height={14} className="bg-background-muted" />
+      <div className="flex items-center gap-1.5">
+        <SkeletonLoader
+          variant="circular"
+          width={14}
+          height={14}
+          className="bg-background-subtle"
+        />
+        <SkeletonLoader variant="text" width={50} height={14} className="bg-background-subtle" />
+      </div>
+    </div>
+
+    {/* Row 5: Work Type badges */}
+    <div className="mt-4 flex items-center gap-2">
+      <SkeletonLoader
+        variant="rectangular"
+        width={70}
+        height={24}
+        className="rounded-md bg-background-subtle"
+      />
+      <SkeletonLoader
+        variant="rectangular"
+        width={60}
+        height={24}
+        className="rounded-md bg-background-subtle"
+      />
+    </div>
+
+    {/* Row 6: Stats footer */}
+    <div className="mt-4 pt-4 border-t border-border-subtle flex items-center gap-4">
+      <div className="flex items-center gap-1.5">
+        <SkeletonLoader variant="circular" width={14} height={14} className="bg-background-muted" />
+        <SkeletonLoader variant="text" width={70} height={12} className="bg-background-muted" />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <SkeletonLoader variant="circular" width={14} height={14} className="bg-background-muted" />
+        <SkeletonLoader variant="text" width={50} height={12} className="bg-background-muted" />
       </div>
     </div>
   </div>
@@ -946,112 +892,111 @@ export const SkeletonRecentActivity: React.FC<{ className?: string }> = ({ class
 export const SkeletonRecruiterJobCard: React.FC<{ className?: string }> = ({ className }) => (
   <div
     className={cn(
-      'transition-all duration-300 w-full bg-background-surface rounded-xl border p-6 border-border-default shadow-sm',
+      'transition-all duration-300 w-full bg-background-surface rounded-2xl border p-6 border-border-default shadow-sm',
       className
     )}
   >
-    <div className="flex flex-col h-full">
-      {}
-      <div className="flex items-start justify-between mb-5">
+    {/* Row 1: Badges + Toggle */}
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
         <SkeletonLoader
           variant="rectangular"
           width={85}
           height={24}
-          className="rounded-full bg-primary-50"
+          className="rounded-md bg-background-muted"
         />
-        <div className="flex items-center gap-2">
-          <SkeletonLoader variant="circular" width={8} height={8} className="bg-success" />
-          <SkeletonLoader variant="text" width={40} height={11} className="bg-background-subtle" />
-        </div>
-      </div>
-
-      {}
-      <div className="mb-5">
-        <SkeletonLoader variant="text" width="85%" height={19} className="bg-background-muted" />
-      </div>
-
-      {}
-      <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-        {}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-muted"
-            />
-            <SkeletonLoader variant="text" width={80} height={14} className="bg-background-muted" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-muted"
-            />
-            <SkeletonLoader variant="text" width={60} height={14} className="bg-background-muted" />
-          </div>
-        </div>
-
-        {}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-muted"
-            />
-            <SkeletonLoader variant="text" width={90} height={14} className="bg-background-muted" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-muted"
-            />
-            <SkeletonLoader variant="text" width={70} height={14} className="bg-background-muted" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SkeletonLoader
-              variant="circular"
-              width={14}
-              height={14}
-              className="bg-background-muted"
-            />
-            <SkeletonLoader variant="text" width={60} height={14} className="bg-background-muted" />
-          </div>
-        </div>
-      </div>
-
-      {}
-      <div className="flex-1" />
-
-      {}
-      <div className="flex items-center justify-between pt-6 border-t border-border-subtle">
-        <div className="flex items-center gap-3">
-          <SkeletonLoader
-            variant="rectangular"
-            width={60}
-            height={36}
-            className="rounded-lg bg-primary-50 dark:bg-primary-950/30"
-          />
-          <SkeletonLoader
-            variant="rectangular"
-            width={60}
-            height={36}
-            className="rounded-lg bg-primary-50 dark:bg-primary-950/30"
-          />
-        </div>
         <SkeletonLoader
           variant="rectangular"
-          width={120}
-          height={36}
-          className="rounded-lg bg-primary-50 dark:bg-primary-950/30"
+          width={55}
+          height={24}
+          className="rounded-md bg-background-muted"
         />
       </div>
+      <SkeletonLoader variant="circular" width={20} height={20} className="bg-background-muted" />
+    </div>
+
+    {/* Row 2: Title */}
+    <div className="mt-4">
+      <SkeletonLoader variant="text" width="85%" height={20} className="bg-background-subtle" />
+    </div>
+
+    {/* Row 3: Metadata */}
+    <div className="mt-4 flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <SkeletonLoader
+          variant="circular"
+          width={14}
+          height={14}
+          className="bg-background-subtle"
+        />
+        <SkeletonLoader variant="text" width={80} height={14} className="bg-background-subtle" />
+      </div>
+      <SkeletonLoader variant="text" width={8} height={14} className="bg-background-muted" />
+      <div className="flex items-center gap-1.5">
+        <SkeletonLoader
+          variant="circular"
+          width={14}
+          height={14}
+          className="bg-background-subtle"
+        />
+        <SkeletonLoader variant="text" width={60} height={14} className="bg-background-subtle" />
+      </div>
+      <SkeletonLoader variant="text" width={8} height={14} className="bg-background-muted" />
+      <div className="flex items-center gap-1.5">
+        <SkeletonLoader
+          variant="circular"
+          width={14}
+          height={14}
+          className="bg-background-subtle"
+        />
+        <SkeletonLoader variant="text" width={50} height={14} className="bg-background-subtle" />
+      </div>
+    </div>
+
+    {/* Row 4: Work Type badges */}
+    <div className="mt-4 flex items-center gap-2">
+      <SkeletonLoader
+        variant="rectangular"
+        width={70}
+        height={24}
+        className="rounded-md bg-background-subtle"
+      />
+      <SkeletonLoader
+        variant="rectangular"
+        width={60}
+        height={24}
+        className="rounded-md bg-background-subtle"
+      />
+    </div>
+
+    {/* Row 5: Stats + Action footer */}
+    <div className="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <SkeletonLoader
+            variant="circular"
+            width={14}
+            height={14}
+            className="bg-background-muted"
+          />
+          <SkeletonLoader variant="text" width={70} height={12} className="bg-background-muted" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <SkeletonLoader
+            variant="circular"
+            width={14}
+            height={14}
+            className="bg-background-muted"
+          />
+          <SkeletonLoader variant="text" width={50} height={12} className="bg-background-muted" />
+        </div>
+      </div>
+      <SkeletonLoader
+        variant="rectangular"
+        width={100}
+        height={28}
+        className="rounded-md bg-primary-50 dark:bg-primary-950/30"
+      />
     </div>
   </div>
 )
