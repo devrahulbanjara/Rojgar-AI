@@ -350,7 +350,7 @@ export function SkillsExpertiseTab({
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-warning-50 flex items-center justify-center text-warning-600 shadow-sm border border-warning-200">
+              <div className="w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center text-warning-600 dark:text-warning-400 shadow-sm border border-warning-200 dark:border-warning-800">
                 <Award className="w-6 h-6" />
               </div>
               <div>
@@ -542,7 +542,7 @@ export function SkillsExpertiseTab({
                 <Button
                   onClick={() => setIsAddingCert(true)}
                   variant="outline"
-                  className="mt-6 border-warning-200 text-warning-600 hover:bg-warning-50 hover:border-warning-300 rounded-xl"
+                  className="mt-6 border-warning-200 dark:border-warning-800 text-warning-600 dark:text-warning-400 hover:bg-warning-50 dark:hover:bg-warning-950/30 hover:border-warning-300 dark:hover:border-warning-700 rounded-xl"
                 >
                   Add Certification
                 </Button>
@@ -553,10 +553,10 @@ export function SkillsExpertiseTab({
               {certifications.map(cert => (
                 <div
                   key={cert.candidate_certification_id}
-                  className="group flex items-start justify-between p-5 bg-background-surface border border-border-default rounded-xl hover:border-warning-200 hover:shadow-md transition-all duration-300"
+                  className="group flex items-start justify-between p-5 bg-background-surface border border-border-default rounded-xl hover:border-warning-200 dark:hover:border-warning-800 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-warning-50 text-warning-600 rounded-lg group-hover:bg-warning-100 transition-colors">
+                    <div className="p-2 bg-warning-50 dark:bg-warning-950/30 text-warning-600 dark:text-warning-400 rounded-lg group-hover:bg-warning-100 dark:group-hover:bg-warning-900/30 transition-colors">
                       <Award className="w-6 h-6" />
                     </div>
                     <div>

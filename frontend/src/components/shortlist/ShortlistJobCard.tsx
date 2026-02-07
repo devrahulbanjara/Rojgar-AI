@@ -1,6 +1,7 @@
 import React from 'react'
-import { Users } from 'lucide-react'
+import { Users, Zap } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 
 interface ShortlistJobCardProps {
   job: {
@@ -9,9 +10,11 @@ interface ShortlistJobCardProps {
     department?: string
     applicant_count: number
     pending_ai_reviews: number
+    auto_shortlist?: boolean
   }
   isSelected: boolean
   onClick: () => void
+  onAutoShortlistChange?: () => void
   className?: string
 }
 
@@ -28,7 +31,21 @@ const getDepartmentBadgeStyle = (department: string) => {
   }
 }
 
-export function ShortlistJobCard({ job, isSelected, onClick, className }: ShortlistJobCardProps) {
+export function ShortlistJobCard({ job, isSelected, onClick, onAutoShortlistChange, className }: ShortlistJobCardProps) {
+  const {
+    autoShortlist,
+    isLoading: isLoadingAutoShortlist,
+    toggle,
+    isToggling,
+  } = useAutoShortlist(job.job_id)
+
+  const handleAutoShortlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isLoadingAutoShortlist || isToggling) return
+    toggle()
+    onAutoShortlistChange?.()
+  }
+
   return (
     <div
       className={cn(
@@ -55,7 +72,7 @@ export function ShortlistJobCard({ job, isSelected, onClick, className }: Shortl
       <div className="flex flex-col h-full">
         {}
         <div className="flex items-start justify-between mb-5">
-          {job.department && (
+          {job.department ? (
             <span
               className={cn(
                 'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
@@ -64,7 +81,36 @@ export function ShortlistJobCard({ job, isSelected, onClick, className }: Shortl
             >
               {job.department}
             </span>
+          ) : (
+            <div />
           )}
+
+          <div className="relative group/tooltip">
+            <button
+              onClick={handleAutoShortlistToggle}
+              disabled={isLoadingAutoShortlist || isToggling}
+              className={cn(
+                'flex items-center justify-center transition-all duration-200 rounded-full',
+                'hover:scale-110 active:scale-95',
+                autoShortlist
+                  ? 'w-7 h-7 bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 shadow-sm'
+                  : 'w-5 h-5 text-text-muted hover:text-warning-500',
+                (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
+              )}
+              title={
+                autoShortlist
+                  ? 'Auto Shortlist: ON - Click to disable'
+                  : 'Auto Shortlist: OFF - Click to enable'
+              }
+            >
+              <Zap className="w-4 h-4 transition-all duration-200" />
+            </button>
+
+            <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-text-inverse bg-text-primary rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+              {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
+              <div className="absolute bottom-full right-2 border-4 border-transparent border-b-text-primary" />
+            </div>
+          </div>
         </div>
 
         {}

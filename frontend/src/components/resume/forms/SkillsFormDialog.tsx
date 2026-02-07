@@ -9,12 +9,10 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Code, Lightbulb } from 'lucide-react'
 
 interface SkillsFormProps {
   open: boolean
@@ -75,33 +73,44 @@ export default function SkillsFormDialog({
   return (
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-md">
       <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-ai-50 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-ai-600" />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center shadow-sm border border-success-100 dark:border-success-900/30">
+            <Code className="w-6 h-6 text-success-600 dark:text-success-400" />
           </div>
           <div>
-            <DialogTitle>{initialData ? 'Edit Skill' : 'Add Skill'}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl">
+              {initialData ? 'Edit Skill' : 'Add Skill'}
+            </DialogTitle>
+            <DialogDescription className="text-text-tertiary">
               {initialData ? 'Update your skill' : 'Add a new skill to your resume'}
             </DialogDescription>
           </div>
         </div>
       </DialogHeader>
 
-      <DialogContent className="pt-0">
+      <DialogContent className="pt-2">
         <form id="skill-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* Skill Name */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-primary">
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <Lightbulb className="w-4 h-4 text-text-tertiary" />
               Skill Name <span className="text-error">*</span>
-            </Label>
-            <Input
+            </label>
+            <input
+              type="text"
               required
               value={skillName}
               onChange={e => setSkillName(e.target.value)}
               placeholder="e.g. Python, React, Leadership"
               autoFocus
-              className="h-11 rounded-xl border-border-default focus:border-ai focus:ring-ai/20"
+              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-success-500/20 focus:border-success-500 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted"
             />
+            <p className="text-xs text-text-tertiary mt-1.5">
+              Add technical skills, tools, frameworks, or soft skills
+            </p>
           </div>
         </form>
       </DialogContent>
@@ -111,7 +120,7 @@ export default function SkillsFormDialog({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="rounded-xl px-5"
+          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
         >
           Cancel
         </Button>
@@ -119,7 +128,7 @@ export default function SkillsFormDialog({
           type="submit"
           form="skill-form"
           disabled={loading}
-          className="btn-primary-gradient rounded-xl px-6"
+          className="h-11 px-6 rounded-xl bg-success-600 dark:bg-success-500 hover:bg-success-700 dark:hover:bg-success-600 text-white font-semibold shadow-lg shadow-success-500/25 dark:shadow-success-400/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Skill'}

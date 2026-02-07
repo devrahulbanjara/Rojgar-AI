@@ -34,7 +34,7 @@ const ActivityIcon = ({ type }: { type: ActivityItem['type'] }) => {
     case 'application':
       return <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
     case 'interview':
-      return <Calendar className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+      return <Calendar className="w-5 h-5 text-info-600 dark:text-info-400" />
     case 'offer':
       return <CheckCircle2 className="w-5 h-5 text-success-600 dark:text-success-400" />
     case 'job_post':
@@ -51,7 +51,7 @@ const ActivityColor = ({ type }: { type: ActivityItem['type'] }) => {
     case 'application':
       return 'bg-primary-50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
     case 'interview':
-      return 'bg-ai-50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
+      return 'bg-info-50 dark:bg-info-950/30 border-info-200 dark:border-info-800'
     case 'offer':
       return 'bg-success-50 dark:bg-success-950/30 border-success-200 dark:border-success-800'
     case 'job_post':
@@ -69,11 +69,18 @@ export function RecentActivity() {
   if (isLoading) {
     return (
       <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-border-default bg-background-subtle/50">
-          <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
-          <p className="text-sm text-text-tertiary">
-            Latest updates from your recruitment pipeline
-          </p>
+        <div className="p-6 border-b border-border-subtle">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900">
+              <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
+              <p className="text-sm text-text-tertiary">
+                Latest updates from your recruitment pipeline
+              </p>
+            </div>
+          </div>
         </div>
         <div className="p-8 flex items-center justify-center">
           <LoadingSpinner />
@@ -83,10 +90,17 @@ export function RecentActivity() {
   }
 
   return (
-    <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border-default bg-background-subtle/50">
-        <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
-        <p className="text-sm text-text-tertiary">Latest updates from your recruitment pipeline</p>
+    <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300">
+      <div className="p-6 border-b border-border-subtle">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900">
+            <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
+            <p className="text-sm text-text-tertiary">Latest updates from your recruitment pipeline</p>
+          </div>
+        </div>
       </div>
 
       {activities.length === 0 ? (
@@ -140,8 +154,8 @@ export function RecentActivity() {
         </div>
       )}
 
-      <div className="p-4 bg-background-subtle/50 border-t border-border-default text-center">
-        <button className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
+      <div className="p-4 border-t border-border-subtle text-center">
+        <button className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors px-4 py-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30">
           View All Activity
         </button>
       </div>

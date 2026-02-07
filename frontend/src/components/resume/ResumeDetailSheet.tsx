@@ -158,7 +158,7 @@ export default function ResumeDetailSheet({
       <Sheet open={isOpen} onOpenChange={open => !open && onClose()} hideClose>
         <SheetContent className="w-full max-w-4xl p-0 bg-background-surface flex flex-col shadow-2xl border-l overflow-hidden rounded-l-2xl">
           {}
-          <div className="flex-shrink-0 bg-gradient-to-b from-ai-50/50 dark:from-ai-950/30 to-background-surface px-12 py-12 border-b border-ai-50/50 dark:border-ai-900/30 relative">
+          <div className="flex-shrink-0 bg-background-surface px-12 py-12 border-b border-ai-50/50 dark:border-ai-900/30 relative">
             {}
             <button
               onClick={onClose}

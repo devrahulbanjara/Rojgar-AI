@@ -259,11 +259,8 @@ export function NotificationDropdown({ isOpen, onToggle, onClose }: Notification
                             groupOrder.filter(g => groupedActivities[g]?.length).length - 1
 
                           return (
-                            <motion.div
+                            <div
                               key={activity.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05, duration: 0.2 }}
                               className={cn(
                                 'group flex items-start gap-3 px-6 py-3.5 hover:bg-[#F9FAFB] dark:hover:bg-background-subtle/50 transition-colors duration-150 cursor-pointer',
                                 !(isLastInGroup && isLastGroup) &&
@@ -304,7 +301,7 @@ export function NotificationDropdown({ isOpen, onToggle, onClose }: Notification
                               <div className="flex-shrink-0 pt-2">
                                 <div className="w-2 h-2 rounded-full bg-[#2463EB]" />
                               </div>
-                            </motion.div>
+                            </div>
                           )
                         })}
                       </div>

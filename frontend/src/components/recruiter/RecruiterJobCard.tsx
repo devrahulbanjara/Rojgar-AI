@@ -103,24 +103,24 @@ function formatDeadline(deadline: string): string {
 
 const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
   Engineering: {
-    bg: 'bg-blue-50/80 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-primary-50/80 dark:bg-primary-950/30',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-800',
   },
   Sales: {
-    bg: 'bg-green-50/80 dark:bg-green-950/30',
-    text: 'text-green-700 dark:text-green-300',
-    border: 'border-green-200 dark:border-green-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
   },
   Marketing: {
-    bg: 'bg-orange-50/80 dark:bg-orange-950/30',
-    text: 'text-orange-700 dark:text-orange-300',
-    border: 'border-orange-200 dark:border-orange-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
   },
   Product: {
-    bg: 'bg-purple-50/80 dark:bg-purple-950/30',
-    text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-200 dark:border-purple-800',
+    bg: 'bg-info-50/80 dark:bg-info-950/30',
+    text: 'text-info-700 dark:text-info-300',
+    border: 'border-info-200 dark:border-info-800',
   },
   Design: {
     bg: 'bg-pink-50/80 dark:bg-pink-950/30',
@@ -128,9 +128,9 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
     border: 'border-pink-200 dark:border-pink-800',
   },
   'Data Science': {
-    bg: 'bg-cyan-50/80 dark:bg-cyan-950/30',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    border: 'border-cyan-200 dark:border-cyan-800',
+    bg: 'bg-info-50/80 dark:bg-info-950/30',
+    text: 'text-info-700 dark:text-info-300',
+    border: 'border-info-200 dark:border-info-800',
   },
   HR: {
     bg: 'bg-rose-50/80 dark:bg-rose-950/30',
@@ -138,14 +138,14 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
     border: 'border-rose-200 dark:border-rose-800',
   },
   Finance: {
-    bg: 'bg-emerald-50/80 dark:bg-emerald-950/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
   },
   Operations: {
-    bg: 'bg-amber-50/80 dark:bg-amber-950/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
   },
   Default: {
     bg: 'bg-background-subtle/80',
@@ -157,7 +157,6 @@ const departmentColors: Record<string, { bg: string; text: string; border: strin
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
   ({ job, onClick, onConvertToReferenceJD, className }) => {
     const status = job.status || 'Draft'
-
     const displayStatus = status === 'Closed' ? 'Expired' : status
     const deptColor = departmentColors[job.department || ''] || departmentColors.Default
 
@@ -168,6 +167,12 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
       toggle,
       isToggling,
     } = useAutoShortlist(jobId)
+
+    // Build location string from available fields
+    const locationDisplay = 
+      job.location_city && job.location_country
+        ? `${job.location_city}, ${job.location_country}`
+        : job.location_city || job.location_country || job.location || 'Location not specified'
 
     const handleConvertClick = (e: React.MouseEvent) => {
       e.stopPropagation()
@@ -190,20 +195,19 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
       }, 100)
     }
 
+    const hasStats = job.applicant_count !== undefined || job.views_count !== undefined
+
     return (
       <div
         onClick={onClick}
         className={cn(
-          'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-xl border p-6',
-          'hover:-translate-y-1 hover:border-primary-200 dark:hover:border-primary-800',
+          'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border',
+          'px-6 py-6',
+          'hover:-translate-y-0.5 hover:border-primary-200 dark:hover:border-primary-800',
           'border-border-default',
-          'shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
-          'hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]',
+          'shadow-sm hover:shadow-lg',
           className
         )}
-        style={{
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
         role="button"
         tabIndex={0}
         aria-label={`View details for ${job.title}`}
@@ -214,13 +218,13 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
           }
         }}
       >
-        <div className="flex flex-col h-full">
-          {}
-          <div className="flex items-start justify-between mb-5">
+        {/* Row 1: Badges + Auto Shortlist Toggle - Single horizontal line */}
+        <div className="flex items-center justify-between gap-2 flex-nowrap">
+          <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
             {job.department && (
               <span
                 className={cn(
-                  'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
+                  'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
                   deptColor.bg,
                   deptColor.text,
                   deptColor.border
@@ -229,138 +233,101 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                 {job.department}
               </span>
             )}
-
-            {}
-            <div className="relative group/tooltip">
-              <button
-                onClick={handleAutoShortlistToggle}
-                disabled={isLoadingAutoShortlist || isToggling || !jobId}
-                className={cn(
-                  'flex items-center justify-center transition-all duration-200 rounded-full',
-                  'hover:scale-110 active:scale-95',
-                  autoShortlist
-                    ? 'w-7 h-7 bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 shadow-sm'
-                    : 'w-5 h-5 text-text-muted hover:text-warning-500',
-                  (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
-                )}
-                title={
-                  autoShortlist
-                    ? 'Auto Shortlist: ON - Click to disable'
-                    : 'Auto Shortlist: OFF - Click to enable'
-                }
-              >
-                <Zap
-                  className={cn(
-                    'transition-all duration-200',
-                    autoShortlist ? 'w-4 h-4' : 'w-4 h-4'
-                  )}
-                />
-              </button>
-
-              {}
-              <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-text-inverse bg-text-primary rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
-                <div className="absolute bottom-full right-2 border-4 border-transparent border-b-text-primary" />
-              </div>
-            </div>
-          </div>
-
-          {}
-          <div className="mb-5">
-            <h3 className="font-semibold text-[19px] leading-tight text-text-primary group-hover:text-primary-600 transition-colors line-clamp-2">
-              {job.title}
-            </h3>
-          </div>
-
-          {}
-          <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-            {}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-[14px] h-[14px] text-text-muted" />
-                <span className="truncate">{job.location}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-[14px] h-[14px] text-text-muted" />
-                <span>{formatPostedDate(job.posted_date || job.created_at)}</span>
-              </div>
-            </div>
-
-            {}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <DollarSign className="w-[14px] h-[14px] text-text-muted" />
-                <span className="font-medium">{formatSalary(job)}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Briefcase className="w-[14px] h-[14px] text-text-muted" />
-                <span>{job.employment_type}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Building2 className="w-[14px] h-[14px] text-text-muted" />
-                <span>{job.location_type || 'On-site'}</span>
-              </div>
-            </div>
-          </div>
-
-          {}
-          <div className="flex-1" />
-
-          {}
-          <div className="flex items-center justify-between pt-6 border-t border-border-subtle">
-            {}
-            <div className="flex items-center gap-3">
-              {job.applicant_count !== undefined && (
-                <div className="inline-flex items-center gap-2 px-3 py-2 bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-lg border border-ai-200 dark:border-ai-800">
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs font-semibold">{job.applicant_count}</span>
-                </div>
-              )}
-              {job.views_count !== undefined && (
-                <div className="inline-flex items-center gap-2 px-3 py-2 bg-primary-50/80 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded-lg border border-primary-200 dark:border-primary-800">
-                  <Eye className="w-4 h-4" />
-                  <span className="text-xs font-semibold">{job.views_count}</span>
-                </div>
-              )}
-            </div>
-
-            {}
-            <div className="flex items-center">
-              {job.application_deadline ? (
-                displayStatus === 'Expired' ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-error-50/80 dark:bg-error-950/30 text-error-700 dark:text-error-300 rounded-lg border border-error-200 dark:border-error-800">
-                    <Calendar className="w-4 h-4" />
-                    <span className="text-xs font-semibold">Deadline: Expired</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-warning-50/80 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded-lg border border-warning-200 dark:border-warning-800">
-                    <Calendar className="w-4 h-4" />
-                    <span className="text-xs font-semibold">
-                      {formatDeadline(job.application_deadline)}
-                    </span>
-                  </div>
-                )
+            {job.application_deadline && (
+              displayStatus === 'Expired' ? (
+                <span className="inline-flex items-center h-6 px-2.5 bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-300 rounded text-[11px] font-semibold border border-error-200 dark:border-error-800 whitespace-nowrap">
+                  Expired
+                </span>
               ) : (
-                onConvertToReferenceJD && (
-                  <button
-                    onClick={handleConvertClick}
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                      'text-primary-600 dark:text-primary-400 hover:text-text-inverse',
-                      'border border-primary-200 hover:border-primary-600',
-                      'hover:bg-primary-600',
-                      'group-hover:shadow-sm'
-                    )}
-                    title="Save as Reference JD Template"
-                  >
-                    <BookmarkPlus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Save as Template</span>
-                  </button>
-                )
+                <span className="inline-flex items-center h-6 px-2.5 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded text-[11px] font-semibold border border-warning-200 dark:border-warning-800 whitespace-nowrap">
+                  {formatDeadline(job.application_deadline)}
+                </span>
+              )
+            )}
+          </div>
+
+          {/* Auto Shortlist Toggle */}
+          <div className="relative group/tooltip flex-shrink-0">
+            <button
+              onClick={handleAutoShortlistToggle}
+              disabled={isLoadingAutoShortlist || isToggling || !jobId}
+              className={cn(
+                'flex items-center justify-center transition-all duration-200 rounded-full',
+                'hover:scale-110 active:scale-95',
+                autoShortlist
+                  ? 'w-6 h-6 bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400'
+                  : 'w-5 h-5 text-text-muted hover:text-warning-500',
+                (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
               )}
+              title={autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
+            >
+              <Zap className="w-3.5 h-3.5" />
+            </button>
+            <div className="absolute top-full right-0 mt-2 px-2 py-1 text-[10px] text-text-inverse bg-text-primary rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+              {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
             </div>
           </div>
         </div>
+
+        {/* Row 2: Title */}
+        <h3 className="mt-5 font-semibold text-base leading-snug text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+          {job.title}
+        </h3>
+
+        {/* Row 3: Metadata - Single horizontal line with separators */}
+        <div className="mt-4 flex items-center flex-nowrap overflow-hidden text-[13px] text-text-secondary">
+          <MapPin className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+          <span className="ml-1 truncate max-w-[120px]">{locationDisplay}</span>
+          <span className="mx-2 text-text-muted flex-shrink-0">·</span>
+          <DollarSign className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+          <span className="ml-0.5 font-medium whitespace-nowrap">{formatSalary(job)}</span>
+          <span className="mx-2 text-text-muted flex-shrink-0">·</span>
+          <Clock className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+          <span className="ml-1 whitespace-nowrap">{formatPostedDate(job.posted_date || job.created_at)}</span>
+        </div>
+
+        {/* Row 4: Work Type - Single horizontal line */}
+        <div className="mt-4 flex items-center gap-2 flex-nowrap">
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+            {job.employment_type}
+          </span>
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+            {job.location_type || 'On-site'}
+          </span>
+        </div>
+
+        {/* Row 5: Stats + Actions - Single horizontal line */}
+        {(hasStats || onConvertToReferenceJD) && (
+          <div className="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between gap-3 flex-nowrap">
+            {/* Stats */}
+            <div className="flex items-center gap-3 flex-nowrap">
+              {job.applicant_count !== undefined && (
+                <div className="inline-flex items-center gap-1 text-[11px] text-text-muted whitespace-nowrap">
+                  <Users className="w-3.5 h-3.5" />
+                  <span className="font-medium">{job.applicant_count} applicants</span>
+                </div>
+              )}
+              {job.views_count !== undefined && (
+                <div className="inline-flex items-center gap-1 text-[11px] text-text-muted whitespace-nowrap">
+                  <Eye className="w-3.5 h-3.5" />
+                  <span className="font-medium">{job.views_count} views</span>
+                </div>
+              )}
+            </div>
+
+            {/* Save as Template button */}
+            {onConvertToReferenceJD && !job.application_deadline && (
+              <button
+                onClick={handleConvertClick}
+                className="flex items-center gap-1.5 h-7 px-3 rounded text-[11px] font-medium transition-all duration-200 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-600 hover:text-white hover:border-primary-600 whitespace-nowrap flex-shrink-0"
+                title="Save as Reference JD Template"
+              >
+                <BookmarkPlus className="w-3.5 h-3.5" />
+                <span>Save Template</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     )
   }

@@ -9,13 +9,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, Award } from 'lucide-react'
+import { Loader2, Award, Building2, Calendar, Link2 } from 'lucide-react'
 import type { ResumeCertificationResponse } from '@/types/resume'
 
 interface CertificationFormProps {
@@ -109,13 +107,15 @@ export default function CertificationFormDialog({
   return (
     <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
       <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
-            <Award className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center shadow-sm border border-warning-100 dark:border-warning-900/30">
+            <Award className="w-6 h-6 text-warning-600 dark:text-warning-400" />
           </div>
           <div>
-            <DialogTitle>{initialData ? 'Edit Certification' : 'Add Certification'}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl">
+              {initialData ? 'Edit Certification' : 'Add Certification'}
+            </DialogTitle>
+            <DialogDescription className="text-text-tertiary">
               {initialData
                 ? 'Update your certification details'
                 : 'Add a professional certification'}
@@ -124,75 +124,111 @@ export default function CertificationFormDialog({
         </div>
       </DialogHeader>
 
-      <DialogContent className="pt-0">
+      <DialogContent className="pt-2">
         <form id="certification-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* Certification Name */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-secondary">
-              Certification Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-text-tertiary" />
+              Certification Name <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
               required
               value={formData.certification_name}
               onChange={e => setFormData({ ...formData, certification_name: e.target.value })}
               placeholder="e.g. AWS Certified Solutions Architect"
-              className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
+              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted"
             />
           </div>
 
+          {/* Issuing Organization */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-secondary">
-              Issuing Organization <span className="text-red-500">*</span>
-            </Label>
-            <Input
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-text-tertiary" />
+              Issuing Organization <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
               required
               value={formData.issuing_body}
               onChange={e => setFormData({ ...formData, issuing_body: e.target.value })}
               placeholder="e.g. Amazon Web Services"
-              className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
+              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted"
             />
           </div>
 
+          {/* Date Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">Issue Date</Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-text-tertiary" />
+                Issue Date
+              </label>
+              <input
                 type="date"
                 value={formData.issue_date}
                 onChange={e => setFormData({ ...formData, issue_date: e.target.value })}
-                className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-text-secondary">Expiration Date</Label>
-              <Input
+              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-text-tertiary" />
+                Expiration Date
+              </label>
+              <input
                 type="date"
                 disabled={formData.does_not_expire}
                 value={formData.expiration_date}
                 onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
-                className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20 disabled:opacity-50"
+                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 py-1">
+          {/* Does Not Expire Checkbox */}
+          <div className="flex items-center gap-3 pt-1">
             <Checkbox
               id="no_expire"
               checked={formData.does_not_expire}
               onCheckedChange={c => setFormData({ ...formData, does_not_expire: c as boolean })}
-              className="rounded border-border-default"
             />
-            <label htmlFor="no_expire" className="text-sm text-text-secondary cursor-pointer">
+            <label
+              htmlFor="no_expire"
+              className="text-sm font-medium text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+            >
               This certification does not expire
             </label>
           </div>
 
+          {/* Credential URL */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-secondary">Credential URL</Label>
-            <Input
+            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
+              <Link2 className="w-4 h-4 text-text-tertiary" />
+              Credential URL
+            </label>
+            <input
+              type="url"
               value={formData.credential_url}
               onChange={e => setFormData({ ...formData, credential_url: e.target.value })}
               placeholder="https://..."
-              className="h-11 rounded-xl border-border-default focus:border-warning focus:ring-warning/20"
+              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
+                focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                hover:border-border-strong transition-all duration-200
+                text-text-primary placeholder:text-text-muted"
             />
           </div>
         </form>
@@ -203,7 +239,7 @@ export default function CertificationFormDialog({
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}
-          className="rounded-xl px-5"
+          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
         >
           Cancel
         </Button>
@@ -211,7 +247,7 @@ export default function CertificationFormDialog({
           type="submit"
           form="certification-form"
           disabled={loading}
-          className="btn-primary-gradient rounded-xl px-6"
+          className="h-11 px-6 rounded-xl bg-warning-600 dark:bg-warning-500 hover:bg-warning-700 dark:hover:bg-warning-600 text-white font-semibold shadow-lg shadow-warning-500/25 dark:shadow-warning-400/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {initialData ? 'Save Changes' : 'Add Certification'}

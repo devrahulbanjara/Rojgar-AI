@@ -1,5 +1,5 @@
 import React from 'react'
-import { Sparkles, CheckCircle2, Briefcase } from 'lucide-react'
+import { FileText, Briefcase, ListChecks } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { ReferenceJD } from '../../services/referenceJDService'
 
@@ -10,56 +10,66 @@ interface ReferenceJDCardProps {
   className?: string
 }
 
-const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
+const departmentColors: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
   Engineering: {
-    bg: 'bg-blue-50/80 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-primary-50/80 dark:bg-primary-950/30',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-200 dark:border-primary-800',
+    iconBg: 'bg-primary-100 dark:bg-primary-900/50',
   },
   Sales: {
-    bg: 'bg-green-50/80 dark:bg-green-950/30',
-    text: 'text-green-700 dark:text-green-300',
-    border: 'border-green-200 dark:border-green-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
+    iconBg: 'bg-success-100 dark:bg-success-900/50',
   },
   Marketing: {
-    bg: 'bg-orange-50/80 dark:bg-orange-950/30',
-    text: 'text-orange-700 dark:text-orange-300',
-    border: 'border-orange-200 dark:border-orange-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
+    iconBg: 'bg-warning-100 dark:bg-warning-900/50',
   },
   Product: {
-    bg: 'bg-purple-50/80 dark:bg-purple-950/30',
-    text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-200 dark:border-purple-800',
+    bg: 'bg-ai-50/80 dark:bg-ai-950/30',
+    text: 'text-ai-700 dark:text-ai-300',
+    border: 'border-ai-200 dark:border-ai-800',
+    iconBg: 'bg-ai-100 dark:bg-ai-900/50',
   },
   Design: {
     bg: 'bg-pink-50/80 dark:bg-pink-950/30',
     text: 'text-pink-700 dark:text-pink-300',
     border: 'border-pink-200 dark:border-pink-800',
+    iconBg: 'bg-pink-100 dark:bg-pink-900/50',
   },
   'Data Science': {
-    bg: 'bg-cyan-50/80 dark:bg-cyan-950/30',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    border: 'border-cyan-200 dark:border-cyan-800',
+    bg: 'bg-info-50/80 dark:bg-info-950/30',
+    text: 'text-info-700 dark:text-info-300',
+    border: 'border-info-200 dark:border-info-800',
+    iconBg: 'bg-info-100 dark:bg-info-900/50',
   },
   HR: {
     bg: 'bg-rose-50/80 dark:bg-rose-950/30',
     text: 'text-rose-700 dark:text-rose-300',
     border: 'border-rose-200 dark:border-rose-800',
+    iconBg: 'bg-rose-100 dark:bg-rose-900/50',
   },
   Finance: {
-    bg: 'bg-emerald-50/80 dark:bg-emerald-950/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-success-50/80 dark:bg-success-950/30',
+    text: 'text-success-700 dark:text-success-300',
+    border: 'border-success-200 dark:border-success-800',
+    iconBg: 'bg-success-100 dark:bg-success-900/50',
   },
   Operations: {
-    bg: 'bg-amber-50/80 dark:bg-amber-950/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
+    text: 'text-warning-700 dark:text-warning-300',
+    border: 'border-warning-200 dark:border-warning-800',
+    iconBg: 'bg-warning-100 dark:bg-warning-900/50',
   },
   Default: {
     bg: 'bg-background-subtle/80',
     text: 'text-text-secondary',
     border: 'border-border-default',
+    iconBg: 'bg-background-subtle',
   },
 }
 
@@ -73,18 +83,13 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
     <div
       onClick={onClick}
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-xl border p-8',
-        'hover:-translate-y-1 hover:border-primary-200 dark:hover:border-primary-800',
+        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border',
+        'px-6 py-6',
+        'hover:-translate-y-0.5 hover:border-primary-200 dark:hover:border-primary-800',
         'border-border-default',
-        'min-h-[340px]',
-        'flex flex-col',
-        'shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
-        'hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]',
+        'shadow-sm hover:shadow-lg',
         className
       )}
-      style={{
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      }}
       role="button"
       tabIndex={0}
       aria-label={`View details for ${jd.department} reference JD`}
@@ -95,80 +100,68 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
         }
       }}
     >
-      {}
-      <div className="flex-1 flex flex-col">
-        {}
-        <div className="flex items-start justify-between mb-6">
-          {jd.department && (
-            <span
-              className={cn(
-                'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
-                deptColor.bg,
-                deptColor.text,
-                deptColor.border
-              )}
-            >
-              {jd.department}
-            </span>
-          )}
-        </div>
-
-        {}
-        {requiredQualifications.length > 0 && (
-          <div className="mb-8">
-            <div className="flex flex-wrap gap-2">
-              {requiredQualifications.slice(0, 2).map((skill, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-text-secondary bg-background-subtle rounded-md"
-                >
-                  {skill.length > 30 ? `${skill.substring(0, 30)}...` : skill}
-                </span>
-              ))}
-              {requiredQualifications.length > 2 && (
-                <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/30 rounded-md">
-                  +{requiredQualifications.length - 2} more
-                </span>
-              )}
-            </div>
-          </div>
+      {/* Row 1: Department Badge - Single horizontal line */}
+      <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+        {jd.department && (
+          <span
+            className={cn(
+              'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
+              deptColor.bg,
+              deptColor.text,
+              deptColor.border
+            )}
+          >
+            {jd.department}
+          </span>
         )}
-
-        {}
-        <div className="flex flex-wrap items-center gap-3 mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50/50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded-lg">
-            <Briefcase className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {jobResponsibilities.length} Responsibilities
-            </span>
-          </div>
-
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-ai-50/50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-lg">
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {requiredQualifications.length} Required Qualifications
-            </span>
-          </div>
-        </div>
-
-        {}
-        <div className="flex-1" />
-
-        {}
-        <button
-          onClick={onUseTemplate}
-          className={cn(
-            'flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm transition-all duration-200',
-            'text-primary-600 dark:text-primary-400 hover:text-text-inverse',
-            'border border-primary-200 dark:border-primary-800 hover:border-primary-600',
-            'hover:bg-primary-600',
-            'group-hover:shadow-sm'
-          )}
-        >
-          <Sparkles className="w-4 h-4" />
-          Use Template
-        </button>
+        <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-muted rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          Template
+        </span>
       </div>
+
+      {/* Row 2: Job Summary Preview */}
+      {(jd.job_summary || jd.role_overview) && (
+        <p className="mt-5 text-[13px] text-text-secondary leading-relaxed line-clamp-2">
+          {jd.job_summary || jd.role_overview}
+        </p>
+      )}
+
+      {/* Row 3: Stats - Single horizontal line with separators */}
+      <div className="mt-4 flex items-center flex-nowrap overflow-hidden text-[13px] text-text-secondary">
+        <Briefcase className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+        <span className="ml-1 whitespace-nowrap">{jobResponsibilities.length} responsibilities</span>
+        <span className="mx-2 text-text-muted flex-shrink-0">·</span>
+        <ListChecks className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+        <span className="ml-1 whitespace-nowrap">{requiredQualifications.length} requirements</span>
+      </div>
+
+      {/* Row 4: Skills Tags - Single horizontal line */}
+      {requiredQualifications.length > 0 && (
+        <div className="mt-4 flex items-center gap-2 flex-nowrap overflow-hidden">
+          {requiredQualifications.slice(0, 2).map((skill, index) => (
+            <span
+              key={index}
+              className="inline-flex items-center h-6 px-2.5 text-[11px] font-medium text-text-secondary bg-background-subtle rounded border border-border-subtle whitespace-nowrap"
+            >
+              {skill.length > 20 ? `${skill.substring(0, 20)}...` : skill}
+            </span>
+          ))}
+          {requiredQualifications.length > 2 && (
+            <span className="inline-flex items-center h-6 px-2.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30 rounded border border-primary-200 dark:border-primary-800 whitespace-nowrap">
+              +{requiredQualifications.length - 2} more
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Row 5: Use Template Button */}
+      <button
+        onClick={onUseTemplate}
+        className="mt-5 flex items-center justify-center gap-1.5 w-full h-9 rounded text-[13px] font-semibold transition-all duration-200 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-600 hover:text-white hover:border-primary-600 dark:hover:bg-primary-600 dark:hover:border-primary-600"
+      >
+        <FileText className="w-3.5 h-3.5" />
+        Use Template
+      </button>
     </div>
   )
 }

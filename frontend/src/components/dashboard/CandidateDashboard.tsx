@@ -192,12 +192,14 @@ function ColumnHeader({
   badgeColor: string
 }) {
   return (
-    <div className="flex items-center justify-between px-1">
+    <div className="flex items-center justify-between px-2">
       <div className="flex items-center gap-3">
-        {icon}
-        <h3 className={`font-bold ${textColor}`}>{title}</h3>
+        <div className="w-10 h-10 rounded-xl bg-background-surface/80 flex items-center justify-center shadow-sm">
+          {icon}
+        </div>
+        <h3 className={`text-lg font-bold ${textColor}`}>{title}</h3>
       </div>
-      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${badgeColor}`}>{count}</span>
+      <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${badgeColor}`}>{count}</span>
     </div>
   )
 }
@@ -211,43 +213,49 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
     return 'border-l-primary-500'
   }
 
+  const getHoverBorderClass = (statusStr: string) => {
+    if (statusStr === 'interviewing') return 'hover:border-ai-200 dark:hover:border-ai-800'
+    if (statusStr === 'outcome') return 'hover:border-success-200 dark:hover:border-success-800'
+    return 'hover:border-primary-200 dark:hover:border-primary-800'
+  }
+
   return (
     <div
-      className={`bg-background-surface p-4 rounded-lg shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} hover:shadow-md transition-all cursor-default group`}
+      className={`bg-background-surface p-5 rounded-xl shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} ${getHoverBorderClass(app.current_status)} hover:shadow-md transition-all duration-200 cursor-default group`}
     >
       {}
-      <div className="mb-3">
-        <h4 className="font-bold text-text-primary text-sm leading-tight mb-1 group-hover:text-primary transition-colors">
+      <div className="mb-4">
+        <h4 className="font-bold text-text-primary text-base leading-tight mb-1.5 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
           {app.job.title}
         </h4>
-        <p className="text-sm font-medium text-text-tertiary">{app.organization.name}</p>
+        <p className="text-sm font-medium text-text-secondary">{app.organization.name}</p>
       </div>
 
       {}
-      <div className="flex items-center gap-3 text-xs text-text-muted mb-4">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted mb-4">
         {app.job.location_city && (
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {app.job.location_city}
+          <div className="flex items-center gap-1.5 bg-background-subtle px-2.5 py-1 rounded-lg">
+            <MapPin className="w-3.5 h-3.5" />
+            <span className="font-medium">{app.job.location_city}</span>
           </div>
         )}
         {app.job.employment_type && (
-          <div className="flex items-center gap-1">
-            <Briefcase className="w-3 h-3" />
-            {app.job.employment_type}
+          <div className="flex items-center gap-1.5 bg-background-subtle px-2.5 py-1 rounded-lg">
+            <Briefcase className="w-3.5 h-3.5" />
+            <span className="font-medium">{app.job.employment_type}</span>
           </div>
         )}
       </div>
 
       {}
-      <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
-        <div className="flex items-center gap-1 text-[11px] text-text-muted font-medium">
-          <CalendarClock className="w-3 h-3" />
+      <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
+        <div className="flex items-center gap-1.5 text-xs text-text-muted font-medium">
+          <CalendarClock className="w-3.5 h-3.5" />
           {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
         </div>
 
         <span
-          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${statusStyle.color.replace('border', '')} border`}
+          className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${statusStyle.color.replace('border', '')} border shadow-sm`}
         >
           {statusStyle.label}
         </span>
@@ -258,8 +266,11 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="h-32 flex flex-col items-center justify-center text-text-muted border-2 border-dashed border-border-default rounded-lg">
-      <div className="text-sm italic">{message}</div>
+    <div className="h-36 flex flex-col items-center justify-center text-text-muted border-2 border-dashed border-border-default rounded-xl bg-background-surface/50">
+      <div className="w-10 h-10 rounded-full bg-background-subtle flex items-center justify-center mb-3">
+        <Briefcase className="w-5 h-5 text-text-muted" />
+      </div>
+      <div className="text-sm font-medium">{message}</div>
     </div>
   )
 }
