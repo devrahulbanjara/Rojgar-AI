@@ -123,15 +123,15 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
               <Clock className="w-4 h-4 mr-1.5" />
               Applied {timeAgo}
             </Badge>
-            {candidate.ai_score && (
+            {candidate.score && (
               <Badge
                 className={cn(
                   'px-4 py-2 text-sm font-semibold rounded-full border-0 transition-all duration-200 hover:scale-105 font-mono',
-                  'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/30'
+                  'bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 hover:bg-ai-100 dark:hover:bg-ai-900/30'
                 )}
               >
                 <Star className="w-4 h-4 mr-1.5" />
-                AI Score: {candidate.ai_score}
+                AI Score: {candidate.score}
               </Badge>
             )}
           </div>
@@ -259,24 +259,22 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
             </section>
           )}
 
-          {}
-          {candidate.ai_analysis && (
+          {/* AI Analysis/Feedback */}
+          {candidate.feedback && (
             <section className="mb-12">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-warning-600 rounded-full" />
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-warning-50 dark:bg-warning-900/30">
-                  <Star className="w-5 h-5 text-warning-600 dark:text-warning-400" />
+                <div className="w-1 h-8 bg-ai-500 rounded-full" />
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-ai-50 dark:bg-ai-900/30">
+                  <Star className="w-5 h-5 text-ai-600 dark:text-ai-400" />
                 </div>
                 <h3 className="text-[22px] font-semibold text-text-primary tracking-[0.5px]">
                   AI Analysis
                 </h3>
               </div>
-              <div className="pl-14">
-                <div className="bg-gradient-to-br from-ai-50 to-ai-100 dark:from-ai-950/30 dark:to-ai-900/30 border border-ai-200 dark:border-ai-700 border-l-4 border-l-ai-500 rounded-xl p-6">
-                  <p className="text-[14px] text-text-secondary leading-relaxed font-mono">
-                    {candidate.ai_analysis}
-                  </p>
-                </div>
+              <div className="bg-ai-50 dark:bg-ai-900/20 border border-ai-200 dark:border-ai-700 border-l-[3px] border-l-ai-500 rounded-xl p-6">
+                <p className="text-[14px] text-text-secondary leading-relaxed font-mono">
+                  {candidate.feedback}
+                </p>
               </div>
             </section>
           )}

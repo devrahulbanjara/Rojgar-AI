@@ -388,6 +388,7 @@ export default function RecruiterJobsPage() {
 
       try {
         await expireJobMutation.mutateAsync(String(jobId))
+        toast.success('Job expired successfully')
         setIsDetailOpen(false)
         setTimeout(() => {
           setSelectedJob(null)
@@ -395,6 +396,7 @@ export default function RecruiterJobsPage() {
         refetchJobs()
       } catch (error) {
         console.error('Failed to expire job:', error)
+        toast.error('Failed to expire job')
       }
     },
     [expireJobMutation, refetchJobs]

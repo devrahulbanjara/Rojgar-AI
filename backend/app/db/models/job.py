@@ -14,6 +14,7 @@ from . import Base
 
 class ShortlistStatus(StrEnum):
     NOT_STARTED = "not_started"
+    FAILED = "failed"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
 
