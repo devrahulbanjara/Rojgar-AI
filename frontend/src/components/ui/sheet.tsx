@@ -71,12 +71,7 @@ export function SheetHeader({
   className?: string
 }) {
   return (
-    <div
-      className={cn(
-        'px-8 py-6 border-b bg-background-surface flex-shrink-0',
-        className
-      )}
-    >
+    <div className={cn('px-8 py-6 border-b bg-background-surface flex-shrink-0', className)}>
       {children}
     </div>
   )

@@ -98,7 +98,9 @@ export function RecentActivity() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
-            <p className="text-sm text-text-tertiary">Latest updates from your recruitment pipeline</p>
+            <p className="text-sm text-text-tertiary">
+              Latest updates from your recruitment pipeline
+            </p>
           </div>
         </div>
       </div>
