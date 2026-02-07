@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronDown, Brain, FileText } from 'lucide-react'
+import { CheckCircle2, XCircle, ChevronDown, Brain, FileText, Loader2 } from 'lucide-react'
 import { UserAvatar } from '../ui/UserAvatar'
 import { cn } from '../../lib/utils'
 import type { ShortlistCandidate } from '../../types/shortlist'
@@ -7,25 +7,27 @@ import { ResumeDetailModal } from './ResumeDetailModal'
 
 interface ShortlistCandidateCardProps {
   candidate: ShortlistCandidate
-  onApprove: (candidateId: string) => void
-  onReject: (candidateId: string) => void
+  onShortlist: (applicationId: string) => void
+  onReject: (applicationId: string) => void
   className?: string
   showJobTitle?: boolean
   scoreInterpretation?: {
     text: string
     color: string
   }
-  showAIScores?: boolean
+  showScores?: boolean
+  isShortlistingInProgress?: boolean
 }
 
 export function ShortlistCandidateCard({
   candidate,
-  onApprove,
+  onShortlist,
   onReject,
   className,
   showJobTitle = false,
   scoreInterpretation,
-  showAIScores = true,
+  showScores = true,
+  isShortlistingInProgress = false,
 }: ShortlistCandidateCardProps) {
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false)
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
@@ -55,12 +57,21 @@ export function ShortlistCandidateCard({
     }
   }
 
-  const scoreStyles = getScoreStyles(candidate.ai_score)
+  const scoreStyles = getScoreStyles(candidate.score)
+
+  // Check if candidate is already processed
+  const isShortlisted = candidate.current_status === 'shortlisted'
+  const isRejected = candidate.current_status === 'rejected'
+  const isProcessed = isShortlisted || isRejected
 
   return (
     <div
       className={cn(
         'group w-full bg-background-surface rounded-[12px] border border-border-subtle p-6 shadow-sm hover:border-border-default hover:shadow-lg hover:-translate-y-1 transition-all duration-300',
+        isShortlisted &&
+          'border-success-200 dark:border-success-800 bg-success-50/30 dark:bg-success-950/20',
+        isRejected &&
+          'border-error-200 dark:border-error-800 bg-error-50/30 dark:bg-error-950/20 opacity-60',
         className
       )}
     >
@@ -75,9 +86,23 @@ export function ShortlistCandidateCard({
           </div>
 
           <div className="flex-1 min-w-0 space-y-2">
-            <h3 className="text-lg font-semibold text-text-primary leading-[1.2]">
-              {candidate.name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-text-primary leading-[1.2]">
+                {candidate.name}
+              </h3>
+              {isShortlisted && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium rounded-full">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Shortlisted
+                </span>
+              )}
+              {isRejected && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-error-100 dark:bg-error-900/30 text-error-700 dark:text-error-300 text-xs font-medium rounded-full">
+                  <XCircle className="w-3 h-3" />
+                  Rejected
+                </span>
+              )}
+            </div>
             {showJobTitle && (
               <div className="text-sm font-medium text-primary-600 dark:text-primary-400">
                 Applied for: {candidate.job_title}
@@ -97,21 +122,32 @@ export function ShortlistCandidateCard({
           </div>
         </div>
 
-        {showAIScores && (
+        {showScores && (
           <div className="flex-shrink-0 flex flex-col items-center gap-1 text-center w-24">
-            <div className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}>
-              {candidate.ai_score}
-            </div>
-            <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">
-              AI Score
-            </div>
-            {scoreInterpretation && (
-              <div
-                className={`text-xs font-semibold ${scoreInterpretation.color}`}
-                style={{ fontWeight: 600 }}
-              >
-                {scoreInterpretation.text}
-              </div>
+            {isShortlistingInProgress && !candidate.score ? (
+              <>
+                <Loader2 className="w-8 h-8 text-ai-500 animate-spin" />
+                <div className="text-xs text-ai-600 dark:text-ai-400 font-mono font-medium tracking-wide">
+                  Analyzing...
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}>
+                  {candidate.score}
+                </div>
+                <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">
+                  Score
+                </div>
+                {scoreInterpretation && (
+                  <div
+                    className={`text-xs font-semibold ${scoreInterpretation.color}`}
+                    style={{ fontWeight: 600 }}
+                  >
+                    {scoreInterpretation.text}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -124,56 +160,50 @@ export function ShortlistCandidateCard({
             <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
             <span>View Resume</span>
           </button>
-          <button
-            onClick={() => onApprove(candidate.candidate_id)}
-            className="group inline-flex items-center gap-2 px-5 py-3 bg-success-50 dark:bg-success-950/30 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 hover:bg-success-100 dark:hover:bg-success-900/30 hover:border-success-300 dark:hover:border-success-700 hover:shadow-lg hover:shadow-success/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
-          >
-            <CheckCircle2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span>Approve</span>
-          </button>
-          <button
-            onClick={() => onReject(candidate.candidate_id)}
-            className="group inline-flex items-center gap-2 px-5 py-3 bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-300 border border-error-200 dark:border-error-800 hover:bg-error-100 dark:hover:bg-error-900/30 hover:border-error-300 dark:hover:border-error-700 hover:shadow-lg hover:shadow-error/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
-          >
-            <XCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span>Reject</span>
-          </button>
+          {!isProcessed && (
+            <>
+              <button
+                onClick={() => onShortlist(candidate.application_id)}
+                className="group inline-flex items-center gap-2 px-5 py-3 bg-success-50 dark:bg-success-950/30 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 hover:bg-success-100 dark:hover:bg-success-900/30 hover:border-success-300 dark:hover:border-success-700 hover:shadow-lg hover:shadow-success/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
+              >
+                <CheckCircle2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span>Shortlist</span>
+              </button>
+              <button
+                onClick={() => onReject(candidate.application_id)}
+                className="group inline-flex items-center gap-2 px-5 py-3 bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-300 border border-error-200 dark:border-error-800 hover:bg-error-100 dark:hover:bg-error-900/30 hover:border-error-300 dark:hover:border-error-700 hover:shadow-lg hover:shadow-error/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
+              >
+                <XCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span>Reject</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {showAIScores && (
+      {showScores && candidate.feedback && (
         <div className="mt-8 pt-6 border-t border-border-subtle">
           <button
             onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
-            className="group w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-ai-50/80 via-ai-100/60 to-ai-50/80 dark:from-ai-950/30 dark:via-ai-900/20 dark:to-ai-950/30 hover:from-ai-100/90 hover:via-ai-200/70 hover:to-ai-100/90 dark:hover:from-ai-900/40 dark:hover:via-ai-800/30 dark:hover:to-ai-900/40 border border-ai-200/60 dark:border-ai-800/60 hover:border-ai-300/80 dark:hover:border-ai-700/80 transition-all duration-300 hover:shadow-md hover:shadow-ai/10"
+            className="group w-full flex items-center justify-between p-4 rounded-xl bg-ai-50 dark:bg-ai-900/20 hover:bg-ai-100 dark:hover:bg-ai-900/30 border border-ai-200 dark:border-ai-800 hover:border-ai-300 dark:hover:border-ai-700 transition-all duration-300"
           >
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-8 h-8 bg-gradient-to-br from-ai-600 to-ai-700 rounded-xl flex items-center justify-center shadow-lg shadow-ai/30">
-                  <Brain className="w-4.5 h-4.5 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-success-400 to-success-500 rounded-full animate-pulse" />
+              <div className="w-8 h-8 bg-ai-100 dark:bg-ai-900/30 rounded-lg flex items-center justify-center">
+                <Brain className="w-4 h-4 text-ai-600 dark:text-ai-400" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-text-primary group-hover:text-ai-700 transition-colors">
-                  AI Insights & Analysis
-                </div>
-                <div className="text-xs text-text-tertiary mt-0.5">
+                <div className="font-semibold text-text-primary">AI Analysis & Feedback</div>
+                <div className="text-xs text-text-tertiary mt-0.5 font-mono">
                   {isAnalysisExpanded ? 'Click to collapse' : 'Click to view detailed feedback'}
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="text-xs font-medium text-ai-600 dark:text-ai-400 bg-ai-100 dark:bg-ai-900/30 px-2 py-1 rounded-full">
-                AI
-              </div>
-              <ChevronDown
-                className={cn(
-                  'w-5 h-5 text-ai-500 dark:text-ai-400 transition-all duration-300 group-hover:text-ai-600 dark:group-hover:text-ai-300',
-                  isAnalysisExpanded && 'rotate-180 scale-110'
-                )}
-              />
-            </div>
+            <ChevronDown
+              className={cn(
+                'w-5 h-5 text-ai-500 transition-all duration-300',
+                isAnalysisExpanded && 'rotate-180'
+              )}
+            />
           </button>
 
           <div
@@ -182,27 +212,15 @@ export function ShortlistCandidateCard({
               isAnalysisExpanded ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
             )}
           >
-            <div
-              className={cn(
-                'relative p-6 bg-background-subtle rounded-2xl shadow-inner border-l-4',
-                candidate.ai_score >= 70
-                  ? 'border-l-success-500'
-                  : candidate.ai_score >= 50
-                    ? 'border-l-warning-500'
-                    : 'border-l-error-500'
-              )}
-            >
-              <div className="prose prose-sm max-w-none">
-                <p className="text-text-secondary leading-relaxed font-mono text-[14px] mb-0">
-                  {candidate.ai_analysis}
-                </p>
-              </div>
+            <div className="relative p-6 bg-ai-50 dark:bg-ai-900/20 rounded-2xl border-l-[3px] border-l-ai-500">
+              <p className="font-mono text-sm text-text-secondary leading-relaxed mb-0">
+                {candidate.feedback}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {}
       <ResumeDetailModal
         isOpen={isResumeModalOpen}
         onClose={() => setIsResumeModalOpen(false)}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
@@ -9,27 +9,32 @@ import { useCandidates } from '../../../hooks/useCandidates'
 import { jobService } from '../../../services/jobService'
 import { ShortlistJobCard } from '../../../components/shortlist/ShortlistJobCard'
 import { ShortlistCandidateCard } from '../../../components/shortlist/ShortlistCandidateCard'
-import { Users, Sparkles, ShieldCheck, Brain } from 'lucide-react'
+import {
+  Users,
+  Sparkles,
+  ShieldCheck,
+  Brain,
+  Info,
+  RefreshCw,
+  Zap,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react'
 import { toast } from 'sonner'
+import { api } from '../../../lib/api'
 import type { ShortlistJob, ShortlistCandidate } from '../../../types/shortlist'
-
-const analysisTemplates = [
-  'Strong technical background in React and Node.js. 5+ years experience aligns well with job requirements. Communication skills evident in portfolio presentation. Minor gap: lacks specific experience with GraphQL mentioned in job description.',
-  'Excellent problem-solving abilities demonstrated through previous projects. Strong portfolio showcasing modern web development practices. Good cultural fit based on background. Areas for improvement: could benefit from more team collaboration experience.',
-  'Impressive educational background with relevant certifications. Shows strong initiative and self-learning capabilities. Technical skills match job requirements well. Consideration: limited industry experience but high potential for growth.',
-  'Proven track record in similar roles with measurable achievements. Strong leadership qualities and team collaboration skills. Technical expertise covers all required areas. Note: salary expectations may need discussion.',
-  'Outstanding portfolio with innovative project implementations. Excellent communication skills and professional presentation. Strong alignment with company values and culture. Recommendation: top candidate for this position.',
-  'Solid technical foundation with room for growth. Shows enthusiasm and willingness to learn. Good problem-solving approach demonstrated in projects. Consideration: may need mentorship initially but shows promise.',
-  'Experienced professional with diverse skill set. Strong analytical thinking and attention to detail. Good understanding of industry best practices. Note: may be overqualified, discuss career goals.',
-  'Fresh perspective with modern development practices. Strong academic performance and relevant coursework. Good potential for long-term growth. Consideration: entry-level but shows exceptional promise.',
-]
 
 export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
-  const { data: candidatesData, isLoading: isCandidatesLoading, error } = useCandidates()
+  const {
+    data: candidatesData,
+    isLoading: isCandidatesLoading,
+    error,
+    refetch: refetchCandidates,
+  } = useCandidates()
 
   const {
     data: jobsResponse,
@@ -46,13 +51,45 @@ export default function ShortlistPage() {
     refetchOnWindowFocus: true,
   })
 
-  const jobsAutoShortlistMap = useMemo(() => {
-    const map = new Map<string, boolean>()
+  // Poll jobs every 5 seconds if any job is in_progress
+  const isAnyJobInProgress = jobsResponse?.jobs?.some(j => j.shortlist_status === 'in_progress')
+
+  // Track previous in_progress state to detect when shortlisting completes
+  const prevInProgressRef = React.useRef(isAnyJobInProgress)
+
+  // Refetch candidates when any job is being shortlisted
+  useEffect(() => {
+    if (isAnyJobInProgress) {
+      const interval = setInterval(() => {
+        refetchCandidates()
+        refetchJobs()
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [isAnyJobInProgress, refetchCandidates, refetchJobs])
+
+  // When shortlisting completes (was in_progress, now not), refetch candidates to get final scores
+  useEffect(() => {
+    if (prevInProgressRef.current && !isAnyJobInProgress) {
+      refetchCandidates()
+    }
+    prevInProgressRef.current = isAnyJobInProgress
+  }, [isAnyJobInProgress, refetchCandidates])
+
+  const jobsMetaMap = useMemo(() => {
+    const map = new Map<
+      string,
+      { auto_shortlist: boolean; status: string; shortlist_status: string }
+    >()
     if (jobsResponse?.jobs) {
       jobsResponse.jobs.forEach(job => {
         const jobId = job.job_id?.toString() || job.id?.toString()
         if (jobId) {
-          map.set(jobId, job.auto_shortlist ?? false)
+          map.set(jobId, {
+            auto_shortlist: job.auto_shortlist ?? false,
+            status: job.status ?? 'active',
+            shortlist_status: job.shortlist_status ?? 'not_started',
+          })
         }
       })
     }
@@ -68,23 +105,29 @@ export default function ShortlistPage() {
       const jobId = candidate.job_id
 
       if (!jobsMap.has(jobId)) {
-        const auto_shortlist = jobsAutoShortlistMap.get(jobId) ?? false
+        const meta = jobsMetaMap.get(jobId) ?? {
+          auto_shortlist: false,
+          status: 'active',
+          shortlist_status: 'not_started',
+        }
         jobsMap.set(jobId, {
           job_id: jobId,
           title: candidate.job_title,
           department: undefined,
+          status: meta.status,
+          shortlist_status: meta.shortlist_status,
           applicant_count: 0,
-          pending_ai_reviews: 0,
+          pending_reviews: 0,
           candidates: [],
-          auto_shortlist,
+          auto_shortlist: meta.auto_shortlist,
         })
       }
 
       const job = jobsMap.get(jobId)
       if (!job) return
 
-      const score = Math.floor(Math.random() * 31) + 65
-      const analysisIndex = Math.floor(Math.random() * analysisTemplates.length)
+      const score = candidate.score ?? 0
+      const feedbackText = candidate.feedback ?? ''
 
       const shortlistCandidate: ShortlistCandidate = {
         application_id: candidate.application_id,
@@ -95,20 +138,21 @@ export default function ShortlistPage() {
         picture: candidate.picture,
         professional_headline: candidate.professional_headline,
         applied_at: candidate.applied_at,
-        ai_score: score,
-        ai_analysis: analysisTemplates[analysisIndex],
-        ai_recommendation: score >= 75 ? 'approve' : score >= 60 ? 'review' : 'reject',
+        current_status: candidate.current_status,
+        score,
+        feedback: feedbackText,
+        recommendation: score >= 75 ? 'shortlist' : score >= 60 ? 'review' : 'reject',
         job_title: candidate.job_title,
         social_links: candidate.social_links,
       }
 
       job.candidates.push(shortlistCandidate)
       job.applicant_count = job.candidates.length
-      job.pending_ai_reviews = job.candidates.filter(c => c.ai_recommendation === 'review').length
+      job.pending_reviews = job.candidates.filter(c => c.recommendation === 'review').length
     })
 
     return Array.from(jobsMap.values())
-  }, [candidatesData, jobsAutoShortlistMap])
+  }, [candidatesData, jobsMetaMap])
 
   useEffect(() => {
     if (jobsData.length > 0 && !selectedJobId) {
@@ -121,10 +165,83 @@ export default function ShortlistPage() {
     [jobsData, selectedJobId]
   )
 
+  const queryClient = useQueryClient()
+
   const recommendedCandidates = useMemo(() => {
     if (!selectedJob) return []
-    return selectedJob.candidates.filter(c => c.ai_score >= 75)
+    return selectedJob.candidates.filter(c => c.score >= 75)
   }, [selectedJob])
+
+  // Check if shortlisting is pending (auto_shortlist on but hasn't run yet)
+  const isShortlistPending = useMemo(() => {
+    if (!selectedJob) return false
+    if (!selectedJob.auto_shortlist) return false
+    return selectedJob.shortlist_status === 'not_started'
+  }, [selectedJob])
+
+  // Check if shortlisting is in progress
+  const isShortlistInProgress = useMemo(() => {
+    return selectedJob?.shortlist_status === 'in_progress'
+  }, [selectedJob])
+
+  // Check if shortlisting failed
+  const isShortlistFailed = useMemo(() => {
+    return selectedJob?.shortlist_status === 'failed'
+  }, [selectedJob])
+
+  // Check if this is an expired job without auto_shortlist (manual shortlisting needed)
+  const canTriggerManualShortlist = useMemo(() => {
+    if (!selectedJob) return false
+    return (
+      selectedJob.status === 'expired' &&
+      !selectedJob.auto_shortlist &&
+      (selectedJob.shortlist_status === 'not_started' || selectedJob.shortlist_status === 'failed')
+    )
+  }, [selectedJob])
+
+  // Check if this is an expired job with auto_shortlist ON but shortlisting hasn't run yet
+  const canTriggerAutoShortlist = useMemo(() => {
+    if (!selectedJob) return false
+    return (
+      selectedJob.status === 'expired' &&
+      selectedJob.auto_shortlist &&
+      selectedJob.shortlist_status === 'not_started'
+    )
+  }, [selectedJob])
+
+  // Mutation to trigger shortlisting
+  const triggerShortlistMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      return await api.shortlisting.trigger(jobId)
+    },
+    onSuccess: () => {
+      toast.success('Shortlisting started')
+      refetchJobs()
+      queryClient.invalidateQueries({ queryKey: ['candidates'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to start shortlisting')
+    },
+  })
+
+  // Mutation to update application status
+  const updateApplicationMutation = useMutation({
+    mutationFn: async ({
+      applicationId,
+      data,
+    }: {
+      applicationId: string
+      data: { status?: string; score?: number; feedback?: string }
+    }) => {
+      return await api.candidates.updateApplication(applicationId, data)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidates'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update application')
+    },
+  })
 
   const getScoreInterpretation = (score: number) => {
     if (score >= 90)
@@ -134,9 +251,31 @@ export default function ShortlistPage() {
     return { text: 'Fair Match', color: 'text-orange-600 dark:text-orange-400' }
   }
 
-  const handleApprove = useCallback((_candidateId: string) => {}, [])
+  const handleShortlist = useCallback(
+    (applicationId: string) => {
+      updateApplicationMutation.mutate(
+        { applicationId, data: { status: 'shortlisted' } },
+        { onSuccess: () => toast.success('Candidate shortlisted') }
+      )
+    },
+    [updateApplicationMutation]
+  )
 
-  const handleReject = useCallback((_candidateId: string) => {}, [])
+  const handleReject = useCallback(
+    (applicationId: string) => {
+      updateApplicationMutation.mutate(
+        { applicationId, data: { status: 'rejected' } },
+        { onSuccess: () => toast.success('Candidate rejected') }
+      )
+    },
+    [updateApplicationMutation]
+  )
+
+  const handleTriggerShortlist = useCallback(() => {
+    if (selectedJob) {
+      triggerShortlistMutation.mutate(selectedJob.job_id)
+    }
+  }, [selectedJob, triggerShortlistMutation])
 
   const handleAcceptAIRecommendations = useCallback(() => {
     setShowConfirmModal(true)
@@ -144,12 +283,12 @@ export default function ShortlistPage() {
 
   const handleConfirmAcceptAI = useCallback(() => {
     recommendedCandidates.forEach(candidate => {
-      handleApprove(candidate.candidate_id)
+      handleShortlist(candidate.application_id)
     })
     setShowConfirmModal(false)
 
-    toast.success(`AI recommendations accepted for ${recommendedCandidates.length} candidates`)
-  }, [recommendedCandidates, handleApprove])
+    toast.success(`Recommendations accepted for ${recommendedCandidates.length} candidates`)
+  }, [recommendedCandidates, handleShortlist])
 
   const handleCancelAcceptAI = useCallback(() => {
     setShowConfirmModal(false)
@@ -253,13 +392,13 @@ export default function ShortlistPage() {
                           </div>
                         </div>
                         {recommendedCandidates.length > 0 &&
-                          selectedJob.auto_shortlist === true && (
+                          selectedJob.shortlist_status === 'completed' && (
                             <button
                               onClick={handleAcceptAIRecommendations}
                               className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
                             >
                               <ShieldCheck className="w-4 h-4" />
-                              Accept AI Recommendations ({recommendedCandidates.length})
+                              Shortlist Recommended ({recommendedCandidates.length})
                             </button>
                           )}
                       </div>
@@ -278,18 +417,139 @@ export default function ShortlistPage() {
                         </div>
                       ) : (
                         <div className="space-y-6">
+                          {/* Show pending banner when auto-shortlist is on but job is still active */}
+                          {isShortlistPending && selectedJob.status !== 'expired' && (
+                            <div className="flex items-center gap-4 p-5 bg-background-subtle rounded-xl border border-border-default">
+                              <div className="flex-shrink-0">
+                                <Info className="w-5 h-5 text-text-tertiary" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-text-primary mb-1">
+                                  Shortlisting Pending
+                                </h4>
+                                <p className="text-sm text-text-secondary">
+                                  Shortlisting will automatically run when the application deadline
+                                  passes. Candidates will be scored and ranked once the job expires.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Show trigger button for expired jobs with auto_shortlist ON */}
+                          {canTriggerAutoShortlist && (
+                            <div className="flex items-center gap-4 p-5 bg-ai-50 dark:bg-ai-950/30 rounded-xl border border-ai-200 dark:border-ai-800">
+                              <div className="flex-shrink-0">
+                                <Brain className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-text-primary mb-1">
+                                  Ready for AI Shortlisting
+                                </h4>
+                                <p className="text-sm text-text-secondary">
+                                  Job has expired. Run AI shortlisting now or wait for the scheduled run at midnight.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleTriggerShortlist}
+                                disabled={triggerShortlistMutation.isPending}
+                                className="flex items-center gap-2 px-4 py-2 bg-ai-600 hover:bg-ai-700 text-white rounded-lg text-sm font-medium transition-all animate-bounce"
+                                style={{ animationDuration: '2s' }}
+                              >
+                                <Zap className="w-4 h-4" />
+                                {triggerShortlistMutation.isPending
+                                  ? 'Starting...'
+                                  : 'Run Shortlisting'}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Show in-progress banner */}
+                          {isShortlistInProgress && (
+                            <div className="flex items-center gap-4 p-5 bg-ai-50 dark:bg-ai-950/30 rounded-xl border border-ai-200 dark:border-ai-800">
+                              <div className="flex-shrink-0">
+                                <Loader2 className="w-5 h-5 text-ai-600 dark:text-ai-400 animate-spin" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-text-primary mb-1">
+                                  AI Shortlisting In Progress
+                                </h4>
+                                <p className="text-sm text-text-secondary font-mono">
+                                  Candidates are being analyzed. This page will update
+                                  automatically.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Show failed banner with retry */}
+                          {isShortlistFailed && (
+                            <div className="flex items-center gap-4 p-5 bg-error-50 dark:bg-error-950/30 rounded-xl border border-error-200 dark:border-error-800">
+                              <div className="flex-shrink-0">
+                                <AlertCircle className="w-5 h-5 text-error-600 dark:text-error-400" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-text-primary mb-1">
+                                  Shortlisting Failed
+                                </h4>
+                                <p className="text-sm text-text-secondary">
+                                  An error occurred during shortlisting. You can retry.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleTriggerShortlist}
+                                disabled={triggerShortlistMutation.isPending}
+                                className="flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong rounded-lg text-sm font-medium transition-all"
+                              >
+                                <RefreshCw
+                                  className={`w-4 h-4 ${triggerShortlistMutation.isPending ? 'animate-spin' : ''}`}
+                                />
+                                Retry
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Show "Run Shortlisting" button for expired jobs without auto_shortlist */}
+                          {canTriggerManualShortlist && (
+                            <div className="flex items-center gap-4 p-5 bg-background-subtle rounded-xl border border-border-default">
+                              <div className="flex-shrink-0">
+                                <Info className="w-5 h-5 text-text-tertiary" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-text-primary mb-1">
+                                  Manual Review Mode
+                                </h4>
+                                <p className="text-sm text-text-secondary">
+                                  Auto-shortlisting is off. Review candidates manually or run AI
+                                  shortlisting.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleTriggerShortlist}
+                                disabled={triggerShortlistMutation.isPending}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-all animate-pulse hover:animate-none"
+                              >
+                                <Zap className="w-4 h-4" />
+                                {triggerShortlistMutation.isPending
+                                  ? 'Starting...'
+                                  : 'Run Shortlisting'}
+                              </button>
+                            </div>
+                          )}
+
                           {selectedJob.candidates
-                            .sort((a, b) =>
-                              selectedJob.auto_shortlist ? b.ai_score - a.ai_score : 0
-                            )
+                            .sort((a, b) => {
+                              const hasScores = selectedJob.shortlist_status === 'completed'
+                              return hasScores ? b.score - a.score : 0
+                            })
                             .map(candidate => (
                               <ShortlistCandidateCard
                                 key={candidate.application_id}
                                 candidate={candidate}
-                                onApprove={handleApprove}
+                                onShortlist={handleShortlist}
                                 onReject={handleReject}
-                                scoreInterpretation={getScoreInterpretation(candidate.ai_score)}
-                                showAIScores={selectedJob.auto_shortlist ?? false}
+                                scoreInterpretation={getScoreInterpretation(candidate.score)}
+                                showScores={selectedJob.shortlist_status === 'completed' || selectedJob.shortlist_status === 'in_progress'}
+                                isShortlistingInProgress={selectedJob.shortlist_status === 'in_progress'}
                               />
                             ))}
                         </div>
