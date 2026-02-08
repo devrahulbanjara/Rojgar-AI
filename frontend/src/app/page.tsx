@@ -11,6 +11,8 @@ import {
   PricingSection,
   CTASection,
   LandingFooter,
+  ManifestoSection,
+  TestimonialsSection,
 } from '../components/landing'
 
 export default function LandingPage() {
@@ -19,11 +21,13 @@ export default function LandingPage() {
       <LandingNavbar />
       <main>
         <HeroSection />
-        <FeaturesSection />
         <BrandSection />
+        <ManifestoSection />
         <RecruiterPlatformSection />
-        <CandidatePlatformSection />
         <HowItWorksSection />
+        <FeaturesSection />
+        <CandidatePlatformSection />
+        <TestimonialsSection />
         <PricingSection />
         <CTASection />
       </main>

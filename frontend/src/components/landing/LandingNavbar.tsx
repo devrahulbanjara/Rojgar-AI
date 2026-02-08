@@ -9,20 +9,24 @@ import { useEffect, useState } from 'react'
 import { Menu, X, ArrowRight } from 'lucide-react'
 
 const navLinks = [
-  { href: '#features', label: 'Features' },
+  { href: '#how-it-works', label: 'How it Works' },
   { href: '#platform', label: 'For Recruiters' },
-  { href: '#candidates', label: 'For Candidates' },
-  { href: '#how-it-works', label: 'How It Works' },
+  { href: '#features', label: 'Features' },
   { href: '#pricing', label: 'Pricing' },
 ]
 
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight
+      const scrolled = (winScroll / height) * 100
+      setProgress(scrolled)
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
@@ -45,18 +49,20 @@ export function LandingNavbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-background-surface/80 backdrop-blur-xl shadow-sm border-b border-border-subtle'
-            : 'bg-transparent'
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+          ? 'bg-background-surface/80 backdrop-blur-xl shadow-sm border-b border-border-subtle'
+          : 'bg-transparent'
+          }`}
       >
+        {/* Scroll progress bar */}
+        <div className="absolute bottom-0 left-0 h-[1px] bg-primary transition-all duration-100 ease-out" style={{ width: `${progress}%`, opacity: scrolled ? 1 : 0 }} />
+
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {}
+            {/* ... */}
             <LogoLink variant="full" size="md" />
 
-            {}
+            {/* ... */}
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map(link => (
                 <a
@@ -69,7 +75,7 @@ export function LandingNavbar() {
               ))}
             </div>
 
-            {}
+            {/* ... */}
             <div className="hidden lg:flex items-center gap-3">
               <ThemeToggle variant="compact" showLabel={false} />
               <Link href="/login">
@@ -81,14 +87,14 @@ export function LandingNavbar() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="btn-primary-gradient text-sm font-medium rounded-xl px-5 py-2.5 h-auto transition-all duration-200 hover:scale-105 shadow-sm group">
-                  Get Started
+                <Button className="btn-primary-gradient text-sm font-medium rounded-xl px-5 py-2.5 h-auto transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm group">
+                  Start Hiring
                   <ArrowRight className="ml-1.5 w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </Button>
               </Link>
             </div>
 
-            {}
+            { }
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-background-subtle transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -103,11 +109,11 @@ export function LandingNavbar() {
         </div>
       </motion.nav>
 
-      {}
+      { }
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {}
+            { }
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -116,7 +122,7 @@ export function LandingNavbar() {
               onClick={() => setMobileMenuOpen(false)}
             />
 
-            {}
+            { }
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -125,7 +131,7 @@ export function LandingNavbar() {
               className="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-background-surface shadow-2xl z-50 lg:hidden"
             >
               <div className="flex flex-col h-full">
-                {}
+                { }
                 <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                   <LogoLink variant="full" size="sm" />
                   <button
@@ -136,7 +142,7 @@ export function LandingNavbar() {
                   </button>
                 </div>
 
-                {}
+                { }
                 <div className="flex-1 px-6 py-8 overflow-y-auto">
                   <div className="space-y-1">
                     {navLinks.map(link => (
@@ -151,7 +157,7 @@ export function LandingNavbar() {
                     ))}
                   </div>
 
-                  {}
+                  { }
                   <div className="mt-8 pt-6 border-t border-border-subtle">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-text-secondary">Theme</span>
@@ -159,7 +165,7 @@ export function LandingNavbar() {
                     </div>
                   </div>
 
-                  {}
+                  { }
                   <div className="mt-6 space-y-3">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block">
                       <Button

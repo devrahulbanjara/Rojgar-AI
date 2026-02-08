@@ -29,12 +29,13 @@ export function RecruiterPlatformSection() {
       id="platform"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
-      {}
+      {/* Decorative Blob */}
       <div className="absolute top-0 right-0 w-72 h-72 bg-primary-100/30 dark:bg-primary-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {}
+
+          {/* Mockup Side */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -43,12 +44,12 @@ export function RecruiterPlatformSection() {
             className="relative order-2 lg:order-1"
           >
             <div className="relative">
-              {}
+              {/* Glow effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-ai/10 rounded-3xl blur-2xl" />
 
-              {}
+              {/* Main Card */}
               <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
-                {}
+                {/* Header */}
                 <div className="px-5 py-3.5 bg-gradient-to-b from-primary-50/50 dark:from-primary-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Brain className="w-4 h-4 text-primary" />
@@ -59,114 +60,64 @@ export function RecruiterPlatformSection() {
                   <p className="text-xs text-text-tertiary mt-0.5">Smart candidate evaluation</p>
                 </div>
 
-                {}
-                <div className="p-4 space-y-3 bg-background-subtle/30">
-                  {}
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      {
-                        label: 'Candidates',
-                        value: '24',
-                        icon: Users,
-                        color: 'text-primary',
-                        bg: 'bg-primary-50 dark:bg-primary-950/50',
-                      },
-                      {
-                        label: 'AI Scored',
-                        value: '24',
-                        icon: Target,
-                        color: 'text-ai',
-                        bg: 'bg-ai-50 dark:bg-ai-950/50',
-                      },
-                      {
-                        label: 'Shortlisted',
-                        value: '8',
-                        icon: ListChecks,
-                        color: 'text-success',
-                        bg: 'bg-success-50 dark:bg-success-950/50',
-                      },
-                    ].map((stat, i) => {
-                      const Icon = stat.icon
-                      return (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: 0.3 + i * 0.1 }}
-                          className="bg-background-surface p-2.5 rounded-lg border border-border-subtle shadow-sm"
-                        >
-                          <div
-                            className={`w-6 h-6 ${stat.bg} rounded-md flex items-center justify-center mb-1.5`}
-                          >
-                            <Icon className={`w-3 h-3 ${stat.color}`} />
-                          </div>
-                          <div className="text-lg font-bold text-text-primary">{stat.value}</div>
-                          <div className="text-xs text-text-tertiary">{stat.label}</div>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
-
-                  {}
-                  <div className="space-y-2">
-                    {[
-                      {
-                        score: 92,
-                        color: 'border-l-success',
-                        badgeColor: 'bg-success-50 text-success-700',
-                      },
-                      {
-                        score: 78,
-                        color: 'border-l-warning',
-                        badgeColor: 'bg-warning-50 text-warning-700',
-                      },
-                    ].map((candidate, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -15 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.5 + i * 0.1 }}
-                        className={`bg-background-surface p-3 rounded-lg border border-border-default border-l-[3px] ${candidate.color}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-border-default animate-pulse flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="h-3 bg-border-default rounded w-24 mb-1 animate-pulse" />
-                            <div className="h-2 bg-border-subtle rounded w-16 animate-pulse" />
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-mono font-bold text-primary">
-                              {candidate.score}
-                            </div>
-                            <div className="text-xs font-mono text-text-tertiary">AI Score</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-subtle">
-                          <span
-                            className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${candidate.badgeColor}`}
-                          >
-                            {candidate.score >= 85 ? 'Recommended' : 'Review'}
+                {/* Content */}
+                <div className="p-5">
+                  <div className="space-y-4">
+                    {/* Candidate 1 - High Match */}
+                    <div className="flex items-start gap-4 p-3 rounded-xl bg-success-50/50 dark:bg-success-950/20 border border-success-100 dark:border-success-900/30">
+                      <div className="w-10 h-10 rounded-full bg-success-100 dark:bg-success-900/50 flex items-center justify-center flex-shrink-0">
+                        <ThumbsUp className="w-5 h-5 text-success" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="text-sm font-semibold text-text-primary truncate">Senior Frontend Engineer</h4>
+                          <span className="text-xs font-bold text-success bg-success-100 dark:bg-success-900/50 px-2 py-0.5 rounded-full">
+                            98% Match
                           </span>
-                          <div className="flex items-center gap-1.5">
-                            <button className="w-6 h-6 rounded-md bg-success-50 flex items-center justify-center">
-                              <ThumbsUp className="w-3 h-3 text-success" />
-                            </button>
-                            <button className="w-6 h-6 rounded-md bg-error-50 flex items-center justify-center">
-                              <ThumbsDown className="w-3 h-3 text-error" />
-                            </button>
-                          </div>
                         </div>
-                      </motion.div>
-                    ))}
+                        <p className="text-xs text-text-secondary line-clamp-2">
+                          Strong React & TypeScript experience. Previously led a team of 5 at a fintech startup.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Candidate 2 - Low Match */}
+                    <div className="flex items-start gap-4 p-3 rounded-xl bg-background-subtle border border-border-subtle opacity-75">
+                      <div className="w-10 h-10 rounded-full bg-text-tertiary/10 flex items-center justify-center flex-shrink-0">
+                        <ThumbsDown className="w-5 h-5 text-text-tertiary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="text-sm font-semibold text-text-secondary truncate">Digital Marketer</h4>
+                          <span className="text-xs font-medium text-text-tertiary bg-text-tertiary/10 px-2 py-0.5 rounded-full">
+                            15% Match
+                          </span>
+                        </div>
+                        <p className="text-xs text-text-tertiary line-clamp-1">
+                          Missing required technical skills. Background primarily in content creation.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats Row */}
+                    <div className="flex items-center gap-4 pt-2">
+                      <div className="flex-1 p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/30 text-center">
+                        <div className="text-lg font-bold text-primary">24h</div>
+                        <div className="text-[10px] text-text-tertiary uppercase tracking-wider font-semibold">Saved</div>
+                      </div>
+                      <div className="flex-1 p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30 text-center">
+                        <div className="text-lg font-bold text-purple-600 dark:text-purple-400">10x</div>
+                        <div className="text-[10px] text-text-tertiary uppercase tracking-wider font-semibold">Faster</div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {}
+          {/* Content Side */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -174,22 +125,17 @@ export function RecruiterPlatformSection() {
             transition={{ duration: 0.6 }}
             className="order-1 lg:order-2"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary text-sm font-medium mb-6">
-              For Recruiters
-            </div>
-
             <h2 className="text-4xl sm:text-5xl font-display font-bold text-text-primary tracking-tightest mb-6">
-              Hire faster with{' '}
-              <span className="bg-gradient-to-r from-primary to-ai bg-clip-text text-transparent">
-                AI automation
-              </span>
+              Stop losing candidates
+              <br />
+              <span className="text-text-secondary">to keyword filters.</span>
             </h2>
 
             <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed font-sans">
-              AI agents handle screening, scheduling, and matching while you stay in control.
+              Your current ATS rejected qualified engineers because they wrote "Node" instead of "Node.js". Ours reads resumes like you would.
             </p>
 
-            {}
+            {/* Keep feature grid but update text */}
             <div className="grid grid-cols-2 gap-3 mb-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon
@@ -213,7 +159,7 @@ export function RecruiterPlatformSection() {
 
             <Link href="/signup">
               <Button className="btn-primary-gradient font-semibold rounded-xl px-6 py-2.5 h-auto group">
-                Start Hiring Smarter
+                Try it free
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
