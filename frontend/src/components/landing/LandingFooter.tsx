@@ -39,7 +39,7 @@ export function LandingFooter() {
     <footer className="bg-background-subtle border-t border-border-default">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
-          { }
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -49,7 +49,8 @@ export function LandingFooter() {
             <LogoLink variant="full" size="md" className="mb-4" />
             <p className="text-text-secondary text-sm mb-6 max-w-xs leading-relaxed">
               We built this because we were tired of losing good candidates to bad processes.
-              <br /><br />
+              <br />
+              <br />
               No more generic job descriptions.
               <br />
               No more keyword matching.
@@ -72,7 +73,7 @@ export function LandingFooter() {
             </div>
           </motion.div>
 
-          { }
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -96,7 +97,7 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          { }
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -120,7 +121,7 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          { }
+          {}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

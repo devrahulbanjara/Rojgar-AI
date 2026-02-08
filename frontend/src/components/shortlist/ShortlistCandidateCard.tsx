@@ -133,7 +133,9 @@ export function ShortlistCandidateCard({
               </>
             ) : (
               <>
-                <div className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}>
+                <div
+                  className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}
+                >
                   {candidate.score}
                 </div>
                 <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">

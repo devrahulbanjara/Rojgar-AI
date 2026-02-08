@@ -8,8 +8,7 @@ const steps = [
     number: '01',
     icon: FileText,
     title: 'Post your job',
-    description:
-      'Tell us who you\'re looking for. We\'ll write the job description if you want.',
+    description: "Tell us who you're looking for. We'll write the job description if you want.",
     color: 'from-primary to-primary-600',
     bgColor: 'bg-primary-50 dark:bg-primary-950/50',
     iconColor: 'text-primary',
@@ -18,8 +17,7 @@ const steps = [
     number: '02',
     icon: Brain,
     title: 'We read the resumes',
-    description:
-      'Every single one. By meaning, not keywords. The good ones float to the top.',
+    description: 'Every single one. By meaning, not keywords. The good ones float to the top.',
     color: 'from-ai to-ai-600',
     bgColor: 'bg-ai-50 dark:bg-ai-950/50',
     iconColor: 'text-ai',
@@ -28,8 +26,7 @@ const steps = [
     number: '03',
     icon: CheckCircle,
     title: 'You pick who to meet',
-    description:
-      'Review the shortlist, see why each person scored high, schedule interviews.',
+    description: 'Review the shortlist, see why each person scored high, schedule interviews.',
     color: 'from-success to-success-600',
     bgColor: 'bg-success-50 dark:bg-success-950/50',
     iconColor: 'text-success',
@@ -42,7 +39,7 @@ export function HowItWorksSection() {
       id="how-it-works"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
-      { }
+      {}
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -70,9 +67,9 @@ export function HowItWorksSection() {
           </p>
         </motion.div>
 
-        { }
+        {}
         <div className="relative">
-          { }
+          {}
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary-200 via-ai-200 via-success-200 via-warning-200 to-error-200 -translate-x-1/2" />
 
           <div className="space-y-8 lg:space-y-0">
@@ -89,7 +86,7 @@ export function HowItWorksSection() {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className={`relative lg:grid lg:grid-cols-2 lg:gap-16 ${index > 0 ? 'lg:mt-8' : ''}`}
                 >
-                  { }
+                  {}
                   <div
                     className={`${isEven ? 'lg:text-right lg:pr-16' : 'lg:col-start-2 lg:pl-16'}`}
                   >
@@ -115,14 +112,14 @@ export function HowItWorksSection() {
                     </p>
                   </div>
 
-                  { }
+                  {}
                   <div className="hidden lg:flex absolute left-1/2 top-6 -translate-x-1/2 items-center justify-center">
                     <div
                       className={`w-4 h-4 rounded-full bg-gradient-to-br ${step.color} ring-4 ring-background-surface shadow-lg`}
                     />
                   </div>
 
-                  { }
+                  {}
                   <div
                     className={`hidden lg:block ${isEven ? 'lg:col-start-2' : 'lg:col-start-1 lg:row-start-1'}`}
                   />

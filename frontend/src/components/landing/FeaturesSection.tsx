@@ -33,7 +33,7 @@ const features: Feature[] = [
     icon: FileText,
     title: 'Smart JD Generator',
     description:
-      'Describe your role like you\'re texting a friend. We\'ll write the formal version. Takes 3 minutes, we timed it.',
+      "Describe your role like you're texting a friend. We'll write the formal version. Takes 3 minutes, we timed it.",
     iconColor: 'text-primary',
     bgColor: 'bg-primary-50 dark:bg-primary-950/50',
   },
@@ -49,7 +49,7 @@ const features: Feature[] = [
     icon: MessageSquare,
     title: 'Real Candidate Feedback',
     description:
-      'Every candidate gets a real explanation, not just a score. We\'re serious about the feedback thing.',
+      "Every candidate gets a real explanation, not just a score. We're serious about the feedback thing.",
     iconColor: 'text-warning-600',
     bgColor: 'bg-warning-50 dark:bg-warning-950/50',
   },
@@ -65,7 +65,7 @@ const features: Feature[] = [
     icon: Shield,
     title: 'Bias-Free Screening',
     description:
-      'We hide names, photos, and universities until you\'ve scored the work. Every decision has an audit trail.',
+      "We hide names, photos, and universities until you've scored the work. Every decision has an audit trail.",
     iconColor: 'text-text-secondary',
     bgColor: 'bg-background-subtle',
   },
@@ -85,7 +85,7 @@ export function FeaturesSection() {
       id="features"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
     >
-      { }
+      {}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-default to-transparent" />
 
       <div className="max-w-7xl mx-auto">
@@ -119,7 +119,15 @@ export function FeaturesSection() {
             const offsetY = [0, -16, 8, -8, 12, -4, 0][index] || 0
             // Vary padding and border-radius
             const padding = ['p-8', 'p-9', 'p-7', 'p-8', 'p-9', 'p-7', 'p-8'][index]
-            const borderRadius = ['rounded-2xl', 'rounded-xl', 'rounded-3xl', 'rounded-2xl', 'rounded-xl', 'rounded-2xl', 'rounded-3xl'][index]
+            const borderRadius = [
+              'rounded-2xl',
+              'rounded-xl',
+              'rounded-3xl',
+              'rounded-2xl',
+              'rounded-xl',
+              'rounded-2xl',
+              'rounded-3xl',
+            ][index]
             // Remove border from some cards
             const hasBorder = index !== 2 && index !== 5
 
@@ -133,11 +141,16 @@ export function FeaturesSection() {
                 className={`group relative ${isLarge ? 'xl:col-span-2' : ''}`}
                 style={{ transform: `translateY(${offsetY}px)` }}
               >
-                <div className={`flex flex-col h-full min-h-[220px] ${padding} ${borderRadius} bg-background-surface ${hasBorder ? 'border border-border-default' : ''} hover:border-border-strong transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
+                <div
+                  className={`flex flex-col h-full min-h-[220px] ${padding} ${borderRadius} bg-background-surface ${hasBorder ? 'border border-border-default' : ''} hover:border-border-strong transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+                >
                   {/* Icon with varied styling */}
                   <div
                     className={`w-12 h-12 ${feature.bgColor} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
-                    style={{ borderRadius: `${8 + (index * 2)}px`, transform: `rotate(${index % 2 === 0 ? 0 : 3}deg)` }}
+                    style={{
+                      borderRadius: `${8 + index * 2}px`,
+                      transform: `rotate(${index % 2 === 0 ? 0 : 3}deg)`,
+                    }}
                   >
                     <Icon className={`w-6 h-6 ${feature.iconColor}`} />
                   </div>
@@ -148,7 +161,9 @@ export function FeaturesSection() {
                   </h3>
 
                   {/* Description - removed line-clamp for larger cards */}
-                  <p className={`text-sm text-text-secondary leading-relaxed ${isLarge ? '' : 'line-clamp-4'}`}>
+                  <p
+                    className={`text-sm text-text-secondary leading-relaxed ${isLarge ? '' : 'line-clamp-4'}`}
+                  >
                     {feature.description}
                   </p>
                 </div>

@@ -49,13 +49,17 @@ export function LandingNavbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-          ? 'bg-background-surface/80 backdrop-blur-xl shadow-sm border-b border-border-subtle'
-          : 'bg-transparent'
-          }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-background-surface/80 backdrop-blur-xl shadow-sm border-b border-border-subtle'
+            : 'bg-transparent'
+        }`}
       >
         {/* Scroll progress bar */}
-        <div className="absolute bottom-0 left-0 h-[1px] bg-primary transition-all duration-100 ease-out" style={{ width: `${progress}%`, opacity: scrolled ? 1 : 0 }} />
+        <div
+          className="absolute bottom-0 left-0 h-[1px] bg-primary transition-all duration-100 ease-out"
+          style={{ width: `${progress}%`, opacity: scrolled ? 1 : 0 }}
+        />
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
@@ -94,7 +98,7 @@ export function LandingNavbar() {
               </Link>
             </div>
 
-            { }
+            {}
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-background-subtle transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -109,11 +113,11 @@ export function LandingNavbar() {
         </div>
       </motion.nav>
 
-      { }
+      {}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            { }
+            {}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -122,7 +126,7 @@ export function LandingNavbar() {
               onClick={() => setMobileMenuOpen(false)}
             />
 
-            { }
+            {}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -131,7 +135,7 @@ export function LandingNavbar() {
               className="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-background-surface shadow-2xl z-50 lg:hidden"
             >
               <div className="flex flex-col h-full">
-                { }
+                {}
                 <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                   <LogoLink variant="full" size="sm" />
                   <button
@@ -142,7 +146,7 @@ export function LandingNavbar() {
                   </button>
                 </div>
 
-                { }
+                {}
                 <div className="flex-1 px-6 py-8 overflow-y-auto">
                   <div className="space-y-1">
                     {navLinks.map(link => (
@@ -157,7 +161,7 @@ export function LandingNavbar() {
                     ))}
                   </div>
 
-                  { }
+                  {}
                   <div className="mt-8 pt-6 border-t border-border-subtle">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-text-secondary">Theme</span>
@@ -165,7 +169,7 @@ export function LandingNavbar() {
                     </div>
                   </div>
 
-                  { }
+                  {}
                   <div className="mt-6 space-y-3">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block">
                       <Button
