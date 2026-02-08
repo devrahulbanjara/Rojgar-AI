@@ -446,7 +446,8 @@ export default function ShortlistPage() {
                                   Ready for AI Shortlisting
                                 </h4>
                                 <p className="text-sm text-text-secondary">
-                                  Job has expired. Run AI shortlisting now or wait for the scheduled run at midnight.
+                                  Job has expired. Run AI shortlisting now or wait for the scheduled
+                                  run at midnight.
                                 </p>
                               </div>
                               <button
@@ -548,8 +549,13 @@ export default function ShortlistPage() {
                                 onShortlist={handleShortlist}
                                 onReject={handleReject}
                                 scoreInterpretation={getScoreInterpretation(candidate.score)}
-                                showScores={selectedJob.shortlist_status === 'completed' || selectedJob.shortlist_status === 'in_progress'}
-                                isShortlistingInProgress={selectedJob.shortlist_status === 'in_progress'}
+                                showScores={
+                                  selectedJob.shortlist_status === 'completed' ||
+                                  selectedJob.shortlist_status === 'in_progress'
+                                }
+                                isShortlistingInProgress={
+                                  selectedJob.shortlist_status === 'in_progress'
+                                }
                               />
                             ))}
                         </div>

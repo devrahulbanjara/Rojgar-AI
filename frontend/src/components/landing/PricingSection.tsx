@@ -13,7 +13,7 @@ const tiers = [
     price: 'Free',
     originalPrice: null,
     period: '',
-    priceDetail: '(seriously, it\'s free forever)',
+    priceDetail: "(seriously, it's free forever)",
     features: [
       { text: 'Up to **3** active job postings', highlight: false },
       { text: 'AI Job Description Generator', highlight: false },
@@ -48,14 +48,14 @@ const tiers = [
     price: 'Custom',
     originalPrice: null,
     period: '',
-    priceDetail: '(we\'ll actually talk to you)',
+    priceDetail: "(we'll actually talk to you)",
     features: [
       { text: 'RAG-based talent pool search', highlight: true },
       { text: 'Speech-to-text interview analysis', highlight: true },
       { text: 'Custom bias & fairness reporting', highlight: false },
       { text: 'Dedicated account manager', highlight: false },
     ],
-    cta: 'Let\'s Talk',
+    cta: "Let's Talk",
     highlighted: false,
   },
 ]
@@ -97,7 +97,8 @@ export function PricingSection() {
             className="hidden lg:block pb-4"
           >
             <p className="text-text-tertiary italic">
-              All plans include semantic matching. <br />We don't gate the important stuff.
+              All plans include semantic matching. <br />
+              We don't gate the important stuff.
             </p>
           </motion.div>
         </div>
@@ -119,9 +120,10 @@ export function PricingSection() {
                 <div
                   className={`
                     relative h-full rounded-2xl p-8 transition-all duration-300
-                    ${isPro
-                      ? 'bg-primary-50/30 dark:bg-primary-900/10 border-l-4 border-l-primary shadow-xl scale-[1.02]'
-                      : 'bg-background-surface border border-border-default hover:border-border-strong shadow-sm hover:shadow-md'
+                    ${
+                      isPro
+                        ? 'bg-primary-50/30 dark:bg-primary-900/10 border-l-4 border-l-primary shadow-xl scale-[1.02]'
+                        : 'bg-background-surface border border-border-default hover:border-border-strong shadow-sm hover:shadow-md'
                     }
                   `}
                 >
@@ -133,10 +135,13 @@ export function PricingSection() {
                       </h3>
                       <p className="text-sm text-text-tertiary mt-1">{tier.description}</p>
                     </div>
-                    <div className={`
+                    <div
+                      className={`
                       w-12 h-12 flex items-center justify-center text-xl font-display font-bold rounded-full border-2 
                       ${isPro ? 'border-primary text-primary bg-white dark:bg-background' : 'border-border-default text-text-tertiary'}
-                    `} style={{ borderRadius: '55% 45% 60% 40% / 50% 60% 30% 70%' }}>
+                    `}
+                      style={{ borderRadius: '55% 45% 60% 40% / 50% 60% 30% 70%' }}
+                    >
                       {tier.number}
                     </div>
                   </div>
@@ -153,7 +158,9 @@ export function PricingSection() {
                         {tier.price}
                       </span>
                       {tier.period && (
-                        <span className="text-text-tertiary text-sm font-medium">{tier.period}</span>
+                        <span className="text-text-tertiary text-sm font-medium">
+                          {tier.period}
+                        </span>
                       )}
                     </div>
                     <p className="text-sm text-text-tertiary mt-2 font-medium">
@@ -165,10 +172,18 @@ export function PricingSection() {
                   <div className="space-y-4 mb-8">
                     {tier.features.map((feature, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <span className={`text-lg leading-none mt-0.5 ${feature.highlight ? 'text-primary' : 'text-text-tertiary'}`}>↳</span>
-                        <span className="text-sm text-text-secondary leading-relaxed"
+                        <span
+                          className={`text-lg leading-none mt-0.5 ${feature.highlight ? 'text-primary' : 'text-text-tertiary'}`}
+                        >
+                          ↳
+                        </span>
+                        <span
+                          className="text-sm text-text-secondary leading-relaxed"
                           dangerouslySetInnerHTML={{
-                            __html: feature.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
+                            __html: feature.text.replace(
+                              /\*\*(.*?)\*\*/g,
+                              '<strong class="text-text-primary font-semibold">$1</strong>'
+                            ),
                           }}
                         />
                       </div>
@@ -192,7 +207,10 @@ export function PricingSection() {
                       </Link>
                     ) : (
                       <Link href="/signup" className="block">
-                        <Button variant="outline" className="w-full rounded-xl py-6 h-auto font-medium text-base hover:bg-background-subtle border-border-strong text-text-primary">
+                        <Button
+                          variant="outline"
+                          className="w-full rounded-xl py-6 h-auto font-medium text-base hover:bg-background-subtle border-border-strong text-text-primary"
+                        >
                           {tier.cta}
                         </Button>
                       </Link>
@@ -212,7 +230,8 @@ export function PricingSection() {
           transition={{ delay: 0.5 }}
           className="text-center text-lg text-text-secondary mt-16 font-sans"
         >
-          Try it free for 14 days. No card needed. <strong className="text-text-primary">Actually cancel anytime</strong> (we mean it).
+          Try it free for 14 days. No card needed.{' '}
+          <strong className="text-text-primary">Actually cancel anytime</strong> (we mean it).
         </motion.p>
       </div>
     </section>

@@ -8,17 +8,17 @@ import Link from 'next/link'
 export function CTASection() {
   return (
     <section className="py-24 lg:py-32 px-6 lg:px-8 relative overflow-hidden">
-      { }
+      {}
       <div className="absolute inset-0 bg-gradient-primary" />
 
-      { }
+      {}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
         <div className="absolute top-10 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary-700/20 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-600/10 rounded-full blur-3xl" />
       </div>
 
-      { }
+      {}
       <div
         className="absolute inset-0 opacity-[0.05]"
         style={{
@@ -43,8 +43,7 @@ export function CTASection() {
 
           {/* Specific subheadline */}
           <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-xl mx-auto leading-relaxed font-sans">
-            Your next great hire is probably in your reject pile right now.
-            Let's fix that.
+            Your next great hire is probably in your reject pile right now. Let's fix that.
           </p>
 
           {/* CTA with specific text */}
@@ -60,7 +59,7 @@ export function CTASection() {
             </Link>
           </div>
 
-          { }
+          {}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

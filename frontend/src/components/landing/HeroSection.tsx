@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import {
@@ -162,16 +162,12 @@ const layerConfig = {
 }
 
 export function HeroSection() {
-  const { scrollY } = useScroll()
-  const yRange = useTransform(scrollY, [0, 500], [0, 100])
-  const opacityRange = useTransform(scrollY, [0, 400], [1, 0])
-
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      { }
+      {}
       <div className="absolute inset-0 bg-gradient-to-b from-background-subtle via-background-surface to-primary-50 dark:to-primary-950/30" />
 
-      { }
+      {}
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -179,7 +175,7 @@ export function HeroSection() {
         }}
       />
 
-      { }
+      {}
       <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
         {floatingIcons.map((config, index) => {
           const {
@@ -252,7 +248,7 @@ export function HeroSection() {
         })}
       </div>
 
-      { }
+      {}
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-3xl animate-pulse" />
       <div
         className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"
@@ -275,8 +271,18 @@ export function HeroSection() {
                 Hire people,
               </span>
               {/* Hand-drawn style underline */}
-              <svg className="absolute -bottom-2 left-0 w-full h-3 opacity-40" viewBox="0 0 200 12" preserveAspectRatio="none">
-                <path d="M2 8 Q50 2, 100 7 T198 5" stroke="currentColor" strokeWidth="3" fill="none" className="text-primary" />
+              <svg
+                className="absolute -bottom-2 left-0 w-full h-3 opacity-40"
+                viewBox="0 0 200 12"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M2 8 Q50 2, 100 7 T198 5"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  fill="none"
+                  className="text-primary"
+                />
               </svg>
             </span>
             <br />
