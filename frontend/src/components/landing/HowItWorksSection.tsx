@@ -1,15 +1,15 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FileText, Brain, Users, MessageSquare, CheckCircle } from 'lucide-react'
+import { FileText, Brain, CheckCircle } from 'lucide-react'
 
 const steps = [
   {
     number: '01',
     icon: FileText,
-    title: 'Create Job Posting',
+    title: 'Post your job',
     description:
-      'Describe your ideal candidate. AI generates a professional, bias-free job description instantly.',
+      'Tell us who you\'re looking for. We\'ll write the job description if you want.',
     color: 'from-primary to-primary-600',
     bgColor: 'bg-primary-50 dark:bg-primary-950/50',
     iconColor: 'text-primary',
@@ -17,42 +17,22 @@ const steps = [
   {
     number: '02',
     icon: Brain,
-    title: 'AI Screens Resumes',
+    title: 'We read the resumes',
     description:
-      'Our semantic AI analyzes every application, understanding skills by meaning, not just keywords.',
+      'Every single one. By meaning, not keywords. The good ones float to the top.',
     color: 'from-ai to-ai-600',
     bgColor: 'bg-ai-50 dark:bg-ai-950/50',
     iconColor: 'text-ai',
   },
   {
     number: '03',
-    icon: Users,
-    title: 'Review Shortlist',
+    icon: CheckCircle,
+    title: 'You pick who to meet',
     description:
-      'Get a ranked list of candidates with detailed score breakdowns. You stay in control of every decision.',
+      'Review the shortlist, see why each person scored high, schedule interviews.',
     color: 'from-success to-success-600',
     bgColor: 'bg-success-50 dark:bg-success-950/50',
     iconColor: 'text-success',
-  },
-  {
-    number: '04',
-    icon: MessageSquare,
-    title: 'Schedule Interviews',
-    description:
-      'AI drafts personalized emails and coordinates schedules. You approve, it handles logistics.',
-    color: 'from-warning to-warning-600',
-    bgColor: 'bg-warning-50 dark:bg-warning-950/50',
-    iconColor: 'text-warning-600',
-  },
-  {
-    number: '05',
-    icon: CheckCircle,
-    title: 'Hire with Confidence',
-    description:
-      'Every decision is explainable. Candidates get feedback. Your team builds a transparent hiring reputation.',
-    color: 'from-error to-error-600',
-    bgColor: 'bg-error-50 dark:bg-error-950/50',
-    iconColor: 'text-error',
   },
 ]
 
@@ -62,7 +42,7 @@ export function HowItWorksSection() {
       id="how-it-works"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-gradient-to-b from-background-subtle to-background-surface relative overflow-hidden"
     >
-      {}
+      { }
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
@@ -72,28 +52,27 @@ export function HowItWorksSection() {
       />
 
       <div className="max-w-6xl mx-auto relative">
-        {}
+        {/* Simple header - no badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16 lg:mb-20"
+          className="text-left max-w-2xl mb-16 lg:mb-20"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background-subtle text-text-secondary text-sm font-medium mb-6">
-            Simple Process
-          </div>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-text-primary tracking-tightest mb-6">
-            How ConvexHire works
+            Three steps.
+            <br />
+            <span className="text-text-secondary">That's it.</span>
           </h2>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed font-sans">
-            From job posting to hiring, our AI streamlines every step while keeping you in control.
+          <p className="text-lg sm:text-xl text-text-secondary leading-relaxed font-sans">
+            Post a job, we read the resumes, you pick who to interview.
           </p>
         </motion.div>
 
-        {}
+        { }
         <div className="relative">
-          {}
+          { }
           <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-primary-200 via-ai-200 via-success-200 via-warning-200 to-error-200 -translate-x-1/2" />
 
           <div className="space-y-8 lg:space-y-0">
@@ -110,7 +89,7 @@ export function HowItWorksSection() {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className={`relative lg:grid lg:grid-cols-2 lg:gap-16 ${index > 0 ? 'lg:mt-8' : ''}`}
                 >
-                  {}
+                  { }
                   <div
                     className={`${isEven ? 'lg:text-right lg:pr-16' : 'lg:col-start-2 lg:pl-16'}`}
                   >
@@ -136,14 +115,14 @@ export function HowItWorksSection() {
                     </p>
                   </div>
 
-                  {}
+                  { }
                   <div className="hidden lg:flex absolute left-1/2 top-6 -translate-x-1/2 items-center justify-center">
                     <div
                       className={`w-4 h-4 rounded-full bg-gradient-to-br ${step.color} ring-4 ring-background-surface shadow-lg`}
                     />
                   </div>
 
-                  {}
+                  { }
                   <div
                     className={`hidden lg:block ${isEven ? 'lg:col-start-2' : 'lg:col-start-1 lg:row-start-1'}`}
                   />
