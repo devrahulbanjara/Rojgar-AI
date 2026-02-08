@@ -27,34 +27,29 @@ export function CandidatePlatformSection() {
       id="candidates"
       className="py-24 lg:py-32 px-6 lg:px-8 bg-background-surface relative overflow-hidden"
     >
-      {}
+      { }
       <div className="absolute top-1/2 left-0 w-72 h-72 bg-success-100/20 dark:bg-success-900/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
 
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {}
+          { }
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 dark:bg-success-950/50 text-success text-sm font-medium mb-6">
-              For Candidates
-            </div>
-
             <h2 className="text-4xl sm:text-5xl font-display font-bold text-text-primary tracking-tightest mb-6">
-              Job search that{' '}
-              <span className="bg-gradient-to-r from-success to-success-600 bg-clip-text text-transparent">
-                respects you
-              </span>
+              Finally, feedback
+              <br />
+              <span className="text-text-secondary">on applications.</span>
             </h2>
 
             <p className="text-lg text-text-secondary mb-8 max-w-md leading-relaxed font-sans">
-              Get feedback on every application and tools to stand out in your job search.
+              No more silence after applying. Know where you stand and how to improve.
             </p>
 
-            {}
+            {/* Feature grid */}
             <div className="grid grid-cols-2 gap-3 mb-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon
@@ -78,13 +73,13 @@ export function CandidatePlatformSection() {
 
             <Link href="/signup">
               <Button className="bg-success hover:bg-success-600 text-white font-semibold rounded-xl px-6 py-2.5 h-auto group">
-                Create Your Profile
+                Create profile
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </motion.div>
 
-          {}
+          { }
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -93,12 +88,12 @@ export function CandidatePlatformSection() {
             className="relative"
           >
             <div className="relative">
-              {}
+              { }
               <div className="absolute -inset-4 bg-gradient-to-r from-success/10 to-success-600/10 rounded-3xl blur-2xl" />
 
-              {}
+              { }
               <div className="relative bg-background-surface rounded-2xl shadow-xl border border-border-default overflow-hidden">
-                {}
+                { }
                 <div className="px-5 py-3.5 bg-gradient-to-b from-success-50/50 dark:from-success-950/50 to-background-surface border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-success" />
@@ -109,10 +104,10 @@ export function CandidatePlatformSection() {
                   <p className="text-xs text-text-tertiary mt-0.5">Track your journey</p>
                 </div>
 
-                {}
+                { }
                 <div className="p-4 bg-background-subtle/50">
                   <div className="grid grid-cols-3 gap-2">
-                    {}
+                    { }
                     <motion.div
                       initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -142,7 +137,7 @@ export function CandidatePlatformSection() {
                       </div>
                     </motion.div>
 
-                    {}
+                    { }
                     <motion.div
                       initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -172,7 +167,7 @@ export function CandidatePlatformSection() {
                       </div>
                     </motion.div>
 
-                    {}
+                    { }
                     <motion.div
                       initial={{ opacity: 0, y: 15 }}
                       whileInView={{ opacity: 1, y: 0 }}

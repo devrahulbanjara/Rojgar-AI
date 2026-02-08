@@ -39,7 +39,7 @@ export function LandingFooter() {
     <footer className="bg-background-subtle border-t border-border-default">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
-          {}
+          { }
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -47,12 +47,15 @@ export function LandingFooter() {
             className="col-span-2 lg:col-span-2"
           >
             <LogoLink variant="full" size="md" className="mb-4" />
-            <p className="text-text-secondary text-sm mb-6 max-w-xs">
-              AI-powered recruitment that understands your candidates. Hire smarter, faster, and
-              fairer.
+            <p className="text-text-secondary text-sm mb-6 max-w-xs leading-relaxed">
+              We built this because we were tired of losing good candidates to bad processes.
+              <br /><br />
+              No more generic job descriptions.
+              <br />
+              No more keyword matching.
             </p>
 
-            {}
+            {/* Social links */}
             <div className="flex items-center gap-3">
               {socialLinks.map(({ icon: Icon, href, label }) => (
                 <a
@@ -69,7 +72,7 @@ export function LandingFooter() {
             </div>
           </motion.div>
 
-          {}
+          { }
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -93,7 +96,7 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          {}
+          { }
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -117,7 +120,7 @@ export function LandingFooter() {
             </ul>
           </motion.div>
 
-          {}
+          { }
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -142,7 +145,7 @@ export function LandingFooter() {
           </motion.div>
         </div>
 
-        {}
+        {/* Bottom bar with personality */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -152,9 +155,11 @@ export function LandingFooter() {
         >
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-text-tertiary">
-              © {new Date().getFullYear()} ConvexHire. All rights reserved.
+              © {new Date().getFullYear()} ConvexHire · Nepal · Still in active development
             </p>
-            <p className="text-sm text-text-tertiary">Built with AI for a fairer hiring future.</p>
+            <p className="text-sm text-text-tertiary">
+              Made by people who have actually seen a gap in this industry.
+            </p>
           </div>
         </motion.div>
       </div>

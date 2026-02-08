@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import {
@@ -162,12 +162,16 @@ const layerConfig = {
 }
 
 export function HeroSection() {
+  const { scrollY } = useScroll()
+  const yRange = useTransform(scrollY, [0, 500], [0, 100])
+  const opacityRange = useTransform(scrollY, [0, 400], [1, 0])
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {}
+      { }
       <div className="absolute inset-0 bg-gradient-to-b from-background-subtle via-background-surface to-primary-50 dark:to-primary-950/30" />
 
-      {}
+      { }
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -175,7 +179,7 @@ export function HeroSection() {
         }}
       />
 
-      {}
+      { }
       <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
         {floatingIcons.map((config, index) => {
           const {
@@ -248,7 +252,7 @@ export function HeroSection() {
         })}
       </div>
 
-      {}
+      { }
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/15 rounded-full blur-3xl animate-pulse" />
       <div
         className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"
@@ -257,95 +261,83 @@ export function HeroSection() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
 
       <div className="relative w-full max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
-        <div className="text-center max-w-4xl mx-auto">
-          {}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-950/50 dark:to-primary-900/50 border border-primary-200 dark:border-primary-800 shadow-sm mb-8 backdrop-blur-sm"
-          >
-            <Brain className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-text-secondary tracking-wide">
-              AI-Powered Recruitment Platform
-            </span>
-          </motion.div>
-
-          {}
+        {/* Left-aligned content for asymmetry */}
+        <div className="text-left max-w-4xl lg:ml-[8%]">
+          {/* Headline - no badge, straight to the point */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
             className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-text-primary leading-[1.05] tracking-tightest mb-8"
           >
-            Hiring that{' '}
             <span className="relative">
               <span className="bg-gradient-to-r from-primary via-primary to-primary-600 bg-clip-text text-transparent">
-                understands
+                Hire people,
               </span>
-              <motion.div
-                className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-primary/30 via-primary/40 to-primary/30 -z-10 rounded-full opacity-60"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-              />
+              {/* Hand-drawn style underline */}
+              <svg className="absolute -bottom-2 left-0 w-full h-3 opacity-40" viewBox="0 0 200 12" preserveAspectRatio="none">
+                <path d="M2 8 Q50 2, 100 7 T198 5" stroke="currentColor" strokeWidth="3" fill="none" className="text-primary" />
+              </svg>
             </span>
             <br />
-            your candidates
+            not keywords.
           </motion.h1>
 
-          {}
+          {/* Specific, opinionated subheadline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-lg sm:text-xl lg:text-2xl text-text-secondary mb-12 max-w-2xl mx-auto leading-relaxed font-sans"
+            className="text-lg sm:text-xl lg:text-2xl text-text-secondary mb-12 max-w-xl leading-relaxed font-sans"
           >
-            ConvexHire uses AI agents that read resumes like humans do, matching skills by meaning,
-            not just keywords.
+            Your ATS is rejecting qualified engineers over typos. We built something that{' '}
+            <em className="text-text-primary font-medium not-italic">actually reads</em> resumes.
           </motion.p>
 
-          {}
+          {/* Left-aligned CTA with specific text */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex justify-center mb-16"
+            className="flex justify-start mb-16"
           >
             <Link href="/signup">
               <Button
                 size="lg"
-                className="btn-primary-gradient text-base font-semibold rounded-xl px-10 py-6 h-auto transition-all duration-300 hover:scale-105 group"
+                className="btn-primary-gradient text-base font-semibold rounded-xl px-10 py-6 h-auto transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
               >
-                Start Free Trial
+                Show me how it works
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </motion.div>
 
-          {}
+          {/* Trust indicators - asymmetric layout with varied spacing */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.7 }}
-            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mt-12 pt-8 border-t border-border-subtle"
+            className="flex flex-wrap items-center gap-x-6 gap-y-4 mt-12 pt-8 border-t border-border-subtle"
           >
             {[
               {
                 icon: Network,
-                label: 'Multi-Agent AI System',
+                label: 'Multi-Agent AI',
+                aside: '(yes, actually)',
                 iconColor: 'text-primary',
                 bgGradient: 'from-primary-100 to-primary-50',
               },
               {
                 icon: FileSearch,
                 label: 'Semantic Resume Analysis',
+                aside: '',
                 iconColor: 'text-primary',
                 bgGradient: 'from-primary-100 to-primary-50',
               },
               {
                 icon: ShieldCheck,
                 label: 'Explainable Decisions',
+                aside: '',
                 iconColor: 'text-success',
                 bgGradient: 'from-success-100 to-success-50',
               },
@@ -356,16 +348,21 @@ export function HeroSection() {
                   key={item.label}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
+                  transition={{ duration: 0.5, delay: 0.8 + index * 0.15 }}
                   className="relative flex items-center gap-3 px-4 py-2 rounded-lg bg-gradient-to-br from-background-subtle/50 dark:from-background-surface/50 to-transparent"
+                  style={{ transform: index === 1 ? 'translateY(-4px)' : 'none' }}
                 >
                   <div
                     className={`relative w-8 h-8 rounded-lg bg-gradient-to-br ${item.bgGradient} flex items-center justify-center`}
+                    style={{ borderRadius: index === 0 ? '10px' : index === 1 ? '8px' : '12px' }}
                   >
                     <Icon className={`w-4 h-4 ${item.iconColor} relative z-10`} />
                   </div>
                   <span className="text-sm font-medium text-text-secondary tracking-wide">
                     {item.label}
+                    {item.aside && (
+                      <span className="ml-1 text-xs text-text-tertiary italic">{item.aside}</span>
+                    )}
                   </span>
                 </motion.div>
               )
@@ -373,127 +370,7 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {}
-        <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="mt-20 relative"
-        >
-          <div className="relative mx-auto max-w-5xl">
-            {}
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/25 to-primary/20 rounded-3xl blur-2xl opacity-60" />
-
-            {}
-            <div className="relative bg-background-surface rounded-2xl shadow-2xl border border-border-default overflow-hidden">
-              {}
-              <div className="flex items-center gap-2 px-4 py-3 bg-background-subtle border-b border-border-default">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
-                </div>
-                <div className="flex-1 mx-4">
-                  <div className="w-full max-w-md mx-auto h-6 bg-background-surface rounded-md border border-border-default flex items-center px-3">
-                    <span className="text-xs text-text-muted">convexhire.app/dashboard</span>
-                  </div>
-                </div>
-              </div>
-
-              {}
-              <div className="p-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/50 to-background-surface min-h-[300px] lg:min-h-[400px]">
-                {}
-                <div className="mb-6">
-                  <h1 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-1">
-                    Recruiter Dashboard
-                  </h1>
-                  <p className="text-sm text-text-secondary">Smart candidate matching</p>
-                </div>
-
-                {}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  {[
-                    {
-                      title: 'Active Jobs',
-                      value: '12',
-                      icon: BriefcaseIcon,
-                      description: 'Jobs currently posted',
-                      color: 'bg-primary-50 dark:bg-primary-950/50',
-                      iconColor: 'text-primary',
-                    },
-                    {
-                      title: 'Candidates',
-                      value: '847',
-                      icon: Users,
-                      description: 'Active candidates',
-                      color: 'bg-success-50 dark:bg-success-950/50',
-                      iconColor: 'text-success',
-                    },
-                    {
-                      title: 'AI Matches',
-                      value: '156',
-                      icon: Target,
-                      description: 'Smart recommendations',
-                      color: 'bg-ai-50 dark:bg-ai-950/50',
-                      iconColor: 'text-ai',
-                    },
-                  ].map((stat, i) => {
-                    const Icon = stat.icon
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.2 + i * 0.1 }}
-                        className="bg-background-surface rounded-2xl p-4 border border-border-default shadow-sm hover:shadow-md transition-all duration-300 group"
-                      >
-                        <div
-                          className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <Icon className={`w-5 h-5 ${stat.iconColor}`} />
-                        </div>
-                        <div className="text-2xl font-bold text-text-primary mb-1">
-                          {stat.value}
-                        </div>
-                        <div className="text-sm font-medium text-text-secondary">
-                          {stat.description}
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-
-                {}
-                <div className="bg-background-surface rounded-2xl border border-border-default overflow-hidden">
-                  <div className="px-4 py-3 border-b border-border-subtle bg-gradient-to-r from-background-subtle to-background-surface">
-                    <h3 className="text-sm font-semibold text-text-secondary">Top AI Matches</h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {[95, 92, 88].map((score, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.5 + i * 0.1 }}
-                        className="flex items-center gap-4 p-3 rounded-xl bg-background-subtle/50 hover:bg-primary-50 transition-colors duration-200 group"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-600" />
-                        <div className="flex-1 min-w-0">
-                          <div className="h-3 bg-border-default rounded w-32 mb-1" />
-                          <div className="h-2 bg-border-subtle rounded w-24" />
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-mono font-bold text-success">{score}%</div>
-                          <div className="text-sm font-mono text-success-600">AI Match</div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        {/* Dashboard Preview removed as per user request */}
       </div>
     </section>
   )
