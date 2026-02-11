@@ -15,6 +15,15 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '../ui/pagination'
 import { UserAvatar } from '../ui/UserAvatar'
 import {
   DropdownMenu,
@@ -39,9 +48,9 @@ interface ActionDropdownProps {
 
 function ActionDropdown({ candidate: _candidate }: ActionDropdownProps) {
   const menuItems = [
-    { icon: Eye, label: 'View Resume', onClick: () => {} },
-    { icon: Send, label: 'Send Email', onClick: () => {} },
-    { icon: Trash2, label: 'Delete', onClick: () => {}, isDanger: true },
+    { icon: Eye, label: 'View Resume', onClick: () => { } },
+    { icon: Send, label: 'Send Email', onClick: () => { } },
+    { icon: Trash2, label: 'Delete', onClick: () => { }, isDanger: true },
   ]
 
   return (
@@ -192,7 +201,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
                 <button
                   onClick={() => handleSort('name')}
-                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
+                  className="flex items-center gap-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Candidate
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -202,7 +211,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
                 <button
                   onClick={() => handleSort('job_title')}
-                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
+                  className="flex items-center gap-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Applied For
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -210,7 +219,7 @@ export function CandidatesTable({
               </th>
 
               <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                   Contact
                 </span>
               </th>
@@ -218,7 +227,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
                 <button
                   onClick={() => handleSort('current_status')}
-                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
+                  className="flex items-center gap-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Status
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -226,7 +235,7 @@ export function CandidatesTable({
               </th>
 
               <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
-                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                   Actions
                 </span>
               </th>
@@ -322,61 +331,67 @@ export function CandidatesTable({
               Showing {startIndex}-{endIndex} of {totalCandidates} candidates
             </p>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={cn(
-                'w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200',
-                currentPage === 1
-                  ? 'bg-background-surface border-border-default text-text-muted cursor-not-allowed'
-                  : 'bg-background-surface border-border-default text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-600 dark:hover:text-primary-400'
-              )}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={e => {
+                    e.preventDefault()
+                    if (currentPage > 1) onPageChange(currentPage - 1)
+                  }}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
 
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              let pageNum: number
-              if (totalPages <= 5) {
-                pageNum = i + 1
-              } else if (currentPage <= 3) {
-                pageNum = i + 1
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i
-              } else {
-                pageNum = currentPage - 2 + i
-              }
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(pageNum => {
+                  if (totalPages <= 5) return true
+                  if (pageNum === 1 || pageNum === totalPages) return true
+                  return Math.abs(pageNum - currentPage) <= 1
+                })
+                .map((pageNum, index, array) => {
+                  const elements = []
+                  if (index > 0 && pageNum - array[index - 1] > 1) {
+                    elements.push(
+                      <PaginationItem key={`ellipsis-${pageNum}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )
+                  }
+                  elements.push(
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        href="#"
+                        isActive={currentPage === pageNum}
+                        onClick={e => {
+                          e.preventDefault()
+                          onPageChange(pageNum)
+                        }}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                  return elements
+                })}
 
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => onPageChange(pageNum)}
-                  className={cn(
-                    'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200',
-                    currentPage === pageNum
-                      ? 'bg-primary-600 text-text-inverse shadow-sm'
-                      : 'bg-background-surface border border-border-default text-text-secondary hover:bg-primary-50 hover:border-primary-200 hover:text-primary-600'
-                  )}
-                >
-                  {pageNum}
-                </button>
-              )
-            })}
-
-            <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className={cn(
-                'w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200',
-                currentPage === totalPages || totalPages === 0
-                  ? 'bg-background-surface border-border-default text-text-muted cursor-not-allowed'
-                  : 'bg-background-surface border-border-default text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-600 dark:hover:text-primary-400'
-              )}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={e => {
+                    e.preventDefault()
+                    if (currentPage < totalPages) onPageChange(currentPage + 1)
+                  }}
+                  className={
+                    currentPage === totalPages || totalPages === 0
+                      ? 'pointer-events-none opacity-50'
+                      : ''
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>

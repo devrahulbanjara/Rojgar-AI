@@ -3,8 +3,9 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppShell } from '../../../components/layout/AppShell'
-import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
-import { ActionButton } from '../../../components/ui'
+import { PageTransition, LoadingSpinner } from '../../../components/common'
+import { ActionButton, Badge, Button } from '../../../components/ui'
+import { Alert, AlertDescription, AlertTitle, AlertAction } from '../../../components/ui/alert'
 import { useAuth } from '../../../hooks/useAuth'
 import { useCandidates } from '../../../hooks/useCandidates'
 import { jobService } from '../../../services/jobService'
@@ -20,15 +21,19 @@ import {
   Zap,
   AlertCircle,
   Loader2,
+  MoreVertical,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '../../../lib/api'
 import type { ShortlistJob, ShortlistCandidate } from '../../../types/shortlist'
+import { ScrollArea } from '../../../components/ui/scroll-area'
+import { useDeleteConfirm } from '../../../components/ui/delete-confirm-dialog'
 
 export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth()
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const {
     data: candidatesData,
@@ -278,229 +283,261 @@ export default function ShortlistPage() {
     }
   }, [selectedJob, triggerShortlistMutation])
 
-  const handleAcceptAIRecommendations = useCallback(() => {
-    setShowConfirmModal(true)
-  }, [])
+  const pendingCandidates = useMemo(() => {
+    if (!selectedJob) return []
+    return selectedJob.candidates.filter(c => c.current_status === 'pending' || c.current_status === 'applied')
+  }, [selectedJob])
 
-  const handleConfirmAcceptAI = useCallback(() => {
-    recommendedCandidates.forEach(candidate => {
-      handleShortlist(candidate.application_id)
+  const handleAcceptAIRecommendations = useCallback(async () => {
+    await confirm({
+      title: 'Finalize AI Recommendations',
+      description: "You're about to accept AI recommendations for",
+      itemName: `${pendingCandidates.length} candidate${pendingCandidates.length !== 1 ? 's' : ''}`,
+      additionalInfo: 'This will automatically shortlist or reject each candidate based on their AI score.',
+      onConfirm: () => {
+        pendingCandidates.forEach(candidate => {
+          if (candidate.score >= 75) {
+            handleShortlist(candidate.application_id)
+          } else {
+            handleReject(candidate.application_id)
+          }
+        })
+        toast.success(`Recommendations accepted for ${pendingCandidates.length} candidates`)
+      },
     })
-    setShowConfirmModal(false)
-
-    toast.success(`Recommendations accepted for ${recommendedCandidates.length} candidates`)
-  }, [recommendedCandidates, handleShortlist])
-
-  const handleCancelAcceptAI = useCallback(() => {
-    setShowConfirmModal(false)
-  }, [])
-
-  useEffect(() => {
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showConfirmModal) {
-        handleCancelAcceptAI()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscKey)
-    return () => document.removeEventListener('keydown', handleEscKey)
-  }, [showConfirmModal, handleCancelAcceptAI])
-
-  if (isAuthLoading || !isAuthenticated || isCandidatesLoading || (user?.id && isJobsLoading)) {
-    return (
-      <AppShell>
-        <PageTransition className="min-h-screen flex items-center justify-center">
-          <LoadingSpinner />
-        </PageTransition>
-      </AppShell>
-    )
-  }
-
-  if (error) {
-    return (
-      <AppShell>
-        <PageTransition className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-text-primary mb-2">
-              Failed to load candidates
-            </h2>
-            <p className="text-text-secondary">Please try refreshing the page</p>
-          </div>
-        </PageTransition>
-      </AppShell>
-    )
-  }
+  }, [confirm, pendingCandidates, handleShortlist, handleReject])
 
   return (
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
-          <AnimatedContainer direction="up" delay={0.1}>
+        {isAuthLoading || !isAuthenticated || isCandidatesLoading || (user?.id && isJobsLoading) ? (
+          <div className="flex min-h-[70vh] items-center justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : error ? (
+          <div className="flex min-h-[70vh] items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-text-primary mb-2">
+                Failed to load candidates
+              </h2>
+              <p className="text-text-secondary">Please try refreshing the page</p>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+            {/* Page header, aligned with Jobs/Candidates */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-2">
                 <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
                   Shortlist
                 </h1>
                 <p className="text-base text-text-secondary">
-                  Review AI-analyzed candidates and make hiring decisions
+                  Review AI-analyzed candidates and make final hiring decisions
                 </p>
               </div>
             </div>
-            <div className="mt-6 border-b border-border-default/60" />
-          </AnimatedContainer>
+            <div className="border-b border-border-default/60" />
 
-          <div className="space-y-8">
-            <div className="flex gap-8">
-              <div className="w-72 flex-shrink-0">
-                <AnimatedContainer direction="up" delay={0.2}>
-                  <div className="space-y-4">
-                    {jobsData.length === 0 ? (
-                      <div className="text-center py-8">
-                        <div className="text-text-tertiary mb-2">No jobs with candidates found</div>
-                        <div className="text-sm text-text-muted">
-                          Candidates will appear here once they apply to jobs
-                        </div>
-                      </div>
-                    ) : (
-                      jobsData.map(job => (
-                        <ShortlistJobCard
-                          key={job.job_id}
-                          job={job}
-                          isSelected={selectedJobId === job.job_id}
-                          onClick={() => setSelectedJobId(job.job_id)}
-                          onAutoShortlistChange={() => {
-                            setTimeout(() => refetchJobs(), 500)
-                          }}
-                        />
-                      ))
-                    )}
+            {/* Main two-column layout */}
+            <div className="flex gap-6">
+              {/* High-density job sidebar */}
+              <aside className="w-80 flex-shrink-0">
+                <div className="bg-background-surface border border-border-default rounded-2xl shadow-sm flex flex-col h-full max-h-[70vh]">
+                  <div className="p-5 border-b border-border-subtle">
+                    <h2 className="text-sm font-semibold text-text-primary tracking-tight">
+                      Job Shortlists
+                    </h2>
+                    <p className="text-[12px] text-text-tertiary mt-1">
+                      Select a job to review its ranked candidates.
+                    </p>
                   </div>
-                </AnimatedContainer>
-              </div>
 
-              <div className="flex-1 min-w-0">
-                <AnimatedContainer direction="up" delay={0.3}>
-                  {selectedJob ? (
-                    <div className="space-y-6">
-                      <div className="flex items-baseline justify-between gap-3 mb-6">
-                        <div className="flex items-baseline gap-3">
-                          <h2 className="text-2xl font-semibold text-text-primary inline">
-                            Candidates for {selectedJob.title}
-                          </h2>
-                          <div className="inline-flex items-center gap-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 rounded-md px-3 py-1 text-base font-semibold">
-                            <Users className="w-4 h-4" />
-                            {selectedJob.candidates.length}
-                          </div>
-                        </div>
-                        {recommendedCandidates.length > 0 &&
-                          selectedJob.shortlist_status === 'completed' && (
-                            <ActionButton
-                              onClick={handleAcceptAIRecommendations}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                              Shortlist Recommended ({recommendedCandidates.length})
-                            </ActionButton>
-                          )}
-                      </div>
-
-                      {selectedJob.candidates.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
-                          <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
-                            <Users className="w-10 h-10 text-primary-300" />
-                          </div>
-                          <h3 className="text-xl font-bold text-text-primary mb-2">
-                            No candidates found
-                          </h3>
-                          <p className="text-base text-text-tertiary max-w-md">
-                            No candidates have applied for this job yet
+                  <ScrollArea className="flex-1">
+                    <div className="p-3 space-y-2">
+                      {jobsData.length === 0 ? (
+                        <div className="text-center py-8 px-3">
+                          <p className="text-sm text-text-secondary">
+                            No jobs with candidates yet.
+                          </p>
+                          <p className="text-xs text-text-tertiary mt-1">
+                            Candidates will appear here once they apply.
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-6">
-                          {/* Show pending banner when auto-shortlist is on but job is still active */}
+                        jobsData.map(job => (
+                          <ShortlistJobCard
+                            key={job.job_id}
+                            job={job}
+                            isSelected={selectedJobId === job.job_id}
+                            onClick={() => setSelectedJobId(job.job_id)}
+                            onAutoShortlistChange={() => {
+                              setTimeout(() => refetchJobs(), 500)
+                            }}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </aside>
+
+              {/* Main content card */}
+              <main className="flex-1 min-w-0">
+                <div className="bg-background-surface border border-border-default rounded-2xl shadow-sm flex flex-col h-full max-h-[70vh]">
+                  {/* Header with AI status toggle */}
+                  <header className="p-6 border-b border-border-subtle flex justify-between items-center gap-4">
+                    {selectedJob ? (
+                      <>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h2 className="text-xl font-semibold text-text-primary">
+                              Candidates for {selectedJob.title}
+                            </h2>
+                            <Badge
+                              variant="outline"
+                              className="text-text-secondary bg-background-subtle border-border-subtle"
+                            >
+                              <Users className="w-3 h-3 mr-1" />
+                              {selectedJob.candidates.length} total
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          {(canTriggerManualShortlist || canTriggerAutoShortlist) && (
+                            <Button
+                              size="sm"
+                              className="h-8 rounded-lg bg-primary-600 hover:bg-primary-700 text-xs px-4"
+                              disabled={triggerShortlistMutation.isPending}
+                              onClick={handleTriggerShortlist}
+                            >
+                              {triggerShortlistMutation.isPending ? 'Running...' : 'Run AI Shortlist'}
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 text-text-muted"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between w-full">
+                        <div>
+                          <h2 className="text-lg font-semibold text-text-primary">
+                            Select a job to get started
+                          </h2>
+                          <p className="text-sm text-text-secondary mt-1">
+                            Pick a posting on the left to see AI-ranked candidates.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </header>
+
+                  {/* Candidate list area */}
+                  <ScrollArea className="flex-1">
+                    <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+                      {!selectedJob ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <div className="w-16 h-16 bg-background-subtle rounded-2xl flex items-center justify-center mb-4 border border-border-subtle">
+                            <Sparkles className="w-8 h-8 text-primary-400" />
+                          </div>
+                          <h3 className="text-lg font-bold text-text-primary mb-1">
+                            Choose a job to review
+                          </h3>
+                          <p className="text-sm text-text-secondary max-w-sm">
+                            Pick a posting from the left to see AI-ranked candidates and take
+                            action.
+                          </p>
+                        </div>
+                      ) : selectedJob.candidates.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <div className="w-16 h-16 bg-background-subtle rounded-2xl flex items-center justify-center mb-4 border border-border-subtle">
+                            <Users className="w-8 h-8 text-primary-300" />
+                          </div>
+                          <h3 className="text-lg font-bold text-text-primary mb-1">
+                            No candidates yet
+                          </h3>
+                          <p className="text-sm text-text-secondary max-w-sm">
+                            Once candidates apply, they’ll appear here with AI-powered scores.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Subtle status banners */}
                           {isShortlistPending && selectedJob.status !== 'expired' && (
-                            <div className="flex items-center gap-4 p-5 bg-background-subtle rounded-xl border border-border-default">
-                              <div className="flex-shrink-0">
-                                <Info className="w-5 h-5 text-text-tertiary" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-text-primary mb-1">
-                                  Shortlisting Pending
-                                </h4>
-                                <p className="text-sm text-text-secondary">
-                                  Shortlisting will automatically run when the application deadline
-                                  passes. Candidates will be scored and ranked once the job expires.
-                                </p>
-                              </div>
-                            </div>
+                            <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+                              <Info className="w-4 h-4 text-blue-600" />
+                              <AlertTitle className="text-blue-900 dark:text-blue-100">Auto-shortlist enabled</AlertTitle>
+                              <AlertDescription className="text-blue-700 dark:text-blue-300">
+                                Shortlisting will run automatically when the job closes. Scores will appear here once processing is complete.
+                              </AlertDescription>
+                            </Alert>
                           )}
 
-                          {/* Show trigger button for expired jobs with auto_shortlist ON */}
+                          {pendingCandidates.length > 0 &&
+                            selectedJob.shortlist_status === 'completed' && (
+                              <Alert className="border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20">
+                                <Brain className="w-4 h-4 text-emerald-600" />
+                                <AlertTitle className="text-emerald-900 dark:text-emerald-100">
+                                  AI analysis complete
+                                </AlertTitle>
+                                <AlertDescription className="text-emerald-700 dark:text-emerald-300">
+                                  Use AI scores as a signal, then confirm final decisions manually.
+                                </AlertDescription>
+                                <AlertAction>
+                                  <ActionButton
+                                    size="sm"
+                                    onClick={handleAcceptAIRecommendations}
+                                    variant="primary"
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    Finalize
+                                  </ActionButton>
+                                </AlertAction>
+                              </Alert>
+                            )}
+
                           {canTriggerAutoShortlist && (
-                            <div className="flex items-center gap-4 p-5 bg-ai-50 dark:bg-ai-950/30 rounded-xl border border-ai-200 dark:border-ai-800">
-                              <div className="flex-shrink-0">
-                                <Brain className="w-5 h-5 text-ai-600 dark:text-ai-400" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-text-primary mb-1">
-                                  Ready for AI Shortlisting
-                                </h4>
-                                <p className="text-sm text-text-secondary">
-                                  Job has expired. Run AI shortlisting now or wait for the scheduled
-                                  run at midnight.
-                                </p>
-                              </div>
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-ai-50 border border-ai-200">
+                              <Brain className="w-4 h-4 text-ai-600" />
+                              <p className="text-xs text-text-secondary flex-1">
+                                This job has expired. Run AI shortlisting now to generate ranked
+                                recommendations.
+                              </p>
                               <ActionButton
                                 onClick={handleTriggerShortlist}
                                 disabled={triggerShortlistMutation.isPending}
                                 loading={triggerShortlistMutation.isPending}
                                 variant="primary"
                                 size="sm"
-                                className="bg-ai-600 hover:bg-ai-700 dark:hover:bg-ai-600 animate-bounce"
-                                style={{ animationDuration: '2s' }}
                               >
                                 <Zap className="w-4 h-4" />
-                                {triggerShortlistMutation.isPending
-                                  ? 'Starting...'
-                                  : 'Run Shortlisting'}
+                                {triggerShortlistMutation.isPending ? 'Starting…' : 'Run AI'}
                               </ActionButton>
                             </div>
                           )}
 
-                          {/* Show in-progress banner */}
                           {isShortlistInProgress && (
-                            <div className="flex items-center gap-4 p-5 bg-ai-50 dark:bg-ai-950/30 rounded-xl border border-ai-200 dark:border-ai-800">
-                              <div className="flex-shrink-0">
-                                <Loader2 className="w-5 h-5 text-ai-600 dark:text-ai-400 animate-spin" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-text-primary mb-1">
-                                  AI Shortlisting In Progress
-                                </h4>
-                                <p className="text-sm text-text-secondary font-mono">
-                                  Candidates are being analyzed. This page will update
-                                  automatically.
-                                </p>
-                              </div>
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-ai-50 border border-ai-200">
+                              <Loader2 className="w-4 h-4 text-ai-600 animate-spin" />
+                              <p className="text-xs text-text-secondary">
+                                AI shortlisting is running. Candidates will update live as scores are
+                                computed.
+                              </p>
                             </div>
                           )}
 
-                          {/* Show failed banner with retry */}
                           {isShortlistFailed && (
-                            <div className="flex items-center gap-4 p-5 bg-error-50 dark:bg-error-950/30 rounded-xl border border-error-200 dark:border-error-800">
-                              <div className="flex-shrink-0">
-                                <AlertCircle className="w-5 h-5 text-error-600 dark:text-error-400" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-text-primary mb-1">
-                                  Shortlisting Failed
-                                </h4>
-                                <p className="text-sm text-text-secondary">
-                                  An error occurred during shortlisting. You can retry.
-                                </p>
-                              </div>
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-error-50 border border-error-200">
+                              <AlertCircle className="w-4 h-4 text-error-600" />
+                              <p className="text-xs text-text-secondary flex-1">
+                                Shortlisting failed. You can retry running AI or continue manual
+                                review.
+                              </p>
                               <ActionButton
                                 onClick={handleTriggerShortlist}
                                 disabled={triggerShortlistMutation.isPending}
@@ -512,37 +549,6 @@ export default function ShortlistPage() {
                                   className={`w-4 h-4 ${triggerShortlistMutation.isPending ? 'animate-spin' : ''}`}
                                 />
                                 Retry
-                              </ActionButton>
-                            </div>
-                          )}
-
-                          {/* Show "Run Shortlisting" button for expired jobs without auto_shortlist */}
-                          {canTriggerManualShortlist && (
-                            <div className="flex items-center gap-4 p-5 bg-background-subtle rounded-xl border border-border-default">
-                              <div className="flex-shrink-0">
-                                <Info className="w-5 h-5 text-text-tertiary" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-text-primary mb-1">
-                                  Manual Review Mode
-                                </h4>
-                                <p className="text-sm text-text-secondary">
-                                  Auto-shortlisting is off. Review candidates manually or run AI
-                                  shortlisting.
-                                </p>
-                              </div>
-                              <ActionButton
-                                onClick={handleTriggerShortlist}
-                                disabled={triggerShortlistMutation.isPending}
-                                loading={triggerShortlistMutation.isPending}
-                                variant="primary"
-                                size="sm"
-                                className="animate-pulse hover:animate-none"
-                              >
-                                <Zap className="w-4 h-4" />
-                                {triggerShortlistMutation.isPending
-                                  ? 'Starting...'
-                                  : 'Run Shortlisting'}
                               </ActionButton>
                             </div>
                           )}
@@ -568,75 +574,18 @@ export default function ShortlistPage() {
                                 }
                               />
                             ))}
-                        </div>
+                        </>
                       )}
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
-                      <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
-                        <Sparkles className="w-10 h-10 text-primary-300 dark:text-primary-600" />
-                      </div>
-                      <h3 className="text-xl font-bold text-text-primary mb-2">
-                        Select a job posting
-                      </h3>
-                      <p className="text-base text-text-tertiary max-w-md">
-                        Choose a job from the sidebar to start reviewing candidates
-                      </p>
-                    </div>
-                  )}
-                </AnimatedContainer>
-              </div>
+                  </ScrollArea>
+                </div>
+              </main>
             </div>
           </div>
-        </div>
+        )}
       </PageTransition>
 
-      {showConfirmModal && (
-        <div
-          className="fixed inset-0 bg-text-primary/50 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={handleCancelAcceptAI}
-        >
-          <div
-            className="bg-background-surface rounded-2xl max-w-md w-full mx-4 border border-border-default animate-in zoom-in-95 duration-200 ease-out shadow-2xl p-10"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex justify-center mb-6">
-              <div className="w-14 h-14 bg-primary-50 dark:bg-primary-950/30 rounded-full flex items-center justify-center">
-                <Brain className="w-7 h-7 text-primary-600 dark:text-primary-400" />
-              </div>
-            </div>
-
-            <div className="text-center mb-8">
-              <h3 className="heading-4 mb-4">Accept AI Recommendations</h3>
-
-              <p className="subtitle mb-3">
-                You're about to accept AI recommendations for{' '}
-                <span className="font-bold text-text-primary">
-                  {recommendedCandidates.length} candidates
-                </span>{' '}
-                for{' '}
-                <span className="font-bold text-primary-600 dark:text-primary-400">
-                  {selectedJob?.title}
-                </span>
-                .
-              </p>
-
-              <p className="text-sm text-text-muted">
-                This will approve all AI-recommended candidates. This action cannot be undone.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <ActionButton onClick={handleCancelAcceptAI} variant="outline" size="md">
-                Cancel
-              </ActionButton>
-              <ActionButton onClick={handleConfirmAcceptAI} variant="primary" size="md">
-                Accept Recommendations
-              </ActionButton>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog />
     </AppShell>
   )
 }

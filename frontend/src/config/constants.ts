@@ -32,7 +32,7 @@ export const ROUTES = {
   },
   CANDIDATE: {
     DASHBOARD: '/candidate/dashboard',
-    JOBS: '/candidate/browse-jobs',
+    JOBS: '/candidate/jobs',
   },
   ORGANIZATION: {
     DASHBOARD: '/organization/dashboard',
