@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, LogOut, Bell, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useTheme } from 'next-themes'
 import { ThemeToggle } from '../common/ThemeToggle'
 import { NotificationDropdown } from './NotificationDropdown'
 import { authService } from '../../services/authService'
@@ -85,15 +84,8 @@ export function Topbar({ user }: TopbarProps) {
   const { toggleSidebar } = useSidebar()
   const router = useRouter()
   const pathname = usePathname()
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
-
-  // Avoid hydration mismatch by waiting for mount
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Determine if user is a recruiter based on role or current path
   const isRecruiter = user?.role === 'recruiter' || pathname?.startsWith('/recruiter')
@@ -155,14 +147,25 @@ export function Topbar({ user }: TopbarProps) {
             className="md:hidden lg:block" // Hide on medium (sidebar expanded)
           >
             <Link href={ROUTES.HOME}>
-              <Image
-                src={mounted && resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg'}
-                alt="ConvexHire Logo"
-                width={180}
-                height={40}
-                className="h-10 w-auto"
-                priority
-              />
+              {/* Use CSS dark mode classes so logo always matches theme */}
+              <div className="h-10 flex items-center">
+                <Image
+                  src="/logo-light.svg"
+                  alt="ConvexHire Logo"
+                  width={180}
+                  height={40}
+                  className="h-10 w-auto dark:hidden"
+                  priority
+                />
+                <Image
+                  src="/logo-dark.svg"
+                  alt="ConvexHire Logo"
+                  width={180}
+                  height={40}
+                  className="h-10 w-auto hidden dark:block"
+                  priority
+                />
+              </div>
             </Link>
           </motion.div>
         </div>

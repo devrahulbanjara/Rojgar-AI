@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
   DialogDescription,
@@ -14,13 +13,13 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
 import { Loader2, GraduationCap, Building2, BookOpen, MapPin, Calendar } from 'lucide-react'
-import type { ResumeEducationResponse } from '@/types/resume'
+import type { Education } from '@/types/resume'
 
 interface EducationFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   resumeId: string
-  initialData?: ResumeEducationResponse
+  initialData?: Education
   onSuccess: () => void
 }
 
@@ -105,158 +104,152 @@ export default function EducationFormDialog({
   }
 
   return (
-    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
-      <DialogHeader>
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center shadow-sm border border-ai-100 dark:border-ai-900/30">
-            <GraduationCap className="w-6 h-6 text-ai-600 dark:text-ai-400" />
-          </div>
-          <div>
-            <DialogTitle className="text-xl">
-              {initialData ? 'Edit Education' : 'Add Education'}
-            </DialogTitle>
-            <DialogDescription className="text-text-tertiary">
-              {initialData ? 'Update your education details' : 'Add your academic background'}
-            </DialogDescription>
+    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
+      <div className="bg-background-surface flex flex-col h-full max-h-[90vh]">
+        <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-ai-600/10 dark:bg-ai-600/20 flex items-center justify-center border border-ai-600/20 shadow-sm">
+              <GraduationCap className="w-7 h-7 text-ai-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold tracking-tight text-text-primary">
+                {initialData ? 'Edit Education' : 'Add Education'}
+              </DialogTitle>
+              <DialogDescription className="text-[14px] text-text-tertiary font-medium">
+                {initialData ? 'Refine your academic background details below' : 'Add your educational history to your profile'}
+              </DialogDescription>
+            </div>
           </div>
         </div>
-      </DialogHeader>
 
-      <DialogContent className="pt-2">
-        <form id="education-form" onSubmit={handleSubmit} className="space-y-5">
-          {/* School / College */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-text-tertiary" />
-              School / College <span className="text-error">*</span>
-            </label>
-            <div className="relative group">
+        <DialogContent className="p-8 overflow-y-auto">
+          <form id="education-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5" />
+                School / College <span className="text-error-500 font-bold">*</span>
+              </label>
               <input
                 type="text"
                 required
                 value={formData.college_name}
                 onChange={e => setFormData({ ...formData, college_name: e.target.value })}
                 placeholder="e.g. Herald College Kathmandu"
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary placeholder:text-text-muted"
+                  text-text-primary font-medium placeholder:text-text-muted"
               />
             </div>
-          </div>
 
-          {/* Degree */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <BookOpen className="w-4 h-4 text-text-tertiary" />
-              Degree <span className="text-error">*</span>
-            </label>
-            <div className="relative group">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5" />
+                Degree <span className="text-error-500 font-bold">*</span>
+              </label>
               <input
                 type="text"
                 required
                 value={formData.degree}
                 onChange={e => setFormData({ ...formData, degree: e.target.value })}
                 placeholder="e.g. B(Hons) in Computer Science"
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary placeholder:text-text-muted"
+                  text-text-primary font-medium placeholder:text-text-muted"
               />
             </div>
-          </div>
 
-          {/* Location */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-text-tertiary" />
-              Location
-            </label>
-            <div className="relative group">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" />
+                Location
+              </label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={e => setFormData({ ...formData, location: e.target.value })}
                 placeholder="e.g. Kathmandu, Nepal"
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary placeholder:text-text-muted"
+                  text-text-primary font-medium placeholder:text-text-muted"
               />
             </div>
-          </div>
 
-          {/* Date Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-text-tertiary" />
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={formData.start_date}
-                onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
-                  hover:border-border-strong transition-all duration-200
-                  text-text-primary"
-              />
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary font-medium transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  disabled={formData.is_current}
+                  value={formData.end_date}
+                  onChange={e => setFormData({ ...formData, end_date: e.target.value })}
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-text-tertiary" />
-                End Date
-              </label>
-              <input
-                type="date"
-                disabled={formData.is_current}
-                value={formData.end_date}
-                onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 
-                  hover:border-border-strong transition-all duration-200
-                  text-text-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
-              />
-            </div>
-          </div>
 
-          {/* Currently Studying Checkbox */}
-          <div className="flex items-center gap-3 pt-1 pb-2">
-            <Checkbox
-              id="current_edu"
-              checked={formData.is_current}
-              onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
-            />
-            <label
-              htmlFor="current_edu"
-              className="text-sm font-medium text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+            <div className="flex items-center gap-3 py-1">
+              <Checkbox
+                id="current_edu"
+                checked={formData.is_current}
+                onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
+                className="w-5 h-5 rounded-md border-border-default data-[state=checked]:bg-ai-600 data-[state=checked]:border-ai-600 transition-all shadow-sm"
+              />
+              <label
+                htmlFor="current_edu"
+                className="text-[14px] font-semibold text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+              >
+                I am currently studying here
+              </label>
+            </div>
+          </form>
+        </DialogContent>
+
+        <DialogFooter className="p-6 border-t border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="h-11 px-6 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-background-subtle font-bold uppercase tracking-wider text-[11px] transition-all"
             >
-              I am currently studying here
-            </label>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="education-form"
+              disabled={loading}
+              className="h-11 px-8 rounded-xl bg-ai-600 hover:bg-ai-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-ai-600/20 transition-all active:scale-95"
+            >
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />}
+              {initialData ? 'Save Changes' : 'Add Education'}
+            </Button>
           </div>
-        </form>
-      </DialogContent>
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          form="education-form"
-          disabled={loading}
-          className="h-11 px-6 rounded-xl bg-ai-600 dark:bg-ai-500 hover:bg-ai-700 dark:hover:bg-ai-600 text-white font-semibold shadow-lg shadow-ai-500/25 dark:shadow-ai-400/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-        >
-          {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {initialData ? 'Save Changes' : 'Add Education'}
-        </Button>
-      </DialogFooter>
+        </DialogFooter>
+      </div>
     </Dialog>
   )
 }

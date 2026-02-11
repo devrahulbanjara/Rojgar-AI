@@ -7,18 +7,20 @@ import {
   usePersonalizedRecommendations,
   useCreateApplication,
   useJobSearch,
+  useApplicationsByCandidate,
 } from '../../../hooks/queries/useJobs'
 import { useAuth } from '../../../hooks/useAuth'
 import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
-import { Button, Card } from '../../../components/ui'
+import { Button, Card, Badge, Tabs, TabsList, TabsTrigger } from '../../../components/ui'
 import { AnimatedContainer, LoadingSpinner, SkeletonJobCard } from '../../../components/common'
-import { RefreshCw, AlertCircle, Search, Filter } from 'lucide-react'
+import { RefreshCw, AlertCircle, Search, Briefcase, Bookmark, Clock } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { Job } from '../../../types/job'
+import type { Application } from '../../../types/application'
 
 export default function Jobs() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -28,6 +30,7 @@ export default function Jobs() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [activeFilters, setActiveFilters] = useState<FilterType[]>([])
+  const [activeTab, setActiveTab] = useState<'recommended' | 'applied' | 'saved'>('recommended')
 
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const queryClient = useQueryClient()
@@ -76,39 +79,57 @@ export default function Jobs() {
   } = useJobSearch(
     shouldFetchSearch
       ? {
-          search: debouncedSearchQuery.trim(),
-          page: currentPage,
-          limit: 9,
-          ...backendFilters,
-        }
+        search: debouncedSearchQuery.trim(),
+        page: currentPage,
+        limit: 9,
+        ...backendFilters,
+      }
       : undefined
   )
 
-  const jobsData = isSearchMode ? searchData : recommendationsData
-  const isLoading = isSearchMode
-    ? shouldFetchSearch
-      ? isLoadingSearch
-      : false
-    : isAuthLoading || isLoadingRecommendations || isRefreshing
-  const error = isSearchMode ? searchError : recommendationsError
-  useEffect(() => {
-    console.warn('Auth status effect:', {
-      userId: user?.id,
-      isAuthLoading,
-      isAuthenticated,
-      hasRecommendations: !!recommendationsData,
-      isLoadingRecommendations,
-    })
+  const {
+    data: applicationsData,
+    isLoading: isLoadingApplications,
+    error: applicationsError,
+  } = useApplicationsByCandidate(user?.id || '', {
+    page: currentPage,
+    limit: 9,
+  })
 
+  // Unified Data Handling
+  const jobsData = isSearchMode ? searchData : activeTab === 'recommended' ? recommendationsData : undefined
+  const applications = Array.isArray(applicationsData) ? applicationsData : []
+
+  const isLoading = isSearchMode
+    ? shouldFetchSearch && isLoadingSearch
+    : activeTab === 'recommended'
+      ? isAuthLoading || isLoadingRecommendations || isRefreshing
+      : activeTab === 'applied'
+        ? isLoadingApplications
+        : false
+
+  const error = isSearchMode
+    ? searchError
+    : activeTab === 'recommended'
+      ? recommendationsError
+      : activeTab === 'applied'
+        ? applicationsError
+        : null
+
+  const jobs = jobsData?.jobs || []
+  const totalJobs = jobsData?.total || 0
+  const totalPages = jobsData?.total_pages || 0
+
+  useEffect(() => {
     if (
       user?.id &&
       !isSearchMode &&
       isAuthenticated &&
       !isAuthLoading &&
       !isLoadingRecommendations &&
-      !recommendationsData
+      !recommendationsData &&
+      activeTab === 'recommended'
     ) {
-      console.warn('Triggering immediate recommendations fetch...')
       refetchRecommendations()
     }
   }, [
@@ -119,6 +140,7 @@ export default function Jobs() {
     isLoadingRecommendations,
     recommendationsData,
     refetchRecommendations,
+    activeTab,
   ])
 
   const createApplicationMutation = useCreateApplication()
@@ -132,55 +154,28 @@ export default function Jobs() {
           refetchType: 'active',
         })
         await refetchSearch()
-      } else {
+      } else if (activeTab === 'recommended') {
         await queryClient.invalidateQueries({
           queryKey: ['jobs', 'personalized'],
           refetchType: 'active',
         })
-
-        if (typeof window !== 'undefined') {
-          try {
-            const cacheKey = 'convexhire-query-cache'
-            const cached = localStorage.getItem(cacheKey)
-            if (cached) {
-              const cacheData = JSON.parse(cached) as Record<string, unknown>
-              const newCache: Record<string, unknown> = {}
-              Object.entries(cacheData).forEach(([key, value]) => {
-                try {
-                  const queryKey = JSON.parse(key)
-                  if (!Array.isArray(queryKey) || queryKey[0] !== 'jobs') {
-                    newCache[key] = value
-                  }
-                } catch {
-                  if (!key.includes('jobs')) {
-                    newCache[key] = value
-                  }
-                }
-              })
-              localStorage.setItem(cacheKey, JSON.stringify(newCache))
-            }
-          } catch (e) {
-            console.warn('Failed to clear localStorage cache:', e)
-          }
-        }
-
         await refetchRecommendations()
       }
 
-      toast.success(isSearchMode ? 'Search results refreshed' : 'Job recommendations refreshed')
+      toast.success(isSearchMode ? 'Search results refreshed' : 'Job list refreshed')
     } catch (error) {
       console.error('Failed to refresh:', error)
       toast.error('Failed to refresh')
     } finally {
       setIsRefreshing(false)
     }
-  }, [queryClient, isSearchMode, refetchSearch, refetchRecommendations])
+  }, [queryClient, isSearchMode, refetchSearch, refetchRecommendations, activeTab])
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value)
   }, [])
 
-  // Debounce search query (matches recruiter/candidates pattern)
+  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
@@ -226,7 +221,7 @@ export default function Jobs() {
       try {
         await createApplicationMutation.mutateAsync({
           job_id: job.id.toString(),
-          resume_id: 'default', // Using 'default' as a placeholder or it should be fetched from user profile
+          resume_id: 'default',
         })
       } catch {
         // Ignore application errors
@@ -235,37 +230,16 @@ export default function Jobs() {
     [createApplicationMutation]
   )
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'recommended' | 'applied' | 'saved')
+    setCurrentPage(1)
+  }
+
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
       window.location.href = '/signin'
     }
   }, [isAuthenticated, isAuthLoading])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
-        event.preventDefault()
-        if (isSearchMode) {
-          queryClient.invalidateQueries({
-            queryKey: ['jobs', 'search'],
-            refetchType: 'active',
-          })
-          refetchSearch()
-        } else {
-          refetchRecommendations()
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isSearchMode, refetchRecommendations, refetchSearch, queryClient])
-
-  const jobs = jobsData?.jobs || []
-  const totalJobs = jobsData?.total || 0
-  const totalPages = jobsData?.total_pages || 0
 
   if (isAuthLoading || !isAuthenticated) {
     return (
@@ -280,7 +254,7 @@ export default function Jobs() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-10">
-        {/* Enhanced Header */}
+        {/* Header */}
         <AnimatedContainer direction="up" delay={0.1}>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2.5">
@@ -299,7 +273,7 @@ export default function Jobs() {
               variant="outline"
               onClick={handleRefresh}
               disabled={isRefreshing || isLoading}
-              className="h-11 px-5 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 shadow-sm transition-all whitespace-nowrap"
+              className="h-11 px-5 text-primary-600 border-primary-200 hover:bg-primary-50 shadow-sm transition-all whitespace-nowrap"
             >
               <RefreshCw className={cn('w-4 h-4 mr-2', isRefreshing && 'animate-spin')} />
               Refresh Jobs
@@ -307,7 +281,7 @@ export default function Jobs() {
           </div>
         </AnimatedContainer>
 
-        {/* Refined Search & Filter Section */}
+        {/* Search & Filter */}
         <AnimatedContainer direction="up" delay={0.15}>
           <Card className="p-4 shadow-sm border-border-default bg-background-surface">
             <div className="flex flex-col lg:flex-row gap-4">
@@ -318,7 +292,7 @@ export default function Jobs() {
                   value={searchQuery}
                   onChange={e => handleSearchChange(e.target.value)}
                   placeholder="Search by job title, company, or skills..."
-                  className="w-full pl-11 pr-4 py-2.5 bg-background-subtle border-none rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-text-muted text-sm font-medium"
+                  className="w-full pl-11 pr-4 py-2.5 bg-background-subtle border-none rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-text-muted text-sm font-medium text-text-primary"
                 />
               </div>
               <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
@@ -333,98 +307,175 @@ export default function Jobs() {
           </Card>
         </AnimatedContainer>
 
-        {/* Jobs Grid Section */}
+        {/* Tabs & Grid */}
         <AnimatedContainer direction="up" delay={0.3}>
           <div className="w-full space-y-8">
-            <div className="flex items-center gap-3 border-l-4 border-primary-600 pl-4">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary">
-                  {isLoading
-                    ? 'Loading...'
-                    : isSearchMode
-                      ? 'Search Results'
-                      : 'Recommended For You'}
-                </h2>
-                <p className="text-sm text-text-tertiary font-medium">
-                  {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} available
-                </p>
-              </div>
-            </div>
+            <Tabs value={isSearchMode ? 'recommended' : activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="bg-transparent border-b border-border-subtle rounded-none w-full justify-start h-auto p-0 gap-8">
+                <TabsTrigger
+                  value="recommended"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                >
+                  {isSearchMode ? 'Search Results' : 'Recommended'}
+                  {recommendationsData?.total !== undefined && !isSearchMode && (
+                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                      {recommendationsData.total}
+                    </span>
+                  )}
+                  {isSearchMode && totalJobs !== undefined && (
+                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                      {totalJobs}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="applied"
+                  disabled={isSearchMode}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                >
+                  Applied
+                  <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                    {applications.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="saved"
+                  disabled={isSearchMode}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                >
+                  Saved
+                  <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">0</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-            {}
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {isLoading ? (
                 <>
-                  {Array.from({ length: 9 }).map((_, index) => (
+                  {Array.from({ length: 6 }).map((_, index) => (
                     <SkeletonJobCard
                       key={index}
-                      className="h-full hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
+                      className="h-full group hover:shadow-lg transition-all duration-300"
                     />
                   ))}
                 </>
               ) : error ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-20 space-y-6 bg-error-50/30 dark:bg-error-950/30 rounded-3xl border border-error-100 dark:border-error-900">
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-background-surface shadow-sm border border-error-100 dark:border-error-900">
-                    <AlertCircle className="w-10 h-10 text-error-500" />
+                <div className="col-span-full py-24 flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-3xl bg-error-50 dark:bg-error-950/30 flex items-center justify-center border border-error-100 dark:border-error-900/30 mb-8">
+                    <AlertCircle className="w-8 h-8 text-error-500" />
                   </div>
-                  <div className="text-center max-w-md px-4">
-                    <h3 className="text-xl font-bold text-text-primary mb-2">
-                      Unable to load jobs
-                    </h3>
-                    <p className="text-text-secondary mb-6">
-                      {error.message ||
-                        'Something went wrong while fetching jobs. Please try again.'}
+                  <h3 className="text-xl font-bold text-text-primary tracking-tight">Unable to load content</h3>
+                  <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                    There was an issue fetching the current data. This might be due to a temporary network problem.
+                  </p>
+                  <Button
+                    onClick={handleRefresh}
+                    className="mt-10 h-12 px-10 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-primary-600/20 transition-all active:scale-95"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Retry Fetch
+                  </Button>
+                </div>
+              ) : isSearchMode || activeTab === 'recommended' ? (
+                jobs.length === 0 ? (
+                  <div className="col-span-full py-24 flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900/30 mb-8">
+                      <Search className="w-8 h-8 text-primary-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-text-primary tracking-tight">No results found</h3>
+                    <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                      We couldn't find any jobs matching your current search or filters. Try broadening your keywords.
                     </p>
                     <Button
-                      onClick={() => window.location.reload()}
-                      className="bg-error-600 hover:bg-error-700 text-white px-8"
+                      variant="ghost"
+                      onClick={handleClearFilters}
+                      className="mt-8 h-11 px-8 rounded-xl text-primary-600 font-bold uppercase tracking-wider text-[11px] hover:bg-primary-50 transition-all"
                     >
-                      Try again
+                      Clear All Filters
                     </Button>
                   </div>
-                </div>
-              ) : jobs.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-24 space-y-6 bg-background-subtle/50 rounded-3xl border border-border-subtle">
-                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center bg-background-surface shadow-sm border border-primary-100 dark:border-primary-900">
-                    <Search className="w-12 h-12 text-primary-500" />
-                  </div>
-                  <div className="text-center max-w-md px-4">
-                    <h3 className="text-xl font-bold text-text-primary mb-2">No jobs found</h3>
-                    <p className="text-text-secondary mb-6">
-                      We couldn&apos;t find any jobs matching your criteria. Try adjusting your
-                      filters or search terms.
-                    </p>
-                    <div className="flex justify-center">
-                      <Button
-                        variant="outline"
-                        onClick={handleClearFilters}
-                        className="flex items-center gap-2 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700"
-                      >
-                        <Filter className="w-4 h-4" />
-                        Clear all filters
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {jobs.map(job => (
+                ) : (
+                  jobs.map(job => (
                     <JobCard
                       key={job.id}
                       job={job}
                       isSelected={selectedJob?.id === job.id}
                       onSelect={handleJobSelect}
-                      onApply={handleJobApply}
-                      showApplyButton={false}
-                      className="h-full hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
+                      className="h-full hover:shadow-xl transition-all duration-300"
                     />
-                  ))}
-                </>
+                  ))
+                )
+              ) : activeTab === 'applied' ? (
+                applications.length === 0 ? (
+                  <div className="col-span-full py-24 flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 rounded-3xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center border border-success-100 dark:border-success-900/30 mb-8">
+                      <Briefcase className="w-8 h-8 text-success-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-text-primary tracking-tight">No applications yet</h3>
+                    <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                      Your journey starts here. Explore our personalized recommendations and apply to roles that fit your skills.
+                    </p>
+                    <Button
+                      onClick={() => setActiveTab('recommended')}
+                      className="mt-10 h-12 px-10 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-primary-600/20 transition-all active:scale-95"
+                    >
+                      Browse Recommended Jobs
+                    </Button>
+                  </div>
+                ) : (
+                  applications.map((app: Application) => (
+                    <Card key={app.id} className="p-6 border-border-default hover:border-primary-200 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md overflow-hidden rounded-[32px] bg-background-surface">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className="w-12 h-12 rounded-2xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center font-bold text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-800 shadow-sm transition-transform group-hover:scale-110 duration-300">
+                            {app.company_name?.substring(0, 2).toUpperCase() || 'JB'}
+                          </div>
+                          <Badge
+                            variant="subtle"
+                            className={cn(
+                              "font-bold uppercase tracking-wider text-[10px] px-3 py-1.5 rounded-full border-none",
+                              app.status === 'applied' ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" :
+                                app.status === 'interviewing' ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400" :
+                                  "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                            )}
+                          >
+                            {app.status}
+                          </Badge>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-text-primary line-clamp-1 group-hover:text-primary-600 transition-colors tracking-tight">
+                            {app.job_title}
+                          </h3>
+                          <p className="text-sm text-text-tertiary font-medium mt-1 uppercase tracking-wider text-[10px] opacity-70 italic">{app.company_name}</p>
+                        </div>
+                      </div>
+                      <div className="pt-6 mt-8 border-t border-border-subtle flex items-center justify-between text-[11px] text-text-tertiary font-medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                          Applied {new Date(app.applied_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                        <div className="px-4 py-2 bg-background-subtle rounded-xl border border-border-subtle group-hover:bg-primary-600 group-hover:text-white group-hover:border-primary-600 font-bold uppercase tracking-wider text-[10px] transition-all cursor-pointer shadow-sm">
+                          Details
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )
+              ) : (
+                <div className="col-span-full py-24 flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-3xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center border border-warning-100 dark:border-warning-900/30 mb-8">
+                    <Bookmark className="w-8 h-8 text-warning-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-text-primary tracking-tight">Saved jobs coming soon</h3>
+                  <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                    We're building a simpler way for you to bookmark and organize roles you're interested in. Stay tuned!
+                  </p>
+                </div>
               )}
             </div>
 
-            {}
-            {totalPages > 1 && totalJobs > 0 && (
+            {/* Pagination */}
+            {totalPages > 1 && totalJobs > 0 && (activeTab === 'recommended' || isSearchMode) && (
               <div className="mt-16 flex justify-center">
                 <div className="flex items-center gap-2 bg-background-surface rounded-2xl p-2 shadow-sm border border-border-subtle">
                   <Button
@@ -432,65 +483,21 @@ export default function Jobs() {
                     size="icon"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 disabled:opacity-30 transition-colors"
+                    className="h-10 w-10 rounded-xl hover:bg-primary-50 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
+                    <Clock className="w-5 h-5 -rotate-90" />
                   </Button>
-
-                  <div className="flex items-center gap-1 mx-2">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum
-                      if (totalPages <= 5) {
-                        pageNum = i + 1
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i
-                      } else {
-                        pageNum = currentPage - 2 + i
-                      }
-
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={currentPage === pageNum ? 'default' : 'ghost'}
-                          size="sm"
-                          onClick={() => handlePageChange(pageNum)}
-                          className={cn(
-                            'h-10 w-10 rounded-xl text-sm font-semibold transition-all duration-200',
-                            currentPage === pageNum
-                              ? 'bg-primary-600 text-white shadow-md hover:bg-primary-700'
-                              : 'text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400'
-                          )}
-                        >
-                          {pageNum}
-                        </Button>
-                      )
-                    })}
-                  </div>
-
+                  <span className="text-sm font-bold text-text-secondary px-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
-                    className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 disabled:opacity-30 transition-colors"
+                    className="h-10 w-10 rounded-xl hover:bg-primary-50 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    <Clock className="w-5 h-5 rotate-90" />
                   </Button>
                 </div>
               </div>
@@ -498,7 +505,6 @@ export default function Jobs() {
           </div>
         </AnimatedContainer>
 
-        {}
         <JobDetailsModal
           job={selectedJob}
           isOpen={isDetailModalOpen}
