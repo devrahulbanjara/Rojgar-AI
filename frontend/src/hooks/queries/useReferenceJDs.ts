@@ -36,8 +36,7 @@ export function useCreateReferenceJD() {
     mutationFn: (data: CreateReferenceJDRequest) => referenceJDService.createReferenceJD(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: referenceJDKeys.list() })
-
-      toast.success('Reference JD created successfully!')
+      // Toast is handled in the component
     },
     onError: (error: Error) => {
       let errorMessage = 'Failed to create reference JD'
@@ -59,7 +58,10 @@ export function useCreateReferenceJD() {
         }
       }
 
-      toast.error(errorMessage)
+      toast.error('Failed to Create Reference JD', {
+        description: errorMessage,
+        duration: 4000,
+      })
       console.error('Error creating reference JD:', error)
       console.error('Error details:', {
         message: error.message,
@@ -86,7 +88,7 @@ export function useConvertJobToReferenceJD() {
       return createMutation.mutateAsync(referenceJDData)
     },
     onSuccess: () => {
-      toast.success('Job converted to Reference JD successfully!')
+      // Toast is handled in the component or by createMutation
     },
     onError: (error: Error) => {
       let errorMessage = 'Failed to convert job to reference JD'
@@ -108,7 +110,10 @@ export function useConvertJobToReferenceJD() {
         }
       }
 
-      toast.error(errorMessage)
+      toast.error('Failed to Convert Job', {
+        description: errorMessage,
+        duration: 4000,
+      })
       console.error('Error converting job to reference JD:', error)
       console.error('Error details:', {
         message: error.message,
@@ -126,7 +131,10 @@ export function useUpdateReferenceJD() {
       referenceJDService.updateReferenceJD(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: referenceJDKeys.list() })
-      toast.success('Reference JD updated successfully!')
+      toast.success('Reference JD Updated Successfully', {
+        description: 'Your reference template has been updated',
+        duration: 4000,
+      })
     },
     onError: (error: Error) => {
       let errorMessage = 'Failed to update reference JD'
@@ -148,7 +156,10 @@ export function useUpdateReferenceJD() {
         }
       }
 
-      toast.error(errorMessage)
+      toast.error('Failed to Update Reference JD', {
+        description: errorMessage,
+        duration: 4000,
+      })
       console.error('Error updating reference JD:', error)
     },
   })
@@ -161,7 +172,10 @@ export function useDeleteReferenceJD() {
     mutationFn: (id: string) => referenceJDService.deleteReferenceJD(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: referenceJDKeys.list() })
-      toast.success('Reference JD deleted successfully!')
+      toast.success('Reference JD Deleted Successfully', {
+        description: 'The reference template has been removed',
+        duration: 4000,
+      })
     },
     onError: (error: Error) => {
       let errorMessage = 'Failed to delete reference JD'
@@ -183,7 +197,10 @@ export function useDeleteReferenceJD() {
         }
       }
 
-      toast.error(errorMessage)
+      toast.error('Failed to Delete Reference JD', {
+        description: errorMessage,
+        duration: 4000,
+      })
       console.error('Error deleting reference JD:', error)
     },
   })

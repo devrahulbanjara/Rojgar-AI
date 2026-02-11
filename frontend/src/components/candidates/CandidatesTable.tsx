@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import { CandidateApplication } from '../../types/candidate'
 import { cn } from '../../lib/utils'
 import {
@@ -11,11 +11,24 @@ import {
   Send,
   Trash2,
   ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
   Users,
 } from 'lucide-react'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '../ui/pagination'
 import { UserAvatar } from '../ui/UserAvatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 interface CandidatesTableProps {
   candidates: CandidateApplication[]
@@ -29,7 +42,44 @@ interface CandidatesTableProps {
 
 interface ActionDropdownProps {
   candidate: CandidateApplication
-  onClose: () => void
+}
+
+function ActionDropdown({ candidate: _candidate }: ActionDropdownProps) {
+  const menuItems = [
+    { icon: Eye, label: 'View Resume', onClick: () => { } },
+    { icon: Send, label: 'Send Email', onClick: () => { } },
+    { icon: Trash2, label: 'Delete', onClick: () => { }, isDanger: true },
+  ]
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:bg-background-subtle hover:text-text-secondary transition-all duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        {menuItems.map((item, index) => (
+          <DropdownMenuItem
+            key={index}
+            onClick={e => {
+              e.stopPropagation()
+              item.onClick()
+            }}
+            className={cn(
+              'flex items-center gap-3 cursor-pointer',
+              item.isDanger
+                ? 'text-text-secondary hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30'
+                : 'text-text-secondary hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
+            )}
+          >
+            <item.icon className="w-4 h-4" />
+            <span>{item.label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 function formatFullDate(dateString: string): string {
@@ -82,53 +132,6 @@ function getStatusStyles(status: string): { bg: string; text: string; border: st
   }
 }
 
-function ActionDropdown({ candidate: _candidate, onClose }: ActionDropdownProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
-
-  const menuItems = [
-    { icon: Eye, label: 'View Resume', onClick: () => {} },
-    { icon: Send, label: 'Send Email', onClick: () => {} },
-    { icon: Trash2, label: 'Delete', onClick: () => {}, isDanger: true },
-  ]
-
-  return (
-    <div
-      ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 z-50 bg-background-surface border border-border-default rounded-xl shadow-lg py-2 min-w-[160px] shadow-[0_4px_6px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_rgba(0,0,0,0.2),0_10px_20px_rgba(0,0,0,0.4)]"
-    >
-      {menuItems.map((item, index) => (
-        <button
-          key={index}
-          onClick={e => {
-            e.stopPropagation()
-            item.onClick()
-            onClose()
-          }}
-          className={cn(
-            'w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200',
-            item.isDanger
-              ? 'text-text-secondary hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30'
-              : 'text-text-secondary hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
-          )}
-        >
-          <item.icon className="w-4 h-4" />
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export function SkeletonTableRow() {
   return (
     <tr className="border-b border-border-subtle animate-pulse">
@@ -172,7 +175,6 @@ export function CandidatesTable({
   onPageChange,
   className,
 }: CandidatesTableProps) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [sortField, setSortField] = useState<string | null>(null)
 
   const totalPages = Math.ceil(totalCandidates / pageSize)
@@ -197,7 +199,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
                 <button
                   onClick={() => handleSort('name')}
-                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
+                  className="flex items-center gap-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Candidate
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -207,7 +209,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
                 <button
                   onClick={() => handleSort('job_title')}
-                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
+                  className="flex items-center gap-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Applied For
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -215,7 +217,7 @@ export function CandidatesTable({
               </th>
 
               <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                   Contact
                 </span>
               </th>
@@ -223,7 +225,7 @@ export function CandidatesTable({
               <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
                 <button
                   onClick={() => handleSort('current_status')}
-                  className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
+                  className="flex items-center gap-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider hover:text-text-primary transition-colors duration-200"
                 >
                   Status
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -231,7 +233,7 @@ export function CandidatesTable({
               </th>
 
               <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
-                <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                   Actions
                 </span>
               </th>
@@ -312,27 +314,7 @@ export function CandidatesTable({
                   </td>
 
                   <td className="py-6 px-6 text-center">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          setActiveDropdown(
-                            activeDropdown === candidate.application_id
-                              ? null
-                              : candidate.application_id
-                          )
-                        }}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:bg-background-subtle hover:text-text-secondary transition-all duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 group-hover:text-primary-600 dark:group-hover:text-primary-400"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      {activeDropdown === candidate.application_id && (
-                        <ActionDropdown
-                          candidate={candidate}
-                          onClose={() => setActiveDropdown(null)}
-                        />
-                      )}
-                    </div>
+                    <ActionDropdown candidate={candidate} />
                   </td>
                 </tr>
               )
@@ -347,61 +329,67 @@ export function CandidatesTable({
               Showing {startIndex}-{endIndex} of {totalCandidates} candidates
             </p>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={cn(
-                'w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200',
-                currentPage === 1
-                  ? 'bg-background-surface border-border-default text-text-muted cursor-not-allowed'
-                  : 'bg-background-surface border-border-default text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-600 dark:hover:text-primary-400'
-              )}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={e => {
+                    e.preventDefault()
+                    if (currentPage > 1) onPageChange(currentPage - 1)
+                  }}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
 
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              let pageNum: number
-              if (totalPages <= 5) {
-                pageNum = i + 1
-              } else if (currentPage <= 3) {
-                pageNum = i + 1
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i
-              } else {
-                pageNum = currentPage - 2 + i
-              }
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(pageNum => {
+                  if (totalPages <= 5) return true
+                  if (pageNum === 1 || pageNum === totalPages) return true
+                  return Math.abs(pageNum - currentPage) <= 1
+                })
+                .map((pageNum, index, array) => {
+                  const elements = []
+                  if (index > 0 && pageNum - array[index - 1] > 1) {
+                    elements.push(
+                      <PaginationItem key={`ellipsis-${pageNum}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )
+                  }
+                  elements.push(
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        href="#"
+                        isActive={currentPage === pageNum}
+                        onClick={e => {
+                          e.preventDefault()
+                          onPageChange(pageNum)
+                        }}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                  return elements
+                })}
 
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => onPageChange(pageNum)}
-                  className={cn(
-                    'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200',
-                    currentPage === pageNum
-                      ? 'bg-primary-600 text-text-inverse shadow-sm'
-                      : 'bg-background-surface border border-border-default text-text-secondary hover:bg-primary-50 hover:border-primary-200 hover:text-primary-600'
-                  )}
-                >
-                  {pageNum}
-                </button>
-              )
-            })}
-
-            <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className={cn(
-                'w-9 h-9 flex items-center justify-center rounded-lg border transition-all duration-200',
-                currentPage === totalPages || totalPages === 0
-                  ? 'bg-background-surface border-border-default text-text-muted cursor-not-allowed'
-                  : 'bg-background-surface border-border-default text-text-secondary hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-200 dark:hover:border-primary-800 hover:text-primary-600 dark:hover:text-primary-400'
-              )}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={e => {
+                    e.preventDefault()
+                    if (currentPage < totalPages) onPageChange(currentPage + 1)
+                  }}
+                  className={
+                    currentPage === totalPages || totalPages === 0
+                      ? 'pointer-events-none opacity-50'
+                      : ''
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>

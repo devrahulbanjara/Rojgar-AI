@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { AppShell } from '../../../components/layout/AppShell'
-import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
+import { PageTransition, AnimatedContainer, SkeletonLoader } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
 import { useCandidates, useCandidateSearch } from '../../../hooks/queries/useCandidates'
 import {
@@ -15,6 +15,92 @@ import {
 } from '../../../components/candidates'
 import { CandidateApplication } from '../../../types/candidate'
 import { Search, FolderOpen, Users } from 'lucide-react'
+
+function CandidatesTableSkeleton() {
+  return (
+    <div
+      className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"
+      style={{
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)',
+      }}
+    >
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gradient-to-r from-background-subtle to-background-subtle/50 border-b border-border-default">
+            <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
+              <SkeletonLoader variant="rectangular" width={84} height={12} className="rounded-sm" />
+            </th>
+            <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
+              <SkeletonLoader variant="rectangular" width={90} height={12} className="rounded-sm" />
+            </th>
+            <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
+              <SkeletonLoader variant="rectangular" width={64} height={12} className="rounded-sm" />
+            </th>
+            <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
+              <SkeletonLoader variant="rectangular" width={58} height={12} className="rounded-sm" />
+            </th>
+            <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
+              <SkeletonLoader variant="rectangular" width={52} height={12} className="rounded-sm mx-auto" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <SkeletonTableRow key={index} />
+          ))}
+        </tbody>
+      </table>
+      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-background-subtle to-background-subtle/50 border-t border-border-default">
+        <SkeletonLoader variant="rectangular" width={180} height={14} className="rounded-sm" />
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <SkeletonLoader key={index} variant="rectangular" width={36} height={36} className="rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RecruiterCandidatesPageSkeleton() {
+  return (
+    <AppShell>
+      <PageTransition className="min-h-screen bg-background-subtle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="space-y-2">
+              <SkeletonLoader variant="text" width="34%" height={34} />
+              <SkeletonLoader variant="text" width="58%" height={18} />
+            </div>
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-background-surface rounded-lg border border-border-default shadow-sm min-w-[124px]">
+              <SkeletonLoader variant="rectangular" width={36} height={36} className="rounded-lg" />
+              <div className="space-y-2">
+                <SkeletonLoader variant="text" width={36} height={20} />
+                <SkeletonLoader variant="text" width={44} height={10} />
+              </div>
+            </div>
+          </div>
+          <div className="border-b border-border-default/60" />
+
+          <div className="space-y-8">
+            <div className="mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
+                <SkeletonLoader variant="rectangular" height={48} className="rounded-xl w-full lg:w-[420px]" />
+                <div className="flex flex-wrap items-center gap-3">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <SkeletonLoader key={index} variant="rectangular" width={90} height={34} className="rounded-full" />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <CandidatesTableSkeleton />
+          </div>
+        </div>
+      </PageTransition>
+    </AppShell>
+  )
+}
 
 export default function RecruiterCandidatesPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
@@ -77,7 +163,7 @@ export default function RecruiterCandidatesPage() {
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = '/login'
+      window.location.href = '/signin'
     }
   }, [isAuthenticated, isAuthLoading])
 
@@ -158,14 +244,12 @@ export default function RecruiterCandidatesPage() {
     setCurrentPage(page)
   }, [])
 
-  if (isAuthLoading || !isAuthenticated) {
-    return (
-      <AppShell>
-        <PageTransition className="min-h-screen flex items-center justify-center">
-          <LoadingSpinner />
-        </PageTransition>
-      </AppShell>
-    )
+  if (isAuthLoading) {
+    return <RecruiterCandidatesPageSkeleton />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -229,47 +313,7 @@ export default function RecruiterCandidatesPage() {
             <AnimatedContainer direction="up" delay={0.2}>
               <div className="w-full">
                 {isLoading ? (
-                  <div
-                    className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"
-                    style={{
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)',
-                    }}
-                  >
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-background-subtle to-background-subtle/50 border-b border-border-default">
-                          <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
-                            <div className="h-3 bg-border-default rounded w-20" />
-                          </th>
-                          <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-                            <div className="h-3 bg-border-default rounded w-24" />
-                          </th>
-                          <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-                            <div className="h-3 bg-border-default rounded w-16" />
-                          </th>
-                          <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
-                            <div className="h-3 bg-border-default rounded w-14" />
-                          </th>
-                          <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
-                            <div className="h-3 bg-border-default rounded w-12 mx-auto" />
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from({ length: 6 }).map((_, index) => (
-                          <SkeletonTableRow key={index} />
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-background-subtle to-background-subtle/50 border-t border-border-default">
-                      <div className="h-4 bg-border-default rounded w-48" />
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <div key={i} className="w-9 h-9 bg-border-default rounded-lg" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  <CandidatesTableSkeleton />
                 ) : error ? (
                   <div
                     className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"

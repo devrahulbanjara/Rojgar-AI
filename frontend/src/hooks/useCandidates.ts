@@ -22,8 +22,8 @@ export interface CandidateApplicationSummary {
   professional_summary?: string
   current_status: string
   applied_at: string
-  ai_score?: number
-  ai_analysis?: string
+  score?: number
+  feedback?: string
   social_links?: SocialLink[]
 }
 
@@ -39,7 +39,7 @@ export function useCandidates(params?: Record<string, unknown>) {
       const response = await api.candidates.list(params)
       return response as RecruiterCandidateListResponse
     },
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   })
 }
