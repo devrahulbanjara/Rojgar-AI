@@ -95,7 +95,7 @@ const departmentColors: Record<
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
   ({ job, onClick, onConvertToReferenceJD: _onConvertToReferenceJD, className }) => {
     const status = job.status || 'Draft'
-    const displayStatus = status === 'Closed' ? 'Expired' : status
+    const displayStatus = status
     const deptColor = departmentColors[job.department || ''] || departmentColors.Default
 
     const jobId = job.job_id || job.id?.toString() || null
