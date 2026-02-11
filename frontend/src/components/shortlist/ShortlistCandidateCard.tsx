@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronDown, Brain, FileText, Loader2 } from 'lucide-react'
+import { CheckCircle2, XCircle, ChevronDown, Brain, Loader2 } from 'lucide-react'
 import { UserAvatar } from '../ui/UserAvatar'
 import { cn } from '../../lib/utils'
 import type { ShortlistCandidate } from '../../types/shortlist'
@@ -68,8 +68,10 @@ export function ShortlistCandidateCard({
     <div
       className={cn(
         'group w-full bg-white dark:bg-[#0F172A] rounded-[16px] border border-[#E2E8F0] dark:border-[#1E293B] p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
-        isShortlisted && 'border-success-200 dark:border-success-800 bg-success-50/20 dark:bg-success-950/20',
-        isRejected && 'border-error-200 dark:border-error-800 bg-error-50/20 dark:bg-error-950/20 opacity-60',
+        isShortlisted &&
+          'border-success-200 dark:border-success-800 bg-success-50/20 dark:bg-success-950/20',
+        isRejected &&
+          'border-error-200 dark:border-error-800 bg-error-50/20 dark:bg-error-950/20 opacity-60',
         className
       )}
     >

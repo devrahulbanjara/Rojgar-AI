@@ -1,10 +1,10 @@
-import React from 'react';
-import Image from 'next/image';
-import Container from './Container';
-import { TestimonialsContent } from '../../../content/landing-page';
+import React from 'react'
+import Image from 'next/image'
+import Container from './Container'
+import { TestimonialsContent } from '../../../content/landing-page'
 
 interface TestimonialsProps {
-  content: TestimonialsContent;
+  content: TestimonialsContent
 }
 
 export default function Testimonials({ content }: TestimonialsProps) {
@@ -13,9 +13,7 @@ export default function Testimonials({ content }: TestimonialsProps) {
       <Container>
         {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="text-base text-[var(--color-gray-600)] mb-3">
-            {content.subtitle}
-          </p>
+          <p className="text-base text-[var(--color-gray-600)] mb-3">{content.subtitle}</p>
           <h2 className="text-3xl sm:text-4xl lg:text-[45px] leading-tight lg:leading-[56px] font-semibold text-[var(--color-primary-black)]">
             {content.title}
           </h2>
@@ -76,5 +74,5 @@ export default function Testimonials({ content }: TestimonialsProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

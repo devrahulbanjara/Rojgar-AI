@@ -163,7 +163,7 @@ export default function CandidateDashboard() {
             title="Outcome"
             count={columns.Outcome.length}
             icon={<Trophy className="w-5 h-5 text-success-600 dark:text-success-400" />}
-            textColor="text-success-900 dark:text-success-100"
+            textColor="text-success-900 dark:text-text-primary"
             badgeColor="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300"
           />
           <div className="flex-1 flex flex-col gap-4">

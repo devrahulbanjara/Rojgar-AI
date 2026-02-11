@@ -1,10 +1,10 @@
-import React from 'react';
-import Container from './Container';
-import Button from './Button';
-import { CTAContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Button from './Button'
+import { CTAContent } from '../../../content/landing-page'
 
 interface CTASectionProps {
-  content: CTAContent;
+  content: CTAContent
 }
 
 export default function CTASection({ content }: CTASectionProps) {
@@ -30,9 +30,9 @@ export default function CTASection({ content }: CTASectionProps) {
 
         {/* Decorative Spinning Icon */}
         <div className="absolute -top-10 -right-10 w-32 h-32 opacity-20 hidden lg:block animate-spin-slow">
-          <svg 
-            viewBox="0 0 100 100" 
-            fill="none" 
+          <svg
+            viewBox="0 0 100 100"
+            fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className="text-[var(--color-primary-purple)]"
           >
@@ -45,5 +45,5 @@ export default function CTASection({ content }: CTASectionProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

@@ -17,26 +17,16 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        // =======================================================================
-        // PREMIUM TYPOGRAPHY SYSTEM - Manrope for clean, modern aesthetic
-        // =======================================================================
-        // Global UI, Body & Headings - Manrope for consistent branding
         sans: ['var(--font-manrope)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         manrope: ['var(--font-manrope)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        // Headings - Also use Manrope for consistency
         display: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
-        // Agentic/AI Data - For Score Breakdowns, AI Logs, Reasoning sections
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       letterSpacing: {
-        // Premium tight headings (-0.02em to -0.04em for luxury tech brand feel)
         tightest: '-0.04em',
         tighter: '-0.02em',
       },
       colors: {
-        // =======================================================================
-        // FOUNDATION - Backgrounds
-        // =======================================================================
         background: {
           DEFAULT: 'hsl(var(--background))',
           base: 'hsl(var(--background-base))',
@@ -45,10 +35,6 @@ const config: Config = {
           muted: 'hsl(var(--background-muted))',
           elevated: 'hsl(var(--background-elevated))',
         },
-
-        // =======================================================================
-        // FOUNDATION - Foreground & Text
-        // =======================================================================
         foreground: 'hsl(var(--foreground))',
         text: {
           primary: 'hsl(var(--text-primary))',
@@ -57,10 +43,6 @@ const config: Config = {
           muted: 'hsl(var(--text-muted))',
           inverse: 'hsl(var(--text-inverse))',
         },
-
-        // =======================================================================
-        // FOUNDATION - Borders
-        // =======================================================================
         border: {
           DEFAULT: 'hsl(var(--border))',
           subtle: 'hsl(var(--border-subtle))',
@@ -69,130 +51,98 @@ const config: Config = {
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-
-        // =======================================================================
-        // BRAND - Professional Intelligence
-        // =======================================================================
         brand: {
           DEFAULT: 'hsl(var(--brand))',
           dark: 'hsl(var(--brand-dark))',
           light: 'hsl(var(--brand-light))',
           foreground: 'hsl(var(--brand-foreground))',
         },
-
-        // =======================================================================
-        // PRIMARY - Professional Blue
-        // =======================================================================
         primary: {
+          '50': 'hsl(var(--primary-50))',
+          '100': 'hsl(var(--primary-100))',
+          '200': 'hsl(var(--primary-200))',
+          '300': 'hsl(var(--primary-300))',
+          '400': 'hsl(var(--primary-400))',
+          '500': 'hsl(var(--primary-500))',
+          '600': 'hsl(var(--primary-600))',
+          '700': 'hsl(var(--primary-700))',
+          '800': 'hsl(var(--primary-800))',
+          '900': 'hsl(var(--primary-900))',
           DEFAULT: 'hsl(var(--primary))',
-          50: 'hsl(var(--primary-50))',
-          100: 'hsl(var(--primary-100))',
-          200: 'hsl(var(--primary-200))',
-          300: 'hsl(var(--primary-300))',
-          400: 'hsl(var(--primary-400))',
-          500: 'hsl(var(--primary-500))',
-          600: 'hsl(var(--primary-600))',
-          700: 'hsl(var(--primary-700))',
-          800: 'hsl(var(--primary-800))',
-          900: 'hsl(var(--primary-900))',
           foreground: 'hsl(var(--primary-foreground))',
           hover: 'hsl(var(--primary-hover))',
         },
-
-        // =======================================================================
-        // AI - Intelligent Assistance (Purple)
-        // =======================================================================
         ai: {
+          '50': 'hsl(var(--ai-50))',
+          '100': 'hsl(var(--ai-100))',
+          '200': 'hsl(var(--ai-200))',
+          '300': 'hsl(var(--ai-300))',
+          '400': 'hsl(var(--ai-400))',
+          '500': 'hsl(var(--ai-500))',
+          '600': 'hsl(var(--ai-600))',
+          '700': 'hsl(var(--ai-700))',
+          '800': 'hsl(var(--ai-800))',
+          '900': 'hsl(var(--ai-900))',
           DEFAULT: 'hsl(var(--ai))',
-          50: 'hsl(var(--ai-50))',
-          100: 'hsl(var(--ai-100))',
-          200: 'hsl(var(--ai-200))',
-          300: 'hsl(var(--ai-300))',
-          400: 'hsl(var(--ai-400))',
-          500: 'hsl(var(--ai-500))',
-          600: 'hsl(var(--ai-600))',
-          700: 'hsl(var(--ai-700))',
-          800: 'hsl(var(--ai-800))',
-          900: 'hsl(var(--ai-900))',
           foreground: 'hsl(var(--ai-foreground))',
         },
-
-        // =======================================================================
-        // SUCCESS - Positive Outcomes (Teal)
-        // =======================================================================
         success: {
+          '50': 'hsl(var(--success-50))',
+          '100': 'hsl(var(--success-100))',
+          '200': 'hsl(var(--success-200))',
+          '300': 'hsl(var(--success-300))',
+          '400': 'hsl(var(--success-400))',
+          '500': 'hsl(var(--success-500))',
+          '600': 'hsl(var(--success-600))',
+          '700': 'hsl(var(--success-700))',
+          '800': 'hsl(var(--success-800))',
+          '900': 'hsl(var(--success-900))',
           DEFAULT: 'hsl(var(--success))',
-          50: 'hsl(var(--success-50))',
-          100: 'hsl(var(--success-100))',
-          200: 'hsl(var(--success-200))',
-          300: 'hsl(var(--success-300))',
-          400: 'hsl(var(--success-400))',
-          500: 'hsl(var(--success-500))',
-          600: 'hsl(var(--success-600))',
-          700: 'hsl(var(--success-700))',
-          800: 'hsl(var(--success-800))',
-          900: 'hsl(var(--success-900))',
           foreground: 'hsl(var(--success-foreground))',
         },
-
-        // =======================================================================
-        // WARNING - Requires Attention (Amber)
-        // =======================================================================
         warning: {
+          '50': 'hsl(var(--warning-50))',
+          '100': 'hsl(var(--warning-100))',
+          '200': 'hsl(var(--warning-200))',
+          '300': 'hsl(var(--warning-300))',
+          '400': 'hsl(var(--warning-400))',
+          '500': 'hsl(var(--warning-500))',
+          '600': 'hsl(var(--warning-600))',
+          '700': 'hsl(var(--warning-700))',
+          '800': 'hsl(var(--warning-800))',
+          '900': 'hsl(var(--warning-900))',
           DEFAULT: 'hsl(var(--warning))',
-          50: 'hsl(var(--warning-50))',
-          100: 'hsl(var(--warning-100))',
-          200: 'hsl(var(--warning-200))',
-          300: 'hsl(var(--warning-300))',
-          400: 'hsl(var(--warning-400))',
-          500: 'hsl(var(--warning-500))',
-          600: 'hsl(var(--warning-600))',
-          700: 'hsl(var(--warning-700))',
-          800: 'hsl(var(--warning-800))',
-          900: 'hsl(var(--warning-900))',
           foreground: 'hsl(var(--warning-foreground))',
         },
-
-        // =======================================================================
-        // DESTRUCTIVE/ERROR - Critical Actions (Red)
-        // =======================================================================
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
         error: {
+          '50': 'hsl(var(--error-50))',
+          '100': 'hsl(var(--error-100))',
+          '200': 'hsl(var(--error-200))',
+          '300': 'hsl(var(--error-300))',
+          '400': 'hsl(var(--error-400))',
+          '500': 'hsl(var(--error-500))',
+          '600': 'hsl(var(--error-600))',
+          '700': 'hsl(var(--error-700))',
+          '800': 'hsl(var(--error-800))',
+          '900': 'hsl(var(--error-900))',
           DEFAULT: 'hsl(var(--error))',
-          50: 'hsl(var(--error-50))',
-          100: 'hsl(var(--error-100))',
-          200: 'hsl(var(--error-200))',
-          300: 'hsl(var(--error-300))',
-          400: 'hsl(var(--error-400))',
-          500: 'hsl(var(--error-500))',
-          600: 'hsl(var(--error-600))',
-          700: 'hsl(var(--error-700))',
-          800: 'hsl(var(--error-800))',
-          900: 'hsl(var(--error-900))',
         },
-
-        // =======================================================================
-        // INFO - Neutral Actions (Sky Blue)
-        // =======================================================================
         info: {
+          '50': 'hsl(var(--info-50))',
+          '100': 'hsl(var(--info-100))',
+          '200': 'hsl(var(--info-200))',
+          '300': 'hsl(var(--info-300))',
+          '400': 'hsl(var(--info-400))',
+          '500': 'hsl(var(--info-500))',
+          '600': 'hsl(var(--info-600))',
+          '700': 'hsl(var(--info-700))',
           DEFAULT: 'hsl(var(--info))',
-          50: 'hsl(var(--info-50))',
-          100: 'hsl(var(--info-100))',
-          200: 'hsl(var(--info-200))',
-          300: 'hsl(var(--info-300))',
-          400: 'hsl(var(--info-400))',
-          500: 'hsl(var(--info-500))',
-          600: 'hsl(var(--info-600))',
-          700: 'hsl(var(--info-700))',
           foreground: 'hsl(var(--info-foreground))',
         },
-
-        // =======================================================================
-        // SEMANTIC UI COLORS
-        // =======================================================================
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
@@ -216,10 +166,6 @@ const config: Config = {
           foreground: 'hsl(var(--accent-foreground))',
           hover: 'hsl(var(--accent-hover))',
         },
-
-        // =======================================================================
-        // SOCIAL MEDIA - Exact Brand Colors
-        // =======================================================================
         social: {
           linkedin: '#0A66C2',
           github: '#24292e',
@@ -229,10 +175,6 @@ const config: Config = {
           dribbble: '#EA4C89',
           behance: '#1769FF',
         },
-
-        // =======================================================================
-        // LANDING PAGE COLORS - CSS Variables
-        // =======================================================================
         'color-primary-black': 'var(--color-primary-black)',
         'color-primary-purple': 'var(--color-primary-purple)',
         'color-primary-light': 'var(--color-primary-light)',
@@ -242,6 +184,23 @@ const config: Config = {
         'color-gray-400': 'var(--color-gray-400)',
         'color-gray-600': 'var(--color-gray-600)',
         'color-gray-900': 'var(--color-gray-900)',
+        chart: {
+          '1': 'hsl(var(--chart-1))',
+          '2': 'hsl(var(--chart-2))',
+          '3': 'hsl(var(--chart-3))',
+          '4': 'hsl(var(--chart-4))',
+          '5': 'hsl(var(--chart-5))',
+        },
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          ring: 'hsl(var(--sidebar-ring))',
+        },
       },
       backgroundImage: {
         'gradient-brand': 'var(--gradient-brand)',
@@ -254,9 +213,9 @@ const config: Config = {
         'gradient-hero': 'var(--gradient-hero)',
       },
       borderRadius: {
-        lg: 'var(--radius-lg)',
-        md: 'var(--radius)',
-        sm: 'var(--radius-sm)',
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
         xl: 'var(--radius-xl)',
         '2xl': '5px',
         '3xl': '5px',
@@ -283,98 +242,223 @@ const config: Config = {
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(8px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(16px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(16px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
         },
         slideInRight: {
-          '0%': { opacity: '0', transform: 'translateX(16px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateX(16px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateX(0)',
+          },
         },
         slideInLeft: {
-          '0%': { opacity: '0', transform: 'translateX(-16px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateX(-16px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateX(0)',
+          },
         },
         scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.96)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
+          '0%': {
+            opacity: '0',
+            transform: 'scale(0.96)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
         },
         scaleOut: {
-          '0%': { opacity: '1', transform: 'scale(1)' },
-          '100%': { opacity: '0', transform: 'scale(0.96)' },
+          '0%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
+          '100%': {
+            opacity: '0',
+            transform: 'scale(0.96)',
+          },
         },
         bounceIn: {
-          '0%': { opacity: '0', transform: 'scale(0.8)' },
-          '50%': { opacity: '1', transform: 'scale(1.02)' },
-          '70%': { transform: 'scale(0.98)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
+          '0%': {
+            opacity: '0',
+            transform: 'scale(0.8)',
+          },
+          '50%': {
+            opacity: '1',
+            transform: 'scale(1.02)',
+          },
+          '70%': {
+            transform: 'scale(0.98)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
         },
         slideDown: {
-          '0%': { opacity: '0', transform: 'translateY(-16px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(-16px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
         },
         fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(20px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
         },
         fadeInDown: {
-          '0%': { opacity: '0', transform: 'translateY(-20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(-20px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
         },
         fadeInLeft: {
-          '0%': { opacity: '0', transform: 'translateX(-20px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateX(-20px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateX(0)',
+          },
         },
         fadeInRight: {
-          '0%': { opacity: '0', transform: 'translateX(20px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
+          '0%': {
+            opacity: '0',
+            transform: 'translateX(20px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateX(0)',
+          },
         },
         zoomIn: {
-          '0%': { opacity: '0', transform: 'scale(0.9)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
+          '0%': {
+            opacity: '0',
+            transform: 'scale(0.9)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
         },
         zoomOut: {
-          '0%': { opacity: '1', transform: 'scale(1)' },
-          '100%': { opacity: '0', transform: 'scale(0.9)' },
+          '0%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
+          '100%': {
+            opacity: '0',
+            transform: 'scale(0.9)',
+          },
         },
         pulse: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.5' },
+          '0%, 100%': {
+            opacity: '1',
+          },
+          '50%': {
+            opacity: '0.5',
+          },
         },
         wiggle: {
-          '0%, 100%': { transform: 'rotate(-3deg)' },
-          '50%': { transform: 'rotate(3deg)' },
+          '0%, 100%': {
+            transform: 'rotate(-3deg)',
+          },
+          '50%': {
+            transform: 'rotate(3deg)',
+          },
         },
         float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '0%, 100%': {
+            transform: 'translateY(0px)',
+          },
+          '50%': {
+            transform: 'translateY(-10px)',
+          },
         },
         shimmer: {
-          '0%': { backgroundPosition: '-200px 0' },
-          '100%': { backgroundPosition: 'calc(200px + 100%) 0' },
+          '0%': {
+            backgroundPosition: '-200px 0',
+          },
+          '100%': {
+            backgroundPosition: 'calc(200px + 100%) 0',
+          },
         },
         gradient: {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
+          '0%, 100%': {
+            backgroundPosition: '0% 50%',
+          },
+          '50%': {
+            backgroundPosition: '100% 50%',
+          },
         },
         typing: {
-          '0%': { width: '0' },
-          '100%': { width: '100%' },
+          '0%': {
+            width: '0',
+          },
+          '100%': {
+            width: '100%',
+          },
         },
         blink: {
-          '0%, 50%': { opacity: '1' },
-          '51%, 100%': { opacity: '0' },
+          '0%, 50%': {
+            opacity: '1',
+          },
+          '51%, 100%': {
+            opacity: '0',
+          },
         },
         'ai-pulse': {
-          '0%, 100%': { boxShadow: '0 0 0 4px rgba(168, 85, 247, 0.15)' },
-          '50%': { boxShadow: '0 0 0 8px rgba(168, 85, 247, 0.05)' },
+          '0%, 100%': {
+            boxShadow: '0 0 0 4px rgba(168, 85, 247, 0.15)',
+          },
+          '50%': {
+            boxShadow: '0 0 0 8px rgba(168, 85, 247, 0.05)',
+          },
         },
         'spin-slow': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+          '0%': {
+            transform: 'rotate(0deg)',
+          },
+          '100%': {
+            transform: 'rotate(360deg)',
+          },
         },
       },
       animation: {
@@ -404,6 +488,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 }
 export default config

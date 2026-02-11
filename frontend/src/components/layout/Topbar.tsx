@@ -12,8 +12,9 @@ import { ROUTES } from '../../config/constants'
 import { UserAvatar } from '../ui/UserAvatar'
 import { cn } from '../../lib/utils'
 
+import { useSidebar } from '../ui/sidebar'
+
 interface TopbarProps {
-  onMenuClick?: () => void
   user: {
     name: string
     email: string
@@ -23,9 +24,9 @@ interface TopbarProps {
 }
 
 const BREADCRUMB_MAP: Record<string, { label: string; parent?: string }> = {
-  '/dashboard/recruiter': { label: 'Dashboard' },
-  '/dashboard/candidate': { label: 'Dashboard' },
-  '/dashboard/organization': { label: 'Overview' },
+  '/recruiter/dashboard': { label: 'Dashboard' },
+  '/candidate/dashboard': { label: 'Dashboard' },
+  '/organization/dashboard': { label: 'Overview' },
   '/recruiter/jobs': { label: 'Jobs' },
   '/recruiter/candidates': { label: 'Candidates' },
   '/recruiter/shortlist': { label: 'Shortlist' },
@@ -80,13 +81,13 @@ function Breadcrumbs() {
   )
 }
 
-export function Topbar({ onMenuClick, user }: TopbarProps) {
+export function Topbar({ user }: TopbarProps) {
+  const { toggleSidebar } = useSidebar()
   const router = useRouter()
   const pathname = usePathname()
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
-  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
 
   // Avoid hydration mismatch by waiting for mount
@@ -95,10 +96,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
   }, [])
 
   // Determine if user is a recruiter based on role or current path
-  const isRecruiter =
-    user?.role === 'recruiter' ||
-    pathname?.startsWith('/recruiter') ||
-    pathname?.startsWith('/dashboard/recruiter')
+  const isRecruiter = user?.role === 'recruiter' || pathname?.startsWith('/recruiter')
 
   const handleLogout = async () => {
     setIsDropdownOpen(false)
@@ -137,25 +135,24 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-[64px] flex items-center transition-all duration-300 border-b border-border-subtle dark:border-border shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] bg-white/85 dark:bg-background-surface/85 backdrop-blur-[12px]">
+    <header className="fixed top-0 left-0 right-0 z-40 h-[64px] flex items-center transition-all duration-300 border-b border-border-subtle dark:border-border shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] bg-white/85 dark:bg-background-surface/85 backdrop-blur-[12px]">
       <div className="flex items-center justify-between w-full h-full px-6 max-w-[1600px] mx-auto relative">
         {/* Left: Logo + Mobile Menu */}
         <div className="flex items-center gap-4">
-          {onMenuClick && (
-            <motion.button
-              onClick={onMenuClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="lg:hidden p-2 rounded-lg hover:bg-background-subtle text-text-secondary hover:text-text-primary transition-colors duration-200"
-              aria-label="Toggle menu"
-            >
-              <Menu className="h-5 w-5" />
-            </motion.button>
-          )}
+          <motion.button
+            onClick={toggleSidebar}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="md:hidden p-2 rounded-lg hover:bg-background-subtle text-text-secondary hover:text-text-primary transition-colors duration-200"
+            aria-label="Toggle menu"
+          >
+            <Menu className="h-5 w-5" />
+          </motion.button>
 
           <motion.div
             whileHover={{ scale: 1.03 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            className="md:hidden lg:block" // Hide on medium (sidebar expanded)
           >
             <Link href={ROUTES.HOME}>
               <Image
@@ -183,11 +180,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
 
             {/* Notification Bell - Shows Recent Activity for Recruiters */}
             {isRecruiter ? (
-              <NotificationDropdown
-                isOpen={isNotificationOpen}
-                onToggle={() => setIsNotificationOpen(prev => !prev)}
-                onClose={() => setIsNotificationOpen(false)}
-              />
+              <NotificationDropdown />
             ) : (
               <button
                 className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background-subtle transition-colors duration-200"

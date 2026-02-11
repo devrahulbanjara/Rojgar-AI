@@ -7,7 +7,9 @@ export default function AIPoweredBadge() {
     <div className="relative group inline-flex items-center gap-2 cursor-pointer">
       <div className="inline-flex items-center gap-2 px-4 py-2 bg-ai-50 dark:bg-ai-950/30 border border-ai-200 dark:border-ai-800 rounded-full transition-all duration-300 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-300 dark:hover:border-ai-700">
         <Sparkles className="w-4 h-4 text-ai-600 dark:text-ai-400" />
-        <span className="text-sm font-semibold text-ai-700 dark:text-ai-300 font-mono">AI Powered</span>
+        <span className="text-sm font-semibold text-ai-700 dark:text-ai-300 font-mono">
+          AI Powered
+        </span>
       </div>
 
       {/* Tooltip */}

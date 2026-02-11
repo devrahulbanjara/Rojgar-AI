@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 
 export default function SkipLink() {
   return (
@@ -8,5 +8,5 @@ export default function SkipLink() {
     >
       Skip to main content
     </a>
-  );
+  )
 }

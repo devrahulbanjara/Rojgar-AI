@@ -1,5 +1,5 @@
 import React from 'react'
-import { FileText, ListChecks, Briefcase, Copy } from 'lucide-react'
+import { ListChecks, Briefcase, Copy } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { ReferenceJD } from '../../services/referenceJDService'
 import {
@@ -36,7 +36,7 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
     <Card
       onClick={onClick}
       className={cn(
-        'group cursor-pointer hover:border-blue-200 dark:hover:border-blue-800/50 transition-all duration-300 shadow-sm flex flex-col bg-background-surface hover:shadow-md hover:-translate-y-0.5',
+        'group cursor-pointer border-border-default hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300 shadow-sm flex flex-col bg-background-surface hover:shadow-md hover:-translate-y-0.5',
         className
       )}
     >
@@ -44,17 +44,11 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
         {/* Header Badges */}
         <div className="flex gap-2">
           {jd.department && (
-            <Badge
-              variant="secondary"
-              className="bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 border-none font-medium h-6"
-            >
+            <Badge variant="subtle" colorPalette="blue" className="border-none font-medium h-6">
               {jd.department}
             </Badge>
           )}
-          <Badge
-            variant="secondary"
-            className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-none font-medium h-6"
-          >
+          <Badge variant="subtle" colorPalette="purple" className="border-none font-medium h-6">
             Template
           </Badge>
         </div>
@@ -85,7 +79,8 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
               <Badge
                 key={i}
                 variant="outline"
-                className="bg-background-subtle text-text-tertiary border-border-default font-normal truncate max-w-[150px]"
+                colorPalette="gray"
+                className="font-normal truncate max-w-[150px]"
                 title={tag}
               >
                 {tag}
@@ -96,10 +91,7 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge
-                      variant="secondary"
-                      className="bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border-none cursor-help"
-                    >
+                    <Badge variant="subtle" colorPalette="blue" className="cursor-help">
                       +{requiredQualifications.length - 2} more
                     </Badge>
                   </TooltipTrigger>
