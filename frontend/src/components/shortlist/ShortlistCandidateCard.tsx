@@ -71,7 +71,7 @@ export function ShortlistCandidateCard({
         className
       )}
     >
-      <div className="flex items-start gap-6">
+      <div className="flex items-center gap-6">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <Avatar className="h-14 w-14 border-2 border-white shadow-sm">
             <AvatarImage src={candidate.picture || undefined} />

@@ -5,12 +5,17 @@ import { usePathname } from 'next/navigation'
 import { Plus, FolderOpen, Briefcase } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '../../../components/layout/AppShell'
-import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
+import { PageTransition, AnimatedContainer, SkeletonLoader } from '../../../components/common'
+import { SkeletonReferenceJDCard } from '../../../components/common/SkeletonLoader'
 import {
-  SkeletonRecruiterJobCard,
-  SkeletonReferenceJDCard,
-} from '../../../components/common/SkeletonLoader'
-import { JobsTable, ReferenceJDsTable, JobDetailModal, PostJobModal, ReferenceJDModal, ReferenceJDEditModal } from '../../../components/recruiter'
+  JobsTable,
+  ReferenceJDsTable,
+  JobDetailModal,
+  PostJobModal,
+  ReferenceJDModal,
+  ReferenceJDEditModal,
+  SkeletonJobTableRow,
+} from '../../../components/recruiter'
 import {
   Tabs,
   TabsList,
@@ -34,6 +39,75 @@ import {
 import { useDeleteConfirm } from '../../../components/ui/delete-confirm-dialog'
 
 type TabType = 'active' | 'drafts' | 'expired' | 'reference-jds'
+
+function RecruiterJobsLoadingContent({ activeTab }: { activeTab: TabType }) {
+  if (activeTab === 'reference-jds') {
+    return (
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <SkeletonReferenceJDCard key={index} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full bg-background-surface border border-border-default rounded-2xl overflow-hidden shadow-sm">
+      <table className="w-full border-collapse">
+        <thead className="bg-background-subtle/60 border-b border-border-default">
+          <tr>
+            {Array.from({ length: 6 }).map((_, index) => (
+              <th key={index} className="py-4 px-6 text-left">
+                <SkeletonLoader variant="rectangular" width={84} height={12} className="rounded-sm" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <SkeletonJobTableRow key={index} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function RecruiterJobsPageSkeleton() {
+  return (
+    <AppShell>
+      <PageTransition className="min-h-screen bg-background-subtle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+          <div className="space-y-2">
+            <SkeletonLoader variant="text" width="28%" height={34} />
+            <SkeletonLoader variant="text" width="42%" height={16} />
+          </div>
+
+          <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border-default/60 pb-1">
+              <div className="flex items-center gap-8 pb-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <SkeletonLoader
+                    key={index}
+                    variant="rectangular"
+                    width={102}
+                    height={16}
+                    className="rounded-sm"
+                  />
+                ))}
+              </div>
+              <div className="pb-3 min-w-fit">
+                <SkeletonLoader variant="rectangular" width={124} height={38} className="rounded-lg" />
+              </div>
+            </div>
+
+            <RecruiterJobsLoadingContent activeTab="active" />
+          </div>
+        </div>
+      </PageTransition>
+    </AppShell>
+  )
+}
 
 const mapJobStatus = (status: string): JobStatus => {
   const statusMap: Record<string, JobStatus> = {
@@ -564,14 +638,12 @@ export default function RecruiterJobsPage() {
     [updateReferenceJDMutation]
   )
 
-  if (isAuthLoading || !isAuthenticated) {
-    return (
-      <AppShell>
-        <PageTransition className="min-h-screen flex items-center justify-center">
-          <LoadingSpinner />
-        </PageTransition>
-      </AppShell>
-    )
+  if (isAuthLoading) {
+    return <RecruiterJobsPageSkeleton />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -642,30 +714,7 @@ export default function RecruiterJobsPage() {
 
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs || (activeTab === 'reference-jds' && isLoadingReferenceJDs) ? (
-                <div className="w-full bg-background-surface border border-border-default rounded-2xl overflow-hidden shadow-sm">
-                  <table className="w-full border-collapse">
-                    <thead className="bg-background-subtle/50 border-b border-border-default">
-                      <tr>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <th key={i} className="py-4 px-6 text-left">
-                            <div className="h-3 bg-border-default rounded w-20 animate-pulse" />
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i} className="border-b border-border-subtle">
-                          <td className="p-6"><div className="flex gap-4"><div className="w-10 h-10 bg-background-muted rounded-xl animate-pulse" /><div className="space-y-2"><div className="h-4 bg-background-muted rounded w-40 animate-pulse" /><div className="h-3 bg-background-muted rounded w-24 animate-pulse" /></div></div></td>
-                          <td className="p-6"><div className="h-4 bg-background-muted rounded w-20 animate-pulse" /></td>
-                          <td className="p-6"><div className="h-6 bg-background-muted rounded-full w-20 animate-pulse" /></td>
-                          <td className="p-6"><div className="h-4 bg-background-muted rounded w-32 animate-pulse" /></td>
-                          <td className="p-6 text-center"><div className="w-8 h-8 bg-background-muted rounded-lg mx-auto animate-pulse" /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <RecruiterJobsLoadingContent activeTab={activeTab} />
               ) : activeTab === 'reference-jds' ? (
                 referenceJDData?.reference_jds && referenceJDData.reference_jds.length > 0 ? (
                   <ReferenceJDsTable

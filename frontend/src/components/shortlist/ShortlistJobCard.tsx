@@ -1,5 +1,5 @@
 import React from 'react'
-import { Users, Zap, CheckCircle2, AlertCircle, Loader2, Clock, ChevronRight } from 'lucide-react'
+import { Users, Zap, ChevronRight } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 
@@ -18,52 +18,6 @@ interface ShortlistJobCardProps {
   onClick: () => void
   onAutoShortlistChange?: () => void
   className?: string
-}
-
-const getDepartmentBadgeStyle = (department: string) => {
-  switch (department.toLowerCase()) {
-    case 'design':
-      return 'bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 border border-ai-200 dark:border-ai-800'
-    case 'engineering':
-      return 'bg-primary-50/80 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800'
-    case 'product':
-      return 'bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 border border-ai-200 dark:border-ai-800'
-    default:
-      return 'bg-background-subtle text-text-secondary border border-border-default'
-  }
-}
-
-const getShortlistStatusBadge = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return {
-        icon: CheckCircle2,
-        label: 'Completed',
-        className:
-          'bg-success-50 dark:bg-success-950/30 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800',
-      }
-    case 'in_progress':
-      return {
-        icon: Loader2,
-        label: 'In Progress',
-        className:
-          'bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800',
-        iconClassName: 'animate-spin',
-      }
-    case 'failed':
-      return {
-        icon: AlertCircle,
-        label: 'Failed',
-        className:
-          'bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-300 border-error-200 dark:border-error-800',
-      }
-    default:
-      return {
-        icon: Clock,
-        label: 'Pending',
-        className: 'bg-background-subtle text-text-tertiary border-border-default',
-      }
-  }
 }
 
 export function ShortlistJobCard({
@@ -86,9 +40,6 @@ export function ShortlistJobCard({
     toggle()
     onAutoShortlistChange?.()
   }
-
-  const shortlistStatus = getShortlistStatusBadge(job.shortlist_status)
-  const StatusIcon = shortlistStatus.icon
 
   const statusDotColor =
     job.status === 'expired'

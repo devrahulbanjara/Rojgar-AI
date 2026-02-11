@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { ApplicationModal } from './ApplicationModal'
-import Image from 'next/image'
 import { Dialog, DialogContent } from '../ui/dialog'
 import { ActionButton } from '../ui'
 import { Badge } from '../ui/badge'
@@ -16,10 +15,8 @@ import {
   X,
   Briefcase,
   Sparkles,
-  Globe,
   Share2,
 } from 'lucide-react'
-import { cn } from '../../lib/utils'
 import { jobUtils } from '../../services/jobService'
 import type { JobDetailsModalProps, Job } from '../../types/job'
 

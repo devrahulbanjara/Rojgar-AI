@@ -7,8 +7,6 @@ import {
     MoreVertical,
     Eye,
     Trash2,
-    Users,
-    Briefcase,
     Zap,
     Edit2,
     Archive,
@@ -43,36 +41,6 @@ function formatFullDate(dateString: string): string {
     })
 }
 
-function getStatusStyles(status: string): { bg: string; text: string; border: string } {
-    const s = status?.toLowerCase() || ''
-    if (s === 'active') {
-        return {
-            bg: 'bg-primary-50 dark:bg-primary-950/30',
-            text: 'text-primary-600 dark:text-primary-400',
-            border: 'border-primary-200 dark:border-primary-800',
-        }
-    }
-    if (s === 'draft') {
-        return {
-            bg: 'bg-warning-50 dark:bg-warning-950/30',
-            text: 'text-warning-600 dark:text-warning-400',
-            border: 'border-warning-200 dark:border-warning-800',
-        }
-    }
-    if (s === 'closed' || s === 'expired' || s === 'inactive') {
-        return {
-            bg: 'bg-error-50 dark:bg-error-950/30',
-            text: 'text-error-600 dark:text-error-400',
-            border: 'border-error-200 dark:border-error-800',
-        }
-    }
-    return {
-        bg: 'bg-background-subtle',
-        text: 'text-text-tertiary',
-        border: 'border-border-default',
-    }
-}
-
 function JobTableRow({
     job,
     index,
@@ -89,7 +57,6 @@ function JobTableRow({
     onDelete: (j: Job) => void;
 }) {
     const status = job.status || 'Draft'
-    const statusStyles = getStatusStyles(status)
     const isEven = index % 2 === 0
     const jobId = job.job_id || job.id?.toString()
 
