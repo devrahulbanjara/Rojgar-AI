@@ -48,7 +48,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
 
   const candidateItems = [
     { title: 'Dashboard', url: '/candidate/dashboard', icon: LayoutDashboard },
-    { title: 'Jobs', url: '/candidate/browse-jobs', icon: Search },
+    { title: 'Jobs', url: '/candidate/jobs', icon: Search },
     { title: 'Resumes', url: '/candidate/resumes', icon: FileText },
     { title: 'Profile', url: '/candidate/profile', icon: User },
   ]

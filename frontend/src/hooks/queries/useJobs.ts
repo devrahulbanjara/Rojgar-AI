@@ -56,18 +56,9 @@ export function usePersonalizedRecommendations(
 ) {
   const isEnabled = !!userId && userId.length > 0
 
-  console.warn('usePersonalizedRecommendations hook:', {
-    userId,
-    isEnabled,
-    page,
-    limit,
-    filters,
-  })
-
   return useQuery({
     queryKey: ['jobs', 'personalized', userId, page, limit, filters],
     queryFn: async () => {
-      console.warn('Fetching personalized recommendations...')
       return await jobService.getPersonalizedRecommendations(userId, page, limit, filters)
     },
     staleTime: 0,

@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { CheckCircle2, XCircle, ChevronDown, Brain, Loader2 } from 'lucide-react'
-import { UserAvatar } from '../ui/UserAvatar'
+import { CheckCircle2, XCircle, Loader2, FileText } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { ShortlistCandidate } from '../../types/shortlist'
 import { ResumeDetailModal } from './ResumeDetailModal'
+import { Avatar, AvatarFallback, AvatarImage, Badge, Button, Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../ui'
 
 interface ShortlistCandidateCardProps {
   candidate: ShortlistCandidate
@@ -29,9 +29,7 @@ export function ShortlistCandidateCard({
   showScores = true,
   isShortlistingInProgress = false,
 }: ShortlistCandidateCardProps) {
-  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false)
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
-
   const getScoreStyles = (score: number) => {
     if (score < 50) {
       return {
@@ -67,156 +65,144 @@ export function ShortlistCandidateCard({
   return (
     <div
       className={cn(
-        'group w-full bg-white dark:bg-[#0F172A] rounded-[16px] border border-[#E2E8F0] dark:border-[#1E293B] p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
-        isShortlisted &&
-          'border-success-200 dark:border-success-800 bg-success-50/20 dark:bg-success-950/20',
-        isRejected &&
-          'border-error-200 dark:border-error-800 bg-error-50/20 dark:bg-error-950/20 opacity-60',
+        'group w-full bg-background-surface rounded-2xl border border-border-default p-6 shadow-sm hover:shadow-md transition-shadow',
+        isShortlisted && 'border-success-200 bg-success-50/20',
+        isRejected && 'border-warning-200 bg-warning-50/20 opacity-70',
         className
       )}
     >
-      <div className="flex items-center gap-8">
+      <div className="flex items-start gap-6">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="flex-shrink-0">
-            <UserAvatar
-              name={candidate.name}
-              src={candidate.picture || undefined}
-              className="w-[72px] h-[72px]"
-            />
-          </div>
+          <Avatar className="h-14 w-14 border-2 border-white shadow-sm">
+            <AvatarImage src={candidate.picture || undefined} />
+            <AvatarFallback className="bg-background-subtle text-text-secondary font-bold">
+              {candidate.name
+                .split(' ')
+                .map(part => part[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
 
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-text-primary leading-[1.2]">
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-bold text-text-primary leading-tight">
                 {candidate.name}
               </h3>
               {isShortlisted && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium rounded-full">
-                  <CheckCircle2 className="w-3 h-3" />
+                <Badge
+                  colorPalette="green"
+                  className="text-xs px-2 py-0.5"
+                  style={{ borderRadius: '5px' }}
+                >
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
                   Shortlisted
-                </span>
+                </Badge>
               )}
               {isRejected && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-error-100 dark:bg-error-900/30 text-error-700 dark:text-error-300 text-xs font-medium rounded-full">
-                  <XCircle className="w-3 h-3" />
+                <Badge
+                  colorPalette="red"
+                  className="text-xs px-2 py-0.5"
+                  style={{ borderRadius: '5px' }}
+                >
+                  <XCircle className="w-3 h-3 mr-1" />
                   Rejected
-                </span>
+                </Badge>
               )}
             </div>
+
             {showJobTitle && (
-              <div className="text-sm font-medium text-primary-600 dark:text-primary-400">
+              <p className="text-sm text-text-secondary font-medium">
                 Applied for: {candidate.job_title}
-              </div>
+              </p>
             )}
             {candidate.professional_headline && (
-              <div className="text-sm text-text-secondary">{candidate.professional_headline}</div>
+              <p className="text-sm text-text-secondary">{candidate.professional_headline}</p>
             )}
-            <div className="text-xs text-text-tertiary mt-1">
+            <p className="text-[11px] text-text-tertiary font-bold uppercase tracking-wider">
               Applied{' '}
               {new Date(candidate.applied_at).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',
               })}
-            </div>
+            </p>
           </div>
         </div>
 
         {showScores && (
-          <div className="flex-shrink-0 flex flex-col items-center gap-1 text-center w-24">
+          <div className="flex-shrink-0 text-center px-6 border-x">
             {isShortlistingInProgress && !candidate.score ? (
               <>
-                <Loader2 className="w-8 h-8 text-ai-500 animate-spin" />
-                <div className="text-xs text-ai-600 dark:text-ai-400 font-mono font-medium tracking-wide">
+                <Loader2 className="w-8 h-8 text-ai-500 animate-spin mx-auto" />
+                <div className="text-xs text-ai-600 font-semibold tracking-wide mt-1">
                   Analyzing...
                 </div>
               </>
             ) : (
               <>
                 <div
-                  className={`text-3xl font-mono font-bold ${scoreStyles.scoreColor} leading-none`}
+                  className={cn('text-4xl font-black leading-none', scoreStyles.scoreColor)}
                 >
                   {candidate.score}
                 </div>
-                <div className="text-xs text-text-tertiary font-mono font-medium tracking-wide uppercase">
-                  Score
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary mt-1">
+                  {scoreInterpretation?.text || 'Match Score'}
                 </div>
-                {scoreInterpretation && (
-                  <div
-                    className={`text-xs font-semibold ${scoreInterpretation.color}`}
-                    style={{ fontWeight: 600 }}
-                  >
-                    {scoreInterpretation.text}
-                  </div>
-                )}
               </>
             )}
           </div>
         )}
 
-        <div className="flex-shrink-0 flex items-center gap-3">
+        <div className="flex-shrink-0 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setIsResumeModalOpen(true)}
-            className="px-5 py-2.5 border-2 border-[#2563EB] text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95"
+            className="px-5 py-2.5 border-2 border-[#2563EB] text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-xl font-bold text-xs transition-all duration-200 active:scale-95 whitespace-nowrap"
           >
             View Resume
           </button>
           {!isProcessed && (
             <>
-              <button
+              <Button
+                size="sm"
+                className="h-9 px-5 bg-primary-600 hover:bg-primary-700 text-[13px] font-semibold"
                 onClick={() => onShortlist(candidate.application_id)}
-                className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all duration-200 active:scale-95"
               >
                 Shortlist
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-5 text-text-secondary border-border-default bg-transparent text-[13px] font-semibold hover:text-error-600 hover:border-error-200 hover:bg-error-50"
                 onClick={() => onReject(candidate.application_id)}
-                className="px-5 py-2.5 border-2 border-[#E2E8F0] text-text-secondary hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95"
               >
                 Reject
-              </button>
+              </Button>
             </>
           )}
         </div>
       </div>
 
       {showScores && candidate.feedback && (
-        <div className="mt-8 pt-6 border-t border-border-subtle">
-          <button
-            onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
-            className="group w-full flex items-center justify-between p-4 rounded-xl bg-ai-50 dark:bg-ai-900/20 hover:bg-ai-100 dark:hover:bg-ai-900/30 border border-ai-200 dark:border-ai-800 hover:border-ai-300 dark:hover:border-ai-700 transition-all duration-300"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-ai-100 dark:bg-ai-900/30 rounded-lg flex items-center justify-center">
-                <Brain className="w-4 h-4 text-ai-600 dark:text-ai-400" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold text-text-primary">AI Analysis & Feedback</div>
-                <div className="text-xs text-text-tertiary mt-0.5 font-mono">
-                  {isAnalysisExpanded ? 'Click to collapse' : 'Click to view detailed feedback'}
+        <div className="mt-4">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="analysis" className="border-none bg-background-subtle/60 rounded-b-2xl">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline border-t border-border-subtle rounded-b-none">
+                <div className="flex items-center gap-2 text-xs font-bold text-text-tertiary uppercase tracking-widest">
+                  <FileText className="w-4 h-4 text-purple-500" />
+                  AI Analysis & Feedback
                 </div>
-              </div>
-            </div>
-            <ChevronDown
-              className={cn(
-                'w-5 h-5 text-ai-500 transition-all duration-300',
-                isAnalysisExpanded && 'rotate-180'
-              )}
-            />
-          </button>
-
-          <div
-            className={cn(
-              'overflow-hidden transition-all duration-300 ease-in-out',
-              isAnalysisExpanded ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
-            )}
-          >
-            <div className="relative p-6 bg-ai-50 dark:bg-ai-900/20 rounded-2xl border-l-[3px] border-l-ai-500">
-              <p className="font-mono text-sm text-text-secondary leading-relaxed mb-0">
-                {candidate.feedback}
-              </p>
-            </div>
-          </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-8 pb-6 pt-2">
+                <div className="relative pl-6 border-l-2 border-ai-300">
+                  <p className="text-[14px] leading-relaxed text-text-secondary italic">
+                    "{candidate.feedback}"
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       )}
 
