@@ -1,10 +1,10 @@
-import React from 'react';
-import Container from './Container';
-import Button from './Button';
-import { HeroContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Button from './Button'
+import { HeroContent } from '../../../content/landing-page'
 
 interface HeroProps {
-  content: HeroContent;
+  content: HeroContent
 }
 
 export default function Hero({ content }: HeroProps) {
@@ -15,22 +15,20 @@ export default function Hero({ content }: HeroProps) {
         <div className="max-w-[720px] text-center mx-auto">
           {/* Subtitle Badge */}
           <div className="flex items-center justify-center gap-2 mb-8">
-            <svg 
-              width="20" 
-              height="20" 
-              viewBox="0 0 20 20" 
-              fill="none" 
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
               xmlns="http://www.w3.org/2000/svg"
               className="text-[var(--color-primary-purple)]"
             >
-              <path 
-                d="M10 2L12.5 7.5L18 8.5L14 13L15 18.5L10 15.5L5 18.5L6 13L2 8.5L7.5 7.5L10 2Z" 
+              <path
+                d="M10 2L12.5 7.5L18 8.5L14 13L15 18.5L10 15.5L5 18.5L6 13L2 8.5L7.5 7.5L10 2Z"
                 fill="currentColor"
               />
             </svg>
-            <span className="text-base text-[var(--color-gray-600)]">
-              {content.subtitle}
-            </span>
+            <span className="text-base text-[var(--color-gray-600)]">{content.subtitle}</span>
           </div>
 
           {/* Title */}
@@ -55,5 +53,5 @@ export default function Hero({ content }: HeroProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

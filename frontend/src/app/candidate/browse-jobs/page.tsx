@@ -12,7 +12,7 @@ import { useAuth } from '../../../hooks/useAuth'
 import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
-import { Button, Card, Input } from '../../../components/ui'
+import { Button, Card } from '../../../components/ui'
 import { AnimatedContainer, LoadingSpinner, SkeletonJobCard } from '../../../components/common'
 import { RefreshCw, AlertCircle, Search, Filter } from 'lucide-react'
 import { cn } from '../../../lib/utils'
@@ -76,11 +76,11 @@ export default function Jobs() {
   } = useJobSearch(
     shouldFetchSearch
       ? {
-        search: debouncedSearchQuery.trim(),
-        page: currentPage,
-        limit: 9,
-        ...backendFilters,
-      }
+          search: debouncedSearchQuery.trim(),
+          page: currentPage,
+          limit: 9,
+          ...backendFilters,
+        }
       : undefined
   )
 
@@ -351,7 +351,7 @@ export default function Jobs() {
               </div>
             </div>
 
-            { }
+            {}
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {isLoading ? (
                 <>
@@ -423,7 +423,7 @@ export default function Jobs() {
               )}
             </div>
 
-            { }
+            {}
             {totalPages > 1 && totalJobs > 0 && (
               <div className="mt-16 flex justify-center">
                 <div className="flex items-center gap-2 bg-background-surface rounded-2xl p-2 shadow-sm border border-border-subtle">
@@ -498,7 +498,7 @@ export default function Jobs() {
           </div>
         </AnimatedContainer>
 
-        { }
+        {}
         <JobDetailsModal
           job={selectedJob}
           isOpen={isDetailModalOpen}

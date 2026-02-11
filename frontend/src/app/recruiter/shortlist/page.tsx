@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
+import { ActionButton } from '../../../components/ui'
 import { useAuth } from '../../../hooks/useAuth'
 import { useCandidates } from '../../../hooks/useCandidates'
 import { jobService } from '../../../services/jobService'
@@ -393,13 +394,14 @@ export default function ShortlistPage() {
                         </div>
                         {recommendedCandidates.length > 0 &&
                           selectedJob.shortlist_status === 'completed' && (
-                            <button
+                            <ActionButton
                               onClick={handleAcceptAIRecommendations}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong hover:bg-background-subtle text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.98]"
+                              variant="outline"
+                              size="sm"
                             >
                               <ShieldCheck className="w-4 h-4" />
                               Shortlist Recommended ({recommendedCandidates.length})
-                            </button>
+                            </ActionButton>
                           )}
                       </div>
 
@@ -450,17 +452,20 @@ export default function ShortlistPage() {
                                   run at midnight.
                                 </p>
                               </div>
-                              <button
+                              <ActionButton
                                 onClick={handleTriggerShortlist}
                                 disabled={triggerShortlistMutation.isPending}
-                                className="flex items-center gap-2 px-4 py-2 bg-ai-600 hover:bg-ai-700 text-white rounded-lg text-sm font-medium transition-all animate-bounce"
+                                loading={triggerShortlistMutation.isPending}
+                                variant="primary"
+                                size="sm"
+                                className="bg-ai-600 hover:bg-ai-700 dark:hover:bg-ai-600 animate-bounce"
                                 style={{ animationDuration: '2s' }}
                               >
                                 <Zap className="w-4 h-4" />
                                 {triggerShortlistMutation.isPending
                                   ? 'Starting...'
                                   : 'Run Shortlisting'}
-                              </button>
+                              </ActionButton>
                             </div>
                           )}
 
@@ -496,16 +501,18 @@ export default function ShortlistPage() {
                                   An error occurred during shortlisting. You can retry.
                                 </p>
                               </div>
-                              <button
+                              <ActionButton
                                 onClick={handleTriggerShortlist}
                                 disabled={triggerShortlistMutation.isPending}
-                                className="flex items-center gap-2 px-4 py-2 bg-background-surface border border-border-default text-text-secondary hover:border-border-strong rounded-lg text-sm font-medium transition-all"
+                                loading={triggerShortlistMutation.isPending}
+                                variant="outline"
+                                size="sm"
                               >
                                 <RefreshCw
                                   className={`w-4 h-4 ${triggerShortlistMutation.isPending ? 'animate-spin' : ''}`}
                                 />
                                 Retry
-                              </button>
+                              </ActionButton>
                             </div>
                           )}
 
@@ -524,16 +531,19 @@ export default function ShortlistPage() {
                                   shortlisting.
                                 </p>
                               </div>
-                              <button
+                              <ActionButton
                                 onClick={handleTriggerShortlist}
                                 disabled={triggerShortlistMutation.isPending}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-all animate-pulse hover:animate-none"
+                                loading={triggerShortlistMutation.isPending}
+                                variant="primary"
+                                size="sm"
+                                className="animate-pulse hover:animate-none"
                               >
                                 <Zap className="w-4 h-4" />
                                 {triggerShortlistMutation.isPending
                                   ? 'Starting...'
                                   : 'Run Shortlisting'}
-                              </button>
+                              </ActionButton>
                             </div>
                           )}
 
@@ -597,9 +607,7 @@ export default function ShortlistPage() {
             </div>
 
             <div className="text-center mb-8">
-              <h3 className="heading-4 mb-4">
-                Accept AI Recommendations
-              </h3>
+              <h3 className="heading-4 mb-4">Accept AI Recommendations</h3>
 
               <p className="subtitle mb-3">
                 You're about to accept AI recommendations for{' '}
@@ -619,18 +627,12 @@ export default function ShortlistPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <button
-                onClick={handleCancelAcceptAI}
-                className="px-6 py-2.5 border-2 border-border-default text-text-secondary bg-white hover:bg-background-subtle hover:border-border-strong rounded-xl font-medium transition-all duration-200"
-              >
+              <ActionButton onClick={handleCancelAcceptAI} variant="outline" size="md">
                 Cancel
-              </button>
-              <button
-                onClick={handleConfirmAcceptAI}
-                className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all duration-200 active:scale-[0.98]"
-              >
+              </ActionButton>
+              <ActionButton onClick={handleConfirmAcceptAI} variant="primary" size="md">
                 Accept Recommendations
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

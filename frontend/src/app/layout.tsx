@@ -3,6 +3,7 @@ import { Inter, Manrope, JetBrains_Mono } from 'next/font/google'
 import React from 'react'
 import './globals.css'
 import { Providers } from '../components/Providers'
+import { Provider as ChakraProvider } from '../components/ui/provider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,7 +27,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'ConvexHire',
-  description: 'Make hiring understandable, efficient, and fair with ConvexHire. AI-powered recruitment platform that treats hiring as a reasoning problem, not keyword filtering.',
+  description:
+    'Make hiring understandable, efficient, and fair with ConvexHire. AI-powered recruitment platform that treats hiring as a reasoning problem, not keyword filtering.',
   icons: {
     icon: [
       { url: '/favicon-light.svg', media: '(prefers-color-scheme: light)' },
@@ -35,19 +37,15 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
-        <Providers>
-          {children}
-        </Providers>
+        <ChakraProvider>
+          <Providers>{children}</Providers>
+        </ChakraProvider>
       </body>
     </html>
   )

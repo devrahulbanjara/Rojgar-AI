@@ -1,10 +1,10 @@
-import React from 'react';
-import Container from './Container';
-import Card from './Card';
-import { FeaturesContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Card from './Card'
+import { FeaturesContent } from '../../../content/landing-page'
 
 interface FeaturesGridProps {
-  content: FeaturesContent;
+  content: FeaturesContent
 }
 
 export default function FeaturesGrid({ content }: FeaturesGridProps) {
@@ -13,9 +13,7 @@ export default function FeaturesGrid({ content }: FeaturesGridProps) {
       <Container>
         {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="text-base text-[var(--color-gray-600)] mb-3">
-            {content.subtitle}
-          </p>
+          <p className="text-base text-[var(--color-gray-600)] mb-3">{content.subtitle}</p>
           <h2 className="text-3xl sm:text-4xl lg:text-[45px] leading-tight lg:leading-[56px] font-semibold text-[var(--color-primary-black)]">
             {content.title}
           </h2>
@@ -37,5 +35,5 @@ export default function FeaturesGrid({ content }: FeaturesGridProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

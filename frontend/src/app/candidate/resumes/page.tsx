@@ -22,9 +22,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { ActionButton } from '@/components/ui'
 import { AppShell } from '@/components/layout/AppShell'
 import { PageTransition, AnimatedContainer, PageHeader } from '@/components/common'
 import ResumeDetailSheet from '@/components/resume/ResumeDetailSheet'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm-dialog'
 
 interface CreateResumeModalProps {
   onClose: () => void
@@ -176,18 +178,21 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
           </div>
 
           <div className="pt-2">
-            <button
+            <ActionButton
               type="submit"
               disabled={loading}
-              className="w-full py-3 btn-primary-gradient text-white rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              loading={loading}
+              variant="primary"
+              size="lg"
+              className="w-full"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
+              {!loading && (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create & Edit Resume
+                </>
               )}
-              Create & Edit Resume
-            </button>
+            </ActionButton>
           </div>
         </form>
       </div>
@@ -210,6 +215,8 @@ export default function ResumeListPage() {
   const [resumeDetails, setResumeDetails] = useState<Record<string, ResumeResponse>>({})
   const dropdownRef = useRef<HTMLDivElement>(null)
   const sortDropdownRef = useRef<HTMLDivElement>(null)
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const sortOptions = [
     { value: 'date', label: 'Sort by Date', icon: Calendar },
@@ -277,16 +284,22 @@ export default function ResumeListPage() {
     return filtered
   }, [resumes, searchQuery, sortBy])
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('Are you sure you want to delete this resume?')) return
-    try {
-      await resumeService.deleteResume(id)
-      toast.success('Resume deleted successfully')
-      loadResumes()
-    } catch {
-      toast.error('Failed to delete resume')
-    }
+    await confirm({
+      title: 'Delete Resume',
+      description: "You're about to permanently delete",
+      itemName: title || 'this resume',
+      onConfirm: async () => {
+        try {
+          await resumeService.deleteResume(id)
+          toast.success('Resume deleted successfully')
+          loadResumes()
+        } catch {
+          toast.error('Failed to delete resume')
+        }
+      },
+    })
   }
 
   const handleDuplicate = async (id: string, e: React.MouseEvent) => {
@@ -454,12 +467,9 @@ export default function ResumeListPage() {
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="btn-primary-gradient text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 font-medium text-base whitespace-nowrap"
-                    >
+                    <ActionButton onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
                       <Plus className="w-5 h-5" /> Create New Resume
-                    </button>
+                    </ActionButton>
                   </div>
                 </div>
 
@@ -572,7 +582,13 @@ export default function ResumeListPage() {
                                       Duplicate
                                     </button>
                                     <button
-                                      onClick={e => handleDelete(resume.resume_id, e)}
+                                      onClick={e =>
+                                        handleDelete(
+                                          resume.resume_id,
+                                          resume.target_job_title || 'Untitled Resume',
+                                          e
+                                        )
+                                      }
                                       className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-50 dark:hover:bg-error-950/30 flex items-center gap-2"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -613,6 +629,8 @@ export default function ResumeListPage() {
           </div>
         </div>
       </PageTransition>
+
+      <Dialog />
     </AppShell>
   )
 }

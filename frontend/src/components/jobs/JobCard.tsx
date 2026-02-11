@@ -1,9 +1,18 @@
 import React, { memo, useCallback } from 'react'
-import { MapPin, DollarSign, Clock, Users, Eye, Bookmark } from 'lucide-react'
+import { MapPin, DollarSign, Clock, Bookmark } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { jobUtils } from '../../services/jobService'
 import type { Job } from '../../types/job'
-import { Card, CardContent, CardHeader, Avatar, AvatarFallback, AvatarImage, Badge, Button } from '../ui'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
+} from '../ui'
 
 interface JobCardProps {
   job: Job
@@ -14,47 +23,18 @@ interface JobCardProps {
   className?: string
 }
 
-const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
-  Engineering: {
-    bg: 'bg-primary-50 text-primary-700 border-primary-100',
-    text: 'text-primary-700 dark:text-primary-300',
-    border: 'border-primary-100 dark:border-primary-900/50',
-  },
-  Sales: {
-    bg: 'bg-success-50 text-success-700 border-success-100',
-    text: 'text-success-700 dark:text-success-300',
-    border: 'border-success-100 dark:border-success-900/50',
-  },
-  Marketing: {
-    bg: 'bg-warning-50 text-warning-700 border-warning-100',
-    text: 'text-warning-700 dark:text-warning-300',
-    border: 'border-warning-100 dark:border-warning-900/50',
-  },
-  Product: {
-    bg: 'bg-info-50 text-info-700 border-info-100',
-    text: 'text-info-700 dark:text-info-300',
-    border: 'border-info-100 dark:border-info-900/50',
-  },
-  Design: {
-    bg: 'bg-pink-50 text-pink-700 border-pink-100',
-    text: 'text-pink-700 dark:text-pink-300',
-    border: 'border-pink-100 dark:border-pink-900/50',
-  },
-  'Data Science': {
-    bg: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    text: 'text-indigo-700 dark:text-indigo-300',
-    border: 'border-indigo-100 dark:border-indigo-900/50',
-  },
-  HR: {
-    bg: 'bg-rose-50 text-rose-700 border-rose-100',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-100 dark:border-rose-900/50',
-  },
-  Default: {
-    bg: 'bg-background-muted text-text-secondary border-border-subtle',
-    text: 'text-text-secondary',
-    border: 'border-border-subtle',
-  },
+const departmentColors: Record<
+  string,
+  { colorPalette: 'blue' | 'green' | 'orange' | 'cyan' | 'pink' | 'purple' | 'red' | 'gray' }
+> = {
+  Engineering: { colorPalette: 'blue' },
+  Sales: { colorPalette: 'green' },
+  Marketing: { colorPalette: 'orange' },
+  Product: { colorPalette: 'cyan' },
+  Design: { colorPalette: 'pink' },
+  'Data Science': { colorPalette: 'purple' },
+  HR: { colorPalette: 'red' },
+  Default: { colorPalette: 'gray' },
 }
 
 export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, className }) => {
@@ -77,7 +57,9 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
       if (diffInDays === 1) return 'Tomorrow'
       if (diffInDays <= 7) return `${diffInDays} days`
       return deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    } catch { return '' }
+    } catch {
+      return ''
+    }
   }
 
   const locationDisplay =
@@ -98,7 +80,8 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
       onClick={handleClick}
       className={cn(
         'group cursor-pointer transition-all duration-300 border-border-default hover:border-primary-200 dark:hover:border-primary-800 bg-background-surface hover:shadow-md hover:-translate-y-0.5',
-        isSelected && 'border-primary ring-1 ring-primary/20 bg-primary-50/5 dark:bg-primary-950/10',
+        isSelected &&
+          'border-primary ring-1 ring-primary/20 bg-primary-50/5 dark:bg-primary-950/10',
         className
       )}
     >
@@ -107,15 +90,19 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
         <div className="flex justify-between items-start">
           <div className="flex gap-2 flex-wrap min-h-6">
             {job.department && (
-              <Badge variant="secondary" className={cn('h-6 font-semibold border-none', deptColor.bg, deptColor.text)}>
+              <Badge
+                variant="subtle"
+                colorPalette={deptColor.colorPalette}
+                className="h-6 font-semibold"
+              >
                 {job.department}
               </Badge>
             )}
-            <Badge variant="outline" className="h-6 font-normal text-text-tertiary">
+            <Badge variant="outline" colorPalette="gray" className="h-6 font-normal">
               {job.level || 'Mid-Level'}
             </Badge>
             {job.application_deadline && (
-              <Badge variant="outline" className="h-6 bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-950/50">
+              <Badge variant="subtle" colorPalette="orange" className="h-6">
                 {formatDeadline(job.application_deadline)}
               </Badge>
             )}
@@ -168,10 +155,10 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
 
         {/* Type Badges */}
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="font-medium bg-background-subtle text-text-secondary border-transparent">
+          <Badge variant="subtle" colorPalette="gray" className="font-medium">
             {job.employment_type}
           </Badge>
-          <Badge variant="secondary" className="font-medium bg-background-subtle text-text-secondary border-transparent">
+          <Badge variant="subtle" colorPalette="gray" className="font-medium">
             {job.location_type || 'On-site'}
           </Badge>
         </div>

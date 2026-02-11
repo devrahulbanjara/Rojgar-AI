@@ -1,21 +1,22 @@
-import React from 'react';
-import Container from './Container';
-import Card from './Card';
-import { ValuePropositionContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Card from './Card'
+import { ValuePropositionContent } from '../../../content/landing-page'
 
 interface ValuePropositionProps {
-  content: ValuePropositionContent;
+  content: ValuePropositionContent
 }
 
 export default function ValueProposition({ content }: ValuePropositionProps) {
   return (
-    <section className="pt-32 pb-36 lg:pt-36 lg:pb-40 bg-[var(--color-gray-100)]" id="value-proposition">
+    <section
+      className="pt-32 pb-36 lg:pt-36 lg:pb-40 bg-[var(--color-gray-100)]"
+      id="value-proposition"
+    >
       <Container>
         {/* Section Header */}
         <div className="text-center mb-20">
-          <p className="text-base text-[var(--color-gray-600)] mb-6">
-            {content.subtitle}
-          </p>
+          <p className="text-base text-[var(--color-gray-600)] mb-6">{content.subtitle}</p>
           <h2 className="text-3xl sm:text-4xl lg:text-[45px] leading-tight lg:leading-[56px] font-semibold text-[var(--color-primary-black)] whitespace-pre-line">
             {content.title}
           </h2>
@@ -36,5 +37,5 @@ export default function ValueProposition({ content }: ValuePropositionProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

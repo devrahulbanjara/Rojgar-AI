@@ -22,6 +22,7 @@ import type {
   EducationCreate,
 } from '../../types/profile'
 import { toast } from 'sonner'
+import { useDeleteConfirm } from '../ui/delete-confirm-dialog'
 
 interface CareerHistoryTabProps {
   experiences: WorkExperience[]
@@ -40,6 +41,8 @@ export function CareerHistoryTab({
 
   const [editingExpId, setEditingExpId] = useState<string | null>(null)
   const [editingEduId, setEditingEduId] = useState<string | null>(null)
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const [experienceForm, setExperienceForm] = useState({
     job_title: '',
@@ -120,19 +123,25 @@ export function CareerHistoryTab({
     setIsAddingExperience(true)
   }
 
-  const handleDeleteExperience = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this work experience?')) return
-    try {
-      await profileService.deleteExperience(id)
-      setWorkExperiences(prev => prev.filter(exp => exp.candidate_work_experience_id !== id))
-      toast.success('Work experience deleted successfully!')
-      if (editingExpId === id) {
-        setIsAddingExperience(false)
-        setEditingExpId(null)
-      }
-    } catch {
-      toast.error('Failed to delete work experience.')
-    }
+  const handleDeleteExperience = async (id: string, jobTitle: string, company: string) => {
+    await confirm({
+      title: 'Delete Work Experience',
+      description: "You're about to permanently delete",
+      itemName: `${jobTitle} at ${company}`,
+      onConfirm: async () => {
+        try {
+          await profileService.deleteExperience(id)
+          setWorkExperiences(prev => prev.filter(exp => exp.candidate_work_experience_id !== id))
+          toast.success('Work experience deleted successfully!')
+          if (editingExpId === id) {
+            setIsAddingExperience(false)
+            setEditingExpId(null)
+          }
+        } catch {
+          toast.error('Failed to delete work experience.')
+        }
+      },
+    })
   }
 
   const handleCancelExperience = () => {
@@ -204,19 +213,25 @@ export function CareerHistoryTab({
     setIsAddingEducation(true)
   }
 
-  const handleDeleteEducation = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this education record?')) return
-    try {
-      await profileService.deleteEducation(id)
-      setEducationRecords(prev => prev.filter(edu => edu.candidate_education_id !== id))
-      toast.success('Education record deleted successfully!')
-      if (editingEduId === id) {
-        setIsAddingEducation(false)
-        setEditingEduId(null)
-      }
-    } catch {
-      toast.error('Failed to delete education record.')
-    }
+  const handleDeleteEducation = async (id: string, degree: string, institution: string) => {
+    await confirm({
+      title: 'Delete Education',
+      description: "You're about to permanently delete",
+      itemName: `${degree} from ${institution}`,
+      onConfirm: async () => {
+        try {
+          await profileService.deleteEducation(id)
+          setEducationRecords(prev => prev.filter(edu => edu.candidate_education_id !== id))
+          toast.success('Education record deleted successfully!')
+          if (editingEduId === id) {
+            setIsAddingEducation(false)
+            setEditingEduId(null)
+          }
+        } catch {
+          toast.error('Failed to delete education record.')
+        }
+      },
+    })
   }
 
   const handleCancelEducation = () => {
@@ -531,7 +546,11 @@ export function CareerHistoryTab({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          handleDeleteExperience(experience.candidate_work_experience_id)
+                          handleDeleteExperience(
+                            experience.candidate_work_experience_id,
+                            experience.job_title,
+                            experience.company
+                          )
                         }
                         className="h-9 w-9 p-0 text-text-tertiary hover:text-error-600 hover:bg-error-50 rounded-lg"
                       >
@@ -803,7 +822,13 @@ export function CareerHistoryTab({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteEducation(education.candidate_education_id)}
+                        onClick={() =>
+                          handleDeleteEducation(
+                            education.candidate_education_id,
+                            education.degree,
+                            education.college_name
+                          )
+                        }
                         className="h-9 w-9 p-0 text-text-tertiary hover:text-error-600 hover:bg-error-50 rounded-lg"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -816,6 +841,7 @@ export function CareerHistoryTab({
           )}
         </div>
       </div>
+      <Dialog />
     </div>
   )
 }

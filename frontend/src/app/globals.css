@@ -10,7 +10,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
     /* =========================================================================
@@ -30,7 +29,7 @@
     /* =========================================================================
        FOUNDATION - Text Hierarchy (60-30-10 Rule)
        ========================================================================= */
-    --foreground: 222 47% 11%;
+    --foreground: 0 0% 3.9%;
     /* #0F172A - Primary content */
     --text-primary: 222 47% 11%;
     /* #0F172A - Headings */
@@ -46,7 +45,7 @@
     /* =========================================================================
        FOUNDATION - Border System
        ========================================================================= */
-    --border: 214 32% 91%;
+    --border: 0 0% 89.8%;
     /* #E2E8F0 - Standard borders */
     --border-subtle: 210 40% 96%;
     /* #F1F5F9 - Barely visible dividers */
@@ -54,9 +53,9 @@
     /* #E2E8F0 - Standard borders, inputs */
     --border-strong: 215 20% 82%;
     /* #CBD5E1 - Emphasis, active states */
-    --input: 214 32% 91%;
+    --input: 0 0% 89.8%;
     /* #E2E8F0 - Input borders */
-    --ring: 221 83% 53%;
+    --ring: 0 0% 3.9%;
     /* #3B82F6 - Focus rings */
 
     /* =========================================================================
@@ -73,7 +72,7 @@
     /* White text on brand */
 
     --primary: 221 83% 53%;
-    /* #3B82F6 - Blue-500 PRIMARY */
+    /* #3B82F6 - Blue-500 PRIMARY BRAND */
     --primary-50: 214 100% 97%;
     /* #EFF6FF - Subtle backgrounds */
     --primary-100: 214 95% 93%;
@@ -187,7 +186,7 @@
     /* =========================================================================
        DESTRUCTIVE/ERROR - "Critical Actions" (Red System)
        ========================================================================= */
-    --destructive: 0 84% 60%;
+    --destructive: 0 84.2% 60.2%;
     /* #EF4444 - Red-500 ERROR */
     --error: 0 84% 60%;
     /* #EF4444 - Alias */
@@ -211,7 +210,7 @@
     /* #991B1B */
     --error-900: 0 63% 31%;
     /* #7F1D1D */
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 98%;
     /* White text on destructive */
 
     /* =========================================================================
@@ -243,34 +242,34 @@
        ========================================================================= */
     --card: 0 0% 100%;
     /* White cards */
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 3.9%;
     /* Dark text on cards */
     --card-hover: 210 40% 98%;
     /* Subtle hover state */
 
     --popover: 0 0% 100%;
     /* White popovers */
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 3.9%;
     /* Dark text on popovers */
 
-    --secondary: 210 40% 96%;
+    --secondary: 0 0% 96.1%;
     /* #F1F5F9 - Soft neutral */
-    --secondary-foreground: 222 47% 11%;
+    --secondary-foreground: 0 0% 9%;
     /* Dark text */
     --secondary-hover: 214 32% 91%;
     /* #E2E8F0 */
 
-    --muted: 210 40% 96%;
+    --muted: 0 0% 96.1%;
     /* #F1F5F9 - Subtle backgrounds */
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 0 0% 45.1%;
     /* #64748B - Muted text */
 
-    --accent: 173 80% 40%;
-    /* Teal accent (same as success) */
-    --accent-foreground: 0 0% 100%;
-    /* White text on accent */
-    --accent-hover: 175 84% 32%;
-    /* Darker teal */
+    --accent: 214 100% 97%;
+    /* Light brand tint */
+    --accent-foreground: 221 83% 53%;
+    /* Brand color */
+    --accent-hover: 213 97% 87%;
+    /* Darker tint */
 
     /* =========================================================================
        GRADIENTS
@@ -331,6 +330,19 @@
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --ease-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent-foreground: 221.2 83.2% 53.3%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 221.2 83.2% 53.3%;
   }
 
   /* ===========================================================================
@@ -344,7 +356,7 @@
        True black (#000) is too harsh. Rich charcoal provides depth while 
        maintaining professional appearance and reducing eye strain.
        ======================================================================== */
-    --background: 220 26% 9%;
+    --background: 0 0% 3.9%;
     /* #111827 - Rich Charcoal Base (Gray-900) */
     --background-base: 220 26% 9%;
     /* #111827 - Main app background */
@@ -361,7 +373,7 @@
        TEXT - Optimized Contrast Ratios (WCAG AAA Compliant)
        High-quality text hierarchy for professional recruitment content
        ======================================================================== */
-    --foreground: 210 40% 98%;
+    --foreground: 0 0% 98%;
     /* #F8FAFC - Near-white for primary text (AAA) */
     --text-primary: 210 40% 98%;
     /* #F8FAFC - Headings, important content */
@@ -378,7 +390,7 @@
        BORDERS - Subtle Separation with Depth
        Visible enough for clear structure, subtle enough for elegance
        ======================================================================== */
-    --border: 217 33% 20%;
+    --border: 0 0% 14.9%;
     /* #2A3849 - Standard borders */
     --border-subtle: 217 33% 17%;
     /* #212E3F - Very subtle dividers */
@@ -386,9 +398,9 @@
     /* #2F3F52 - Input borders, card outlines */
     --border-strong: 215 20% 35%;
     /* #4A5668 - Emphasized borders */
-    --input: 217 33% 20%;
+    --input: 0 0% 14.9%;
     /* #2A3849 - Input field borders */
-    --ring: 217 91% 65%;
+    --ring: 0 0% 83.1%;
     /* #60A5FA - Blue-400 focus rings */
 
     /* ========================================================================
@@ -406,7 +418,7 @@
     /* Dark text on brand background */
 
     --primary: 217 91% 65%;
-    /* #60A5FA - Blue-400 PRIMARY */
+    /* Blue-400 PRIMARY BRAND */
     --primary-50: 217 33% 17%;
     /* Dark variant for subtle backgrounds */
     --primary-100: 217 33% 20%;
@@ -513,7 +525,7 @@
        ERROR/DESTRUCTIVE - Softer Red (Clear but Not Aggressive)
        Salmon-ish red that's clear but doesn't scream
        ======================================================================== */
-    --destructive: 0 86% 70%;
+    --destructive: 0 62.8% 30.6%;
     /* #F87171 - Red-400 */
     --error: 0 86% 70%;
     /* Alias */
@@ -531,7 +543,7 @@
     /* Medium red */
     --error-600: 0 72% 55%;
     /* Darker red */
-    --destructive-foreground: 220 26% 9%;
+    --destructive-foreground: 0 0% 98%;
     /* Dark text on error */
 
     /* ========================================================================
@@ -558,33 +570,33 @@
     /* ========================================================================
        SEMANTIC UI COMPONENTS
        ======================================================================== */
-    --card: 217 33% 12%;
+    --card: 0 0% 3.9%;
     /* #16202E - Cards */
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 0 0% 98%;
     /* #F8FAFC - Text on cards */
     --card-hover: 217 33% 14%;
     /* Subtle hover lift */
 
-    --popover: 217 33% 15%;
+    --popover: 0 0% 3.9%;
     /* #1C2836 - Elevated popovers */
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 0 0% 98%;
     /* Text on popovers */
 
-    --secondary: 217 33% 17%;
+    --secondary: 0 0% 14.9%;
     /* #212E3F - Secondary buttons */
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 0 0% 98%;
     /* Text on secondary */
     --secondary-hover: 217 33% 20%;
     /* Hover state */
 
-    --muted: 217 33% 17%;
+    --muted: 0 0% 14.9%;
     /* #212E3F - Muted backgrounds */
-    --muted-foreground: 215 20% 70%;
+    --muted-foreground: 0 0% 63.9%;
     /* #A3B3C7 - Muted text */
 
-    --accent: 172 66% 55%;
+    --accent: 0 0% 14.9%;
     /* Teal accent */
-    --accent-foreground: 220 26% 9%;
+    --accent-foreground: 0 0% 98%;
     /* Dark text on accent */
     --accent-hover: 173 80% 50%;
     /* Darker teal hover */
@@ -630,6 +642,19 @@
     --focus-ring-ai: 0 0 0 3px rgba(192, 132, 252, 0.35);
     --focus-ring-success: 0 0 0 3px rgba(45, 212, 191, 0.35);
     --focus-ring-error: 0 0 0 3px rgba(248, 113, 113, 0.4);
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 217 33% 12%;
+    --sidebar-foreground: 215 20% 70%;
+    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 15%;
+    --sidebar-accent-foreground: 217 91% 65%;
+    --sidebar-border: 0 0% 14.9%;
+    --sidebar-ring: 217 91% 65%;
   }
 }
 
@@ -821,7 +846,6 @@
 
   /* Respect user's motion preferences */
   @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {
@@ -877,7 +901,6 @@
 }
 
 @layer components {
-
   /* Glass effect - Enhanced for dark mode */
   .glass {
     @apply bg-card/60 backdrop-blur-lg border-border/50;
@@ -975,7 +998,6 @@
   }
 
   @keyframes ai-pulse-animation {
-
     0%,
     100% {
       box-shadow: 0 0 0 4px hsl(var(--ai) / 0.15);
@@ -1018,7 +1040,6 @@
 }
 
 @layer utilities {
-
   /* Animation utilities */
   .animate-in {
     animation: fadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -1231,40 +1252,40 @@
   }
 
   /* Smooth stagger for lists */
-  .stagger-list>* {
+  .stagger-list > * {
     animation: fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
     will-change: opacity, transform;
   }
 
-  .stagger-list>*:nth-child(1) {
+  .stagger-list > *:nth-child(1) {
     animation-delay: 0.05s;
   }
 
-  .stagger-list>*:nth-child(2) {
+  .stagger-list > *:nth-child(2) {
     animation-delay: 0.1s;
   }
 
-  .stagger-list>*:nth-child(3) {
+  .stagger-list > *:nth-child(3) {
     animation-delay: 0.15s;
   }
 
-  .stagger-list>*:nth-child(4) {
+  .stagger-list > *:nth-child(4) {
     animation-delay: 0.2s;
   }
 
-  .stagger-list>*:nth-child(5) {
+  .stagger-list > *:nth-child(5) {
     animation-delay: 0.25s;
   }
 
-  .stagger-list>*:nth-child(6) {
+  .stagger-list > *:nth-child(6) {
     animation-delay: 0.3s;
   }
 
-  .stagger-list>*:nth-child(7) {
+  .stagger-list > *:nth-child(7) {
     animation-delay: 0.35s;
   }
 
-  .stagger-list>*:nth-child(8) {
+  .stagger-list > *:nth-child(8) {
     animation-delay: 0.4s;
   }
 
@@ -1537,7 +1558,6 @@
   }
 
   @keyframes float {
-
     0%,
     100% {
       transform: translateY(0px);
@@ -1549,7 +1569,6 @@
   }
 
   @keyframes gradient {
-
     0%,
     100% {
       background-position: 0% 50%;
@@ -1628,15 +1647,15 @@ html.no-transitions *::after {
    Landing Page Design System Tokens
    ============================================================================= */
 :root {
-  --color-primary-black: #0F172A;
-  --color-primary-purple: #2563EB;
-  --color-primary-light: #EEF2FF;
-  --color-white: #FFFFFF;
-  --color-gray-100: #F8FAFC;
-  --color-gray-200: #E2E8F0;
-  --color-gray-400: #94A3B8;
-  --color-gray-600: #64748B;
-  --color-gray-900: #0F172A;
+  --color-primary-black: #0f172a;
+  --color-primary-purple: #2563eb;
+  --color-primary-light: #eef2ff;
+  --color-white: #ffffff;
+  --color-gray-100: #f8fafc;
+  --color-gray-200: #e2e8f0;
+  --color-gray-400: #94a3b8;
+  --color-gray-600: #64748b;
+  --color-gray-900: #0f172a;
 
   --font-family-primary: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 
@@ -1686,13 +1705,13 @@ html.no-transitions *::after {
 
 /* Dark mode overrides for landing page variables */
 .dark {
-  --color-primary-black: #F8FAFC;
+  --color-primary-black: #f8fafc;
   --color-white: #111827;
-  --color-gray-100: #1C2836;
-  --color-gray-200: #2A3849;
-  --color-gray-400: #A3B3C7;
-  --color-gray-600: #D1DBE8;
-  --color-gray-900: #F8FAFC;
+  --color-gray-100: #1c2836;
+  --color-gray-200: #2a3849;
+  --color-gray-400: #a3b3c7;
+  --color-gray-600: #d1dbe8;
+  --color-gray-900: #f8fafc;
 }
 
 /* Animations */
@@ -1711,7 +1730,6 @@ html.no-transitions *::after {
 }
 
 @keyframes bounce-slow {
-
   0%,
   100% {
     transform: translateY(0);
@@ -1723,7 +1741,6 @@ html.no-transitions *::after {
 }
 
 @keyframes bounce-slower {
-
   0%,
   100% {
     transform: translateY(0);
@@ -1740,4 +1757,102 @@ html.no-transitions *::after {
 
 .animate-bounce-slower {
   animation: bounce-slower 5s ease-in-out infinite 1s;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =============================================================================
+   SONNER TOAST NOTIFICATIONS - Custom Styling
+   Brand blue for success, red for errors, with proper light/dark mode support
+   ============================================================================= */
+
+[data-sonner-toaster] {
+  font-family: var(--font-manrope), system-ui, sans-serif !important;
+}
+
+[data-sonner-toast] {
+  font-family: var(--font-manrope), system-ui, sans-serif !important;
+}
+
+/* Success toasts - Brand blue */
+[data-sonner-toast][data-type='success'] {
+  background: hsl(var(--primary-600)) !important;
+  border: 1px solid hsl(var(--primary-700)) !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-title] {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-description] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-icon] {
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-close-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Error toasts - Red */
+[data-sonner-toast][data-type='error'] {
+  background: hsl(var(--error-600)) !important;
+  border: 1px solid hsl(var(--error-700)) !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-title] {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-description] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-icon] {
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-close-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Info and warning toasts - Default styling */
+[data-sonner-toast][data-type='info'],
+[data-sonner-toast][data-type='warning'] {
+  background: hsl(var(--background-surface)) !important;
+  border: 1px solid hsl(var(--border-default)) !important;
+  color: hsl(var(--text-primary)) !important;
+}
+
+.dark [data-sonner-toast][data-type='info'],
+.dark [data-sonner-toast][data-type='warning'] {
+  background: hsl(var(--background-surface)) !important;
+  border: 1px solid hsl(var(--border-default)) !important;
+  color: hsl(var(--text-primary)) !important;
 }
