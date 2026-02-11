@@ -9,6 +9,7 @@ import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import {
   SkeletonRecruiterJobCard,
+  SkeletonReferenceJDCard,
   SkeletonJobTabSwitcher,
 } from '../../../components/common/SkeletonLoader'
 import {
@@ -128,25 +129,25 @@ const transformJob = (job: BackendJobResponse): Job => {
     company:
       job.organization || job.company
         ? {
-            id:
-              parseInt(
-                String(
-                  job.organization?.id ||
-                    job.company?.id ||
-                    job.company_id ||
-                    job.organization_id ||
-                    0
-                )
-              ) || 0,
-            name:
-              job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
-            logo: job.organization?.logo || job.company?.logo,
-            website: job.organization?.website || job.company?.website,
-            description: job.organization?.description || job.company?.description,
-            location: job.organization?.location || job.company?.location,
-            industry: job.organization?.industry || job.company?.industry,
-            founded_year: job.organization?.founded_year || job.company?.founded_year,
-          }
+          id:
+            parseInt(
+              String(
+                job.organization?.id ||
+                job.company?.id ||
+                job.company_id ||
+                job.organization_id ||
+                0
+              )
+            ) || 0,
+          name:
+            job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
+          logo: job.organization?.logo || job.company?.logo,
+          website: job.organization?.website || job.company?.website,
+          description: job.organization?.description || job.company?.description,
+          location: job.organization?.location || job.company?.location,
+          industry: job.organization?.industry || job.company?.industry,
+          founded_year: job.organization?.founded_year || job.company?.founded_year,
+        }
         : undefined,
     title: job.title || '',
     department: job.department || '',
@@ -564,14 +565,14 @@ export default function RecruiterJobsPage() {
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
-          {/* Minimalist Page Header */}
+          {/* Page Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+              <div className="space-y-1.5">
+                <h1 className="text-3xl font-bold text-text-primary tracking-tight">
                   Jobs
                 </h1>
-                <p className="text-base text-text-secondary">
+                <p className="text-text-secondary text-sm">
                   Manage your job postings and track applicants
                 </p>
               </div>
@@ -583,12 +584,11 @@ export default function RecruiterJobsPage() {
                 Post New Job
               </button>
             </div>
-            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
           {/* Content */}
           <div className="space-y-8">
-            {}
+            { }
             <div>
               {isLoadingJobs && isLoadingReferenceJDs ? (
                 <SkeletonJobTabSwitcher />
@@ -604,16 +604,29 @@ export default function RecruiterJobsPage() {
               )}
             </div>
 
-            {}
+            { }
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs || (activeTab === 'reference-jds' && isLoadingReferenceJDs) ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  <SkeletonRecruiterJobCard />
-                  <SkeletonRecruiterJobCard />
-                  <SkeletonRecruiterJobCard />
-                  <SkeletonRecruiterJobCard />
-                  <SkeletonRecruiterJobCard />
-                  <SkeletonRecruiterJobCard />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {activeTab === 'reference-jds' ? (
+                    <>
+                      <SkeletonReferenceJDCard />
+                      <SkeletonReferenceJDCard />
+                      <SkeletonReferenceJDCard />
+                      <SkeletonReferenceJDCard />
+                      <SkeletonReferenceJDCard />
+                      <SkeletonReferenceJDCard />
+                    </>
+                  ) : (
+                    <>
+                      <SkeletonRecruiterJobCard />
+                      <SkeletonRecruiterJobCard />
+                      <SkeletonRecruiterJobCard />
+                      <SkeletonRecruiterJobCard />
+                      <SkeletonRecruiterJobCard />
+                      <SkeletonRecruiterJobCard />
+                    </>
+                  )}
                 </div>
               ) : activeTab === 'reference-jds' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -630,7 +643,7 @@ export default function RecruiterJobsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {filteredJobs.map((job, index) => (
                     <RecruiterJobCard
                       key={`job-${job.id}-${index}`}
@@ -646,7 +659,7 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              {}
+              { }
               {activeTab !== 'reference-jds' && filteredJobs.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
                   {activeTab === 'expired' ? (
@@ -684,7 +697,7 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              {}
+              { }
               {activeTab === 'reference-jds' &&
                 (!referenceJDData?.reference_jds || referenceJDData.reference_jds.length === 0) && (
                   <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
@@ -705,7 +718,7 @@ export default function RecruiterJobsPage() {
         </div>
       </PageTransition>
 
-      {}
+      { }
       <JobDetailModal
         job={selectedJob}
         isOpen={isDetailOpen}
