@@ -1,10 +1,10 @@
-import React from 'react';
-import Container from './Container';
-import Card from './Card';
-import { BenefitsContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Card from './Card'
+import { BenefitsContent } from '../../../content/landing-page'
 
 interface BenefitsProps {
-  content: BenefitsContent;
+  content: BenefitsContent
 }
 
 export default function Benefits({ content }: BenefitsProps) {
@@ -60,5 +60,5 @@ export default function Benefits({ content }: BenefitsProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

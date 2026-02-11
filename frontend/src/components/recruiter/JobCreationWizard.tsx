@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,7 +14,6 @@ import {
   Briefcase,
   Pencil,
   X as XIcon,
-  ChevronDown,
   Bot,
   MapPin,
   Globe,
@@ -34,6 +33,8 @@ import {
 import { cn } from '../../lib/utils'
 import { useCreateJob, useGenerateJobDraft, useUpdateJob } from '../../hooks/queries/useJobs'
 import { useReferenceJDs } from '../../hooks/queries/useReferenceJDs'
+import { ActionButton } from '../ui'
+import { SelectDropdown } from '../ui/select-dropdown'
 import { toast } from 'sonner'
 import type { CreateJobRequest, Job } from '../../types/job'
 
@@ -65,146 +66,6 @@ function SkeletonLine({ className }: { className?: string }) {
         animation: 'shimmer 1.5s ease-in-out infinite',
       }}
     />
-  )
-}
-
-interface CustomDropdownProps {
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string; disabled?: boolean }[]
-  placeholder: string
-  disabled?: boolean
-  className?: string
-}
-
-function CustomDropdown({
-  value,
-  onChange,
-  options,
-  placeholder,
-  disabled = false,
-  className,
-}: CustomDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [positionAbove, setPositionAbove] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      const spaceBelow = viewportHeight - buttonRect.bottom
-      const spaceAbove = buttonRect.top
-      const dropdownHeight = options.length * 48 + 16 // Approximate height
-
-      // Position above if not enough space below but enough space above
-      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-        setPositionAbove(true)
-      } else {
-        setPositionAbove(false)
-      }
-    }
-  }, [isOpen, options.length])
-
-  const selectedOption = options.find(option => option.value === value)
-
-  return (
-    <div className={cn('relative', className)} ref={dropdownRef}>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        onKeyDown={e => {
-          if (disabled) return
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setIsOpen(!isOpen)
-          } else if (e.key === 'Escape') {
-            setIsOpen(false)
-          }
-        }}
-        className={cn(
-          'w-full h-12 pl-4 pr-10 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]',
-          disabled
-            ? 'opacity-50 cursor-not-allowed border-border-default'
-            : isOpen
-              ? 'border-primary-500 ring-2 ring-primary-500/20 shadow-md'
-              : 'border-border-default hover:border-primary-300 hover:bg-gradient-to-r hover:from-primary-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
-        )}
-      >
-        <div className="flex items-center gap-3 h-full">
-          {selectedOption ? (
-            <span className="font-medium text-text-primary">{selectedOption.label}</span>
-          ) : (
-            <span className="text-text-tertiary">{placeholder}</span>
-          )}
-        </div>
-        <ChevronDown
-          className={cn(
-            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
-            disabled
-              ? 'text-text-muted'
-              : isOpen
-                ? 'rotate-180 text-primary-600'
-                : 'text-text-muted group-hover:text-primary-500'
-          )}
-        />
-      </button>
-
-      {isOpen && !disabled && (
-        <div
-          className={cn(
-            'absolute z-[200] w-full bg-background-surface border border-primary-200 rounded-xl shadow-xl overflow-hidden animate-in duration-200 ring-1 ring-primary-100',
-            positionAbove
-              ? 'bottom-full mb-2 slide-in-from-bottom-2'
-              : 'top-full mt-2 slide-in-from-top-2'
-          )}
-        >
-          {options.map((option, index) => (
-            <button
-              key={option.value}
-              type="button"
-              disabled={option.disabled}
-              onClick={() => {
-                if (!option.disabled) {
-                  onChange(option.value)
-                  setIsOpen(false)
-                }
-              }}
-              className={cn(
-                'w-full px-4 py-3 text-left focus:outline-none transition-all duration-200 flex items-center gap-3 text-base',
-                option.disabled
-                  ? 'text-text-muted cursor-not-allowed bg-background-subtle'
-                  : 'text-text-primary hover:text-primary-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-primary-50 focus:to-primary-50 transform hover:scale-[1.01] active:scale-[0.99] group'
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <span className="font-medium">{option.label}</span>
-              {!option.disabled && (
-                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
-                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -820,7 +681,7 @@ export function JobCreationWizard({
                             <FileText className="w-4 h-4 text-text-tertiary" />
                             Reference Job Description <span className="text-error">*</span>
                           </label>
-                          <CustomDropdown
+                          <SelectDropdown
                             value={formData.reference_jd_id}
                             onChange={value => updateField('reference_jd_id', value)}
                             placeholder="Select a reference JD..."
@@ -962,7 +823,7 @@ export function JobCreationWizard({
                               <Building2 className="w-4 h-4 text-text-tertiary" />
                               Department <span className="text-error">*</span>
                             </label>
-                            <CustomDropdown
+                            <SelectDropdown
                               value={formData.department}
                               onChange={value => updateField('department', value)}
                               placeholder="Select department..."
@@ -981,7 +842,7 @@ export function JobCreationWizard({
                               <Users className="w-4 h-4 text-text-tertiary" />
                               Level <span className="text-error">*</span>
                             </label>
-                            <CustomDropdown
+                            <SelectDropdown
                               value={formData.level}
                               onChange={value => updateField('level', value)}
                               placeholder="Select level..."
@@ -1214,7 +1075,7 @@ export function JobCreationWizard({
                           <Building2 className="w-4 h-4 text-text-tertiary" />
                           Department <span className="text-error">*</span>
                         </label>
-                        <CustomDropdown
+                        <SelectDropdown
                           value={formData.department}
                           onChange={value => updateField('department', value)}
                           placeholder="Select department..."
@@ -1238,7 +1099,7 @@ export function JobCreationWizard({
                           <Users className="w-4 h-4 text-text-tertiary" />
                           Level <span className="text-error">*</span>
                         </label>
-                        <CustomDropdown
+                        <SelectDropdown
                           value={formData.level}
                           onChange={value => updateField('level', value)}
                           placeholder="Select level..."
@@ -1462,7 +1323,7 @@ export function JobCreationWizard({
                         <Building2 className="w-4 h-4 text-text-tertiary" />
                         Location Type <span className="text-error">*</span>
                       </label>
-                      <CustomDropdown
+                      <SelectDropdown
                         value={formData.locationType}
                         onChange={value => updateField('locationType', value)}
                         placeholder="Select type..."
@@ -1483,7 +1344,7 @@ export function JobCreationWizard({
                         <Clock className="w-4 h-4 text-text-tertiary" />
                         Employment Type <span className="text-error">*</span>
                       </label>
-                      <CustomDropdown
+                      <SelectDropdown
                         value={formData.employmentType}
                         onChange={value => updateField('employmentType', value)}
                         placeholder="Select type..."
@@ -1782,7 +1643,7 @@ export function JobCreationWizard({
                           <Coins className="w-4 h-4 text-text-tertiary" />
                           Currency
                         </label>
-                        <CustomDropdown
+                        <SelectDropdown
                           value={formData.currency}
                           onChange={value => updateField('currency', value)}
                           placeholder="Select currency..."
@@ -1945,65 +1806,42 @@ export function JobCreationWizard({
       {}
       {!isGenerating && (
         <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 bg-background-surface border-t border-border-default shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-          <button
-            onClick={handlePrev}
-            className="flex items-center gap-2 px-5 py-2.5 text-text-tertiary text-sm font-semibold hover:text-text-primary hover:bg-background-subtle rounded-xl transition-all duration-200"
-          >
+          <ActionButton onClick={handlePrev} variant="ghost" size="md">
             <ArrowLeft className="w-4 h-4" />
             {currentStep === 1 ? 'Cancel' : 'Back'}
-          </button>
+          </ActionButton>
 
           <div className="flex items-center gap-3">
-            {}
             {currentStep === steps.length ? (
               <div className="flex gap-3">
-                {}
                 {(jobToEdit || isGenerated) && (
-                  <button
+                  <ActionButton
                     onClick={() => setShowRevisionPrompt(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-primary-600 dark:text-primary-400 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-all duration-200 border border-transparent hover:border-primary-100 dark:hover:border-primary-900"
+                    variant="outline"
+                    size="md"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Revise with AI
-                  </button>
+                  </ActionButton>
                 )}
-                <button
+                <ActionButton
                   onClick={handleSaveDraft}
-                  className={cn(
-                    'px-5 py-2.5 text-text-secondary text-sm font-semibold rounded-xl transition-all duration-200 border border-border-default',
-                    createJobMutation.isPending || updateJobMutation.isPending
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-background-subtle hover:border-border-strong hover:text-text-primary'
-                  )}
+                  variant="outline"
+                  size="md"
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
+                  loading={createJobMutation.isPending || updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending || updateJobMutation.isPending ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
-                    </span>
-                  ) : jobToEdit ? (
-                    'Save as Draft'
-                  ) : (
-                    'Save Draft'
-                  )}
-                </button>
-                <button
+                  {!(createJobMutation.isPending || updateJobMutation.isPending) &&
+                    (jobToEdit ? 'Save as Draft' : 'Save Draft')}
+                </ActionButton>
+                <ActionButton
                   onClick={handleSubmit}
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
-                  className={cn(
-                    'flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300',
-                    createJobMutation.isPending || updateJobMutation.isPending
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:-translate-y-0.5'
-                  )}
+                  loading={createJobMutation.isPending || updateJobMutation.isPending}
+                  variant="primary"
+                  size="md"
                 >
-                  {createJobMutation.isPending || updateJobMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Publishing...
-                    </>
-                  ) : (
+                  {!(createJobMutation.isPending || updateJobMutation.isPending) && (
                     <>
                       {jobToEdit && jobToEdit.status === 'Draft'
                         ? 'Publish Job'
@@ -2013,50 +1851,34 @@ export function JobCreationWizard({
                       <Check className="w-4 h-4" />
                     </>
                   )}
-                </button>
+                </ActionButton>
               </div>
             ) : (
               <div className="flex gap-3">
-                {}
                 {jobToEdit && (
-                  <button
+                  <ActionButton
                     onClick={() => setShowRevisionPrompt(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-primary-600 dark:text-primary-400 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-all duration-200 border border-transparent hover:border-primary-100 dark:hover:border-primary-900"
+                    variant="outline"
+                    size="md"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Revise with AI
-                  </button>
+                  </ActionButton>
                 )}
-                {}
-                <button
+                <ActionButton
                   onClick={handleSaveDraft}
-                  className={cn(
-                    'px-5 py-2.5 text-text-secondary text-sm font-semibold rounded-xl transition-all duration-200 border border-border-default',
-                    createJobMutation.isPending || updateJobMutation.isPending
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-background-subtle hover:border-border-strong hover:text-text-primary'
-                  )}
+                  variant="outline"
+                  size="md"
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
+                  loading={createJobMutation.isPending || updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending || updateJobMutation.isPending ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
-                    </span>
-                  ) : jobToEdit ? (
-                    'Save as Draft'
-                  ) : (
-                    'Save Draft'
-                  )}
-                </button>
-                {}
-                <button
-                  onClick={handleNext}
-                  className="flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5"
-                >
+                  {!(createJobMutation.isPending || updateJobMutation.isPending) &&
+                    (jobToEdit ? 'Save as Draft' : 'Save Draft')}
+                </ActionButton>
+                <ActionButton onClick={handleNext} variant="primary" size="md">
                   Continue
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </ActionButton>
               </div>
             )}
           </div>
@@ -2145,34 +1967,27 @@ export function JobCreationWizard({
 
             {}
             <div className="px-10 py-6 bg-background-surface border-t border-border-subtle flex justify-end gap-3">
-              <button
+              <ActionButton
                 onClick={() => setShowRevisionPrompt(false)}
-                className="px-5 py-2.5 text-text-tertiary text-sm font-semibold hover:bg-background-subtle rounded-xl transition-all duration-200 border border-border-default hover:border-border-strong"
+                variant="outline"
+                size="md"
               >
                 Cancel
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 onClick={handleRevision}
                 disabled={!revisionText.trim() || generateDraftMutation.isPending}
-                className={cn(
-                  'flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300',
-                  revisionText.trim() && !generateDraftMutation.isPending
-                    ? 'btn-primary-gradient hover:-translate-y-0.5'
-                    : 'bg-background-muted text-text-muted cursor-not-allowed'
-                )}
+                loading={generateDraftMutation.isPending}
+                variant="primary"
+                size="md"
               >
-                {generateDraftMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Revising...
-                  </>
-                ) : (
+                {!generateDraftMutation.isPending && (
                   <>
                     <Sparkles className="w-4 h-4" />
                     Revise
                   </>
                 )}
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

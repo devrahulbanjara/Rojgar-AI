@@ -1,7 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { X, ChevronDown, Calendar, ArrowUpDown } from 'lucide-react'
+'use client'
+
+import React from 'react'
+import { X, Calendar, ArrowUpDown } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { ShortlistFilters } from '../../types/shortlist'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 interface ShortlistFiltersProps {
   filters: ShortlistFilters
@@ -32,22 +40,6 @@ export function ShortlistFiltersComponent({
   onFiltersChange,
   onClearAll,
 }: ShortlistFiltersProps) {
-  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false)
-  const sortDropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
-        setIsSortDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
-
   const hasActiveFilters =
     filters.scoreRange !== undefined ||
     filters.dateSort !== undefined ||
@@ -78,7 +70,7 @@ export function ShortlistFiltersComponent({
   return (
     <div className="bg-background-surface rounded-2xl p-6 border border-border-default shadow-sm">
       <div className="flex flex-wrap items-center gap-6">
-        {}
+        {/* Score Filter */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-text-tertiary">Score:</span>
           <div className="flex gap-2">
@@ -101,7 +93,7 @@ export function ShortlistFiltersComponent({
           </div>
         </div>
 
-        {}
+        {/* Status Filter */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-text-tertiary">Status:</span>
           <div className="flex gap-2">
@@ -122,68 +114,40 @@ export function ShortlistFiltersComponent({
           </div>
         </div>
 
-        {}
+        {/* Sort Dropdown */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-text-tertiary">Sort:</span>
-          <div className="relative" ref={sortDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setIsSortDropdownOpen(!isSortDropdownOpen)
-                } else if (e.key === 'Escape') {
-                  setIsSortDropdownOpen(false)
-                }
-              }}
-              className={cn(
-                'h-9 pl-3 pr-9 py-2 border rounded-xl bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] min-w-[140px]',
-                isSortDropdownOpen
-                  ? 'border-ai-500 ring-2 ring-ai-500/20 shadow-md'
-                  : 'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
-              )}
-            >
-              <div className="flex items-center gap-2 h-full">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'h-9 pl-3 pr-3 py-2 border rounded-xl bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] min-w-[140px] flex items-center gap-2',
+                  'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
+                )}
+              >
                 <ArrowUpDown className="w-4 h-4 text-ai-500" />
                 <span className="font-medium text-text-primary">{getCurrentSortLabel()}</span>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
-                  isSortDropdownOpen ? 'rotate-180 text-ai-600' : 'text-text-muted'
-                )}
-              />
-            </button>
-
-            {isSortDropdownOpen && (
-              <div className="absolute z-50 w-full mt-2 bg-background-surface border border-ai-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-ai-100">
-                {dateSortOptions.map((option, index) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      handleFilterChange('dateSort', option.value)
-                      setIsSortDropdownOpen(false)
-                    }}
-                    className={cn(
-                      'w-full px-3 py-2.5 text-left hover:bg-gradient-to-r hover:from-ai-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-ai-50 focus:to-primary-50 focus:outline-none transition-all duration-200 flex items-center gap-2.5 text-sm text-text-primary hover:text-ai-700 transform hover:scale-[1.01] active:scale-[0.99] group',
-                      (filters.dateSort === option.value ||
-                        (option.value === 'newest' && !filters.dateSort)) &&
-                        'bg-ai-50/50'
-                    )}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <Calendar className="w-4 h-4 text-ai-500 transition-transform duration-200 group-hover:scale-110" />
-                    <span className="font-medium">{option.label}</span>
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
-                      <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              {dateSortOptions.map(option => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleFilterChange('dateSort', option.value)}
+                  className={cn(
+                    'flex items-center gap-2.5 cursor-pointer',
+                    (filters.dateSort === option.value ||
+                      (option.value === 'newest' && !filters.dateSort)) &&
+                      'bg-ai-50/50'
+                  )}
+                >
+                  <Calendar className="w-4 h-4 text-ai-500" />
+                  <span className="font-medium">{option.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {hasActiveFilters && (

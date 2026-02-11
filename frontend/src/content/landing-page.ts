@@ -1,180 +1,180 @@
 export interface HeroContent {
-  subtitle: string;
-  title: string;
-  description: string;
+  subtitle: string
+  title: string
+  description: string
   primaryCTA: {
-    text: string;
-    href: string;
-  };
+    text: string
+    href: string
+  }
   secondaryCTA: {
-    text: string;
-    href: string;
-  };
+    text: string
+    href: string
+  }
 }
 
 export interface ValuePropItem {
-  icon: string;
-  iconAlt: string;
-  title: string;
-  description: string;
+  icon: string
+  iconAlt: string
+  title: string
+  description: string
 }
 
 export interface ValuePropositionContent {
-  subtitle: string;
-  title: string;
-  items: ValuePropItem[];
+  subtitle: string
+  title: string
+  items: ValuePropItem[]
 }
 
 export interface FeatureItem {
-  icon: string;
-  iconAlt: string;
-  title: string;
-  description: string;
+  icon: string
+  iconAlt: string
+  title: string
+  description: string
 }
 
 export interface FeaturesContent {
-  subtitle: string;
-  title: string;
-  features: FeatureItem[];
+  subtitle: string
+  title: string
+  features: FeatureItem[]
 }
 
 export interface ProcessStep {
-  icon: string;
-  iconAlt: string;
-  title: string;
-  description: string;
+  icon: string
+  iconAlt: string
+  title: string
+  description: string
 }
 
 export interface HowItWorksContent {
-  subtitle: string;
-  title: string;
-  steps: ProcessStep[];
+  subtitle: string
+  title: string
+  steps: ProcessStep[]
 }
 
 export interface BenefitItem {
-  icon: string;
-  iconAlt: string;
-  title: string;
-  description: string;
+  icon: string
+  iconAlt: string
+  title: string
+  description: string
 }
 
 export interface BenefitsContent {
-  title: string;
+  title: string
   recruiterBenefits: {
-    subtitle: string;
-    items: BenefitItem[];
-  };
+    subtitle: string
+    items: BenefitItem[]
+  }
   candidateBenefits: {
-    subtitle: string;
-    items: BenefitItem[];
-  };
+    subtitle: string
+    items: BenefitItem[]
+  }
 }
 
 export interface CTAContent {
-  title: string;
-  description: string;
+  title: string
+  description: string
   cta: {
-    text: string;
-    href: string;
-  };
+    text: string
+    href: string
+  }
 }
 
 export interface TestimonialItem {
-  name: string;
-  role: string;
-  company: string;
-  avatar: string;
-  content: string;
-  rating: number;
+  name: string
+  role: string
+  company: string
+  avatar: string
+  content: string
+  rating: number
 }
 
 export interface TestimonialsContent {
-  subtitle: string;
-  title: string;
-  testimonials: TestimonialItem[];
+  subtitle: string
+  title: string
+  testimonials: TestimonialItem[]
 }
 
 export interface PricingFeature {
-  text: string;
-  included: boolean;
+  text: string
+  included: boolean
 }
 
 export interface PricingPlan {
-  name: string;
-  description: string;
-  price: string;
-  period: string;
-  features: PricingFeature[];
+  name: string
+  description: string
+  price: string
+  period: string
+  features: PricingFeature[]
   cta: {
-    text: string;
-    href: string;
-  };
-  featured?: boolean;
+    text: string
+    href: string
+  }
+  featured?: boolean
 }
 
 export interface PricingContent {
-  subtitle: string;
-  title: string;
-  plans: PricingPlan[];
+  subtitle: string
+  title: string
+  plans: PricingPlan[]
 }
 
 export interface FooterLink {
-  text: string;
-  href: string;
+  text: string
+  href: string
 }
 
 export interface FooterColumn {
-  title: string;
-  links: FooterLink[];
+  title: string
+  links: FooterLink[]
 }
 
 export interface FooterContent {
   logo: {
-    src: string;
-    alt: string;
-  };
-  description: string;
+    src: string
+    alt: string
+  }
+  description: string
   contact: {
-    email: string;
-  };
-  columns: FooterColumn[];
-  copyright: string;
+    email: string
+  }
+  columns: FooterColumn[]
+  copyright: string
 }
 
 export interface NavigationLink {
-  text: string;
-  href: string;
+  text: string
+  href: string
 }
 
 export interface NavigationContent {
   logo: {
-    src: string;
-    alt: string;
-  };
-  links: NavigationLink[];
+    src: string
+    alt: string
+  }
+  links: NavigationLink[]
   cta: {
     signIn: {
-      text: string;
-      href: string;
-    };
+      text: string
+      href: string
+    }
     demo: {
-      text: string;
-      href: string;
-    };
-  };
+      text: string
+      href: string
+    }
+  }
 }
 
 export interface LandingPageContent {
-  navigation: NavigationContent;
-  hero: HeroContent;
-  valueProposition: ValuePropositionContent;
-  features: FeaturesContent;
-  howItWorks: HowItWorksContent;
-  benefits: BenefitsContent;
-  testimonials: TestimonialsContent;
-  pricing: PricingContent;
-  cta: CTAContent;
-  footer: FooterContent;
+  navigation: NavigationContent
+  hero: HeroContent
+  valueProposition: ValuePropositionContent
+  features: FeaturesContent
+  howItWorks: HowItWorksContent
+  benefits: BenefitsContent
+  testimonials: TestimonialsContent
+  pricing: PricingContent
+  cta: CTAContent
+  footer: FooterContent
 }
 
 export const landingPageContent: LandingPageContent = {
@@ -204,7 +204,8 @@ export const landingPageContent: LandingPageContent = {
   hero: {
     subtitle: 'AI-Powered Recruitment Operations',
     title: 'Make Hiring Understandable, Efficient, and Fair',
-    description: 'ConvexHire treats hiring as a reasoning problem, not keyword filtering. Our multi-agent AI system assists recruiters and candidates across the entire hiring lifecycle with humans always in control.',
+    description:
+      'ConvexHire treats hiring as a reasoning problem, not keyword filtering. Our multi-agent AI system assists recruiters and candidates across the entire hiring lifecycle with humans always in control.',
     primaryCTA: {
       text: 'Get Started',
       href: '/signup',
@@ -222,19 +223,22 @@ export const landingPageContent: LandingPageContent = {
         icon: '/icons/semantic.svg',
         iconAlt: 'Semantic Understanding Icon',
         title: 'Semantic Understanding',
-        description: 'Evaluates resumes based on meaning, not vocabulary. Understands skill equivalence and adjacency for fair, accurate screening.',
+        description:
+          'Evaluates resumes based on meaning, not vocabulary. Understands skill equivalence and adjacency for fair, accurate screening.',
       },
       {
         icon: '/icons/transparent.svg',
         iconAlt: 'Transparency Icon',
         title: 'Transparent Decisions',
-        description: 'Every recommendation comes with a traceable rationale and natural-language explanation. No black-box scoring.',
+        description:
+          'Every recommendation comes with a traceable rationale and natural-language explanation. No black-box scoring.',
       },
       {
         icon: '/icons/human-loop.svg',
         iconAlt: 'Human-in-the-Loop Icon',
         title: 'Human-in-the-Loop',
-        description: 'AI prepares, humans decide. Every critical action requires recruiter approval. Accountability built into the architecture.',
+        description:
+          'AI prepares, humans decide. Every critical action requires recruiter approval. Accountability built into the architecture.',
       },
     ],
   },
@@ -246,37 +250,43 @@ export const landingPageContent: LandingPageContent = {
         icon: '/icons/jd-generator.svg',
         iconAlt: 'Job Description Generator Icon',
         title: 'Job Description Generator',
-        description: 'Transforms rough recruiter intent into structured, professional JDs. Clarifies required vs optional skills to reduce downstream mismatch.',
+        description:
+          'Transforms rough recruiter intent into structured, professional JDs. Clarifies required vs optional skills to reduce downstream mismatch.',
       },
       {
         icon: '/icons/resume-screener.svg',
         iconAlt: 'Resume Screener Icon',
         title: 'Resume Screener',
-        description: 'Semantic analysis of resumes with skill match, experience alignment, and education relevance. Transparent score breakdown included.',
+        description:
+          'Semantic analysis of resumes with skill match, experience alignment, and education relevance. Transparent score breakdown included.',
       },
       {
         icon: '/icons/interview-questions.svg',
         iconAlt: 'Interview Questions Icon',
         title: 'Interview Question Generator',
-        description: 'Bidirectional question generation: helps candidates prepare and provides recruiters with tailored question sets based on resumes.',
+        description:
+          'Bidirectional question generation: helps candidates prepare and provides recruiters with tailored question sets based on resumes.',
       },
       {
         icon: '/icons/voice-analysis.svg',
         iconAlt: 'Voice Analysis Icon',
         title: 'Interview Voice Analysis',
-        description: 'Analyzes communication signals: clarity, conceptual consistency, and confidence indicators. Produces insights, not decisions.',
+        description:
+          'Analyzes communication signals: clarity, conceptual consistency, and confidence indicators. Produces insights, not decisions.',
       },
       {
         icon: '/icons/scheduling.svg',
         iconAlt: 'Scheduling Icon',
         title: 'Interview Handler & Scheduling',
-        description: 'Prepares personalized outreach and drafts scheduling emails. Integrates with Cal.com—always requires recruiter approval.',
+        description:
+          'Prepares personalized outreach and drafts scheduling emails. Integrates with Cal.com—always requires recruiter approval.',
       },
       {
         icon: '/icons/talent-pool.svg',
         iconAlt: 'Talent Pool Icon',
         title: 'Talent Pool & Memory',
-        description: 'RAG-powered institutional memory. Query past applicants in plain English: "Find backend engineers from last year with AWS experience."',
+        description:
+          'RAG-powered institutional memory. Query past applicants in plain English: "Find backend engineers from last year with AWS experience."',
       },
     ],
   },
@@ -288,19 +298,22 @@ export const landingPageContent: LandingPageContent = {
         icon: '/icons/step-1.svg',
         iconAlt: 'Create Job Description',
         title: 'Create Job Description',
-        description: 'AI transforms your rough requirements into a structured, professional job description with clear expectations.',
+        description:
+          'AI transforms your rough requirements into a structured, professional job description with clear expectations.',
       },
       {
         icon: '/icons/step-2.svg',
         iconAlt: 'Screen Candidates',
         title: 'Screen Candidates',
-        description: 'Semantic screening evaluates resumes based on meaning. You review transparent recommendations with full explanations.',
+        description:
+          'Semantic screening evaluates resumes based on meaning. You review transparent recommendations with full explanations.',
       },
       {
         icon: '/icons/step-3.svg',
         iconAlt: 'Conduct Interviews',
         title: 'Conduct Interviews',
-        description: 'AI generates tailored questions and analyzes interview recordings. You make the final decision with enhanced insights.',
+        description:
+          'AI generates tailored questions and analyzes interview recordings. You make the final decision with enhanced insights.',
       },
     ],
   },
@@ -313,19 +326,22 @@ export const landingPageContent: LandingPageContent = {
           icon: '/icons/efficiency.svg',
           iconAlt: 'Efficiency Icon',
           title: 'Focus on Evaluation, Not Filtering',
-          description: 'Spend time on meaningful candidate interactions instead of manual resume screening.',
+          description:
+            'Spend time on meaningful candidate interactions instead of manual resume screening.',
         },
         {
           icon: '/icons/talent-pool-benefit.svg',
           iconAlt: 'Talent Pool Icon',
           title: 'Institutional Memory',
-          description: 'Never lose track of great candidates. Query your talent pool semantically for future roles.',
+          description:
+            'Never lose track of great candidates. Query your talent pool semantically for future roles.',
         },
         {
           icon: '/icons/confidence.svg',
           iconAlt: 'Confidence Icon',
           title: 'Explainable Decisions',
-          description: 'Every recommendation is traceable and auditable. Defend hiring decisions with confidence.',
+          description:
+            'Every recommendation is traceable and auditable. Defend hiring decisions with confidence.',
         },
       ],
     },
@@ -336,7 +352,8 @@ export const landingPageContent: LandingPageContent = {
           icon: '/icons/fair.svg',
           iconAlt: 'Fairness Icon',
           title: 'Fair Evaluation',
-          description: 'Semantic screening means your skills are understood, not just keyword-matched.',
+          description:
+            'Semantic screening means your skills are understood, not just keyword-matched.',
         },
         {
           icon: '/icons/feedback.svg',
@@ -362,7 +379,8 @@ export const landingPageContent: LandingPageContent = {
         role: 'Head of Talent',
         company: 'TechCorp',
         avatar: '/avatars/sampada.png',
-        content: 'ConvexHire transformed our hiring process. We reduced time-to-hire by 40% while improving candidate quality. The semantic screening is a game-changer.',
+        content:
+          'ConvexHire transformed our hiring process. We reduced time-to-hire by 40% while improving candidate quality. The semantic screening is a game-changer.',
         rating: 5,
       },
       {
@@ -370,7 +388,8 @@ export const landingPageContent: LandingPageContent = {
         role: 'VP of Engineering',
         company: 'Drively',
         avatar: '/avatars/sarthak.png',
-        content: 'Finally, an ATS that understands context. The AI agents help us find candidates we would have missed with traditional keyword filtering.',
+        content:
+          'Finally, an ATS that understands context. The AI agents help us find candidates we would have missed with traditional keyword filtering.',
         rating: 5,
       },
       {
@@ -378,7 +397,8 @@ export const landingPageContent: LandingPageContent = {
         role: 'Recruiting Manager',
         company: 'Fusemachines',
         avatar: '/avatars/aayush.png',
-        content: 'The transparency is incredible. Every decision is explainable, which helps us maintain compliance and build trust with candidates.',
+        content:
+          'The transparency is incredible. Every decision is explainable, which helps us maintain compliance and build trust with candidates.',
         rating: 5,
       },
     ],
@@ -452,7 +472,8 @@ export const landingPageContent: LandingPageContent = {
   },
   cta: {
     title: 'Ready to Transform Your Hiring Process?',
-    description: 'Join forward-thinking companies using ConvexHire to make hiring understandable, efficient, and fair.',
+    description:
+      'Join forward-thinking companies using ConvexHire to make hiring understandable, efficient, and fair.',
     cta: {
       text: 'Get Started Today',
       href: '/signup',
@@ -463,7 +484,8 @@ export const landingPageContent: LandingPageContent = {
       src: '/logo-dark.svg',
       alt: 'ConvexHire Logo',
     },
-    description: 'AI-powered recruitment operations platform designed to make hiring understandable, efficient, and fair.',
+    description:
+      'AI-powered recruitment operations platform designed to make hiring understandable, efficient, and fair.',
     contact: {
       email: 'hello@convexhire.com',
     },
@@ -497,4 +519,4 @@ export const landingPageContent: LandingPageContent = {
     ],
     copyright: '© 2026 ConvexHire. All rights reserved.',
   },
-};
+}

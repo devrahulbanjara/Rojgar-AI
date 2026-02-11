@@ -1,31 +1,65 @@
+'use client'
+
 import * as React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { Badge as ChakraBadge } from '@chakra-ui/react'
 import { cn } from '../../lib/utils'
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-[5px] border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-)
-
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> { }
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?:
+    | 'default'
+    | 'secondary'
+    | 'destructive'
+    | 'outline'
+    | 'solid'
+    | 'subtle'
+    | 'surface'
+    | 'plain'
+  colorPalette?:
+    | 'gray'
+    | 'red'
+    | 'orange'
+    | 'yellow'
+    | 'green'
+    | 'teal'
+    | 'blue'
+    | 'cyan'
+    | 'purple'
+    | 'pink'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
-export { Badge, badgeVariants }
+function Badge({
+  className,
+  variant = 'subtle',
+  colorPalette = 'gray',
+  size = 'sm',
+  children,
+  ...props
+}: BadgeProps) {
+  // Map old variants to Chakra variants
+  const chakraVariant =
+    variant === 'default'
+      ? 'solid'
+      : variant === 'secondary'
+        ? 'subtle'
+        : variant === 'destructive'
+          ? 'solid'
+          : variant
+
+  // Map destructive to red color
+  const chakraColorPalette = variant === 'destructive' ? 'red' : colorPalette
+
+  return (
+    <ChakraBadge
+      variant={chakraVariant}
+      colorPalette={chakraColorPalette}
+      size={size}
+      className={cn(className)}
+      {...props}
+    >
+      {children}
+    </ChakraBadge>
+  )
+}
+
+export { Badge }

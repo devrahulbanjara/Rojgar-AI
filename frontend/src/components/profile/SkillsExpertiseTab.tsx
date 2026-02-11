@@ -7,6 +7,7 @@ import { Settings, Plus, X, Award, Pencil, CheckCircle2 } from 'lucide-react'
 import type { Skill, Certification, SkillCreate, CertificationCreate } from '../../types/profile'
 import { toast } from 'sonner'
 import { queryClient } from '../../lib/queryClient'
+import { useDeleteConfirm } from '../ui/delete-confirm-dialog'
 
 const invalidateRecommendationsCache = () => {
   queryClient.invalidateQueries({ queryKey: ['jobs'] })
@@ -47,6 +48,8 @@ export function SkillsExpertiseTab({
   const [skillForm, setSkillForm] = useState({
     skill_name: '',
   })
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const [certifications, setCertifications] = useState<Certification[]>(initialCertifications)
   const [isAddingCert, setIsAddingCert] = useState(false)
@@ -101,21 +104,27 @@ export function SkillsExpertiseTab({
     setIsAddingSkill(true)
   }
 
-  const handleDeleteSkill = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this skill?')) return
-    try {
-      await profileService.deleteSkill(id)
-      setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
-      toast.success('Skill deleted successfully!')
-      invalidateRecommendationsCache()
+  const handleDeleteSkill = async (id: string, skillName: string) => {
+    await confirm({
+      title: 'Delete Skill',
+      description: "You're about to permanently delete",
+      itemName: skillName,
+      onConfirm: async () => {
+        try {
+          await profileService.deleteSkill(id)
+          setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
+          toast.success('Skill deleted successfully!')
+          invalidateRecommendationsCache()
 
-      if (editingSkillId === id) {
-        setIsAddingSkill(false)
-        setEditingSkillId(null)
-      }
-    } catch {
-      toast.error('Failed to delete skill.')
-    }
+          if (editingSkillId === id) {
+            setIsAddingSkill(false)
+            setEditingSkillId(null)
+          }
+        } catch {
+          toast.error('Failed to delete skill.')
+        }
+      },
+    })
   }
 
   const handleCancelSkill = () => {
@@ -184,19 +193,25 @@ export function SkillsExpertiseTab({
     setIsAddingCert(true)
   }
 
-  const handleDeleteCert = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this certification?')) return
-    try {
-      await profileService.deleteCertification(id)
-      setCertifications(prev => prev.filter(cert => cert.candidate_certification_id !== id))
-      toast.success('Certification deleted successfully!')
-      if (editingCertId === id) {
-        setIsAddingCert(false)
-        setEditingCertId(null)
-      }
-    } catch {
-      toast.error('Failed to delete certification.')
-    }
+  const handleDeleteCert = async (id: string, certName: string, issuingBody: string) => {
+    await confirm({
+      title: 'Delete Certification',
+      description: "You're about to permanently delete",
+      itemName: `${certName} from ${issuingBody}`,
+      onConfirm: async () => {
+        try {
+          await profileService.deleteCertification(id)
+          setCertifications(prev => prev.filter(cert => cert.candidate_certification_id !== id))
+          toast.success('Certification deleted successfully!')
+          if (editingCertId === id) {
+            setIsAddingCert(false)
+            setEditingCertId(null)
+          }
+        } catch {
+          toast.error('Failed to delete certification.')
+        }
+      },
+    })
   }
 
   const handleCancelCert = () => {
@@ -333,7 +348,7 @@ export function SkillsExpertiseTab({
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteSkill(skill.candidate_skill_id)}
+                      onClick={() => handleDeleteSkill(skill.candidate_skill_id, skill.skill_name)}
                       className="flex items-center justify-center w-6 h-6 text-ai-600 hover:text-error-600 hover:bg-background-surface hover:shadow-sm rounded-lg transition-all duration-200"
                       title="Delete skill"
                     >
@@ -603,7 +618,13 @@ export function SkillsExpertiseTab({
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteCert(cert.candidate_certification_id)}
+                      onClick={() =>
+                        handleDeleteCert(
+                          cert.candidate_certification_id,
+                          cert.certification_name,
+                          cert.issuing_body
+                        )
+                      }
                       className="p-2 text-text-tertiary hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors duration-200"
                       title="Delete certification"
                     >
@@ -616,6 +637,7 @@ export function SkillsExpertiseTab({
           )}
         </div>
       </div>
+      <Dialog />
     </div>
   )
 }

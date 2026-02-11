@@ -164,8 +164,8 @@ class AuthService:
     def get_redirect_url_for_user(self, user: User) -> str:
         """Get redirect URL based on user role"""
         if user.role == UserRole.CANDIDATE.value:
-            return f"{settings.FRONTEND_URL}/dashboard/candidate"
+            return f"{settings.FRONTEND_URL}/candidate/dashboard"
         elif user.role == UserRole.RECRUITER.value:
-            return f"{settings.FRONTEND_URL}/dashboard/recruiter"
+            return f"{settings.FRONTEND_URL}/recruiter/dashboard"
         else:
-            return f"{settings.FRONTEND_URL}/dashboard/candidate"
+            return f"{settings.FRONTEND_URL}/organization/dashboard"

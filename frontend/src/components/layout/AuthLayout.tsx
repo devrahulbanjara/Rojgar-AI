@@ -179,10 +179,11 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide
-                    ? 'w-8 bg-brand'
-                    : 'w-2 bg-border-strong hover:bg-text-muted'
-                    }`}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentSlide
+                      ? 'w-8 bg-brand'
+                      : 'w-2 bg-border-strong hover:bg-text-muted'
+                  }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
@@ -232,9 +233,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  {subtitle}
-                </p>
+                <p className="text-sm text-text-secondary leading-relaxed">{subtitle}</p>
               )}
             </div>
 

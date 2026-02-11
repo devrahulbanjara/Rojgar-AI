@@ -1,10 +1,10 @@
-import React from 'react';
-import Container from './Container';
-import Button from './Button';
-import { PricingContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Button from './Button'
+import { PricingContent } from '../../../content/landing-page'
 
 interface PricingProps {
-  content: PricingContent;
+  content: PricingContent
 }
 
 export default function Pricing({ content }: PricingProps) {
@@ -13,9 +13,7 @@ export default function Pricing({ content }: PricingProps) {
       <Container>
         {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="text-base text-[var(--color-gray-600)] mb-3">
-            {content.subtitle}
-          </p>
+          <p className="text-base text-[var(--color-gray-600)] mb-3">{content.subtitle}</p>
           <h2 className="text-3xl sm:text-4xl lg:text-[45px] leading-tight lg:leading-[56px] font-semibold text-[var(--color-primary-black)]">
             {content.title}
           </h2>
@@ -51,23 +49,16 @@ export default function Pricing({ content }: PricingProps) {
                     {plan.price}
                   </span>
                   {plan.period && (
-                    <span className="text-lg text-[var(--color-gray-600)]">
-                      {plan.period}
-                    </span>
+                    <span className="text-lg text-[var(--color-gray-600)]">{plan.period}</span>
                   )}
                 </div>
-                <p className="text-base text-[var(--color-gray-600)]">
-                  {plan.description}
-                </p>
+                <p className="text-base text-[var(--color-gray-600)]">{plan.description}</p>
               </div>
 
               {/* Features List */}
               <ul className="flex-grow py-6 space-y-3">
                 {plan.features.map((feature, featureIndex) => (
-                  <li
-                    key={featureIndex}
-                    className="flex items-start gap-3 text-base"
-                  >
+                  <li key={featureIndex} className="flex items-start gap-3 text-base">
                     {feature.included ? (
                       <svg
                         width="20"
@@ -96,12 +87,7 @@ export default function Pricing({ content }: PricingProps) {
                         className="flex-shrink-0 mt-0.5"
                       >
                         <circle cx="10" cy="10" r="10" fill="#E9ECEF" />
-                        <path
-                          d="M7 10H13"
-                          stroke="#ADB5BD"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
+                        <path d="M7 10H13" stroke="#ADB5BD" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     )}
                     <span
@@ -133,5 +119,5 @@ export default function Pricing({ content }: PricingProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

@@ -1,31 +1,31 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import Container from './Container';
-import Button from './Button';
-import { NavigationContent } from '../../../content/landing-page';
+import React, { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import Container from './Container'
+import Button from './Button'
+import { NavigationContent } from '../../../content/landing-page'
 
 interface NavigationProps {
-  content: NavigationContent;
+  content: NavigationContent
 }
 
 export default function Navigation({ content }: NavigationProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLinkClick = (href: string) => {
     if (href.startsWith('#')) {
-      const element = document.querySelector(href);
+      const element = document.querySelector(href)
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: 'smooth' })
       }
     }
-    setMobileMenuOpen(false);
-  };
+    setMobileMenuOpen(false)
+  }
 
   return (
-    <nav 
+    <nav
       className="sticky top-0 bg-[var(--color-white)] border-b border-[var(--color-gray-200)] py-4 z-[1020]"
       role="banner"
     >
@@ -45,7 +45,7 @@ export default function Navigation({ content }: NavigationProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
-            {content.links.map((link) => (
+            {content.links.map(link => (
               <button
                 key={link.text}
                 onClick={() => handleLinkClick(link.href)}
@@ -73,9 +73,15 @@ export default function Navigation({ content }: NavigationProps) {
             aria-label="Toggle mobile menu"
             aria-expanded={mobileMenuOpen}
           >
-            <span className={`block w-6 h-0.5 bg-[var(--color-primary-black)] transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-            <span className={`block w-6 h-0.5 bg-[var(--color-primary-black)] transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-            <span className={`block w-6 h-0.5 bg-[var(--color-primary-black)] transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+            <span
+              className={`block w-6 h-0.5 bg-[var(--color-primary-black)] transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}
+            />
+            <span
+              className={`block w-6 h-0.5 bg-[var(--color-primary-black)] transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`}
+            />
+            <span
+              className={`block w-6 h-0.5 bg-[var(--color-primary-black)] transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}
+            />
           </button>
         </div>
 
@@ -97,7 +103,7 @@ export default function Navigation({ content }: NavigationProps) {
               <span className="block w-6 h-0.5 bg-[var(--color-primary-black)] -rotate-45 -translate-y-0.5" />
             </button>
 
-            {content.links.map((link) => (
+            {content.links.map(link => (
               <button
                 key={link.text}
                 onClick={() => handleLinkClick(link.href)}
@@ -128,5 +134,5 @@ export default function Navigation({ content }: NavigationProps) {
         )}
       </Container>
     </nav>
-  );
+  )
 }

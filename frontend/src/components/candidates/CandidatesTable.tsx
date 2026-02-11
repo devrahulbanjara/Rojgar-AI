@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import { CandidateApplication } from '../../types/candidate'
 import { cn } from '../../lib/utils'
 import {
@@ -16,6 +16,12 @@ import {
   Users,
 } from 'lucide-react'
 import { UserAvatar } from '../ui/UserAvatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 interface CandidatesTableProps {
   candidates: CandidateApplication[]
@@ -29,7 +35,44 @@ interface CandidatesTableProps {
 
 interface ActionDropdownProps {
   candidate: CandidateApplication
-  onClose: () => void
+}
+
+function ActionDropdown({ candidate: _candidate }: ActionDropdownProps) {
+  const menuItems = [
+    { icon: Eye, label: 'View Resume', onClick: () => {} },
+    { icon: Send, label: 'Send Email', onClick: () => {} },
+    { icon: Trash2, label: 'Delete', onClick: () => {}, isDanger: true },
+  ]
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:bg-background-subtle hover:text-text-secondary transition-all duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        {menuItems.map((item, index) => (
+          <DropdownMenuItem
+            key={index}
+            onClick={e => {
+              e.stopPropagation()
+              item.onClick()
+            }}
+            className={cn(
+              'flex items-center gap-3 cursor-pointer',
+              item.isDanger
+                ? 'text-text-secondary hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30'
+                : 'text-text-secondary hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
+            )}
+          >
+            <item.icon className="w-4 h-4" />
+            <span>{item.label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 function formatFullDate(dateString: string): string {
@@ -82,53 +125,6 @@ function getStatusStyles(status: string): { bg: string; text: string; border: st
   }
 }
 
-function ActionDropdown({ candidate: _candidate, onClose }: ActionDropdownProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
-
-  const menuItems = [
-    { icon: Eye, label: 'View Resume', onClick: () => {} },
-    { icon: Send, label: 'Send Email', onClick: () => {} },
-    { icon: Trash2, label: 'Delete', onClick: () => {}, isDanger: true },
-  ]
-
-  return (
-    <div
-      ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 z-50 bg-background-surface border border-border-default rounded-xl shadow-lg py-2 min-w-[160px] shadow-[0_4px_6px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_rgba(0,0,0,0.2),0_10px_20px_rgba(0,0,0,0.4)]"
-    >
-      {menuItems.map((item, index) => (
-        <button
-          key={index}
-          onClick={e => {
-            e.stopPropagation()
-            item.onClick()
-            onClose()
-          }}
-          className={cn(
-            'w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200',
-            item.isDanger
-              ? 'text-text-secondary hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30'
-              : 'text-text-secondary hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
-          )}
-        >
-          <item.icon className="w-4 h-4" />
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export function SkeletonTableRow() {
   return (
     <tr className="border-b border-border-subtle animate-pulse">
@@ -172,7 +168,6 @@ export function CandidatesTable({
   onPageChange,
   className,
 }: CandidatesTableProps) {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [sortField, setSortField] = useState<string | null>(null)
 
   const totalPages = Math.ceil(totalCandidates / pageSize)
@@ -312,27 +307,7 @@ export function CandidatesTable({
                   </td>
 
                   <td className="py-6 px-6 text-center">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          setActiveDropdown(
-                            activeDropdown === candidate.application_id
-                              ? null
-                              : candidate.application_id
-                          )
-                        }}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-text-muted hover:bg-background-subtle hover:text-text-secondary transition-all duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 group-hover:text-primary-600 dark:group-hover:text-primary-400"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      {activeDropdown === candidate.application_id && (
-                        <ActionDropdown
-                          candidate={candidate}
-                          onClose={() => setActiveDropdown(null)}
-                        />
-                      )}
-                    </div>
+                    <ActionDropdown candidate={candidate} />
                   </td>
                 </tr>
               )

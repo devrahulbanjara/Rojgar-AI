@@ -5,6 +5,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { LoadingSpinner } from '../common/LoadingSpinner'
 import { Plus, Trash2, Settings, CheckCircle, AlertCircle, X } from 'lucide-react'
+import { useDeleteConfirm } from '../ui/delete-confirm-dialog'
 
 export function SkillsManagement() {
   const [skills, setSkills] = useState<Skill[]>([])
@@ -12,6 +13,7 @@ export function SkillsManagement() {
   const [isAdding, setIsAdding] = useState(false)
   const [newSkill, setNewSkill] = useState('')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const { confirm, Dialog } = useDeleteConfirm()
 
   useEffect(() => {
     loadSkills()
@@ -51,20 +53,25 @@ export function SkillsManagement() {
     }
   }
 
-  const handleDeleteSkill = async (skillId: string) => {
-    if (!confirm('Are you sure you want to delete this skill?')) return
-
-    try {
-      await skillService.deleteSkill(skillId)
-      setSkills(prev => prev.filter(skill => skill.id !== skillId))
-      setMessage({ type: 'success', text: 'Skill deleted successfully!' })
-    } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } }
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.detail || 'Failed to delete skill. Please try again.',
-      })
-    }
+  const handleDeleteSkill = async (skillId: string, skillName: string) => {
+    await confirm({
+      title: 'Delete Skill',
+      description: "You're about to permanently delete the skill",
+      itemName: skillName,
+      onConfirm: async () => {
+        try {
+          await skillService.deleteSkill(skillId)
+          setSkills(prev => prev.filter(skill => skill.id !== skillId))
+          setMessage({ type: 'success', text: 'Skill deleted successfully!' })
+        } catch (err) {
+          const error = err as { response?: { data?: { detail?: string } } }
+          setMessage({
+            type: 'error',
+            text: error.response?.data?.detail || 'Failed to delete skill. Please try again.',
+          })
+        }
+      },
+    })
   }
 
   if (isLoading) {
@@ -160,7 +167,7 @@ export function SkillsManagement() {
               >
                 <span className="text-sm font-medium">{skill.skill}</span>
                 <button
-                  onClick={() => handleDeleteSkill(skill.id)}
+                  onClick={() => handleDeleteSkill(skill.id, skill.skill)}
                   className="flex items-center justify-center w-5 h-5 text-text-muted hover:text-error-600 hover:bg-error-100 rounded-full transition-colors duration-200"
                   title="Delete skill"
                 >
@@ -176,18 +183,21 @@ export function SkillsManagement() {
         <div className="pt-6 border-t border-border-default mt-6">
           <Button
             variant="outline"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete all skills?')) {
-                skillService
-                  .deleteAllSkills()
-                  .then(() => {
+            onClick={async () => {
+              await confirm({
+                title: 'Delete All Skills',
+                description: "You're about to permanently delete all your skills.",
+                variant: 'danger',
+                onConfirm: async () => {
+                  try {
+                    await skillService.deleteAllSkills()
                     setSkills([])
                     setMessage({ type: 'success', text: 'All skills deleted successfully!' })
-                  })
-                  .catch(() => {
+                  } catch {
                     setMessage({ type: 'error', text: 'Failed to delete all skills.' })
-                  })
-              }
+                  }
+                },
+              })
             }}
             className="bg-error-50 text-error-700 border-error-200 hover:bg-error-100 hover:text-error-800 px-6 py-3 rounded-xl transition-colors duration-200"
           >
@@ -196,6 +206,7 @@ export function SkillsManagement() {
           </Button>
         </div>
       )}
+      <Dialog />
     </div>
   )
 }

@@ -80,17 +80,17 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
                     className={cn(
                       'ml-1 px-2 py-0 h-5 min-w-[20px] justify-center text-[10px] font-bold transition-all duration-300 rounded-[5px]',
                       isActive &&
-                      tab.color === 'blue' &&
-                      'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-100/50',
+                        tab.color === 'blue' &&
+                        'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-100/50',
                       isActive &&
-                      tab.color === 'amber' &&
-                      'bg-warning-50 dark:bg-warning-950/40 text-warning-600 dark:text-warning-400 border border-warning-100/50',
+                        tab.color === 'amber' &&
+                        'bg-warning-50 dark:bg-warning-950/40 text-warning-600 dark:text-warning-400 border border-warning-100/50',
                       isActive &&
-                      tab.color === 'rose' &&
-                      'bg-error-50 dark:bg-error-950/40 text-error-600 dark:text-error-400 border border-error-100/50',
+                        tab.color === 'rose' &&
+                        'bg-error-50 dark:bg-error-950/40 text-error-600 dark:text-error-400 border border-error-100/50',
                       isActive &&
-                      tab.color === 'purple' &&
-                      'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-100/50',
+                        tab.color === 'purple' &&
+                        'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-100/50',
                       !isActive && 'bg-background-muted/80 text-text-tertiary border-transparent'
                     )}
                   >

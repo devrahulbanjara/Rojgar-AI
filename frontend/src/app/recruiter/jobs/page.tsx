@@ -1,12 +1,12 @@
 'use client'
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { usePathname } from 'next/navigation'
-import { Plus, FolderOpen, Trash2 } from 'lucide-react'
+import { Plus, FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
+import { ActionButton } from '../../../components/ui'
 import {
   SkeletonRecruiterJobCard,
   SkeletonReferenceJDCard,
@@ -35,6 +35,7 @@ import {
   CreateReferenceJDRequest,
   ReferenceJDService,
 } from '../../../services/referenceJDService'
+import { useDeleteConfirm } from '../../../components/ui/delete-confirm-dialog'
 
 type TabType = 'active' | 'drafts' | 'expired' | 'reference-jds'
 
@@ -129,25 +130,25 @@ const transformJob = (job: BackendJobResponse): Job => {
     company:
       job.organization || job.company
         ? {
-          id:
-            parseInt(
-              String(
-                job.organization?.id ||
-                job.company?.id ||
-                job.company_id ||
-                job.organization_id ||
-                0
-              )
-            ) || 0,
-          name:
-            job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
-          logo: job.organization?.logo || job.company?.logo,
-          website: job.organization?.website || job.company?.website,
-          description: job.organization?.description || job.company?.description,
-          location: job.organization?.location || job.company?.location,
-          industry: job.organization?.industry || job.company?.industry,
-          founded_year: job.organization?.founded_year || job.company?.founded_year,
-        }
+            id:
+              parseInt(
+                String(
+                  job.organization?.id ||
+                    job.company?.id ||
+                    job.company_id ||
+                    job.organization_id ||
+                    0
+                )
+              ) || 0,
+            name:
+              job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
+            logo: job.organization?.logo || job.company?.logo,
+            website: job.organization?.website || job.company?.website,
+            description: job.organization?.description || job.company?.description,
+            location: job.organization?.location || job.company?.location,
+            industry: job.organization?.industry || job.company?.industry,
+            founded_year: job.organization?.founded_year || job.company?.founded_year,
+          }
         : undefined,
     title: job.title || '',
     department: job.department || '',
@@ -231,8 +232,7 @@ export default function RecruiterJobsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [referenceJDToEdit, setReferenceJDToEdit] = useState<ReferenceJD | null>(null)
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const {
     data: referenceJDData,
@@ -293,11 +293,6 @@ export default function RecruiterJobsPage() {
     }
   }, [pathname, refetchJobs, refetchReferenceJDs])
 
-  const handleCancelDeleteJob = useCallback(() => {
-    setShowDeleteModal(false)
-    setJobToDelete(null)
-  }, [])
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
@@ -305,17 +300,13 @@ export default function RecruiterJobsPage() {
         refetchJobs()
         refetchReferenceJDs()
       }
-
-      if (event.key === 'Escape' && showDeleteModal) {
-        handleCancelDeleteJob()
-      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [refetchJobs, refetchReferenceJDs, showDeleteModal, handleCancelDeleteJob])
+  }, [refetchJobs, refetchReferenceJDs])
 
   const allJobs = useMemo(() => {
     if (!jobsData?.jobs) return []
@@ -389,7 +380,10 @@ export default function RecruiterJobsPage() {
 
       try {
         await expireJobMutation.mutateAsync(String(jobId))
-        toast.success('Job expired successfully')
+        toast.success('Job Expired Successfully', {
+          description: `"${job.title}" has been moved to expired jobs`,
+          duration: 4000,
+        })
         setIsDetailOpen(false)
         setTimeout(() => {
           setSelectedJob(null)
@@ -397,51 +391,88 @@ export default function RecruiterJobsPage() {
         refetchJobs()
       } catch (error) {
         console.error('Failed to expire job:', error)
-        toast.error('Failed to expire job')
+        toast.error('Failed to Expire Job', {
+          description: 'An error occurred while expiring the job. Please try again.',
+          duration: 4000,
+        })
       }
     },
     [expireJobMutation, refetchJobs]
   )
 
-  const handleDeleteJob = useCallback((job: Job) => {
-    setJobToDelete(job)
-    setShowDeleteModal(true)
-  }, [])
+  const handleDeleteJob = useCallback(
+    async (job: Job) => {
+      const jobId = job.job_id || job.id
+      if (!jobId) {
+        toast.error('Invalid Job ID', {
+          description: 'Unable to identify the job to delete',
+          duration: 4000,
+        })
+        return
+      }
 
-  const handleConfirmDeleteJob = useCallback(async () => {
-    if (!jobToDelete) return
+      await confirm({
+        title: 'Delete Job Posting',
+        description: "You're about to permanently delete",
+        itemName: job.title,
+        additionalInfo:
+          job.applicant_count > 0
+            ? `This job has ${job.applicant_count} application${job.applicant_count > 1 ? 's' : ''}`
+            : undefined,
+        onConfirm: async () => {
+          try {
+            await deleteJobMutation.mutateAsync(String(jobId))
+            setIsDetailOpen(false)
+            setTimeout(() => {
+              setSelectedJob(null)
+            }, 300)
+            refetchJobs()
+            toast.success('Job Deleted Successfully', {
+              description: `"${job.title}" has been removed`,
+              duration: 4000,
+            })
+          } catch (error) {
+            console.error('Failed to delete job:', error)
+            const errorMessage =
+              error instanceof Error && error.message.includes('CORS')
+                ? 'Unable to delete job due to server configuration. Please contact support.'
+                : 'An error occurred while deleting the job. Please try again.'
+            toast.error('Failed to Delete Job', {
+              description: errorMessage,
+              duration: 4000,
+            })
+          }
+        },
+      })
+    },
+    [confirm, deleteJobMutation, refetchJobs]
+  )
 
-    const jobId = jobToDelete.job_id || jobToDelete.id
-    if (!jobId) {
-      toast.error('Invalid job ID')
-      return
-    }
-
-    try {
-      await deleteJobMutation.mutateAsync(String(jobId))
-      setShowDeleteModal(false)
-      setJobToDelete(null)
-      setIsDetailOpen(false)
-      setTimeout(() => {
-        setSelectedJob(null)
-      }, 300)
-      refetchJobs()
-      toast.success(`"${jobToDelete.title}" has been deleted`)
-    } catch (error) {
-      console.error('Failed to delete job:', error)
-      const errorMessage =
-        error instanceof Error && error.message.includes('CORS')
-          ? 'Unable to delete job due to server configuration. Please contact support.'
-          : 'Failed to delete job. Please try again later.'
-      toast.error(errorMessage)
-      setShowDeleteModal(false)
-      setJobToDelete(null)
-    }
-  }, [jobToDelete, deleteJobMutation, refetchJobs])
+  const handleDeleteReferenceJD = useCallback(
+    async (jd: ReferenceJD) => {
+      await confirm({
+        title: 'Delete Reference JD',
+        description: "You're about to permanently delete",
+        itemName: jd.department ? `${jd.department} Template` : 'this reference template',
+        onConfirm: async () => {
+          try {
+            await deleteReferenceJDMutation.mutateAsync(jd.id)
+            setIsReferenceModalOpen(false)
+            setTimeout(() => {
+              setSelectedReferenceJD(null)
+            }, 300)
+            refetchReferenceJDs()
+          } catch (error) {
+            console.error('Failed to delete reference JD:', error)
+          }
+        },
+      })
+    },
+    [confirm, deleteReferenceJDMutation, refetchReferenceJDs]
+  )
 
   const handlePostNewJob = useCallback(() => {
     setPostJobMode(null)
-
     setIsPostJobModalOpen(true)
   }, [])
 
@@ -490,8 +521,16 @@ export default function RecruiterJobsPage() {
 
         await createReferenceJD.mutateAsync(referenceJDData)
         refetchReferenceJDs()
+        toast.success('Template Saved Successfully', {
+          description: `"${job.title}" has been saved as a reference template`,
+          duration: 4000,
+        })
       } catch (error) {
         console.error('Error converting job to reference JD:', error)
+        toast.error('Failed to Save Template', {
+          description: 'An error occurred while saving the template. Please try again.',
+          duration: 4000,
+        })
       }
     },
     [createReferenceJD, refetchReferenceJDs]
@@ -529,28 +568,6 @@ export default function RecruiterJobsPage() {
     [updateReferenceJDMutation]
   )
 
-  const handleDeleteReferenceJD = useCallback(
-    async (jd: ReferenceJD) => {
-      if (
-        !confirm(`Are you sure you want to delete this reference JD? This action cannot be undone.`)
-      ) {
-        return
-      }
-
-      try {
-        await deleteReferenceJDMutation.mutateAsync(jd.id)
-        setIsReferenceModalOpen(false)
-        setTimeout(() => {
-          setSelectedReferenceJD(null)
-        }, 300)
-        refetchReferenceJDs()
-      } catch (error) {
-        console.error('Failed to delete reference JD:', error)
-      }
-    },
-    [deleteReferenceJDMutation, refetchReferenceJDs]
-  )
-
   if (isAuthLoading || !isAuthenticated) {
     return (
       <AppShell>
@@ -567,44 +584,39 @@ export default function RecruiterJobsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
           {/* Page Header */}
           <AnimatedContainer direction="up" delay={0.1}>
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-              <div className="space-y-1.5">
-                <h1 className="text-3xl font-bold text-text-primary tracking-tight">
-                  Jobs
-                </h1>
-                <p className="text-text-secondary text-sm">
-                  Manage your job postings and track applicants
-                </p>
-              </div>
-              <button
-                onClick={handlePostNewJob}
-                className="btn-primary-gradient inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
-              >
-                <Plus className="w-4 h-4" />
-                Post New Job
-              </button>
+            <div className="space-y-1.5">
+              <h1 className="text-3xl font-bold text-text-primary tracking-tight">Jobs</h1>
+              <p className="text-text-secondary text-sm">
+                Manage your job postings and track applicants
+              </p>
             </div>
           </AnimatedContainer>
 
           {/* Content */}
           <div className="space-y-8">
-            { }
-            <div>
-              {isLoadingJobs && isLoadingReferenceJDs ? (
-                <SkeletonJobTabSwitcher />
-              ) : (
-                <JobTabSwitcher
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                  activeCount={activeCount}
-                  draftCount={draftCount}
-                  expiredCount={expiredCount}
-                  referenceJDCount={referenceJDCount}
-                />
-              )}
+            {/* Tabs with Post New Job Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex-1">
+                {isLoadingJobs && isLoadingReferenceJDs ? (
+                  <SkeletonJobTabSwitcher />
+                ) : (
+                  <JobTabSwitcher
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    activeCount={activeCount}
+                    draftCount={draftCount}
+                    expiredCount={expiredCount}
+                    referenceJDCount={referenceJDCount}
+                  />
+                )}
+              </div>
+              <ActionButton onClick={handlePostNewJob} variant="primary" size="md">
+                <Plus className="w-4 h-4" />
+                Post New Job
+              </ActionButton>
             </div>
 
-            { }
+            {}
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs || (activeTab === 'reference-jds' && isLoadingReferenceJDs) ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -659,7 +671,7 @@ export default function RecruiterJobsPage() {
                 </div>
               )}
 
-              { }
+              {}
               {activeTab !== 'reference-jds' && filteredJobs.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
                   {activeTab === 'expired' ? (
@@ -685,19 +697,16 @@ export default function RecruiterJobsPage() {
                             ? 'Save a job as draft to continue editing later.'
                             : 'Expired or closed jobs will appear here.'}
                       </p>
-                      <button
-                        onClick={handlePostNewJob}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-primary-600 dark:text-primary-400 bg-background-surface border border-primary-200 dark:border-primary-800 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 shadow-sm"
-                      >
+                      <ActionButton onClick={handlePostNewJob} variant="secondary" size="lg">
                         <Plus className="w-5 h-5" />
                         Create Job
-                      </button>
+                      </ActionButton>
                     </>
                   )}
                 </div>
               )}
 
-              { }
+              {}
               {activeTab === 'reference-jds' &&
                 (!referenceJDData?.reference_jds || referenceJDData.reference_jds.length === 0) && (
                   <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
@@ -718,7 +727,7 @@ export default function RecruiterJobsPage() {
         </div>
       </PageTransition>
 
-      { }
+      {}
       <JobDetailModal
         job={selectedJob}
         isOpen={isDetailOpen}
@@ -753,108 +762,7 @@ export default function RecruiterJobsPage() {
         onSave={handleSaveReferenceJD}
       />
 
-      {showDeleteModal &&
-        jobToDelete &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <div
-            className="fixed inset-0 bg-text-primary/50 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200"
-            style={{ zIndex: 10000 }}
-            onClick={handleCancelDeleteJob}
-          >
-            <div
-              className="bg-background-surface rounded-2xl max-w-md w-full mx-4 border border-border-default animate-in zoom-in-95 duration-200 ease-out"
-              style={{
-                padding: '40px',
-                borderRadius: '16px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex justify-center mb-5">
-                <div className="w-12 h-12 bg-error-100 rounded-full flex items-center justify-center">
-                  <Trash2 className="w-6 h-6 text-error-600" />
-                </div>
-              </div>
-
-              <div className="text-center mb-8">
-                <h3
-                  className="text-text-primary mb-4"
-                  style={{
-                    fontSize: '24px',
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Delete Job Posting
-                </h3>
-
-                <p
-                  className="text-text-secondary mb-3"
-                  style={{
-                    fontSize: '16px',
-                    fontWeight: 400,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  You're about to permanently delete{' '}
-                  <span className="font-bold text-text-primary">"{jobToDelete.title}"</span>{' '}
-                  {jobToDelete.applicant_count > 0 && (
-                    <>
-                      with{' '}
-                      <span className="font-bold text-error-600">
-                        {jobToDelete.applicant_count} applications
-                      </span>
-                    </>
-                  )}
-                  .
-                </p>
-
-                <p
-                  className="text-text-muted"
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  This action cannot be undone. All associated data will be lost.
-                </p>
-              </div>
-
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={handleCancelDeleteJob}
-                  className="border border-border-default text-text-secondary bg-background-surface hover:bg-background-subtle hover:border-border-strong rounded-lg transition-all duration-200"
-                  style={{
-                    minWidth: '120px',
-                    height: '44px',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    borderWidth: '1.5px',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDeleteJob}
-                  className="bg-error-600 hover:bg-error-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    minWidth: '160px',
-                    height: '44px',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                  }}
-                  disabled={deleteJobMutation.isPending}
-                >
-                  {deleteJobMutation.isPending ? 'Deleting...' : 'Delete Job'}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <Dialog />
     </AppShell>
   )
 }

@@ -1,10 +1,10 @@
-import React from 'react';
-import Container from './Container';
-import Card from './Card';
-import { HowItWorksContent } from '../../../content/landing-page';
+import React from 'react'
+import Container from './Container'
+import Card from './Card'
+import { HowItWorksContent } from '../../../content/landing-page'
 
 interface HowItWorksProps {
-  content: HowItWorksContent;
+  content: HowItWorksContent
 }
 
 export default function HowItWorks({ content }: HowItWorksProps) {
@@ -13,9 +13,7 @@ export default function HowItWorks({ content }: HowItWorksProps) {
       <Container>
         {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="text-base text-[var(--color-gray-600)] mb-3">
-            {content.subtitle}
-          </p>
+          <p className="text-base text-[var(--color-gray-600)] mb-3">{content.subtitle}</p>
           <h2 className="text-3xl sm:text-4xl lg:text-[45px] leading-tight lg:leading-[56px] font-semibold text-[var(--color-primary-black)]">
             {content.title}
           </h2>
@@ -31,25 +29,24 @@ export default function HowItWorks({ content }: HowItWorksProps) {
                 title={step.title}
                 description={step.description}
                 variant="process"
-                stepNumber={index + 1}
               />
-              
+
               {/* Connecting Arrow (Desktop only) */}
               {index < content.steps.length - 1 && (
                 <div className="hidden md:block absolute top-1/2 -right-6 transform -translate-y-1/2 z-10">
-                  <svg 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                     className="text-[var(--color-primary-purple)]"
                   >
-                    <path 
-                      d="M5 12H19M19 12L12 5M19 12L12 19" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
+                    <path
+                      d="M5 12H19M19 12L12 5M19 12L12 19"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
@@ -60,5 +57,5 @@ export default function HowItWorks({ content }: HowItWorksProps) {
         </div>
       </Container>
     </section>
-  );
+  )
 }

@@ -200,7 +200,7 @@ export function useDeleteJob() {
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: jobQueryKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() })
-      toast.success('Job deleted successfully')
+      // Toast is handled in the component
     },
     onError: (error: Error) => {
       const errorMessage =
@@ -208,8 +208,9 @@ export function useDeleteJob() {
         (error as { data?: { detail?: string; message?: string } })?.data?.message ||
         error.message ||
         'Failed to delete job'
-      toast.error('Failed to delete job', {
+      toast.error('Failed to Delete Job', {
         description: errorMessage,
+        duration: 4000,
       })
     },
   })

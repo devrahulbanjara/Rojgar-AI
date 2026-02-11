@@ -1,10 +1,20 @@
 import React, { memo } from 'react'
-import { MapPin, DollarSign, Clock, Users, Eye, BookmarkPlus, Zap, MoreHorizontal } from 'lucide-react'
+import { MapPin, DollarSign, Clock, Users, Eye, Zap, MoreHorizontal } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 import { toast } from 'sonner'
 import type { Job } from '../../types/job'
-import { Card, CardContent, CardFooter, CardHeader, Avatar, AvatarFallback, AvatarImage, Badge, Button } from '../ui'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
+} from '../ui'
 
 interface RecruiterJobCardProps {
   job: Job
@@ -63,54 +73,27 @@ function formatDeadline(deadline: string): string {
     if (diffInDays === 1) return 'Tomorrow'
     if (diffInDays <= 7) return `${diffInDays} days`
     return deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  } catch { return '' }
+  } catch {
+    return ''
+  }
 }
 
-const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
-  Engineering: {
-    bg: 'bg-primary-50 text-primary-700 border-primary-100',
-    text: 'text-primary-700 dark:text-primary-300',
-    border: 'border-primary-100 dark:border-primary-900/50',
-  },
-  Sales: {
-    bg: 'bg-success-50 text-success-700 border-success-100',
-    text: 'text-success-700 dark:text-success-300',
-    border: 'border-success-100 dark:border-success-900/50',
-  },
-  Marketing: {
-    bg: 'bg-warning-50 text-warning-700 border-warning-100',
-    text: 'text-warning-700 dark:text-warning-300',
-    border: 'border-warning-100 dark:border-warning-900/50',
-  },
-  Product: {
-    bg: 'bg-info-50 text-info-700 border-info-100',
-    text: 'text-info-700 dark:text-info-300',
-    border: 'border-info-100 dark:border-info-900/50',
-  },
-  Design: {
-    bg: 'bg-pink-50 text-pink-700 border-pink-100',
-    text: 'text-pink-700 dark:text-pink-300',
-    border: 'border-pink-100 dark:border-pink-900/50',
-  },
-  'Data Science': {
-    bg: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    text: 'text-indigo-700 dark:text-indigo-300',
-    border: 'border-indigo-100 dark:border-indigo-900/50',
-  },
-  HR: {
-    bg: 'bg-rose-50 text-rose-700 border-rose-100',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-100 dark:border-rose-900/50',
-  },
-  Default: {
-    bg: 'bg-background-muted text-text-secondary border-border-subtle',
-    text: 'text-text-secondary',
-    border: 'border-border-subtle',
-  },
+const departmentColors: Record<
+  string,
+  { colorPalette: 'blue' | 'green' | 'orange' | 'cyan' | 'pink' | 'purple' | 'red' | 'gray' }
+> = {
+  Engineering: { colorPalette: 'blue' },
+  Sales: { colorPalette: 'green' },
+  Marketing: { colorPalette: 'orange' },
+  Product: { colorPalette: 'cyan' },
+  Design: { colorPalette: 'pink' },
+  'Data Science': { colorPalette: 'purple' },
+  HR: { colorPalette: 'red' },
+  Default: { colorPalette: 'gray' },
 }
 
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
-  ({ job, onClick, onConvertToReferenceJD, className }) => {
+  ({ job, onClick, onConvertToReferenceJD: _onConvertToReferenceJD, className }) => {
     const status = job.status || 'Draft'
     const displayStatus = status === 'Closed' ? 'Expired' : status
     const deptColor = departmentColors[job.department || ''] || departmentColors.Default
@@ -136,10 +119,12 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
       if (!jobId || isLoadingAutoShortlist || isToggling) return
       toggle()
       setTimeout(() => {
-        toast.success(
-          autoShortlist ? `Auto Shortlist disabled` : `Auto Shortlist enabled`,
-          { duration: 2000 }
-        )
+        toast.success(autoShortlist ? 'Auto Shortlist Disabled' : 'Auto Shortlist Enabled', {
+          description: autoShortlist
+            ? 'Candidates will not be automatically shortlisted'
+            : 'Candidates will be automatically shortlisted when job expires',
+          duration: 3000,
+        })
       }, 100)
     }
 
@@ -156,21 +141,23 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
           <div className="flex justify-between items-start">
             <div className="flex gap-2 flex-wrap">
               {job.department && (
-                <Badge variant="secondary" className={cn('h-6 font-semibold border-none', deptColor.bg, deptColor.text)}>
+                <Badge
+                  variant="subtle"
+                  colorPalette={deptColor.colorPalette}
+                  className="h-6 font-semibold"
+                >
                   {job.department}
                 </Badge>
               )}
               {job.application_deadline && (
                 <Badge
-                  variant="outline"
-                  className={cn(
-                    'h-6 border-none',
-                    displayStatus === 'Expired'
-                      ? 'bg-error-50 dark:bg-error-950/20 text-error-600 dark:text-error-400'
-                      : 'bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400'
-                  )}
+                  variant="subtle"
+                  colorPalette={displayStatus === 'Expired' ? 'red' : 'orange'}
+                  className="h-6"
                 >
-                  {displayStatus === 'Expired' ? 'Expired' : formatDeadline(job.application_deadline)}
+                  {displayStatus === 'Expired'
+                    ? 'Expired'
+                    : formatDeadline(job.application_deadline)}
                 </Badge>
               )}
             </div>
@@ -208,7 +195,9 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
                   {job.title}
                 </h3>
               </div>
-              <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest mt-0.5 mt-1">{companyName}</p>
+              <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest mt-0.5 mt-1">
+                {companyName}
+              </p>
             </div>
           </div>
         </CardHeader>
@@ -234,10 +223,10 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
 
           {/* Type Tags */}
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="font-medium bg-background-subtle text-text-secondary border-transparent">
+            <Badge variant="subtle" colorPalette="gray" className="font-medium">
               {job.employment_type}
             </Badge>
-            <Badge variant="secondary" className="font-medium bg-background-subtle text-text-secondary border-transparent">
+            <Badge variant="subtle" colorPalette="gray" className="font-medium">
               {job.location_type || 'On-site'}
             </Badge>
           </div>

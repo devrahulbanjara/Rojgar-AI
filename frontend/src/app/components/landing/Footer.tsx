@@ -1,16 +1,16 @@
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import Container from './Container';
-import { FooterContent } from '../../../content/landing-page';
+import React from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import Container from './Container'
+import { FooterContent } from '../../../content/landing-page'
 
 interface FooterProps {
-  content: FooterContent;
+  content: FooterContent
 }
 
 export default function Footer({ content }: FooterProps) {
   return (
-    <footer 
+    <footer
       className="bg-[var(--color-primary-black)] text-white py-16 lg:py-20"
       role="contentinfo"
     >
@@ -29,7 +29,7 @@ export default function Footer({ content }: FooterProps) {
             <p className="text-base leading-relaxed text-white/70 mb-6 max-w-xs">
               {content.description}
             </p>
-            <a 
+            <a
               href={`mailto:${content.contact.email}`}
               className="text-base text-white hover:text-[var(--color-primary-purple)] transition-colors duration-200"
             >
@@ -40,9 +40,7 @@ export default function Footer({ content }: FooterProps) {
           {/* Link Columns */}
           {content.columns.map((column, index) => (
             <div key={index}>
-              <h3 className="text-base font-bold text-white mb-5">
-                {column.title}
-              </h3>
+              <h3 className="text-base font-bold text-white mb-5">{column.title}</h3>
               <ul className="flex flex-col gap-3 list-none p-0 m-0">
                 {column.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
@@ -61,11 +59,9 @@ export default function Footer({ content }: FooterProps) {
 
         {/* Footer Bottom */}
         <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <p className="text-sm text-white/50 text-center">
-            {content.copyright}
-          </p>
+          <p className="text-sm text-white/50 text-center">{content.copyright}</p>
         </div>
       </Container>
     </footer>
-  );
+  )
 }

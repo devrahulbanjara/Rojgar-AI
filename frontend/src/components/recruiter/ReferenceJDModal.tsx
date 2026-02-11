@@ -12,6 +12,7 @@ import {
   Building2,
 } from 'lucide-react'
 import { ReferenceJD } from '../../services/referenceJDService'
+import { useDeleteConfirm } from '../ui/delete-confirm-dialog'
 
 interface ReferenceJDModalProps {
   jd: ReferenceJD | null
@@ -30,11 +31,20 @@ export function ReferenceJDModal({
   onDelete,
   onEdit,
 }: ReferenceJDModalProps) {
+  const { confirm, Dialog } = useDeleteConfirm()
+
   if (!isOpen || !jd) return null
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (onDelete) {
-      onDelete(jd)
+      await confirm({
+        title: 'Delete Reference JD',
+        description: "You're about to permanently delete",
+        itemName: jd.department ? `${jd.department} Template` : 'this reference template',
+        onConfirm: async () => {
+          onDelete(jd)
+        },
+      })
     }
   }
 
@@ -273,6 +283,7 @@ export function ReferenceJDModal({
           </div>
         </div>
       </div>
+      <Dialog />
     </div>
   )
 
