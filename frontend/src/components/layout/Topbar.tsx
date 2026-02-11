@@ -2,7 +2,9 @@ import React from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, LogOut, Bell, ChevronRight } from 'lucide-react'
-import { LogoLink } from '../common/Logo'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useTheme } from 'next-themes'
 import { ThemeToggle } from '../common/ThemeToggle'
 import { NotificationDropdown } from './NotificationDropdown'
 import { authService } from '../../services/authService'
@@ -81,6 +83,7 @@ function Breadcrumbs() {
 export function Topbar({ onMenuClick, user }: TopbarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { resolvedTheme } = useTheme()
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
@@ -148,7 +151,16 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
             whileHover={{ scale: 1.03 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
-            <LogoLink variant="full" size="lg" />
+            <Link href={ROUTES.HOME}>
+              <Image
+                src={resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg'}
+                alt="ConvexHire Logo"
+                width={180}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
+            </Link>
           </motion.div>
         </div>
 
