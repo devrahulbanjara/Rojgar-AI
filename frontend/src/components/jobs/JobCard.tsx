@@ -155,7 +155,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
   return (
     <div
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border relative overflow-hidden',
+        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-lg border relative overflow-hidden',
         'p-6',
         'hover:-translate-y-0.5 hover:scale-[1.01] shadow-sm hover:shadow-md',
         isSelected
@@ -184,7 +184,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
           {job.department && (
             <span
               className={cn(
-                'inline-flex items-center h-6 px-2.5 rounded-md text-[11px] font-semibold border whitespace-nowrap',
+                'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
                 deptColor.bg,
                 deptColor.text,
                 deptColor.border
@@ -196,7 +196,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
           {job.level && (
             <span
               className={cn(
-                'inline-flex items-center h-6 px-2.5 rounded-md text-[11px] font-semibold border whitespace-nowrap',
+                'inline-flex items-center h-6 px-2.5 rounded text-[11px] font-semibold border whitespace-nowrap',
                 levelColor.bg,
                 levelColor.text,
                 levelColor.border
@@ -206,7 +206,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
             </span>
           )}
           {job.application_deadline && (
-            <span className="inline-flex items-center h-6 px-2.5 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded-md text-[11px] font-semibold border border-warning-200 dark:border-warning-800 whitespace-nowrap">
+            <span className="inline-flex items-center h-6 px-2.5 bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded text-[11px] font-semibold border border-warning-200 dark:border-warning-800 whitespace-nowrap">
               {formatDeadline(job.application_deadline)}
             </span>
           )}
@@ -245,10 +245,10 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
 
         {/* Row 5: Work Type - Single horizontal line, no wrap */}
         <div className="mt-4 flex items-center gap-2 flex-nowrap">
-          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary dark:text-text-primary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary dark:text-text-primary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
             {job.employment_type}
           </span>
-          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary dark:text-text-primary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary dark:text-text-primary rounded text-[11px] font-medium border border-border-subtle whitespace-nowrap">
             {job.location_type || 'On-site'}
           </span>
         </div>

@@ -124,7 +124,7 @@ export default function CandidateDashboard() {
     <div className="h-full flex flex-col space-y-8 pb-10">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
         {}
-        <div className="bg-primary-50/50 dark:bg-primary-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-primary-200/60 dark:border-primary-800/60 shadow-sm/50">
+        <div className="bg-primary-50/50 dark:bg-primary-950/30 rounded-lg p-6 flex flex-col gap-6 border border-primary-200/60 dark:border-primary-800/60 shadow-sm/50">
           <ColumnHeader
             title="Applied"
             count={columns.Applied.length}
@@ -141,7 +141,7 @@ export default function CandidateDashboard() {
         </div>
 
         {}
-        <div className="bg-ai-50/50 dark:bg-ai-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-ai-200/60 dark:border-ai-800/60 shadow-sm/50">
+        <div className="bg-ai-50/50 dark:bg-ai-950/30 rounded-lg p-6 flex flex-col gap-6 border border-ai-200/60 dark:border-ai-800/60 shadow-sm/50">
           <ColumnHeader
             title="Interviewing"
             count={columns.Interviewing.length}
@@ -158,7 +158,7 @@ export default function CandidateDashboard() {
         </div>
 
         {}
-        <div className="bg-success-50/50 dark:bg-success-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-success-200/60 dark:border-success-800/60 shadow-sm/50">
+        <div className="bg-success-50/50 dark:bg-success-950/30 rounded-lg p-6 flex flex-col gap-6 border border-success-200/60 dark:border-success-800/60 shadow-sm/50">
           <ColumnHeader
             title="Outcome"
             count={columns.Outcome.length}
@@ -194,12 +194,12 @@ function ColumnHeader({
   return (
     <div className="flex items-center justify-between px-2">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-background-surface/80 flex items-center justify-center shadow-sm">
+        <div className="w-10 h-10 rounded-md bg-background-surface/80 flex items-center justify-center shadow-sm">
           {icon}
         </div>
         <h3 className={`text-lg font-bold ${textColor}`}>{title}</h3>
       </div>
-      <span className={`text-xs font-bold px-3 py-1.5 rounded-full shadow-sm ${badgeColor}`}>
+      <span className={`text-xs font-bold px-3 py-1.5 rounded shadow-sm ${badgeColor}`}>
         {count}
       </span>
     </div>
@@ -223,7 +223,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
 
   return (
     <div
-      className={`bg-background-surface p-5 rounded-xl shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} ${getHoverBorderClass(app.current_status)} hover:shadow-md transition-all duration-200 cursor-default group`}
+      className={`bg-background-surface p-5 rounded-lg shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} ${getHoverBorderClass(app.current_status)} hover:shadow-md transition-all duration-200 cursor-default group`}
     >
       {}
       <div className="mb-4">
@@ -257,7 +257,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
         </div>
 
         <span
-          className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${statusStyle.color.replace('border', '')} border shadow-sm`}
+          className={`text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wide ${statusStyle.color.replace('border', '')} border shadow-sm`}
         >
           {statusStyle.label}
         </span>
@@ -268,7 +268,7 @@ function ApplicationCard({ app }: { app: ApplicationResponse }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="h-36 flex flex-col items-center justify-center text-text-muted border-2 border-dashed border-border-default rounded-xl bg-background-surface/50">
+    <div className="h-36 flex flex-col items-center justify-center text-text-muted border-2 border-dashed border-border-default rounded-lg bg-background-surface/50">
       <div className="w-10 h-10 rounded-full bg-background-subtle flex items-center justify-center mb-3">
         <Briefcase className="w-5 h-5 text-text-muted" />
       </div>

@@ -48,7 +48,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
             key={filter}
             onClick={() => onFilterToggle(filter)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer',
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer',
               isActive
                 ? 'bg-primary text-primary-foreground hover:bg-primary-700 border border-primary'
                 : 'bg-background-surface text-text-tertiary hover:text-text-primary hover:bg-background-subtle border border-default hover:border-strong'

@@ -57,9 +57,9 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
   const CurrentIcon = carouselSlides[currentSlide].icon
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="min-h-screen bg-background-subtle dark:bg-background grid grid-cols-1 lg:grid-cols-2">
       {/* Left Panel - Illustration */}
-      <div className="hidden lg:flex bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] relative overflow-hidden">
+      <div className="hidden lg:flex bg-gradient-to-br from-primary-50 to-primary-100 dark:from-background-base dark:to-background-surface relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute inset-0">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
@@ -69,9 +69,9 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
 
         {/* Pattern overlay */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232563EB' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='currentColor' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
 
@@ -166,7 +166,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                   <h2 className="text-2xl xl:text-3xl font-display font-bold text-text-primary tracking-tight mb-4">
                     {carouselSlides[currentSlide].title}
                   </h2>
-                  <p className="text-sm text-[#6B7280] leading-relaxed max-w-md mx-auto">
+                  <p className="text-sm text-text-secondary leading-relaxed max-w-md mx-auto">
                     {carouselSlides[currentSlide].description}
                   </p>
                 </motion.div>
@@ -179,11 +179,10 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === currentSlide
-                      ? 'w-8 bg-[#2563EB]'
-                      : 'w-2 bg-[#D1D5DB] hover:bg-[#9CA3AF]'
-                  }`}
+                  className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide
+                    ? 'w-8 bg-brand'
+                    : 'w-2 bg-border-strong hover:bg-text-muted'
+                    }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
@@ -198,7 +197,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
         <div className="absolute top-6 left-6">
           <Link
             href={ROUTES.HOME}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:text-brand-dark transition-colors"
           >
             <ArrowRight className="h-4 w-4 rotate-180" />
             Back to home
@@ -233,7 +232,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-sm text-[#6B7280] leading-relaxed">
+                <p className="text-sm text-text-secondary leading-relaxed">
                   {subtitle}
                 </p>
               )}
