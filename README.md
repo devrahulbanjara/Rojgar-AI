@@ -24,7 +24,7 @@
 
 ---
 
-> [!WARNING]
+> [!NOTE]
 > **Currently in Development** – Features are being actively built and tested. Expect breaking changes.
 
 ---
@@ -72,14 +72,12 @@ docker-compose up -d
 cd backend && uv sync && uv run fastapi dev
 
 # 6. Run frontend (http://localhost:3000)
-cd frontend && bun install && bun run dev
+cd frontend && npm install && npm run dev
 ```
 
-> [!TIP]
+> [!IMPORTANT]
 > Make sure to configure your API keys in the `.env` files before running the application.
 
-> [!NOTE]
-> The backend runs on port 8000 and the frontend on port 3000 by default.
 
 ---
 

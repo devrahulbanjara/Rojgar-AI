@@ -587,39 +587,21 @@ export default function ShortlistPage() {
           onClick={handleCancelAcceptAI}
         >
           <div
-            className="bg-background-surface rounded-2xl max-w-md w-full mx-4 border border-border-default animate-in zoom-in-95 duration-200 ease-out shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]"
-            style={{
-              padding: '40px',
-              borderRadius: '16px',
-            }}
+            className="bg-background-surface rounded-2xl max-w-md w-full mx-4 border border-border-default animate-in zoom-in-95 duration-200 ease-out shadow-2xl p-10"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex justify-center mb-5">
-              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                <Brain className="w-6 h-6 text-primary-600" />
+            <div className="flex justify-center mb-6">
+              <div className="w-14 h-14 bg-primary-50 dark:bg-primary-950/30 rounded-full flex items-center justify-center">
+                <Brain className="w-7 h-7 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
 
             <div className="text-center mb-8">
-              <h3
-                className="text-text-primary mb-4"
-                style={{
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  lineHeight: 1.2,
-                }}
-              >
+              <h3 className="heading-4 mb-4">
                 Accept AI Recommendations
               </h3>
 
-              <p
-                className="text-text-secondary mb-3"
-                style={{
-                  fontSize: '16px',
-                  fontWeight: 400,
-                  lineHeight: 1.5,
-                }}
-              >
+              <p className="subtitle mb-3">
                 You're about to accept AI recommendations for{' '}
                 <span className="font-bold text-text-primary">
                   {recommendedCandidates.length} candidates
@@ -631,41 +613,21 @@ export default function ShortlistPage() {
                 .
               </p>
 
-              <p
-                className="text-text-muted"
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 400,
-                  lineHeight: 1.5,
-                }}
-              >
+              <p className="text-sm text-text-muted">
                 This will approve all AI-recommended candidates. This action cannot be undone.
               </p>
             </div>
 
-            <div className="flex justify-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
                 onClick={handleCancelAcceptAI}
-                className="border border-border-default text-text-secondary bg-background-surface hover:bg-background-subtle hover:border-border-strong rounded-lg transition-all duration-200"
-                style={{
-                  minWidth: '120px',
-                  height: '44px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  borderWidth: '1.5px',
-                }}
+                className="px-6 py-2.5 border-2 border-border-default text-text-secondary bg-white hover:bg-background-subtle hover:border-border-strong rounded-xl font-medium transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmAcceptAI}
-                className="btn-primary-gradient rounded-lg transition-all duration-200 shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
-                style={{
-                  minWidth: '200px',
-                  height: '44px',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                }}
+                className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all duration-200 active:scale-[0.98]"
               >
                 Accept Recommendations
               </button>

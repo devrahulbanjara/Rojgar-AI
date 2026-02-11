@@ -84,9 +84,15 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+
+  // Avoid hydration mismatch by waiting for mount
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Determine if user is a recruiter based on role or current path
   const isRecruiter =
@@ -131,8 +137,8 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
   const roleLabel = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 border-b border-border-subtle dark:border-[#1E293B] shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] bg-white/85 dark:bg-[#0F172A]/80 backdrop-blur-[12px]">
-      <div className="flex items-center justify-between h-full px-6 lg:px-8 max-w-[1600px] mx-auto">
+    <header className="fixed top-0 left-0 right-0 z-50 h-[64px] flex items-center transition-all duration-300 border-b border-border-subtle dark:border-border shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] bg-white/85 dark:bg-background-surface/85 backdrop-blur-[12px]">
+      <div className="flex items-center justify-between w-full h-full px-6 max-w-[1600px] mx-auto relative">
         {/* Left: Logo + Mobile Menu */}
         <div className="flex items-center gap-4">
           {onMenuClick && (
@@ -153,7 +159,7 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           >
             <Link href={ROUTES.HOME}>
               <Image
-                src={resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg'}
+                src={mounted && resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg'}
                 alt="ConvexHire Logo"
                 width={180}
                 height={40}
@@ -164,54 +170,56 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
           </motion.div>
         </div>
 
-        {/* Center: Breadcrumbs */}
-        <div className="hidden md:flex flex-1 justify-center">
+        {/* Center: Navigation Items (Breadcrumbs) */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
           <Breadcrumbs />
         </div>
 
         {/* Right: Actions Cluster */}
-        <div className="flex items-center gap-1">
-          {/* Theme Toggle */}
-          <ThemeToggle variant="icon-only" />
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-5">
+            {/* Theme Toggle */}
+            <ThemeToggle variant="icon-only" />
 
-          {/* Notification Bell - Shows Recent Activity for Recruiters */}
-          {isRecruiter ? (
-            <NotificationDropdown
-              isOpen={isNotificationOpen}
-              onToggle={() => setIsNotificationOpen(prev => !prev)}
-              onClose={() => setIsNotificationOpen(false)}
-            />
-          ) : (
-            <button
-              className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background-subtle transition-colors duration-200"
-              aria-label="Notifications"
-              title="Notifications"
+            {/* Notification Bell - Shows Recent Activity for Recruiters */}
+            {isRecruiter ? (
+              <NotificationDropdown
+                isOpen={isNotificationOpen}
+                onToggle={() => setIsNotificationOpen(prev => !prev)}
+                onClose={() => setIsNotificationOpen(false)}
+              />
+            ) : (
+              <button
+                className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background-subtle transition-colors duration-200"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+              </button>
+            )}
+
+            {/* Logout Button */}
+            <motion.button
+              onClick={handleLogout}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-50/60 dark:hover:bg-error-950/20 transition-all duration-200"
+              aria-label="Logout"
+              title="Logout"
             >
-              <Bell className="h-[18px] w-[18px]" />
-            </button>
-          )}
-
-          {/* Logout Button */}
-          <motion.button
-            onClick={handleLogout}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-50/60 dark:hover:bg-error-950/20 transition-all duration-200"
-            aria-label="Logout"
-            title="Logout"
-          >
-            <LogOut className="h-[18px] w-[18px]" />
-          </motion.button>
+              <LogOut className="h-5 w-5" />
+            </motion.button>
+          </div>
 
           {/* Separator */}
-          <div className="h-6 w-px bg-border-default/60 mx-1.5 hidden sm:block" />
+          <div className="h-6 w-px bg-border-default/60 hidden sm:block" />
 
           {/* User Avatar Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(prev => !prev)}
               className={cn(
-                'group flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer',
+                'group flex items-center gap-3 pl-1.5 pr-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer',
                 isDropdownOpen
                   ? 'bg-background-subtle ring-1 ring-border-default'
                   : 'hover:bg-background-subtle'
@@ -223,10 +231,10 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
                 <UserAvatar
                   name={user.name}
                   src={user.picture}
-                  className="w-8 h-8 border-2 border-background-surface shadow-sm"
+                  className="w-9 h-9 border-2 border-background-surface shadow-sm"
                 />
               ) : (
-                <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
                   U
                 </div>
               )}

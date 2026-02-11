@@ -90,12 +90,12 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
 
   const sidebarMarginClass = React.useMemo(() => {
     if (hideSidebar) return ''
-    if (isSidebarCollapsed === null) return 'lg:ml-[220px]'
-    return isSidebarCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[220px]'
+    if (isSidebarCollapsed === null) return 'lg:ml-[240px]'
+    return isSidebarCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[240px]'
   }, [isSidebarCollapsed, hideSidebar])
 
   return (
-    <div className="min-h-screen bg-background-subtle">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-background">
       <Topbar onMenuClick={hideSidebar ? undefined : handleMenuClick} user={user} />
 
       <div className="flex min-h-[calc(100vh-64px)] pt-16">

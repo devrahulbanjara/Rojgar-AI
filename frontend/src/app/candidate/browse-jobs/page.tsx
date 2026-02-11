@@ -311,7 +311,7 @@ export default function Jobs() {
 
         {/* Search & Filters */}
         <AnimatedContainer direction="up" delay={0.15}>
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-lg shadow-sm">
             <div className="relative w-full lg:w-[420px]">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
               <input
@@ -319,7 +319,7 @@ export default function Jobs() {
                 value={searchQuery}
                 onChange={e => handleSearchChange(e.target.value)}
                 placeholder="Search by job title, company, or skills..."
-                className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
+                className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
               />
             </div>
 
