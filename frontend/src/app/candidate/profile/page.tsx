@@ -110,15 +110,14 @@ export default function CandidateProfilePage() {
   return (
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-6">
           <AnimatedContainer direction="up" delay={0.1}>
             <ProfileHeader user={user} profile={profile} />
-            <div className="mt-6 border-b border-border-default/60" />
           </AnimatedContainer>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <AnimatedContainer direction="up" delay={0.2}>
-              <div className="bg-background-surface rounded-2xl border border-border-default p-1 shadow-sm">
+              <div className="bg-background-surface rounded-[5px] border border-border-default p-1">
                 <div className="flex overflow-x-auto">
                   {[
                     { id: 'profile', label: 'Profile Information', icon: User },
@@ -137,13 +136,13 @@ export default function CandidateProfilePage() {
                         onClick={() =>
                           setActiveTab(tab.id as 'profile' | 'career' | 'skills' | 'password')
                         }
-                        className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-200 whitespace-nowrap ${
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded font-medium transition-all duration-200 whitespace-nowrap ${
                           activeTab === tab.id
-                            ? 'bg-primary-600 text-white shadow-sm'
+                            ? 'bg-primary-600 text-white'
                             : 'text-text-secondary hover:bg-background-subtle hover:text-primary-600 dark:hover:text-primary-400'
                         }`}
                       >
-                        <IconComponent className="w-5 h-5" />
+                        <IconComponent className="w-4 h-4" />
                         <span className="text-sm font-medium">{tab.label}</span>
                       </button>
                     )
@@ -154,7 +153,7 @@ export default function CandidateProfilePage() {
 
             {}
             <AnimatedContainer direction="up" delay={0.3}>
-              <div className="bg-background-surface rounded-2xl border border-border-default shadow-sm">
+              <div className="bg-background-surface rounded-[5px] border border-border-default">
                 {activeTab === 'profile' && profile && (
                   <ProfileInformationTab profile={profile} onUpdate={handleProfileUpdate} />
                 )}

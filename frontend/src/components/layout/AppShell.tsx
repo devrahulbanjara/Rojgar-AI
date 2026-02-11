@@ -27,7 +27,7 @@ export function AppShell({ children, hideSidebar = false }: AppShellProps) {
       {!hideSidebar && (
         <AppSidebar role={sidebarRole as 'candidate' | 'recruiter' | 'organization'} />
       )}
-      <SidebarInset className="min-h-screen bg-[#F8FAFC] dark:bg-background flex flex-col">
+      <SidebarInset className="min-h-screen bg-background-subtle dark:bg-background flex flex-col">
         <Topbar user={user} />
 
         <main className="flex-1 pt-16">

@@ -141,13 +141,8 @@ export function Topbar({ user }: TopbarProps) {
             <Menu className="h-5 w-5" />
           </motion.button>
 
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            className="md:hidden lg:block" // Hide on medium (sidebar expanded)
-          >
+          <div className="md:hidden lg:block">
             <Link href={ROUTES.HOME}>
-              {/* Use CSS dark mode classes so logo always matches theme */}
               <div className="h-10 flex items-center">
                 <Image
                   src="/logo-light.svg"
@@ -167,7 +162,7 @@ export function Topbar({ user }: TopbarProps) {
                 />
               </div>
             </Link>
-          </motion.div>
+          </div>
         </div>
 
         {/* Center: Navigation Items (Breadcrumbs) */}

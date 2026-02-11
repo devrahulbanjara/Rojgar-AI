@@ -255,24 +255,14 @@ export function CareerHistoryTab({
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h3 className="text-2xl font-bold text-text-primary mb-2">Career History</h3>
-        <p className="text-text-secondary">Manage your work experience and education records.</p>
-      </div>
-
+    <div className="px-10 py-8">
       <div className="space-y-8">
         {}
-        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-200 dark:border-primary-800">
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-text-primary">Work Experience</h4>
-                <p className="text-sm text-text-tertiary">Your professional journey</p>
-              </div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-border-default">
+            <div>
+              <h4 className="text-lg font-bold text-text-primary">Work Experience</h4>
+              <p className="text-sm text-text-tertiary mt-0.5">Your professional journey</p>
             </div>
             {!isAddingExperience && (
               <Button
@@ -289,7 +279,7 @@ export function CareerHistoryTab({
                   })
                   setIsAddingExperience(true)
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-md shadow-primary transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-medium"
               >
                 <Plus className="w-4 h-4" />
                 Add Experience
@@ -301,9 +291,9 @@ export function CareerHistoryTab({
           {isAddingExperience && (
             <form
               onSubmit={handleAddExperience}
-              className="mb-8 p-6 bg-background-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-top-4 duration-300"
+              className="mb-6 p-6 bg-background-subtle rounded border border-border-default"
             >
-              <h5 className="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
+              <h5 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                 {editingExpId ? (
                   <Pencil className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 ) : (
@@ -480,7 +470,7 @@ export function CareerHistoryTab({
                 <Button
                   onClick={() => setIsAddingExperience(true)}
                   variant="outline"
-                  className="mt-6 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 rounded-xl"
+                  className="mt-6 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 rounded"
                 >
                   Add Experience
                 </Button>
@@ -565,16 +555,11 @@ export function CareerHistoryTab({
         </div>
 
         {}
-        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center text-ai-600 dark:text-ai-400 shadow-sm border border-ai-200 dark:border-ai-800">
-                <GraduationCap className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-text-primary">Education</h4>
-                <p className="text-sm text-text-tertiary">Your academic background</p>
-              </div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-border-default">
+            <div>
+              <h4 className="text-lg font-bold text-text-primary">Education</h4>
+              <p className="text-sm text-text-tertiary mt-0.5">Your academic background</p>
             </div>
             {!isAddingEducation && (
               <Button
@@ -590,7 +575,7 @@ export function CareerHistoryTab({
                   })
                   setIsAddingEducation(true)
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-md shadow-primary transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-medium"
               >
                 <Plus className="w-4 h-4" />
                 Add Education
@@ -602,9 +587,9 @@ export function CareerHistoryTab({
           {isAddingEducation && (
             <form
               onSubmit={handleAddEducation}
-              className="mb-8 p-6 bg-background-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-top-4 duration-300"
+              className="mb-6 p-6 bg-background-subtle rounded border border-border-default"
             >
-              <h5 className="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
+              <h5 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                 {editingEduId ? (
                   <Pencil className="w-5 h-5 text-ai-600" />
                 ) : (
@@ -761,7 +746,7 @@ export function CareerHistoryTab({
                 <Button
                   onClick={() => setIsAddingEducation(true)}
                   variant="outline"
-                  className="mt-6 border-ai-200 text-ai-600 hover:bg-ai-50 hover:border-ai-300 rounded-xl"
+                  className="mt-6 border-ai-200 text-ai-600 hover:bg-ai-50 hover:border-ai-300 rounded"
                 >
                   Add Education
                 </Button>
