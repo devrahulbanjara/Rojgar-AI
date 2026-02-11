@@ -181,6 +181,12 @@ function JobTableRow({
                 </div>
             </td>
 
+            <td className="py-5 px-6">
+                <div className="text-[13px] font-medium text-text-secondary whitespace-nowrap">
+                    {job.application_deadline ? formatFullDate(job.application_deadline) : '-'}
+                </div>
+            </td>
+
             <td className="py-5 px-6 text-center">
                 <div className="flex items-center justify-center gap-1">
                     <button
@@ -317,9 +323,14 @@ export function JobsTable({
                                     Status
                                 </span>
                             </th>
-                            <th className="py-4 px-6 text-left" style={{ width: '20%' }}>
+                            <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
                                 <span className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
                                     Posted date
+                                </span>
+                            </th>
+                            <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
+                                <span className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
+                                    {jobs[0]?.status?.toLowerCase() === 'expired' ? 'Expired date' : 'Deadline'}
                                 </span>
                             </th>
                             <th className="py-4 px-6 text-center" style={{ width: '10%' }}>

@@ -50,17 +50,17 @@ function ReferenceJDTableRow({
             className={cn(
                 'border-b border-border-subtle cursor-pointer transition-all duration-200 group',
                 isEven ? 'bg-background-surface' : 'bg-background-subtle/10',
-                'hover:bg-ai-50/40 dark:hover:bg-ai-950/20 hover:border-ai-100 dark:hover:border-ai-900'
+                'hover:bg-primary-50/40 dark:hover:bg-primary-950/20 hover:border-primary-100 dark:hover:border-primary-900'
             )}
         >
             {/* Template Details */}
             <td className="py-5 px-6">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-ai-50 dark:bg-ai-900/40 flex items-center justify-center font-bold text-ai-600 dark:text-ai-400 border border-ai-100 dark:border-ai-800 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/40 flex items-center justify-center font-bold text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-800 shadow-sm transition-transform group-hover:scale-105">
                         {(jd.department || 'JD').substring(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[15px] font-bold text-text-primary group-hover:text-ai-600 transition-colors truncate">
+                        <p className="text-[15px] font-bold text-text-primary group-hover:text-primary-600 transition-colors truncate">
                             {jd.department ? `${jd.department} Template` : 'Reference JD'}
                         </p>
                         <p className="text-[11px] text-text-tertiary font-medium mt-0.5 truncate uppercase tracking-wider opacity-80 italic">
@@ -94,7 +94,7 @@ function ReferenceJDTableRow({
                         <DropdownMenuTrigger asChild>
                             <button
                                 onClick={e => e.stopPropagation()}
-                                className="p-2.5 rounded-xl text-text-muted hover:bg-ai-100/50 hover:text-ai-600 transition-all focus:outline-none"
+                                className="p-2.5 rounded-xl text-text-muted hover:bg-primary-100/50 hover:text-primary-600 transition-all focus:outline-none"
                             >
                                 <MoreVertical className="w-4 h-4" />
                             </button>
@@ -105,7 +105,7 @@ function ReferenceJDTableRow({
                                     e.stopPropagation()
                                     onJDClick(jd)
                                 }}
-                                className="flex items-center gap-3 px-3 py-2.5 cursor-pointer font-semibold rounded-lg text-sm text-text-primary hover:bg-ai-50"
+                                className="flex items-center gap-3 px-3 py-2.5 cursor-pointer font-semibold rounded-lg text-sm text-text-primary hover:bg-primary-50"
                             >
                                 <FileText className="w-4 h-4 text-text-tertiary" /> View Detailed Template
                             </DropdownMenuItem>
@@ -123,7 +123,7 @@ function ReferenceJDTableRow({
                                     e.stopPropagation()
                                     onEdit(jd)
                                 }}
-                                className="flex items-center gap-3 px-3 py-2.5 cursor-pointer font-semibold rounded-lg text-sm text-text-primary hover:bg-ai-50"
+                                className="flex items-center gap-3 px-3 py-2.5 cursor-pointer font-semibold rounded-lg text-sm text-text-primary hover:bg-primary-50"
                             >
                                 <Edit2 className="w-4 h-4 text-text-tertiary" /> Edit Template Files
                             </DropdownMenuItem>
