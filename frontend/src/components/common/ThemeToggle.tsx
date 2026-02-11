@@ -28,10 +28,10 @@ export function ThemeToggle({
   }
 
   const ThemeIcon = () => {
-    if (!mounted) return <Sun className="h-4 w-4" />
-    if (theme === 'system') return <Monitor className="h-4 w-4" />
-    if (resolvedTheme === 'dark') return <Moon className="h-4 w-4" />
-    return <Sun className="h-4 w-4" />
+    if (!mounted) return <Sun className="h-5 w-5" />
+    if (theme === 'system') return <Monitor className="h-5 w-5" />
+    if (resolvedTheme === 'dark') return <Moon className="h-5 w-5" />
+    return <Sun className="h-5 w-5" />
   }
 
   const themeLabel = !mounted

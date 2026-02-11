@@ -67,11 +67,9 @@ export function ShortlistCandidateCard({
   return (
     <div
       className={cn(
-        'group w-full bg-background-surface rounded-[12px] border border-border-subtle p-6 shadow-sm hover:border-border-default hover:shadow-lg hover:-translate-y-1 transition-all duration-300',
-        isShortlisted &&
-          'border-success-200 dark:border-success-800 bg-success-50/30 dark:bg-success-950/20',
-        isRejected &&
-          'border-error-200 dark:border-error-800 bg-error-50/30 dark:bg-error-950/20 opacity-60',
+        'group w-full bg-white dark:bg-[#0F172A] rounded-[16px] border border-[#E2E8F0] dark:border-[#1E293B] p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
+        isShortlisted && 'border-success-200 dark:border-success-800 bg-success-50/20 dark:bg-success-950/20',
+        isRejected && 'border-error-200 dark:border-error-800 bg-error-50/20 dark:bg-error-950/20 opacity-60',
         className
       )}
     >
@@ -154,29 +152,26 @@ export function ShortlistCandidateCard({
           </div>
         )}
 
-        <div className="flex-shrink-0 flex items-center gap-4">
+        <div className="flex-shrink-0 flex items-center gap-3">
           <button
             onClick={() => setIsResumeModalOpen(true)}
-            className="group inline-flex items-center gap-2 px-5 py-3 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg hover:shadow-primary/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
+            className="px-5 py-2.5 border-2 border-[#2563EB] text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95"
           >
-            <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span>View Resume</span>
+            View Resume
           </button>
           {!isProcessed && (
             <>
               <button
                 onClick={() => onShortlist(candidate.application_id)}
-                className="group inline-flex items-center gap-2 px-5 py-3 bg-success-50 dark:bg-success-950/30 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800 hover:bg-success-100 dark:hover:bg-success-900/30 hover:border-success-300 dark:hover:border-success-700 hover:shadow-lg hover:shadow-success/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
+                className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all duration-200 active:scale-95"
               >
-                <CheckCircle2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>Shortlist</span>
+                Shortlist
               </button>
               <button
                 onClick={() => onReject(candidate.application_id)}
-                className="group inline-flex items-center gap-2 px-5 py-3 bg-error-50 dark:bg-error-950/30 text-error-700 dark:text-error-300 border border-error-200 dark:border-error-800 hover:bg-error-100 dark:hover:bg-error-900/30 hover:border-error-300 dark:hover:border-error-700 hover:shadow-lg hover:shadow-error/20 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5"
+                className="px-5 py-2.5 border-2 border-[#E2E8F0] text-text-secondary hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95"
               >
-                <XCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>Reject</span>
+                Reject
               </button>
             </>
           )}

@@ -95,26 +95,26 @@ export function Sidebar({
     <>
       <motion.aside
         initial={false}
-        animate={{ width: isCollapsed ? 80 : 220 }}
+        animate={{ width: isCollapsed ? 64 : 240 }}
         transition={disableAnimation ? { duration: 0 } : sidebarSpring}
         suppressHydrationWarning
         className={cn(
           'fixed left-0 top-16 z-40 h-[calc(100vh-64px)] flex-col',
-          'bg-background-subtle dark:bg-[#1E293B]',
-          'border-r border-border-default dark:border-[#334155]',
+          'bg-white dark:bg-background-surface',
+          'border-r border-border-default dark:border-border',
           'hidden lg:flex'
         )}
       >
         <motion.button
           type="button"
           onClick={onToggle}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           suppressHydrationWarning
           className={cn(
-            'absolute -right-3.5 top-8 z-50 flex h-7 w-7 items-center justify-center rounded-full',
+            'absolute -right-4 top-4 z-50 flex h-8 w-8 items-center justify-center rounded-full p-2',
             'border border-border-default bg-background-surface text-text-tertiary',
-            'shadow-md hover:shadow-lg transition-shadow duration-200',
+            'shadow-md hover:shadow-lg transition-all duration-200',
             'hover:border-primary hover:text-primary hover:bg-primary-50 dark:hover:bg-primary-950/50',
             'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
           )}
@@ -128,17 +128,18 @@ export function Sidebar({
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.15 }}
+              className="flex items-center justify-center"
             >
               {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               ) : (
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               )}
             </motion.div>
           </AnimatePresence>
         </motion.button>
 
-        <nav className="relative flex-1 px-3 pt-6 space-y-1.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <nav className="relative flex-1 px-2 pt-6 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {items.map((item, index) => {
             const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`)
 
@@ -153,22 +154,6 @@ export function Sidebar({
             )
           })}
         </nav>
-
-        <AnimatePresence>
-          {isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="px-3 pb-6 pt-2"
-            >
-              <div className="flex justify-center">
-                <div className="w-8 h-1 rounded-full bg-border-default" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.aside>
 
       <AnimatePresence>
@@ -191,8 +176,8 @@ export function Sidebar({
               transition={sidebarSpring}
               className={cn(
                 'fixed left-0 top-16 z-50 h-[calc(100vh-64px)] w-72 flex-col',
-                'bg-background-subtle dark:bg-[#1E293B]',
-                'border-r border-border-default dark:border-[#334155] shadow-2xl',
+                'bg-white dark:bg-background-surface',
+                'border-r border-border-default dark:border-border shadow-2xl',
                 'lg:hidden flex'
               )}
             >
@@ -237,11 +222,11 @@ function NavItem({ item, isActive, isCollapsed, index: _index, onNavigate }: Nav
       onClick={onNavigate}
       aria-label={item.title}
       className={cn(
-        'group relative flex items-center rounded-xl cursor-pointer',
+        'group relative flex items-center cursor-pointer',
         'transition-all duration-200',
-        isCollapsed ? 'h-12 w-12 justify-center mx-auto' : 'h-12 w-full px-4 gap-3',
+        isCollapsed ? 'h-11 w-11 justify-center mx-auto rounded-lg' : 'h-[44px] w-full px-4 gap-3 rounded-[6px]',
         isActive
-          ? 'bg-primary-50 dark:bg-primary-900/20 border-l-[3px] border-l-primary-600 dark:border-l-primary-500 rounded-l-none'
+          ? 'bg-primary-50 dark:bg-primary-900/20 border-l-[3px] border-l-brand text-brand dark:text-primary-400 font-semibold'
           : 'text-text-tertiary hover:bg-primary-50/60 dark:hover:bg-primary-950/40 hover:text-primary'
       )}
     >
@@ -249,35 +234,33 @@ function NavItem({ item, isActive, isCollapsed, index: _index, onNavigate }: Nav
         className={cn(
           'flex-shrink-0 transition-all duration-200 ease-out',
           isActive
-            ? 'text-primary-600 dark:text-primary-400'
-            : 'text-text-tertiary group-hover:text-primary group-hover:scale-105'
+            ? 'text-[#2563EB] dark:text-primary-400'
+            : 'text-text-tertiary group-hover:text-primary'
         )}
       >
         <Icon
-          className={cn('transition-colors duration-200', isCollapsed ? 'h-6 w-6' : 'h-5 w-5')}
+          className={cn('transition-colors duration-200', 'h-5 w-5')}
         />
       </div>
 
-      {/* Label with AnimatePresence for smooth transitions */}
-      <AnimatePresence mode="wait" initial={false}>
-        {!isCollapsed && (
-          <motion.span
-            key="label"
-            variants={textVariants}
-            initial="collapsed"
-            animate="expanded"
-            exit="collapsed"
-            className={cn(
-              'text-[15px] font-medium whitespace-nowrap overflow-hidden',
-              isActive
-                ? 'text-primary-600 dark:text-primary-400 font-semibold'
-                : 'text-text-secondary group-hover:text-primary'
-            )}
-          >
-            {item.title}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {!isCollapsed && (
+        <motion.span
+          key="label"
+          variants={textVariants}
+          initial="collapsed"
+          animate="expanded"
+          exit="collapsed"
+          className={cn(
+            'text-[14px] font-medium whitespace-nowrap overflow-hidden',
+            isActive
+              ? 'text-brand dark:text-primary-400'
+              : 'text-text-secondary group-hover:text-primary'
+          )}
+        >
+          {item.title}
+        </motion.span>
+      )}
     </Link>
   )
 }
+

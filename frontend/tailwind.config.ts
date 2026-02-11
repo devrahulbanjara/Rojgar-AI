@@ -26,10 +26,7 @@ const config: Config = {
         // Headings - Also use Manrope for consistency
         display: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
         // Agentic/AI Data - For Score Breakdowns, AI Logs, Reasoning sections
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
-        // Legacy aliases for backward compatibility
-        jakarta: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       letterSpacing: {
         // Premium tight headings (-0.02em to -0.04em for luxury tech brand feel)
@@ -261,8 +258,8 @@ const config: Config = {
         md: 'var(--radius)',
         sm: 'var(--radius-sm)',
         xl: 'var(--radius-xl)',
-        '2xl': '1.5rem',
-        '3xl': '2rem',
+        '2xl': '5px',
+        '3xl': '5px',
       },
       boxShadow: {
         xs: 'var(--shadow-xs)',

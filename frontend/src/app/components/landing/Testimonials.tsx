@@ -54,8 +54,13 @@ export default function Testimonials({ content }: TestimonialsProps) {
 
               {/* Author Info */}
               <div className="flex items-center gap-4 mt-auto">
-                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-light)] flex items-center justify-center text-[var(--color-primary-purple)] font-bold text-lg">
-                  {testimonial.name.charAt(0)}
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[var(--color-primary-light)]">
+                  <Image
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <div>
                   <p className="text-base font-bold text-[var(--color-primary-black)] m-0">
