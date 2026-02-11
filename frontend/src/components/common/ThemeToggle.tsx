@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Monitor } from 'lucide-react'
+import { Sun, Moon } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 interface ThemeToggleProps {
@@ -16,31 +16,28 @@ export function ThemeToggle({
   className,
   showLabel = true,
 }: ThemeToggleProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => setMounted(true), [])
 
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark')
-    else if (theme === 'dark') setTheme('system')
+    else if (theme === 'dark') setTheme('light')
     else setTheme('light')
   }
 
   const ThemeIcon = () => {
-    if (!mounted) return <Sun className="h-4 w-4" />
-    if (theme === 'system') return <Monitor className="h-4 w-4" />
-    if (resolvedTheme === 'dark') return <Moon className="h-4 w-4" />
-    return <Sun className="h-4 w-4" />
+    if (!mounted) return <Sun className="h-5 w-5" />
+    if (theme === 'dark') return <Moon className="h-5 w-5" />
+    return <Sun className="h-5 w-5" />
   }
 
   const themeLabel = !mounted
     ? 'Light'
-    : theme === 'system'
-      ? 'System'
-      : resolvedTheme === 'dark'
-        ? 'Dark'
-        : 'Light'
+    : theme === 'dark'
+      ? 'Dark'
+      : 'Light'
 
   if (variant === 'icon-only') {
     return (

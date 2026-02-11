@@ -15,10 +15,10 @@ export interface CandidateApplication {
   picture?: string
   professional_headline?: string
   professional_summary?: string
-  current_status: 'applied' | 'interviewing' | 'outcome'
+  current_status: 'applied' | 'shortlisted' | 'rejected' | 'interviewing' | 'outcome'
   applied_at: string
-  ai_score?: number
-  ai_analysis?: string
+  score?: number
+  feedback?: string
   social_links?: SocialLink[]
 }
 

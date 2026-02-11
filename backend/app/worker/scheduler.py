@@ -36,6 +36,7 @@ async def expire_jobs_task():
             )
 
             job_ids_to_process = await job_service.auto_expire_jobs()
+            await db.commit()  # Commit job expiration changes
 
             if job_ids_to_process:
                 logger.info(
@@ -48,8 +49,10 @@ async def expire_jobs_task():
                 for job_id in job_ids_to_process:
                     try:
                         await shortlist_service.process_shortlisting(job_id)
+                        await db.commit()  # Commit after each job's shortlisting
                         logger.info(f"Auto-shortlisting completed for job {job_id}")
                     except Exception as e:
+                        await db.rollback()  # Rollback on error
                         logger.error(f"Auto-shortlisting failed for job {job_id}: {e}")
             else:
                 logger.trace(
@@ -57,6 +60,7 @@ async def expire_jobs_task():
                 )
 
         except Exception as e:
+            await db.rollback()  # Rollback on error
             logger.error(f"Cron Job Error: {e}")
 
 

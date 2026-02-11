@@ -56,22 +56,14 @@ export function usePersonalizedRecommendations(
 ) {
   const isEnabled = !!userId && userId.length > 0
 
-  console.warn('usePersonalizedRecommendations hook:', {
-    userId,
-    isEnabled,
-    page,
-    limit,
-    filters,
-  })
-
   return useQuery({
     queryKey: ['jobs', 'personalized', userId, page, limit, filters],
     queryFn: async () => {
-      console.warn('Fetching personalized recommendations...')
       return await jobService.getPersonalizedRecommendations(userId, page, limit, filters)
     },
     staleTime: 0,
     gcTime: 0,
+    enabled: isEnabled,
 
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -200,7 +192,7 @@ export function useDeleteJob() {
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: jobQueryKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: jobQueryKeys.lists() })
-      toast.success('Job deleted successfully')
+      // Toast is handled in the component
     },
     onError: (error: Error) => {
       const errorMessage =
@@ -208,8 +200,9 @@ export function useDeleteJob() {
         (error as { data?: { detail?: string; message?: string } })?.data?.message ||
         error.message ||
         'Failed to delete job'
-      toast.error('Failed to delete job', {
+      toast.error('Failed to Delete Job', {
         description: errorMessage,
+        duration: 4000,
       })
     },
   })
