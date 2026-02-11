@@ -81,23 +81,6 @@ cd frontend && npm install && npm run dev
 
 ---
 
-## 🎨 Design System
-
-<table>
-<tr>
-<td width="80" align="center">
-<img src="frontend/public/logo-icon.svg" width="40" height="40" alt="ConvexHire"/>
-</td>
-<td>
-ConvexHire uses a clean, premium, modern design system.
-</td>
-</tr>
-</table>
-
-> 📖 **[View Full Design Documentation →](./DESIGN.md)** Logo, typography, colors, spacing, shadows, animations, dark mode, and component patterns.
-
----
-
 ## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=devrahulbanjara/ConvexHire&type=date&legend=top-left)](https://www.star-history.com/#devrahulbanjara/ConvexHire&type=date&legend=top-left)

@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
@@ -33,6 +31,7 @@ import {
 import { cn } from '../../lib/utils'
 import { useCreateJob, useGenerateJobDraft, useUpdateJob } from '../../hooks/queries/useJobs'
 import { useReferenceJDs } from '../../hooks/queries/useReferenceJDs'
+import { useAuth } from '../../hooks/useAuth'
 import { ActionButton } from '../ui'
 import { SelectDropdown } from '../ui/select-dropdown'
 import { toast } from 'sonner'
@@ -88,6 +87,7 @@ export function JobCreationWizard({
   jobToEdit,
   initialReferenceJdId,
 }: JobCreationWizardProps) {
+  const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGenerated, setIsGenerated] = useState(false)
@@ -128,8 +128,8 @@ export function JobCreationWizard({
     reference_jd_id: initialReferenceJdId || '',
     description: '',
     jobResponsibilities: [''],
-    locationCity: '',
-    locationCountry: '',
+    locationCity: user?.organization?.location_city || '',
+    locationCountry: user?.organization?.location_country || '',
     locationType: '',
     employmentType: '',
     requiredSkillsAndExperience: [''],
@@ -675,6 +675,47 @@ export function JobCreationWizard({
                           />
                         </div>
 
+                        {/* Department & Level */}
+                        <div className="grid grid-cols-2 gap-5">
+                          <div>
+                            <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-text-tertiary" />
+                              Department <span className="text-error">*</span>
+                            </label>
+                            <SelectDropdown
+                              value={formData.department}
+                              onChange={value => updateField('department', value)}
+                              placeholder="Select department..."
+                              options={[
+                                { value: 'Engineering', label: 'Engineering' },
+                                { value: 'Design', label: 'Design' },
+                                { value: 'Product', label: 'Product' },
+                                { value: 'Marketing', label: 'Marketing' },
+                                { value: 'Sales', label: 'Sales' },
+                                { value: 'Operations', label: 'Operations' },
+                              ]}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                              <Users className="w-4 h-4 text-text-tertiary" />
+                              Level <span className="text-error">*</span>
+                            </label>
+                            <SelectDropdown
+                              value={formData.level}
+                              onChange={value => updateField('level', value)}
+                              placeholder="Select level..."
+                              options={[
+                                { value: 'Junior', label: 'Junior' },
+                                { value: 'Mid', label: 'Mid-Level' },
+                                { value: 'Senior', label: 'Senior' },
+                                { value: 'Lead', label: 'Lead' },
+                                { value: 'Principal', label: 'Principal' },
+                              ]}
+                            />
+                          </div>
+                        </div>
+
                         {/* Reference JD */}
                         <div>
                           <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
@@ -748,36 +789,27 @@ export function JobCreationWizard({
                             !formData.reference_jd_id
                           }
                           className={cn(
-                            'group relative w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg overflow-hidden',
+                            'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200',
                             !isGenerating &&
                               !generateDraftMutation.isPending &&
                               formData.title.trim() &&
                               formData.keywords.trim() &&
                               formData.reference_jd_id
-                              ? 'bg-gradient-to-r from-ai-600 to-primary-600 dark:from-ai-500 dark:to-primary-500 text-white shadow-ai-500/25 hover:from-ai-700 hover:to-primary-700 dark:hover:from-ai-600 dark:hover:to-primary-600 hover:shadow-ai-500/40 hover:-translate-y-0.5'
+                              ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md'
                               : 'bg-background-subtle text-text-muted cursor-not-allowed'
                           )}
                         >
-                          {!isGenerating &&
-                            !generateDraftMutation.isPending &&
-                            formData.title.trim() &&
-                            formData.keywords.trim() &&
-                            formData.reference_jd_id && (
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                            )}
-                          <div className="relative flex items-center gap-2">
-                            {isGenerating || generateDraftMutation.isPending ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Generating...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Wand2 className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200" />
-                                <span>{jobToEdit ? 'Revise with AI' : 'Generate with AI'}</span>
-                              </>
-                            )}
-                          </div>
+                          {isGenerating || generateDraftMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Wand2 className="w-4 h-4" />
+                              <span>{jobToEdit ? 'Revise with AI' : 'Generate with AI'}</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
