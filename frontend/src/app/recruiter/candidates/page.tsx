@@ -77,7 +77,7 @@ export default function RecruiterCandidatesPage() {
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = '/login'
+      window.location.href = '/signin'
     }
   }, [isAuthenticated, isAuthLoading])
 
