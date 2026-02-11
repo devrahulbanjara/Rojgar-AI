@@ -18,12 +18,13 @@ const config: Config = {
     extend: {
       fontFamily: {
         // =======================================================================
-        // PREMIUM TYPOGRAPHY SYSTEM - Dual-font for AI-Enterprise Aesthetic
+        // PREMIUM TYPOGRAPHY SYSTEM - Manrope for clean, modern aesthetic
         // =======================================================================
-        // Global UI & Body - The gold standard for SaaS
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        // Headings & Branding - Premium geometric sans-serif
-        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        // Global UI, Body & Headings - Manrope for consistent branding
+        sans: ['var(--font-manrope)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        manrope: ['var(--font-manrope)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Headings - Also use Manrope for consistency
+        display: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
         // Agentic/AI Data - For Score Breakdowns, AI Logs, Reasoning sections
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
         // Legacy aliases for backward compatibility
@@ -231,6 +232,19 @@ const config: Config = {
           dribbble: '#EA4C89',
           behance: '#1769FF',
         },
+
+        // =======================================================================
+        // LANDING PAGE COLORS - CSS Variables
+        // =======================================================================
+        'color-primary-black': 'var(--color-primary-black)',
+        'color-primary-purple': 'var(--color-primary-purple)',
+        'color-primary-light': 'var(--color-primary-light)',
+        'color-white': 'var(--color-white)',
+        'color-gray-100': 'var(--color-gray-100)',
+        'color-gray-200': 'var(--color-gray-200)',
+        'color-gray-400': 'var(--color-gray-400)',
+        'color-gray-600': 'var(--color-gray-600)',
+        'color-gray-900': 'var(--color-gray-900)',
       },
       backgroundImage: {
         'gradient-brand': 'var(--gradient-brand)',
@@ -361,6 +375,10 @@ const config: Config = {
           '0%, 100%': { boxShadow: '0 0 0 4px rgba(168, 85, 247, 0.15)' },
           '50%': { boxShadow: '0 0 0 8px rgba(168, 85, 247, 0.05)' },
         },
+        'spin-slow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -385,6 +403,7 @@ const config: Config = {
         typing: 'typing 3.5s steps(40, end)',
         blink: 'blink 1s step-end infinite',
         'ai-pulse': 'ai-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'spin-slow': 'spin-slow 20s linear infinite',
       },
     },
   },

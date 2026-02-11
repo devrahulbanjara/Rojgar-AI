@@ -1,15 +1,12 @@
 /* =============================================================================
-   PREMIUM TYPOGRAPHY SYSTEM - Dual-Font AI-Enterprise Aesthetic
+   PREMIUM TYPOGRAPHY SYSTEM - Manrope for Clean Modern Aesthetic
    
    Font Roles:
-   - Inter: Global UI & Body (SaaS gold standard, crisp in light/dark modes)
-   - Plus Jakarta Sans: Headings & Branding (premium geometric sans-serif)
+   - Manrope: Global UI, Body & Headings (clean, modern, professional)
    - JetBrains Mono: Agentic/AI Data (signals computed agent data)
    ============================================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -505,7 +502,7 @@
   }
 
   /* ==========================================================================
-     BODY - Inter for Global UI (crisp in light/dark, handles high-density data)
+     BODY - Manrope for Global UI (clean, modern, professional)
      ========================================================================== */
   body {
     @apply bg-background text-foreground font-sans antialiased;
@@ -517,8 +514,8 @@
   }
 
   /* ==========================================================================
-     HEADINGS - Plus Jakarta Sans for Premium Branding
-     Tighter letter-spacing for luxury tech brand feel (Apple/Stripe aesthetic)
+     HEADINGS - Manrope for Consistent Branding
+     Tighter letter-spacing for modern tech brand feel
      ========================================================================== */
   h1,
   h2,
@@ -526,7 +523,7 @@
   h4,
   h5,
   h6 {
-    @apply font-display font-semibold;
+    @apply font-sans font-semibold;
     letter-spacing: -0.02em;
     /* Premium tight headings */
     font-optical-sizing: auto;
@@ -1009,21 +1006,21 @@
 
   /* Hero heading - Extra tight for maximum impact */
   .heading-hero {
-    @apply font-display font-bold;
+    @apply font-sans font-bold;
     letter-spacing: -0.04em;
     line-height: 1.1;
   }
 
   /* Section heading - Standard premium heading */
   .heading-section {
-    @apply font-display font-semibold;
+    @apply font-sans font-semibold;
     letter-spacing: -0.03em;
     line-height: 1.2;
   }
 
   /* Card heading - Slightly less tight */
   .heading-card {
-    @apply font-display font-semibold;
+    @apply font-sans font-semibold;
     letter-spacing: -0.02em;
     line-height: 1.3;
   }
@@ -1346,4 +1343,107 @@ html.no-transitions *::after {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--text-muted));
+}
+
+
+/* =============================================================================
+   HRbes Design System Tokens for Landing Page
+   ============================================================================= */
+:root {
+  /* Primary Colors */
+  --color-primary-black: #010101;
+  --color-primary-purple: #2563EB;
+  --color-primary-light: #DBEAFE;
+
+  /* Neutral Colors */
+  --color-white: #FFFFFF;
+  --color-gray-100: #F8F9FA;
+  --color-gray-200: #E9ECEF;
+  --color-gray-400: #ADB5BD;
+  --color-gray-600: #6C757D;
+  --color-gray-900: #212529;
+
+  /* Semantic Colors */
+  --color-success: #28a745;
+  --color-error: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
+
+  /* Spacing System (8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* Border Radius */
+  --radius-small: 4px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --radius-xlarge: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-large: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 8px 20px rgba(37, 99, 235, 0.15);
+
+  /* Z-Index Layers */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Animations for Landing Page */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes bounce-slower {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
+
+.animate-bounce-slower {
+  animation: bounce-slower 5s ease-in-out infinite 1s;
 }
