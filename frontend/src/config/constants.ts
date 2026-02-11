@@ -20,22 +20,22 @@ export const GOOGLE_CONFIG = {
 
 export const ROUTES = {
   HOME: '/',
-  LOGIN: '/login',
+  LOGIN: '/signin',
   SIGNUP: '/signup',
   AUTH_CALLBACK: '/auth/callback',
   SELECT_ROLE: '/select-role',
-  RECRUITER_DASHBOARD: '/dashboard/recruiter',
-  CANDIDATE_DASHBOARD: '/dashboard/candidate',
-  ORGANIZATION_DASHBOARD: '/dashboard/organization',
+  RECRUITER_DASHBOARD: '/recruiter/dashboard',
+  CANDIDATE_DASHBOARD: '/candidate/dashboard',
+  ORGANIZATION_DASHBOARD: '/organization/dashboard',
   RECRUITER: {
-    DASHBOARD: '/dashboard/recruiter',
+    DASHBOARD: '/recruiter/dashboard',
   },
   CANDIDATE: {
-    DASHBOARD: '/dashboard/candidate',
-    JOBS: '/candidate/browse-jobs',
+    DASHBOARD: '/candidate/dashboard',
+    JOBS: '/candidate/jobs',
   },
   ORGANIZATION: {
-    DASHBOARD: '/dashboard/organization',
+    DASHBOARD: '/organization/dashboard',
     RECRUITERS: '/organization/recruiters',
     JOBS: '/organization/jobs',
     SETTINGS: '/organization/settings',

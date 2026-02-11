@@ -15,6 +15,7 @@ import {
   Calendar,
 } from 'lucide-react'
 import { AppShell } from '../../../components/layout/AppShell'
+import { ActionButton } from '../../../components/ui'
 import { PageTransition, AnimatedContainer } from '../../../components/common'
 import { RecruiterModal, RecruiterFormData } from '../../../components/organization/RecruiterModal'
 import {
@@ -26,6 +27,7 @@ import {
 import type { Recruiter as BackendRecruiter } from '../../../services/organizationService'
 import { UserAvatar } from '../../../components/ui/UserAvatar'
 import { cn } from '../../../lib/utils'
+import { useDeleteConfirm } from '../../../components/ui/delete-confirm-dialog'
 
 interface Recruiter {
   id: string
@@ -59,7 +61,7 @@ interface ActionDropdownProps {
   recruiter: Recruiter
   onClose: () => void
   onEdit: (recruiter: Recruiter) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string, name: string) => void
 }
 
 function ActionDropdown({ recruiter, onClose, onEdit, onDelete }: ActionDropdownProps) {
@@ -94,7 +96,7 @@ function ActionDropdown({ recruiter, onClose, onEdit, onDelete }: ActionDropdown
       <button
         onClick={e => {
           e.stopPropagation()
-          onDelete(recruiter.id)
+          onDelete(recruiter.id, recruiter.name)
           onClose()
         }}
         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 text-text-secondary hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30"
@@ -148,6 +150,8 @@ export default function RecruitersPage() {
   const createRecruiterMutation = useCreateRecruiter()
   const updateRecruiterMutation = useUpdateRecruiter()
   const deleteRecruiterMutation = useDeleteRecruiter()
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const recruiters = useMemo(() => {
     if (!backendRecruiters) return []
@@ -203,16 +207,21 @@ export default function RecruitersPage() {
     setActiveDropdown(null)
   }
 
-  const handleDeleteRecruiter = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this recruiter?')) {
-      try {
-        await deleteRecruiterMutation.mutateAsync(id)
-        setActiveDropdown(null)
-      } catch (error) {
-        console.error('Failed to delete recruiter:', error)
-        alert('Failed to delete recruiter. Please try again.')
-      }
-    }
+  const handleDeleteRecruiter = async (id: string, name: string) => {
+    await confirm({
+      title: 'Delete Recruiter',
+      description: "You're about to permanently delete",
+      itemName: name,
+      onConfirm: async () => {
+        try {
+          await deleteRecruiterMutation.mutateAsync(id)
+          setActiveDropdown(null)
+        } catch (error) {
+          console.error('Failed to delete recruiter:', error)
+          alert('Failed to delete recruiter. Please try again.')
+        }
+      },
+    })
   }
 
   const handleModalSubmit = async (data: RecruiterFormData) => {
@@ -380,12 +389,9 @@ export default function RecruitersPage() {
                           ? error.message
                           : 'There was an error loading the recruiters. Please try again.'}
                       </p>
-                      <button
-                        onClick={() => refetchRecruiters()}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
-                      >
+                      <ActionButton onClick={() => refetchRecruiters()} variant="primary" size="md">
                         Try Again
-                      </button>
+                      </ActionButton>
                     </div>
                   </div>
                 ) : paginatedRecruiters.length === 0 ? (
@@ -403,13 +409,10 @@ export default function RecruitersPage() {
                           : 'Add your first recruiter to start building your team.'}
                       </p>
                       {!searchTerm && (
-                        <button
-                          onClick={handleAddRecruiter}
-                          className="mt-6 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
-                        >
+                        <ActionButton onClick={handleAddRecruiter} variant="primary" size="md">
                           <Plus className="w-4 h-4" />
                           Add Recruiter
-                        </button>
+                        </ActionButton>
                       )}
                     </div>
                   </div>
@@ -631,6 +634,8 @@ export default function RecruitersPage() {
         }
         mode={modalMode}
       />
+
+      <Dialog />
     </AppShell>
   )
 }

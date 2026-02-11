@@ -6,7 +6,6 @@ import { resumeService } from '@/services/resumeService'
 import { profileService } from '@/services/profileService'
 import { ResumeListResponse, ResumeCreate, ResumeResponse } from '@/types/resume'
 import {
-  Loader2,
   Plus,
   FileText,
   Trash2,
@@ -22,9 +21,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { ActionButton } from '@/components/ui'
 import { AppShell } from '@/components/layout/AppShell'
-import { PageTransition, AnimatedContainer, PageHeader } from '@/components/common'
+import { PageTransition, AnimatedContainer, PageHeader, SkeletonLoader } from '@/components/common'
 import ResumeDetailSheet from '@/components/resume/ResumeDetailSheet'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm-dialog'
 
 interface CreateResumeModalProps {
   onClose: () => void
@@ -120,14 +121,21 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
 
   if (loadingProfile) {
     const loadingContent = (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div
           className="fixed inset-0 bg-black/5 dark:bg-black/20 backdrop-blur-[3px]"
           onClick={onClose}
         />
-        <div className="relative bg-background-surface p-6 rounded-2xl shadow-2xl border border-border-default flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
-          <Loader2 className="w-5 h-5 animate-spin text-primary" />
-          <p className="text-text-secondary font-medium">Initializing...</p>
+        <div className="relative bg-background-surface rounded-xl shadow-2xl border border-border-default w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-6 space-y-5">
+          <div className="space-y-2">
+            <SkeletonLoader variant="text" width="52%" height={24} />
+            <SkeletonLoader variant="text" width="78%" height={14} />
+          </div>
+          <div className="space-y-3">
+            <SkeletonLoader variant="text" width="34%" height={14} />
+            <SkeletonLoader variant="rectangular" width="100%" height={48} className="rounded-xl" />
+          </div>
+          <SkeletonLoader variant="rectangular" width="100%" height={44} className="rounded-xl" />
         </div>
       </div>
     )
@@ -176,18 +184,21 @@ function CreateResumeModal({ onClose, onCreated }: CreateResumeModalProps) {
           </div>
 
           <div className="pt-2">
-            <button
+            <ActionButton
               type="submit"
               disabled={loading}
-              className="w-full py-3 btn-primary-gradient text-white rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              loading={loading}
+              variant="primary"
+              size="lg"
+              className="w-full"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
+              {!loading && (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create & Edit Resume
+                </>
               )}
-              Create & Edit Resume
-            </button>
+            </ActionButton>
           </div>
         </form>
       </div>
@@ -210,6 +221,8 @@ export default function ResumeListPage() {
   const [resumeDetails, setResumeDetails] = useState<Record<string, ResumeResponse>>({})
   const dropdownRef = useRef<HTMLDivElement>(null)
   const sortDropdownRef = useRef<HTMLDivElement>(null)
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const sortOptions = [
     { value: 'date', label: 'Sort by Date', icon: Calendar },
@@ -277,16 +290,22 @@ export default function ResumeListPage() {
     return filtered
   }, [resumes, searchQuery, sortBy])
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, title: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('Are you sure you want to delete this resume?')) return
-    try {
-      await resumeService.deleteResume(id)
-      toast.success('Resume deleted successfully')
-      loadResumes()
-    } catch {
-      toast.error('Failed to delete resume')
-    }
+    await confirm({
+      title: 'Delete Resume',
+      description: "You're about to permanently delete",
+      itemName: title || 'this resume',
+      onConfirm: async () => {
+        try {
+          await resumeService.deleteResume(id)
+          toast.success('Resume deleted successfully')
+          loadResumes()
+        } catch {
+          toast.error('Failed to delete resume')
+        }
+      },
+    })
   }
 
   const handleDuplicate = async (id: string, e: React.MouseEvent) => {
@@ -376,98 +395,99 @@ export default function ResumeListPage() {
             )}
 
             <AnimatedContainer direction="up" delay={0.2}>
-              <div className="bg-background-surface rounded-xl border border-border-default p-6 min-h-[400px]">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                  <h2 className="text-xl font-semibold flex items-center gap-2 text-text-primary">
-                    <FileText className="w-5 h-5 text-primary" /> Your Resumes
-                  </h2>
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:flex-initial sm:w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                      <input
-                        type="text"
-                        placeholder="Search resumes..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-sm border border-border-default rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-background-surface text-text-primary placeholder:text-text-muted"
-                      />
-                    </div>
-                    <div className="relative" ref={sortDropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            setIsSortDropdownOpen(!isSortDropdownOpen)
-                          } else if (e.key === 'Escape') {
-                            setIsSortDropdownOpen(false)
-                          }
-                        }}
-                        className={cn(
-                          'h-10 pl-3 pr-10 py-2.5 border rounded-xl bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] min-w-[150px]',
-                          isSortDropdownOpen
-                            ? 'border-ai-500 ring-2 ring-ai-500/20 shadow-md'
-                            : 'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
-                        )}
-                      >
-                        <div className="flex items-center gap-2 h-full">
-                          <ArrowUpDown className="w-4 h-4 text-ai-500" />
-                          <span className="font-medium text-text-primary">
-                            {getCurrentSortLabel()}
-                          </span>
-                        </div>
-                        <ChevronDown
-                          className={cn(
-                            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
-                            isSortDropdownOpen ? 'rotate-180 text-ai-600' : 'text-text-muted'
-                          )}
-                        />
-                      </button>
-
-                      {isSortDropdownOpen && (
-                        <div className="absolute z-50 w-full mt-2 bg-background-surface border border-ai-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-ai-100">
-                          {sortOptions.map((option, index) => {
-                            const IconComponent = option.icon
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => {
-                                  setSortBy(option.value as 'date' | 'title')
-                                  setIsSortDropdownOpen(false)
-                                }}
-                                className={cn(
-                                  'w-full px-3 py-2.5 text-left hover:bg-gradient-to-r hover:from-ai-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-ai-50 focus:to-primary-50 focus:outline-none transition-all duration-200 flex items-center gap-2.5 text-sm text-text-primary hover:text-ai-700 transform hover:scale-[1.01] active:scale-[0.99] group',
-                                  sortBy === option.value && 'bg-ai-50/50'
-                                )}
-                                style={{ animationDelay: `${index * 50}ms` }}
-                              >
-                                <IconComponent className="w-4 h-4 text-ai-500 transition-transform duration-200 group-hover:scale-110" />
-                                <span className="font-medium">{option.label}</span>
-                                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-initial sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                    <input
+                      type="text"
+                      placeholder="Search resumes..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 text-sm border border-border-default rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-background-surface text-text-primary placeholder:text-text-muted"
+                    />
+                  </div>
+                  <div className="relative" ref={sortDropdownRef}>
                     <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="btn-primary-gradient text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 font-medium text-base whitespace-nowrap"
+                      type="button"
+                      onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                      className={cn(
+                        'h-10 pl-3 pr-10 py-2.5 border rounded-lg bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all min-w-[150px]',
+                        isSortDropdownOpen
+                          ? 'border-primary-500 ring-2 ring-primary-500/20'
+                          : 'border-border-default hover:border-primary-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
+                      )}
                     >
-                      <Plus className="w-5 h-5" /> Create New Resume
+                      <div className="flex items-center gap-2 h-full">
+                        <ArrowUpDown className="w-4 h-4 text-primary-500" />
+                        <span className="font-medium text-text-primary">
+                          {getCurrentSortLabel()}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
+                          isSortDropdownOpen ? 'rotate-180 text-primary-600' : 'text-text-muted'
+                        )}
+                      />
                     </button>
+
+                    {isSortDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-2 bg-background-surface border border-border-default rounded-lg shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                        {sortOptions.map(option => {
+                          const IconComponent = option.icon
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                setSortBy(option.value as 'date' | 'title')
+                                setIsSortDropdownOpen(false)
+                              }}
+                              className={cn(
+                                'w-full px-3 py-2.5 text-left hover:bg-background-subtle focus:bg-background-subtle focus:outline-none transition-all flex items-center gap-2.5 text-sm text-text-primary',
+                                sortBy === option.value && 'bg-primary-50/50 dark:bg-primary-950/30'
+                              )}
+                            >
+                              <IconComponent className="w-4 h-4 text-primary-500" />
+                              <span className="font-medium">{option.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
+                <ActionButton onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
+                  <Plus className="w-5 h-5" /> Create New Resume
+                </ActionButton>
+              </div>
 
-                {loading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                  </div>
-                ) : resumes.length === 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="overflow-hidden border border-border-default rounded-xl bg-background-surface flex flex-col h-full min-h-[220px] p-6"
+                    >
+                      <div className="flex justify-between items-start mb-5">
+                        <SkeletonLoader variant="rectangular" width={48} height={48} className="rounded-xl" />
+                        <SkeletonLoader variant="circular" width={32} height={32} />
+                      </div>
+
+                      <div className="space-y-2 mb-6">
+                        <SkeletonLoader variant="text" width="88%" height={20} />
+                        <SkeletonLoader variant="text" width="65%" height={20} />
+                      </div>
+
+                      <div className="mt-auto flex items-center gap-2">
+                        <SkeletonLoader variant="circular" width={14} height={14} />
+                        <SkeletonLoader variant="text" width="55%" height={12} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : resumes.length === 0 ? (
                   <div className="text-center py-20 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
                     <div className="bg-background-surface w-20 h-20 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-4">
                       <FileText className="w-10 h-10 text-primary-400 dark:text-primary-500" />
@@ -485,7 +505,7 @@ export default function ResumeListPage() {
                       Create your first resume
                     </button>
                   </div>
-                ) : filteredAndSortedResumes.length === 0 ? (
+              ) : filteredAndSortedResumes.length === 0 ? (
                   <div className="text-center py-16 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
                     <div className="bg-background-surface w-16 h-16 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-3">
                       <Search className="w-8 h-8 text-primary-400 dark:text-primary-500" />
@@ -499,96 +519,99 @@ export default function ResumeListPage() {
                         : 'Create your first resume to get started!'}
                     </p>
                   </div>
-                ) : (
+              ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredAndSortedResumes.map(resume => {
-                      const details = resumeDetails[resume.resume_id]
-                      const isExpanded = expandedResumeId === resume.resume_id
-
-                      return (
-                        <div
-                          key={resume.resume_id}
-                          onClick={() => setSelectedResumeId(resume.resume_id)}
-                          className="group cursor-pointer transition-all duration-200 w-full bg-background-surface dark:bg-[#1E293B] rounded-xl border border-border-default dark:border-[#334155] py-5 px-6 hover:border-border-strong dark:hover:border-[#475569] hover:shadow-md relative"
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`View resume for ${resume.target_job_title || 'General Resume'}`}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault()
-                              setSelectedResumeId(resume.resume_id)
-                            }
-                          }}
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <h3 className="font-semibold text-lg text-text-primary group-hover:text-primary transition-colors truncate">
-                              {resume.target_job_title || 'General Resume'}
-                            </h3>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                              <span className="text-sm text-text-tertiary whitespace-nowrap">
-                                {new Date(resume.updated_at).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
-                              </span>
-                              <div className="relative" ref={isExpanded ? dropdownRef : null}>
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    const newExpandedId =
-                                      expandedResumeId === resume.resume_id
-                                        ? null
-                                        : resume.resume_id
-                                    setExpandedResumeId(newExpandedId)
-                                    if (newExpandedId && !details) {
-                                      loadResumeDetails(resume.resume_id)
-                                    }
-                                  }}
-                                  className="p-1.5 text-text-muted hover:text-text-secondary hover:bg-background-subtle dark:hover:bg-background-muted rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    {filteredAndSortedResumes.map(resume => (
+                      <div
+                        key={resume.resume_id}
+                        onClick={() => setSelectedResumeId(resume.resume_id)}
+                        className="group hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-border-default rounded-xl bg-background-surface flex flex-col h-full min-h-[220px]"
+                      >
+                        <div className="p-6 flex-grow flex flex-col">
+                          <div className="flex justify-between items-start mb-5">
+                            <div className="h-12 w-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:bg-primary-600 group-hover:text-white transition-colors">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                            <div className="relative" ref={expandedResumeId === resume.resume_id ? dropdownRef : null}>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  const newExpandedId = expandedResumeId === resume.resume_id ? null : resume.resume_id
+                                  setExpandedResumeId(newExpandedId)
+                                  if (newExpandedId && !resumeDetails[resume.resume_id]) {
+                                    loadResumeDetails(resume.resume_id)
+                                  }
+                                }}
+                                className="p-2 text-text-muted hover:text-text-secondary hover:bg-background-subtle rounded-lg transition-colors"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              {expandedResumeId === resume.resume_id && (
+                                <div
+                                  onClick={e => e.stopPropagation()}
+                                  className="absolute right-0 top-10 bg-background-surface border border-border-default rounded-lg shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                                 >
-                                  <MoreVertical className="w-4 h-4" />
-                                </button>
-                                {isExpanded && (
-                                  <div
-                                    onClick={e => e.stopPropagation()}
-                                    className="absolute right-0 top-9 bg-background-surface dark:bg-[#1E293B] border border-border-default dark:border-[#334155] rounded-xl shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                                  <button
+                                    onClick={e => {
+                                      e.stopPropagation()
+                                      setSelectedResumeId(resume.resume_id)
+                                      setExpandedResumeId(null)
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle flex items-center gap-2"
                                   >
-                                    <button
-                                      onClick={e => {
-                                        e.stopPropagation()
-                                        setSelectedResumeId(resume.resume_id)
-                                        setExpandedResumeId(null)
-                                      }}
-                                      className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle dark:hover:bg-background-muted flex items-center gap-2"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                      Edit
-                                    </button>
-                                    <button
-                                      onClick={e => handleDuplicate(resume.resume_id, e)}
-                                      className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle dark:hover:bg-background-muted flex items-center gap-2"
-                                    >
-                                      <Copy className="w-4 h-4" />
-                                      Duplicate
-                                    </button>
-                                    <button
-                                      onClick={e => handleDelete(resume.resume_id, e)}
-                                      className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-50 dark:hover:bg-error-950/30 flex items-center gap-2"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                                    <Edit className="w-4 h-4" />
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={e => handleDuplicate(resume.resume_id, e)}
+                                    className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle flex items-center gap-2"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                    Duplicate
+                                  </button>
+                                  <button
+                                    onClick={e => handleDelete(resume.resume_id, resume.target_job_title || 'Untitled Resume', e)}
+                                    className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-50 dark:hover:bg-error-950/30 flex items-center gap-2"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
+
+                          <div className="min-h-[60px] flex items-start mb-3">
+                            <h3 className="text-lg font-bold text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors leading-[1.2] line-clamp-2">
+                              {resume.target_job_title || 'General Resume'}
+                            </h3>
+                          </div>
+
+                          <div className="mt-auto flex items-center gap-2 text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>Last edited {new Date(resume.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
                         </div>
-                      )
-                    })}
+
+                        <div className="px-6 py-3 bg-background-subtle/50 dark:bg-background-muted/30 border-t border-border-default mt-auto">
+                          <span className="text-[12px] text-primary-600 dark:text-primary-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                            Open Builder
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="border-2 border-dashed border-border-default rounded-xl p-6 flex flex-col items-center justify-center text-text-muted hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-500 dark:hover:text-primary-400 transition-all bg-background-surface/50 group h-full min-h-[220px]"
+                    >
+                      <div className="h-12 w-12 rounded-full bg-background-subtle flex items-center justify-center mb-3 group-hover:bg-primary-50 dark:group-hover:bg-primary-950/30 transition-colors">
+                        <Plus className="w-6 h-6" />
+                      </div>
+                      <span className="text-sm font-bold">New Resume</span>
+                    </button>
                   </div>
-                )}
-              </div>
+              )}
             </AnimatedContainer>
 
             {isModalOpen && (
@@ -613,6 +636,8 @@ export default function ResumeListPage() {
           </div>
         </div>
       </PageTransition>
+
+      <Dialog />
     </AppShell>
   )
 }

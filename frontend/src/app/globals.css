@@ -1,178 +1,275 @@
 /* =============================================================================
-   PREMIUM TYPOGRAPHY SYSTEM - Dual-Font AI-Enterprise Aesthetic
+   PREMIUM TYPOGRAPHY SYSTEM
    
    Font Roles:
-   - Inter: Global UI & Body (SaaS gold standard, crisp in light/dark modes)
-   - Plus Jakarta Sans: Headings & Branding (premium geometric sans-serif)
+   - Manrope: Global UI, Body & Headings (clean, modern, professional)
    - JetBrains Mono: Agentic/AI Data (signals computed agent data)
    ============================================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* =============================================================================
-   ConvexHire Premium Design System
-   "Sophisticated Intelligence" - Premium AI-powered recruitment platform
-   ============================================================================= */
 
 @layer base {
   :root {
     /* =========================================================================
        FOUNDATION - Background Hierarchy
        ========================================================================= */
-    --background: 210 20% 98%; /* #FAFBFC - Softer than pure white */
-    --background-base: 210 20% 98%; /* #FAFBFC */
-    --background-surface: 0 0% 100%; /* #FFFFFF - Cards, modals, elevated surfaces */
-    --background-subtle: 210 40% 96%; /* #F1F5F9 - Hover states, disabled fields */
-    --background-muted: 214 32% 91%; /* #E2E8F0 - Active/selected subtle states */
+    --background: 0 0% 100%;
+    /* #FFFFFF - Pure white background */
+    --background-base: 0 0% 100%;
+    /* #FFFFFF */
+    --background-surface: 0 0% 100%;
+    /* #FFFFFF - Cards, modals, elevated surfaces */
+    --background-subtle: 210 40% 98%;
+    /* #F8FAFC - Hover states, disabled fields */
+    --background-muted: 214 32% 91%;
+    /* #E2E8F0 - Active/selected subtle states */
 
     /* =========================================================================
        FOUNDATION - Text Hierarchy (60-30-10 Rule)
        ========================================================================= */
-    --foreground: 222 47% 11%; /* #0F172A - Primary content */
-    --text-primary: 222 47% 11%; /* #0F172A - Headings (60% of text) */
-    --text-secondary: 215 25% 27%; /* #334155 - Body text (30%) */
-    --text-tertiary: 215 16% 47%; /* #64748B - Metadata, labels (10%) */
-    --text-muted: 215 20% 65%; /* #94A3B8 - Disabled, placeholders */
-    --text-inverse: 0 0% 100%; /* #FFFFFF - Text on dark backgrounds */
+    --foreground: 0 0% 3.9%;
+    /* #0F172A - Primary content */
+    --text-primary: 222 47% 11%;
+    /* #0F172A - Headings */
+    --text-secondary: 215 25% 40%;
+    /* #475569 - Body text */
+    --text-tertiary: 215 16% 47%;
+    /* #64748B - Metadata, labels (10%) */
+    --text-muted: 215 20% 65%;
+    /* #94A3B8 - Disabled, placeholders */
+    --text-inverse: 0 0% 100%;
+    /* #FFFFFF - Text on dark backgrounds */
 
     /* =========================================================================
        FOUNDATION - Border System
        ========================================================================= */
-    --border: 214 32% 91%; /* #E2E8F0 - Standard borders */
-    --border-subtle: 210 40% 96%; /* #F1F5F9 - Barely visible dividers */
-    --border-default: 214 32% 91%; /* #E2E8F0 - Standard borders, inputs */
-    --border-strong: 215 20% 82%; /* #CBD5E1 - Emphasis, active states */
-    --input: 214 32% 91%; /* #E2E8F0 - Input borders */
-    --ring: 221 83% 53%; /* #3B82F6 - Focus rings */
+    --border: 0 0% 89.8%;
+    /* #E2E8F0 - Standard borders */
+    --border-subtle: 210 40% 96%;
+    /* #F1F5F9 - Barely visible dividers */
+    --border-default: 214 32% 91%;
+    /* #E2E8F0 - Standard borders, inputs */
+    --border-strong: 215 20% 82%;
+    /* #CBD5E1 - Emphasis, active states */
+    --input: 0 0% 89.8%;
+    /* #E2E8F0 - Input borders */
+    --ring: 0 0% 3.9%;
+    /* #3B82F6 - Focus rings */
 
     /* =========================================================================
        BRAND & PRIMARY - "Professional Intelligence"
        Royal blue, not bright - communicates trust and professionalism
        ========================================================================= */
-    --brand: 221 83% 53%; /* #3B82F6 - Brand color */
-    --brand-dark: 224 76% 48%; /* #1D4ED8 - Darker brand */
-    --brand-light: 213 94% 68%; /* #60A5FA - Lighter brand */
-    --brand-foreground: 0 0% 100%; /* White text on brand */
+    --brand: 221 83% 53%;
+    /* #3B82F6 - Brand color */
+    --brand-dark: 224 76% 48%;
+    /* #1D4ED8 - Darker brand */
+    --brand-light: 213 94% 68%;
+    /* #60A5FA - Lighter brand */
+    --brand-foreground: 0 0% 100%;
+    /* White text on brand */
 
-    --primary: 221 83% 53%; /* #3B82F6 - Blue-500 PRIMARY */
-    --primary-50: 214 100% 97%; /* #EFF6FF - Subtle backgrounds */
-    --primary-100: 214 95% 93%; /* #DBEAFE - Hover backgrounds */
-    --primary-200: 213 97% 87%; /* #BFDBFE - Borders, dividers */
-    --primary-300: 212 96% 78%; /* #93C5FD - Disabled states */
-    --primary-400: 213 94% 68%; /* #60A5FA - Subtle accents */
-    --primary-500: 217 91% 60%; /* #3B82F6 - PRIMARY BRAND */
-    --primary-600: 221 83% 53%; /* #2563EB - Hover, active (DEFAULT) */
-    --primary-700: 224 76% 48%; /* #1D4ED8 - Pressed states */
-    --primary-800: 226 71% 40%; /* #1E40AF - Depth */
-    --primary-900: 224 64% 33%; /* #1E3A8A - Darkest variant */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
-    --primary-hover: 224 76% 48%; /* #1D4ED8 */
+    --primary: 221 83% 53%;
+    /* #3B82F6 - Blue-500 PRIMARY BRAND */
+    --primary-50: 214 100% 97%;
+    /* #EFF6FF - Subtle backgrounds */
+    --primary-100: 214 95% 93%;
+    /* #DBEAFE - Hover backgrounds */
+    --primary-200: 213 97% 87%;
+    /* #BFDBFE - Borders, dividers */
+    --primary-300: 212 96% 78%;
+    /* #93C5FD - Disabled states */
+    --primary-400: 213 94% 68%;
+    /* #60A5FA - Subtle accents */
+    --primary-500: 217 91% 60%;
+    /* #3B82F6 - PRIMARY BRAND */
+    --primary-600: 221 83% 53%;
+    /* #2563EB - Hover, active (DEFAULT) */
+    --primary-700: 224 76% 48%;
+    /* #1D4ED8 - Pressed states */
+    --primary-800: 226 71% 40%;
+    /* #1E40AF - Depth */
+    --primary-900: 224 64% 33%;
+    /* #1E3A8A - Darkest variant */
+    --primary-foreground: 0 0% 100%;
+    /* White text on primary */
+    --primary-hover: 224 76% 48%;
+    /* #1D4ED8 */
 
     /* =========================================================================
        AI AGENT PURPLE - "Intelligent Assistance"
        Sophisticated purple for AI-powered features
        ========================================================================= */
-    --ai: 271 91% 65%; /* #A855F7 - Purple-500 AI ACCENT */
-    --ai-50: 270 100% 98%; /* #FAF5FF - AI insight backgrounds */
-    --ai-100: 269 100% 95%; /* #F3E8FF - AI card backgrounds */
-    --ai-200: 269 100% 92%; /* #E9D5FF - AI borders */
-    --ai-300: 269 97% 85%; /* #D8B4FE - Disabled AI features */
-    --ai-400: 270 95% 75%; /* #C084FC - Subtle AI accents */
-    --ai-500: 271 91% 65%; /* #A855F7 - AI ACCENT (DEFAULT) */
-    --ai-600: 271 81% 56%; /* #9333EA - AI hover */
-    --ai-700: 272 72% 47%; /* #7E22CE - AI active */
-    --ai-800: 273 67% 39%; /* #6B21A8 - Deep AI */
-    --ai-900: 274 66% 32%; /* #581C87 - Darkest */
-    --ai-foreground: 0 0% 100%; /* White text on AI purple */
+    --ai: 271 91% 65%;
+    /* #A855F7 - Purple-500 AI ACCENT */
+    --ai-50: 270 100% 98%;
+    /* #FAF5FF - AI insight backgrounds */
+    --ai-100: 269 100% 95%;
+    /* #F3E8FF - AI card backgrounds */
+    --ai-200: 269 100% 92%;
+    /* #E9D5FF - AI borders */
+    --ai-300: 269 97% 85%;
+    /* #D8B4FE - Disabled AI features */
+    --ai-400: 270 95% 75%;
+    /* #C084FC - Subtle AI accents */
+    --ai-500: 271 91% 65%;
+    /* #A855F7 - AI ACCENT (DEFAULT) */
+    --ai-600: 271 81% 56%;
+    /* #9333EA - AI hover */
+    --ai-700: 272 72% 47%;
+    /* #7E22CE - AI active */
+    --ai-800: 273 67% 39%;
+    /* #6B21A8 - Deep AI */
+    --ai-900: 274 66% 32%;
+    /* #581C87 - Darkest */
+    --ai-foreground: 0 0% 100%;
+    /* White text on AI purple */
 
     /* =========================================================================
        SUCCESS - "Positive Outcomes" (Teal System - Sophisticated)
        ========================================================================= */
-    --success: 173 80% 40%; /* #14B8A6 - Teal-500 SUCCESS */
-    --success-50: 166 76% 97%; /* #F0FDFA */
-    --success-100: 167 85% 89%; /* #CCFBF1 */
-    --success-200: 168 84% 78%; /* #99F6E4 */
-    --success-300: 171 77% 64%; /* #5EEAD4 */
-    --success-400: 172 66% 50%; /* #2DD4BF */
-    --success-500: 173 80% 40%; /* #14B8A6 - SUCCESS (DEFAULT) */
-    --success-600: 175 84% 32%; /* #0D9488 - Hover/Active */
-    --success-700: 175 77% 26%; /* #0F766E - Pressed */
-    --success-800: 176 69% 22%; /* #115E59 - Deep */
-    --success-900: 176 61% 19%; /* #134E4A - Darkest */
-    --success-foreground: 0 0% 100%; /* White text on success */
+    --success: 173 80% 40%;
+    /* #14B8A6 - Teal-500 SUCCESS */
+    --success-50: 166 76% 97%;
+    /* #F0FDFA */
+    --success-100: 167 85% 89%;
+    /* #CCFBF1 */
+    --success-200: 168 84% 78%;
+    /* #99F6E4 */
+    --success-300: 171 77% 64%;
+    /* #5EEAD4 */
+    --success-400: 172 66% 50%;
+    /* #2DD4BF */
+    --success-500: 173 80% 40%;
+    /* #14B8A6 - SUCCESS (DEFAULT) */
+    --success-600: 175 84% 32%;
+    /* #0D9488 - Hover/Active */
+    --success-700: 175 77% 26%;
+    /* #0F766E - Pressed */
+    --success-800: 176 69% 22%;
+    /* #115E59 - Deep */
+    --success-900: 176 61% 19%;
+    /* #134E4A - Darkest */
+    --success-foreground: 0 0% 100%;
+    /* White text on success */
 
     /* =========================================================================
        WARNING - "Requires Attention" (Amber System)
        ========================================================================= */
-    --warning: 38 92% 50%; /* #F59E0B - Amber-500 WARNING */
-    --warning-50: 48 100% 96%; /* #FFFBEB */
-    --warning-100: 48 96% 89%; /* #FEF3C7 */
-    --warning-200: 48 97% 77%; /* #FDE68A */
-    --warning-300: 46 97% 65%; /* #FCD34D */
-    --warning-400: 43 96% 56%; /* #FBBF24 */
-    --warning-500: 38 92% 50%; /* #F59E0B - WARNING (DEFAULT) */
-    --warning-600: 32 95% 44%; /* #D97706 - Hover */
-    --warning-700: 26 90% 37%; /* #B45309 - Active */
-    --warning-800: 23 83% 31%; /* #92400E */
-    --warning-900: 22 78% 26%; /* #78350F */
-    --warning-foreground: 0 0% 100%; /* White text on warning */
+    --warning: 38 92% 50%;
+    /* #F59E0B - Amber-500 WARNING */
+    --warning-50: 48 100% 96%;
+    /* #FFFBEB */
+    --warning-100: 48 96% 89%;
+    /* #FEF3C7 */
+    --warning-200: 48 97% 77%;
+    /* #FDE68A */
+    --warning-300: 46 97% 65%;
+    /* #FCD34D */
+    --warning-400: 43 96% 56%;
+    /* #FBBF24 */
+    --warning-500: 38 92% 50%;
+    /* #F59E0B - WARNING (DEFAULT) */
+    --warning-600: 32 95% 44%;
+    /* #D97706 - Hover */
+    --warning-700: 26 90% 37%;
+    /* #B45309 - Active */
+    --warning-800: 23 83% 31%;
+    /* #92400E */
+    --warning-900: 22 78% 26%;
+    /* #78350F */
+    --warning-foreground: 0 0% 100%;
+    /* White text on warning */
 
     /* =========================================================================
        DESTRUCTIVE/ERROR - "Critical Actions" (Red System)
        ========================================================================= */
-    --destructive: 0 84% 60%; /* #EF4444 - Red-500 ERROR */
-    --error: 0 84% 60%; /* #EF4444 - Alias */
-    --error-50: 0 86% 97%; /* #FEF2F2 */
-    --error-100: 0 93% 94%; /* #FEE2E2 */
-    --error-200: 0 96% 89%; /* #FECACA */
-    --error-300: 0 94% 82%; /* #FCA5A5 */
-    --error-400: 0 91% 71%; /* #F87171 */
-    --error-500: 0 84% 60%; /* #EF4444 - ERROR (DEFAULT) */
-    --error-600: 0 72% 51%; /* #DC2626 - Hover */
-    --error-700: 0 74% 42%; /* #B91C1C - Active */
-    --error-800: 0 70% 35%; /* #991B1B */
-    --error-900: 0 63% 31%; /* #7F1D1D */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --destructive: 0 84.2% 60.2%;
+    /* #EF4444 - Red-500 ERROR */
+    --error: 0 84% 60%;
+    /* #EF4444 - Alias */
+    --error-50: 0 86% 97%;
+    /* #FEF2F2 */
+    --error-100: 0 93% 94%;
+    /* #FEE2E2 */
+    --error-200: 0 96% 89%;
+    /* #FECACA */
+    --error-300: 0 94% 82%;
+    /* #FCA5A5 */
+    --error-400: 0 91% 71%;
+    /* #F87171 */
+    --error-500: 0 84% 60%;
+    /* #EF4444 - ERROR (DEFAULT) */
+    --error-600: 0 72% 51%;
+    /* #DC2626 - Hover */
+    --error-700: 0 74% 42%;
+    /* #B91C1C - Active */
+    --error-800: 0 70% 35%;
+    /* #991B1B */
+    --error-900: 0 63% 31%;
+    /* #7F1D1D */
+    --destructive-foreground: 0 0% 98%;
+    /* White text on destructive */
 
     /* =========================================================================
        INFORMATION - "Neutral Actions" (Sky Blue System)
        ========================================================================= */
-    --info: 199 89% 48%; /* #0EA5E9 - Sky-500 INFO */
-    --info-50: 204 100% 97%; /* #F0F9FF */
-    --info-100: 204 94% 94%; /* #E0F2FE */
-    --info-200: 201 94% 86%; /* #BAE6FD */
-    --info-300: 199 95% 74%; /* #7DD3FC */
-    --info-400: 198 93% 60%; /* #38BDF8 */
-    --info-500: 199 89% 48%; /* #0EA5E9 - INFO (DEFAULT) */
-    --info-600: 200 98% 39%; /* #0284C7 - Hover */
-    --info-700: 201 96% 32%; /* #0369A1 */
-    --info-foreground: 0 0% 100%; /* White text on info */
+    --info: 199 89% 48%;
+    /* #0EA5E9 - Sky-500 INFO */
+    --info-50: 204 100% 97%;
+    /* #F0F9FF */
+    --info-100: 204 94% 94%;
+    /* #E0F2FE */
+    --info-200: 201 94% 86%;
+    /* #BAE6FD */
+    --info-300: 199 95% 74%;
+    /* #7DD3FC */
+    --info-400: 198 93% 60%;
+    /* #38BDF8 */
+    --info-500: 199 89% 48%;
+    /* #0EA5E9 - INFO (DEFAULT) */
+    --info-600: 200 98% 39%;
+    /* #0284C7 - Hover */
+    --info-700: 201 96% 32%;
+    /* #0369A1 */
+    --info-foreground: 0 0% 100%;
+    /* White text on info */
 
     /* =========================================================================
        SEMANTIC UI COLORS
        ========================================================================= */
-    --card: 0 0% 100%; /* White cards */
-    --card-foreground: 222 47% 11%; /* Dark text on cards */
-    --card-hover: 210 40% 98%; /* Subtle hover state */
+    --card: 0 0% 100%;
+    /* White cards */
+    --card-foreground: 0 0% 3.9%;
+    /* Dark text on cards */
+    --card-hover: 210 40% 98%;
+    /* Subtle hover state */
 
-    --popover: 0 0% 100%; /* White popovers */
-    --popover-foreground: 222 47% 11%; /* Dark text on popovers */
+    --popover: 0 0% 100%;
+    /* White popovers */
+    --popover-foreground: 0 0% 3.9%;
+    /* Dark text on popovers */
 
-    --secondary: 210 40% 96%; /* #F1F5F9 - Soft neutral */
-    --secondary-foreground: 222 47% 11%; /* Dark text */
-    --secondary-hover: 214 32% 91%; /* #E2E8F0 */
+    --secondary: 0 0% 96.1%;
+    /* #F1F5F9 - Soft neutral */
+    --secondary-foreground: 0 0% 9%;
+    /* Dark text */
+    --secondary-hover: 214 32% 91%;
+    /* #E2E8F0 */
 
-    --muted: 210 40% 96%; /* #F1F5F9 - Subtle backgrounds */
-    --muted-foreground: 215 16% 47%; /* #64748B - Muted text */
+    --muted: 0 0% 96.1%;
+    /* #F1F5F9 - Subtle backgrounds */
+    --muted-foreground: 0 0% 45.1%;
+    /* #64748B - Muted text */
 
-    --accent: 173 80% 40%; /* Teal accent (same as success) */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
-    --accent-hover: 175 84% 32%; /* Darker teal */
+    --accent: 214 100% 97%;
+    /* Light brand tint */
+    --accent-foreground: 221 83% 53%;
+    /* Brand color */
+    --accent-hover: 213 97% 87%;
+    /* Darker tint */
 
     /* =========================================================================
        GRADIENTS
@@ -216,12 +313,16 @@
     --focus-ring-error: 0 0 0 3px rgba(239, 68, 68, 0.2);
 
     /* =========================================================================
-       RADIUS & TRANSITIONS
+       RADIUS & TRANSITIONS - ALL SET TO 5PX
        ========================================================================= */
-    --radius: 0.75rem;
-    --radius-sm: 0.5rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
+    --radius: 5px;
+    /* Base radius - 5px */
+    --radius-sm: 5px;
+    /* Small radius - 5px */
+    --radius-lg: 5px;
+    /* Large radius - 5px */
+    --radius-xl: 5px;
+    /* Extra large radius - 5px */
 
     --transition-fast: 120ms;
     --transition-base: 200ms;
@@ -229,126 +330,331 @@
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --ease-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent-foreground: 221.2 83.2% 53.3%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 221.2 83.2% 53.3%;
   }
 
   /* ===========================================================================
-     DARK THEME
-     Elevation through lightness, not shadows
+     PROFESSIONAL DARK THEME - PRODUCTION GRADE
+     Optimized for recruitment platforms with focus on readability and trust
+     Modern dark mode inspired by Linear, Vercel, and GitHub
      =========================================================================== */
   .dark {
-    /* Backgrounds - Slate palette, elevation through lighter surfaces */
-    --background: 222 84% 5%; /* #020617 - Slate-950 deepest */
-    --background-base: 222 84% 5%; /* #020617 */
-    --background-surface: 222 47% 11%; /* #0F172A - Slate-900 cards */
-    --background-elevated: 215 25% 27%; /* #1E293B - Slate-800 modals */
-    --background-subtle: 215 25% 27%; /* #1E293B - Hover states */
-    --background-muted: 215 25% 27%; /* #1E293B */
+    /* ========================================================================
+       BACKGROUNDS - Rich, Deep Charcoal System
+       True black (#000) is too harsh. Rich charcoal provides depth while 
+       maintaining professional appearance and reducing eye strain.
+       ======================================================================== */
+    --background: 0 0% 3.9%;
+    /* #111827 - Rich Charcoal Base (Gray-900) */
+    --background-base: 220 26% 9%;
+    /* #111827 - Main app background */
+    --background-surface: 217 33% 12%;
+    /* #16202E - Cards, panels, elevated surfaces */
+    --background-elevated: 217 33% 15%;
+    /* #1C2836 - Modals, dropdowns, highest elevation */
+    --background-subtle: 217 33% 12%;
+    /* #16202E - Hover states */
+    --background-muted: 217 33% 17%;
+    /* #212E3F - Active/selected states */
 
-    /* Text - Lighter for dark backgrounds */
-    --foreground: 210 40% 96%; /* #F1F5F9 - Slate-100 */
-    --text-primary: 210 40% 96%; /* #F1F5F9 */
-    --text-secondary: 215 20% 82%; /* #CBD5E1 - Slate-300 */
-    --text-tertiary: 215 20% 65%; /* #94A3B8 - Slate-400 */
-    --text-muted: 215 16% 47%; /* #64748B - Slate-500 */
-    --text-inverse: 222 47% 11%; /* #0F172A */
+    /* ========================================================================
+       TEXT - Optimized Contrast Ratios (WCAG AAA Compliant)
+       High-quality text hierarchy for professional recruitment content
+       ======================================================================== */
+    --foreground: 0 0% 98%;
+    /* #F8FAFC - Near-white for primary text (AAA) */
+    --text-primary: 210 40% 98%;
+    /* #F8FAFC - Headings, important content */
+    --text-secondary: 214 32% 85%;
+    /* #D1DBE8 - Body text, paragraphs */
+    --text-tertiary: 215 20% 70%;
+    /* #A3B3C7 - Meta info, labels, timestamps */
+    --text-muted: 215 16% 55%;
+    /* #778699 - Disabled text, placeholders */
+    --text-inverse: 220 26% 9%;
+    /* #111827 - Dark text for light backgrounds */
 
-    /* Borders - Darker */
-    --border: 215 25% 27%; /* #1E293B - Slate-800 */
-    --border-subtle: 215 25% 27%; /* #1E293B */
-    --border-default: 215 25% 27%; /* #334155 - Slate-700 */
-    --border-strong: 215 20% 35%; /* #475569 - Slate-600 */
-    --input: 215 25% 27%; /* #1E293B */
-    --ring: 213 94% 68%; /* #60A5FA - Blue-400 */
+    /* ========================================================================
+       BORDERS - Subtle Separation with Depth
+       Visible enough for clear structure, subtle enough for elegance
+       ======================================================================== */
+    --border: 0 0% 14.9%;
+    /* #2A3849 - Standard borders */
+    --border-subtle: 217 33% 17%;
+    /* #212E3F - Very subtle dividers */
+    --border-default: 217 33% 22%;
+    /* #2F3F52 - Input borders, card outlines */
+    --border-strong: 215 20% 35%;
+    /* #4A5668 - Emphasized borders */
+    --input: 0 0% 14.9%;
+    /* #2A3849 - Input field borders */
+    --ring: 0 0% 83.1%;
+    /* #60A5FA - Blue-400 focus rings */
 
-    /* Brand - Lighter for dark backgrounds */
-    --brand: 213 94% 68%; /* #60A5FA */
-    --brand-dark: 217 91% 60%; /* #3B82F6 */
-    --brand-light: 212 96% 78%; /* #93C5FD */
-    --brand-foreground: 222 47% 11%; /* Dark text on light brand */
+    /* ========================================================================
+       BRAND & PRIMARY - Vibrant Blue for Professional Energy
+       Lighter, more saturated blue works better on dark backgrounds
+       Signals innovation, trust, and forward-thinking recruitment
+       ======================================================================== */
+    --brand: 217 91% 65%;
+    /* #60A5FA - Blue-400 (primary brand) */
+    --brand-dark: 221 83% 60%;
+    /* #5B94F5 - Slightly darker */
+    --brand-light: 213 94% 70%;
+    /* #7CB8FF - Lighter accent */
+    --brand-foreground: 220 26% 9%;
+    /* Dark text on brand background */
 
-    /* Primary - Desaturated for eye comfort */
-    --primary: 213 94% 68%; /* #60A5FA - Blue-400 */
-    --primary-50: 217 33% 17%; /* Dark variant */
-    --primary-100: 217 33% 22%;
-    --primary-600: 213 94% 68%; /* Blue-400 - Lighter for dark */
-    --primary-700: 217 91% 60%; /* Blue-500 - Hover */
-    --primary-foreground: 222 47% 11%; /* Dark text */
-    --primary-hover: 217 91% 60%;
+    --primary: 217 91% 65%;
+    /* Blue-400 PRIMARY BRAND */
+    --primary-50: 217 33% 17%;
+    /* Dark variant for subtle backgrounds */
+    --primary-100: 217 33% 20%;
+    /* Hover background */
+    --primary-200: 217 33% 25%;
+    /* Active background */
+    --primary-300: 213 94% 75%;
+    /* Light accent */
+    --primary-400: 213 94% 70%;
+    /* Lighter blue */
+    --primary-500: 217 91% 65%;
+    /* Blue-400 (DEFAULT) */
+    --primary-600: 221 83% 60%;
+    /* Blue-500 adjusted */
+    --primary-700: 224 76% 55%;
+    /* Darker blue */
+    --primary-800: 226 71% 50%;
+    /* Deep blue */
+    --primary-900: 224 64% 45%;
+    /* Deepest blue */
+    --primary-foreground: 220 26% 9%;
+    /* Dark text on primary */
+    --primary-hover: 221 83% 60%;
+    /* Hover state */
 
-    /* AI Purple - Lighter for dark backgrounds */
-    --ai: 270 95% 75%; /* #C084FC - Purple-400 */
-    --ai-50: 274 66% 12%; /* Dark variant */
-    --ai-100: 274 66% 17%;
-    --ai-600: 270 95% 75%; /* Purple-400 - Lighter */
-    --ai-700: 271 91% 65%; /* Purple-500 */
-    --ai-foreground: 222 47% 11%;
+    /* ========================================================================
+       AI PURPLE - Sophisticated Intelligence Indicator
+       Vibrant purple that stands out while maintaining professionalism
+       ======================================================================== */
+    --ai: 270 95% 70%;
+    /* #C084FC - Purple-400 */
+    --ai-50: 274 66% 15%;
+    /* Dark purple background */
+    --ai-100: 274 66% 18%;
+    /* Hover background */
+    --ai-200: 270 95% 80%;
+    /* Light purple border */
+    --ai-300: 270 95% 75%;
+    /* Medium purple */
+    --ai-400: 270 95% 70%;
+    /* Purple-400 */
+    --ai-500: 271 91% 65%;
+    /* Purple-500 */
+    --ai-600: 271 81% 60%;
+    /* Deeper purple */
+    --ai-700: 272 72% 55%;
+    /* Dark purple */
+    --ai-800: 273 67% 50%;
+    /* Very dark purple */
+    --ai-900: 274 66% 45%;
+    /* Deepest purple */
+    --ai-foreground: 220 26% 9%;
+    /* Dark text on AI background */
 
-    /* Success - Lighter teal */
-    --success: 172 66% 50%; /* #2DD4BF - Teal-400 */
-    --success-50: 176 61% 12%;
-    --success-600: 172 66% 50%;
-    --success-foreground: 222 47% 11%;
+    /* ========================================================================
+       SUCCESS - Professional Teal (Sophisticated Achievement)
+       Bright enough to indicate success, refined enough for corporate use
+       ======================================================================== */
+    --success: 172 66% 55%;
+    /* #2DD4BF - Teal-400 */
+    --success-50: 176 61% 15%;
+    /* Dark teal background */
+    --success-100: 176 61% 18%;
+    /* Hover background */
+    --success-200: 172 66% 60%;
+    /* Light teal */
+    --success-300: 172 66% 55%;
+    /* Teal-400 */
+    --success-400: 173 80% 50%;
+    /* Teal-500 */
+    --success-500: 173 80% 45%;
+    /* Medium teal */
+    --success-600: 175 84% 40%;
+    /* Darker teal */
+    --success-700: 175 77% 35%;
+    /* Deep teal */
+    --success-foreground: 220 26% 9%;
+    /* Dark text on success */
 
-    /* Warning - Lighter amber */
-    --warning: 43 96% 56%; /* #FBBF24 - Amber-400 */
-    --warning-50: 22 78% 12%;
-    --warning-600: 43 96% 56%;
-    --warning-foreground: 222 47% 11%;
+    /* ========================================================================
+       WARNING - Warm Amber (Attention without Alarm)
+       Rich amber that's visible but not jarring
+       ======================================================================== */
+    --warning: 43 96% 60%;
+    /* #FBBF24 - Amber-400 */
+    --warning-50: 22 78% 15%;
+    /* Dark amber background */
+    --warning-100: 22 78% 18%;
+    /* Hover background */
+    --warning-200: 43 96% 65%;
+    /* Light amber */
+    --warning-300: 43 96% 60%;
+    /* Amber-400 */
+    --warning-400: 38 92% 55%;
+    /* Amber-500 */
+    --warning-500: 38 92% 50%;
+    /* Medium amber */
+    --warning-600: 32 95% 45%;
+    /* Darker amber */
+    --warning-foreground: 220 26% 9%;
+    /* Dark text on warning */
 
-    /* Error - Softer red */
-    --destructive: 0 91% 71%; /* #F87171 - Red-400 */
-    --error: 0 91% 71%;
-    --error-50: 0 63% 15%;
-    --error-600: 0 91% 71%;
-    --destructive-foreground: 222 47% 11%;
+    /* ========================================================================
+       ERROR/DESTRUCTIVE - Softer Red (Clear but Not Aggressive)
+       Salmon-ish red that's clear but doesn't scream
+       ======================================================================== */
+    --destructive: 0 62.8% 30.6%;
+    /* #F87171 - Red-400 */
+    --error: 0 86% 70%;
+    /* Alias */
+    --error-50: 0 63% 18%;
+    /* Dark red background */
+    --error-100: 0 63% 20%;
+    /* Hover background */
+    --error-200: 0 91% 75%;
+    /* Light red */
+    --error-300: 0 91% 72%;
+    /* Red-400 */
+    --error-400: 0 84% 65%;
+    /* Red-500 adjusted */
+    --error-500: 0 84% 60%;
+    /* Medium red */
+    --error-600: 0 72% 55%;
+    /* Darker red */
+    --destructive-foreground: 0 0% 98%;
+    /* Dark text on error */
 
-    /* Info - Lighter sky */
-    --info: 198 93% 60%; /* #38BDF8 - Sky-400 */
-    --info-50: 201 96% 12%;
-    --info-600: 198 93% 60%;
-    --info-foreground: 222 47% 11%;
+    /* ========================================================================
+       INFO - Bright Sky Blue (Friendly Information)
+       Clear, friendly blue for informational states
+       ======================================================================== */
+    --info: 198 93% 65%;
+    /* #38BDF8 - Sky-400 */
+    --info-50: 201 96% 15%;
+    /* Dark sky background */
+    --info-100: 201 96% 18%;
+    /* Hover background */
+    --info-200: 198 93% 70%;
+    /* Light sky */
+    --info-300: 198 93% 65%;
+    /* Sky-400 */
+    --info-400: 199 89% 58%;
+    /* Sky-500 */
+    --info-500: 199 89% 53%;
+    /* Medium sky */
+    --info-foreground: 220 26% 9%;
+    /* Dark text on info */
 
-    /* Semantic UI */
-    --card: 222 47% 11%; /* Slate-900 */
-    --card-foreground: 210 40% 96%;
-    --card-hover: 215 25% 15%;
+    /* ========================================================================
+       SEMANTIC UI COMPONENTS
+       ======================================================================== */
+    --card: 0 0% 3.9%;
+    /* #16202E - Cards */
+    --card-foreground: 0 0% 98%;
+    /* #F8FAFC - Text on cards */
+    --card-hover: 217 33% 14%;
+    /* Subtle hover lift */
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 0 0% 3.9%;
+    /* #1C2836 - Elevated popovers */
+    --popover-foreground: 0 0% 98%;
+    /* Text on popovers */
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 96%;
-    --secondary-hover: 217 33% 22%;
+    --secondary: 0 0% 14.9%;
+    /* #212E3F - Secondary buttons */
+    --secondary-foreground: 0 0% 98%;
+    /* Text on secondary */
+    --secondary-hover: 217 33% 20%;
+    /* Hover state */
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 14.9%;
+    /* #212E3F - Muted backgrounds */
+    --muted-foreground: 0 0% 63.9%;
+    /* #A3B3C7 - Muted text */
 
-    --accent: 172 66% 50%;
-    --accent-foreground: 222 47% 11%;
-    --accent-hover: 173 80% 40%;
+    --accent: 0 0% 14.9%;
+    /* Teal accent */
+    --accent-foreground: 0 0% 98%;
+    /* Dark text on accent */
+    --accent-hover: 173 80% 50%;
+    /* Darker teal hover */
 
-    /* Gradients - Lighter for dark mode */
-    --gradient-brand: linear-gradient(135deg, hsl(213 94% 68%), hsl(217 91% 60%));
-    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(217 91% 60%));
-    --gradient-ai: linear-gradient(135deg, hsl(270 95% 75%), hsl(271 91% 65%));
-    --gradient-subtle: linear-gradient(180deg, hsl(222 47% 11%), hsl(222 47% 15%));
-    --gradient-hero: linear-gradient(135deg, hsl(213 94% 68%), hsl(217 91% 60%), hsl(212 96% 78%));
+    /* ========================================================================
+       GRADIENTS - Vibrant for Dark Mode
+       ======================================================================== */
+    --gradient-brand: linear-gradient(135deg, hsl(217 91% 65%), hsl(221 83% 60%));
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 65%), hsl(221 83% 60%));
+    --gradient-primary-hover: linear-gradient(135deg, hsl(221 83% 60%), hsl(224 76% 55%));
+    --gradient-ai: linear-gradient(135deg, hsl(270 95% 70%), hsl(271 91% 65%));
+    --gradient-ai-hover: linear-gradient(135deg, hsl(271 91% 65%), hsl(272 72% 60%));
+    --gradient-success: linear-gradient(135deg, hsl(172 66% 55%), hsl(173 80% 50%));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 26% 9%), hsl(217 33% 12%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 65%), hsl(221 83% 60%), hsl(213 94% 70%));
 
-    /* Overlays - Adjusted for dark */
-    --overlay-soft: rgba(248, 250, 252, 0.05);
-    --overlay-medium: rgba(248, 250, 252, 0.1);
-    --overlay-strong: rgba(0, 0, 0, 0.6);
-    --overlay-intense: rgba(0, 0, 0, 0.8);
+    /* ========================================================================
+       OVERLAYS - Adjusted for Dark Backgrounds
+       ======================================================================== */
+    --overlay-soft: rgba(0, 0, 0, 0.3);
+    --overlay-medium: rgba(0, 0, 0, 0.5);
+    --overlay-strong: rgba(0, 0, 0, 0.7);
+    --overlay-intense: rgba(0, 0, 0, 0.85);
 
-    /* Shadows - Darker for dark mode */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    /* ========================================================================
+       SHADOWS - Deeper for Dark Mode Elevation
+       Black shadows with higher opacity create depth on dark backgrounds
+       ======================================================================== */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 30px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    --shadow-primary: 0 4px 20px 0 rgba(96, 165, 250, 0.25);
+    --shadow-ai: 0 4px 20px 0 rgba(192, 132, 252, 0.25);
+    --shadow-success: 0 4px 20px 0 rgba(45, 212, 191, 0.25);
 
-    /* Focus Rings - Stronger for dark */
-    --focus-ring-primary: 0 0 0 3px rgba(96, 165, 250, 0.3);
-    --focus-ring-ai: 0 0 0 3px rgba(192, 132, 252, 0.25);
+    /* ========================================================================
+       FOCUS RINGS - Bright and Visible
+       ======================================================================== */
+    --focus-ring-primary: 0 0 0 3px rgba(96, 165, 250, 0.4);
+    --focus-ring-ai: 0 0 0 3px rgba(192, 132, 252, 0.35);
+    --focus-ring-success: 0 0 0 3px rgba(45, 212, 191, 0.35);
+    --focus-ring-error: 0 0 0 3px rgba(248, 113, 113, 0.4);
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 217 33% 12%;
+    --sidebar-foreground: 215 20% 70%;
+    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 15%;
+    --sidebar-accent-foreground: 217 91% 65%;
+    --sidebar-border: 0 0% 14.9%;
+    --sidebar-ring: 217 91% 65%;
   }
 }
 
@@ -358,46 +664,172 @@
   }
 
   /* ==========================================================================
-     BODY - Inter for Global UI (crisp in light/dark, handles high-density data)
+     BODY - Manrope for Global UI (clean, modern, professional)
      ========================================================================== */
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-optical-sizing: auto; /* Variable font optical sizing */
+    font-family: var(--font-family-primary);
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
   /* ==========================================================================
-     HEADINGS - Plus Jakarta Sans for Premium Branding
-     Tighter letter-spacing for luxury tech brand feel (Apple/Stripe aesthetic)
+     PREMIUM TYPOGRAPHY SYSTEM - Heading Hierarchy
      ========================================================================== */
+  .heading-1 {
+    font-family: var(--font-family-primary);
+    font-size: 76px;
+    line-height: 96px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-primary-black);
+  }
+
+  .heading-2 {
+    font-family: var(--font-family-primary);
+    font-size: 64px;
+    line-height: 80px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-primary-black);
+  }
+
+  .heading-2-small {
+    font-family: var(--font-family-primary);
+    font-size: 45px;
+    line-height: 56px;
+    font-weight: 600;
+    color: var(--color-primary-black);
+  }
+
+  .heading-3 {
+    font-family: var(--font-family-primary);
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 700;
+    color: var(--color-primary-black);
+  }
+
+  .heading-4 {
+    font-family: var(--font-family-primary);
+    font-size: 24px;
+    line-height: 36px;
+    font-weight: 700;
+    color: var(--color-primary-black);
+  }
+
+  /* Body Text Styles */
+  .paragraph {
+    font-family: var(--font-family-primary);
+    font-size: 20px;
+    line-height: 30px;
+    font-weight: 400;
+    color: var(--color-gray-900);
+  }
+
+  .paragraph-medium {
+    font-family: var(--font-family-primary);
+    font-size: 18px;
+    line-height: 30px;
+    font-weight: 400;
+    color: var(--color-gray-600);
+  }
+
+  .subtitle {
+    font-family: var(--font-family-primary);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+    color: var(--color-gray-600);
+  }
+
+  /* Responsive Typography */
+  @media (max-width: 767px) {
+    .heading-1 {
+      font-size: 36px;
+      line-height: 44px;
+    }
+
+    .heading-2 {
+      font-size: 32px;
+      line-height: 40px;
+    }
+
+    .heading-2-small {
+      font-size: 28px;
+      line-height: 36px;
+    }
+
+    .heading-3 {
+      font-size: 24px;
+      line-height: 32px;
+    }
+
+    .heading-4 {
+      font-size: 20px;
+      line-height: 28px;
+    }
+
+    .paragraph {
+      font-size: 16px;
+      line-height: 24px;
+    }
+
+    .paragraph-medium {
+      font-size: 14px;
+      line-height: 22px;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .heading-1 {
+      font-size: 56px;
+      line-height: 68px;
+    }
+
+    .heading-2 {
+      font-size: 48px;
+      line-height: 60px;
+    }
+
+    .heading-2-small {
+      font-size: 36px;
+      line-height: 44px;
+    }
+  }
+
+  /* Base Heading Styles */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    @apply font-display font-semibold;
-    letter-spacing: -0.02em; /* Premium tight headings */
+    @apply font-sans;
+    color: var(--color-primary-black);
     font-optical-sizing: auto;
   }
 
-  /* Extra tight for large hero headings */
   h1 {
-    letter-spacing: -0.04em;
+    @apply heading-1;
   }
 
   h2 {
-    letter-spacing: -0.03em;
+    @apply heading-2;
   }
 
-  /* ==========================================================================
-     BODY TEXT - The 1.5x Rule for readability
-     Prevents "text-wall fatigue" for recruiters reading profiles
-     ========================================================================== */
+  h3 {
+    @apply heading-3;
+  }
+
+  h4 {
+    @apply heading-4;
+  }
+
   p {
-    line-height: 1.6; /* Optimal for job descriptions & candidate summaries */
+    @apply paragraph;
   }
 
   /* Job descriptions and long-form content */
@@ -406,12 +838,6 @@
   .candidate-summary p {
     line-height: 1.7;
   }
-
-  /* ==========================================================================
-     COLOR-CONTRAST HIERARCHY
-     Primary Text: Slate-800 (#1E293B) instead of pure black
-     Secondary Text: Slate-500 (#64748B) for metadata
-     ========================================================================== */
 
   /* Smooth scrolling for anchor links */
   html {
@@ -430,22 +856,38 @@
     }
   }
 
-  /* Custom scrollbar */
+  /* Custom scrollbar - Enhanced for Dark Mode */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted;
+    @apply bg-background-base;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/20 rounded-full;
+    @apply bg-border-strong rounded-full;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/30;
+    @apply bg-text-tertiary;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(var(--background-base));
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border: 2px solid hsl(var(--background-base));
+    background-clip: padding-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--text-tertiary));
   }
 
   /* Custom dropdown arrow */
@@ -459,9 +901,15 @@
 }
 
 @layer components {
-  /* Glass effect */
+  /* Glass effect - Enhanced for dark mode */
   .glass {
     @apply bg-card/60 backdrop-blur-lg border-border/50;
+  }
+
+  .dark .glass {
+    background: hsl(var(--background-surface) / 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.5);
   }
 
   /* Gradient text */
@@ -469,16 +917,28 @@
     @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
 
-  /* Card hover effect */
+  /* Card hover effect - Optimized for dark mode */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
 
+  .dark .card-hover:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
   /* Stat card gradient border */
   .stat-card {
-    @apply relative overflow-hidden rounded-xl;
+    @apply relative overflow-hidden;
+    border-radius: 5px;
     background:
       linear-gradient(white, white) padding-box,
+      var(--gradient-brand) border-box;
+    border: 2px solid transparent;
+  }
+
+  .dark .stat-card {
+    background:
+      linear-gradient(hsl(var(--background-surface)), hsl(var(--background-surface))) padding-box,
       var(--gradient-brand) border-box;
     border: 2px solid transparent;
   }
@@ -486,13 +946,11 @@
   /* AI Content Accent - Purple left border for AI-generated content */
   .ai-content-accent {
     @apply border-l-[3px];
-    border-left-color: hsl(var(--ai-500));
+    border-left-color: hsl(var(--ai));
   }
 
   /* ==========================================================================
      AI/AGENTIC TYPOGRAPHY - JetBrains Mono for Machine Logic
-     Use for: Score Breakdowns, AI Logs, Reasoning sections, Match Scores
-     Signals to user: "This data was computed by an agent"
      ========================================================================== */
   .ai-text,
   .agent-text,
@@ -502,45 +960,51 @@
     @apply font-mono;
     font-feature-settings:
       'liga' 1,
-      'calt' 1; /* Enable ligatures */
+      'calt' 1;
   }
 
-  /* AI Score Display - Prominent monospace for match percentages */
+  /* AI Score Display */
   .ai-score-display {
     @apply font-mono font-semibold;
-    color: hsl(var(--ai-500));
+    color: hsl(var(--ai));
     letter-spacing: 0.02em;
   }
 
-  /* AI Labels - Small caps for "AI Suggestion", "Match Score" labels */
+  /* AI Labels */
   .ai-label {
     @apply font-mono text-xs font-medium uppercase;
-    color: hsl(var(--ai-500));
+    color: hsl(var(--ai));
     letter-spacing: 0.1em;
   }
 
-  /* AI Reasoning Block - For explanations and breakdowns */
+  /* AI Reasoning Block */
   .ai-reasoning-block {
     @apply font-mono text-sm;
-    @apply bg-ai-50 dark:bg-ai-900/20 rounded-lg p-4;
+    background: hsl(var(--ai-50));
+    padding: 1rem;
+    border-radius: 5px;
     @apply border-l-[3px];
-    border-left-color: hsl(var(--ai-500));
+    border-left-color: hsl(var(--ai));
     line-height: 1.6;
   }
 
-  /* AI Pulse Animation for processing states */
+  .dark .ai-reasoning-block {
+    background: hsl(var(--ai-50));
+  }
+
+  /* AI Pulse Animation */
   .ai-pulse {
-    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
     animation: ai-pulse-animation 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   @keyframes ai-pulse-animation {
     0%,
     100% {
-      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+      box-shadow: 0 0 0 4px hsl(var(--ai) / 0.15);
     }
+
     50% {
-      box-shadow: 0 0 0 8px rgba(168, 85, 247, 0.05);
+      box-shadow: 0 0 0 8px hsl(var(--ai) / 0.05);
     }
   }
 
@@ -549,6 +1013,7 @@
     background: var(--gradient-primary);
     box-shadow: var(--shadow-primary);
     @apply text-white font-medium transition-all duration-200;
+    border-radius: 5px;
   }
 
   .btn-primary-gradient:hover {
@@ -565,6 +1030,7 @@
     background: var(--gradient-ai);
     box-shadow: var(--shadow-ai);
     @apply text-white font-medium transition-all duration-200;
+    border-radius: 5px;
   }
 
   .btn-ai-gradient:hover {
@@ -574,7 +1040,7 @@
 }
 
 @layer utilities {
-  /* Animation utilities - Optimized for smooth performance */
+  /* Animation utilities */
   .animate-in {
     animation: fadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     will-change: opacity, transform;
@@ -662,7 +1128,12 @@
     animation: shimmer 1.5s ease-in-out infinite;
   }
 
-  /* Enhanced hover effects - Clean, smooth, fluid, minimal */
+  .dark .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    background-size: 200px 100%;
+  }
+
+  /* Enhanced hover effects */
   .hover-lift {
     transition:
       transform var(--transition-base) var(--ease-smooth),
@@ -690,8 +1161,16 @@
     box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
   }
 
+  .dark .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
   .hover-glow-ai:hover {
     box-shadow: 0 0 16px rgba(168, 85, 247, 0.2);
+  }
+
+  .dark .hover-glow-ai:hover {
+    box-shadow: 0 0 20px hsl(var(--ai) / 0.3);
   }
 
   .hover-rotate {
@@ -713,15 +1192,24 @@
 
   /* Focus states */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: hsl(var(--primary) / 0.2);
+  }
+
+  .dark .focus-ring {
+    --tw-ring-color: hsl(var(--primary) / 0.4);
   }
 
   .focus-ring-ai {
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    --tw-ring-color: hsl(var(--ai-500) / 0.2);
+    --tw-ring-color: hsl(var(--ai) / 0.2);
   }
 
-  /* Smooth transitions - Clean, smooth, fluid, minimal */
+  .dark .focus-ring-ai {
+    --tw-ring-color: hsl(var(--ai) / 0.35);
+  }
+
+  /* Smooth transitions */
   .transition-smooth {
     transition: all var(--transition-base) var(--ease-smooth);
   }
@@ -772,24 +1260,31 @@
   .stagger-list > *:nth-child(1) {
     animation-delay: 0.05s;
   }
+
   .stagger-list > *:nth-child(2) {
     animation-delay: 0.1s;
   }
+
   .stagger-list > *:nth-child(3) {
     animation-delay: 0.15s;
   }
+
   .stagger-list > *:nth-child(4) {
     animation-delay: 0.2s;
   }
+
   .stagger-list > *:nth-child(5) {
     animation-delay: 0.25s;
   }
+
   .stagger-list > *:nth-child(6) {
     animation-delay: 0.3s;
   }
+
   .stagger-list > *:nth-child(7) {
     animation-delay: 0.35s;
   }
+
   .stagger-list > *:nth-child(8) {
     animation-delay: 0.4s;
   }
@@ -843,62 +1338,46 @@
     -webkit-line-clamp: 3;
   }
 
-  /* ==========================================================================
-     PREMIUM HEADING UTILITIES
-     For hero sections, landing pages, and high-impact areas
-     ========================================================================== */
-
-  /* Hero heading - Extra tight for maximum impact */
+  /* Premium heading utilities */
   .heading-hero {
-    @apply font-display font-bold;
+    @apply font-sans font-bold;
     letter-spacing: -0.04em;
     line-height: 1.1;
   }
 
-  /* Section heading - Standard premium heading */
   .heading-section {
-    @apply font-display font-semibold;
+    @apply font-sans font-semibold;
     letter-spacing: -0.03em;
     line-height: 1.2;
   }
 
-  /* Card heading - Slightly less tight */
   .heading-card {
-    @apply font-display font-semibold;
+    @apply font-sans font-semibold;
     letter-spacing: -0.02em;
     line-height: 1.3;
   }
 
-  /* Subheading - Inter for body-adjacent headings */
   .heading-sub {
     @apply font-sans font-medium;
     letter-spacing: -0.01em;
     line-height: 1.4;
   }
 
-  /* ==========================================================================
-     TEXT HIERARCHY UTILITIES
-     Semantic text styles following 60-30-10 rule
-     ========================================================================== */
-
-  /* Primary text - Main content (Slate-800 instead of pure black) */
+  /* Text hierarchy utilities */
   .text-content-primary {
     @apply text-text-primary;
   }
 
-  /* Secondary text - Supporting content */
   .text-content-secondary {
     @apply text-text-secondary;
   }
 
-  /* Tertiary text - Metadata, timestamps, labels */
   .text-content-tertiary {
     @apply text-text-tertiary;
   }
 
-  /* AI accent text - Purple for AI-related labels */
   .text-ai-accent {
-    color: hsl(var(--ai-500));
+    color: hsl(var(--ai));
   }
 
   @keyframes fadeIn {
@@ -906,6 +1385,7 @@
       opacity: 0;
       transform: translateY(8px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -917,6 +1397,7 @@
       opacity: 0;
       transform: translateY(16px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -928,6 +1409,7 @@
       opacity: 0;
       transform: translateY(-16px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -939,6 +1421,7 @@
       opacity: 0;
       transform: translateX(16px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -950,6 +1433,7 @@
       opacity: 0;
       transform: translateX(-16px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -961,6 +1445,7 @@
       opacity: 0;
       transform: scale(0.96);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -972,6 +1457,7 @@
       opacity: 1;
       transform: scale(1);
     }
+
     to {
       opacity: 0;
       transform: scale(0.96);
@@ -983,13 +1469,16 @@
       opacity: 0;
       transform: scale(0.8);
     }
+
     50% {
       opacity: 1;
       transform: scale(1.02);
     }
+
     70% {
       transform: scale(0.98);
     }
+
     100% {
       opacity: 1;
       transform: scale(1);
@@ -1001,6 +1490,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -1012,6 +1502,7 @@
       opacity: 0;
       transform: translateY(-20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -1023,6 +1514,7 @@
       opacity: 0;
       transform: translateX(-20px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -1034,6 +1526,7 @@
       opacity: 0;
       transform: translateX(20px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -1045,6 +1538,7 @@
       opacity: 0;
       transform: scale(0.9);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -1056,6 +1550,7 @@
       opacity: 1;
       transform: scale(1);
     }
+
     to {
       opacity: 0;
       transform: scale(0.9);
@@ -1067,6 +1562,7 @@
     100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-10px);
     }
@@ -1077,6 +1573,7 @@
     100% {
       background-position: 0% 50%;
     }
+
     50% {
       background-position: 100% 50%;
     }
@@ -1086,6 +1583,7 @@
     0% {
       background-position: -200px 0;
     }
+
     100% {
       background-position: calc(200px + 100%) 0;
     }
@@ -1094,7 +1592,6 @@
 
 /* =============================================================================
    Dark Mode Transitions & Typography Adjustments
-   Smooth color transitions when switching between light and dark themes
    ============================================================================= */
 html.dark {
   color-scheme: dark;
@@ -1104,13 +1601,9 @@ html {
   color-scheme: light;
 }
 
-/* =============================================================================
-   DARK MODE TYPOGRAPHY - "Premium Sharpness"
-   White text on dark backgrounds appears thicker than it is.
-   Drop font weight by one level to maintain premium sharpness.
-   ============================================================================= */
+/* Dark mode typography adjustments */
 .dark body {
-  font-weight: 400; /* Lighter for dark mode */
+  font-weight: 400;
 }
 
 .dark h1,
@@ -1119,7 +1612,8 @@ html {
 .dark h4,
 .dark h5,
 .dark h6 {
-  font-weight: 500; /* Semi-bold becomes medium in dark mode */
+  font-weight: 500;
+  color: hsl(var(--text-primary));
 }
 
 /* Ensure crisp rendering in dark mode */
@@ -1137,7 +1631,7 @@ html {
   transition-timing-function: ease-in-out;
 }
 
-/* Disable transitions on page load to prevent flash */
+/* Disable transitions on page load */
 html.no-transitions *,
 html.no-transitions *::before,
 html.no-transitions *::after {
@@ -1146,24 +1640,219 @@ html.no-transitions *::after {
 
 /* Dark mode skeleton shimmer */
 .dark .animate-pulse {
-  opacity: 0.3;
+  opacity: 0.2;
 }
 
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* =============================================================================
+   Landing Page Design System Tokens
+   ============================================================================= */
+:root {
+  --color-primary-black: #0f172a;
+  --color-primary-purple: #2563eb;
+  --color-primary-light: #eef2ff;
+  --color-white: #ffffff;
+  --color-gray-100: #f8fafc;
+  --color-gray-200: #e2e8f0;
+  --color-gray-400: #94a3b8;
+  --color-gray-600: #64748b;
+  --color-gray-900: #0f172a;
+
+  --font-family-primary: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  --color-success: #28a745;
+  --color-error: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
+
+  /* Spacing System (8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* Border Radius - ALL 5PX */
+  --radius-small: 5px;
+  --radius-medium: 5px;
+  --radius-large: 5px;
+  --radius-xlarge: 5px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-large: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 8px 20px rgba(37, 99, 235, 0.15);
+
+  /* Z-Index Layers */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: hsl(var(--background-base));
+/* Dark mode overrides for landing page variables */
+.dark {
+  --color-primary-black: #f8fafc;
+  --color-white: #111827;
+  --color-gray-100: #1c2836;
+  --color-gray-200: #2a3849;
+  --color-gray-400: #a3b3c7;
+  --color-gray-600: #d1dbe8;
+  --color-gray-900: #f8fafc;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border-strong));
-  border-radius: 4px;
+/* Animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--text-muted));
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+@keyframes bounce-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes bounce-slower {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s ease-in-out infinite;
+}
+
+.animate-bounce-slower {
+  animation: bounce-slower 5s ease-in-out infinite 1s;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =============================================================================
+   SONNER TOAST NOTIFICATIONS - Custom Styling
+   Brand blue for success, red for errors, with proper light/dark mode support
+   ============================================================================= */
+
+[data-sonner-toaster] {
+  font-family: var(--font-manrope), system-ui, sans-serif !important;
+}
+
+[data-sonner-toast] {
+  font-family: var(--font-manrope), system-ui, sans-serif !important;
+}
+
+/* Success toasts - Brand blue */
+[data-sonner-toast][data-type='success'] {
+  background: hsl(var(--primary-600)) !important;
+  border: 1px solid hsl(var(--primary-700)) !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-title] {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-description] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-icon] {
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-close-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Error toasts - Red */
+[data-sonner-toast][data-type='error'] {
+  background: hsl(var(--error-600)) !important;
+  border: 1px solid hsl(var(--error-700)) !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-title] {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-description] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-icon] {
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-close-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: white !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Info and warning toasts - Default styling */
+[data-sonner-toast][data-type='info'],
+[data-sonner-toast][data-type='warning'] {
+  background: hsl(var(--background-surface)) !important;
+  border: 1px solid hsl(var(--border-default)) !important;
+  color: hsl(var(--text-primary)) !important;
+}
+
+.dark [data-sonner-toast][data-type='info'],
+.dark [data-sonner-toast][data-type='warning'] {
+  background: hsl(var(--background-surface)) !important;
+  border: 1px solid hsl(var(--border-default)) !important;
+  color: hsl(var(--text-primary)) !important;
 }

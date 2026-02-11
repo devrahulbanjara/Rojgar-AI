@@ -7,6 +7,7 @@ import { Settings, Plus, X, Award, Pencil, CheckCircle2 } from 'lucide-react'
 import type { Skill, Certification, SkillCreate, CertificationCreate } from '../../types/profile'
 import { toast } from 'sonner'
 import { queryClient } from '../../lib/queryClient'
+import { useDeleteConfirm } from '../ui/delete-confirm-dialog'
 
 const invalidateRecommendationsCache = () => {
   queryClient.invalidateQueries({ queryKey: ['jobs'] })
@@ -47,6 +48,8 @@ export function SkillsExpertiseTab({
   const [skillForm, setSkillForm] = useState({
     skill_name: '',
   })
+
+  const { confirm, Dialog } = useDeleteConfirm()
 
   const [certifications, setCertifications] = useState<Certification[]>(initialCertifications)
   const [isAddingCert, setIsAddingCert] = useState(false)
@@ -101,21 +104,27 @@ export function SkillsExpertiseTab({
     setIsAddingSkill(true)
   }
 
-  const handleDeleteSkill = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this skill?')) return
-    try {
-      await profileService.deleteSkill(id)
-      setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
-      toast.success('Skill deleted successfully!')
-      invalidateRecommendationsCache()
+  const handleDeleteSkill = async (id: string, skillName: string) => {
+    await confirm({
+      title: 'Delete Skill',
+      description: "You're about to permanently delete",
+      itemName: skillName,
+      onConfirm: async () => {
+        try {
+          await profileService.deleteSkill(id)
+          setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
+          toast.success('Skill deleted successfully!')
+          invalidateRecommendationsCache()
 
-      if (editingSkillId === id) {
-        setIsAddingSkill(false)
-        setEditingSkillId(null)
-      }
-    } catch {
-      toast.error('Failed to delete skill.')
-    }
+          if (editingSkillId === id) {
+            setIsAddingSkill(false)
+            setEditingSkillId(null)
+          }
+        } catch {
+          toast.error('Failed to delete skill.')
+        }
+      },
+    })
   }
 
   const handleCancelSkill = () => {
@@ -184,19 +193,25 @@ export function SkillsExpertiseTab({
     setIsAddingCert(true)
   }
 
-  const handleDeleteCert = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this certification?')) return
-    try {
-      await profileService.deleteCertification(id)
-      setCertifications(prev => prev.filter(cert => cert.candidate_certification_id !== id))
-      toast.success('Certification deleted successfully!')
-      if (editingCertId === id) {
-        setIsAddingCert(false)
-        setEditingCertId(null)
-      }
-    } catch {
-      toast.error('Failed to delete certification.')
-    }
+  const handleDeleteCert = async (id: string, certName: string, issuingBody: string) => {
+    await confirm({
+      title: 'Delete Certification',
+      description: "You're about to permanently delete",
+      itemName: `${certName} from ${issuingBody}`,
+      onConfirm: async () => {
+        try {
+          await profileService.deleteCertification(id)
+          setCertifications(prev => prev.filter(cert => cert.candidate_certification_id !== id))
+          toast.success('Certification deleted successfully!')
+          if (editingCertId === id) {
+            setIsAddingCert(false)
+            setEditingCertId(null)
+          }
+        } catch {
+          toast.error('Failed to delete certification.')
+        }
+      },
+    })
   }
 
   const handleCancelCert = () => {
@@ -214,24 +229,14 @@ export function SkillsExpertiseTab({
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h3 className="text-2xl font-bold text-text-primary mb-2">Skills & Expertise</h3>
-        <p className="text-text-secondary">Manage your professional skills and certifications.</p>
-      </div>
-
+    <div className="px-10 py-8">
       <div className="space-y-8">
         {}
-        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-200 dark:border-primary-800">
-                <Settings className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-text-primary">Skills</h4>
-                <p className="text-sm text-text-tertiary">Your technical competencies</p>
-              </div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-border-default">
+            <div>
+              <h4 className="text-lg font-bold text-text-primary">Skills</h4>
+              <p className="text-sm text-text-tertiary mt-0.5">Your technical competencies</p>
             </div>
             {!isAddingSkill && (
               <Button
@@ -240,7 +245,7 @@ export function SkillsExpertiseTab({
                   setSkillForm({ skill_name: '' })
                   setIsAddingSkill(true)
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-md shadow-primary transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-medium"
               >
                 <Plus className="w-4 h-4" />
                 Add Skill
@@ -252,9 +257,9 @@ export function SkillsExpertiseTab({
           {isAddingSkill && (
             <form
               onSubmit={handleAddSkill}
-              className="mb-8 p-6 bg-background-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-top-4 duration-300"
+              className="mb-6 p-6 bg-background-subtle rounded border border-border-default"
             >
-              <h5 className="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
+              <h5 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                 {editingSkillId ? (
                   <Pencil className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 ) : (
@@ -272,15 +277,15 @@ export function SkillsExpertiseTab({
                     value={skillForm.skill_name}
                     onChange={e => setSkillForm(prev => ({ ...prev, skill_name: e.target.value }))}
                     placeholder="e.g., React, Python, Project Management"
-                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
+                    className="h-11 rounded border-border-default focus:border-primary focus:ring-primary/20"
                     required
                   />
                 </div>
               </div>
-              <div className="flex gap-3 mt-6 pt-4 border-t border-border-default">
+              <div className="flex gap-3 mt-4 pt-4 border-t border-border-default">
                 <Button
                   type="submit"
-                  className="px-6 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl font-medium shadow-sm transition-all"
+                  className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-medium"
                 >
                   {editingSkillId ? 'Save Changes' : 'Add Skill'}
                 </Button>
@@ -288,7 +293,7 @@ export function SkillsExpertiseTab({
                   type="button"
                   variant="outline"
                   onClick={handleCancelSkill}
-                  className="px-6 py-2.5 border-border-default text-text-secondary hover:bg-background-subtle rounded-xl font-medium transition-all"
+                  className="px-6 py-2 border-border-default text-text-secondary hover:bg-background-subtle rounded font-medium"
                 >
                   Cancel
                 </Button>
@@ -310,7 +315,7 @@ export function SkillsExpertiseTab({
                 <Button
                   onClick={() => setIsAddingSkill(true)}
                   variant="outline"
-                  className="mt-6 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 rounded-xl"
+                  className="mt-6 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 rounded"
                 >
                   Add Skill
                 </Button>
@@ -321,7 +326,7 @@ export function SkillsExpertiseTab({
               {skills.map(skill => (
                 <div
                   key={skill.candidate_skill_id}
-                  className="group inline-flex items-center gap-2 px-4 py-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-xl border border-ai-200 dark:border-ai-800 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-300 dark:hover:border-ai-700 hover:shadow-sm transition-all duration-200"
+                  className="group inline-flex items-center gap-2 px-4 py-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded border border-ai-200 dark:border-ai-800 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-300 dark:hover:border-ai-700 hover:shadow-sm transition-all duration-200"
                 >
                   <span className="font-semibold">{skill.skill_name}</span>
                   <div className="flex items-center gap-1 border-l border-ai-200 pl-2 ml-1 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -333,7 +338,7 @@ export function SkillsExpertiseTab({
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteSkill(skill.candidate_skill_id)}
+                      onClick={() => handleDeleteSkill(skill.candidate_skill_id, skill.skill_name)}
                       className="flex items-center justify-center w-6 h-6 text-ai-600 hover:text-error-600 hover:bg-background-surface hover:shadow-sm rounded-lg transition-all duration-200"
                       title="Delete skill"
                     >
@@ -347,18 +352,13 @@ export function SkillsExpertiseTab({
         </div>
 
         {}
-        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-warning-50 flex items-center justify-center text-warning-600 shadow-sm border border-warning-200">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-text-primary">Certifications</h4>
-                <p className="text-sm text-text-tertiary">
-                  Licenses and professional certifications
-                </p>
-              </div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-border-default">
+            <div>
+              <h4 className="text-lg font-bold text-text-primary">Certifications</h4>
+              <p className="text-sm text-text-tertiary mt-0.5">
+                Licenses and professional certifications
+              </p>
             </div>
             {!isAddingCert && (
               <Button
@@ -375,7 +375,7 @@ export function SkillsExpertiseTab({
                   })
                   setIsAddingCert(true)
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl shadow-md shadow-primary transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded font-medium"
               >
                 <Plus className="w-4 h-4" />
                 Add Certification
@@ -387,9 +387,9 @@ export function SkillsExpertiseTab({
           {isAddingCert && (
             <form
               onSubmit={handleAddCert}
-              className="mb-8 p-6 bg-background-subtle rounded-2xl border border-border-default animate-in fade-in slide-in-from-top-4 duration-300"
+              className="mb-6 p-6 bg-background-subtle rounded border border-border-default"
             >
-              <h5 className="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
+              <h5 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                 {editingCertId ? (
                   <Pencil className="w-5 h-5 text-warning-600" />
                 ) : (
@@ -542,7 +542,7 @@ export function SkillsExpertiseTab({
                 <Button
                   onClick={() => setIsAddingCert(true)}
                   variant="outline"
-                  className="mt-6 border-warning-200 text-warning-600 hover:bg-warning-50 hover:border-warning-300 rounded-xl"
+                  className="mt-6 border-warning-200 dark:border-warning-800 text-warning-600 dark:text-warning-400 hover:bg-warning-50 dark:hover:bg-warning-950/30 hover:border-warning-300 dark:hover:border-warning-700 rounded"
                 >
                   Add Certification
                 </Button>
@@ -553,10 +553,10 @@ export function SkillsExpertiseTab({
               {certifications.map(cert => (
                 <div
                   key={cert.candidate_certification_id}
-                  className="group flex items-start justify-between p-5 bg-background-surface border border-border-default rounded-xl hover:border-warning-200 hover:shadow-md transition-all duration-300"
+                  className="group flex items-start justify-between p-5 bg-background-surface border border-border-default rounded-xl hover:border-warning-200 dark:hover:border-warning-800 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-warning-50 text-warning-600 rounded-lg group-hover:bg-warning-100 transition-colors">
+                    <div className="p-2 bg-warning-50 dark:bg-warning-950/30 text-warning-600 dark:text-warning-400 rounded-lg group-hover:bg-warning-100 dark:group-hover:bg-warning-900/30 transition-colors">
                       <Award className="w-6 h-6" />
                     </div>
                     <div>
@@ -603,7 +603,13 @@ export function SkillsExpertiseTab({
                       <Pencil className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteCert(cert.candidate_certification_id)}
+                      onClick={() =>
+                        handleDeleteCert(
+                          cert.candidate_certification_id,
+                          cert.certification_name,
+                          cert.issuing_body
+                        )
+                      }
                       className="p-2 text-text-tertiary hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors duration-200"
                       title="Delete certification"
                     >
@@ -616,6 +622,7 @@ export function SkillsExpertiseTab({
           )}
         </div>
       </div>
+      <Dialog />
     </div>
   )
 }
