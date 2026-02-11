@@ -161,12 +161,15 @@ function JobTableRow({
             <td className="py-5 px-6">
                 <Badge
                     variant="subtle"
-                    className={cn(
-                        'rounded-full px-3 py-1 font-bold uppercase tracking-wider text-[10px] border',
-                        statusStyles.bg,
-                        statusStyles.text,
-                        statusStyles.border
-                    )}
+                    colorPalette={
+                        status.toLowerCase() === 'active'
+                            ? 'blue'
+                            : status.toLowerCase() === 'draft'
+                                ? 'orange'
+                                : 'red'
+                    }
+                    className="font-bold uppercase tracking-wider text-[10px]"
+                    style={{ borderRadius: '5px' }}
                 >
                     {status}
                 </Badge>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Users, Zap, CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react'
+import { Users, Zap, CheckCircle2, AlertCircle, Loader2, Clock, ChevronRight } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 
@@ -90,19 +90,29 @@ export function ShortlistJobCard({
   const shortlistStatus = getShortlistStatusBadge(job.shortlist_status)
   const StatusIcon = shortlistStatus.icon
 
+  const statusDotColor =
+    job.status === 'expired'
+      ? 'bg-warning-500'
+      : job.shortlist_status === 'completed'
+        ? 'bg-success-500'
+        : 'bg-primary-500'
+
+  const statusLabel =
+    job.shortlist_status === 'completed'
+      ? 'Analyzed'
+      : job.status === 'expired'
+        ? 'Pending'
+        : 'Active'
+
   return (
     <div
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-xl border p-6 relative',
-        'hover:-translate-y-1 hover:border-primary-200 dark:hover:border-primary-800',
+        'relative p-3 rounded-xl cursor-pointer transition-all group text-left',
         isSelected
-          ? 'border-primary-300 dark:border-primary-700 bg-gradient-to-br from-primary-50/50 to-primary-100/40 dark:from-primary-950/30 dark:to-primary-900/20 shadow-md shadow-primary/10'
-          : 'border-border-default hover:shadow-lg',
+          ? 'bg-primary-50/60 dark:bg-primary-950/30'
+          : 'hover:bg-background-subtle',
         className
       )}
-      style={{
-        borderWidth: isSelected ? '2px' : '1px',
-      }}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -113,88 +123,58 @@ export function ShortlistJobCard({
         }
       }}
     >
-      <div className="flex flex-col h-full">
-        {/* Header with department and auto-shortlist toggle */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {job.department && (
-              <span
-                className={cn(
-                  'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
-                  getDepartmentBadgeStyle(job.department)
-                )}
-              >
-                {job.department}
+      {isSelected && (
+        <div className="absolute left-0 top-3 bottom-3 w-1 bg-primary-600 dark:bg-primary-400 rounded-r-full" />
+      )}
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+          <div className={cn('h-2 w-2 rounded-full shrink-0', statusDotColor)} />
+          <div className="truncate flex-1 min-w-0">
+            <p
+              className={cn(
+                'text-[14px] font-bold truncate',
+                isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-text-primary'
+              )}
+            >
+              {job.title}
+            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[11px] text-text-tertiary flex items-center gap-1">
+                <Users className="w-3 h-3" /> {job.applicant_count}
               </span>
-            )}
-            {/* Job status badge */}
-            <span
-              className={cn(
-                'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border',
-                job.status === 'expired'
-                  ? 'bg-warning-50 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 border-warning-200 dark:border-warning-800'
-                  : 'bg-success-50 dark:bg-success-950/30 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800'
-              )}
-            >
-              {job.status === 'expired' ? 'Expired' : 'Active'}
-            </span>
-          </div>
-
-          <div className="relative group/tooltip">
-            <button
-              onClick={handleAutoShortlistToggle}
-              disabled={isLoadingAutoShortlist || isToggling}
-              className={cn(
-                'flex items-center justify-center transition-all duration-200 rounded-full',
-                'hover:scale-110 active:scale-95',
-                autoShortlist
-                  ? 'w-7 h-7 bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 shadow-sm'
-                  : 'w-5 h-5 text-text-muted hover:text-warning-500',
-                (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
-              )}
-              title={
-                autoShortlist
-                  ? 'Auto Shortlist: ON - Click to disable'
-                  : 'Auto Shortlist: OFF - Click to enable'
-              }
-            >
-              <Zap className="w-4 h-4 transition-all duration-200" />
-            </button>
-
-            <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-text-inverse bg-text-primary rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
-              <div className="absolute bottom-full right-2 border-4 border-transparent border-b-text-primary" />
+              <span className="text-[11px] text-text-tertiary uppercase font-bold tracking-tighter">
+                {statusLabel}
+              </span>
+              <button
+                onClick={handleAutoShortlistToggle}
+                disabled={isLoadingAutoShortlist || isToggling}
+                className={cn(
+                  'p-1 rounded-md transition-all',
+                  autoShortlist
+                    ? 'text-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                    : 'text-text-muted hover:bg-background-subtle',
+                  (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
+                )}
+                title={
+                  autoShortlist
+                    ? 'Auto Shortlist: ON - Click to disable'
+                    : 'Auto Shortlist: OFF - Click to enable'
+                }
+              >
+                <Zap className={cn('w-3 h-3', autoShortlist && 'fill-current')} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Title */}
-        <div className="mb-4">
-          <h3 className="font-semibold text-[19px] leading-tight text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
-            {job.title}
-          </h3>
-        </div>
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Footer with stats */}
-        <div className="flex items-center justify-between gap-2 pt-4 border-t border-border-subtle">
-          <div className="inline-flex items-center gap-2 px-3 py-2 bg-primary-50/80 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded-lg border border-primary-200 dark:border-primary-800">
-            <Users className="w-4 h-4" />
-            <span className="text-xs font-semibold">{job.applicant_count}</span>
-          </div>
-
-          {/* Shortlist status badge */}
-          <div
+        <div className="flex items-center shrink-0">
+          <ChevronRight
             className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium',
-              shortlistStatus.className
+              'w-4 h-4 text-text-muted transition-transform',
+              isSelected ? 'translate-x-1 text-primary-400' : 'opacity-0 group-hover:opacity-100'
             )}
-          >
-            <StatusIcon className={cn('w-3.5 h-3.5', shortlistStatus.iconClassName)} />
-            <span>{shortlistStatus.label}</span>
-          </div>
+          />
         </div>
       </div>
     </div>

@@ -31,7 +31,7 @@ const BREADCRUMB_MAP: Record<string, { label: string; parent?: string }> = {
   '/recruiter/shortlist': { label: 'Shortlist' },
   '/recruiter/interviews': { label: 'Interviews' },
   '/recruiter/final-selection': { label: 'Final Selection' },
-  '/candidate/browse-jobs': { label: 'Browse Jobs' },
+  '/candidate/jobs': { label: 'Jobs' },
   '/candidate/resumes': { label: 'Resumes' },
   '/candidate/profile': { label: 'Profile' },
   '/organization/recruiters': { label: 'Recruiters' },
