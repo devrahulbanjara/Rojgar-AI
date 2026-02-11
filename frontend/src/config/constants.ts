@@ -20,7 +20,7 @@ export const GOOGLE_CONFIG = {
 
 export const ROUTES = {
   HOME: '/',
-  LOGIN: '/login',
+  LOGIN: '/signin',
   SIGNUP: '/signup',
   AUTH_CALLBACK: '/auth/callback',
   SELECT_ROLE: '/select-role',
