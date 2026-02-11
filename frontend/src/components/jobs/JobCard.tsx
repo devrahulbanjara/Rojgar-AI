@@ -245,10 +245,10 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
 
         {/* Row 5: Work Type - Single horizontal line, no wrap */}
         <div className="mt-4 flex items-center gap-2 flex-nowrap">
-          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary dark:text-text-primary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
             {job.employment_type}
           </span>
-          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
+          <span className="inline-flex items-center h-6 px-2.5 bg-background-subtle text-text-secondary dark:text-text-primary rounded-md text-[11px] font-medium border border-border-subtle whitespace-nowrap">
             {job.location_type || 'On-site'}
           </span>
         </div>

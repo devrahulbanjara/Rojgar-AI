@@ -71,7 +71,8 @@ export default function SignIn() {
                 </div>
               )}
 
-              <div className="mb-4 sm:mb-6">
+              {/* Google OAuth Button - Issue #11 */}
+              <div className="mb-7">
                 <GoogleOAuthButton
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
@@ -79,22 +80,25 @@ export default function SignIn() {
                 />
               </div>
 
-              <div className="relative mb-4 sm:mb-6">
+              {/* Divider - Issue #12 */}
+              <div className="relative mb-7">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border-default" />
                 </div>
-                <div className="relative flex justify-center text-xs sm:text-sm">
-                  <span className="bg-background-surface px-3 sm:px-4 text-text-muted">
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-background-surface px-4 text-[#9CA3AF]">
                     Or continue with email
                   </span>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                <div className="space-y-1 sm:space-y-2">
+              {/* Form - Issue #24 */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Email Field - Issue #13, #14, #15 */}
+                <div className="space-y-2">
                   <label
                     htmlFor="email"
-                    className="block text-xs sm:text-sm font-medium text-text-primary"
+                    className="block text-sm font-medium text-[#1F2937]"
                   >
                     Email Address
                   </label>
@@ -106,10 +110,10 @@ export default function SignIn() {
                     value={values.email}
                     onChange={e => handleChange('email', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                    className={`w-full h-12 px-4 bg-background-surface border-[1.5px] rounded-[5px] text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                       errors.email
-                        ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
-                        : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
+                        ? 'border-error bg-error-50 focus:border-error focus:ring-[3px] focus:ring-error/10'
+                        : 'border-[#E5E7EB] focus:border-[#2563EB] focus:ring-[3px] focus:ring-[rgba(37,99,235,0.1)]'
                     }`}
                   />
                   {errors.email && (
@@ -120,10 +124,11 @@ export default function SignIn() {
                   )}
                 </div>
 
-                <div className="space-y-1 sm:space-y-2">
+                {/* Password Field - Issue #13, #14, #15 */}
+                <div className="space-y-2">
                   <label
                     htmlFor="password"
-                    className="block text-xs sm:text-sm font-medium text-text-primary"
+                    className="block text-sm font-medium text-[#1F2937]"
                   >
                     Password
                   </label>
@@ -136,22 +141,22 @@ export default function SignIn() {
                       value={values.password}
                       onChange={e => handleChange('password', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                      className={`w-full h-12 px-4 pr-12 bg-background-surface border-[1.5px] rounded-[5px] text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                         errors.password
-                          ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
-                          : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
+                          ? 'border-error bg-error-50 focus:border-error focus:ring-[3px] focus:ring-error/10'
+                          : 'border-[#E5E7EB] focus:border-[#2563EB] focus:ring-[3px] focus:ring-[rgba(37,99,235,0.1)]'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                       aria-label="Toggle password visibility"
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <EyeOff className="h-5 w-5" />
                       ) : (
-                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <Eye className="h-5 w-5" />
                       )}
                     </button>
                   </div>
@@ -163,10 +168,11 @@ export default function SignIn() {
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                {/* Remember Me & Forgot Password - Issue #16 */}
+                <div className="flex items-center justify-between">
                   <label
                     htmlFor="rememberMe"
-                    className="flex items-center gap-2.5 py-1 cursor-pointer group"
+                    className="flex items-center gap-2.5 cursor-pointer group"
                   >
                     <div className="relative">
                       <input
@@ -209,45 +215,48 @@ export default function SignIn() {
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs sm:text-sm font-medium text-primary hover:text-primary-700 hover:underline transition-colors"
+                    className="text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] hover:underline transition-colors"
                   >
                     Forgot password?
                   </Link>
                 </div>
 
+                {/* Sign In Button - Issue #17, #18 */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 sm:h-12 btn-primary-gradient text-white text-sm sm:text-[15px] font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 mt-4 sm:mt-6 flex items-center justify-center gap-2"
+                  className="w-full h-14 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-base font-semibold rounded-[5px] transition-all duration-200 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
                       Sign In
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>
               </form>
 
-              <p className="mt-6 text-xs text-text-tertiary text-center leading-relaxed">
+              {/* Terms of Service - Issue #19 */}
+              <p className="mt-5 text-xs text-[#6B7280] text-center leading-relaxed">
                 By signing in, you agree to our{' '}
-                <Link href="/terms" className="text-primary hover:underline">
+                <Link href="/terms" className="text-[#2563EB] hover:underline">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-primary hover:underline">
+                <Link href="/privacy" className="text-[#2563EB] hover:underline">
                   Privacy Policy
                 </Link>
               </p>
 
-              <div className="mt-6 text-center">
+              {/* Sign Up Link - Issue #20 */}
+              <div className="mt-7 text-center">
                 <p className="text-sm text-text-secondary">
                   Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
-                    className="font-semibold text-text-primary hover:underline transition-colors"
+                    className="font-semibold text-[#2563EB] hover:underline transition-colors"
                   >
                     Sign Up
                   </Link>

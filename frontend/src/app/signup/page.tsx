@@ -113,7 +113,7 @@ export default function Signup() {
           return (
             <AuthLayout title="Create Account" subtitle="Join ConvexHire to start hiring smarter">
               {authError && (
-                <div className="mb-4 sm:mb-6 p-3 bg-error-50 border border-error/20 rounded-xl flex items-center gap-2 text-error text-xs sm:text-sm">
+                <div className="mb-4 sm:mb-6 p-3 bg-error-50 border border-error/20 rounded-[5px] flex items-center gap-2 text-error text-xs sm:text-sm">
                   <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                   {authError}
                 </div>
@@ -171,7 +171,7 @@ export default function Signup() {
                     value={values.name}
                     onChange={e => handleChange('name', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-background-surface border-[1.5px] rounded-[5px] text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                       errors.name
                         ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
                         : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
@@ -200,7 +200,7 @@ export default function Signup() {
                     value={values.email}
                     onChange={e => handleChange('email', e.target.value)}
                     disabled={isLoading}
-                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                    className={`w-full h-10 sm:h-12 px-3 sm:px-4 bg-background-surface border-[1.5px] rounded-[5px] text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                       errors.email
                         ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
                         : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
@@ -230,7 +230,7 @@ export default function Signup() {
                       value={values.password}
                       onChange={e => handleChange('password', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-background-surface border-[1.5px] rounded-[5px] text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                         errors.password
                           ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
                           : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
@@ -276,7 +276,7 @@ export default function Signup() {
                       value={values.confirmPassword}
                       onChange={e => handleChange('confirmPassword', e.target.value)}
                       disabled={isLoading}
-                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-background-surface border-[1.5px] rounded-lg sm:rounded-xl text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                      className={`w-full h-10 sm:h-12 px-3 sm:px-4 pr-10 sm:pr-12 bg-background-surface border-[1.5px] rounded-[5px] text-sm sm:text-[15px] text-text-primary placeholder-text-muted transition-all duration-200 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
                         errors.confirmPassword
                           ? 'border-error bg-error-50 focus:border-error focus:ring-4 focus:ring-error/10'
                           : 'border-border-default focus:border-primary focus:ring-4 focus:ring-primary/10'
@@ -306,7 +306,7 @@ export default function Signup() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 sm:h-12 btn-primary-gradient text-white text-sm sm:text-[15px] font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 mt-4 sm:mt-6 flex items-center justify-center gap-2"
+                  className="w-full h-11 sm:h-12 btn-primary-gradient text-white text-sm sm:text-[15px] font-semibold rounded-[5px] transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:translate-y-0 mt-4 sm:mt-6 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
@@ -335,7 +335,7 @@ export default function Signup() {
                   Already have an account?{' '}
                   <Link
                     href="/signin"
-                    className="font-semibold text-text-primary hover:underline transition-colors"
+                    className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] hover:underline transition-colors"
                   >
                     Sign In
                   </Link>
