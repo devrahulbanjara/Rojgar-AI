@@ -42,7 +42,7 @@ export function GoogleOAuthButton({
       type="button"
       onClick={handleGoogleLogin}
       disabled={disabled || isLoading}
-      className={`w-full h-12 bg-background-surface border-[1.5px] border-border-default rounded-xl flex items-center justify-center gap-3 text-[15px] font-medium text-text-primary transition-all duration-200 hover:border-border-strong hover:bg-background-subtle disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+      className={`w-full h-12 bg-background-surface border-[1.5px] border-[#E5E7EB] rounded-[5px] flex items-center justify-center gap-3 text-[15px] font-medium text-text-primary transition-all duration-200 hover:border-border-strong hover:bg-background-subtle disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
       style={{
         boxShadow: disabled || isLoading ? 'none' : '0 2px 8px rgba(0,0,0,0.04)',
       }}

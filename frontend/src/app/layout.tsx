@@ -34,7 +34,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'ConvexHire - AI-Powered Recruitment Operations Platform',
+  title: 'ConvexHire',
   description: 'Make hiring understandable, efficient, and fair with ConvexHire. AI-powered recruitment platform that treats hiring as a reasoning problem, not keyword filtering.',
   keywords: ['recruitment', 'hiring', 'AI', 'ATS', 'applicant tracking', 'HR technology', 'semantic screening'],
   icons: {

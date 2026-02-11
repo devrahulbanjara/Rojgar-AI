@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Brain, Users, FileSearch, Zap, Shield, BarChart3 } from 'lucide-react'
-import { LogoLink } from '../common/Logo'
 import { ROUTES } from '../../config/constants'
 
 interface AuthLayoutProps {
@@ -57,14 +57,17 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
   const CurrentIcon = carouselSlides[currentSlide].icon
 
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] bg-background-subtle relative overflow-hidden">
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left Panel - Illustration */}
+      <div className="hidden lg:flex bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] relative overflow-hidden">
+        {/* Background decorative elements */}
         <div className="absolute inset-0">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-ai/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-success/5 rounded-full blur-3xl" />
         </div>
 
+        {/* Pattern overlay */}
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -72,32 +75,36 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
           }}
         />
 
-        <div className="relative z-10 flex flex-col justify-center items-center w-full px-12 xl:px-20">
-          <div className="absolute top-[15%] left-[10%] opacity-20">
-            <Brain className="w-8 h-8 text-primary" />
-          </div>
-          <div className="absolute top-[25%] right-[15%] opacity-15">
-            <Shield className="w-6 h-6 text-success" />
-          </div>
-          <div className="absolute bottom-[30%] left-[15%] opacity-20">
-            <BarChart3 className="w-7 h-7 text-ai" />
-          </div>
-          <div className="absolute bottom-[20%] right-[10%] opacity-15">
-            <FileSearch className="w-8 h-8 text-primary" />
-          </div>
+        {/* Decorative icons - Issue #23 */}
+        <div className="absolute top-[15%] left-[10%] opacity-40">
+          <Brain className="w-9 h-9 text-primary" />
+        </div>
+        <div className="absolute top-[25%] right-[15%] opacity-50">
+          <Shield className="w-8 h-8 text-success" />
+        </div>
+        <div className="absolute bottom-[30%] left-[15%] opacity-40">
+          <BarChart3 className="w-9 h-9 text-ai" />
+        </div>
+        <div className="absolute bottom-[20%] right-[10%] opacity-50">
+          <FileSearch className="w-9 h-9 text-primary" />
+        </div>
 
+        {/* Main content */}
+        <div className="relative z-10 flex flex-col justify-center items-center w-full px-12 xl:px-20">
           <div className="w-full max-w-lg">
+            {/* Central icon circle - Issue #3 */}
             <motion.div
-              className="relative w-64 h-64 mx-auto mb-12"
+              className="relative w-32 h-32 mx-auto mb-12"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
             >
+              {/* Outer rings */}
               <div className="absolute inset-0 rounded-full border-2 border-border-default opacity-30" />
+              <div className="absolute inset-4 rounded-full border-2 border-border-default opacity-40 bg-background-surface/20" />
 
-              <div className="absolute inset-8 rounded-full border-2 border-border-default opacity-40 bg-background-surface/20" />
-
-              <div className="absolute inset-16 rounded-full bg-background-surface shadow-xl border border-border-default flex items-center justify-center">
+              {/* Main circle with icon - Issue #3 */}
+              <div className="absolute inset-8 rounded-full bg-background-surface shadow-[0_8px_16px_rgba(0,0,0,0.08)] border border-border-default flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentSlide}
@@ -105,20 +112,21 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, scale: 0.5, rotate: 10 }}
                     transition={{ duration: 0.4 }}
-                    className={`w-16 h-16 rounded-2xl ${carouselSlides[currentSlide].bgColor} flex items-center justify-center`}
+                    className={`w-14 h-14 rounded-lg ${carouselSlides[currentSlide].bgColor} flex items-center justify-center`}
                   >
-                    <CurrentIcon className={`w-8 h-8 ${carouselSlides[currentSlide].color}`} />
+                    <CurrentIcon className={`w-7 h-7 ${carouselSlides[currentSlide].color}`} />
                   </motion.div>
                 </AnimatePresence>
               </div>
 
+              {/* Feature badges - Issue #4, #5 */}
               <motion.div
-                className="absolute -top-4 -right-4 bg-background-surface rounded-xl p-3 shadow-lg border border-border-default"
+                className="absolute -top-3 -right-3 bg-background-surface rounded-lg p-2 shadow-lg border border-border-default"
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-md bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
                     <Zap className="w-4 h-4 text-success" />
                   </div>
                   <div>
@@ -129,12 +137,12 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
               </motion.div>
 
               <motion.div
-                className="absolute -bottom-4 -left-4 bg-background-surface rounded-xl p-3 shadow-lg border border-border-default"
+                className="absolute -bottom-3 -left-3 bg-background-surface rounded-lg p-2 shadow-lg border border-border-default"
                 animate={{ y: [0, 8, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-md bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                     <Brain className="w-4 h-4 text-primary" />
                   </div>
                   <div>
@@ -145,6 +153,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
               </motion.div>
             </motion.div>
 
+            {/* Carousel content - Issue #6 */}
             <div className="text-center">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -154,25 +163,26 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <h2 className="text-2xl xl:text-3xl font-display font-bold text-text-primary tracking-tight mb-3">
+                  <h2 className="text-2xl xl:text-3xl font-display font-bold text-text-primary tracking-tight mb-4">
                     {carouselSlides[currentSlide].title}
                   </h2>
-                  <p className="text-text-secondary leading-relaxed max-w-md mx-auto">
+                  <p className="text-sm text-[#6B7280] leading-relaxed max-w-md mx-auto">
                     {carouselSlides[currentSlide].description}
                   </p>
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            <div className="flex items-center justify-center gap-2 mt-8">
+            {/* Pagination dots - Issue #7 */}
+            <div className="flex items-center justify-center gap-1.5 mt-8">
               {carouselSlides.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     index === currentSlide
-                      ? 'w-8 bg-primary'
-                      : 'w-2 bg-border-strong hover:bg-text-muted'
+                      ? 'w-8 bg-[#2563EB]'
+                      : 'w-2 bg-[#D1D5DB] hover:bg-[#9CA3AF]'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
@@ -182,24 +192,48 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 xl:w-[45%] flex flex-col min-h-screen bg-background-surface">
-        <div className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16 xl:px-20 py-8 sm:py-12">
+      {/* Right Panel - Form - Issue #8, #9 */}
+      <div className="w-full flex flex-col min-h-screen bg-background-surface relative">
+        {/* Back to home button - Issue #21 */}
+        <div className="absolute top-6 left-6">
+          <Link
+            href={ROUTES.HOME}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            Back to home
+          </Link>
+        </div>
+
+        {/* Form container - Issue #8, #9 */}
+        <div className="flex-1 flex items-center justify-center px-12 py-12 pt-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full max-w-[400px]"
+            className="w-full max-w-[440px]"
           >
-            <div className="flex justify-center mb-8">
-              <LogoLink variant="full" size="lg" />
+            {/* Logo - Issue #9 */}
+            <div className="flex justify-center mb-12">
+              <Link href={ROUTES.HOME}>
+                <Image
+                  src="/logo-light.svg"
+                  alt="ConvexHire Logo"
+                  width={180}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
+              </Link>
             </div>
 
-            <div className="text-center mb-8">
+            {/* Heading - Issue #10 */}
+            <div className="text-center mb-10">
               <h1 className="text-2xl sm:text-3xl font-display font-bold text-text-primary tracking-tight mb-2">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
+                <p className="text-sm text-[#6B7280] leading-relaxed">
                   {subtitle}
                 </p>
               )}
@@ -209,23 +243,15 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
           </motion.div>
         </div>
 
-        <div className="px-6 sm:px-12 lg:px-16 xl:px-20 py-6 border-t border-border-subtle">
-          <div className="max-w-[400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-tertiary">
-            <Link
-              href={ROUTES.HOME}
-              className="inline-flex items-center gap-1.5 font-medium text-primary hover:text-primary-700 transition-colors"
-            >
-              Back to home
-              <ArrowRight className="h-3 w-3" />
+        {/* Footer - Issue #22 */}
+        <div className="px-12 py-8 border-t border-border-subtle">
+          <div className="max-w-[440px] mx-auto flex items-center justify-center gap-6 text-xs text-[#6B7280]">
+            <Link href="/privacy" className="hover:text-text-secondary transition-colors">
+              Privacy Policy
             </Link>
-            <div className="flex items-center gap-4">
-              <Link href="/privacy" className="hover:text-text-secondary transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="hover:text-text-secondary transition-colors">
-                Terms of Service
-              </Link>
-            </div>
+            <Link href="/terms" className="hover:text-text-secondary transition-colors">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>

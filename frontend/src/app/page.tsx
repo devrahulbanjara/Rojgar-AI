@@ -1,4 +1,3 @@
-import SkipLink from './components/landing/SkipLink';
 import Navigation from './components/landing/Navigation';
 import Hero from './components/landing/Hero';
 import ValueProposition from './components/landing/ValueProposition';
@@ -14,7 +13,6 @@ import { landingPageContent } from '../content/landing-page';
 export default function Home() {
   return (
     <>
-      <SkipLink />
       <Navigation content={landingPageContent.navigation} />
       <main id="main-content" role="main">
         <Hero content={landingPageContent.hero} />
