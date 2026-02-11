@@ -1,7 +1,19 @@
 import React from 'react'
-import { FileText, Briefcase, ListChecks } from 'lucide-react'
+import { FileText, ListChecks, Briefcase, Copy } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { ReferenceJD } from '../../services/referenceJDService'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  Badge,
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui'
 
 interface ReferenceJDCardProps {
   jd: ReferenceJD
@@ -10,178 +22,122 @@ interface ReferenceJDCardProps {
   className?: string
 }
 
-const departmentColors: Record<
-  string,
-  { bg: string; text: string; border: string; iconBg: string }
-> = {
-  Engineering: {
-    bg: 'bg-primary-50/80 dark:bg-primary-950/30',
-    text: 'text-primary-700 dark:text-primary-300',
-    border: 'border-primary-200 dark:border-primary-800',
-    iconBg: 'bg-primary-100 dark:bg-primary-900/50',
-  },
-  Sales: {
-    bg: 'bg-success-50/80 dark:bg-success-950/30',
-    text: 'text-success-700 dark:text-success-300',
-    border: 'border-success-200 dark:border-success-800',
-    iconBg: 'bg-success-100 dark:bg-success-900/50',
-  },
-  Marketing: {
-    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
-    text: 'text-warning-700 dark:text-warning-300',
-    border: 'border-warning-200 dark:border-warning-800',
-    iconBg: 'bg-warning-100 dark:bg-warning-900/50',
-  },
-  Product: {
-    bg: 'bg-ai-50/80 dark:bg-ai-950/30',
-    text: 'text-ai-700 dark:text-ai-300',
-    border: 'border-ai-200 dark:border-ai-800',
-    iconBg: 'bg-ai-100 dark:bg-ai-900/50',
-  },
-  Design: {
-    bg: 'bg-pink-50/80 dark:bg-pink-950/30',
-    text: 'text-pink-700 dark:text-pink-300',
-    border: 'border-pink-200 dark:border-pink-800',
-    iconBg: 'bg-pink-100 dark:bg-pink-900/50',
-  },
-  'Data Science': {
-    bg: 'bg-info-50/80 dark:bg-info-950/30',
-    text: 'text-info-700 dark:text-info-300',
-    border: 'border-info-200 dark:border-info-800',
-    iconBg: 'bg-info-100 dark:bg-info-900/50',
-  },
-  HR: {
-    bg: 'bg-rose-50/80 dark:bg-rose-950/30',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-200 dark:border-rose-800',
-    iconBg: 'bg-rose-100 dark:bg-rose-900/50',
-  },
-  Finance: {
-    bg: 'bg-success-50/80 dark:bg-success-950/30',
-    text: 'text-success-700 dark:text-success-300',
-    border: 'border-success-200 dark:border-success-800',
-    iconBg: 'bg-success-100 dark:bg-success-900/50',
-  },
-  Operations: {
-    bg: 'bg-warning-50/80 dark:bg-warning-950/30',
-    text: 'text-warning-700 dark:text-warning-300',
-    border: 'border-warning-200 dark:border-warning-800',
-    iconBg: 'bg-warning-100 dark:bg-warning-900/50',
-  },
-  Default: {
-    bg: 'bg-background-subtle/80',
-    text: 'text-text-secondary',
-    border: 'border-border-default',
-    iconBg: 'bg-background-subtle',
-  },
-}
-
 export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: ReferenceJDCardProps) {
-  const deptColor = departmentColors[jd.department || ''] || departmentColors.Default
-
   const jobResponsibilities = jd.job_responsibilities || []
   const requiredQualifications = jd.required_qualifications || jd.requiredSkillsAndExperience || []
+  const summary = jd.job_summary || jd.role_overview || 'No description available'
+
+  const handleUseTemplate = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onUseTemplate?.(e)
+  }
 
   return (
-    <div
+    <Card
       onClick={onClick}
       className={cn(
-        'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-2xl border relative overflow-hidden',
-        'p-6',
-        'hover:-translate-y-0.5 hover:scale-[1.01] hover:border-primary-200 dark:hover:border-primary-800',
-        'border-border-default',
-        'shadow-sm hover:shadow-md',
+        'group cursor-pointer hover:border-blue-200 dark:hover:border-blue-800/50 transition-all duration-300 shadow-sm flex flex-col bg-background-surface hover:shadow-md hover:-translate-y-0.5',
         className
       )}
-      role="button"
-      tabIndex={0}
-      aria-label={`View details for ${jd.department} reference JD`}
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onClick?.()
-        }
-      }}
     >
-      {/* Subtle gradient overlay on hover - matches StatCard pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-50/0 via-primary-50/0 to-primary-50/20 dark:from-primary-950/0 dark:via-primary-950/0 dark:to-primary-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-      {/* Content wrapper for z-index */}
-      <div className="relative z-10">
-        {/* Row 1: Department Badge - Single horizontal line */}
-        <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+      <CardHeader className="space-y-4 pb-4">
+        {/* Header Badges */}
+        <div className="flex gap-2">
           {jd.department && (
-            <span
-              className={cn(
-                'inline-flex items-center h-6 px-2.5 rounded-md text-[11px] font-semibold border whitespace-nowrap',
-                deptColor.bg,
-                deptColor.text,
-                deptColor.border
-              )}
+            <Badge
+              variant="secondary"
+              className="bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 border-none font-medium h-6"
             >
               {jd.department}
-            </span>
+            </Badge>
           )}
-          <span className="inline-flex items-center h-6 px-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-600 dark:text-ai-400 rounded-md text-[11px] font-medium border border-ai-200 dark:border-ai-800 whitespace-nowrap">
+          <Badge
+            variant="secondary"
+            className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-none font-medium h-6"
+          >
             Template
-          </span>
+          </Badge>
         </div>
 
-        {/* Row 2: Job Summary Preview */}
-        {(jd.job_summary || jd.role_overview) && (
-          <p className="mt-4 text-sm text-text-secondary leading-relaxed line-clamp-2">
-            {jd.job_summary || jd.role_overview}
-          </p>
-        )}
+        {/* AI Description Snippet */}
+        <p className="text-sm text-text-secondary leading-relaxed line-clamp-3 font-medium">
+          {summary}
+        </p>
+      </CardHeader>
 
-        {/* Row 3: Stats - Single horizontal line with separators */}
-        <div className="mt-4 flex items-center flex-nowrap overflow-hidden text-sm text-text-secondary">
-          <Briefcase className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-          <span className="ml-1.5 whitespace-nowrap">
-            {jobResponsibilities.length} responsibilities
-          </span>
-          <span className="mx-2 text-text-muted/60 flex-shrink-0">·</span>
-          <ListChecks className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-          <span className="ml-1.5 whitespace-nowrap">
-            {requiredQualifications.length} requirements
-          </span>
+      <CardContent className="space-y-5 flex-grow">
+        {/* Responsibilities & Requirements Stats */}
+        <div className="flex items-center gap-4 text-xs font-semibold text-text-muted">
+          <div className="flex items-center gap-1.5">
+            <Briefcase className="w-4 h-4 text-text-tertiary" />
+            <span>{jobResponsibilities.length} responsibilities</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <ListChecks className="w-4 h-4 text-text-tertiary" />
+            <span>{requiredQualifications.length} requirements</span>
+          </div>
         </div>
 
-        {/* Row 4: Skills Tags - Single horizontal line */}
+        {/* Quick-Glance Requirement Tags */}
         {requiredQualifications.length > 0 && (
-          <div className="mt-4 flex items-center gap-2">
-            {/* Scrollable skills container */}
-            <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
-              {requiredQualifications.slice(0, 2).map((skill, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center h-6 px-2.5 text-[11px] font-medium text-text-secondary bg-background-subtle rounded-md border border-border-subtle whitespace-nowrap truncate max-w-[140px]"
-                  title={skill}
-                >
-                  {skill.length > 20 ? `${skill.substring(0, 20)}...` : skill}
-                </span>
-              ))}
-            </div>
-            {/* "+X more" indicator - always visible, never compressed */}
+          <div className="flex flex-wrap gap-2">
+            {requiredQualifications.slice(0, 2).map((tag, i) => (
+              <Badge
+                key={i}
+                variant="outline"
+                className="bg-background-subtle text-text-tertiary border-border-default font-normal truncate max-w-[150px]"
+                title={tag}
+              >
+                {tag}
+              </Badge>
+            ))}
+
             {requiredQualifications.length > 2 && (
-              <span className="inline-flex items-center h-6 px-2.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30 rounded-md border border-primary-200 dark:border-primary-800 whitespace-nowrap flex-shrink-0">
-                +{requiredQualifications.length - 2} more
-              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border-none cursor-help"
+                    >
+                      +{requiredQualifications.length - 2} more
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="max-w-xs space-y-1 py-1">
+                      <p className="text-xs font-bold mb-1 border-b border-border-default pb-1">
+                        Additional Requirements
+                      </p>
+                      {requiredQualifications.slice(2, 7).map((req, idx) => (
+                        <p key={idx} className="text-[11px] leading-tight">
+                          • {req}
+                        </p>
+                      ))}
+                      {requiredQualifications.length > 7 && (
+                        <p className="text-[11px] text-text-muted italic">
+                          and {requiredQualifications.length - 7} more...
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         )}
+      </CardContent>
 
-        {/* Row 5: Use Template Button */}
-        <div className="mt-4 pt-4 border-t border-border-subtle">
-          <button
-            onClick={onUseTemplate}
-            className="flex items-center justify-center gap-2 w-full h-10 rounded-md text-sm font-semibold leading-none transition-all duration-200 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-600 hover:text-white hover:border-primary-600 dark:hover:bg-primary-600 dark:hover:border-primary-600"
-          >
-            <FileText className="w-4 h-4 flex-shrink-0" />
-            <span>Use Template</span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <CardFooter className="pt-2 p-6">
+        {/* Primary Action */}
+        <Button
+          variant="outline"
+          onClick={handleUseTemplate}
+          className="w-full justify-center gap-2 text-primary-600 dark:text-primary-400 border-primary-100 dark:border-primary-900 bg-primary-50/30 dark:bg-primary-950/10 hover:bg-primary-600 hover:text-white dark:hover:bg-primary-600 transition-colors"
+        >
+          <Copy className="w-4 h-4" />
+          Use Template
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }

@@ -12,7 +12,7 @@ import { useAuth } from '../../../hooks/useAuth'
 import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
-import { Button } from '../../../components/ui/button'
+import { Button, Card, Input } from '../../../components/ui'
 import { AnimatedContainer, LoadingSpinner, SkeletonJobCard } from '../../../components/common'
 import { RefreshCw, AlertCircle, Search, Filter } from 'lucide-react'
 import { cn } from '../../../lib/utils'
@@ -76,12 +76,11 @@ export default function Jobs() {
   } = useJobSearch(
     shouldFetchSearch
       ? {
-          search: debouncedSearchQuery.trim(),
-          page: currentPage,
-          limit: 9,
-          ...backendFilters,
-          userId: user?.id,
-        }
+        search: debouncedSearchQuery.trim(),
+        page: currentPage,
+        limit: 9,
+        ...backendFilters,
+      }
       : undefined
   )
 
@@ -227,6 +226,7 @@ export default function Jobs() {
       try {
         await createApplicationMutation.mutateAsync({
           job_id: job.id.toString(),
+          resume_id: 'default', // Using 'default' as a placeholder or it should be fetched from user profile
         })
       } catch {
         // Ignore application errors
@@ -279,15 +279,15 @@ export default function Jobs() {
 
   return (
     <AppShell>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
-        {/* Minimalist Page Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-10">
+        {/* Enhanced Header */}
         <AnimatedContainer direction="up" delay={0.1}>
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-2.5">
+              <h1 className="text-4xl font-extrabold text-text-primary tracking-tight">
                 {isSearchMode ? 'Search Results' : 'Find Your Next Role'}
               </h1>
-              <p className="text-base text-text-secondary max-w-2xl">
+              <p className="text-text-secondary text-lg">
                 {isSearchMode
                   ? debouncedSearchQuery
                     ? `Found ${totalJobs} matches for "${debouncedSearchQuery}"`
@@ -297,65 +297,61 @@ export default function Jobs() {
             </div>
             <Button
               variant="outline"
-              size="default"
               onClick={handleRefresh}
               disabled={isRefreshing || isLoading}
-              className="flex items-center gap-2 bg-background-surface hover:bg-primary-50 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:border-primary-300 dark:hover:border-primary-700 shadow-sm transition-all duration-200"
+              className="h-11 px-5 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 shadow-sm transition-all whitespace-nowrap"
             >
-              <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+              <RefreshCw className={cn('w-4 h-4 mr-2', isRefreshing && 'animate-spin')} />
               Refresh Jobs
             </Button>
           </div>
-          <div className="mt-6 border-b border-border-default/60" />
         </AnimatedContainer>
 
-        {/* Search & Filters */}
+        {/* Refined Search & Filter Section */}
         <AnimatedContainer direction="up" delay={0.15}>
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-lg shadow-sm">
-            <div className="relative w-full lg:w-[420px]">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => handleSearchChange(e.target.value)}
-                placeholder="Search by job title, company, or skills..."
-                className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
-              />
+          <Card className="p-4 shadow-sm border-border-default bg-background-surface">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted w-4.5 h-4.5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => handleSearchChange(e.target.value)}
+                  placeholder="Search by job title, company, or skills..."
+                  className="w-full pl-11 pr-4 py-2.5 bg-background-subtle border-none rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-text-muted text-sm font-medium"
+                />
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
+                <FilterChips
+                  activeFilters={activeFilters}
+                  onFilterToggle={handleFilterToggle}
+                  onClearAll={handleClearFilters}
+                  showAvailable
+                />
+              </div>
             </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <FilterChips
-                activeFilters={activeFilters}
-                onFilterToggle={handleFilterToggle}
-                onClearAll={handleClearFilters}
-                showAvailable
-              />
-            </div>
-          </div>
+          </Card>
         </AnimatedContainer>
 
-        {/* Jobs Grid */}
+        {/* Jobs Grid Section */}
         <AnimatedContainer direction="up" delay={0.3}>
-          <div className="w-full">
-            <div className="mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-8 bg-primary-600 rounded-full" />
-                <div>
-                  <h2 className="text-xl font-bold text-text-primary">
-                    {isLoading
-                      ? 'Loading...'
-                      : isSearchMode
-                        ? 'Search Results'
-                        : 'Recommended For You'}
-                  </h2>
-                  <p className="text-sm text-text-tertiary font-medium">
-                    {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} available
-                  </p>
-                </div>
+          <div className="w-full space-y-8">
+            <div className="flex items-center gap-3 border-l-4 border-primary-600 pl-4">
+              <div>
+                <h2 className="text-2xl font-bold text-text-primary">
+                  {isLoading
+                    ? 'Loading...'
+                    : isSearchMode
+                      ? 'Search Results'
+                      : 'Recommended For You'}
+                </h2>
+                <p className="text-sm text-text-tertiary font-medium">
+                  {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} available
+                </p>
               </div>
             </div>
 
-            {}
+            { }
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {isLoading ? (
                 <>
@@ -427,7 +423,7 @@ export default function Jobs() {
               )}
             </div>
 
-            {}
+            { }
             {totalPages > 1 && totalJobs > 0 && (
               <div className="mt-16 flex justify-center">
                 <div className="flex items-center gap-2 bg-background-surface rounded-2xl p-2 shadow-sm border border-border-subtle">
@@ -502,7 +498,7 @@ export default function Jobs() {
           </div>
         </AnimatedContainer>
 
-        {}
+        { }
         <JobDetailsModal
           job={selectedJob}
           isOpen={isDetailModalOpen}
