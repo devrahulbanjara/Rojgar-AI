@@ -81,6 +81,7 @@ export function JobDetailModal({
   }
 
   const isActive = job.status === 'Active' || job.status.toLowerCase() === 'active'
+  const isExpired = job.status === 'Expired' || job.status.toLowerCase() === 'expired'
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} className="max-w-3xl mx-4" showCloseButton={false}>
@@ -316,8 +317,7 @@ export function JobDetailModal({
             )}
           </div>
           <div className="flex items-center gap-3">
-            {onConvertToReferenceJD &&
-              (isActive || job.status === 'Closed' || job.status.toLowerCase() === 'expired') && (
+            {onConvertToReferenceJD && (isActive || isExpired) && (
                 <ActionButton
                   onClick={handleConvertToReferenceJD}
                   variant="outline"

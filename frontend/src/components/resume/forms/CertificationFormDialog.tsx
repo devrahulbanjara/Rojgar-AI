@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
   DialogDescription,
@@ -14,13 +13,13 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
 import { Loader2, Award, Building2, Calendar, Link2 } from 'lucide-react'
-import type { ResumeCertificationResponse } from '@/types/resume'
+import type { Certification } from '@/types/resume'
 
 interface CertificationFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   resumeId: string
-  initialData?: ResumeCertificationResponse
+  initialData?: Certification
   onSuccess: () => void
 }
 
@@ -105,154 +104,154 @@ export default function CertificationFormDialog({
   }
 
   return (
-    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
-      <DialogHeader>
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center shadow-sm border border-warning-100 dark:border-warning-900/30">
-            <Award className="w-6 h-6 text-warning-600 dark:text-warning-400" />
-          </div>
-          <div>
-            <DialogTitle className="text-xl">
-              {initialData ? 'Edit Certification' : 'Add Certification'}
-            </DialogTitle>
-            <DialogDescription className="text-text-tertiary">
-              {initialData
-                ? 'Update your certification details'
-                : 'Add a professional certification'}
-            </DialogDescription>
+    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
+      <div className="bg-background-surface flex flex-col h-full max-h-[90vh]">
+        <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-warning-600/10 dark:bg-warning-600/20 flex items-center justify-center border border-warning-600/20 shadow-sm">
+              <Award className="w-7 h-7 text-warning-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold tracking-tight text-text-primary">
+                {initialData ? 'Edit Certification' : 'Add Certification'}
+              </DialogTitle>
+              <DialogDescription className="text-[14px] text-text-tertiary font-medium">
+                {initialData
+                  ? 'Update your professional certification details'
+                  : 'Add a new certification to your profile'}
+              </DialogDescription>
+            </div>
           </div>
         </div>
-      </DialogHeader>
 
-      <DialogContent className="pt-2">
-        <form id="certification-form" onSubmit={handleSubmit} className="space-y-5">
-          {/* Certification Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-text-tertiary" />
-              Certification Name <span className="text-error">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.certification_name}
-              onChange={e => setFormData({ ...formData, certification_name: e.target.value })}
-              placeholder="e.g. AWS Certified Solutions Architect"
-              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
-                hover:border-border-strong transition-all duration-200
-                text-text-primary placeholder:text-text-muted"
-            />
-          </div>
-
-          {/* Issuing Organization */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-text-tertiary" />
-              Issuing Organization <span className="text-error">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.issuing_body}
-              onChange={e => setFormData({ ...formData, issuing_body: e.target.value })}
-              placeholder="e.g. Amazon Web Services"
-              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
-                hover:border-border-strong transition-all duration-200
-                text-text-primary placeholder:text-text-muted"
-            />
-          </div>
-
-          {/* Date Row */}
-          <div className="grid grid-cols-2 gap-4">
+        <DialogContent className="p-8 overflow-y-auto">
+          <form id="certification-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-text-tertiary" />
-                Issue Date
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <Award className="w-3.5 h-3.5" />
+                Certification Name <span className="text-error-500 font-bold">*</span>
               </label>
               <input
-                type="date"
-                value={formData.issue_date}
-                onChange={e => setFormData({ ...formData, issue_date: e.target.value })}
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                type="text"
+                required
+                value={formData.certification_name}
+                onChange={e => setFormData({ ...formData, certification_name: e.target.value })}
+                placeholder="e.g. AWS Solutions Architect Associate"
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary"
+                  text-text-primary font-medium placeholder:text-text-muted"
               />
             </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-text-tertiary" />
-                Expiration Date
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5" />
+                Issuing Organization <span className="text-error-500 font-bold">*</span>
               </label>
               <input
-                type="date"
-                disabled={formData.does_not_expire}
-                value={formData.expiration_date}
-                onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
+                type="text"
+                required
+                value={formData.issuing_body}
+                onChange={e => setFormData({ ...formData, issuing_body: e.target.value })}
+                placeholder="e.g. Amazon Web Services"
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
+                  text-text-primary font-medium placeholder:text-text-muted"
               />
             </div>
-          </div>
 
-          {/* Does Not Expire Checkbox */}
-          <div className="flex items-center gap-3 pt-1">
-            <Checkbox
-              id="no_expire"
-              checked={formData.does_not_expire}
-              onCheckedChange={c => setFormData({ ...formData, does_not_expire: c as boolean })}
-            />
-            <label
-              htmlFor="no_expire"
-              className="text-sm font-medium text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Issue Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.issue_date}
+                  onChange={e => setFormData({ ...formData, issue_date: e.target.value })}
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary font-medium"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Expiration Date
+                </label>
+                <input
+                  type="date"
+                  disabled={formData.does_not_expire}
+                  value={formData.expiration_date}
+                  onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 py-1">
+              <Checkbox
+                id="no_expire"
+                checked={formData.does_not_expire}
+                onCheckedChange={c => setFormData({ ...formData, does_not_expire: c as boolean })}
+                className="w-5 h-5 rounded-md border-border-default data-[state=checked]:bg-warning-600 data-[state=checked]:border-warning-600 shadow-sm transition-all"
+              />
+              <label
+                htmlFor="no_expire"
+                className="text-[14px] font-semibold text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+              >
+                This certification does not expire
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <Link2 className="w-3.5 h-3.5" />
+                Credential URL
+              </label>
+              <input
+                type="url"
+                value={formData.credential_url}
+                onChange={e => setFormData({ ...formData, credential_url: e.target.value })}
+                placeholder="https://..."
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary font-medium placeholder:text-text-muted"
+              />
+            </div>
+          </form>
+        </DialogContent>
+
+        <DialogFooter className="p-6 border-t border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="h-11 px-6 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-background-subtle font-bold uppercase tracking-wider text-[11px] transition-all"
             >
-              This certification does not expire
-            </label>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="certification-form"
+              disabled={loading}
+              className="h-11 px-8 rounded-xl bg-warning-600 hover:bg-warning-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-warning-600/20 transition-all active:scale-95"
+            >
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />}
+              {initialData ? 'Save Changes' : 'Add Certification'}
+            </Button>
           </div>
-
-          {/* Credential URL */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <Link2 className="w-4 h-4 text-text-tertiary" />
-              Credential URL
-            </label>
-            <input
-              type="url"
-              value={formData.credential_url}
-              onChange={e => setFormData({ ...formData, credential_url: e.target.value })}
-              placeholder="https://..."
-              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                focus:outline-none focus:ring-2 focus:ring-warning-500/20 focus:border-warning-500 
-                hover:border-border-strong transition-all duration-200
-                text-text-primary placeholder:text-text-muted"
-            />
-          </div>
-        </form>
-      </DialogContent>
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          form="certification-form"
-          disabled={loading}
-          className="h-11 px-6 rounded-xl bg-warning-600 dark:bg-warning-500 hover:bg-warning-700 dark:hover:bg-warning-600 text-white font-semibold shadow-lg shadow-warning-500/25 dark:shadow-warning-400/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-        >
-          {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {initialData ? 'Save Changes' : 'Add Certification'}
-        </Button>
-      </DialogFooter>
+        </DialogFooter>
+      </div>
     </Dialog>
   )
 }

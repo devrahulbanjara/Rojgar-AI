@@ -2,25 +2,21 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { Plus, FolderOpen } from 'lucide-react'
+import { Plus, FolderOpen, Briefcase } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
-import { ActionButton } from '../../../components/ui'
 import {
   SkeletonRecruiterJobCard,
   SkeletonReferenceJDCard,
-  SkeletonJobTabSwitcher,
 } from '../../../components/common/SkeletonLoader'
+import { JobsTable, ReferenceJDsTable, JobDetailModal, PostJobModal, ReferenceJDModal, ReferenceJDEditModal } from '../../../components/recruiter'
 import {
-  RecruiterJobCard,
-  JobTabSwitcher,
-  JobDetailModal,
-  PostJobModal,
-  ReferenceJDCard,
-  ReferenceJDModal,
-  ReferenceJDEditModal,
-} from '../../../components/recruiter'
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  ActionButton,
+} from '../../../components/ui'
 import type { Job, JobStatus } from '../../../types/job'
 import { useJobsByCompany, useExpireJob, useDeleteJob } from '../../../hooks/queries/useJobs'
 import { useAuth } from '../../../hooks/useAuth'
@@ -43,9 +39,9 @@ const mapJobStatus = (status: string): JobStatus => {
   const statusMap: Record<string, JobStatus> = {
     active: 'Active',
     draft: 'Draft',
-    expired: 'Closed',
-    closed: 'Closed',
-    inactive: 'Inactive',
+    expired: 'Expired',
+    closed: 'Expired',
+    inactive: 'Expired',
   }
   return statusMap[status.toLowerCase()] || 'Draft'
 }
@@ -130,25 +126,25 @@ const transformJob = (job: BackendJobResponse): Job => {
     company:
       job.organization || job.company
         ? {
-            id:
-              parseInt(
-                String(
-                  job.organization?.id ||
-                    job.company?.id ||
-                    job.company_id ||
-                    job.organization_id ||
-                    0
-                )
-              ) || 0,
-            name:
-              job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
-            logo: job.organization?.logo || job.company?.logo,
-            website: job.organization?.website || job.company?.website,
-            description: job.organization?.description || job.company?.description,
-            location: job.organization?.location || job.company?.location,
-            industry: job.organization?.industry || job.company?.industry,
-            founded_year: job.organization?.founded_year || job.company?.founded_year,
-          }
+          id:
+            parseInt(
+              String(
+                job.organization?.id ||
+                job.company?.id ||
+                job.company_id ||
+                job.organization_id ||
+                0
+              )
+            ) || 0,
+          name:
+            job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
+          logo: job.organization?.logo || job.company?.logo,
+          website: job.organization?.website || job.company?.website,
+          description: job.organization?.description || job.company?.description,
+          location: job.organization?.location || job.company?.location,
+          industry: job.organization?.industry || job.company?.industry,
+          founded_year: job.organization?.founded_year || job.company?.founded_year,
+        }
         : undefined,
     title: job.title || '',
     department: job.department || '',
@@ -328,7 +324,7 @@ export default function RecruiterJobsPage() {
         return job.status === 'Draft'
       }
       if (activeTab === 'expired') {
-        return job.status === 'Closed' || job.status === 'Inactive'
+        return job.status === 'Expired'
       }
       return false
     })
@@ -343,7 +339,7 @@ export default function RecruiterJobsPage() {
   const activeCount = useMemo(() => allJobs.filter(j => j.status === 'Active').length, [allJobs])
   const draftCount = useMemo(() => allJobs.filter(j => j.status === 'Draft').length, [allJobs])
   const expiredCount = useMemo(
-    () => allJobs.filter(j => j.status === 'Closed' || j.status === 'Inactive').length,
+    () => allJobs.filter(j => j.status === 'Expired').length,
     [allJobs]
   )
   const referenceJDCount = useMemo(
@@ -595,139 +591,138 @@ export default function RecruiterJobsPage() {
           {/* Content */}
           <div className="space-y-8">
             {/* Tabs with Post New Job Button */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex-1">
-                {isLoadingJobs && isLoadingReferenceJDs ? (
-                  <SkeletonJobTabSwitcher />
-                ) : (
-                  <JobTabSwitcher
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    activeCount={activeCount}
-                    draftCount={draftCount}
-                    expiredCount={expiredCount}
-                    referenceJDCount={referenceJDCount}
-                  />
-                )}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border-default/60 pb-1">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="w-full">
+                <TabsList className="bg-transparent border-none rounded-none w-full justify-start h-auto p-0 gap-8">
+                  <TabsTrigger
+                    value="active"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-4 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Active Jobs
+                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                      {activeCount}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="drafts"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-4 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Drafts
+                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                      {draftCount}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="expired"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-4 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Expired
+                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                      {expiredCount}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="reference-jds"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-4 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Reference JDs
+                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
+                      {referenceJDCount}
+                    </span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="pb-3 min-w-fit">
+                <ActionButton onClick={handlePostNewJob} variant="primary" size="md">
+                  <Plus className="w-4 h-4" />
+                  Post New Job
+                </ActionButton>
               </div>
-              <ActionButton onClick={handlePostNewJob} variant="primary" size="md">
-                <Plus className="w-4 h-4" />
-                Post New Job
-              </ActionButton>
             </div>
 
-            {}
             <AnimatedContainer direction="up" delay={0.2}>
               {isLoadingJobs || (activeTab === 'reference-jds' && isLoadingReferenceJDs) ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {activeTab === 'reference-jds' ? (
-                    <>
-                      <SkeletonReferenceJDCard />
-                      <SkeletonReferenceJDCard />
-                      <SkeletonReferenceJDCard />
-                      <SkeletonReferenceJDCard />
-                      <SkeletonReferenceJDCard />
-                      <SkeletonReferenceJDCard />
-                    </>
-                  ) : (
-                    <>
-                      <SkeletonRecruiterJobCard />
-                      <SkeletonRecruiterJobCard />
-                      <SkeletonRecruiterJobCard />
-                      <SkeletonRecruiterJobCard />
-                      <SkeletonRecruiterJobCard />
-                      <SkeletonRecruiterJobCard />
-                    </>
-                  )}
+                <div className="w-full bg-background-surface border border-border-default rounded-2xl overflow-hidden shadow-sm">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-background-subtle/50 border-b border-border-default">
+                      <tr>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <th key={i} className="py-4 px-6 text-left">
+                            <div className="h-3 bg-border-default rounded w-20 animate-pulse" />
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i} className="border-b border-border-subtle">
+                          <td className="p-6"><div className="flex gap-4"><div className="w-10 h-10 bg-background-muted rounded-xl animate-pulse" /><div className="space-y-2"><div className="h-4 bg-background-muted rounded w-40 animate-pulse" /><div className="h-3 bg-background-muted rounded w-24 animate-pulse" /></div></div></td>
+                          <td className="p-6"><div className="h-4 bg-background-muted rounded w-20 animate-pulse" /></td>
+                          <td className="p-6"><div className="h-6 bg-background-muted rounded-full w-20 animate-pulse" /></td>
+                          <td className="p-6"><div className="h-4 bg-background-muted rounded w-32 animate-pulse" /></td>
+                          <td className="p-6 text-center"><div className="w-8 h-8 bg-background-muted rounded-lg mx-auto animate-pulse" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : activeTab === 'reference-jds' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {referenceJDData?.reference_jds?.map(jd => (
-                    <ReferenceJDCard
-                      key={jd.id}
-                      jd={jd}
-                      onClick={() => handleReferenceClick(jd)}
-                      onUseTemplate={(e: React.MouseEvent) => {
-                        e.stopPropagation()
-                        handleUseTemplate(jd)
-                      }}
-                    />
-                  ))}
-                </div>
+                referenceJDData?.reference_jds && referenceJDData.reference_jds.length > 0 ? (
+                  <ReferenceJDsTable
+                    jds={referenceJDData.reference_jds}
+                    onJDClick={handleReferenceClick}
+                    onEdit={handleEditReferenceJD}
+                    onDelete={handleDeleteReferenceJD}
+                    onUseTemplate={handleUseTemplate}
+                  />
+                ) : !isLoadingReferenceJDs && (
+                  <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <div className="w-16 h-16 rounded-3xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center border border-ai-100 dark:border-ai-900/30 mb-8">
+                      <Briefcase className="w-8 h-8 text-ai-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-text-primary tracking-tight">No reference JDs yet</h3>
+                    <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                      Convert your existing job postings to templates or create new ones to streamline your hiring process.
+                    </p>
+                  </div>
+                )
+              ) : filteredJobs.length > 0 ? (
+                <JobsTable
+                  jobs={filteredJobs}
+                  onJobClick={handleJobClick}
+                  onEdit={handleEditJob}
+                  onExpire={handleExpireJob}
+                  onDelete={handleDeleteJob}
+                />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredJobs.map((job, index) => (
-                    <RecruiterJobCard
-                      key={`job-${job.id}-${index}`}
-                      job={job}
-                      onClick={() => handleJobClick(job)}
-                      onConvertToReferenceJD={
-                        activeTab === 'active' || activeTab === 'expired'
-                          ? () => handleConvertToReferenceJD(job)
-                          : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-
-              {}
-              {activeTab !== 'reference-jds' && filteredJobs.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
-                  {activeTab === 'expired' ? (
-                    <h3 className="text-xl font-bold text-text-primary">No job has expired</h3>
-                  ) : (
-                    <>
-                      <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
-                        <FolderOpen className="w-10 h-10 text-primary-300" />
-                      </div>
-                      <h3 className="text-xl font-bold text-text-primary mb-2">
-                        No{' '}
-                        {activeTab === 'active'
-                          ? 'active'
-                          : activeTab === 'drafts'
-                            ? 'draft'
-                            : 'expired'}{' '}
-                        jobs
-                      </h3>
-                      <p className="text-base text-text-tertiary max-w-md mb-8">
-                        {activeTab === 'active'
-                          ? 'Create a new job posting to start receiving applications.'
-                          : activeTab === 'drafts'
-                            ? 'Save a job as draft to continue editing later.'
-                            : 'Expired or closed jobs will appear here.'}
-                      </p>
-                      <ActionButton onClick={handlePostNewJob} variant="secondary" size="lg">
-                        <Plus className="w-5 h-5" />
-                        Create Job
-                      </ActionButton>
-                    </>
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900/30 mb-8">
+                    <FolderOpen className="w-8 h-8 text-primary-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-text-primary tracking-tight">
+                    No {activeTab === 'active' ? 'active' : activeTab === 'drafts' ? 'draft' : 'expired'} jobs found
+                  </h3>
+                  <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                    {activeTab === 'active'
+                      ? 'Create a new job posting to start receiving applications and finding top talent.'
+                      : activeTab === 'drafts'
+                        ? 'Save your job listings as drafts to finish them later.'
+                        : 'Expired or closed jobs will appear here for your records.'}
+                  </p>
+                  {activeTab !== 'expired' && (
+                    <ActionButton onClick={handlePostNewJob} variant="primary" size="md" className="mt-8">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Job
+                    </ActionButton>
                   )}
                 </div>
               )}
-
-              {}
-              {activeTab === 'reference-jds' &&
-                (!referenceJDData?.reference_jds || referenceJDData.reference_jds.length === 0) && (
-                  <div className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/50 rounded-3xl border-2 border-dashed border-border-subtle">
-                    <div className="w-20 h-20 bg-background-surface shadow-sm border border-border-subtle rounded-2xl flex items-center justify-center mb-6">
-                      <FolderOpen className="w-10 h-10 text-ai-300 dark:text-ai-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-text-primary mb-2">
-                      No reference JDs yet
-                    </h3>
-                    <p className="text-base text-text-tertiary max-w-md mb-8">
-                      Convert your existing job postings to reference JDs or create new ones to
-                      streamline your hiring process.
-                    </p>
-                  </div>
-                )}
             </AnimatedContainer>
           </div>
         </div>
       </PageTransition>
 
-      {}
+      { }
       <JobDetailModal
         job={selectedJob}
         isOpen={isDetailOpen}

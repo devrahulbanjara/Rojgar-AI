@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
   DialogDescription,
@@ -109,172 +108,172 @@ export default function ExperienceFormDialog({
   }
 
   return (
-    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-xl">
-      <DialogHeader>
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center shadow-sm border border-primary-100 dark:border-primary-900/30">
-            <Briefcase className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          </div>
-          <div>
-            <DialogTitle className="text-xl">
-              {initialData ? 'Edit Work Experience' : 'Add Work Experience'}
-            </DialogTitle>
-            <DialogDescription className="text-text-tertiary">
-              {initialData
-                ? 'Update your work history details'
-                : 'Add your professional experience'}
-            </DialogDescription>
+    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
+      <div className="bg-background-surface flex flex-col h-full max-h-[90vh]">
+        <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-primary-600/10 dark:bg-primary-600/20 flex items-center justify-center border border-primary-600/20 shadow-sm">
+              <Briefcase className="w-7 h-7 text-primary-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold tracking-tight text-text-primary">
+                {initialData ? 'Edit Experience' : 'Add Experience'}
+              </DialogTitle>
+              <DialogDescription className="text-[14px] text-text-tertiary font-medium">
+                {initialData
+                  ? 'Refine your professional history details below'
+                  : 'Tell us about your previous professional roles'}
+              </DialogDescription>
+            </div>
           </div>
         </div>
-      </DialogHeader>
 
-      <DialogContent className="pt-2">
-        <form id="experience-form" onSubmit={handleSubmit} className="space-y-5">
-          {/* Job Title and Company Row */}
-          <div className="grid grid-cols-2 gap-4">
+        <DialogContent className="p-8 overflow-y-auto">
+          <form id="experience-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Briefcase className="w-3.5 h-3.5" />
+                  Job Title <span className="text-error-500 font-bold">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.job_title}
+                  onChange={e => setFormData({ ...formData, job_title: e.target.value })}
+                  placeholder="e.g. Senior Software Engineer"
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary placeholder:text-text-muted font-medium"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5" />
+                  Company <span className="text-error-500 font-bold">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.company}
+                  onChange={e => setFormData({ ...formData, company: e.target.value })}
+                  placeholder="e.g. Google"
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary placeholder:text-text-muted font-medium"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Briefcase className="w-4 h-4 text-text-tertiary" />
-                Job Title <span className="text-error">*</span>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" />
+                Location
               </label>
               <input
                 type="text"
-                required
-                value={formData.job_title}
-                onChange={e => setFormData({ ...formData, job_title: e.target.value })}
-                placeholder="e.g. Senior Developer"
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+                value={formData.location}
+                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                placeholder="e.g. San Francisco, CA (Remote)"
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary placeholder:text-text-muted"
+                  text-text-primary placeholder:text-text-muted font-medium"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-text-tertiary" />
-                Company <span className="text-error">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.company}
-                onChange={e => setFormData({ ...formData, company: e.target.value })}
-                placeholder="e.g. Acme Inc."
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
-                  hover:border-border-strong transition-all duration-200
-                  text-text-primary placeholder:text-text-muted"
-              />
-            </div>
-          </div>
 
-          {/* Location */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-text-tertiary" />
-              Location
-            </label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={e => setFormData({ ...formData, location: e.target.value })}
-              placeholder="e.g. New York, NY (Remote)"
-              className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
-                hover:border-border-strong transition-all duration-200
-                text-text-primary placeholder:text-text-muted"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary font-medium"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  disabled={formData.is_current}
+                  value={formData.end_date}
+                  onChange={e => setFormData({ ...formData, end_date: e.target.value })}
+                  className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                    focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 
+                    hover:border-border-strong transition-all duration-200
+                    text-text-primary font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
+                />
+              </div>
+            </div>
 
-          {/* Date Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-text-tertiary" />
-                Start Date
+            <div className="flex items-center gap-3 py-1">
+              <Checkbox
+                id="current"
+                checked={formData.is_current}
+                onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
+                className="w-5 h-5 rounded-md border-border-default data-[state=checked]:bg-primary-600 data-[state=checked]:border-primary-600"
+              />
+              <label
+                htmlFor="current"
+                className="text-[14px] font-semibold text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+              >
+                I currently work here
               </label>
-              <input
-                type="date"
-                value={formData.start_date}
-                onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <FileText className="w-3.5 h-3.5" />
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Key achievements, technical stack, and responsibilities..."
+                rows={5}
+                className="w-full px-4 py-3 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 
                   hover:border-border-strong transition-all duration-200
-                  text-text-primary"
+                  text-text-primary placeholder:text-text-muted font-medium resize-none leading-relaxed"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-text-tertiary" />
-                End Date
-              </label>
-              <input
-                type="date"
-                disabled={formData.is_current}
-                value={formData.end_date}
-                onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
-                  hover:border-border-strong transition-all duration-200
-                  text-text-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
-              />
-            </div>
-          </div>
+          </form>
+        </DialogContent>
 
-          {/* Currently Working Checkbox */}
-          <div className="flex items-center gap-3 pt-1">
-            <Checkbox
-              id="current"
-              checked={formData.is_current}
-              onCheckedChange={c => setFormData({ ...formData, is_current: c as boolean })}
-            />
-            <label
-              htmlFor="current"
-              className="text-sm font-medium text-text-secondary cursor-pointer select-none hover:text-text-primary transition-colors"
+        <DialogFooter className="p-6 border-t border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="h-11 px-6 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-background-subtle font-bold uppercase tracking-wider text-[11px] transition-all"
             >
-              I currently work here
-            </label>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="experience-form"
+              disabled={loading}
+              className="h-11 px-8 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-primary-600/20 transition-all active:scale-95"
+            >
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />}
+              {initialData ? 'Save Changes' : 'Add Experience'}
+            </Button>
           </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-secondary flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-text-tertiary" />
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe your achievements and responsibilities..."
-              rows={4}
-              className="w-full px-4 py-3 bg-background-subtle border border-border-default rounded-xl 
-                focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary 
-                hover:border-border-strong transition-all duration-200
-                text-text-primary placeholder:text-text-muted resize-none"
-            />
-          </div>
-        </form>
-      </DialogContent>
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          className="h-11 px-6 rounded-xl border-border-default hover:bg-background-subtle hover:border-border-strong transition-all duration-200"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          form="experience-form"
-          disabled={loading}
-          className="h-11 px-6 rounded-xl bg-primary-600 dark:bg-primary-500 hover:bg-primary-700 dark:hover:bg-primary-600 text-white font-semibold shadow-lg shadow-primary/25 dark:shadow-primary/15 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-        >
-          {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {initialData ? 'Save Changes' : 'Add Experience'}
-        </Button>
-      </DialogFooter>
+        </DialogFooter>
+      </div>
     </Dialog>
   )
 }
