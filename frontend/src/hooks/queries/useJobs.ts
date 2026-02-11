@@ -63,6 +63,7 @@ export function usePersonalizedRecommendations(
     },
     staleTime: 0,
     gcTime: 0,
+    enabled: isEnabled,
 
     refetchOnMount: true,
     refetchOnWindowFocus: false,

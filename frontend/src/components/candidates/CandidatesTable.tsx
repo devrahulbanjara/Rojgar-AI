@@ -11,8 +11,6 @@ import {
   Send,
   Trash2,
   ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
   Users,
 } from 'lucide-react'
 import {

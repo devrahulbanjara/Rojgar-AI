@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppShell } from '../../../components/layout/AppShell'
-import { PageTransition, LoadingSpinner } from '../../../components/common'
+import { PageTransition, SkeletonLoader } from '../../../components/common'
 import { ActionButton, Badge, Button } from '../../../components/ui'
 import { Alert, AlertDescription, AlertTitle, AlertAction } from '../../../components/ui/alert'
 import { useAuth } from '../../../hooks/useAuth'
@@ -14,7 +14,6 @@ import { ShortlistCandidateCard } from '../../../components/shortlist/ShortlistC
 import {
   Users,
   Sparkles,
-  ShieldCheck,
   Brain,
   Info,
   RefreshCw,
@@ -28,6 +27,106 @@ import { api } from '../../../lib/api'
 import type { ShortlistJob, ShortlistCandidate } from '../../../types/shortlist'
 import { ScrollArea } from '../../../components/ui/scroll-area'
 import { useDeleteConfirm } from '../../../components/ui/delete-confirm-dialog'
+
+function ShortlistJobCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-border-default bg-background-surface p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-2 w-full">
+          <SkeletonLoader variant="text" width="70%" height={14} />
+          <SkeletonLoader variant="text" width="45%" height={12} />
+        </div>
+        <SkeletonLoader variant="circular" width={28} height={28} />
+      </div>
+      <div className="flex items-center gap-2">
+        <SkeletonLoader variant="rectangular" width={54} height={18} className="rounded-full" />
+        <SkeletonLoader variant="rectangular" width={64} height={18} className="rounded-full" />
+      </div>
+    </div>
+  )
+}
+
+function ShortlistCandidateCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-border-default bg-background-surface p-5 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <SkeletonLoader variant="circular" width={44} height={44} />
+          <div className="space-y-2">
+            <SkeletonLoader variant="text" width={160} height={16} />
+            <SkeletonLoader variant="text" width={120} height={12} />
+          </div>
+        </div>
+        <SkeletonLoader variant="rectangular" width={66} height={24} className="rounded-full" />
+      </div>
+
+      <div className="space-y-2">
+        <SkeletonLoader variant="text" width="100%" height={12} />
+        <SkeletonLoader variant="text" width="90%" height={12} />
+      </div>
+
+      <div className="flex justify-between items-center pt-2">
+        <div className="flex items-center gap-2">
+          <SkeletonLoader variant="circular" width={14} height={14} />
+          <SkeletonLoader variant="text" width={86} height={12} />
+        </div>
+        <div className="flex gap-2">
+          <SkeletonLoader variant="rectangular" width={90} height={34} className="rounded-lg" />
+          <SkeletonLoader variant="rectangular" width={90} height={34} className="rounded-lg" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShortlistPageSkeleton() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
+      <div className="space-y-2">
+        <SkeletonLoader variant="text" width="24%" height={34} />
+        <SkeletonLoader variant="text" width="46%" height={18} />
+      </div>
+      <div className="border-b border-border-default/60" />
+
+      <div className="flex gap-6">
+        <aside className="w-80 flex-shrink-0">
+          <div className="bg-background-surface border border-border-default rounded-2xl shadow-sm flex flex-col h-full max-h-[70vh]">
+            <div className="p-5 border-b border-border-subtle space-y-2">
+              <SkeletonLoader variant="text" width="46%" height={14} />
+              <SkeletonLoader variant="text" width="84%" height={12} />
+            </div>
+            <div className="p-3 space-y-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <ShortlistJobCardSkeleton key={index} />
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        <main className="flex-1 min-w-0">
+          <div className="bg-background-surface border border-border-default rounded-2xl shadow-sm flex flex-col h-full max-h-[70vh]">
+            <header className="p-6 border-b border-border-subtle flex justify-between items-center gap-4">
+              <div className="space-y-2 w-full">
+                <SkeletonLoader variant="text" width="44%" height={24} />
+                <SkeletonLoader variant="text" width="28%" height={14} />
+              </div>
+              <SkeletonLoader variant="rectangular" width={120} height={34} className="rounded-lg" />
+            </header>
+
+            <div className="max-w-5xl mx-auto px-6 py-6 space-y-6 w-full">
+              <div className="rounded-xl border border-border-default p-4">
+                <SkeletonLoader variant="text" width="52%" height={14} />
+              </div>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <ShortlistCandidateCardSkeleton key={index} />
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
 
 export default function ShortlistPage() {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth()
@@ -173,11 +272,6 @@ export default function ShortlistPage() {
 
   const queryClient = useQueryClient()
 
-  const recommendedCandidates = useMemo(() => {
-    if (!selectedJob) return []
-    return selectedJob.candidates.filter(c => c.score >= 75)
-  }, [selectedJob])
-
   // Check if shortlisting is pending (auto_shortlist on but hasn't run yet)
   const isShortlistPending = useMemo(() => {
     if (!selectedJob) return false
@@ -311,9 +405,7 @@ export default function ShortlistPage() {
     <AppShell>
       <PageTransition className="min-h-screen bg-background-subtle">
         {isAuthLoading || !isAuthenticated || isCandidatesLoading || (user?.id && isJobsLoading) ? (
-          <div className="flex min-h-[70vh] items-center justify-center">
-            <LoadingSpinner />
-          </div>
+          <ShortlistPageSkeleton />
         ) : error ? (
           <div className="flex min-h-[70vh] items-center justify-center">
             <div className="text-center">

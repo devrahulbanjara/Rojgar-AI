@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { LoadingSpinner } from '../common/LoadingSpinner'
-import { User as UserIcon, Mail, Phone, MapPin, Globe, CheckCircle2 } from 'lucide-react'
+import { User as UserIcon, Globe, CheckCircle2, Briefcase } from 'lucide-react'
 import type { CandidateProfile, CandidateProfileUpdate } from '../../types/profile'
 import { toast } from 'sonner'
 import { SocialLinksSection } from './SocialLinksSection'
@@ -60,33 +60,12 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h3 className="text-2xl font-display font-bold text-text-primary tracking-tight mb-2">
-          Profile Information
-        </h3>
-        <p className="text-text-secondary">
-          Manage your personal information and professional identity.
-        </p>
-      </div>
-
+    <div className="px-10 py-8">
       <form onSubmit={handleSubmit} className="space-y-8">
-        {}
-        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
-            <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-200 dark:border-primary-800">
-              <UserIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="text-lg font-display font-bold text-text-primary tracking-tight">
-                Contact Details
-              </h4>
-              <p className="text-sm text-text-tertiary">Your basic contact information</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
+        {/* Contact Details Section */}
+        <Section icon={<UserIcon className="w-4 h-4" />} title="Contact Details">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-semibold text-text-secondary">
                 Full Name
               </Label>
@@ -96,109 +75,77 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 type="text"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full h-12 px-4 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl transition-all duration-200 font-medium"
+                className="h-11"
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold text-text-secondary">
                 Email Address
               </Label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-hover:bg-primary-50 dark:group-hover:bg-primary-950/30 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-200">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  disabled
-                  className="w-full h-12 pl-14 bg-background-subtle text-text-muted border-border-default rounded-xl font-medium cursor-not-allowed"
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                value={profile.email}
+                disabled
+                className="h-11 bg-background-subtle text-text-muted cursor-not-allowed"
+              />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="phone" className="text-sm font-semibold text-text-secondary">
                 Phone Number
               </Label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
-                  <Phone className="w-4 h-4" />
-                </div>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Enter your phone number"
-                  className="w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl transition-all duration-200 font-medium"
-                />
-              </div>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Enter your phone number"
+                className="h-11"
+              />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="location_city" className="text-sm font-semibold text-text-secondary">
                 City
               </Label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <Input
-                  id="location_city"
-                  name="location_city"
-                  type="text"
-                  value={formData.location_city}
-                  onChange={handleChange}
-                  placeholder="City"
-                  className="w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl transition-all duration-200 font-medium"
-                />
-              </div>
+              <Input
+                id="location_city"
+                name="location_city"
+                type="text"
+                value={formData.location_city}
+                onChange={handleChange}
+                placeholder="City"
+                className="h-11"
+              />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label
                 htmlFor="location_country"
                 className="text-sm font-semibold text-text-secondary"
               >
                 Country
               </Label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-lg bg-background-subtle flex items-center justify-center text-text-muted dark:text-text-secondary group-focus-within:bg-primary-50 dark:group-focus-within:bg-primary-950/30 group-focus-within:text-primary-500 dark:group-focus-within:text-primary-400 transition-colors duration-200">
-                  <Globe className="w-4 h-4" />
-                </div>
-                <Input
-                  id="location_country"
-                  name="location_country"
-                  type="text"
-                  value={formData.location_country}
-                  onChange={handleChange}
-                  placeholder="Country"
-                  className="w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl transition-all duration-200 font-medium"
-                />
-              </div>
+              <Input
+                id="location_country"
+                name="location_country"
+                type="text"
+                value={formData.location_country}
+                onChange={handleChange}
+                placeholder="Country"
+                className="h-11"
+              />
             </div>
           </div>
-        </div>
+        </Section>
 
-        {}
-        <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
-            <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center text-ai-600 dark:text-ai-400 shadow-sm border border-ai-200 dark:border-ai-800">
-              <UserIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="text-lg font-display font-bold text-text-primary tracking-tight">
-                Professional Summary
-              </h4>
-              <p className="text-sm text-text-tertiary">Highlight your professional background</p>
-            </div>
-          </div>
-
+        {/* Professional Summary Section */}
+        <Section icon={<Briefcase className="w-4 h-4" />} title="Professional Summary">
           <div className="space-y-6">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label
                 htmlFor="professional_headline"
                 className="text-sm font-semibold text-text-secondary"
@@ -212,11 +159,11 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 value={formData.professional_headline}
                 onChange={handleChange}
                 placeholder="e.g., Senior Software Engineer"
-                className="w-full h-12 px-4 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl transition-all duration-200 font-medium"
+                className="h-11"
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label
                 htmlFor="professional_summary"
                 className="text-sm font-semibold text-text-secondary"
@@ -230,45 +177,69 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
                 onChange={handleChange}
                 placeholder="Write a brief summary of your professional background and expertise..."
                 rows={4}
-                className="w-full px-4 py-3 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl transition-all duration-200 resize-none font-medium leading-relaxed"
+                className="resize-none"
               />
             </div>
           </div>
-        </div>
+        </Section>
 
-        {}
-        <SocialLinksSection
-          socialLinks={profile.social_links}
-          onUpdate={async () => {
-            try {
-              const updatedProfile = await profileService.getProfile()
-              onUpdate(updatedProfile)
-            } catch (error) {
-              console.error('Failed to refresh profile:', error)
-            }
-          }}
-        />
+        {/* Social Links Section */}
+        <Section icon={<Globe className="w-4 h-4" />} title="Social Links">
+          <SocialLinksSection
+            socialLinks={profile.social_links}
+            onUpdate={async () => {
+              try {
+                const updatedProfile = await profileService.getProfile()
+                onUpdate(updatedProfile)
+              } catch (error) {
+                console.error('Failed to refresh profile:', error)
+              }
+            }}
+          />
+        </Section>
 
-        <div className="flex justify-end pt-6 border-t border-border-default">
+        <div className="border-t border-border-default pt-6 flex justify-end">
           <Button
             type="submit"
             disabled={isSaving}
-            className="px-8 py-4 bg-gradient-primary hover:bg-gradient-primary-hover text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-primary hover:shadow-primary disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+            className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded transition-all"
           >
             {isSaving ? (
               <div className="flex items-center gap-2">
                 <LoadingSpinner size="sm" />
-                Updating Profile...
+                Updating...
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5" />
+                <CheckCircle2 className="w-4 h-4" />
                 Update Profile
               </div>
             )}
           </Button>
         </div>
       </form>
+    </div>
+  )
+}
+
+function Section({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative pl-8 border-l-2 border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900 transition-colors pt-1">
+      <div className="absolute -left-[11px] top-1 p-1 bg-white dark:bg-slate-900 border border-border-default rounded-md text-slate-400 dark:text-slate-500">
+        {icon}
+      </div>
+      <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-4">
+        {title}
+      </h4>
+      <div>{children}</div>
     </div>
   )
 }

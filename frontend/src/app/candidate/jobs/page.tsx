@@ -14,13 +14,70 @@ import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
 import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
 import { Button, Card, Badge, Tabs, TabsList, TabsTrigger } from '../../../components/ui'
-import { AnimatedContainer, LoadingSpinner, SkeletonJobCard } from '../../../components/common'
+import { AnimatedContainer, SkeletonJobCard, SkeletonLoader } from '../../../components/common'
 import { RefreshCw, AlertCircle, Search, Briefcase, Bookmark, Clock } from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { Job } from '../../../types/job'
 import type { Application } from '../../../types/application'
+
+function CandidateJobsPageSkeleton() {
+  return (
+    <AppShell>
+      <div className="min-h-screen bg-background-subtle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-3 w-full md:max-w-xl">
+              <SkeletonLoader variant="text" height={38} width="55%" />
+              <SkeletonLoader variant="text" height={18} width="90%" />
+            </div>
+            <SkeletonLoader variant="rectangular" width={132} height={44} className="rounded-xl" />
+          </div>
+
+          <Card className="p-4 shadow-sm border-border-default bg-background-surface">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <SkeletonLoader variant="rectangular" height={44} className="rounded-lg flex-1" />
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <SkeletonLoader
+                    key={index}
+                    variant="rectangular"
+                    width={92}
+                    height={34}
+                    className="rounded-full"
+                  />
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <div className="space-y-8">
+            <Tabs value="recommended" className="w-full">
+              <TabsList className="bg-transparent border-b border-border-subtle rounded-none w-full justify-start h-auto p-0 gap-8">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <TabsTrigger
+                    key={index}
+                    value={`skeleton-tab-${index}`}
+                    className="rounded-none px-0 pb-3 pointer-events-none"
+                  >
+                    <SkeletonLoader variant="rectangular" width={90} height={14} className="rounded-sm" />
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonJobCard key={index} className="h-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  )
+}
 
 export default function Jobs() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -241,18 +298,17 @@ export default function Jobs() {
     }
   }, [isAuthenticated, isAuthLoading])
 
-  if (isAuthLoading || !isAuthenticated) {
-    return (
-      <AppShell>
-        <div className="min-h-screen flex items-center justify-center">
-          <LoadingSpinner />
-        </div>
-      </AppShell>
-    )
+  if (isAuthLoading) {
+    return <CandidateJobsPageSkeleton />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
     <AppShell>
+      <div className="min-h-screen bg-background-subtle">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-10">
         {/* Header */}
         <AnimatedContainer direction="up" delay={0.1}>
@@ -273,7 +329,7 @@ export default function Jobs() {
               variant="outline"
               onClick={handleRefresh}
               disabled={isRefreshing || isLoading}
-              className="h-11 px-5 text-primary-600 border-primary-200 hover:bg-primary-50 shadow-sm transition-all whitespace-nowrap"
+              className="h-11 px-5 text-primary-600 border-primary-200 hover:bg-primary-50 dark:hover:bg-primary-950/30 shadow-sm transition-all whitespace-nowrap"
             >
               <RefreshCw className={cn('w-4 h-4 mr-2', isRefreshing && 'animate-spin')} />
               Refresh Jobs
@@ -361,7 +417,7 @@ export default function Jobs() {
                 </>
               ) : error ? (
                 <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-3xl bg-error-50 dark:bg-error-950/30 flex items-center justify-center border border-error-100 dark:border-error-900/30 mb-8">
+                  <div className="w-16 h-16 rounded-3xl bg-error-50 dark:bg-error-900/30 flex items-center justify-center border border-error-100 dark:border-error-800/30 mb-8">
                     <AlertCircle className="w-8 h-8 text-error-500" />
                   </div>
                   <h3 className="text-xl font-bold text-text-primary tracking-tight">Unable to load content</h3>
@@ -379,7 +435,7 @@ export default function Jobs() {
               ) : isSearchMode || activeTab === 'recommended' ? (
                 jobs.length === 0 ? (
                   <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900/30 mb-8">
+                    <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-100 dark:border-primary-800/30 mb-8">
                       <Search className="w-8 h-8 text-primary-500" />
                     </div>
                     <h3 className="text-xl font-bold text-text-primary tracking-tight">No results found</h3>
@@ -389,7 +445,7 @@ export default function Jobs() {
                     <Button
                       variant="ghost"
                       onClick={handleClearFilters}
-                      className="mt-8 h-11 px-8 rounded-xl text-primary-600 font-bold uppercase tracking-wider text-[11px] hover:bg-primary-50 transition-all"
+                      className="mt-8 h-11 px-8 rounded-xl text-primary-600 font-bold uppercase tracking-wider text-[11px] hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all"
                     >
                       Clear All Filters
                     </Button>
@@ -408,7 +464,7 @@ export default function Jobs() {
               ) : activeTab === 'applied' ? (
                 applications.length === 0 ? (
                   <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-3xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center border border-success-100 dark:border-success-900/30 mb-8">
+                    <div className="w-16 h-16 rounded-3xl bg-success-50 dark:bg-success-900/30 flex items-center justify-center border border-success-100 dark:border-success-800/30 mb-8">
                       <Briefcase className="w-8 h-8 text-success-500" />
                     </div>
                     <h3 className="text-xl font-bold text-text-primary tracking-tight">No applications yet</h3>
@@ -463,7 +519,7 @@ export default function Jobs() {
                 )
               ) : (
                 <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-3xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center border border-warning-100 dark:border-warning-900/30 mb-8">
+                  <div className="w-16 h-16 rounded-3xl bg-warning-50 dark:bg-warning-900/30 flex items-center justify-center border border-warning-100 dark:border-warning-800/30 mb-8">
                     <Bookmark className="w-8 h-8 text-warning-500" />
                   </div>
                   <h3 className="text-xl font-bold text-text-primary tracking-tight">Saved jobs coming soon</h3>
@@ -483,7 +539,7 @@ export default function Jobs() {
                     size="icon"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="h-10 w-10 rounded-xl hover:bg-primary-50 disabled:opacity-30 transition-colors"
+                    className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-30 transition-colors"
                   >
                     <Clock className="w-5 h-5 -rotate-90" />
                   </Button>
@@ -495,7 +551,7 @@ export default function Jobs() {
                     size="icon"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
-                    className="h-10 w-10 rounded-xl hover:bg-primary-50 disabled:opacity-30 transition-colors"
+                    className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-30 transition-colors"
                   >
                     <Clock className="w-5 h-5 rotate-90" />
                   </Button>
@@ -512,6 +568,7 @@ export default function Jobs() {
           onApply={handleJobApply}
           showApplyButton
         />
+      </div>
       </div>
     </AppShell>
   )
