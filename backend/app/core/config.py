@@ -1,4 +1,4 @@
-from pydantic import SecretStr
+from pydantic import SecretStr, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,11 +11,13 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     SECURE: bool
-    FRONTEND_URL: str
-    BACKEND_URL: str
+    
+    FRONTEND_URL: HttpUrl
+    BACKEND_URL: HttpUrl
     ENVIRONMENT: str
     APP_VERSION: str
     DATABASE_URL: str
+    
     QDRANT_URL: str
     QDRANT_COLLECTION_NAME: str
     EMBEDDING_MODEL: str
@@ -24,15 +26,19 @@ class Settings(BaseSettings):
     THINK_LLM: str = "openai/gpt-oss-120b"
     LLM_TEMPERATURE: int = 0
     LLM_MAX_RETRIES: int = 3
+    
     GROQ_API_KEY: str
     GMAIL_APP_PASSWORD: str
     GOOGLE_API_KEY: str
     TAVILY_API_KEY: str
+    BOOKING_LINK: HttpUrl = "https://cal.com/convexhire/interview"
+    
     RATE_LIMIT_AUTH: str = "50/minute"
     RATE_LIMIT_API: str = "100/minute"
     RATE_LIMIT_WEBSOCKET: str = "30/minute"
     RATE_LIMIT_SHORTLIST_TRIGGER: str = "10/minute"
     RATE_LIMIT_SHORTLIST_SUMMARY: str = "100/minute"
+    
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
