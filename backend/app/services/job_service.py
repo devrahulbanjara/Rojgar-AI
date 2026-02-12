@@ -3,13 +3,13 @@ from datetime import date
 
 from app.core import get_datetime
 from app.core.authorization import verify_user_can_edit_job
+from app.core.logging_config import logger
 from app.db.models.job import JobDescription, JobPosting, ShortlistStatus
 from app.db.repositories.candidate_repo import CandidateProfileRepository
 from app.db.repositories.job_repo import JobDescriptionRepository, JobRepository
 from app.db.repositories.user_repo import UserRepository
 from app.integrations.qdrant.vector_service import JobVectorService
 from app.services.recruiter.activity_events import ActivityEventEmitter
-from app.core.logging_config import logger
 
 VISIBLE_STATUSES = ["active"]
 
@@ -55,7 +55,6 @@ class JobService:
                     job_ids = raw_ids
                     order_by_date = False
             except Exception as e:
-
                 logger.warning(f"Vector search failed for recommendations: {e}")
                 job_ids = None
                 order_by_date = True
