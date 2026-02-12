@@ -1,5 +1,6 @@
 export { Badge } from './badge'
 export { Button } from './button'
+export { ActionButton } from './action-button'
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card'
 export {
   Dialog,
@@ -15,3 +16,7 @@ export { Progress } from './progress'
 export { Select } from './select'
 export { Separator } from './separator'
 export { Textarea } from './textarea'
+export { Avatar, AvatarImage, AvatarFallback } from './avatar'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './tooltip'
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './accordion'

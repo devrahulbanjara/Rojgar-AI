@@ -1,0 +1,80 @@
+<svg width="280" height="60" viewBox="0 0 280 60" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ConvexHire">
+  <defs>
+    <!-- Gradient for the AI nodes -->
+    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+    <!-- Gradient for the human node -->
+    <linearGradient id="humanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+    <!-- Subtle glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main Icon: Multi-agent system with human at center -->
+  <g transform="translate(5, 5)">
+    <!-- Orbital paths representing AI agent coordination -->
+    <circle cx="25" cy="25" r="20" stroke="#2563EB" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4 3"/>
+    <circle cx="25" cy="25" r="15" stroke="#1d4ed8" stroke-width="1.5" fill="none" opacity="0.2" stroke-dasharray="3 2"/>
+    
+    <!-- AI Agent nodes (positioned around the circle) -->
+    <g filter="url(#glow)">
+      <!-- Top agent -->
+      <circle cx="25" cy="5" r="3.5" fill="url(#aiGradient)"/>
+      <circle cx="25" cy="5" r="2" fill="white" opacity="0.4"/>
+      
+      <!-- Right agent -->
+      <circle cx="45" cy="25" r="3.5" fill="url(#aiGradient)"/>
+      <circle cx="45" cy="25" r="2" fill="white" opacity="0.4"/>
+      
+      <!-- Bottom agent -->
+      <circle cx="25" cy="45" r="3.5" fill="url(#aiGradient)"/>
+      <circle cx="25" cy="45" r="2" fill="white" opacity="0.4"/>
+      
+      <!-- Left agent -->
+      <circle cx="5" cy="25" r="3.5" fill="url(#aiGradient)"/>
+      <circle cx="5" cy="25" r="2" fill="white" opacity="0.4"/>
+      
+      <!-- Top-right agent -->
+      <circle cx="39" cy="11" r="3" fill="url(#aiGradient)" opacity="0.8"/>
+      
+      <!-- Bottom-right agent -->
+      <circle cx="39" cy="39" r="3" fill="url(#aiGradient)" opacity="0.8"/>
+    </g>
+    
+    <!-- Connection lines from agents to center (representing orchestration) -->
+    <g stroke="#2563EB" stroke-width="1.2" opacity="0.35" stroke-dasharray="2 2">
+      <line x1="25" y1="9" x2="25" y2="18"/>
+      <line x1="41" y1="25" x2="32" y2="25"/>
+      <line x1="25" y1="41" x2="25" y2="32"/>
+      <line x1="9" y1="25" x2="18" y2="25"/>
+      <line x1="37" y1="13" x2="29" y2="21"/>
+      <line x1="37" y1="37" x2="29" y2="29"/>
+    </g>
+    
+    <!-- Central human node (the decision maker) -->
+    <g filter="url(#glow)">
+      <circle cx="25" cy="25" r="7" fill="url(#humanGradient)"/>
+      <circle cx="25" cy="25" r="5" fill="white" opacity="0.3"/>
+      <!-- Human icon inside -->
+      <g transform="translate(25, 25)" fill="white">
+        <circle cx="0" cy="-1.5" r="2"/>
+        <path d="M-2.2 3.5 L-1.2 0.8 L1.2 0.8 L2.2 3.5 Z" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="65" y="42" font-family="Manrope, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="36" font-weight="600" letter-spacing="-0.03em" fill="#F1F5F9">
+    Convex<tspan fill="#2563EB">Hire</tspan>
+  </text>
+</svg>

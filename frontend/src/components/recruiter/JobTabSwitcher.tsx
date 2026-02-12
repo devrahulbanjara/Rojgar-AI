@@ -1,6 +1,8 @@
 import React, { memo } from 'react'
 import { Briefcase, FileEdit, BookOpen, Archive } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { Tabs, TabsList, TabsTrigger } from '../ui'
+import { Badge } from '../ui/badge'
 
 type TabType = 'active' | 'drafts' | 'expired' | 'reference-jds'
 
@@ -40,72 +42,66 @@ export const JobTabSwitcher = memo<JobTabSwitcherProps>(
     }
 
     return (
-      <div
-        className={cn(
-          'inline-flex items-center gap-1 p-1 bg-background-muted/80 dark:bg-background-surface backdrop-blur-sm rounded-2xl border border-border-subtle dark:border-border-default shadow-sm',
-          className
-        )}
+      <Tabs
+        value={activeTab}
+        onValueChange={value => onTabChange(value as TabType)}
+        className={cn('w-full', className)}
       >
-        {tabs.map(tab => {
-          const Icon = tab.icon
-          const isActive = activeTab === tab.id
-          const count = getCount(tab.id)
+        <TabsList className="bg-background-muted/80 dark:bg-background-surface backdrop-blur-sm p-1.5 h-auto rounded-xl border border-border-subtle dark:border-border-default shadow-sm inline-flex">
+          {tabs.map(tab => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            const count = getCount(tab.id)
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={cn(
-                'relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium',
-                'transition-all duration-300 ease-out',
-                isActive
-                  ? cn(
-                      'bg-background-surface text-text-primary shadow-sm',
-                      tab.color === 'blue' && 'border border-primary-200 dark:border-primary-700',
-                      tab.color === 'amber' && 'border border-warning-200 dark:border-warning-700',
-                      tab.color === 'rose' && 'border border-error-200 dark:border-error-700',
-                      tab.color === 'purple' && 'border border-primary-200 dark:border-primary-700'
-                    )
-                  : 'text-text-tertiary hover:text-text-secondary hover:bg-background-surface/50 border border-transparent'
-              )}
-            >
-              <Icon
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
                 className={cn(
-                  'w-4 h-4 transition-colors duration-300',
-                  isActive && tab.color === 'blue' && 'text-primary',
-                  isActive && tab.color === 'amber' && 'text-warning',
-                  isActive && tab.color === 'rose' && 'text-error',
-                  isActive && tab.color === 'purple' && 'text-primary',
-                  !isActive && 'text-text-muted'
+                  'relative flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300',
+                  'data-[state=active]:bg-background-surface data-[state=active]:text-text-primary data-[state=active]:shadow-sm data-[state=active]:border-border-default/50',
+                  'text-text-tertiary hover:text-text-secondary'
                 )}
-              />
-              <span>{tab.label}</span>
-              {count !== null && (
-                <span
+              >
+                <Icon
                   className={cn(
-                    'px-2 py-0.5 rounded-full text-xs font-semibold transition-all duration-300',
-                    isActive &&
-                      tab.color === 'blue' &&
-                      'bg-primary-100 dark:bg-primary-900/30 text-primary',
-                    isActive &&
-                      tab.color === 'amber' &&
-                      'bg-warning-100 dark:bg-warning-900/30 text-warning',
-                    isActive &&
-                      tab.color === 'rose' &&
-                      'bg-error-100 dark:bg-error-900/30 text-error',
-                    isActive &&
-                      tab.color === 'purple' &&
-                      'bg-primary-100 dark:bg-primary-900/30 text-primary',
-                    !isActive && 'bg-background-muted/80 text-text-tertiary'
+                    'w-4 h-4 transition-colors duration-300',
+                    isActive && tab.color === 'blue' && 'text-primary-600 dark:text-primary-400',
+                    isActive && tab.color === 'amber' && 'text-warning-600 dark:text-warning-400',
+                    isActive && tab.color === 'rose' && 'text-error-600 dark:text-error-400',
+                    isActive && tab.color === 'purple' && 'text-primary-600 dark:text-primary-400',
+                    !isActive && 'text-text-muted'
                   )}
-                >
-                  {count}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+                />
+                <span className="max-sm:hidden">{tab.label}</span>
+                {count !== null && (
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      'ml-1 px-2 py-0 h-5 min-w-[20px] justify-center text-[10px] font-bold transition-all duration-300 rounded-[5px]',
+                      isActive &&
+                        tab.color === 'blue' &&
+                        'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-100/50',
+                      isActive &&
+                        tab.color === 'amber' &&
+                        'bg-warning-50 dark:bg-warning-950/40 text-warning-600 dark:text-warning-400 border border-warning-100/50',
+                      isActive &&
+                        tab.color === 'rose' &&
+                        'bg-error-50 dark:bg-error-950/40 text-error-600 dark:text-error-400 border border-error-100/50',
+                      isActive &&
+                        tab.color === 'purple' &&
+                        'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border border-primary-100/50',
+                      !isActive && 'bg-background-muted/80 text-text-tertiary border-transparent'
+                    )}
+                  >
+                    {count}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
+      </Tabs>
     )
   }
 )

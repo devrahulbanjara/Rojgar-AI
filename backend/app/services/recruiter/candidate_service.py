@@ -1,9 +1,13 @@
 import uuid
 
+from app.core import get_datetime
+from app.db.models.application import ApplicationStatus
 from app.db.repositories.application_repo import JobApplicationRepository
 from app.schemas.recruiter_candidate import (
     CandidateApplicationSummary,
     RecruiterCandidateListResponse,
+    UpdateApplicationRequest,
+    UpdateApplicationResponse,
 )
 
 
@@ -49,8 +53,8 @@ class RecruiterCandidateService:
                     professional_summary=candidate_profile.professional_summary,
                     current_status=app.current_status,
                     applied_at=app.applied_at,
-                    ai_score=app.ai_score,
-                    ai_analysis=app.ai_analysis,
+                    score=app.score,
+                    feedback=app.feedback,
                     social_links=social_links,
                 )
             )
@@ -75,3 +79,50 @@ class RecruiterCandidateService:
             )
 
         return application.resume
+
+    async def update_application(
+        self,
+        application_id: uuid.UUID,
+        organization_id: uuid.UUID,
+        data: UpdateApplicationRequest,
+    ) -> UpdateApplicationResponse:
+        """Update application status, score, and/or feedback."""
+        application = await self.application_repo.get_with_details(application_id)
+
+        if not application:
+            raise ValueError("Application not found")
+
+        if application.organization_id != organization_id:
+            raise ValueError(
+                "Access denied: Application belongs to another organization"
+            )
+
+        # Build update kwargs
+        update_data: dict = {"updated_at": get_datetime()}
+
+        if data.status is not None:
+            # Validate status
+            valid_statuses = [s.value for s in ApplicationStatus]
+            if data.status not in valid_statuses:
+                raise ValueError(f"Invalid status. Must be one of: {valid_statuses}")
+            update_data["current_status"] = data.status
+
+        if data.score is not None:
+            if data.score < 0 or data.score > 100:
+                raise ValueError("Score must be between 0 and 100")
+            update_data["score"] = data.score
+
+        if data.feedback is not None:
+            update_data["feedback"] = data.feedback
+
+        await self.application_repo.update(application_id, **update_data)
+
+        return UpdateApplicationResponse(
+            application_id=application_id,
+            current_status=data.status or application.current_status,
+            score=data.score if data.score is not None else application.score,
+            feedback=data.feedback
+            if data.feedback is not None
+            else application.feedback,
+            message="Application updated successfully",
+        )

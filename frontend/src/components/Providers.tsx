@@ -2,6 +2,7 @@
 
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
+import { Toaster } from 'sonner'
 import {
   queryClient,
   persistQueryCache,
@@ -11,6 +12,10 @@ import {
 import { apiClient } from '../lib/api'
 import { ROUTES } from '../config/constants'
 import { ReactNode, useEffect } from 'react'
+
+function ToasterProvider() {
+  return <Toaster position="top-right" expand={false} closeButton duration={4000} />
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -48,14 +53,17 @@ export function Providers({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="light"
-      enableSystem
-      disableTransitionOnChange
-      storageKey="convexhire-theme"
-    >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        disableTransitionOnChange
+        storageKey="convexhire-theme"
+      >
+        {children}
+        <ToasterProvider />
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }

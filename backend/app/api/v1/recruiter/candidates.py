@@ -9,7 +9,11 @@ from app.core.authorization import require_recruiter_with_organization
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.db.models.user import User
-from app.schemas.recruiter_candidate import RecruiterCandidateListResponse
+from app.schemas.recruiter_candidate import (
+    RecruiterCandidateListResponse,
+    UpdateApplicationRequest,
+    UpdateApplicationResponse,
+)
 from app.schemas.resume import ResumeResponse
 from app.services.recruiter.candidate_service import RecruiterCandidateService
 
@@ -74,6 +78,38 @@ async def get_application_resume_detail(
 
         return resume
 
+    except ValueError as e:
+        status_code = (
+            status.HTTP_403_FORBIDDEN
+            if "Access denied" in str(e)
+            else status.HTTP_400_BAD_REQUEST
+        )
+        raise HTTPException(status_code=status_code, detail=str(e))
+
+
+@router.patch(
+    "/applications/{application_id}",
+    response_model=UpdateApplicationResponse,
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def update_application(
+    request: Request,
+    application_id: uuid.UUID,
+    data: UpdateApplicationRequest,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    candidate_service: Annotated[
+        RecruiterCandidateService, Depends(get_recruiter_candidate_service)
+    ],
+):
+    """Update application status, score, and/or feedback."""
+    try:
+        organization_id = require_recruiter_with_organization(current_user)
+        return await candidate_service.update_application(
+            application_id=application_id,
+            organization_id=organization_id,
+            data=data,
+        )
     except ValueError as e:
         status_code = (
             status.HTTP_403_FORBIDDEN

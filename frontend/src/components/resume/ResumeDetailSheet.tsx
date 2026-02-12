@@ -1,6 +1,6 @@
 'use client'
 
-import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -12,12 +12,10 @@ import {
   Code,
   Award,
   ExternalLink,
-  Calendar,
-  MapPin,
-  Building,
+  History,
   X,
 } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, ReactNode } from 'react'
 import ExperienceFormDialog from './forms/ExperienceFormDialog'
 import EducationFormDialog from './forms/EducationFormDialog'
 import SkillsFormDialog from './forms/SkillsFormDialog'
@@ -27,6 +25,7 @@ import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
 import { ResumeDetail, WorkExperience, Education, Certification, Skill } from '@/types/resume'
 import { SkeletonResumeDetail } from '../common/SkeletonLoader'
+import { useDeleteConfirm } from '@/components/ui/delete-confirm-dialog'
 
 interface ResumeDetailSheetProps {
   resumeId: string | null
@@ -55,6 +54,8 @@ export default function ResumeDetailSheet({
   const [editingCertification, setEditingCertification] = useState<Certification | null>(null)
 
   const [isBasicInfoOpen, setIsBasicInfoOpen] = useState(false)
+
+  const { confirm, Dialog: DeleteConfirmDialog } = useDeleteConfirm()
 
   const fetchResume = useCallback(async () => {
     if (!resumeId) {
@@ -91,23 +92,36 @@ export default function ResumeDetailSheet({
     }
   }, [isOpen, resumeId, fetchResume])
 
-  const handleDelete = async (type: string, id: string) => {
-    if (!confirm('Are you sure you want to remove this item?')) return
-    try {
-      const res = await fetch(
-        `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resume?.resume_id}/${type}/${id}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      )
-      if (!res.ok) throw new Error('Failed')
-      toast.success('Item removed')
-      fetchResume()
-      onUpdate()
-    } catch {
-      toast.error('Failed to delete item')
+  const handleDelete = async (type: string, id: string, itemName: string) => {
+    const typeLabels: Record<string, string> = {
+      experience: 'Work Experience',
+      education: 'Education',
+      skills: 'Skill',
+      certifications: 'Certification',
     }
+
+    await confirm({
+      title: `Delete ${typeLabels[type] || 'Item'}`,
+      description: "You're about to permanently delete",
+      itemName,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(
+            `${API_CONFIG.baseUrl}/api/v1/candidate/resumes/${resume?.resume_id}/${type}/${id}`,
+            {
+              method: 'DELETE',
+              credentials: 'include',
+            }
+          )
+          if (!res.ok) throw new Error('Failed')
+          toast.success('Item removed')
+          fetchResume()
+          onUpdate()
+        } catch {
+          toast.error('Failed to delete item')
+        }
+      },
+    })
   }
 
   const handleEdit = (type: FormType, item: WorkExperience | Education | Certification) => {
@@ -143,448 +157,340 @@ export default function ResumeDetailSheet({
     setEditingCertification(null)
   }
 
+
+
   if (!resume || loading) {
     return (
-      <Sheet open={isOpen} onOpenChange={open => !open && onClose()}>
-        <SheetContent className="w-full max-w-4xl p-0 bg-background-surface border-l shadow-2xl flex flex-col overflow-hidden rounded-l-2xl">
+      <Dialog isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-[800px] mx-auto p-0 border-none shadow-none">
+        <div className="w-full max-w-[800px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
+          <DialogTitle className="sr-only">Loading Resume</DialogTitle>
+          <DialogDescription className="sr-only">Please wait while we fetch the resume details.</DialogDescription>
           <SkeletonResumeDetail />
-        </SheetContent>
-      </Sheet>
+        </div>
+      </Dialog>
     )
   }
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={open => !open && onClose()} hideClose>
-        <SheetContent className="w-full max-w-4xl p-0 bg-background-surface flex flex-col shadow-2xl border-l overflow-hidden rounded-l-2xl">
-          {}
-          <div className="flex-shrink-0 bg-gradient-to-b from-ai-50/50 dark:from-ai-950/30 to-background-surface px-12 py-12 border-b border-ai-50/50 dark:border-ai-900/30 relative">
-            {}
+      <Dialog isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-[800px] mx-auto p-0 border-none shadow-none">
+        <div className="w-full max-w-[800px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
+          <DialogTitle className="sr-only">{resume.target_job_title || 'General Resume'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Detailed view of the resume for {resume.target_job_title || 'General'}.
+          </DialogDescription>
+          {/* Header Section */}
+          <div className="flex-shrink-0 bg-background-surface px-10 py-8 border-b border-border-subtle relative">
             <button
               onClick={onClose}
-              className="absolute top-8 right-8 p-2.5 rounded-full hover:bg-background-subtle transition-all duration-200 hover:scale-110 active:scale-95 group"
+              className="absolute top-6 right-8 p-2 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-background-subtle transition-all duration-200"
               aria-label="Close modal"
             >
-              <X className="w-5 h-5 text-text-tertiary group-hover:text-text-primary transition-colors" />
+              <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-start gap-4 pr-12">
-              <div className="flex-1 min-w-0 pt-1">
+            <div className="flex items-start gap-5 pr-12">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 group mb-2">
-                  <h2 className="text-2xl font-bold text-text-primary leading-tight">
+                  <h2 className="text-3xl font-bold tracking-tight text-text-primary">
                     {resume.target_job_title || 'General Resume'}
                   </h2>
                   <button
                     onClick={() => setIsBasicInfoOpen(true)}
-                    className="p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition opacity-0 group-hover:opacity-100"
+                    className="p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                     title="Edit Basic Info"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Pencil className="w-4 h-4" />
                   </button>
                 </div>
-                {resume.custom_summary && (
-                  <p className="text-text-secondary font-medium leading-relaxed max-w-3xl">
-                    {resume.custom_summary}
-                  </p>
-                )}
+
               </div>
             </div>
           </div>
 
-          {}
-          <ScrollArea className="flex-1 bg-background-subtle">
-            <div className="p-8 space-y-8">
-              {}
+          { }
+          {/* Scrollable Content */}
+          <ScrollArea className="flex-1 bg-background-base">
+            <div className="px-10 py-8 space-y-12">
+
+
+              {/* Summary Section */}
               {resume.custom_summary && (
-                <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="flex items-center gap-4 mb-6 pb-4 border-b border-border-subtle">
-                    <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-100 dark:border-primary-900/30">
-                      <Briefcase className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-text-primary">Professional Summary</h4>
-                      <p className="text-sm text-text-tertiary">Your professional overview</p>
-                    </div>
-                  </div>
-                  <div className="bg-background-subtle border border-border-default rounded-2xl p-6">
-                    <p className="text-text-secondary leading-relaxed">{resume.custom_summary}</p>
-                  </div>
-                </div>
+                <Section title="Professional Summary" icon={<Briefcase className="w-4 h-4" />}>
+                  <p className="text-[15px] leading-relaxed text-text-secondary whitespace-pre-wrap">
+                    {resume.custom_summary}
+                  </p>
+                </Section>
               )}
 
-              {}
-              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 shadow-sm border border-primary-100 dark:border-primary-900/30">
-                      <Briefcase className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-text-primary">Work Experience</h4>
-                      <p className="text-sm text-text-tertiary">Professional journey</p>
-                    </div>
-                  </div>
+              {/* Work Experience Section */}
+              <Section
+                title="Work Experience"
+                icon={<History className="w-4 h-4" />}
+                action={
                   <button
                     onClick={() => handleAdd('experience')}
-                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
                   >
-                    <Plus className="w-4 h-4" /> Add Experience
+                    <Plus className="w-3.5 h-3.5" /> Add New
                   </button>
-                </div>
-
-                <div className="space-y-4">
+                }
+              >
+                <div className="space-y-6 mt-2">
                   {resume.work_experiences.length === 0 && (
-                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
-                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
-                        <Briefcase className="w-8 h-8 text-text-tertiary" />
-                      </div>
-                      <h5 className="text-lg font-semibold text-text-primary mb-2">
-                        No work experience added yet
-                      </h5>
-                      <p className="text-text-secondary max-w-sm mx-auto">
-                        Add your work experience to showcase your professional background.
+                    <div className="text-center py-8 bg-background-subtle/50 rounded-xl border border-dashed border-border-default">
+                      <p className="text-sm text-text-tertiary italic">
+                        No work experience records found.
                       </p>
                     </div>
                   )}
-
                   {resume.work_experiences.map((exp: WorkExperience) => (
-                    <div
-                      key={exp.resume_work_experience_id}
-                      className="bg-background-surface rounded-xl border border-border-default p-5 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-md transition-all duration-300 group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors">
-                              <Building className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h5 className="font-bold text-text-primary text-lg">
-                                {exp.job_title}
-                              </h5>
-                              <p className="text-text-secondary font-medium">{exp.company}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
-                            <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                              <Calendar className="w-4 h-4 text-primary-500 dark:text-primary-400" />
-                              <span className="font-medium">
-                                {exp.start_date} - {exp.is_current ? 'Present' : exp.end_date}
-                              </span>
-                            </div>
+                    <div key={exp.resume_work_experience_id} className="group relative">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <h4 className="text-[16px] font-bold text-text-primary">
+                            {exp.job_title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[14px] text-text-secondary font-medium">
+                            <span>{exp.company}</span>
                             {exp.location && (
-                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                                <MapPin className="w-4 h-4 text-primary-500 dark:text-primary-400" />
-                                <span className="font-medium">{exp.location}</span>
-                              </div>
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-border-strong" />
+                                <span className="text-text-tertiary">{exp.location}</span>
+                              </>
                             )}
                           </div>
-
+                          <p className="text-[12px] text-text-tertiary font-medium">
+                            {exp.start_date} — {exp.is_current ? 'Present' : exp.end_date}
+                          </p>
                           {exp.description && (
-                            <div className="mt-4 pt-3 border-t border-border-subtle">
-                              <p className="text-sm text-text-secondary leading-relaxed">
-                                {exp.description}
-                              </p>
-                            </div>
+                            <p className="mt-3 text-[14px] text-text-secondary leading-relaxed">
+                              {exp.description}
+                            </p>
                           )}
                         </div>
-                        <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 p-0 text-text-tertiary hover:text-primary dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg"
+                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-primary-600"
                             onClick={() => handleEdit('experience', exp)}
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 p-0 text-text-tertiary hover:text-error dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg"
+                            className="h-8 w-8 rounded-lg hover:bg-error-50 dark:hover:bg-error-950/30 text-text-tertiary hover:text-error-600"
                             onClick={() =>
-                              handleDelete('experience', exp.resume_work_experience_id)
+                              handleDelete(
+                                'experience',
+                                exp.resume_work_experience_id,
+                                `${exp.job_title} at ${exp.company}`
+                              )
                             }
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Section>
 
-              {}
-              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center text-ai-600 dark:text-ai-400 shadow-sm border border-ai-100 dark:border-ai-900/30">
-                      <GraduationCap className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-text-primary">Education</h4>
-                      <p className="text-sm text-text-tertiary">Academic background</p>
-                    </div>
-                  </div>
+              {/* Education Section */}
+              <Section
+                title="Education"
+                icon={<GraduationCap className="w-4 h-4" />}
+                action={
                   <button
                     onClick={() => handleAdd('education')}
-                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-ai-600 hover:text-ai-700 uppercase tracking-wider"
                   >
-                    <Plus className="w-4 h-4" /> Add Education
+                    <Plus className="w-3.5 h-3.5" /> Add New
                   </button>
-                </div>
-
-                <div className="space-y-4">
+                }
+              >
+                <div className="space-y-6 mt-2">
                   {resume.educations.length === 0 && (
-                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
-                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
-                        <GraduationCap className="w-8 h-8 text-text-tertiary" />
-                      </div>
-                      <h5 className="text-lg font-semibold text-text-primary mb-2">
-                        No education records added yet
-                      </h5>
-                      <p className="text-text-secondary max-w-sm mx-auto">
-                        Add your educational background to complete your profile.
-                      </p>
+                    <div className="text-center py-8 bg-background-subtle/50 rounded-xl border border-dashed border-border-default">
+                      <p className="text-sm text-text-tertiary italic">No education records found.</p>
                     </div>
                   )}
-
                   {resume.educations.map((edu: Education) => (
-                    <div
-                      key={edu.resume_education_id}
-                      className="bg-background-surface rounded-xl border border-border-default p-5 hover:border-ai-200 dark:hover:border-ai-800 hover:shadow-md transition-all duration-300 group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-ai-50 dark:bg-ai-950/30 text-ai-600 dark:text-ai-400 rounded-lg hover:bg-ai-100 dark:hover:bg-ai-900/30 transition-colors">
-                              <GraduationCap className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h5 className="font-bold text-text-primary text-lg">{edu.degree}</h5>
-                              <p className="text-text-secondary font-medium">{edu.college_name}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
-                            {edu.start_date && (
-                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                                <Calendar className="w-4 h-4 text-ai-500 dark:text-ai-400" />
-                                <span className="font-medium">
-                                  {edu.start_date} - {edu.is_current ? 'Present' : edu.end_date}
-                                </span>
-                              </div>
-                            )}
-                            {edu.location && (
-                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                                <MapPin className="w-4 h-4 text-ai-500 dark:text-ai-400" />
-                                <span className="font-medium">{edu.location}</span>
-                              </div>
-                            )}
-                          </div>
+                    <div key={edu.resume_education_id} className="group relative">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <h4 className="text-[16px] font-bold text-text-primary">{edu.degree}</h4>
+                          <p className="text-[14px] text-text-secondary font-medium">
+                            {edu.college_name}
+                          </p>
+                          <p className="text-[12px] text-text-tertiary font-medium">
+                            {edu.start_date} — {edu.is_current ? 'Present' : edu.end_date}
+                          </p>
                         </div>
-                        <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 p-0 text-text-tertiary hover:text-primary dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg"
+                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-ai-600"
                             onClick={() => handleEdit('education', edu)}
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 p-0 text-text-tertiary hover:text-error dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg"
-                            onClick={() => handleDelete('education', edu.resume_education_id)}
+                            className="h-8 w-8 rounded-lg hover:bg-error-50 dark:hover:bg-error-950/30 text-text-tertiary hover:text-error-600"
+                            onClick={() =>
+                              handleDelete(
+                                'education',
+                                edu.resume_education_id,
+                                `${edu.degree} from ${edu.college_name}`
+                              )
+                            }
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Section>
 
-              {}
-              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center text-success-600 dark:text-success-400 shadow-sm border border-success-100 dark:border-success-900/30">
-                      <Code className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-text-primary">Skills & Expertise</h4>
-                      <p className="text-sm text-text-tertiary">
-                        Technical and professional skills
-                      </p>
-                    </div>
-                  </div>
+              {/* Skills Section */}
+              <Section
+                title="Skills & Expertise"
+                icon={<Code className="w-4 h-4" />}
+                action={
                   <button
                     onClick={() => handleAdd('skills')}
-                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-success-600 hover:text-success-700 uppercase tracking-wider"
                   >
-                    <Plus className="w-4 h-4" /> Add Skills
+                    <Plus className="w-3.5 h-3.5" /> Manage
                   </button>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
+                }
+              >
+                <div className="flex flex-wrap gap-2 mt-2">
                   {resume.skills.length === 0 && (
-                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default w-full">
-                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
-                        <Code className="w-8 h-8 text-text-tertiary" />
-                      </div>
-                      <h5 className="text-lg font-semibold text-text-primary mb-2">
-                        No skills added yet
-                      </h5>
-                      <p className="text-text-secondary max-w-sm mx-auto">
-                        Add your skills to showcase your expertise.
-                      </p>
-                    </div>
+                    <p className="text-sm text-text-tertiary italic w-full">No skills added.</p>
                   )}
                   {resume.skills.map((s: Skill) => (
                     <div
                       key={s.resume_skill_id}
-                      className="group inline-flex items-center gap-2 px-4 py-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-xl border border-ai-100 dark:border-ai-900/30 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-200 dark:hover:border-ai-800 hover:shadow-sm transition-all duration-200"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-background-subtle rounded-lg border border-border-default text-[13px] font-medium text-text-secondary"
                     >
-                      <span className="font-semibold">{s.skill_name}</span>
+                      {s.skill_name}
                       <button
-                        onClick={() => handleDelete('skills', s.resume_skill_id)}
-                        className="text-ai-600 dark:text-ai-400 hover:text-error opacity-0 group-hover:opacity-100 transition-all duration-200 ml-1"
+                        onClick={() => handleDelete('skills', s.resume_skill_id, s.skill_name)}
+                        className="p-0.5 hover:text-error-600 hover:bg-error-50 dark:hover:bg-error-950/30 rounded"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Section>
 
-              {}
-              <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border-subtle">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center text-warning-600 dark:text-warning-400 shadow-sm border border-warning-100 dark:border-warning-900/30">
-                      <Award className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-text-primary">Certifications</h4>
-                      <p className="text-sm text-text-tertiary">Professional certifications</p>
-                    </div>
-                  </div>
+              {/* Certifications Section */}
+              <Section
+                title="Certifications"
+                icon={<Award className="w-4 h-4" />}
+                action={
                   <button
                     onClick={() => handleAdd('certification')}
-                    className="btn-primary-gradient flex items-center gap-2 px-5 py-2.5 rounded-xl"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-warning-600 hover:text-warning-700 uppercase tracking-wider"
                   >
-                    <Plus className="w-4 h-4" /> Add Certification
+                    <Plus className="w-3.5 h-3.5" /> Add New
                   </button>
-                </div>
-
-                <div className="space-y-4">
+                }
+              >
+                <div className="space-y-6 mt-2">
                   {resume.certifications.length === 0 && (
-                    <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
-                      <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
-                        <Award className="w-8 h-8 text-text-tertiary" />
-                      </div>
-                      <h5 className="text-lg font-semibold text-text-primary mb-2">
-                        No certifications added yet
-                      </h5>
-                      <p className="text-text-secondary max-w-sm mx-auto">
-                        Add your certifications to demonstrate your expertise.
+                    <div className="text-center py-8 bg-background-subtle/50 rounded-xl border border-dashed border-border-default">
+                      <p className="text-sm text-text-tertiary italic">
+                        No certifications records found.
                       </p>
                     </div>
                   )}
-
                   {resume.certifications.map((cert: Certification) => (
-                    <div
-                      key={cert.resume_certification_id}
-                      className="bg-background-surface rounded-xl border border-border-default p-5 hover:border-warning-200 dark:hover:border-warning-800 hover:shadow-md transition-all duration-300 group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-warning-50 dark:bg-warning-950/30 text-warning-600 dark:text-warning-400 rounded-lg hover:bg-warning-100 dark:hover:bg-warning-900/30 transition-colors">
-                              <Award className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h5 className="font-bold text-text-primary text-lg">
-                                {cert.certification_name}
-                              </h5>
-                              <p className="text-text-secondary font-medium">{cert.issuing_body}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
-                            {cert.issue_date && (
-                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                                <Calendar className="w-4 h-4 text-warning-500 dark:text-warning-400" />
-                                <span className="font-medium">Issued {cert.issue_date}</span>
-                              </div>
-                            )}
+                    <div key={cert.resume_certification_id} className="group relative">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <h4 className="text-[16px] font-bold text-text-primary">
+                            {cert.certification_name}
+                          </h4>
+                          <p className="text-[14px] text-text-secondary font-medium">
+                            {cert.issuing_body}
+                          </p>
+                          <div className="flex items-center gap-3 text-[12px] text-text-tertiary font-medium">
+                            {cert.issue_date && <span>Issued {cert.issue_date}</span>}
                             {!cert.does_not_expire && cert.expiration_date && (
-                              <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                                <Calendar className="w-4 h-4 text-warning-500 dark:text-warning-400" />
-                                <span className="font-medium">Expires {cert.expiration_date}</span>
-                              </div>
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-border-strong" />
+                                <span>Expires {cert.expiration_date}</span>
+                              </>
                             )}
                           </div>
-
                           {cert.credential_url && (
-                            <div className="mt-4">
-                              <a
-                                href={cert.credential_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 text-sm text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium hover:underline"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                View Credential
-                              </a>
-                            </div>
+                            <a
+                              href={cert.credential_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 mt-2 text-[13px] font-bold text-primary-600 hover:text-primary-700 underline underline-offset-4"
+                            >
+                              View Credential <ExternalLink className="w-3 h-3" />
+                            </a>
                           )}
                         </div>
-                        <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 p-0 text-text-tertiary hover:text-primary dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg"
+                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-warning-600"
                             onClick={() => handleEdit('certification', cert)}
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 p-0 text-text-tertiary hover:text-error dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg"
+                            className="h-8 w-8 rounded-lg hover:bg-error-50 dark:hover:bg-error-950/30 text-text-tertiary hover:text-error-600"
                             onClick={() =>
-                              handleDelete('certifications', cert.resume_certification_id)
+                              handleDelete(
+                                'certifications',
+                                cert.resume_certification_id,
+                                `${cert.certification_name} from ${cert.issuing_body}`
+                              )
                             }
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Section>
             </div>
           </ScrollArea>
 
-          {}
-          <div className="border-t border-border-default bg-background-surface px-8 py-5 flex items-center justify-end gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+          { }
+          {/* Footer Section */}
+          <div className="border-t border-border-default bg-background-subtle/30 px-10 py-6 flex items-center justify-end gap-3 rounded-b-[16px]">
             <Button
               onClick={onClose}
-              className="btn-primary-gradient h-11 px-8 text-base font-semibold rounded-xl"
+              className="bg-primary-600 hover:bg-primary-700 text-white h-11 px-10 text-[14px] font-bold rounded-lg transition-all shadow-md shadow-primary-500/20 active:scale-95"
             >
               Done
             </Button>
           </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+      </Dialog>
 
-      {}
+      { }
       {resume && (
         <>
           <ExperienceFormDialog
@@ -629,8 +535,38 @@ export default function ResumeDetailSheet({
             initialData={resume}
             onSuccess={handleFormSuccess}
           />
+
+          <DeleteConfirmDialog />
         </>
       )}
     </>
+  )
+}
+
+// Clean section component matching JobDetailModal vibe
+function Section({
+  title,
+  icon,
+  children,
+  action,
+}: {
+  title: string
+  icon: ReactNode
+  children: ReactNode
+  action?: ReactNode
+}) {
+  return (
+    <div className="relative pl-8 border-l-2 border-border-subtle hover:border-primary-200 dark:hover:border-primary-900 transition-colors pt-1">
+      <div className="absolute -left-[11px] top-1 p-1 bg-background-surface border border-border-default rounded-md text-text-tertiary">
+        {icon}
+      </div>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-[11px] uppercase tracking-wider font-bold text-text-tertiary">
+          {title}
+        </h4>
+        {action}
+      </div>
+      <div>{children}</div>
+    </div>
   )
 }

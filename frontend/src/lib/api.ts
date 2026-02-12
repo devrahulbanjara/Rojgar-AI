@@ -186,6 +186,10 @@ export const endpoints = {
     toggle: (jobId: string) => `/api/v1/recruiter/auto-shortlist/${jobId}/toggle`,
   },
 
+  shortlisting: {
+    trigger: (jobId: string) => `/api/v1/recruiter/jobs/${jobId}/shortlist`,
+  },
+
   applications: {
     list: '/api/v1/candidate/applications',
     detail: (id: string) => `/api/v1/candidate/applications/${id}`,
@@ -205,9 +209,10 @@ export const endpoints = {
   candidates: {
     list: '/api/v1/recruiter/candidates',
     search: '/api/v1/recruiter/candidates/search',
-
     resume: (applicationId: string) =>
       `/api/v1/recruiter/candidates/applications/${applicationId}/resume`,
+    updateApplication: (applicationId: string) =>
+      `/api/v1/recruiter/candidates/applications/${applicationId}`,
   },
 
   candidate: {
@@ -332,6 +337,11 @@ export const api = {
       apiClient.put<{ auto_shortlist: boolean }>(endpoints.autoShortlist.toggle(jobId)),
   },
 
+  shortlisting: {
+    trigger: (jobId: string) =>
+      apiClient.post<{ message: string; job_id: string }>(endpoints.shortlisting.trigger(jobId)),
+  },
+
   applications: {
     list: (params?: Record<string, unknown>) =>
       apiClient.get(
@@ -358,6 +368,10 @@ export const api = {
         `${endpoints.candidates.search}${params ? `?${new URLSearchParams(params as Record<string, string>)}` : ''}`
       ),
     getResume: (applicationId: string) => apiClient.get(endpoints.candidates.resume(applicationId)),
+    updateApplication: (
+      applicationId: string,
+      data: { status?: string; score?: number; feedback?: string }
+    ) => apiClient.patch(endpoints.candidates.updateApplication(applicationId), data),
   },
 
   candidate: {

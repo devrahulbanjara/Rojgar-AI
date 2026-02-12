@@ -66,7 +66,7 @@ export function RecruiterModal({
     <Dialog isOpen={isOpen} onClose={onClose} className="max-w-md mx-4 rounded-[20px]">
       <div className="flex flex-col bg-background-surface rounded-[20px] overflow-hidden">
         {}
-        <DialogHeader className="bg-gradient-to-b from-background-subtle/80 to-background-surface px-8 py-8 border-b border-border-subtle">
+        <DialogHeader className="bg-background-surface px-8 py-8 border-b border-border-subtle">
           <DialogTitle className="text-2xl font-bold text-text-primary leading-tight">
             {mode === 'add' ? 'Add Recruiter' : 'Edit Recruiter'}
           </DialogTitle>

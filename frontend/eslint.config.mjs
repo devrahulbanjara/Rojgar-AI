@@ -6,6 +6,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import nextPlugin from '@next/eslint-plugin-next'
 import prettier from 'eslint-config-prettier'
 import globals from 'globals'
+import unusedImports from 'eslint-plugin-unused-imports'
 
 export default [
   js.configs.recommended,
@@ -36,6 +37,7 @@ export default [
       react,
       'react-hooks': reactHooks,
       '@next/next': nextPlugin,
+      'unused-imports': unusedImports,
     },
     rules: {
       // Basic rules
@@ -45,7 +47,17 @@ export default [
       'no-var': 'error',
       'object-shorthand': 'error',
       'prefer-template': 'error',
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
 
       // React rules
       'react/react-in-jsx-scope': 'off',
@@ -85,11 +97,22 @@ export default [
       react,
       'react-hooks': reactHooks,
       '@next/next': nextPlugin,
+      'unused-imports': unusedImports,
     },
     rules: {
       // Disable base rule and use TypeScript version
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
 
       // TypeScript rules
       '@typescript-eslint/no-explicit-any': 'warn',
