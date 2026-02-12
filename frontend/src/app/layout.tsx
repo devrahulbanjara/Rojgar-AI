@@ -1,20 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
+import { Inter, Manrope, JetBrains_Mono } from 'next/font/google'
 import React from 'react'
 import './globals.css'
 import { Providers } from '../components/Providers'
-import { Toaster } from 'sonner'
+import { Provider as ChakraProvider } from '../components/ui/provider'
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-inter',
   display: 'swap',
 })
 
-const jakarta = Plus_Jakarta_Sans({
+const manrope = Manrope({
+  variable: '--font-manrope',
   subsets: ['latin'],
-  variable: '--font-display',
   weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 })
@@ -29,31 +28,41 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'ConvexHire',
   description:
-    'Transform your hiring process with AI-powered job matching, real-time application tracking, and automated scheduling.',
+    'Make hiring understandable, efficient, and fair with ConvexHire. AI-powered recruitment platform that treats hiring as a reasoning problem, not keyword filtering.',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-light.svg', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-dark.svg', media: '(prefers-color-scheme: dark)' },
     ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
-  manifest: '/site.webmanifest',
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('convexhire-theme');
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${inter.variable} ${jakarta.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
-        <Providers>
-          {children}
-          <Toaster position="top-right" richColors theme="system" />
-        </Providers>
+        <ChakraProvider>
+          <Providers>{children}</Providers>
+        </ChakraProvider>
       </body>
     </html>
   )

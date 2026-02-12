@@ -92,7 +92,7 @@ const Dialog: React.FC<DialogProps> = ({
             className={cn(
               'relative z-50 w-full bg-background-surface border border-default',
 
-              'rounded-[20px]',
+              'rounded-[5px]',
 
               'max-w-lg',
               'shadow-xl',
@@ -149,7 +149,7 @@ const DialogFooter: React.FC<DialogFooterProps> = ({ children, className }) => {
   return (
     <div
       className={cn(
-        'flex justify-end gap-3 px-8 py-6 bg-background-subtle rounded-b-2xl border-t border-subtle',
+        'flex justify-end gap-3 px-8 py-6 bg-background-subtle rounded-b-[5px] border-t border-subtle',
         className
       )}
     >

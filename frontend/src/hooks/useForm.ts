@@ -125,14 +125,14 @@ export function useForm<T extends Record<string, unknown>>(
               if (validationError) {
                 return { ...prev, [field]: validationError }
               } else {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                 
                 const { [field]: _, ...rest } = prev
                 return rest
               }
             })
           } else {
             setErrors(prev => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+               
               const { [field]: _, ...rest } = prev
               return rest
             })
@@ -140,7 +140,7 @@ export function useForm<T extends Record<string, unknown>>(
         } else {
           setErrors(prev => {
             if (prev[field]) {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+               
               const { [field]: _, ...rest } = prev
               return rest
             }

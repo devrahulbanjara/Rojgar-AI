@@ -1,11 +1,9 @@
-'use client'
-
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Sparkles,
+  Wand2,
   Building2,
   DollarSign,
   FileText,
@@ -14,11 +12,28 @@ import {
   Briefcase,
   Pencil,
   X as XIcon,
-  ChevronDown,
+  Bot,
+  MapPin,
+  Globe,
+  Clock,
+  Users,
+  Target,
+  Award,
+  Gift,
+  Calendar,
+  Zap,
+  ClipboardList,
+  ListChecks,
+  Coins,
+  Sparkles,
+  Plus,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useCreateJob, useGenerateJobDraft, useUpdateJob } from '../../hooks/queries/useJobs'
 import { useReferenceJDs } from '../../hooks/queries/useReferenceJDs'
+import { useAuth } from '../../hooks/useAuth'
+import { ActionButton } from '../ui'
+import { SelectDropdown } from '../ui/select-dropdown'
 import { toast } from 'sonner'
 import type { CreateJobRequest, Job } from '../../types/job'
 
@@ -53,119 +68,6 @@ function SkeletonLine({ className }: { className?: string }) {
   )
 }
 
-interface CustomDropdownProps {
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string; disabled?: boolean }[]
-  placeholder: string
-  disabled?: boolean
-  className?: string
-}
-
-function CustomDropdown({
-  value,
-  onChange,
-  options,
-  placeholder,
-  disabled = false,
-  className,
-}: CustomDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
-
-  const selectedOption = options.find(option => option.value === value)
-
-  return (
-    <div className={cn('relative', className)} ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        onKeyDown={e => {
-          if (disabled) return
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setIsOpen(!isOpen)
-          } else if (e.key === 'Escape') {
-            setIsOpen(false)
-          }
-        }}
-        className={cn(
-          'w-full h-12 pl-4 pr-10 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99]',
-          disabled
-            ? 'opacity-50 cursor-not-allowed border-border-default'
-            : isOpen
-              ? 'border-primary-500 ring-2 ring-primary-500/20 shadow-md'
-              : 'border-border-default hover:border-primary-300 hover:bg-gradient-to-r hover:from-primary-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
-        )}
-      >
-        <div className="flex items-center gap-3 h-full">
-          {selectedOption ? (
-            <span className="font-medium text-text-primary">{selectedOption.label}</span>
-          ) : (
-            <span className="text-text-tertiary">{placeholder}</span>
-          )}
-        </div>
-        <ChevronDown
-          className={cn(
-            'absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-all duration-200',
-            disabled
-              ? 'text-text-muted'
-              : isOpen
-                ? 'rotate-180 text-primary-600'
-                : 'text-text-muted group-hover:text-primary-500'
-          )}
-        />
-      </button>
-
-      {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-2 bg-background-surface border border-primary-200 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ring-1 ring-primary-100">
-          {options.map((option, index) => (
-            <button
-              key={option.value}
-              type="button"
-              disabled={option.disabled}
-              onClick={() => {
-                if (!option.disabled) {
-                  onChange(option.value)
-                  setIsOpen(false)
-                }
-              }}
-              className={cn(
-                'w-full px-4 py-3 text-left focus:outline-none transition-all duration-200 flex items-center gap-3 text-base',
-                option.disabled
-                  ? 'text-text-muted cursor-not-allowed bg-background-subtle'
-                  : 'text-text-primary hover:text-primary-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-primary-50 focus:bg-gradient-to-r focus:from-primary-50 focus:to-primary-50 transform hover:scale-[1.01] active:scale-[0.99] group'
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <span className="font-medium">{option.label}</span>
-              {!option.disabled && (
-                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-all duration-200">
-                  <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 const revisionSuggestions = [
   'Change the salary in Nepali Rupees (NPR)',
   'Add more technical skills and technologies related to this field.',
@@ -185,6 +87,7 @@ export function JobCreationWizard({
   jobToEdit,
   initialReferenceJdId,
 }: JobCreationWizardProps) {
+  const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGenerated, setIsGenerated] = useState(false)
@@ -225,8 +128,8 @@ export function JobCreationWizard({
     reference_jd_id: initialReferenceJdId || '',
     description: '',
     jobResponsibilities: [''],
-    locationCity: '',
-    locationCountry: '',
+    locationCity: user?.organization?.location_city || '',
+    locationCountry: user?.organization?.location_country || '',
     locationType: '',
     employmentType: '',
     requiredSkillsAndExperience: [''],
@@ -715,12 +618,12 @@ export function JobCreationWizard({
                     className={cn(
                       'flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 relative',
                       activeTab === 'agent'
-                        ? 'text-primary-700 border-b-[3px] border-primary-600'
+                        ? 'text-primary-700 dark:text-primary-400 border-b-[3px] border-primary-600'
                         : 'text-text-secondary hover:text-text-primary border-b-[3px] border-transparent'
                     )}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <Sparkles className="w-4 h-4" />
+                      <Bot className="w-4 h-4" />
                       <span>Agent Mode</span>
                     </div>
                   </button>
@@ -743,263 +646,344 @@ export function JobCreationWizard({
                 {}
                 {activeTab === 'agent' && (
                   <div className="px-8 py-6 space-y-6">
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Title <span className="text-red-400 dark:text-red-300">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={e => updateField('title', e.target.value)}
-                        placeholder="e.g. Senior ML Engineer"
-                        className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary text-text-primary placeholder:text-text-muted transition-all text-base"
-                      />
-                    </div>
-
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Reference Job Description{' '}
-                        <span className="text-red-400 dark:text-red-300">*</span>
-                      </label>
-                      <CustomDropdown
-                        value={formData.reference_jd_id}
-                        onChange={value => updateField('reference_jd_id', value)}
-                        placeholder="Select a reference JD..."
-                        disabled={isLoadingReferenceJDs}
-                        options={
-                          isLoadingReferenceJDs
-                            ? [{ value: '', label: 'Loading reference JDs...', disabled: true }]
-                            : referenceJDsData?.reference_jds &&
-                                referenceJDsData.reference_jds.length > 0
-                              ? referenceJDsData.reference_jds.map(refJD => {
-                                  const jobSummary = refJD.job_summary || refJD.role_overview || ''
-                                  return {
-                                    value: refJD.id,
-                                    label: refJD.department
-                                      ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
-                                      : jobSummary.slice(0, 80),
-                                  }
-                                })
-                              : [{ value: '', label: 'No reference JDs available', disabled: true }]
-                        }
-                      />
-                      <p className="text-xs text-text-tertiary mt-2">
-                        {referenceJDsData?.reference_jds &&
-                        referenceJDsData.reference_jds.length > 0
-                          ? 'Select a reference JD to guide the AI in generating a similar job description.'
-                          : 'Create reference JDs in your organization to use them as templates for AI generation.'}
-                      </p>
-                    </div>
-
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Keywords & Requirements{' '}
-                        <span className="text-red-400 dark:text-red-300">*</span>
-                      </label>
-                      <textarea
-                        value={formData.keywords || ''}
-                        onChange={e => updateField('keywords', e.target.value)}
-                        placeholder={
-                          jobToEdit
-                            ? "Describe what you'd like to change or improve..."
-                            : 'e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience...'
-                        }
-                        rows={4}
-                        className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary text-text-primary placeholder:text-text-muted transition-all resize-none text-base"
-                      />
-                    </div>
-
-                    {}
-                    <button
-                      onClick={handleGenerate}
-                      disabled={
-                        isGenerating ||
-                        generateDraftMutation.isPending ||
-                        !formData.title.trim() ||
-                        !formData.keywords.trim() ||
-                        !formData.reference_jd_id
-                      }
-                      className={cn(
-                        'group relative w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg overflow-hidden',
-                        !isGenerating &&
-                          !generateDraftMutation.isPending &&
-                          formData.title.trim() &&
-                          formData.keywords.trim() &&
-                          formData.reference_jd_id
-                          ? 'bg-gradient-to-r from-primary-600 to-blue-600 dark:from-primary-500 dark:to-blue-500 text-white shadow-primary-500/25 hover:from-primary-700 hover:to-blue-700 dark:hover:from-primary-600 dark:hover:to-blue-600 hover:shadow-primary-500/40 hover:-translate-y-0.5'
-                          : 'bg-background-subtle text-text-muted cursor-not-allowed'
-                      )}
-                    >
-                      {!isGenerating &&
-                        !generateDraftMutation.isPending &&
-                        formData.title.trim() &&
-                        formData.keywords.trim() &&
-                        formData.reference_jd_id && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        )}
-                      <div className="relative flex items-center gap-2">
-                        {isGenerating || generateDraftMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Generating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200" />
-                            <span>{jobToEdit ? 'Revise with AI' : 'Generate with AI'}</span>
-                          </>
-                        )}
+                    {/* AI Generation Card */}
+                    <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                      <div className="px-6 py-5 border-b border-border-subtle flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center">
+                          <Bot className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-text-primary">AI Job Generation</h4>
+                          <p className="text-sm text-text-tertiary mt-0.5">
+                            Provide details and let AI generate a complete job description.
+                          </p>
+                        </div>
                       </div>
-                    </button>
+                      <div className="px-6 py-5 space-y-5">
+                        {/* Job Title */}
+                        <div>
+                          <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4 text-text-tertiary" />
+                            Job Title <span className="text-error">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.title}
+                            onChange={e => updateField('title', e.target.value)}
+                            placeholder="e.g. Senior ML Engineer"
+                            className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary hover:border-border-strong text-text-primary placeholder:text-text-muted transition-all text-base"
+                          />
+                        </div>
+
+                        {/* Department & Level */}
+                        <div className="grid grid-cols-2 gap-5">
+                          <div>
+                            <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-text-tertiary" />
+                              Department <span className="text-error">*</span>
+                            </label>
+                            <SelectDropdown
+                              value={formData.department}
+                              onChange={value => updateField('department', value)}
+                              placeholder="Select department..."
+                              options={[
+                                { value: 'Engineering', label: 'Engineering' },
+                                { value: 'Design', label: 'Design' },
+                                { value: 'Product', label: 'Product' },
+                                { value: 'Marketing', label: 'Marketing' },
+                                { value: 'Sales', label: 'Sales' },
+                                { value: 'Operations', label: 'Operations' },
+                              ]}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                              <Users className="w-4 h-4 text-text-tertiary" />
+                              Level <span className="text-error">*</span>
+                            </label>
+                            <SelectDropdown
+                              value={formData.level}
+                              onChange={value => updateField('level', value)}
+                              placeholder="Select level..."
+                              options={[
+                                { value: 'Junior', label: 'Junior' },
+                                { value: 'Mid', label: 'Mid-Level' },
+                                { value: 'Senior', label: 'Senior' },
+                                { value: 'Lead', label: 'Lead' },
+                                { value: 'Principal', label: 'Principal' },
+                              ]}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Reference JD */}
+                        <div>
+                          <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-text-tertiary" />
+                            Reference Job Description <span className="text-error">*</span>
+                          </label>
+                          <SelectDropdown
+                            value={formData.reference_jd_id}
+                            onChange={value => updateField('reference_jd_id', value)}
+                            placeholder="Select a reference JD..."
+                            disabled={isLoadingReferenceJDs}
+                            options={
+                              isLoadingReferenceJDs
+                                ? [{ value: '', label: 'Loading reference JDs...', disabled: true }]
+                                : referenceJDsData?.reference_jds &&
+                                    referenceJDsData.reference_jds.length > 0
+                                  ? referenceJDsData.reference_jds.map(refJD => {
+                                      const jobSummary =
+                                        refJD.job_summary || refJD.role_overview || ''
+                                      return {
+                                        value: refJD.id,
+                                        label: refJD.department
+                                          ? `${refJD.department} - ${jobSummary.slice(0, 50)}...`
+                                          : jobSummary.slice(0, 80),
+                                      }
+                                    })
+                                  : [
+                                      {
+                                        value: '',
+                                        label: 'No reference JDs available',
+                                        disabled: true,
+                                      },
+                                    ]
+                            }
+                          />
+                          <p className="text-xs text-text-tertiary mt-2">
+                            {referenceJDsData?.reference_jds &&
+                            referenceJDsData.reference_jds.length > 0
+                              ? 'Select a reference JD to guide the AI in generating a similar job description.'
+                              : 'Create reference JDs in your organization to use them as templates for AI generation.'}
+                          </p>
+                        </div>
+
+                        {/* Keywords & Requirements */}
+                        <div>
+                          <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                            <Target className="w-4 h-4 text-text-tertiary" />
+                            Keywords & Requirements <span className="text-error">*</span>
+                          </label>
+                          <textarea
+                            value={formData.keywords || ''}
+                            onChange={e => updateField('keywords', e.target.value)}
+                            placeholder={
+                              jobToEdit
+                                ? "Describe what you'd like to change or improve..."
+                                : 'e.g. FastAPI, AWS, PyTorch, MLOps, 5 years experience...'
+                            }
+                            rows={4}
+                            className="w-full px-4 py-3 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary hover:border-border-strong text-text-primary placeholder:text-text-muted transition-all resize-none text-base"
+                          />
+                        </div>
+
+                        {}
+                        <button
+                          onClick={handleGenerate}
+                          disabled={
+                            isGenerating ||
+                            generateDraftMutation.isPending ||
+                            !formData.title.trim() ||
+                            !formData.keywords.trim() ||
+                            !formData.reference_jd_id
+                          }
+                          className={cn(
+                            'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200',
+                            !isGenerating &&
+                              !generateDraftMutation.isPending &&
+                              formData.title.trim() &&
+                              formData.keywords.trim() &&
+                              formData.reference_jd_id
+                              ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md'
+                              : 'bg-background-subtle text-text-muted cursor-not-allowed'
+                          )}
+                        >
+                          {isGenerating || generateDraftMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Generating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Wand2 className="w-4 h-4" />
+                              <span>{jobToEdit ? 'Revise with AI' : 'Generate with AI'}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {}
+                {/* Manual Mode */}
                 {activeTab === 'manual' && (
                   <div className="px-8 py-6 space-y-6">
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Title <span className="text-red-400 dark:text-red-300">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={e => updateField('title', e.target.value)}
-                        placeholder="e.g. Senior Software Engineer"
-                        className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary text-text-primary placeholder:text-text-muted transition-all text-base"
-                      />
-                    </div>
-
-                    {}
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
-                          Department <span className="text-red-400 dark:text-red-300">*</span>
-                        </label>
-                        <CustomDropdown
-                          value={formData.department}
-                          onChange={value => updateField('department', value)}
-                          placeholder="Select department..."
-                          options={[
-                            { value: 'Engineering', label: 'Engineering' },
-                            { value: 'Design', label: 'Design' },
-                            { value: 'Product', label: 'Product' },
-                            { value: 'Marketing', label: 'Marketing' },
-                            { value: 'Sales', label: 'Sales' },
-                            { value: 'Operations', label: 'Operations' },
-                          ]}
-                        />
+                    {/* Basic Info Card */}
+                    <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                      <div className="px-6 py-5 border-b border-border-subtle flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
+                          <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-text-primary">Basic Information</h4>
+                          <p className="text-sm text-text-tertiary mt-0.5">
+                            Enter the core details for this job posting.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
-                          Level <span className="text-error-400 dark:text-error-300">*</span>
-                        </label>
-                        <CustomDropdown
-                          value={formData.level}
-                          onChange={value => updateField('level', value)}
-                          placeholder="Select level..."
-                          options={[
-                            { value: 'Junior', label: 'Junior' },
-                            { value: 'Mid', label: 'Mid-Level' },
-                            { value: 'Senior', label: 'Senior' },
-                            { value: 'Lead', label: 'Lead' },
-                            { value: 'Principal', label: 'Principal' },
-                          ]}
-                        />
+                      <div className="px-6 py-5 space-y-5">
+                        {/* Job Title */}
+                        <div>
+                          <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4 text-text-tertiary" />
+                            Job Title <span className="text-error">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.title}
+                            onChange={e => updateField('title', e.target.value)}
+                            placeholder="e.g. Senior Software Engineer"
+                            className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary hover:border-border-strong text-text-primary placeholder:text-text-muted transition-all text-base"
+                          />
+                        </div>
+
+                        {/* Department & Level */}
+                        <div className="grid grid-cols-2 gap-5">
+                          <div>
+                            <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-text-tertiary" />
+                              Department <span className="text-error">*</span>
+                            </label>
+                            <SelectDropdown
+                              value={formData.department}
+                              onChange={value => updateField('department', value)}
+                              placeholder="Select department..."
+                              options={[
+                                { value: 'Engineering', label: 'Engineering' },
+                                { value: 'Design', label: 'Design' },
+                                { value: 'Product', label: 'Product' },
+                                { value: 'Marketing', label: 'Marketing' },
+                                { value: 'Sales', label: 'Sales' },
+                                { value: 'Operations', label: 'Operations' },
+                              ]}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                              <Users className="w-4 h-4 text-text-tertiary" />
+                              Level <span className="text-error">*</span>
+                            </label>
+                            <SelectDropdown
+                              value={formData.level}
+                              onChange={value => updateField('level', value)}
+                              placeholder="Select level..."
+                              options={[
+                                { value: 'Junior', label: 'Junior' },
+                                { value: 'Mid', label: 'Mid-Level' },
+                                { value: 'Senior', label: 'Senior' },
+                                { value: 'Lead', label: 'Lead' },
+                                { value: 'Principal', label: 'Principal' },
+                              ]}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Job Summary */}
+                        <div>
+                          <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-text-tertiary" />
+                            Job Summary <span className="text-error">*</span>
+                          </label>
+                          <textarea
+                            value={formData.description}
+                            onChange={e => updateField('description', e.target.value)}
+                            rows={Math.max(4, Math.ceil(formData.description.length / 80))}
+                            placeholder="Summarize what this role is about..."
+                            className="w-full px-4 py-3 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-border-strong resize-y text-base leading-relaxed text-text-primary placeholder:text-text-muted min-h-[100px] max-h-[300px] overflow-y-auto transition-all"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Summary <span className="text-error-400 dark:text-error-300">*</span>
-                      </label>
-                      <textarea
-                        value={formData.description}
-                        onChange={e => updateField('description', e.target.value)}
-                        rows={Math.max(4, Math.ceil(formData.description.length / 80))}
-                        placeholder="Summarize what this role is about..."
-                        className="w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 resize-y text-base leading-relaxed text-text-primary placeholder:text-text-muted min-h-[100px] max-h-[300px] overflow-y-auto"
-                      />
-                    </div>
-
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Responsibilities
-                      </label>
-                      <p className="text-sm text-text-tertiary mb-3">
-                        Add key responsibilities and duties for this role.
-                      </p>
-                      <div className="space-y-4">
+                    {/* Job Responsibilities Card */}
+                    <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                      <div className="px-6 py-5 border-b border-border-subtle flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center">
+                          <ClipboardList className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-text-primary">
+                            Job Responsibilities
+                          </h4>
+                          <p className="text-sm text-text-tertiary mt-0.5">
+                            Add key responsibilities and duties for this role.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="px-6 py-5 space-y-3">
                         {formData.jobResponsibilities.map((item, index) => {
                           const isEditing =
                             editingField?.field === 'jobResponsibilities' &&
                             editingField.index === index
                           return (
-                            <div key={index} className="relative">
+                            <div key={index} className="group">
                               {isEditing ? (
-                                <div className="space-y-2">
+                                <div className="bg-background-subtle rounded-xl p-4 border-2 border-primary-500 shadow-sm">
                                   <textarea
                                     value={editValue}
                                     onChange={e => setEditValue(e.target.value)}
                                     placeholder="e.g. Design and implement scalable backend services"
                                     rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                    className="w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                                    className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-all duration-200 resize-none min-h-[80px]"
                                     autoFocus
                                   />
-                                  <div className="flex gap-2 justify-end">
+                                  <div className="flex gap-2 justify-end mt-3">
                                     <button
                                       type="button"
                                       onClick={cancelEdit}
-                                      className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
+                                      className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-background-surface border border-border-default hover:border-border-strong rounded-lg transition-all duration-200"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       type="button"
                                       onClick={saveEdit}
-                                      className="px-3 py-1.5 text-sm text-text-inverse bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                                      className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all duration-200 shadow-sm"
                                     >
                                       Save
                                     </button>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="relative">
-                                  <textarea
-                                    value={item}
-                                    onChange={e =>
-                                      updateArrayField('jobResponsibilities', index, e.target.value)
-                                    }
-                                    placeholder="e.g. Design and implement scalable backend services"
-                                    rows={Math.max(2, Math.ceil(item.length / 60))}
-                                    className={cn(
-                                      'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
-                                      'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                      'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                      'whitespace-pre-wrap break-words',
-                                      isGenerated &&
-                                        item &&
-                                        'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
-                                    )}
-                                  />
-                                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                                <div className="flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 hover:shadow-sm hover:border-ai-200 dark:hover:border-ai-800 bg-background-subtle border-border-default">
+                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center mt-0.5">
+                                    <span className="text-xs font-semibold text-ai-600 dark:text-ai-400">
+                                      {index + 1}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <textarea
+                                      value={item}
+                                      onChange={e =>
+                                        updateArrayField(
+                                          'jobResponsibilities',
+                                          index,
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="e.g. Design and implement scalable backend services"
+                                      rows={Math.max(1, Math.ceil(item.length / 70))}
+                                      className="w-full bg-transparent border-none focus:outline-none text-base leading-relaxed text-text-primary placeholder:text-text-muted resize-none"
+                                    />
+                                  </div>
+                                  <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                     <button
                                       type="button"
                                       onClick={() =>
                                         startEditing('jobResponsibilities', index, item)
                                       }
-                                      className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
-                                      style={{
-                                        right: '40px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                      }}
+                                      className="p-2 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-all duration-200"
                                       aria-label="Edit responsibility"
                                     >
                                       <Pencil className="w-4 h-4" />
@@ -1010,12 +994,7 @@ export function JobCreationWizard({
                                         onClick={() =>
                                           removeArrayItem('jobResponsibilities', index)
                                         }
-                                        className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
-                                        style={{
-                                          right: '12px',
-                                          top: '50%',
-                                          transform: 'translateY(-50%)',
-                                        }}
+                                        className="p-2 text-text-muted hover:text-error-500 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg transition-all duration-200"
                                         aria-label="Remove responsibility"
                                       >
                                         <XIcon className="w-4 h-4" />
@@ -1030,9 +1009,10 @@ export function JobCreationWizard({
                         <button
                           type="button"
                           onClick={() => addArrayItem('jobResponsibilities')}
-                          className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
+                          className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-ai-600 dark:text-ai-400 hover:text-ai-700 dark:hover:text-ai-300 hover:bg-ai-50 dark:hover:bg-ai-950/30 rounded-xl transition-all duration-200 w-full justify-center border-2 border-dashed border-ai-200 dark:border-ai-800 hover:border-ai-400 dark:hover:border-ai-600"
                         >
-                          + Add responsibility
+                          <Plus className="w-4 h-4" />
+                          Add Responsibility
                         </button>
                       </div>
                     </div>
@@ -1077,16 +1057,16 @@ export function JobCreationWizard({
               <div className="space-y-8">
                 {}
                 {isGenerated && (
-                  <div className="bg-gradient-to-r from-ai-50 to-ai-100 dark:from-ai-950/30 dark:to-ai-900/30 border border-ai-200 dark:border-ai-800 rounded-xl px-8 py-6 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
-                    <div className="w-10 h-10 rounded-full bg-background-surface flex items-center justify-center flex-shrink-0 shadow-sm border border-ai-200">
-                      <Sparkles className="w-5 h-5 text-ai-600" />
+                  <div className="bg-gradient-to-r from-success-50 to-success-100 dark:from-success-950/30 dark:to-success-900/30 border border-success-200 dark:border-success-800 rounded-xl px-8 py-6 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
+                    <div className="w-12 h-12 rounded-xl bg-background-surface flex items-center justify-center flex-shrink-0 shadow-sm border border-success-200 dark:border-success-800">
+                      <Check className="w-6 h-6 text-success-600 dark:text-success-400" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-xl font-bold text-ai-900 dark:text-ai-100 mb-2">
-                        AI Magic Applied!
+                      <h4 className="text-lg font-bold text-success-900 dark:text-success-100 mb-1">
+                        Job Description Generated
                       </h4>
-                      <p className="text-sm text-ai-700 dark:text-ai-300 leading-relaxed">
-                        We&apos;ve generated a professional job description based on your
+                      <p className="text-sm text-success-700 dark:text-success-300 leading-relaxed">
+                        We&apos;ve created a professional job description based on your
                         requirements. Review the highlighted fields below and make any edits you
                         need.
                       </p>
@@ -1094,13 +1074,17 @@ export function JobCreationWizard({
                   </div>
                 )}
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
+                      <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    </div>
                     <h4 className="text-xl font-bold text-text-primary">Basic Information</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Title *
+                      <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                        <Briefcase className="w-4 h-4 text-text-tertiary" />
+                        Job Title <span className="text-error">*</span>
                       </label>
                       <input
                         type="text"
@@ -1119,10 +1103,11 @@ export function JobCreationWizard({
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
-                          Department *
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-text-tertiary" />
+                          Department <span className="text-error">*</span>
                         </label>
-                        <CustomDropdown
+                        <SelectDropdown
                           value={formData.department}
                           onChange={value => updateField('department', value)}
                           placeholder="Select department..."
@@ -1142,10 +1127,11 @@ export function JobCreationWizard({
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
-                          Level *
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-text-tertiary" />
+                          Level <span className="text-error">*</span>
                         </label>
-                        <CustomDropdown
+                        <SelectDropdown
                           value={formData.level}
                           onChange={value => updateField('level', value)}
                           placeholder="Select level..."
@@ -1165,10 +1151,11 @@ export function JobCreationWizard({
                       </div>
                     </div>
 
-                    {}
+                    {/* Job Summary */}
                     <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Summary *
+                      <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-text-tertiary" />
+                        Job Summary <span className="text-error">*</span>
                       </label>
                       <p className="text-sm text-text-tertiary mb-3">
                         Brief 2-3 sentence summary about this position.
@@ -1189,79 +1176,92 @@ export function JobCreationWizard({
                       />
                     </div>
 
-                    {}
-                    <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Job Responsibilities
-                      </label>
-                      <p className="text-sm text-text-tertiary mb-3">
-                        Add key responsibilities and duties for this role.
-                      </p>
-                      <div className="space-y-4">
+                    {/* Job Responsibilities */}
+                    <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
+                      <div className="px-6 py-5 border-b border-border-subtle flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center">
+                          <ClipboardList className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-text-primary">
+                            Job Responsibilities
+                          </h4>
+                          <p className="text-sm text-text-tertiary mt-0.5">
+                            Key responsibilities and duties for this role.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="px-6 py-5 space-y-3">
                         {formData.jobResponsibilities.map((item, index) => {
                           const isEditing =
                             editingField?.field === 'jobResponsibilities' &&
                             editingField.index === index
                           return (
-                            <div key={index} className="relative">
+                            <div key={index} className="group">
                               {isEditing ? (
-                                <div className="space-y-2">
+                                <div className="bg-background-subtle rounded-xl p-4 border-2 border-ai-500 shadow-sm">
                                   <textarea
                                     value={editValue}
                                     onChange={e => setEditValue(e.target.value)}
                                     placeholder="e.g. Design and implement scalable backend services"
                                     rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                    className="w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto whitespace-pre-wrap break-words"
+                                    className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-ai-500/20 focus:border-ai-500 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-all duration-200 resize-none min-h-[80px]"
                                     autoFocus
                                   />
-                                  <div className="flex gap-2 justify-end">
+                                  <div className="flex gap-2 justify-end mt-3">
                                     <button
                                       type="button"
                                       onClick={cancelEdit}
-                                      className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
+                                      className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-background-surface border border-border-default hover:border-border-strong rounded-lg transition-all duration-200"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       type="button"
                                       onClick={saveEdit}
-                                      className="px-3 py-1.5 text-sm text-text-inverse bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                                      className="px-4 py-2 text-sm font-medium text-white bg-ai-600 hover:bg-ai-700 rounded-lg transition-all duration-200 shadow-sm"
                                     >
                                       Save
                                     </button>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="relative">
-                                  <textarea
-                                    value={item}
-                                    onChange={e =>
-                                      updateArrayField('jobResponsibilities', index, e.target.value)
-                                    }
-                                    placeholder="e.g. Design and implement scalable backend services"
-                                    rows={Math.max(2, Math.ceil(item.length / 60))}
-                                    className={cn(
-                                      'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
-                                      'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                      'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                      'whitespace-pre-wrap break-words',
-                                      isGenerated &&
-                                        item &&
-                                        'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
-                                    )}
-                                  />
-                                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                                <div
+                                  className={cn(
+                                    'flex items-start gap-3 p-4 rounded-xl border transition-all duration-200',
+                                    'hover:shadow-sm hover:border-ai-200 dark:hover:border-ai-800',
+                                    isGenerated && item
+                                      ? 'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
+                                      : 'bg-background-subtle border-border-default'
+                                  )}
+                                >
+                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center mt-0.5">
+                                    <span className="text-xs font-semibold text-ai-600 dark:text-ai-400">
+                                      {index + 1}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <textarea
+                                      value={item}
+                                      onChange={e =>
+                                        updateArrayField(
+                                          'jobResponsibilities',
+                                          index,
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="e.g. Design and implement scalable backend services"
+                                      rows={Math.max(1, Math.ceil(item.length / 70))}
+                                      className="w-full bg-transparent border-none focus:outline-none text-base leading-relaxed text-text-primary placeholder:text-text-muted resize-none"
+                                    />
+                                  </div>
+                                  <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                     <button
                                       type="button"
                                       onClick={() =>
                                         startEditing('jobResponsibilities', index, item)
                                       }
-                                      className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
-                                      style={{
-                                        right: '40px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                      }}
+                                      className="p-2 text-text-muted hover:text-ai-600 dark:hover:text-ai-400 hover:bg-ai-50 dark:hover:bg-ai-900/30 rounded-lg transition-all duration-200"
                                       aria-label="Edit responsibility"
                                     >
                                       <Pencil className="w-4 h-4" />
@@ -1272,12 +1272,7 @@ export function JobCreationWizard({
                                         onClick={() =>
                                           removeArrayItem('jobResponsibilities', index)
                                         }
-                                        className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
-                                        style={{
-                                          right: '12px',
-                                          top: '50%',
-                                          transform: 'translateY(-50%)',
-                                        }}
+                                        className="p-2 text-text-muted hover:text-error-500 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg transition-all duration-200"
                                         aria-label="Remove responsibility"
                                       >
                                         <XIcon className="w-4 h-4" />
@@ -1292,9 +1287,10 @@ export function JobCreationWizard({
                         <button
                           type="button"
                           onClick={() => addArrayItem('jobResponsibilities')}
-                          className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
+                          className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-ai-600 dark:text-ai-400 hover:text-ai-700 dark:hover:text-ai-300 hover:bg-ai-50 dark:hover:bg-ai-950/30 rounded-xl transition-all duration-200 w-full justify-center border-2 border-dashed border-ai-200 dark:border-ai-800 hover:border-ai-400 dark:hover:border-ai-600"
                         >
-                          + Add responsibility
+                          <Plus className="w-4 h-4" />
+                          Add Responsibility
                         </button>
                       </div>
                     </div>
@@ -1303,27 +1299,31 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {}
+            {/* Step 2: Job Details */}
             {getContentStep(currentStep) === 2 && (
               <div className="space-y-8">
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
-                    <h4 className="text-xl font-bold text-text-primary">Job Details</h4>
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <h4 className="text-xl font-bold text-text-primary">Location & Employment</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
-                          City *
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-text-tertiary" />
+                          City <span className="text-error">*</span>
                         </label>
                         <input
                           type="text"
                           value={formData.locationCity}
                           onChange={e => updateField('locationCity', e.target.value)}
-                          placeholder="e.g. "
+                          placeholder="e.g. Kathmandu"
                           className={cn(
-                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200',
+                            'w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-border-strong',
+                            'text-base text-text-primary placeholder:text-text-muted transition-all duration-200',
                             isGenerated &&
                               formData.locationCity &&
                               'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
@@ -1331,8 +1331,9 @@ export function JobCreationWizard({
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
-                          Country *
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-text-tertiary" />
+                          Country <span className="text-error">*</span>
                         </label>
                         <input
                           type="text"
@@ -1340,8 +1341,8 @@ export function JobCreationWizard({
                           onChange={e => updateField('locationCountry', e.target.value)}
                           placeholder="e.g. Nepal"
                           className={cn(
-                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200',
+                            'w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-border-strong',
+                            'text-base text-text-primary placeholder:text-text-muted transition-all duration-200',
                             isGenerated &&
                               formData.locationCountry &&
                               'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
@@ -1350,10 +1351,11 @@ export function JobCreationWizard({
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Location Type *
+                      <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-text-tertiary" />
+                        Location Type <span className="text-error">*</span>
                       </label>
-                      <CustomDropdown
+                      <SelectDropdown
                         value={formData.locationType}
                         onChange={value => updateField('locationType', value)}
                         placeholder="Select type..."
@@ -1370,10 +1372,11 @@ export function JobCreationWizard({
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
-                        Employment Type *
+                      <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-text-tertiary" />
+                        Employment Type <span className="text-error">*</span>
                       </label>
-                      <CustomDropdown
+                      <SelectDropdown
                         value={formData.employmentType}
                         onChange={value => updateField('employmentType', value)}
                         placeholder="Select type..."
@@ -1395,90 +1398,94 @@ export function JobCreationWizard({
               </div>
             )}
 
-            {}
+            {/* Step 3: Requirements */}
             {getContentStep(currentStep) === 3 && (
               <div className="space-y-8">
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
-                    <h4 className="text-xl font-bold text-text-primary">Required Qualifications</h4>
-                    <p className="text-sm text-text-tertiary mt-2">
-                      Add requirements, skills, and education here.
-                    </p>
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center">
+                      <ListChecks className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-text-primary">
+                        Required Qualifications
+                      </h4>
+                      <p className="text-sm text-text-tertiary mt-0.5">
+                        Add requirements, skills, and education here.
+                      </p>
+                    </div>
                   </div>
-                  <div className="px-8 py-6 space-y-4">
+                  <div className="px-8 py-6 space-y-3">
                     {formData.requiredSkillsAndExperience.map((item, index) => {
                       const isEditing =
                         editingField?.field === 'requiredSkillsAndExperience' &&
                         editingField.index === index
                       return (
-                        <div key={index} className="relative">
+                        <div key={index} className="group">
                           {isEditing ? (
-                            <div className="space-y-2">
+                            <div className="bg-background-subtle rounded-xl p-4 border-2 border-primary-500 shadow-sm">
                               <textarea
                                 value={editValue}
                                 onChange={e => setEditValue(e.target.value)}
                                 placeholder="e.g. Strong experience with Python for backend development"
                                 rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                className={cn(
-                                  'w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                  'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                  'whitespace-pre-wrap break-words'
-                                )}
+                                className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-all duration-200 resize-none min-h-[80px]"
                                 autoFocus
                               />
-                              <div className="flex gap-2 justify-end">
+                              <div className="flex gap-2 justify-end mt-3">
                                 <button
                                   type="button"
                                   onClick={cancelEdit}
-                                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
+                                  className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-background-surface border border-border-default hover:border-border-strong rounded-lg transition-all duration-200"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   type="button"
                                   onClick={saveEdit}
-                                  className="px-3 py-1.5 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all duration-200 shadow-sm"
                                 >
                                   Save
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="relative">
-                              <textarea
-                                value={item}
-                                onChange={e =>
-                                  updateArrayField(
-                                    'requiredSkillsAndExperience',
-                                    index,
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g. Strong experience with Python for backend development"
-                                rows={Math.max(2, Math.ceil(item.length / 60))}
-                                className={cn(
-                                  'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
-                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                  'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                  'whitespace-pre-wrap break-words',
-                                  isGenerated &&
-                                    item &&
-                                    'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
-                                )}
-                              />
-                              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                            <div
+                              className={cn(
+                                'flex items-start gap-3 p-4 rounded-xl border transition-all duration-200',
+                                'hover:shadow-sm hover:border-primary-200 dark:hover:border-primary-800',
+                                isGenerated && item
+                                  ? 'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
+                                  : 'bg-background-subtle border-border-default'
+                              )}
+                            >
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-ai-100 dark:bg-ai-900/50 flex items-center justify-center mt-0.5">
+                                <span className="text-xs font-semibold text-ai-600 dark:text-ai-400">
+                                  {index + 1}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <textarea
+                                  value={item}
+                                  onChange={e =>
+                                    updateArrayField(
+                                      'requiredSkillsAndExperience',
+                                      index,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="e.g. Strong experience with Python for backend development"
+                                  rows={Math.max(1, Math.ceil(item.length / 70))}
+                                  className="w-full bg-transparent border-none focus:outline-none text-base leading-relaxed text-text-primary placeholder:text-text-muted resize-none"
+                                />
+                              </div>
+                              <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 <button
                                   type="button"
                                   onClick={() =>
                                     startEditing('requiredSkillsAndExperience', index, item)
                                   }
-                                  className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
-                                  style={{
-                                    right: '40px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                  }}
+                                  className="p-2 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-all duration-200"
                                   aria-label="Edit requirement"
                                 >
                                   <Pencil className="w-4 h-4" />
@@ -1489,12 +1496,7 @@ export function JobCreationWizard({
                                     onClick={() =>
                                       removeArrayItem('requiredSkillsAndExperience', index)
                                     }
-                                    className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
-                                    style={{
-                                      right: '12px',
-                                      top: '50%',
-                                      transform: 'translateY(-50%)',
-                                    }}
+                                    className="p-2 text-text-muted hover:text-error-500 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg transition-all duration-200"
                                     aria-label="Remove requirement"
                                   >
                                     <XIcon className="w-4 h-4" />
@@ -1508,88 +1510,90 @@ export function JobCreationWizard({
                     })}
                     <button
                       onClick={() => addArrayItem('requiredSkillsAndExperience')}
-                      className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-xl transition-all duration-200 w-full justify-center border-2 border-dashed border-primary-200 dark:border-primary-800 hover:border-primary-400 dark:hover:border-primary-600"
                     >
-                      + Add requirements
+                      <Plus className="w-4 h-4" />
+                      Add Requirement
                     </button>
                   </div>
                 </div>
 
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
-                    <h4 className="text-xl font-bold text-text-primary">Preferred</h4>
-                    <p className="text-sm text-text-tertiary mt-2">
-                      Optional experiences, qualities that would be beneficial but not strictly
-                      required for this role.
-                    </p>
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center">
+                      <Award className="w-5 h-5 text-success-600 dark:text-success-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-text-primary">Nice to Have</h4>
+                      <p className="text-sm text-text-tertiary mt-0.5">
+                        Optional experiences and qualities that would be beneficial.
+                      </p>
+                    </div>
                   </div>
-                  <div className="px-8 py-6 space-y-4">
+                  <div className="px-8 py-6 space-y-3">
                     {formData.niceToHave.map((item, index) => {
                       const isEditing =
                         editingField?.field === 'niceToHave' && editingField.index === index
                       return (
-                        <div key={index} className="relative">
+                        <div key={index} className="group">
                           {isEditing ? (
-                            <div className="space-y-2">
+                            <div className="bg-background-subtle rounded-xl p-4 border-2 border-success-500 shadow-sm">
                               <textarea
                                 value={editValue}
                                 onChange={e => setEditValue(e.target.value)}
                                 placeholder="e.g. Experience with Kubernetes and container orchestration"
                                 rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                className={cn(
-                                  'w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                  'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                  'whitespace-pre-wrap break-words'
-                                )}
+                                className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-success-500/20 focus:border-success-500 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-all duration-200 resize-none min-h-[80px]"
                                 autoFocus
                               />
-                              <div className="flex gap-2 justify-end">
+                              <div className="flex gap-2 justify-end mt-3">
                                 <button
                                   type="button"
                                   onClick={cancelEdit}
-                                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
+                                  className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-background-surface border border-border-default hover:border-border-strong rounded-lg transition-all duration-200"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   type="button"
                                   onClick={saveEdit}
-                                  className="px-3 py-1.5 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                                  className="px-4 py-2 text-sm font-medium text-white bg-success-600 hover:bg-success-700 rounded-lg transition-all duration-200 shadow-sm"
                                 >
                                   Save
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="relative">
-                              <textarea
-                                value={item}
-                                onChange={e =>
-                                  updateArrayField('niceToHave', index, e.target.value)
-                                }
-                                placeholder="e.g. Experience with Kubernetes and container orchestration"
-                                rows={Math.max(2, Math.ceil(item.length / 60))}
-                                className={cn(
-                                  'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary',
-                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                  'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                  'whitespace-pre-wrap break-words',
-                                  isGenerated &&
-                                    item &&
-                                    'bg-ai-50/50 dark:bg-ai-950/30 border-ai-200 dark:border-ai-800'
-                                )}
-                              />
-                              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                            <div
+                              className={cn(
+                                'flex items-start gap-3 p-4 rounded-xl border transition-all duration-200',
+                                'hover:shadow-sm hover:border-success-200 dark:hover:border-success-800',
+                                isGenerated && item
+                                  ? 'bg-success-50/50 dark:bg-success-950/30 border-success-200 dark:border-success-800'
+                                  : 'bg-background-subtle border-border-default'
+                              )}
+                            >
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-success-100 dark:bg-success-900/50 flex items-center justify-center mt-0.5">
+                                <span className="text-xs font-semibold text-success-600 dark:text-success-400">
+                                  {index + 1}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <textarea
+                                  value={item}
+                                  onChange={e =>
+                                    updateArrayField('niceToHave', index, e.target.value)
+                                  }
+                                  placeholder="e.g. Experience with Kubernetes and container orchestration"
+                                  rows={Math.max(1, Math.ceil(item.length / 70))}
+                                  className="w-full bg-transparent border-none focus:outline-none text-base leading-relaxed text-text-primary placeholder:text-text-muted resize-none"
+                                />
+                              </div>
+                              <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 <button
                                   type="button"
                                   onClick={() => startEditing('niceToHave', index, item)}
-                                  className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
-                                  style={{
-                                    right: '40px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                  }}
+                                  className="p-2 text-text-muted hover:text-success-600 dark:hover:text-success-400 hover:bg-success-50 dark:hover:bg-success-900/30 rounded-lg transition-all duration-200"
                                   aria-label="Edit nice to have"
                                 >
                                   <Pencil className="w-4 h-4" />
@@ -1598,12 +1602,7 @@ export function JobCreationWizard({
                                   <button
                                     type="button"
                                     onClick={() => removeArrayItem('niceToHave', index)}
-                                    className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
-                                    style={{
-                                      right: '12px',
-                                      top: '50%',
-                                      transform: 'translateY(-50%)',
-                                    }}
+                                    className="p-2 text-text-muted hover:text-error-500 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg transition-all duration-200"
                                     aria-label="Remove nice to have"
                                   >
                                     <XIcon className="w-4 h-4" />
@@ -1617,26 +1616,31 @@ export function JobCreationWizard({
                     })}
                     <button
                       onClick={() => addArrayItem('niceToHave')}
-                      className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-success-600 dark:text-success-400 hover:text-success-700 dark:hover:text-success-300 hover:bg-success-50 dark:hover:bg-success-950/30 rounded-xl transition-all duration-200 w-full justify-center border-2 border-dashed border-success-200 dark:border-success-800 hover:border-success-400 dark:hover:border-success-600"
                     >
-                      + Add nice to have
+                      <Plus className="w-4 h-4" />
+                      Add Nice to Have
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {}
+            {/* Step 4: Compensation */}
             {getContentStep(currentStep) === 4 && (
               <div className="space-y-8">
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
-                    <h4 className="text-xl font-bold text-text-primary">Compensation</h4>
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-warning-50 dark:bg-warning-950/30 flex items-center justify-center">
+                      <Coins className="w-5 h-5 text-warning-600 dark:text-warning-400" />
+                    </div>
+                    <h4 className="text-xl font-bold text-text-primary">Salary & Timeline</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div className="grid grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-text-tertiary" />
                           Min Salary
                         </label>
                         <input
@@ -1645,13 +1649,14 @@ export function JobCreationWizard({
                           onChange={e => updateField('salaryMin', e.target.value)}
                           placeholder="80000"
                           className={cn(
-                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200'
+                            'w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-border-strong',
+                            'text-base text-text-primary placeholder:text-text-muted transition-all duration-200'
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-text-tertiary" />
                           Max Salary
                         </label>
                         <input
@@ -1660,16 +1665,17 @@ export function JobCreationWizard({
                           onChange={e => updateField('salaryMax', e.target.value)}
                           placeholder="120000"
                           className={cn(
-                            'w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-                            'text-base text-text-primary placeholder:text-text-muted transition-colors duration-200'
+                            'w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-border-strong',
+                            'text-base text-text-primary placeholder:text-text-muted transition-all duration-200'
                           )}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-text-secondary mb-3">
+                        <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                          <Coins className="w-4 h-4 text-text-tertiary" />
                           Currency
                         </label>
-                        <CustomDropdown
+                        <SelectDropdown
                           value={formData.currency}
                           onChange={value => updateField('currency', value)}
                           placeholder="Select currency..."
@@ -1682,88 +1688,89 @@ export function JobCreationWizard({
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-text-secondary mb-3">
+                      <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-text-tertiary" />
                         Application Deadline
                       </label>
                       <input
                         type="date"
                         value={formData.applicationDeadline}
                         onChange={e => updateField('applicationDeadline', e.target.value)}
-                        className="w-full px-4 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-base text-text-primary transition-colors duration-200"
+                        className="w-full h-12 px-4 bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-border-strong text-base text-text-primary transition-all duration-200"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
-                    <h4 className="text-xl font-bold text-text-primary">Compensation & Benefits</h4>
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-success-50 dark:bg-success-950/30 flex items-center justify-center">
+                      <Gift className="w-5 h-5 text-success-600 dark:text-success-400" />
+                    </div>
+                    <h4 className="text-xl font-bold text-text-primary">Benefits & Perks</h4>
                   </div>
-                  <div className="px-8 py-6 space-y-4">
+                  <div className="px-8 py-6 space-y-3">
                     {formData.benefits.map((benefit, index) => {
                       const isEditing =
                         editingField?.field === 'benefits' && editingField.index === index
                       return (
-                        <div key={index} className="relative">
+                        <div key={index} className="group">
                           {isEditing ? (
-                            <div className="space-y-2">
+                            <div className="bg-background-subtle rounded-xl p-4 border-2 border-success-500 shadow-sm">
                               <textarea
                                 value={editValue}
                                 onChange={e => setEditValue(e.target.value)}
-                                placeholder="Add what we offer..."
+                                placeholder="e.g. Flexible work hours and remote work options"
                                 rows={Math.max(2, Math.ceil(editValue.length / 60))}
-                                className={cn(
-                                  'w-full px-4 pr-14 py-3 border-2 border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                  'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                  'whitespace-pre-wrap break-words'
-                                )}
+                                className="w-full px-4 py-3 bg-background-surface border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-success-500/20 focus:border-success-500 text-base leading-relaxed text-text-primary placeholder:text-text-muted transition-all duration-200 resize-none min-h-[80px]"
                                 autoFocus
                               />
-                              <div className="flex gap-2 justify-end">
+                              <div className="flex gap-2 justify-end mt-3">
                                 <button
                                   type="button"
                                   onClick={cancelEdit}
-                                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:bg-background-subtle rounded-lg transition-colors"
+                                  className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary bg-background-surface border border-border-default hover:border-border-strong rounded-lg transition-all duration-200"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   type="button"
                                   onClick={saveEdit}
-                                  className="px-3 py-1.5 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                                  className="px-4 py-2 text-sm font-medium text-white bg-success-600 hover:bg-success-700 rounded-lg transition-all duration-200 shadow-sm"
                                 >
                                   Save
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="relative">
-                              <textarea
-                                value={benefit}
-                                onChange={e => updateArrayField('benefits', index, e.target.value)}
-                                placeholder="Add what we offer..."
-                                rows={Math.max(2, Math.ceil(benefit.length / 60))}
-                                className={cn(
-                                  'w-full px-4 pr-14 py-3 border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-                                  'text-base leading-relaxed text-text-primary placeholder:text-text-muted',
-                                  'transition-colors duration-200 resize-y min-h-[60px] max-h-[200px] overflow-y-auto',
-                                  'whitespace-pre-wrap break-words',
-                                  isGenerated &&
-                                    benefit &&
-                                    'bg-primary-50/50 dark:bg-primary-950/30 border-primary-200 dark:border-primary-800'
-                                )}
-                              />
-                              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                            <div
+                              className={cn(
+                                'flex items-start gap-3 p-4 rounded-xl border transition-all duration-200',
+                                'hover:shadow-sm hover:border-success-200 dark:hover:border-success-800',
+                                isGenerated && benefit
+                                  ? 'bg-success-50/50 dark:bg-success-950/30 border-success-200 dark:border-success-800'
+                                  : 'bg-background-subtle border-border-default'
+                              )}
+                            >
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-success-100 dark:bg-success-900/50 flex items-center justify-center mt-0.5">
+                                <Gift className="w-3.5 h-3.5 text-success-600 dark:text-success-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <textarea
+                                  value={benefit}
+                                  onChange={e =>
+                                    updateArrayField('benefits', index, e.target.value)
+                                  }
+                                  placeholder="e.g. Flexible work hours and remote work options"
+                                  rows={Math.max(1, Math.ceil(benefit.length / 70))}
+                                  className="w-full bg-transparent border-none focus:outline-none text-base leading-relaxed text-text-primary placeholder:text-text-muted resize-none"
+                                />
+                              </div>
+                              <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 <button
                                   type="button"
                                   onClick={() => startEditing('benefits', index, benefit)}
-                                  className="absolute p-1.5 text-text-muted hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded hover:bg-primary-50 dark:hover:bg-primary-900/30"
-                                  style={{
-                                    right: '40px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                  }}
+                                  className="p-2 text-text-muted hover:text-success-600 dark:hover:text-success-400 hover:bg-success-50 dark:hover:bg-success-900/30 rounded-lg transition-all duration-200"
                                   aria-label="Edit benefit"
                                 >
                                   <Pencil className="w-4 h-4" />
@@ -1772,12 +1779,7 @@ export function JobCreationWizard({
                                   <button
                                     type="button"
                                     onClick={() => removeArrayItem('benefits', index)}
-                                    className="absolute p-1.5 text-text-muted hover:text-error-500 dark:hover:text-error-400 transition-colors rounded hover:bg-error-50 dark:hover:bg-error-950/30"
-                                    style={{
-                                      right: '12px',
-                                      top: '50%',
-                                      transform: 'translateY(-50%)',
-                                    }}
+                                    className="p-2 text-text-muted hover:text-error-500 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950/30 rounded-lg transition-all duration-200"
                                     aria-label="Remove benefit"
                                   >
                                     <XIcon className="w-4 h-4" />
@@ -1791,21 +1793,25 @@ export function JobCreationWizard({
                     })}
                     <button
                       onClick={() => addArrayItem('benefits')}
-                      className="text-sm text-primary-500 font-medium hover:underline cursor-pointer"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-success-600 dark:text-success-400 hover:text-success-700 dark:hover:text-success-300 hover:bg-success-50 dark:hover:bg-success-950/30 rounded-xl transition-all duration-200 w-full justify-center border-2 border-dashed border-success-200 dark:border-success-800 hover:border-success-400 dark:hover:border-success-600"
                     >
-                      + Add offering
+                      <Plus className="w-4 h-4" />
+                      Add Benefit
                     </button>
                   </div>
                 </div>
 
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
-                  <div className="px-8 py-6 border-b border-border-subtle">
-                    <h4 className="text-xl font-bold text-text-primary">Automatic Shortlisting</h4>
+                  <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-ai-600 dark:text-ai-400" />
+                    </div>
+                    <h4 className="text-xl font-bold text-text-primary">AI Shortlisting</h4>
                   </div>
                   <div className="px-8 py-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <p className="text-sm text-text-tertiary leading-relaxed">
+                        <p className="text-sm text-text-secondary leading-relaxed">
                           When enabled, candidates will be automatically shortlisted when this job
                           expires. This helps streamline your recruitment process by identifying top
                           candidates using AI.
@@ -1832,65 +1838,42 @@ export function JobCreationWizard({
       {}
       {!isGenerating && (
         <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 bg-background-surface border-t border-border-default shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-          <button
-            onClick={handlePrev}
-            className="flex items-center gap-2 px-5 py-2.5 text-text-tertiary text-sm font-semibold hover:text-text-primary hover:bg-background-subtle rounded-xl transition-all duration-200"
-          >
+          <ActionButton onClick={handlePrev} variant="ghost" size="md">
             <ArrowLeft className="w-4 h-4" />
             {currentStep === 1 ? 'Cancel' : 'Back'}
-          </button>
+          </ActionButton>
 
           <div className="flex items-center gap-3">
-            {}
             {currentStep === steps.length ? (
               <div className="flex gap-3">
-                {}
                 {(jobToEdit || isGenerated) && (
-                  <button
+                  <ActionButton
                     onClick={() => setShowRevisionPrompt(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-primary-600 dark:text-primary-400 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-all duration-200 border border-transparent hover:border-primary-100 dark:hover:border-primary-900"
+                    variant="outline"
+                    size="md"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Revise with AI
-                  </button>
+                  </ActionButton>
                 )}
-                <button
+                <ActionButton
                   onClick={handleSaveDraft}
-                  className={cn(
-                    'px-5 py-2.5 text-text-secondary text-sm font-semibold rounded-xl transition-all duration-200 border border-border-default',
-                    createJobMutation.isPending || updateJobMutation.isPending
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-background-subtle hover:border-border-strong hover:text-text-primary'
-                  )}
+                  variant="outline"
+                  size="md"
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
+                  loading={createJobMutation.isPending || updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending || updateJobMutation.isPending ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
-                    </span>
-                  ) : jobToEdit ? (
-                    'Save as Draft'
-                  ) : (
-                    'Save Draft'
-                  )}
-                </button>
-                <button
+                  {!(createJobMutation.isPending || updateJobMutation.isPending) &&
+                    (jobToEdit ? 'Save as Draft' : 'Save Draft')}
+                </ActionButton>
+                <ActionButton
                   onClick={handleSubmit}
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
-                  className={cn(
-                    'flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300',
-                    createJobMutation.isPending || updateJobMutation.isPending
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:-translate-y-0.5'
-                  )}
+                  loading={createJobMutation.isPending || updateJobMutation.isPending}
+                  variant="primary"
+                  size="md"
                 >
-                  {createJobMutation.isPending || updateJobMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Publishing...
-                    </>
-                  ) : (
+                  {!(createJobMutation.isPending || updateJobMutation.isPending) && (
                     <>
                       {jobToEdit && jobToEdit.status === 'Draft'
                         ? 'Publish Job'
@@ -1900,50 +1883,34 @@ export function JobCreationWizard({
                       <Check className="w-4 h-4" />
                     </>
                   )}
-                </button>
+                </ActionButton>
               </div>
             ) : (
               <div className="flex gap-3">
-                {}
                 {jobToEdit && (
-                  <button
+                  <ActionButton
                     onClick={() => setShowRevisionPrompt(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-primary-600 dark:text-primary-400 text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-all duration-200 border border-transparent hover:border-primary-100 dark:hover:border-primary-900"
+                    variant="outline"
+                    size="md"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Revise with AI
-                  </button>
+                  </ActionButton>
                 )}
-                {}
-                <button
+                <ActionButton
                   onClick={handleSaveDraft}
-                  className={cn(
-                    'px-5 py-2.5 text-text-secondary text-sm font-semibold rounded-xl transition-all duration-200 border border-border-default',
-                    createJobMutation.isPending || updateJobMutation.isPending
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-background-subtle hover:border-border-strong hover:text-text-primary'
-                  )}
+                  variant="outline"
+                  size="md"
                   disabled={createJobMutation.isPending || updateJobMutation.isPending}
+                  loading={createJobMutation.isPending || updateJobMutation.isPending}
                 >
-                  {createJobMutation.isPending || updateJobMutation.isPending ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
-                    </span>
-                  ) : jobToEdit ? (
-                    'Save as Draft'
-                  ) : (
-                    'Save Draft'
-                  )}
-                </button>
-                {}
-                <button
-                  onClick={handleNext}
-                  className="flex items-center gap-2 px-6 py-2.5 btn-primary-gradient text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5"
-                >
+                  {!(createJobMutation.isPending || updateJobMutation.isPending) &&
+                    (jobToEdit ? 'Save as Draft' : 'Save Draft')}
+                </ActionButton>
+                <ActionButton onClick={handleNext} variant="primary" size="md">
                   Continue
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </ActionButton>
               </div>
             )}
           </div>
@@ -2032,34 +1999,27 @@ export function JobCreationWizard({
 
             {}
             <div className="px-10 py-6 bg-background-surface border-t border-border-subtle flex justify-end gap-3">
-              <button
+              <ActionButton
                 onClick={() => setShowRevisionPrompt(false)}
-                className="px-5 py-2.5 text-text-tertiary text-sm font-semibold hover:bg-background-subtle rounded-xl transition-all duration-200 border border-border-default hover:border-border-strong"
+                variant="outline"
+                size="md"
               >
                 Cancel
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 onClick={handleRevision}
                 disabled={!revisionText.trim() || generateDraftMutation.isPending}
-                className={cn(
-                  'flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all duration-300',
-                  revisionText.trim() && !generateDraftMutation.isPending
-                    ? 'btn-primary-gradient hover:-translate-y-0.5'
-                    : 'bg-background-muted text-text-muted cursor-not-allowed'
-                )}
+                loading={generateDraftMutation.isPending}
+                variant="primary"
+                size="md"
               >
-                {generateDraftMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Revising...
-                  </>
-                ) : (
+                {!generateDraftMutation.isPending && (
                   <>
                     <Sparkles className="w-4 h-4" />
                     Revise
                   </>
                 )}
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

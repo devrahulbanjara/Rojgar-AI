@@ -18,8 +18,8 @@ class CandidateApplicationSummary(BaseModel):
     professional_summary: str | None = None
     current_status: str
     applied_at: datetime
-    ai_score: int | None = None
-    ai_analysis: str | None = None
+    score: int | None = None
+    feedback: str | None = None
     social_links: list[dict[str, Any]] = []
 
     model_config = ConfigDict(from_attributes=True)
@@ -28,3 +28,17 @@ class CandidateApplicationSummary(BaseModel):
 class RecruiterCandidateListResponse(BaseModel):
     candidates: list[CandidateApplicationSummary]
     total: int
+
+
+class UpdateApplicationRequest(BaseModel):
+    status: str | None = None
+    score: int | None = None
+    feedback: str | None = None
+
+
+class UpdateApplicationResponse(BaseModel):
+    application_id: UUID
+    current_status: str
+    score: int | None = None
+    feedback: str | None = None
+    message: str
