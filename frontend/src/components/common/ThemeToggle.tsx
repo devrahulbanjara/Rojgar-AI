@@ -33,11 +33,7 @@ export function ThemeToggle({
     return <Sun className="h-5 w-5" />
   }
 
-  const themeLabel = !mounted
-    ? 'Light'
-    : theme === 'dark'
-      ? 'Dark'
-      : 'Light'
+  const themeLabel = !mounted ? 'Light' : theme === 'dark' ? 'Dark' : 'Light'
 
   if (variant === 'icon-only') {
     return (

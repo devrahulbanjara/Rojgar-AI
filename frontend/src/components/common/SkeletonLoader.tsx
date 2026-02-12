@@ -209,32 +209,32 @@ export const SkeletonDashboardColumn: React.FC<{
   textColor = 'bg-background-subtle',
   badgeColor = 'bg-primary-100 dark:bg-primary-900/30',
 }) => (
-    <div
-      className={cn(
-        `${bgColor} rounded-2xl p-6 flex flex-col gap-6 border ${borderColor} shadow-sm/50`,
-        className
-      )}
-    >
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-3">
-          <SkeletonLoader variant="circular" width={20} height={20} className={iconColor} />
-          <SkeletonLoader variant="text" width={80} height={16} className={textColor} />
-        </div>
-        <SkeletonLoader
-          variant="rectangular"
-          width={24}
-          height={24}
-          className={`rounded-full ${badgeColor}`}
-        />
+  <div
+    className={cn(
+      `${bgColor} rounded-2xl p-6 flex flex-col gap-6 border ${borderColor} shadow-sm/50`,
+      className
+    )}
+  >
+    <div className="flex items-center justify-between px-1">
+      <div className="flex items-center gap-3">
+        <SkeletonLoader variant="circular" width={20} height={20} className={iconColor} />
+        <SkeletonLoader variant="text" width={80} height={16} className={textColor} />
       </div>
-
-      <div className="flex-1 flex flex-col gap-4">
-        <SkeletonApplicationCard />
-        <SkeletonApplicationCard />
-        <SkeletonApplicationCard />
-      </div>
+      <SkeletonLoader
+        variant="rectangular"
+        width={24}
+        height={24}
+        className={`rounded-full ${badgeColor}`}
+      />
     </div>
-  )
+
+    <div className="flex-1 flex flex-col gap-4">
+      <SkeletonApplicationCard />
+      <SkeletonApplicationCard />
+      <SkeletonApplicationCard />
+    </div>
+  </div>
+)
 
 export const SkeletonProfileHeader: React.FC<{ className?: string }> = ({ className }) => (
   <div
@@ -484,10 +484,25 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
         {/* Professional Summary Skeleton */}
         <div className="p-5 rounded-[8px] border border-border-default bg-background-surface shadow-sm">
           <div className="flex items-center gap-3 mb-5 border-b border-border-subtle pb-4">
-            <SkeletonLoader variant="rectangular" width={40} height={40} className="rounded-lg bg-background-subtle" />
+            <SkeletonLoader
+              variant="rectangular"
+              width={40}
+              height={40}
+              className="rounded-lg bg-background-subtle"
+            />
             <div className="space-y-1.5 flex-1">
-              <SkeletonLoader variant="text" width="25%" height={14} className="bg-background-muted" />
-              <SkeletonLoader variant="text" width="15%" height={12} className="bg-background-subtle" />
+              <SkeletonLoader
+                variant="text"
+                width="25%"
+                height={14}
+                className="bg-background-muted"
+              />
+              <SkeletonLoader
+                variant="text"
+                width="15%"
+                height={12}
+                className="bg-background-subtle"
+              />
             </div>
           </div>
           <div className="bg-background-subtle/50 rounded-[8px] p-4">
@@ -499,22 +514,55 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
         <div className="p-5 rounded-[8px] border border-border-default bg-background-surface shadow-sm">
           <div className="flex justify-between items-center mb-6 border-b border-border-subtle pb-4">
             <div className="flex items-center gap-3">
-              <SkeletonLoader variant="rectangular" width={40} height={40} className="rounded-lg bg-background-subtle" />
+              <SkeletonLoader
+                variant="rectangular"
+                width={40}
+                height={40}
+                className="rounded-lg bg-background-subtle"
+              />
               <div className="space-y-1.5">
-                <SkeletonLoader variant="text" width={100} height={14} className="bg-background-muted" />
-                <SkeletonLoader variant="text" width={80} height={12} className="bg-background-subtle" />
+                <SkeletonLoader
+                  variant="text"
+                  width={100}
+                  height={14}
+                  className="bg-background-muted"
+                />
+                <SkeletonLoader
+                  variant="text"
+                  width={80}
+                  height={12}
+                  className="bg-background-subtle"
+                />
               </div>
             </div>
-            <SkeletonLoader variant="rectangular" width={120} height={36} className="rounded-[6px] bg-background-subtle" />
+            <SkeletonLoader
+              variant="rectangular"
+              width={120}
+              height={36}
+              className="rounded-[6px] bg-background-subtle"
+            />
           </div>
 
           <div className="space-y-4">
             {[1, 2].map(i => (
-              <div key={i} className="p-4 rounded-[8px] border border-border-subtle bg-background-subtle/30">
+              <div
+                key={i}
+                className="p-4 rounded-[8px] border border-border-subtle bg-background-subtle/30"
+              >
                 <div className="flex justify-between items-start mb-3">
                   <div className="space-y-2 flex-1">
-                    <SkeletonLoader variant="text" width="40%" height={16} className="bg-background-muted" />
-                    <SkeletonLoader variant="text" width="25%" height={12} className="bg-background-subtle" />
+                    <SkeletonLoader
+                      variant="text"
+                      width="40%"
+                      height={16}
+                      className="bg-background-muted"
+                    />
+                    <SkeletonLoader
+                      variant="text"
+                      width="25%"
+                      height={12}
+                      className="bg-background-subtle"
+                    />
                   </div>
                 </div>
                 <SkeletonLoader variant="text" lines={2} className="bg-background-subtle" />
@@ -527,23 +575,53 @@ export const SkeletonResumeDetail: React.FC<{ className?: string }> = ({ classNa
         <div className="p-5 rounded-[8px] border border-border-default bg-background-surface shadow-sm">
           <div className="flex justify-between items-center mb-6 border-b border-border-subtle pb-4">
             <div className="flex items-center gap-3">
-              <SkeletonLoader variant="rectangular" width={40} height={40} className="rounded-lg bg-background-subtle" />
+              <SkeletonLoader
+                variant="rectangular"
+                width={40}
+                height={40}
+                className="rounded-lg bg-background-subtle"
+              />
               <div className="space-y-1.5">
-                <SkeletonLoader variant="text" width={80} height={14} className="bg-background-muted" />
-                <SkeletonLoader variant="text" width={60} height={12} className="bg-background-subtle" />
+                <SkeletonLoader
+                  variant="text"
+                  width={80}
+                  height={14}
+                  className="bg-background-muted"
+                />
+                <SkeletonLoader
+                  variant="text"
+                  width={60}
+                  height={12}
+                  className="bg-background-subtle"
+                />
               </div>
             </div>
-            <SkeletonLoader variant="rectangular" width={120} height={36} className="rounded-[6px] bg-background-subtle" />
+            <SkeletonLoader
+              variant="rectangular"
+              width={120}
+              height={36}
+              className="rounded-[6px] bg-background-subtle"
+            />
           </div>
           <div className="p-4 rounded-[8px] border border-dashed border-border-subtle bg-background-subtle/30">
-            <SkeletonLoader variant="text" width="60%" height={14} className="bg-background-muted" />
+            <SkeletonLoader
+              variant="text"
+              width="60%"
+              height={14}
+              className="bg-background-muted"
+            />
           </div>
         </div>
       </div>
 
       {/* Footer Section */}
       <div className="border-t border-border-subtle bg-background-surface px-8 py-5 flex items-center justify-end">
-        <SkeletonLoader variant="rectangular" width={100} height={40} className="rounded-[6px] bg-background-muted" />
+        <SkeletonLoader
+          variant="rectangular"
+          width={100}
+          height={40}
+          className="rounded-[6px] bg-background-muted"
+        />
       </div>
     </div>
   </div>

@@ -40,7 +40,12 @@ function CandidatesTableSkeleton() {
               <SkeletonLoader variant="rectangular" width={58} height={12} className="rounded-sm" />
             </th>
             <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
-              <SkeletonLoader variant="rectangular" width={52} height={12} className="rounded-sm mx-auto" />
+              <SkeletonLoader
+                variant="rectangular"
+                width={52}
+                height={12}
+                className="rounded-sm mx-auto"
+              />
             </th>
           </tr>
         </thead>
@@ -54,7 +59,13 @@ function CandidatesTableSkeleton() {
         <SkeletonLoader variant="rectangular" width={180} height={14} className="rounded-sm" />
         <div className="flex items-center gap-1">
           {Array.from({ length: 5 }).map((_, index) => (
-            <SkeletonLoader key={index} variant="rectangular" width={36} height={36} className="rounded-lg" />
+            <SkeletonLoader
+              key={index}
+              variant="rectangular"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
           ))}
         </div>
       </div>
@@ -85,10 +96,20 @@ function RecruiterCandidatesPageSkeleton() {
           <div className="space-y-8">
             <div className="mb-8">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
-                <SkeletonLoader variant="rectangular" height={48} className="rounded-xl w-full lg:w-[420px]" />
+                <SkeletonLoader
+                  variant="rectangular"
+                  height={48}
+                  className="rounded-xl w-full lg:w-[420px]"
+                />
                 <div className="flex flex-wrap items-center gap-3">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <SkeletonLoader key={index} variant="rectangular" width={90} height={34} className="rounded-full" />
+                    <SkeletonLoader
+                      key={index}
+                      variant="rectangular"
+                      width={90}
+                      height={34}
+                      className="rounded-full"
+                    />
                   ))}
                 </div>
               </div>
