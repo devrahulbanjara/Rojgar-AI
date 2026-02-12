@@ -16,12 +16,7 @@ import {
   ReferenceJDEditModal,
   SkeletonJobTableRow,
 } from '../../../components/recruiter'
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  ActionButton,
-} from '../../../components/ui'
+import { Tabs, TabsList, TabsTrigger, ActionButton } from '../../../components/ui'
 import type { Job, JobStatus } from '../../../types/job'
 import { useJobsByCompany, useExpireJob, useDeleteJob } from '../../../hooks/queries/useJobs'
 import { useAuth } from '../../../hooks/useAuth'
@@ -58,7 +53,12 @@ function RecruiterJobsLoadingContent({ activeTab }: { activeTab: TabType }) {
           <tr>
             {Array.from({ length: 6 }).map((_, index) => (
               <th key={index} className="py-4 px-6 text-left">
-                <SkeletonLoader variant="rectangular" width={84} height={12} className="rounded-sm" />
+                <SkeletonLoader
+                  variant="rectangular"
+                  width={84}
+                  height={12}
+                  className="rounded-sm"
+                />
               </th>
             ))}
           </tr>
@@ -97,7 +97,12 @@ function RecruiterJobsPageSkeleton() {
                 ))}
               </div>
               <div className="pb-3 min-w-fit">
-                <SkeletonLoader variant="rectangular" width={124} height={38} className="rounded-lg" />
+                <SkeletonLoader
+                  variant="rectangular"
+                  width={124}
+                  height={38}
+                  className="rounded-lg"
+                />
               </div>
             </div>
 
@@ -200,25 +205,25 @@ const transformJob = (job: BackendJobResponse): Job => {
     company:
       job.organization || job.company
         ? {
-          id:
-            parseInt(
-              String(
-                job.organization?.id ||
-                job.company?.id ||
-                job.company_id ||
-                job.organization_id ||
-                0
-              )
-            ) || 0,
-          name:
-            job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
-          logo: job.organization?.logo || job.company?.logo,
-          website: job.organization?.website || job.company?.website,
-          description: job.organization?.description || job.company?.description,
-          location: job.organization?.location || job.company?.location,
-          industry: job.organization?.industry || job.company?.industry,
-          founded_year: job.organization?.founded_year || job.company?.founded_year,
-        }
+            id:
+              parseInt(
+                String(
+                  job.organization?.id ||
+                    job.company?.id ||
+                    job.company_id ||
+                    job.organization_id ||
+                    0
+                )
+              ) || 0,
+            name:
+              job.organization?.name || job.company?.name || job.company_name || 'Unknown Company',
+            logo: job.organization?.logo || job.company?.logo,
+            website: job.organization?.website || job.company?.website,
+            description: job.organization?.description || job.company?.description,
+            location: job.organization?.location || job.company?.location,
+            industry: job.organization?.industry || job.company?.industry,
+            founded_year: job.organization?.founded_year || job.company?.founded_year,
+          }
         : undefined,
     title: job.title || '',
     department: job.department || '',
@@ -412,10 +417,7 @@ export default function RecruiterJobsPage() {
 
   const activeCount = useMemo(() => allJobs.filter(j => j.status === 'Active').length, [allJobs])
   const draftCount = useMemo(() => allJobs.filter(j => j.status === 'Draft').length, [allJobs])
-  const expiredCount = useMemo(
-    () => allJobs.filter(j => j.status === 'Expired').length,
-    [allJobs]
-  )
+  const expiredCount = useMemo(() => allJobs.filter(j => j.status === 'Expired').length, [allJobs])
   const referenceJDCount = useMemo(
     () => referenceJDData?.reference_jds?.length || 0,
     [referenceJDData]
@@ -664,7 +666,11 @@ export default function RecruiterJobsPage() {
           <div className="space-y-8">
             {/* Tabs with Post New Job Button */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border-default/60 pb-1">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={v => setActiveTab(v as TabType)}
+                className="w-full"
+              >
                 <TabsList className="bg-transparent border-none rounded-none w-full justify-start h-auto p-0 gap-8">
                   <TabsTrigger
                     value="active"
@@ -724,16 +730,21 @@ export default function RecruiterJobsPage() {
                     onDelete={handleDeleteReferenceJD}
                     onUseTemplate={handleUseTemplate}
                   />
-                ) : !isLoadingReferenceJDs && (
-                  <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <div className="w-16 h-16 rounded-3xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center border border-ai-100 dark:border-ai-900/30 mb-8">
-                      <Briefcase className="w-8 h-8 text-ai-500" />
+                ) : (
+                  !isLoadingReferenceJDs && (
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                      <div className="w-16 h-16 rounded-3xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center border border-ai-100 dark:border-ai-900/30 mb-8">
+                        <Briefcase className="w-8 h-8 text-ai-500" />
+                      </div>
+                      <h3 className="text-xl font-bold text-text-primary tracking-tight">
+                        No reference JDs yet
+                      </h3>
+                      <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
+                        Convert your existing job postings to templates or create new ones to
+                        streamline your hiring process.
+                      </p>
                     </div>
-                    <h3 className="text-xl font-bold text-text-primary tracking-tight">No reference JDs yet</h3>
-                    <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
-                      Convert your existing job postings to templates or create new ones to streamline your hiring process.
-                    </p>
-                  </div>
+                  )
                 )
               ) : filteredJobs.length > 0 ? (
                 <JobsTable
@@ -749,7 +760,13 @@ export default function RecruiterJobsPage() {
                     <FolderOpen className="w-8 h-8 text-primary-500" />
                   </div>
                   <h3 className="text-xl font-bold text-text-primary tracking-tight">
-                    No {activeTab === 'active' ? 'active' : activeTab === 'drafts' ? 'draft' : 'expired'} jobs found
+                    No{' '}
+                    {activeTab === 'active'
+                      ? 'active'
+                      : activeTab === 'drafts'
+                        ? 'draft'
+                        : 'expired'}{' '}
+                    jobs found
                   </h3>
                   <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
                     {activeTab === 'active'
@@ -759,7 +776,12 @@ export default function RecruiterJobsPage() {
                         : 'Expired or closed jobs will appear here for your records.'}
                   </p>
                   {activeTab !== 'expired' && (
-                    <ActionButton onClick={handlePostNewJob} variant="primary" size="md" className="mt-8">
+                    <ActionButton
+                      onClick={handlePostNewJob}
+                      variant="primary"
+                      size="md"
+                      className="mt-8"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Create Job
                     </ActionButton>
@@ -771,7 +793,7 @@ export default function RecruiterJobsPage() {
         </div>
       </PageTransition>
 
-      { }
+      {}
       <JobDetailModal
         job={selectedJob}
         isOpen={isDetailOpen}

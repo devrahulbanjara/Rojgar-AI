@@ -3,7 +3,17 @@ import { CheckCircle2, XCircle, Loader2, FileText } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { ShortlistCandidate } from '../../types/shortlist'
 import { ResumeDetailModal } from './ResumeDetailModal'
-import { Avatar, AvatarFallback, AvatarImage, Badge, Button, Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../ui'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '../ui'
 
 interface ShortlistCandidateCardProps {
   candidate: ShortlistCandidate
@@ -142,9 +152,7 @@ export function ShortlistCandidateCard({
               </>
             ) : (
               <>
-                <div
-                  className={cn('text-4xl font-black leading-none', scoreStyles.scoreColor)}
-                >
+                <div className={cn('text-4xl font-black leading-none', scoreStyles.scoreColor)}>
                   {candidate.score}
                 </div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary mt-1">
@@ -187,7 +195,10 @@ export function ShortlistCandidateCard({
       {showScores && candidate.feedback && (
         <div className="mt-4">
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="analysis" className="border-none bg-background-subtle/60 rounded-b-2xl">
+            <AccordionItem
+              value="analysis"
+              className="border-none bg-background-subtle/60 rounded-b-2xl"
+            >
               <AccordionTrigger className="px-4 py-3 hover:no-underline border-t border-border-subtle rounded-b-none">
                 <div className="flex items-center gap-2 text-xs font-bold text-text-tertiary uppercase tracking-widest">
                   <FileText className="w-4 h-4 text-purple-500" />
