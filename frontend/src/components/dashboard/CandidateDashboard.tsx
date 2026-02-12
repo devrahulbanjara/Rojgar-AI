@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { STATUS_CONFIG, COLUMN_MAPPING } from '@/utils/statusStyles'
-import { Briefcase, Video, Trophy, MapPin, CalendarClock } from 'lucide-react'
+import { Briefcase, Video, Trophy, MapPin, Building2, Clock } from 'lucide-react'
 import { SkeletonDashboardColumn } from '../common/SkeletonLoader'
+import { Badge } from '../ui/badge'
 
 interface JobSummary {
   job_id: string
@@ -122,144 +123,136 @@ export default function CandidateDashboard() {
 
   return (
     <div className="h-full flex flex-col space-y-8 pb-10">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-        {}
-        <div className="bg-primary-50/50 dark:bg-primary-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-primary-200/60 dark:border-primary-800/60 shadow-sm/50">
-          <ColumnHeader
-            title="Applied"
-            count={columns.Applied.length}
-            icon={<Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
-            textColor="text-primary-900 dark:text-text-primary"
-            badgeColor="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
-          />
-          <div className="flex-1 flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <BoardColumn
+          title="Applied"
+          count={columns.Applied.length}
+          icon={<Briefcase className="w-4 h-4" />}
+        >
+          <div className="space-y-4">
             {columns.Applied.map(app => (
-              <ApplicationCard key={app.application_id} app={app} />
+              <ApplicationCard key={app.application_id} app={app} color="primary" />
             ))}
-            {columns.Applied.length === 0 && <EmptyState message="No active applications" />}
+            {columns.Applied.length === 0 && <EmptyState message="No active applications" icon={<Briefcase />} />}
           </div>
-        </div>
+        </BoardColumn>
 
-        {}
-        <div className="bg-ai-50/50 dark:bg-ai-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-ai-200/60 dark:border-ai-800/60 shadow-sm/50">
-          <ColumnHeader
-            title="Interviewing"
-            count={columns.Interviewing.length}
-            icon={<Video className="w-5 h-5 text-ai-600 dark:text-ai-400" />}
-            textColor="text-ai-900 dark:text-text-primary"
-            badgeColor="bg-ai-100 dark:bg-ai-900/30 text-ai-700 dark:text-ai-300"
-          />
-          <div className="flex-1 flex flex-col gap-4">
+        <BoardColumn
+          title="Interviewing"
+          count={columns.Interviewing.length}
+          icon={<Video className="w-4 h-4" />}
+        >
+          <div className="space-y-4">
             {columns.Interviewing.map(app => (
-              <ApplicationCard key={app.application_id} app={app} />
+              <ApplicationCard key={app.application_id} app={app} color="purple" />
             ))}
-            {columns.Interviewing.length === 0 && <EmptyState message="No interviews yet" />}
+            {columns.Interviewing.length === 0 && <EmptyState message="No interviews yet" icon={<Video />} />}
           </div>
-        </div>
+        </BoardColumn>
 
-        {}
-        <div className="bg-success-50/50 dark:bg-success-950/30 rounded-2xl p-6 flex flex-col gap-6 border border-success-200/60 dark:border-success-800/60 shadow-sm/50">
-          <ColumnHeader
-            title="Outcome"
-            count={columns.Outcome.length}
-            icon={<Trophy className="w-5 h-5 text-success-600 dark:text-success-400" />}
-            textColor="text-success-900 dark:text-success-100"
-            badgeColor="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300"
-          />
-          <div className="flex-1 flex flex-col gap-4">
+        <BoardColumn
+          title="Outcome"
+          count={columns.Outcome.length}
+          icon={<Trophy className="w-4 h-4" />}
+        >
+          <div className="space-y-4">
             {columns.Outcome.map(app => (
-              <ApplicationCard key={app.application_id} app={app} />
+              <ApplicationCard key={app.application_id} app={app} color="emerald" />
             ))}
-            {columns.Outcome.length === 0 && <EmptyState message="No outcomes yet" />}
+            {columns.Outcome.length === 0 && <EmptyState message="No outcomes yet" icon={<Trophy />} />}
           </div>
-        </div>
+        </BoardColumn>
       </div>
     </div>
   )
 }
 
-function ColumnHeader({
+function BoardColumn({
   title,
   count,
   icon,
-  textColor,
-  badgeColor,
+  children,
 }: {
   title: string
   count: number
   icon: React.ReactNode
-  textColor: string
-  badgeColor: string
+  children: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between px-1">
-      <div className="flex items-center gap-3">
-        {icon}
-        <h3 className={`font-bold ${textColor}`}>{title}</h3>
+    <div className="flex flex-col h-full space-y-4">
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-md bg-background-surface border shadow-sm text-text-muted">
+            {icon}
+          </div>
+          <h2 className="text-[13px] font-bold text-text-tertiary uppercase tracking-widest">{title}</h2>
+        </div>
+        <Badge variant="secondary" className="bg-background-muted dark:bg-background-subtle text-text-secondary font-bold h-5 px-2">
+          {count}
+        </Badge>
       </div>
-      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${badgeColor}`}>{count}</span>
+
+      <div className="flex-1 rounded-xl bg-background-subtle/50 dark:bg-background-muted/30 border-2 border-dashed border-border-default p-3">
+        <div className="space-y-3">
+          {children}
+        </div>
+      </div>
     </div>
   )
 }
 
-function ApplicationCard({ app }: { app: ApplicationResponse }) {
+function ApplicationCard({ app, color }: { app: ApplicationResponse; color: 'primary' | 'purple' | 'emerald' }) {
   const statusStyle = STATUS_CONFIG[app.current_status] || STATUS_CONFIG.applied
 
-  const getBorderColorClass = (statusStr: string) => {
-    if (statusStr === 'interviewing') return 'border-l-ai-500'
-    if (statusStr === 'outcome') return 'border-l-success-500'
-    return 'border-l-primary-500'
+  const borderColorMap = {
+    primary: 'border-l-primary-600',
+    purple: 'border-l-purple-600',
+    emerald: 'border-l-emerald-600',
   }
 
   return (
-    <div
-      className={`bg-background-surface p-4 rounded-lg shadow-sm border border-border-default border-l-[4px] ${getBorderColorClass(app.current_status)} hover:shadow-md transition-all cursor-default group`}
-    >
-      {}
-      <div className="mb-3">
-        <h4 className="font-bold text-text-primary text-sm leading-tight mb-1 group-hover:text-primary transition-colors">
-          {app.job.title}
-        </h4>
-        <p className="text-sm font-medium text-text-tertiary">{app.organization.name}</p>
-      </div>
-
-      {}
-      <div className="flex items-center gap-3 text-xs text-text-muted mb-4">
-        {app.job.location_city && (
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {app.job.location_city}
-          </div>
-        )}
-        {app.job.employment_type && (
-          <div className="flex items-center gap-1">
-            <Briefcase className="w-3 h-3" />
-            {app.job.employment_type}
-          </div>
-        )}
-      </div>
-
-      {}
-      <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
-        <div className="flex items-center gap-1 text-[11px] text-text-muted font-medium">
-          <CalendarClock className="w-3 h-3" />
-          {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
+    <div className={`bg-background-surface border border-border-default/60 shadow-sm hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-pointer overflow-hidden relative p-5 rounded-xl border-l-[3px] ${borderColorMap[color]} group`}>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <h3 className="text-lg font-bold text-text-primary leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            {app.job.title}
+          </h3>
+          <p className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest">{app.organization.name}</p>
         </div>
 
-        <span
-          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${statusStyle.color.replace('border', '')} border`}
-        >
-          {statusStyle.label}
-        </span>
+        <div className="space-y-2">
+          {app.job.location_city && (
+            <div className="flex items-center gap-2 text-[13px] text-text-secondary font-medium">
+              <MapPin className="w-4 h-4 text-text-muted" /> {app.job.location_city}
+            </div>
+          )}
+          {app.job.employment_type && (
+            <div className="flex items-center gap-2 text-[13px] text-text-secondary font-medium">
+              <Building2 className="w-4 h-4 text-text-muted" /> {app.job.employment_type}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-tertiary uppercase tracking-tighter">
+            <Clock className="w-3.5 h-3.5" /> {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
+          </div>
+          <Badge className={`${statusStyle.color.replace('border', 'bg').replace('500', '50')} ${statusStyle.color.replace('border', 'text').replace('500', '600')} dark:${statusStyle.color.replace('border', 'bg').replace('500', '950/30')} dark:${statusStyle.color.replace('border', 'text').replace('500', '400')} border-none text-[10px] font-bold px-2 py-0`}>
+            {statusStyle.label}
+          </Badge>
+        </div>
       </div>
     </div>
   )
 }
 
-function EmptyState({ message }: { message: string }) {
+function EmptyState({ message, icon }: { message: string; icon: React.ReactNode }) {
   return (
-    <div className="h-32 flex flex-col items-center justify-center text-text-muted border-2 border-dashed border-border-default rounded-lg">
-      <div className="text-sm italic">{message}</div>
+    <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
+      <div className="p-4 bg-background-surface rounded-full border border-dashed border-border-default text-text-muted">
+        {icon && <div className="scale-125">{icon}</div>}
+      </div>
+      <p className="text-sm font-medium text-text-tertiary">{message}</p>
     </div>
   )
 }

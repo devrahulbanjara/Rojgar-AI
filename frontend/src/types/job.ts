@@ -1,7 +1,7 @@
 export type JobLevel = 'Junior' | 'Mid' | 'Senior' | 'Lead' | 'Principal'
 export type LocationType = 'Remote' | 'Hybrid' | 'On-site'
 export type EmploymentType = 'Full-time' | 'Part-time' | 'Contract' | 'Internship'
-export type JobStatus = 'Draft' | 'Active' | 'Inactive' | 'Closed'
+export type JobStatus = 'Draft' | 'Active' | 'Expired'
 
 export interface Company {
   id: number

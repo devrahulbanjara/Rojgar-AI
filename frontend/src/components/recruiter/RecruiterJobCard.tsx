@@ -1,20 +1,20 @@
 import React, { memo } from 'react'
-import {
-  MapPin,
-  Briefcase,
-  DollarSign,
-  Clock,
-  Users,
-  Eye,
-  BookmarkPlus,
-  Building2,
-  Calendar,
-  Zap,
-} from 'lucide-react'
+import { MapPin, DollarSign, Clock, Users, Eye, Zap, MoreHorizontal } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 import { toast } from 'sonner'
 import type { Job } from '../../types/job'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
+} from '../ui'
 
 interface RecruiterJobCardProps {
   job: Job
@@ -47,31 +47,17 @@ function formatSalary(job: Job): string {
 
 function formatPostedDate(dateStr: string): string {
   if (!dateStr) return 'Recently'
-
   const date = new Date(dateStr)
-  const now = new Date()
-
   if (isNaN(date.getTime())) return 'Recently'
-
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const postedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-  const diffTime = today.getTime() - postedDate.getTime()
+  const today = new Date()
+  const diffTime = today.getTime() - date.getTime()
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
   if (diffDays < 7) return `${diffDays}d ago`
-  if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7)
-    return `${weeks}w ago`
-  }
-  if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30)
-    return `${months}mo ago`
-  }
-  const years = Math.floor(diffDays / 365)
-  return `${years}y ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`
+  return `${Math.floor(diffDays / 365)}y ago`
 }
 
 function formatDeadline(deadline: string): string {
@@ -82,83 +68,34 @@ function formatDeadline(deadline: string): string {
     const diffInMs = deadlineDate.getTime() - now.getTime()
     const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24))
 
-    if (diffInDays < 0) {
-      return 'Expired'
-    } else if (diffInDays === 0) {
-      return 'Today'
-    } else if (diffInDays === 1) {
-      return 'Tomorrow'
-    } else if (diffInDays <= 7) {
-      return `${diffInDays} days`
-    } else {
-      return deadlineDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      })
-    }
+    if (diffInDays < 0) return 'Expired'
+    if (diffInDays === 0) return 'Today'
+    if (diffInDays === 1) return 'Tomorrow'
+    if (diffInDays <= 7) return `${diffInDays} days`
+    return deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   } catch {
     return ''
   }
 }
 
-const departmentColors: Record<string, { bg: string; text: string; border: string }> = {
-  Engineering: {
-    bg: 'bg-blue-50/80 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
-  },
-  Sales: {
-    bg: 'bg-green-50/80 dark:bg-green-950/30',
-    text: 'text-green-700 dark:text-green-300',
-    border: 'border-green-200 dark:border-green-800',
-  },
-  Marketing: {
-    bg: 'bg-orange-50/80 dark:bg-orange-950/30',
-    text: 'text-orange-700 dark:text-orange-300',
-    border: 'border-orange-200 dark:border-orange-800',
-  },
-  Product: {
-    bg: 'bg-purple-50/80 dark:bg-purple-950/30',
-    text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-200 dark:border-purple-800',
-  },
-  Design: {
-    bg: 'bg-pink-50/80 dark:bg-pink-950/30',
-    text: 'text-pink-700 dark:text-pink-300',
-    border: 'border-pink-200 dark:border-pink-800',
-  },
-  'Data Science': {
-    bg: 'bg-cyan-50/80 dark:bg-cyan-950/30',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    border: 'border-cyan-200 dark:border-cyan-800',
-  },
-  HR: {
-    bg: 'bg-rose-50/80 dark:bg-rose-950/30',
-    text: 'text-rose-700 dark:text-rose-300',
-    border: 'border-rose-200 dark:border-rose-800',
-  },
-  Finance: {
-    bg: 'bg-emerald-50/80 dark:bg-emerald-950/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
-  },
-  Operations: {
-    bg: 'bg-amber-50/80 dark:bg-amber-950/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
-  },
-  Default: {
-    bg: 'bg-background-subtle/80',
-    text: 'text-text-secondary',
-    border: 'border-border-default',
-  },
+const departmentColors: Record<
+  string,
+  { colorPalette: 'blue' | 'green' | 'orange' | 'cyan' | 'pink' | 'purple' | 'red' | 'gray' }
+> = {
+  Engineering: { colorPalette: 'blue' },
+  Sales: { colorPalette: 'green' },
+  Marketing: { colorPalette: 'orange' },
+  Product: { colorPalette: 'cyan' },
+  Design: { colorPalette: 'pink' },
+  'Data Science': { colorPalette: 'purple' },
+  HR: { colorPalette: 'red' },
+  Default: { colorPalette: 'gray' },
 }
 
 export const RecruiterJobCard = memo<RecruiterJobCardProps>(
-  ({ job, onClick, onConvertToReferenceJD, className }) => {
+  ({ job, onClick, onConvertToReferenceJD: _onConvertToReferenceJD, className }) => {
     const status = job.status || 'Draft'
-
-    const displayStatus = status === 'Closed' ? 'Expired' : status
+    const displayStatus = status
     const deptColor = departmentColors[job.department || ''] || departmentColors.Default
 
     const jobId = job.job_id || job.id?.toString() || null
@@ -169,199 +106,145 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
       isToggling,
     } = useAutoShortlist(jobId)
 
-    const handleConvertClick = (e: React.MouseEvent) => {
-      e.stopPropagation()
-      onConvertToReferenceJD?.()
-    }
+    const locationDisplay =
+      job.location_city && job.location_country
+        ? `${job.location_city}, ${job.location_country}`
+        : job.location_city || job.location_country || job.location || 'Location not specified'
+
+    const companyName = job.company?.name || 'Company'
+    const companyLogo = job.company?.logo
 
     const handleAutoShortlistToggle = (e: React.MouseEvent) => {
       e.stopPropagation()
       if (!jobId || isLoadingAutoShortlist || isToggling) return
-
       toggle()
-
       setTimeout(() => {
-        toast.success(
-          autoShortlist
-            ? `Auto Shortlist disabled for ${job.title}`
-            : `Auto Shortlist enabled for ${job.title}`,
-          { duration: 3000 }
-        )
+        toast.success(autoShortlist ? 'Auto Shortlist Disabled' : 'Auto Shortlist Enabled', {
+          description: autoShortlist
+            ? 'Candidates will not be automatically shortlisted'
+            : 'Candidates will be automatically shortlisted when job expires',
+          duration: 3000,
+        })
       }, 100)
     }
 
     return (
-      <div
+      <Card
         onClick={onClick}
         className={cn(
-          'group cursor-pointer transition-all duration-300 w-full bg-background-surface rounded-xl border p-6',
-          'hover:-translate-y-1 hover:border-primary-200 dark:hover:border-primary-800',
-          'border-border-default',
-          'shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
-          'hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]',
+          'group cursor-pointer transition-all duration-300 border-border-default hover:border-primary-200 dark:hover:border-primary-800 bg-background-surface hover:shadow-md hover:-translate-y-0.5',
           className
         )}
-        style={{
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={`View details for ${job.title}`}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onClick?.()
-          }
-        }}
       >
-        <div className="flex flex-col h-full">
-          {}
-          <div className="flex items-start justify-between mb-5">
-            {job.department && (
-              <span
-                className={cn(
-                  'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border',
-                  deptColor.bg,
-                  deptColor.text,
-                  deptColor.border
-                )}
-              >
-                {job.department}
-              </span>
-            )}
+        <CardHeader className="p-6 pb-3 space-y-4">
+          {/* Top Row: Badges and Actions */}
+          <div className="flex justify-between items-start">
+            <div className="flex gap-2 flex-wrap">
+              {job.department && (
+                <Badge
+                  variant="subtle"
+                  colorPalette={deptColor.colorPalette}
+                  className="h-6 font-semibold"
+                >
+                  {job.department}
+                </Badge>
+              )}
+              {job.application_deadline && (
+                <Badge
+                  variant="subtle"
+                  colorPalette={displayStatus === 'Expired' ? 'red' : 'orange'}
+                  className="h-6"
+                >
+                  {displayStatus === 'Expired'
+                    ? 'Expired'
+                    : formatDeadline(job.application_deadline)}
+                </Badge>
+              )}
+            </div>
 
-            {}
-            <div className="relative group/tooltip">
+            <div className="flex items-center gap-1.5 pt-1">
               <button
                 onClick={handleAutoShortlistToggle}
-                disabled={isLoadingAutoShortlist || isToggling || !jobId}
                 className={cn(
-                  'flex items-center justify-center transition-all duration-200 rounded-full',
-                  'hover:scale-110 active:scale-95',
+                  'transition-all duration-200 p-1.5 rounded-lg',
                   autoShortlist
-                    ? 'w-7 h-7 bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 shadow-sm'
-                    : 'w-5 h-5 text-text-muted hover:text-warning-500',
-                  (isLoadingAutoShortlist || isToggling) && 'opacity-50 cursor-not-allowed'
+                    ? 'text-orange-500 fill-orange-500'
+                    : 'text-text-muted hover:text-orange-400'
                 )}
-                title={
-                  autoShortlist
-                    ? 'Auto Shortlist: ON - Click to disable'
-                    : 'Auto Shortlist: OFF - Click to enable'
-                }
+                title={autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
               >
-                <Zap
-                  className={cn(
-                    'transition-all duration-200',
-                    autoShortlist ? 'w-4 h-4' : 'w-4 h-4'
-                  )}
-                />
+                <Zap className={cn('w-4 h-4', autoShortlist && 'fill-current')} />
               </button>
-
-              {}
-              <div className="absolute top-full right-0 mt-2 px-2 py-1 text-xs text-text-inverse bg-text-primary rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                {autoShortlist ? 'Auto Shortlist: ON' : 'Auto Shortlist: OFF'}
-                <div className="absolute bottom-full right-2 border-4 border-transparent border-b-text-primary" />
-              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-text-muted">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
             </div>
           </div>
 
-          {}
-          <div className="mb-5">
-            <h3 className="font-semibold text-[19px] leading-tight text-text-primary group-hover:text-primary-600 transition-colors line-clamp-2">
-              {job.title}
-            </h3>
-          </div>
-
-          {}
-          <div className="space-y-2.5 text-sm text-text-tertiary mb-6">
-            {}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-[14px] h-[14px] text-text-muted" />
-                <span className="truncate">{job.location}</span>
+          {/* Title and Logo Branding */}
+          <div className="flex items-center gap-4">
+            <Avatar className="h-10 w-10 border border-border-subtle bg-background-subtle rounded-xl">
+              <AvatarImage src={companyLogo} />
+              <AvatarFallback className="text-primary-600 dark:text-primary-400 font-bold text-xs bg-primary-50 dark:bg-primary-950">
+                {companyName.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-lg leading-tight text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+                  {job.title}
+                </h3>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-[14px] h-[14px] text-text-muted" />
-                <span>{formatPostedDate(job.posted_date || job.created_at)}</span>
-              </div>
-            </div>
-
-            {}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <DollarSign className="w-[14px] h-[14px] text-text-muted" />
-                <span className="font-medium">{formatSalary(job)}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Briefcase className="w-[14px] h-[14px] text-text-muted" />
-                <span>{job.employment_type}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Building2 className="w-[14px] h-[14px] text-text-muted" />
-                <span>{job.location_type || 'On-site'}</span>
-              </div>
+              <p className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest mt-0.5 mt-1">
+                {companyName}
+              </p>
             </div>
           </div>
+        </CardHeader>
 
-          {}
-          <div className="flex-1" />
-
-          {}
-          <div className="flex items-center justify-between pt-6 border-t border-border-subtle">
-            {}
-            <div className="flex items-center gap-3">
-              {job.applicant_count !== undefined && (
-                <div className="inline-flex items-center gap-2 px-3 py-2 bg-ai-50/80 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded-lg border border-ai-200 dark:border-ai-800">
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs font-semibold">{job.applicant_count}</span>
-                </div>
-              )}
-              {job.views_count !== undefined && (
-                <div className="inline-flex items-center gap-2 px-3 py-2 bg-primary-50/80 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 rounded-lg border border-primary-200 dark:border-primary-800">
-                  <Eye className="w-4 h-4" />
-                  <span className="text-xs font-semibold">{job.views_count}</span>
-                </div>
-              )}
+        <CardContent className="p-6 pt-2 space-y-5">
+          {/* Vertical Hierarchy Spine */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+              <MapPin className="w-4 h-4 text-text-muted flex-shrink-0" />
+              <span className="truncate">{locationDisplay}</span>
             </div>
-
-            {}
-            <div className="flex items-center">
-              {job.application_deadline ? (
-                displayStatus === 'Expired' ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-error-50/80 dark:bg-error-950/30 text-error-700 dark:text-error-300 rounded-lg border border-error-200 dark:border-error-800">
-                    <Calendar className="w-4 h-4" />
-                    <span className="text-xs font-semibold">Deadline: Expired</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-warning-50/80 dark:bg-warning-950/30 text-warning-700 dark:text-warning-300 rounded-lg border border-warning-200 dark:border-warning-800">
-                    <Calendar className="w-4 h-4" />
-                    <span className="text-xs font-semibold">
-                      {formatDeadline(job.application_deadline)}
-                    </span>
-                  </div>
-                )
-              ) : (
-                onConvertToReferenceJD && (
-                  <button
-                    onClick={handleConvertClick}
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                      'text-primary-600 dark:text-primary-400 hover:text-text-inverse',
-                      'border border-primary-200 hover:border-primary-600',
-                      'hover:bg-primary-600',
-                      'group-hover:shadow-sm'
-                    )}
-                    title="Save as Reference JD Template"
-                  >
-                    <BookmarkPlus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Save as Template</span>
-                  </button>
-                )
-              )}
+            <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+              <DollarSign className="w-4 h-4 text-text-muted flex-shrink-0" />
+              <span className="font-medium whitespace-nowrap">{formatSalary(job)}</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-sm text-text-secondary">
+              <Clock className="w-4 h-4 text-text-muted flex-shrink-0" />
+              <span className="whitespace-nowrap">
+                {formatPostedDate(job.posted_date || job.created_at)}
+              </span>
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Type Tags */}
+          <div className="flex items-center gap-2">
+            <Badge variant="subtle" colorPalette="gray" className="font-medium">
+              {job.employment_type}
+            </Badge>
+            <Badge variant="subtle" colorPalette="gray" className="font-medium">
+              {job.location_type || 'On-site'}
+            </Badge>
+          </div>
+        </CardContent>
+
+        <CardFooter className="p-6 pt-4 border-t border-border-default/60 flex items-center justify-between">
+          <div className="flex gap-6">
+            <div className="flex items-center gap-2 text-xs font-semibold text-text-muted">
+              <Users className="w-4 h-4" />
+              <span>{job.applicant_count || 0} applicants</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-text-muted">
+              <Eye className="w-4 h-4" />
+              <span>{job.views_count || 0} views</span>
+            </div>
+          </div>
+        </CardFooter>
+      </Card>
     )
   }
 )

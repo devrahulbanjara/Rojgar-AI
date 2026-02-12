@@ -9,6 +9,7 @@ from app.db.repositories.job_repo import JobDescriptionRepository, JobRepository
 from app.db.repositories.user_repo import UserRepository
 from app.integrations.qdrant.vector_service import JobVectorService
 from app.services.recruiter.activity_events import ActivityEventEmitter
+from app.core.logging_config import logger
 
 VISIBLE_STATUSES = ["active"]
 
@@ -54,7 +55,6 @@ class JobService:
                     job_ids = raw_ids
                     order_by_date = False
             except Exception as e:
-                from app.core.logging_config import logger
 
                 logger.warning(f"Vector search failed for recommendations: {e}")
                 job_ids = None

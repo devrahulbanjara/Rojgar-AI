@@ -3,18 +3,15 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Code, Lightbulb } from 'lucide-react'
 
 interface SkillsFormProps {
   open: boolean
@@ -73,58 +70,72 @@ export default function SkillsFormDialog({
   }
 
   return (
-    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-md">
-      <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-ai-50 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-ai-600" />
-          </div>
-          <div>
-            <DialogTitle>{initialData ? 'Edit Skill' : 'Add Skill'}</DialogTitle>
-            <DialogDescription>
-              {initialData ? 'Update your skill' : 'Add a new skill to your resume'}
-            </DialogDescription>
+    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-[480px] p-0 overflow-hidden border-none shadow-2xl">
+      <div className="bg-background-surface flex flex-col h-full">
+        <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-success-600/10 dark:bg-success-600/20 flex items-center justify-center border border-success-600/20 shadow-sm">
+              <Code className="w-7 h-7 text-success-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold tracking-tight text-text-primary">
+                {initialData ? 'Edit Skill' : 'Add Skill'}
+              </DialogTitle>
+              <DialogDescription className="text-[14px] text-text-tertiary font-medium">
+                {initialData ? 'Update your professional skill detail' : 'Highlight a key skill for your profile'}
+              </DialogDescription>
+            </div>
           </div>
         </div>
-      </DialogHeader>
 
-      <DialogContent className="pt-0">
-        <form id="skill-form" onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-text-primary">
-              Skill Name <span className="text-error">*</span>
-            </Label>
-            <Input
-              required
-              value={skillName}
-              onChange={e => setSkillName(e.target.value)}
-              placeholder="e.g. Python, React, Leadership"
-              autoFocus
-              className="h-11 rounded-xl border-border-default focus:border-ai focus:ring-ai/20"
-            />
+        <DialogContent className="p-8">
+          <form id="skill-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
+                <Lightbulb className="w-3.5 h-3.5" />
+                Skill Name <span className="text-error-500 font-bold">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={skillName}
+                onChange={e => setSkillName(e.target.value)}
+                placeholder="e.g. React, Python, Product Design"
+                autoFocus
+                className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
+                  focus:outline-none focus:ring-2 focus:ring-success-600/20 focus:border-success-600 
+                  hover:border-border-strong transition-all duration-200
+                  text-text-primary font-medium placeholder:text-text-muted"
+              />
+              <p className="text-[12px] text-text-tertiary font-medium mt-2">
+                Use common names for better discoverability
+              </p>
+            </div>
+          </form>
+        </DialogContent>
+
+        <DialogFooter className="p-6 border-t border-border-subtle bg-background-surface shrink-0">
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="h-11 px-6 rounded-xl text-text-tertiary hover:text-text-primary hover:bg-background-subtle font-bold uppercase tracking-wider text-[11px] transition-all"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="skill-form"
+              disabled={loading}
+              className="h-11 px-8 rounded-xl bg-success-600 hover:bg-success-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-success-600/20 transition-all active:scale-95"
+            >
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />}
+              {initialData ? 'Save Changes' : 'Add Skill'}
+            </Button>
           </div>
-        </form>
-      </DialogContent>
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          className="rounded-xl px-5"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          form="skill-form"
-          disabled={loading}
-          className="btn-primary-gradient rounded-xl px-6"
-        >
-          {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {initialData ? 'Save Changes' : 'Add Skill'}
-        </Button>
-      </DialogFooter>
+        </DialogFooter>
+      </div>
     </Dialog>
   )
 }

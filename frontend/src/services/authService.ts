@@ -54,7 +54,7 @@ class AuthService {
       }
 
       if (response.status === 403) {
-        const orgResponse = await fetch(`${API_CONFIG.baseUrl}/api/v1/organization/me`, {
+        const orgResponse = await fetch(`${API_CONFIG.baseUrl}/api/v1/recruiter/organization/me`, {
           credentials: 'include',
         })
 

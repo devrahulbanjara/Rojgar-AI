@@ -13,9 +13,10 @@ export interface ShortlistCandidate {
   picture?: string
   professional_headline?: string
   applied_at: string
-  ai_score: number
-  ai_analysis: string
-  ai_recommendation: 'approve' | 'review' | 'reject'
+  current_status: string
+  score: number
+  feedback: string
+  recommendation: 'shortlist' | 'review' | 'reject'
   job_title: string
   social_links?: SocialLink[]
 }
@@ -24,9 +25,12 @@ export interface ShortlistJob {
   job_id: string
   title: string
   department?: string
+  status: string
+  shortlist_status: string
   applicant_count: number
-  pending_ai_reviews: number
+  pending_reviews: number
   candidates: ShortlistCandidate[]
+  auto_shortlist?: boolean
 }
 
 export interface ShortlistFilters {

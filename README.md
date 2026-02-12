@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="docs/ConvexHire.png" alt="ConvexHire Logo" width="800"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/public/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="frontend/public/logo-light.svg">
+    <img src="frontend/public/logo-light.svg" alt="ConvexHire Logo" width="400"/>
+  </picture>
   
   ### Use AI to Recruit Humans
   
@@ -20,7 +24,7 @@
 
 ---
 
-> [!WARNING]
+> [!NOTE]
 > **Currently in Development** – Features are being actively built and tested. Expect breaking changes.
 
 ---
@@ -46,48 +50,34 @@ ConvexHire is an AI-powered recruitment platform that automates your hiring work
 > - [uv](https://docs.astral.sh/uv/getting-started/installation/) - Fast Python package installer
 > - Node.js 18+
 > - Docker
+> - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) - Required for AI services
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/devrahulbanjara/ConvexHire.git
 cd ConvexHire
 
-# 2. Set up environment variables
+# 2. Configure AWS credentials
+aws configure
+# Enter your AWS Access Key ID, Secret Access Key, and region (e.g., us-east-1)
+
+# 3. Set up environment variables
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 
-# 3. Start infrastructure
+# 4. Start infrastructure
 docker-compose up -d
 
-# 4. Run backend (http://localhost:8000)
+# 5. Run backend (http://localhost:8000)
 cd backend && uv sync && uv run fastapi dev
 
-# 5. Run frontend (http://localhost:3000)
-cd frontend && bun install && bun run dev
+# 6. Run frontend (http://localhost:3000)
+cd frontend && npm install && npm run dev
 ```
 
-> [!TIP]
+> [!IMPORTANT]
 > Make sure to configure your API keys in the `.env` files before running the application.
 
-> [!NOTE]
-> The backend runs on port 8000 and the frontend on port 3000 by default.
-
----
-
-## 🎨 Design System
-
-<table>
-<tr>
-<td width="80" align="center">
-<img src="https://api.iconify.design/fluent:design-ideas-24-filled.svg?color=%233b82f6" width="40" height="40" alt="Design"/>
-</td>
-<td>
-ConvexHire features a premium <strong>"Sophisticated Intelligence"</strong> design system with a tri-font typography system (Inter for UI, Plus Jakarta Sans for headings, JetBrains Mono for AI data), carefully crafted color palettes for light/dark modes, and AI-specific visual patterns that distinguish human interface from machine logic.
-</td>
-</tr>
-</table>
-
-> 📖 **[View Full Design Documentation →](./DESIGN.md)** — Typography, colors, spacing, shadows, animations, dark mode, and component patterns.
 
 ---
 

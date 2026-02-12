@@ -23,11 +23,11 @@ export interface UpdateRecruiterRequest {
 
 const organizationEndpoints = {
   recruiters: {
-    list: '/api/v1/organization/recruiters',
-    detail: (id: string) => `/api/v1/organization/recruiters/${id}`,
-    create: '/api/v1/organization/recruiters',
-    update: (id: string) => `/api/v1/organization/recruiters/${id}`,
-    delete: (id: string) => `/api/v1/organization/recruiters/${id}`,
+    list: '/api/v1/recruiter/organization/recruiters',
+    detail: (id: string) => `/api/v1/recruiter/organization/recruiters/${id}`,
+    create: '/api/v1/recruiter/organization/recruiters',
+    update: (id: string) => `/api/v1/recruiter/organization/recruiters/${id}`,
+    delete: (id: string) => `/api/v1/recruiter/organization/recruiters/${id}`,
   },
 } as const
 
