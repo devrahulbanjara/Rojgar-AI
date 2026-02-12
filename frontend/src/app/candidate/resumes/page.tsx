@@ -471,7 +471,12 @@ export default function ResumeListPage() {
                       className="overflow-hidden border border-border-default rounded-xl bg-background-surface flex flex-col h-full min-h-[220px] p-6"
                     >
                       <div className="flex justify-between items-start mb-5">
-                        <SkeletonLoader variant="rectangular" width={48} height={48} className="rounded-xl" />
+                        <SkeletonLoader
+                          variant="rectangular"
+                          width={48}
+                          height={48}
+                          className="rounded-xl"
+                        />
                         <SkeletonLoader variant="circular" width={32} height={32} />
                       </div>
 
@@ -488,129 +493,146 @@ export default function ResumeListPage() {
                   ))}
                 </div>
               ) : resumes.length === 0 ? (
-                  <div className="text-center py-20 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
-                    <div className="bg-background-surface w-20 h-20 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-10 h-10 text-primary-400 dark:text-primary-500" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-text-primary mb-2">
-                      No resumes created yet
-                    </h3>
-                    <p className="text-text-secondary mb-6 max-w-sm mx-auto">
-                      Create your first resume to get started with your job applications!
-                    </p>
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="text-primary font-medium hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
-                    >
-                      Create your first resume
-                    </button>
+                <div className="text-center py-20 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
+                  <div className="bg-background-surface w-20 h-20 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-10 h-10 text-primary-400 dark:text-primary-500" />
                   </div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-2">
+                    No resumes created yet
+                  </h3>
+                  <p className="text-text-secondary mb-6 max-w-sm mx-auto">
+                    Create your first resume to get started with your job applications!
+                  </p>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-primary font-medium hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+                  >
+                    Create your first resume
+                  </button>
+                </div>
               ) : filteredAndSortedResumes.length === 0 ? (
-                  <div className="text-center py-16 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
-                    <div className="bg-background-surface w-16 h-16 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-3">
-                      <Search className="w-8 h-8 text-primary-400 dark:text-primary-500" />
-                    </div>
-                    <h3 className="text-base font-semibold text-text-primary mb-1">
-                      No resumes found
-                    </h3>
-                    <p className="text-sm text-text-secondary">
-                      {searchQuery
-                        ? 'Try adjusting your search query'
-                        : 'Create your first resume to get started!'}
-                    </p>
+                <div className="text-center py-16 bg-background-subtle/50 dark:bg-background-surface/50 rounded-xl border-2 border-dashed border-border-subtle dark:border-border-default">
+                  <div className="bg-background-surface w-16 h-16 rounded-xl shadow-sm border border-border-subtle dark:border-border-default flex items-center justify-center mx-auto mb-3">
+                    <Search className="w-8 h-8 text-primary-400 dark:text-primary-500" />
                   </div>
+                  <h3 className="text-base font-semibold text-text-primary mb-1">
+                    No resumes found
+                  </h3>
+                  <p className="text-sm text-text-secondary">
+                    {searchQuery
+                      ? 'Try adjusting your search query'
+                      : 'Create your first resume to get started!'}
+                  </p>
+                </div>
               ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredAndSortedResumes.map(resume => (
-                      <div
-                        key={resume.resume_id}
-                        onClick={() => setSelectedResumeId(resume.resume_id)}
-                        className="group hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-border-default rounded-xl bg-background-surface flex flex-col h-full min-h-[220px]"
-                      >
-                        <div className="p-6 flex-grow flex flex-col">
-                          <div className="flex justify-between items-start mb-5">
-                            <div className="h-12 w-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:bg-primary-600 group-hover:text-white transition-colors">
-                              <FileText className="w-6 h-6" />
-                            </div>
-                            <div className="relative" ref={expandedResumeId === resume.resume_id ? dropdownRef : null}>
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  const newExpandedId = expandedResumeId === resume.resume_id ? null : resume.resume_id
-                                  setExpandedResumeId(newExpandedId)
-                                  if (newExpandedId && !resumeDetails[resume.resume_id]) {
-                                    loadResumeDetails(resume.resume_id)
-                                  }
-                                }}
-                                className="p-2 text-text-muted hover:text-text-secondary hover:bg-background-subtle rounded-lg transition-colors"
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredAndSortedResumes.map(resume => (
+                    <div
+                      key={resume.resume_id}
+                      onClick={() => setSelectedResumeId(resume.resume_id)}
+                      className="group hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-border-default rounded-xl bg-background-surface flex flex-col h-full min-h-[220px]"
+                    >
+                      <div className="p-6 flex-grow flex flex-col">
+                        <div className="flex justify-between items-start mb-5">
+                          <div className="h-12 w-12 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:bg-primary-600 group-hover:text-white transition-colors">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                          <div
+                            className="relative"
+                            ref={expandedResumeId === resume.resume_id ? dropdownRef : null}
+                          >
+                            <button
+                              onClick={e => {
+                                e.stopPropagation()
+                                const newExpandedId =
+                                  expandedResumeId === resume.resume_id ? null : resume.resume_id
+                                setExpandedResumeId(newExpandedId)
+                                if (newExpandedId && !resumeDetails[resume.resume_id]) {
+                                  loadResumeDetails(resume.resume_id)
+                                }
+                              }}
+                              className="p-2 text-text-muted hover:text-text-secondary hover:bg-background-subtle rounded-lg transition-colors"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                            {expandedResumeId === resume.resume_id && (
+                              <div
+                                onClick={e => e.stopPropagation()}
+                                className="absolute right-0 top-10 bg-background-surface border border-border-default rounded-lg shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                               >
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-                              {expandedResumeId === resume.resume_id && (
-                                <div
-                                  onClick={e => e.stopPropagation()}
-                                  className="absolute right-0 top-10 bg-background-surface border border-border-default rounded-lg shadow-lg py-1 min-w-[140px] z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    setSelectedResumeId(resume.resume_id)
+                                    setExpandedResumeId(null)
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle flex items-center gap-2"
                                 >
-                                  <button
-                                    onClick={e => {
-                                      e.stopPropagation()
-                                      setSelectedResumeId(resume.resume_id)
-                                      setExpandedResumeId(null)
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle flex items-center gap-2"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={e => handleDuplicate(resume.resume_id, e)}
-                                    className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle flex items-center gap-2"
-                                  >
-                                    <Copy className="w-4 h-4" />
-                                    Duplicate
-                                  </button>
-                                  <button
-                                    onClick={e => handleDelete(resume.resume_id, resume.target_job_title || 'Untitled Resume', e)}
-                                    className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-50 dark:hover:bg-error-950/30 flex items-center gap-2"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="min-h-[60px] flex items-start mb-3">
-                            <h3 className="text-lg font-bold text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors leading-[1.2] line-clamp-2">
-                              {resume.target_job_title || 'General Resume'}
-                            </h3>
-                          </div>
-
-                          <div className="mt-auto flex items-center gap-2 text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>Last edited {new Date(resume.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                  <Edit className="w-4 h-4" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={e => handleDuplicate(resume.resume_id, e)}
+                                  className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-background-subtle flex items-center gap-2"
+                                >
+                                  <Copy className="w-4 h-4" />
+                                  Duplicate
+                                </button>
+                                <button
+                                  onClick={e =>
+                                    handleDelete(
+                                      resume.resume_id,
+                                      resume.target_job_title || 'Untitled Resume',
+                                      e
+                                    )
+                                  }
+                                  className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error-50 dark:hover:bg-error-950/30 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        <div className="px-6 py-3 bg-background-subtle/50 dark:bg-background-muted/30 border-t border-border-default mt-auto">
-                          <span className="text-[12px] text-primary-600 dark:text-primary-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                            Open Builder
+                        <div className="min-h-[60px] flex items-start mb-3">
+                          <h3 className="text-lg font-bold text-text-primary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors leading-[1.2] line-clamp-2">
+                            {resume.target_job_title || 'General Resume'}
+                          </h3>
+                        </div>
+
+                        <div className="mt-auto flex items-center gap-2 text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>
+                            Last edited{' '}
+                            {new Date(resume.updated_at).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
                           </span>
                         </div>
                       </div>
-                    ))}
 
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="border-2 border-dashed border-border-default rounded-xl p-6 flex flex-col items-center justify-center text-text-muted hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-500 dark:hover:text-primary-400 transition-all bg-background-surface/50 group h-full min-h-[220px]"
-                    >
-                      <div className="h-12 w-12 rounded-full bg-background-subtle flex items-center justify-center mb-3 group-hover:bg-primary-50 dark:group-hover:bg-primary-950/30 transition-colors">
-                        <Plus className="w-6 h-6" />
+                      <div className="px-6 py-3 bg-background-subtle/50 dark:bg-background-muted/30 border-t border-border-default mt-auto">
+                        <span className="text-[12px] text-primary-600 dark:text-primary-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                          Open Builder
+                        </span>
                       </div>
-                      <span className="text-sm font-bold">New Resume</span>
-                    </button>
-                  </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="border-2 border-dashed border-border-default rounded-xl p-6 flex flex-col items-center justify-center text-text-muted hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-500 dark:hover:text-primary-400 transition-all bg-background-surface/50 group h-full min-h-[220px]"
+                  >
+                    <div className="h-12 w-12 rounded-full bg-background-subtle flex items-center justify-center mb-3 group-hover:bg-primary-50 dark:group-hover:bg-primary-950/30 transition-colors">
+                      <Plus className="w-6 h-6" />
+                    </div>
+                    <span className="text-sm font-bold">New Resume</span>
+                  </button>
+                </div>
               )}
             </AnimatedContainer>
 
