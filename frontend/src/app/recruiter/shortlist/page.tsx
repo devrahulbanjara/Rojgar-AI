@@ -110,7 +110,12 @@ function ShortlistPageSkeleton() {
                 <SkeletonLoader variant="text" width="44%" height={24} />
                 <SkeletonLoader variant="text" width="28%" height={14} />
               </div>
-              <SkeletonLoader variant="rectangular" width={120} height={34} className="rounded-lg" />
+              <SkeletonLoader
+                variant="rectangular"
+                width={120}
+                height={34}
+                className="rounded-lg"
+              />
             </header>
 
             <div className="max-w-5xl mx-auto px-6 py-6 space-y-6 w-full">
@@ -379,7 +384,9 @@ export default function ShortlistPage() {
 
   const pendingCandidates = useMemo(() => {
     if (!selectedJob) return []
-    return selectedJob.candidates.filter(c => c.current_status === 'pending' || c.current_status === 'applied')
+    return selectedJob.candidates.filter(
+      c => c.current_status === 'pending' || c.current_status === 'applied'
+    )
   }, [selectedJob])
 
   const handleAcceptAIRecommendations = useCallback(async () => {
@@ -387,7 +394,8 @@ export default function ShortlistPage() {
       title: 'Finalize AI Recommendations',
       description: "You're about to accept AI recommendations for",
       itemName: `${pendingCandidates.length} candidate${pendingCandidates.length !== 1 ? 's' : ''}`,
-      additionalInfo: 'This will automatically shortlist or reject each candidate based on their AI score.',
+      additionalInfo:
+        'This will automatically shortlist or reject each candidate based on their AI score.',
       onConfirm: () => {
         pendingCandidates.forEach(candidate => {
           if (candidate.score >= 75) {
@@ -503,14 +511,12 @@ export default function ShortlistPage() {
                               disabled={triggerShortlistMutation.isPending}
                               onClick={handleTriggerShortlist}
                             >
-                              {triggerShortlistMutation.isPending ? 'Running...' : 'Run AI Shortlist'}
+                              {triggerShortlistMutation.isPending
+                                ? 'Running...'
+                                : 'Run AI Shortlist'}
                             </Button>
                           )}
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9 text-text-muted"
-                          >
+                          <Button variant="outline" size="icon" className="h-9 w-9 text-text-muted">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </div>
@@ -563,9 +569,12 @@ export default function ShortlistPage() {
                           {isShortlistPending && selectedJob.status !== 'expired' && (
                             <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
                               <Info className="w-4 h-4 text-blue-600" />
-                              <AlertTitle className="text-blue-900 dark:text-blue-100">Auto-shortlist enabled</AlertTitle>
+                              <AlertTitle className="text-blue-900 dark:text-blue-100">
+                                Auto-shortlist enabled
+                              </AlertTitle>
                               <AlertDescription className="text-blue-700 dark:text-blue-300">
-                                Shortlisting will run automatically when the job closes. Scores will appear here once processing is complete.
+                                Shortlisting will run automatically when the job closes. Scores will
+                                appear here once processing is complete.
                               </AlertDescription>
                             </Alert>
                           )}
@@ -617,8 +626,8 @@ export default function ShortlistPage() {
                             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-ai-50 border border-ai-200">
                               <Loader2 className="w-4 h-4 text-ai-600 animate-spin" />
                               <p className="text-xs text-text-secondary">
-                                AI shortlisting is running. Candidates will update live as scores are
-                                computed.
+                                AI shortlisting is running. Candidates will update live as scores
+                                are computed.
                               </p>
                             </div>
                           )}

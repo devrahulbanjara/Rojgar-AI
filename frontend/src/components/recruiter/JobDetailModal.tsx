@@ -318,16 +318,16 @@ export function JobDetailModal({
           </div>
           <div className="flex items-center gap-3">
             {onConvertToReferenceJD && (isActive || isExpired) && (
-                <ActionButton
-                  onClick={handleConvertToReferenceJD}
-                  variant="outline"
-                  size="md"
-                  className="text-slate-600 dark:text-slate-400"
-                >
-                  <BookmarkPlus className="w-4 h-4" />
-                  Save as Template
-                </ActionButton>
-              )}
+              <ActionButton
+                onClick={handleConvertToReferenceJD}
+                variant="outline"
+                size="md"
+                className="text-slate-600 dark:text-slate-400"
+              >
+                <BookmarkPlus className="w-4 h-4" />
+                Save as Template
+              </ActionButton>
+            )}
             {isActive && onExpire && (
               <ActionButton
                 onClick={handleExpire}

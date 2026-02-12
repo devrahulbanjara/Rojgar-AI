@@ -157,14 +157,19 @@ export default function ResumeDetailSheet({
     setEditingCertification(null)
   }
 
-
-
   if (!resume || loading) {
     return (
-      <Dialog isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-[800px] mx-auto p-0 border-none shadow-none">
+      <Dialog
+        isOpen={isOpen}
+        onClose={onClose}
+        showCloseButton={false}
+        className="max-w-[800px] mx-auto p-0 border-none shadow-none"
+      >
         <div className="w-full max-w-[800px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
           <DialogTitle className="sr-only">Loading Resume</DialogTitle>
-          <DialogDescription className="sr-only">Please wait while we fetch the resume details.</DialogDescription>
+          <DialogDescription className="sr-only">
+            Please wait while we fetch the resume details.
+          </DialogDescription>
           <SkeletonResumeDetail />
         </div>
       </Dialog>
@@ -173,9 +178,16 @@ export default function ResumeDetailSheet({
 
   return (
     <>
-      <Dialog isOpen={isOpen} onClose={onClose} showCloseButton={false} className="max-w-[800px] mx-auto p-0 border-none shadow-none">
+      <Dialog
+        isOpen={isOpen}
+        onClose={onClose}
+        showCloseButton={false}
+        className="max-w-[800px] mx-auto p-0 border-none shadow-none"
+      >
         <div className="w-full max-w-[800px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
-          <DialogTitle className="sr-only">{resume.target_job_title || 'General Resume'}</DialogTitle>
+          <DialogTitle className="sr-only">
+            {resume.target_job_title || 'General Resume'}
+          </DialogTitle>
           <DialogDescription className="sr-only">
             Detailed view of the resume for {resume.target_job_title || 'General'}.
           </DialogDescription>
@@ -203,17 +215,14 @@ export default function ResumeDetailSheet({
                     <Pencil className="w-4 h-4" />
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
 
-          { }
+          {}
           {/* Scrollable Content */}
           <ScrollArea className="flex-1 bg-background-base">
             <div className="px-10 py-8 space-y-12">
-
-
               {/* Summary Section */}
               {resume.custom_summary && (
                 <Section title="Professional Summary" icon={<Briefcase className="w-4 h-4" />}>
@@ -315,7 +324,9 @@ export default function ResumeDetailSheet({
                 <div className="space-y-6 mt-2">
                   {resume.educations.length === 0 && (
                     <div className="text-center py-8 bg-background-subtle/50 rounded-xl border border-dashed border-border-default">
-                      <p className="text-sm text-text-tertiary italic">No education records found.</p>
+                      <p className="text-sm text-text-tertiary italic">
+                        No education records found.
+                      </p>
                     </div>
                   )}
                   {resume.educations.map((edu: Education) => (
@@ -477,7 +488,7 @@ export default function ResumeDetailSheet({
             </div>
           </ScrollArea>
 
-          { }
+          {}
           {/* Footer Section */}
           <div className="border-t border-border-default bg-background-subtle/30 px-10 py-6 flex items-center justify-end gap-3 rounded-b-[16px]">
             <Button
@@ -490,7 +501,7 @@ export default function ResumeDetailSheet({
         </div>
       </Dialog>
 
-      { }
+      {}
       {resume && (
         <>
           <ExperienceFormDialog

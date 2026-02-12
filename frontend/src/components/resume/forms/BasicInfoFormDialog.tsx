@@ -72,7 +72,11 @@ export default function BasicInfoFormDialog({
   }
 
   return (
-    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
+    <Dialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl"
+    >
       <div className="bg-background-surface flex flex-col h-full max-h-[90vh]">
         <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
           <div className="flex items-center gap-5">
@@ -125,7 +129,8 @@ export default function BasicInfoFormDialog({
                   text-text-primary font-medium placeholder:text-text-muted resize-none leading-relaxed"
               />
               <p className="text-[12px] text-text-tertiary font-medium mt-2 leading-relaxed">
-                Tip: Briefly describe your core expertise, years of experience, and what values you bring to a potential team.
+                Tip: Briefly describe your core expertise, years of experience, and what values you
+                bring to a potential team.
               </p>
             </div>
           </form>
