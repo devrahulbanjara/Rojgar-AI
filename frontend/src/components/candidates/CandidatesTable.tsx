@@ -3,16 +3,7 @@
 import React, { useState } from 'react'
 import { CandidateApplication } from '../../types/candidate'
 import { cn } from '../../lib/utils'
-import {
-  Mail,
-  Phone,
-  MoreVertical,
-  Eye,
-  Send,
-  Trash2,
-  ArrowUpDown,
-  Users,
-} from 'lucide-react'
+import { Mail, Phone, MoreVertical, Eye, Send, Trash2, ArrowUpDown, Users } from 'lucide-react'
 import {
   Pagination,
   PaginationContent,
@@ -46,9 +37,9 @@ interface ActionDropdownProps {
 
 function ActionDropdown({ candidate: _candidate }: ActionDropdownProps) {
   const menuItems = [
-    { icon: Eye, label: 'View Resume', onClick: () => { } },
-    { icon: Send, label: 'Send Email', onClick: () => { } },
-    { icon: Trash2, label: 'Delete', onClick: () => { }, isDanger: true },
+    { icon: Eye, label: 'View Resume', onClick: () => {} },
+    { icon: Send, label: 'Send Email', onClick: () => {} },
+    { icon: Trash2, label: 'Delete', onClick: () => {}, isDanger: true },
   ]
 
   return (
