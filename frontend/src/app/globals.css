@@ -1770,6 +1770,24 @@ html.no-transitions *::after {
 }
 
 /* =============================================================================
+   SHINE BORDER ANIMATION
+   ============================================================================= */
+@theme inline {
+  --animate-shine: shine var(--duration) infinite linear;
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    to {
+      background-position: 0% 0%;
+    }
+  }
+}
+
+/* =============================================================================
    SONNER TOAST NOTIFICATIONS - Custom Styling
    Brand blue for success, red for errors, with proper light/dark mode support
    ============================================================================= */
