@@ -31,9 +31,11 @@ app.state.limiter = limiter
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    
-    detail = str(exc) if settings.ENVIRONMENT == "development" else "Internal server error"
-    
+
+    detail = (
+        str(exc) if settings.ENVIRONMENT == "development" else "Internal server error"
+    )
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": detail},

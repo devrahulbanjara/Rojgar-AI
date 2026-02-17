@@ -217,3 +217,39 @@ class ShortlistService:
         except Exception as e:
             logger.error(f"Failed to get shortlisting summary for job {job_id}: {e}")
             return {"error": str(e)}
+
+    async def finalize_shortlist(
+        self,
+        job_id: uuid.UUID,
+        use_ai_recommendations: bool = False,
+        threshold: int = 70,
+    ) -> dict[str, Any]:
+        """Finalize the shortlist for a job.
+        If use_ai_recommendations is True, it updates applications based on threshold.
+        Marks the job as final_shortlist_completed=True.
+        """
+        try:
+            # 1. Update statuses if requested
+            updated_count = 0
+            if use_ai_recommendations:
+                updated_count = (
+                    await self.application_repo.update_statuses_by_threshold(
+                        job_id, threshold
+                    )
+                )
+                logger.info(
+                    f"Applied AI recommendations for job {job_id}: {updated_count} applications updated"
+                )
+
+            # 2. Mark job as completed
+            await self.job_repo.update_final_shortlist_completed(job_id, True)
+            logger.info(f"Marked shortlist as completed for job {job_id}")
+
+            return {
+                "success": True,
+                "updated_applications": updated_count,
+                "job_id": str(job_id),
+            }
+        except Exception as e:
+            logger.error(f"Failed to finalize shortlist for job {job_id}: {e}")
+            return {"success": False, "error": str(e)}

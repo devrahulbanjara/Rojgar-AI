@@ -98,9 +98,9 @@ function getStatusStyles(status: string): { bg: string; text: string; border: st
       }
     case 'shortlisted':
       return {
-        bg: 'bg-success-50 dark:bg-success-950/30',
-        text: 'text-success-600 dark:text-success-400',
-        border: 'border-success-200 dark:border-success-800',
+        bg: 'bg-primary-50 dark:bg-primary-950/30',
+        text: 'text-primary-600 dark:text-primary-400',
+        border: 'border-primary-200 dark:border-primary-800',
       }
     case 'rejected':
       return {
@@ -110,9 +110,9 @@ function getStatusStyles(status: string): { bg: string; text: string; border: st
       }
     case 'outcome':
       return {
-        bg: 'bg-success-50 dark:bg-success-950/30',
-        text: 'text-success-600 dark:text-success-400',
-        border: 'border-success-200 dark:border-success-800',
+        bg: 'bg-primary-100 dark:bg-primary-900/40',
+        text: 'text-primary-700 dark:text-primary-300',
+        border: 'border-primary-300 dark:border-primary-700',
       }
     default:
       return {
@@ -294,7 +294,7 @@ export function CandidatesTable({
                   <td className="py-6 px-6">
                     <span
                       className={cn(
-                        'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold capitalize border',
+                        'inline-flex items-center px-3 py-1.5 rounded-[5px] text-xs font-semibold capitalize border',
                         statusStyles.bg,
                         statusStyles.text,
                         statusStyles.border

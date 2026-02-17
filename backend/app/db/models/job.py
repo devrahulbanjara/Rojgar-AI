@@ -76,8 +76,14 @@ class JobPosting(Base):
     status: Mapped[str] = mapped_column(String, default="active", nullable=False)
     is_indexed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     auto_shortlist: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    shortlist_threshold: Mapped[int] = mapped_column(
+        Integer, default=70, nullable=False
+    )
     shortlist_status: Mapped[str] = mapped_column(
         String, default=ShortlistStatus.NOT_STARTED, nullable=False
+    )
+    final_shortlist_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
     )
     posted_date: Mapped[date] = mapped_column(Date, nullable=False)
     application_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)

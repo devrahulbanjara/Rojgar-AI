@@ -13,6 +13,7 @@ from app.db.repositories.candidate_repo import (
     CandidateSocialLinkRepository,
     CandidateWorkExperienceRepository,
 )
+from app.db.repositories.email_draft_repo import EmailDraftRepository
 from app.db.repositories.job_repo import (
     JobDescriptionRepository,
     JobRepository,
@@ -49,6 +50,7 @@ from app.services.organization.organization_service import OrganizationService
 from app.services.organization.recruiter_crud import RecruiterCrudService
 from app.services.recruiter.activity_events import ActivityEventEmitter
 from app.services.recruiter.candidate_service import RecruiterCandidateService
+from app.services.recruiter.email_batch_service import EmailBatchService
 from app.services.recruiter.job_generation_service import JobGenerationService
 from app.services.recruiter.reference_jd_service import ReferenceJDService
 from app.services.recruiter.shortlist_service import ShortlistService
@@ -161,6 +163,10 @@ def get_resume_certification_repo(
 
 def get_resume_skill_repo(db: AsyncSession = Depends(get_db)) -> ResumeSkillRepository:
     return ResumeSkillRepository(db)
+
+
+def get_email_draft_repo(db: AsyncSession = Depends(get_db)) -> EmailDraftRepository:
+    return EmailDraftRepository(db)
 
 
 # Integration Dependencies
@@ -363,3 +369,10 @@ def get_recruiter_candidate_service(
     application_repo: JobApplicationRepository = Depends(get_job_application_repo),
 ) -> RecruiterCandidateService:
     return RecruiterCandidateService(application_repo)
+
+
+def get_email_batch_service(
+    application_repo: JobApplicationRepository = Depends(get_job_application_repo),
+    draft_repo: EmailDraftRepository = Depends(get_email_draft_repo),
+) -> EmailBatchService:
+    return EmailBatchService(application_repo, draft_repo)

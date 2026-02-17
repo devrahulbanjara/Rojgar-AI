@@ -76,7 +76,12 @@ export function ResumeDetailModal({
   if (!isOpen) return null
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} className="max-w-[900px] mx-4" showCloseButton={false}>
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="max-w-[900px] mx-4"
+      showCloseButton={false}
+    >
       <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col bg-background-surface rounded-[5px]">
         {/* Header */}
         <div className="px-6 py-5 border-b border-border-subtle bg-background-surface">

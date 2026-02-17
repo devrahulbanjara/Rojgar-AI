@@ -13,7 +13,6 @@ import {
   ExternalLink,
   CheckCircle2,
   X,
-  Briefcase,
   Star,
   Gift,
   Share2,
@@ -320,10 +319,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   benefits &&
                   Array.isArray(benefits) &&
                   benefits.length > 0 && (
-                    <Section
-                      icon={<Gift className="w-4 h-4" />}
-                      title="Compensation & Benefits"
-                    >
+                    <Section icon={<Gift className="w-4 h-4" />} title="Compensation & Benefits">
                       <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                         {(jobWithExtras.compensation_and_benefits || job.benefits || []).map(
                           (benefit: string, index: number) => (

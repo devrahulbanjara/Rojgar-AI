@@ -200,6 +200,21 @@ class JobRepository(BaseRepository[JobPosting]):
         except (IntegrityError, SQLAlchemyError) as e:
             await self._handle_db_error(e, "Failed to update shortlist status.")
 
+    async def update_final_shortlist_completed(
+        self, job_id: uuid.UUID, completed: bool
+    ) -> None:
+        """Updates the final_shortlist_completed status for a job."""
+        try:
+            query = (
+                update(JobPosting)
+                .where(JobPosting.job_id == job_id)
+                .values(final_shortlist_completed=completed, updated_at=get_datetime())
+            )
+            await self.db.execute(query)
+            await self.db.flush()
+        except (IntegrityError, SQLAlchemyError) as e:
+            await self._handle_db_error(e, "Failed to update final shortlist status.")
+
     async def expire_jobs(self) -> int:
         """Expire jobs past their application deadline"""
         today = date.today()
@@ -376,6 +391,11 @@ class JobRepository(BaseRepository[JobPosting]):
             job_posting.application_deadline = job_data.application_deadline
         if hasattr(job_data, "auto_shortlist") and job_data.auto_shortlist is not None:
             job_posting.auto_shortlist = job_data.auto_shortlist
+        if (
+            hasattr(job_data, "shortlist_threshold")
+            and job_data.shortlist_threshold is not None
+        ):
+            job_posting.shortlist_threshold = job_data.shortlist_threshold
         job_posting.updated_at = get_datetime()
 
         # Update job description

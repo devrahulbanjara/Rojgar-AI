@@ -3,21 +3,9 @@ import { CandidateApplication } from '../../types/candidate'
 import { Dialog } from '../ui/dialog'
 import { Badge } from '../ui/badge'
 import { ActionButton } from '../ui'
-import {
-  X,
-  Briefcase,
-  Calendar,
-  Star,
-  Mail,
-  ExternalLink,
-  Clock,
-  Phone,
-  Globe,
-  FileText,
-} from 'lucide-react'
+import { X, Calendar, Star, Mail, ExternalLink, Phone, Globe, FileText } from 'lucide-react'
 import { SiGithub, SiLinkedin } from 'react-icons/si'
 import { formatDistanceToNow, format } from 'date-fns'
-import { UserAvatar } from '../ui/UserAvatar'
 
 interface CandidateDetailModalProps {
   candidate: CandidateApplication | null
@@ -33,12 +21,7 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
   const formattedDate = format(appliedDate, 'MMM dd, yyyy')
 
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      className="max-w-4xl mx-4"
-      showCloseButton={false}
-    >
+    <Dialog isOpen={isOpen} onClose={onClose} className="max-w-4xl mx-4" showCloseButton={false}>
       <div className="max-h-[85vh] overflow-hidden w-full max-w-4xl p-0 flex flex-col bg-background-surface rounded-[5px]">
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
@@ -46,9 +29,13 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
             {/* Header Section */}
             <div className="flex justify-between items-start mb-6">
               <div className="space-y-1 flex-1">
-                <h2 className="text-3xl font-bold tracking-tight text-text-primary">{candidate.name}</h2>
+                <h2 className="text-3xl font-bold tracking-tight text-text-primary">
+                  {candidate.name}
+                </h2>
                 {candidate.professional_headline && (
-                  <p className="text-text-secondary font-medium">{candidate.professional_headline}</p>
+                  <p className="text-text-secondary font-medium">
+                    {candidate.professional_headline}
+                  </p>
                 )}
               </div>
               <button
@@ -71,7 +58,8 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                 variant="secondary"
                 className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-0 text-[14px] font-medium"
               >
-                {candidate.current_status.charAt(0).toUpperCase() + candidate.current_status.slice(1)}
+                {candidate.current_status.charAt(0).toUpperCase() +
+                  candidate.current_status.slice(1)}
               </Badge>
               <Badge
                 variant="secondary"
@@ -190,11 +178,9 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
 
               {candidate.feedback && (
                 <Section icon={<Star className="w-4 h-4" />} title="AI Analysis">
-                  <div className="bg-ai-50 dark:bg-ai-900/20 border border-ai-200 dark:border-ai-700 border-l-[3px] border-l-ai-500 rounded-xl p-6">
-                    <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed font-mono">
-                      {candidate.feedback}
-                    </p>
-                  </div>
+                  <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                    {candidate.feedback}
+                  </p>
                 </Section>
               )}
             </div>
@@ -202,21 +188,14 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
         </div>
 
         {/* Standardized Footer */}
-        <div className="border-t border-border-default bg-slate-50/50 dark:bg-slate-900/30 px-10 py-6 flex items-center justify-between rounded-b-[5px]">
-          <div className="flex items-center gap-3">
-            <ActionButton
-              onClick={onClose}
-              variant="ghost"
-              size="md"
-              className="text-slate-600 dark:text-slate-400"
-            >
-              Close
-            </ActionButton>
-          </div>
-
-          <ActionButton variant="primary" size="md" className="px-8">
-            View Full Profile
-            <ExternalLink className="w-4 h-4" />
+        <div className="border-t border-border-default bg-slate-50/50 dark:bg-slate-900/30 px-10 py-6 flex items-center justify-center rounded-b-[5px]">
+          <ActionButton
+            onClick={onClose}
+            variant="ghost"
+            size="md"
+            className="text-slate-600 dark:text-slate-400 px-12"
+          >
+            Close
           </ActionButton>
         </div>
       </div>
