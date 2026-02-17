@@ -1,5 +1,4 @@
 import React from 'react'
-import { createPortal } from 'react-dom'
 import {
   X,
   MapPin,
@@ -16,7 +15,7 @@ import { SiGithub, SiLinkedin } from 'react-icons/si'
 import { UserAvatar } from '../ui/UserAvatar'
 import { LoadingSpinner } from '../common'
 import { useResume } from '../../hooks/useResume'
-
+import { Dialog } from '../ui/dialog'
 import { Badge } from '../ui'
 
 interface ResumeDetailModalProps {
@@ -76,18 +75,9 @@ export function ResumeDetailModal({
 
   if (!isOpen) return null
 
-  return createPortal(
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200 bg-text-primary/40"
-      onClick={onClose}
-    >
-      <div
-        className="bg-background-surface w-full mx-4 max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200 ease-out rounded-[5px] shadow-2xl"
-        style={{
-          maxWidth: '900px',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
+  return (
+    <Dialog isOpen={isOpen} onClose={onClose} className="max-w-[900px] mx-4" showCloseButton={false}>
+      <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col bg-background-surface rounded-[5px]">
         {/* Header */}
         <div className="px-6 py-5 border-b border-border-subtle bg-background-surface">
           <div className="flex items-start justify-between gap-4">
@@ -372,7 +362,6 @@ export function ResumeDetailModal({
           )}
         </div>
       </div>
-    </div>,
-    document.body
+    </Dialog>
   )
 }
