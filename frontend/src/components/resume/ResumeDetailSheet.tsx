@@ -315,7 +315,7 @@ export default function ResumeDetailSheet({
                 action={
                   <button
                     onClick={() => handleAdd('education')}
-                    className="flex items-center gap-1.5 text-[12px] font-bold text-ai-600 hover:text-ai-700 uppercase tracking-wider"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add New
                   </button>
@@ -345,7 +345,7 @@ export default function ResumeDetailSheet({
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-ai-600"
+                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-primary-600"
                             onClick={() => handleEdit('education', edu)}
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -378,7 +378,7 @@ export default function ResumeDetailSheet({
                 action={
                   <button
                     onClick={() => handleAdd('skills')}
-                    className="flex items-center gap-1.5 text-[12px] font-bold text-success-600 hover:text-success-700 uppercase tracking-wider"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
                   >
                     <Plus className="w-3.5 h-3.5" /> Manage
                   </button>
@@ -412,7 +412,7 @@ export default function ResumeDetailSheet({
                 action={
                   <button
                     onClick={() => handleAdd('certification')}
-                    className="flex items-center gap-1.5 text-[12px] font-bold text-warning-600 hover:text-warning-700 uppercase tracking-wider"
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add New
                   </button>
@@ -460,7 +460,7 @@ export default function ResumeDetailSheet({
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-warning-600"
+                            className="h-8 w-8 rounded-lg hover:bg-background-subtle text-text-tertiary hover:text-primary-600"
                             onClick={() => handleEdit('certification', cert)}
                           >
                             <Pencil className="w-3.5 h-3.5" />

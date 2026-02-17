@@ -13,6 +13,9 @@ def get_embedding_model():
 
 
 def get_llm(model: str):
+    if not settings.GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY is required but not configured")
+
     return ChatGroq(
         temperature=settings.LLM_TEMPERATURE,
         model=model,

@@ -38,10 +38,14 @@ async def get_my_applications(
     except Exception as e:
         # Log the error for debugging
         import logging
-        logging.error(f"Error fetching applications for user {current_user.user_id}: {e}", exc_info=True)
+
+        logging.error(
+            f"Error fetching applications for user {current_user.user_id}: {e}",
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch applications: {str(e)}"
+            detail=f"Failed to fetch applications: {str(e)}",
         )
 
 

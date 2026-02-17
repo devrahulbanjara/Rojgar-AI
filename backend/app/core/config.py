@@ -22,11 +22,12 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     EMBEDDING_DIM: int = 3072
     FAST_LLM: str = "llama-3.1-8b-instant"
-    THINK_LLM: str = "openai/gpt-oss-120b"
+    THINK_LLM: str = "llama-3.3-70b-versatile"
     LLM_TEMPERATURE: int = 0
     LLM_MAX_RETRIES: int = 3
 
     GROQ_API_KEY: str
+    GMAIL_USER: str = "convexhire@gmail.com"
     GMAIL_APP_PASSWORD: str
     GOOGLE_API_KEY: str
     TAVILY_API_KEY: str
@@ -41,4 +42,4 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-settings = Settings() # type: ignore
+settings = Settings()  # type: ignore

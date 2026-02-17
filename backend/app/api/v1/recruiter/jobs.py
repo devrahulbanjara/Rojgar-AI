@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 
 from app.api.dependencies import (
+    get_email_batch_service,
     get_job_generation_service,
     get_job_service,
     get_reference_jd_service,
@@ -16,9 +17,11 @@ from app.core.authorization import (
 )
 from app.core.config import settings
 from app.core.limiter import limiter
+from app.core.logging_config import logger
 from app.db.models.user import User
 from app.schemas import job as schemas
 from app.services.job_service import JobService
+from app.services.recruiter.email_batch_service import EmailBatchService
 from app.services.recruiter.job_generation_service import JobGenerationService
 from app.services.recruiter.reference_jd_service import ReferenceJDService
 from app.services.recruiter.shortlist_service import ShortlistService
@@ -50,20 +53,28 @@ async def generate_job_draft(
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    generated_draft = await job_generation_service.generate_job_draft(
-        title=draft_request.title,
-        raw_requirements=draft_request.raw_requirements,
-        reference_jd_id=draft_request.reference_jd_id,
-        organization_id=organization_id,
-        current_draft=draft_request.current_draft,
-    )
-    if not generated_draft or not generated_draft.get("draft"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to generate job description. Please check your requirements and try again.",
+
+    try:
+        logger.info(
+            f"Generating job draft for user {current_user.user_id}, title: {draft_request.title}"
         )
-    draft = generated_draft["draft"]
-    return draft
+        generated_draft = await job_generation_service.generate_job_draft(
+            title=draft_request.title,
+            raw_requirements=draft_request.raw_requirements,
+            reference_jd_id=draft_request.reference_jd_id,
+            organization_id=organization_id,
+            current_draft=draft_request.current_draft,
+        )
+        logger.info(f"Successfully generated job draft for user {current_user.user_id}")
+        return generated_draft
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating job draft: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate job draft: {str(e)}",
+        )
 
 
 # Job CRUD Operations
@@ -210,6 +221,111 @@ async def get_shortlisting_summary(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
     return await shortlist_service.get_shortlisting_summary(job_id)
+
+
+@router.post("/{job_id}/shortlist/finalize", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def finalize_shortlisting(
+    request: Request,
+    job_id: uuid.UUID,
+    finalize_data: schemas.JobFinalizeShortlistRequest,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    shortlist_service: Annotated[ShortlistService, Depends(get_shortlist_service)],
+):
+    job = await job_service.get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
+    try:
+        verify_user_can_edit_job(current_user, job)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    result = await shortlist_service.finalize_shortlist(
+        job_id,
+        use_ai_recommendations=finalize_data.use_ai_recommendations,
+        threshold=finalize_data.threshold,
+    )
+
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=result.get("error", "Failed to finalize shortlist"),
+        )
+
+    return result
+
+
+# Email Management Operations
+@router.post("/{job_id}/emails/prepare", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def prepare_emails(
+    request: Request,
+    job_id: uuid.UUID,
+    params: schemas.EmailPrepareRequest,
+    background_tasks: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    email_service: Annotated[EmailBatchService, Depends(get_email_batch_service)],
+):
+    job = await job_service.get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
+
+    verify_user_can_edit_job(current_user, job)
+
+    return await email_service.prepare_drafts(
+        job_id, background_tasks=background_tasks, direct_send=params.direct_send
+    )
+
+
+@router.get(
+    "/{job_id}/emails/drafts",
+    response_model=list[schemas.EmailDraftResponse],
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def get_email_drafts(
+    request: Request,
+    job_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    email_service: Annotated[EmailBatchService, Depends(get_email_batch_service)],
+):
+    job = await job_service.get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
+
+    verify_user_can_edit_job(current_user, job)
+
+    return await email_service.get_drafts_for_job(job_id)
+
+
+@router.post("/{job_id}/emails/send-all", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def send_all_emails(
+    request: Request,
+    job_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    email_service: Annotated[EmailBatchService, Depends(get_email_batch_service)],
+):
+    job = await job_service.get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
+
+    verify_user_can_edit_job(current_user, job)
+
+    return await email_service.send_all_drafts(job_id, background_tasks)
 
 
 # Reference JD Operations

@@ -24,6 +24,10 @@ const jobEndpoints = {
   update: (id: string) => `/api/v1/recruiter/jobs/${id}`,
   delete: (id: string) => `/api/v1/recruiter/jobs/${id}`,
   expire: (id: string) => `/api/v1/recruiter/jobs/${id}/expire`,
+  finalizeShortlist: (id: string) => `/api/v1/recruiter/jobs/${id}/shortlist/finalize`,
+  prepareEmails: (id: string) => `/api/v1/recruiter/jobs/${id}/emails/prepare`,
+  getEmailDrafts: (id: string) => `/api/v1/recruiter/jobs/${id}/emails/drafts`,
+  sendAllEmails: (id: string) => `/api/v1/recruiter/jobs/${id}/emails/send-all`,
 } as const
 
 const applicationEndpoints = {
@@ -135,6 +139,33 @@ export class JobService {
 
     const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`
     return apiClient.get<JobListResponse>(endpoint)
+  }
+
+  static async finalizeShortlist(
+    jobId: string,
+    data: { use_ai_recommendations: boolean; threshold: number }
+  ): Promise<{ success: boolean; updated_applications: number; job_id: string }> {
+    return apiClient.post<{ success: boolean; updated_applications: number; job_id: string }>(
+      jobEndpoints.finalizeShortlist(jobId),
+      data
+    )
+  }
+
+  static async prepareEmails(
+    jobId: string,
+    directSend: boolean = false
+  ): Promise<{ success: boolean; drafts_count: number }> {
+    return apiClient.post<{ success: boolean; drafts_count: number }>(jobEndpoints.prepareEmails(jobId), {
+      direct_send: directSend,
+    })
+  }
+
+  static async getEmailDrafts(jobId: string): Promise<any[]> {
+    return apiClient.get<any[]>(jobEndpoints.getEmailDrafts(jobId))
+  }
+
+  static async sendAllEmails(jobId: string): Promise<{ success: boolean; sent_count: number }> {
+    return apiClient.post<{ success: boolean; sent_count: number }>(jobEndpoints.sendAllEmails(jobId), {})
   }
 }
 

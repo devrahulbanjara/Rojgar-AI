@@ -88,7 +88,13 @@ class JobResponse(
     TimestampMixin,
 ):
     auto_shortlist: Annotated[bool, "Auto-trigger AI shortlisting on job expiry"]
+    shortlist_threshold: Annotated[
+        int, "Score threshold for AI shortlisting (default 70)"
+    ]
     shortlist_status: Annotated[str, "AI shortlisting status"]
+    final_shortlist_completed: Annotated[
+        bool, "Whether the final shortlist has been completed"
+    ] = False
     organization: Annotated[
         OrganizationResponseInJob | None, "Organization details"
     ] = None
@@ -97,6 +103,13 @@ class JobResponse(
 
 class JobListResponse(PaginationMixin):
     jobs: Annotated[list[JobResponse], "List of jobs"]
+
+
+class JobFinalizeShortlistRequest(BaseModel):
+    use_ai_recommendations: Annotated[
+        bool, "Whether to apply AI recommendations (shortlist/reject)"
+    ] = False
+    threshold: Annotated[int, "Score threshold for AI recommendations"] = 70
 
 
 class JobCreateUpdateBase(JobDescription):
@@ -111,7 +124,10 @@ class JobCreateUpdateBase(JobDescription):
     salary_max: Annotated[int | None, "Maximum salary"] = None
     salary_currency: Annotated[str | None, "Salary currency"] = "NPR"
     application_deadline: Annotated[date | None, "Application deadline"] = None
-    auto_shortlist: Annotated[bool, "Auto-trigger AI shortlisting on job expiry"]
+    auto_shortlist: Annotated[bool, "Auto-trigger AI shortlisting on job expiry"] = (
+        False
+    )
+    shortlist_threshold: Annotated[int, "Score threshold for AI shortlisting"] = 70
     status: Annotated[str | None, "Job status"] = "active"
 
 
@@ -131,6 +147,12 @@ class JobUpdate(JobCreateUpdateBase):
     preferred: Annotated[list[str] | None, "Preferred skills"] = None
     compensation_and_benefits: Annotated[
         list[str] | None, "Compensation and benefits"
+    ] = None
+    shortlist_threshold: Annotated[
+        int | None, "Score threshold for AI shortlisting"
+    ] = None
+    auto_shortlist: Annotated[
+        bool | None, "Auto-trigger AI shortlisting on job expiry"
     ] = None
 
 
@@ -164,3 +186,20 @@ class ReferenceJDResponse(ReferenceJDBase):
 
 class ReferenceJDListResponse(PaginationMixin):
     reference_jds: Annotated[list[ReferenceJDResponse], "List of reference JDs"]
+
+
+class EmailDraftResponse(BaseModel):
+    draft_id: UUID
+    application_id: UUID
+    candidate_name: str
+    candidate_email: str
+    status: str
+    subject: str
+    body: str
+    is_approved: bool
+    is_sent: bool
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EmailPrepareRequest(BaseModel):
+    direct_send: bool = False

@@ -27,6 +27,7 @@ interface ShortlistCandidateCardProps {
   }
   showScores?: boolean
   isShortlistingInProgress?: boolean
+  isFinalized?: boolean
 }
 
 export function ShortlistCandidateCard({
@@ -38,6 +39,7 @@ export function ShortlistCandidateCard({
   scoreInterpretation,
   showScores = true,
   isShortlistingInProgress = false,
+  isFinalized = false,
 }: ShortlistCandidateCardProps) {
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
   const getScoreStyles = (score: number) => {
@@ -57,10 +59,10 @@ export function ShortlistCandidateCard({
       }
     } else {
       return {
-        scoreColor: 'text-success-600 dark:text-success-400',
+        scoreColor: 'text-primary-600 dark:text-primary-400',
         bgColor:
-          'from-success-50/80 via-success-50/40 to-success-50/60 dark:from-success-950/30 dark:via-success-950/20 dark:to-success-950/30',
-        borderColor: 'border-success-200/60 dark:border-success-800/60',
+          'from-primary-50/80 via-primary-50/40 to-primary-50/60 dark:from-primary-950/30 dark:via-primary-950/20 dark:to-primary-950/30',
+        borderColor: 'border-primary-200/60 dark:border-primary-800/60',
       }
     }
   }
@@ -76,8 +78,7 @@ export function ShortlistCandidateCard({
     <div
       className={cn(
         'group w-full bg-background-surface rounded-2xl border border-border-default p-6 shadow-sm hover:shadow-md transition-shadow',
-        isShortlisted && 'border-success-200 bg-success-50/20',
-        isRejected && 'border-warning-200 bg-warning-50/20 opacity-70',
+        isRejected && 'opacity-70',
         className
       )}
     >
@@ -102,7 +103,7 @@ export function ShortlistCandidateCard({
               </h3>
               {isShortlisted && (
                 <Badge
-                  colorPalette="green"
+                  colorPalette="blue"
                   className="text-xs px-2 py-0.5"
                   style={{ borderRadius: '5px' }}
                 >
@@ -142,20 +143,20 @@ export function ShortlistCandidateCard({
         </div>
 
         {showScores && (
-          <div className="flex-shrink-0 text-center px-6 border-x">
+          <div className="flex-shrink-0 text-center px-6 border-x border-border-default/50">
             {isShortlistingInProgress && !candidate.score ? (
               <>
-                <Loader2 className="w-8 h-8 text-ai-500 animate-spin mx-auto" />
-                <div className="text-xs text-ai-600 font-semibold tracking-wide mt-1">
+                <Loader2 className="w-7 h-7 text-primary-500 animate-spin mx-auto" />
+                <div className="text-[10px] text-primary-600 font-bold tracking-tight mt-1.5">
                   Analyzing...
                 </div>
               </>
             ) : (
               <>
-                <div className={cn('text-4xl font-black leading-none', scoreStyles.scoreColor)}>
+                <div className={cn('text-2xl font-bold leading-none', scoreStyles.scoreColor)}>
                   {candidate.score}
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary mt-1">
+                <div className="text-[10px] font-semibold uppercase tracking-tight text-text-tertiary mt-1.5">
                   {scoreInterpretation?.text || 'Match Score'}
                 </div>
               </>
@@ -166,11 +167,11 @@ export function ShortlistCandidateCard({
         <div className="flex-shrink-0 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setIsResumeModalOpen(true)}
-            className="px-5 py-2.5 border-2 border-[#2563EB] text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-xl font-bold text-xs transition-all duration-200 active:scale-95 whitespace-nowrap"
+            className="px-5 py-2.5 border border-[#2563EB] text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-xl font-bold text-xs transition-all duration-200 active:scale-95 whitespace-nowrap"
           >
             View Resume
           </button>
-          {!isProcessed && (
+          {!isProcessed && !isFinalized && (
             <>
               <Button
                 size="sm"
@@ -197,18 +198,18 @@ export function ShortlistCandidateCard({
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem
               value="analysis"
-              className="border-none bg-background-subtle/60 rounded-b-2xl"
+              className="border-none bg-background-subtle/40 rounded-xl"
             >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline border-t border-border-subtle rounded-b-none">
-                <div className="flex items-center gap-2 text-xs font-bold text-text-tertiary uppercase tracking-widest">
-                  <FileText className="w-4 h-4 text-purple-500" />
-                  AI Analysis & Feedback
+              <AccordionTrigger className="px-4 py-2.5 hover:no-underline border-t border-border-subtle/50 rounded-b-none">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-text-tertiary uppercase tracking-tight">
+                  <FileText className="w-3.5 h-3.5 text-primary-500" />
+                  AI Feedback
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-8 pb-6 pt-2">
-                <div className="relative pl-6 border-l-2 border-ai-300">
-                  <p className="text-[14px] leading-relaxed text-text-secondary italic">
-                    "{candidate.feedback}"
+              <AccordionContent className="px-5 pb-5 pt-1">
+                <div className="border-l border-border-default pl-4">
+                  <p className="text-sm leading-relaxed text-text-secondary">
+                    {candidate.feedback}
                   </p>
                 </div>
               </AccordionContent>

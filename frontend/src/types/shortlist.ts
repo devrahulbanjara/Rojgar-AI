@@ -31,6 +31,8 @@ export interface ShortlistJob {
   pending_reviews: number
   candidates: ShortlistCandidate[]
   auto_shortlist?: boolean
+  shortlist_threshold?: number
+  final_shortlist_completed?: boolean
 }
 
 export interface ShortlistFilters {

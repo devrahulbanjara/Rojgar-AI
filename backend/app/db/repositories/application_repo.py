@@ -1,11 +1,16 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.db.models.application import JobApplication, JobApplicationStatusHistory
+from app.core import get_datetime
+from app.db.models.application import (
+    ApplicationStatus,
+    JobApplication,
+    JobApplicationStatusHistory,
+)
 from app.db.models.candidate import CandidateProfile
 from app.db.models.job import JobPosting
 from app.db.models.resume import Resume
@@ -45,6 +50,9 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
                 selectinload(JobApplication.resume).selectinload(Resume.skills),
                 selectinload(JobApplication.resume).selectinload(Resume.certifications),
                 selectinload(JobApplication.resume).selectinload(Resume.social_links),
+                selectinload(JobApplication.candidate_profile).selectinload(
+                    CandidateProfile.user
+                ),
             )
             .where(JobApplication.application_id == application_id)
         )
@@ -79,8 +87,6 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
         self, job_id: uuid.UUID, skip: int = 0, limit: int = 100
     ) -> Sequence[JobApplication]:
         """Get applications by job ID"""
-        from app.db.models.resume import Resume
-
         query = (
             select(JobApplication)
             .options(
@@ -160,6 +166,44 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
 
+    async def update_statuses_by_threshold(
+        self, job_id: uuid.UUID, threshold: int
+    ) -> int:
+        """Update application statuses based on AI score threshold.
+        Candidates >= threshold are shortlisted, others are rejected.
+        Only updates applications that are in 'applied' status.
+        """
+        # Shortlist those >= threshold
+        shortlist_query = (
+            update(JobApplication)
+            .where(
+                JobApplication.job_id == job_id,
+                JobApplication.current_status == ApplicationStatus.APPLIED,
+                JobApplication.score >= threshold,
+            )
+            .values(
+                current_status=ApplicationStatus.SHORTLISTED, updated_at=get_datetime()
+            )
+        )
+        result_shortlist = await self.db.execute(shortlist_query)
+
+        # Reject those < threshold
+        reject_query = (
+            update(JobApplication)
+            .where(
+                JobApplication.job_id == job_id,
+                JobApplication.current_status == ApplicationStatus.APPLIED,
+                JobApplication.score < threshold,
+            )
+            .values(
+                current_status=ApplicationStatus.REJECTED, updated_at=get_datetime()
+            )
+        )
+        result_reject = await self.db.execute(reject_query)
+
+        await self.db.flush()
+        return (result_shortlist.rowcount or 0) + (result_reject.rowcount or 0)
+
 
 class JobApplicationStatusHistoryRepository(
     BaseRepository[JobApplicationStatusHistory]
@@ -183,12 +227,8 @@ class JobApplicationStatusHistoryRepository(
         self, application_id: uuid.UUID, status: str
     ) -> JobApplicationStatusHistory:
         """Add a status change record"""
-        import uuid as uuid_lib
-
-        from app.db.models.application import JobApplicationStatusHistory
-
         status_history = JobApplicationStatusHistory(
-            status_history_id=uuid_lib.uuid4(),
+            status_history_id=uuid.uuid4(),
             application_id=application_id,
             status=status,
         )
