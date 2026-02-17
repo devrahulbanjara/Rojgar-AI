@@ -25,7 +25,6 @@ import {
   ClipboardList,
   ListChecks,
   Coins,
-  Sparkles,
   Plus,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -2015,7 +2014,7 @@ export function JobCreationWizard({
               >
                 {!generateDraftMutation.isPending && (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Wand2 className="w-4 h-4" />
                     Revise
                   </>
                 )}

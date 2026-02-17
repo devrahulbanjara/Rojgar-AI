@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ChevronDown, Sparkles, Clock } from 'lucide-react'
+import { ChevronDown, Brain, Clock } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 interface AIAnalysisSectionProps {
@@ -49,7 +49,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
         onClick={() => setIsExpanded(!isExpanded)}
         className="text-ai-600 dark:text-ai-400 hover:text-ai-700 dark:hover:text-ai-300 font-medium text-sm flex items-center gap-2 transition-colors"
       >
-        <Sparkles className="w-4 h-4" />
+        <Brain className="w-4 h-4" />
         <span>AI Analysis</span>
         <ChevronDown
           className={cn('w-4 h-4 transition-transform duration-200', isExpanded && 'rotate-180')}
