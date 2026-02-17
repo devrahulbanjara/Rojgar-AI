@@ -1,26 +1,25 @@
-from pydantic import HttpUrl, SecretStr
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    TIMEZONE: str
-    LLAMA_CLOUD_API_KEY: str
+    TIMEZONE: str = "Asia/Kathmandu"
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     SECRET_KEY: SecretStr
     ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
-    SECURE: bool
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    SECURE: bool = False
 
-    FRONTEND_URL: HttpUrl
-    BACKEND_URL: HttpUrl
+    FRONTEND_URL: str
+    BACKEND_URL: str
     ENVIRONMENT: str
     APP_VERSION: str
     DATABASE_URL: str
 
     QDRANT_URL: str
-    QDRANT_COLLECTION_NAME: str
-    EMBEDDING_MODEL: str
+    QDRANT_COLLECTION_NAME: str = "ConvexHireJobs"
+    EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     EMBEDDING_DIM: int = 3072
     FAST_LLM: str = "llama-3.1-8b-instant"
     THINK_LLM: str = "openai/gpt-oss-120b"
@@ -31,7 +30,7 @@ class Settings(BaseSettings):
     GMAIL_APP_PASSWORD: str
     GOOGLE_API_KEY: str
     TAVILY_API_KEY: str
-    BOOKING_LINK: HttpUrl = "https://cal.com/convexhire/interview"
+    BOOKING_LINK: str = "https://cal.com/convexhire/interview"
 
     RATE_LIMIT_AUTH: str = "50/minute"
     RATE_LIMIT_API: str = "100/minute"
@@ -42,4 +41,4 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-settings = Settings()  # type: ignore
+settings = Settings() # type: ignore

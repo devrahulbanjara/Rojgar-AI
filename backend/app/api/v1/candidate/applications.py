@@ -27,14 +27,22 @@ async def get_my_applications(
         ApplicationService, Depends(get_application_service)
     ],
 ):
-    applications = await application_service.get_candidate_applications(
-        current_user.user_id
-    )
-    if applications is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Candidate profile not found"
+    try:
+        applications = await application_service.get_candidate_applications(
+            current_user.user_id
         )
-    return applications
+        if applications is None:
+            # User doesn't have a candidate profile yet - return empty list
+            return []
+        return applications
+    except Exception as e:
+        # Log the error for debugging
+        import logging
+        logging.error(f"Error fetching applications for user {current_user.user_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch applications: {str(e)}"
+        )
 
 
 @router.get("/applications/{application_id}", response_model=ApplicationResponse)

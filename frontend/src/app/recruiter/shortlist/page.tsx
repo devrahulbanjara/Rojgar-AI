@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Loader2,
   MoreVertical,
+  ClipboardList,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '../../../lib/api'
@@ -541,7 +542,7 @@ export default function ShortlistPage() {
                       {!selectedJob ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                           <div className="w-16 h-16 bg-background-subtle rounded-2xl flex items-center justify-center mb-4 border border-border-subtle">
-                            <Sparkles className="w-8 h-8 text-primary-400" />
+                            <ClipboardList className="w-8 h-8 text-primary-400" />
                           </div>
                           <h3 className="text-lg font-bold text-text-primary mb-1">
                             Choose a job to review

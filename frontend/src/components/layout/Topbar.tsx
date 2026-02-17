@@ -128,9 +128,9 @@ export function Topbar({ user }: TopbarProps) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-[64px] flex items-center transition-all duration-300 border-b border-border-subtle dark:border-border shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] bg-white/85 dark:bg-background-surface/85 backdrop-blur-[12px]">
-      <div className="flex items-center justify-between w-full h-full px-6 max-w-[1600px] mx-auto relative">
-        {/* Left: Logo + Mobile Menu */}
-        <div className="flex items-center gap-4">
+      <div className="flex items-center w-full h-full px-6">
+        {/* Left: Logo + Mobile Menu - Fixed width to match sidebar */}
+        <div className="flex items-center gap-4 w-[240px] flex-shrink-0">
           <motion.button
             onClick={toggleSidebar}
             whileHover={{ scale: 1.05 }}
@@ -165,8 +165,8 @@ export function Topbar({ user }: TopbarProps) {
           </div>
         </div>
 
-        {/* Center: Navigation Items (Breadcrumbs) */}
-        <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
+        {/* Center: Breadcrumbs */}
+        <div className="flex-1 flex justify-center hidden md:flex">
           <Breadcrumbs />
         </div>
 

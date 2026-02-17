@@ -14,8 +14,11 @@ import {
   CheckCircle2,
   X,
   Briefcase,
-  Sparkles,
+  Star,
+  Gift,
   Share2,
+  FileText,
+  ListChecks,
 } from 'lucide-react'
 import { jobUtils } from '../../services/jobService'
 import type { JobDetailsModalProps, Job } from '../../types/job'
@@ -243,7 +246,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 const jobWithExtras = job as JobWithExtras
                 return (
                   (jobWithExtras.job_summary || job.description) && (
-                    <Section icon={<Briefcase className="w-4 h-4" />} title="Job Summary">
+                    <Section icon={<FileText className="w-4 h-4" />} title="Job Summary">
                       <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                         {jobWithExtras.job_summary || job.description}
                       </p>
@@ -257,7 +260,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                 return (
                   jobWithExtras.job_responsibilities &&
                   jobWithExtras.job_responsibilities.length > 0 && (
-                    <Section icon={<Briefcase className="w-4 h-4" />} title="Responsibilities">
+                    <Section icon={<ListChecks className="w-4 h-4" />} title="Responsibilities">
                       <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                         {jobWithExtras.job_responsibilities.map((resp: string, index: number) => (
                           <li key={index}>{resp}</li>
@@ -297,7 +300,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   preferred &&
                   Array.isArray(preferred) &&
                   preferred.length > 0 && (
-                    <Section icon={<Sparkles className="w-4 h-4" />} title="Preferred">
+                    <Section icon={<Star className="w-4 h-4" />} title="Preferred">
                       <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                         {(jobWithExtras.preferred || job.nice_to_have || []).map(
                           (item: string, index: number) => (
@@ -318,7 +321,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   Array.isArray(benefits) &&
                   benefits.length > 0 && (
                     <Section
-                      icon={<Sparkles className="w-4 h-4" />}
+                      icon={<Gift className="w-4 h-4" />}
                       title="Compensation & Benefits"
                     >
                       <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">

@@ -10,7 +10,7 @@ from app.db.repositories.job_repo import JobDescriptionRepository, JobRepository
 from app.db.repositories.user_repo import UserRepository
 from app.integrations.qdrant.vector_service import JobVectorService
 from app.services.recruiter.activity_events import ActivityEventEmitter
-
+from app.core.logging_config import logger
 VISIBLE_STATUSES = ["active"]
 
 
@@ -38,7 +38,7 @@ class JobService:
         limit: int = 10,
         employment_type: str | None = None,
         location_type: str | None = None,
-    ):
+    ):      
         candidate = await self.candidate_profile_repo.get_with_skills(user_id)
         user_skills = []
         if candidate and candidate.skills:

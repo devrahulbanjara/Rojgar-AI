@@ -4,7 +4,8 @@ import React from 'react'
 import {
   Briefcase,
   CheckCircle2,
-  Sparkles,
+  Star,
+  Gift,
   X,
   MapPin,
   DollarSign,
@@ -15,6 +16,8 @@ import {
   Ban,
   Trash2,
   BookmarkPlus,
+  FileText,
+  ListChecks,
 } from 'lucide-react'
 import type { Job } from '../../types/job'
 
@@ -244,7 +247,7 @@ export function JobDetailModal({
               )}
 
               {job.description && (
-                <Section icon={<Briefcase className="w-4 h-4" />} title="Job Summary">
+                <Section icon={<FileText className="w-4 h-4" />} title="Job Summary">
                   <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                     {job.description}
                   </p>
@@ -255,7 +258,7 @@ export function JobDetailModal({
                 const jobWithExtras = job as JobWithExtras
                 return jobWithExtras.job_responsibilities &&
                   jobWithExtras.job_responsibilities.length > 0 ? (
-                  <Section icon={<Briefcase className="w-4 h-4" />} title="Responsibilities">
+                  <Section icon={<ListChecks className="w-4 h-4" />} title="Responsibilities">
                     <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                       {jobWithExtras.job_responsibilities.map((resp: string, index: number) => (
                         <li key={index}>{resp}</li>
@@ -279,7 +282,7 @@ export function JobDetailModal({
               )}
 
               {job.nice_to_have && job.nice_to_have.length > 0 && (
-                <Section icon={<Sparkles className="w-4 h-4" />} title="Preferred">
+                <Section icon={<Star className="w-4 h-4" />} title="Preferred">
                   <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                     {job.nice_to_have.map((item, index) => (
                       <li key={index}>{item}</li>
@@ -289,7 +292,7 @@ export function JobDetailModal({
               )}
 
               {job.benefits && job.benefits.length > 0 && (
-                <Section icon={<Sparkles className="w-4 h-4" />} title="Compensation & Benefits">
+                <Section icon={<Gift className="w-4 h-4" />} title="Compensation & Benefits">
                   <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                     {job.benefits.map((benefit, index) => (
                       <li key={index}>{benefit}</li>
