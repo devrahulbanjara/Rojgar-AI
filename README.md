@@ -91,7 +91,7 @@ aws configure
 
 # 3. Set up environment variables
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp frontend/.env.example frontend/.env.local
 ```
 
 ### Backend Configuration
@@ -99,32 +99,52 @@ cp frontend/.env.example frontend/.env
 Edit `backend/.env` with your credentials:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/convexhire
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# LLM Providers
+# JWT Security
+SECRET_KEY=your_secret_key_here
+ALGORITHM=HS256
+
+# Application URLs
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:8000
+
+# Application Settings
+ENVIRONMENT=development
+APP_VERSION=1.0.0
+
+# Database Configuration
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/convexhire
+
+# Vector Database
+QDRANT_URL=http://localhost:6333
+
+# LLM Provider
 GROQ_API_KEY=your_groq_api_key
-AWS_REGION=us-east-1
 
-# Observability
-LANGCHAIN_API_KEY=your_langsmith_api_key
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_PROJECT=convexhire
-LOGFIRE_TOKEN=your_logfire_token
+# Email Configuration
+GMAIL_USER=your_gmail_address@gmail.com
+GMAIL_APP_PASSWORD=your_gmail_app_password
+
+# Google Services
+GOOGLE_API_KEY=your_google_api_key
 
 # Web Search
 TAVILY_API_KEY=your_tavily_api_key
-
-# Security
-SECRET_KEY=your_secret_key_here
 ```
 
 ### Frontend Configuration
 
-Edit `frontend/.env`:
+Edit `frontend/.env.local`:
 
 ```env
+# Backend API URL
 NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Google OAuth Client ID
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
 ### Start the Application
