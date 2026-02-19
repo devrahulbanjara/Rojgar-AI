@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     SECURE: bool = False
 
-    FRONTEND_URL: str
-    BACKEND_URL: str
+    FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: str = "http://localhost:8000"
     ENVIRONMENT: str
     APP_VERSION: str
     DATABASE_URL: str
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     LLM_MAX_RETRIES: int = 3
 
     GROQ_API_KEY: str
-    GMAIL_USER: str = "convexhire@gmail.com"
+    GMAIL_USER: str
     GMAIL_APP_PASSWORD: str
     GOOGLE_API_KEY: str
     TAVILY_API_KEY: str
