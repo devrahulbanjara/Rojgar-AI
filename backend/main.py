@@ -1,3 +1,4 @@
+import logfire
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -26,6 +27,18 @@ app.add_middleware(
 app.add_middleware(SlowAPIMiddleware)
 
 app.state.limiter = limiter
+
+
+def scrubbing_callback(m: logfire.ScrubMatch):
+    if m.path == ("attributes", "fastapi.arguments.values", "auth_service"):
+        return m.value
+
+    if m.path == ("attributes", "fastapi.arguments.values", "login_data", "password"):
+        return m.value
+
+
+logfire.configure(scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback))
+logfire.instrument_fastapi(app)
 
 
 @app.exception_handler(Exception)
