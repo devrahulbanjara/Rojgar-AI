@@ -62,7 +62,7 @@ class JobGenerationService:
                     logger.error(f"Error fetching reference JD: {e}", exc_info=True)
                     raise ValueError(
                         "Could not retrieve the selected reference job description."
-                    )
+                    ) from e
 
             initial_state: JobState = {
                 "title": title,

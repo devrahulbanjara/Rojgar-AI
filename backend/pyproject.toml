@@ -34,6 +34,9 @@ dependencies = [
     "logfire[fastapi]>=4.24.0",
     "uvicorn>=0.38.0",
     "python-dotenv>=1.2.1",
+    "spacy>=3.8.11",
+    "huggingface-hub>=0.36.0",
+    "hf-xet>=1.2.0",
 ]
 
 [dependency-groups]

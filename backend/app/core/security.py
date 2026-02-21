@@ -1,7 +1,6 @@
 import hashlib
 import uuid
 from datetime import timedelta
-from typing import TYPE_CHECKING
 
 from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
@@ -9,13 +8,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.db.models.user import User
 from app.db.session import get_db
 
 from .config import settings
 from .current_datetime import get_datetime
-
-if TYPE_CHECKING:
-    from app.db.models.user import User
 
 
 def hash_password(password: str) -> str:
@@ -55,8 +52,8 @@ def verify_token(token: str) -> tuple[uuid.UUID, str]:
         if entity_id is None:
             raise ValueError("Invalid token")
         return (uuid.UUID(entity_id), entity_type)
-    except JWTError:
-        raise ValueError("Invalid or expired token")
+    except JWTError as e:
+        raise ValueError("Invalid or expired token") from e
 
 
 def get_current_user_id(request: Request) -> uuid.UUID:
@@ -72,7 +69,7 @@ def get_current_user_id(request: Request) -> uuid.UUID:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
-        )
+        ) from e
     if entity_type != "user":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -94,7 +91,7 @@ def get_current_organization_id(request: Request) -> uuid.UUID:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
-        )
+        ) from e
     if entity_type != "organization":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -106,8 +103,7 @@ def get_current_organization_id(request: Request) -> uuid.UUID:
 async def get_current_active_user(
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
-) -> "User":
-    from app.db.models.user import User
+) -> User:
 
     result = await db.execute(
         select(User)
@@ -138,10 +134,9 @@ def get_current_user_id_optional(request: Request) -> uuid.UUID | None:
 async def get_current_active_user_optional(
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID | None = Depends(get_current_user_id_optional),
-) -> "User | None":
+) -> User | None:
     if not user_id:
         return None
-    from app.db.models.user import User
 
     result = await db.execute(select(User).where(User.user_id == user_id))
     user = result.scalar_one_or_none()
@@ -164,7 +159,7 @@ async def get_current_recruiter_organization_id(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
-        )
+        ) from e
 
     # Only accept organization tokens
     if entity_type != "organization":

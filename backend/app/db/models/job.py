@@ -38,6 +38,9 @@ class JobDescription(Base):
     compensation_and_benefits: Mapped[list[str] | None] = mapped_column(
         ARRAY(String), nullable=True
     )
+    extracted_skills: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )

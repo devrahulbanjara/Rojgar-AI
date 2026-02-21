@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.db.models.candidate import CandidateProfile
 from app.db.models.resume import (
     Resume,
     ResumeCertification,
@@ -48,7 +49,6 @@ class ResumeRepository(BaseRepository[Resume]):
 
     async def get_by_user_id(self, user_id: uuid.UUID) -> Sequence[Resume]:
         """Get resumes by user ID through candidate profile"""
-        from app.db.models.candidate import CandidateProfile
 
         query = (
             select(Resume)

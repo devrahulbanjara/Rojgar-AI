@@ -20,7 +20,7 @@ export class CandidateService {
         params.job_id = filters.job_id
       }
 
-      return await api.candidates.list(params) as Promise<CandidateListResponse>
+      return (await api.candidates.list(params)) as Promise<CandidateListResponse>
     } catch (error) {
       console.error('Error fetching candidates:', error)
       throw error
@@ -39,7 +39,7 @@ export class CandidateService {
         limit: limit.toString(),
       }
 
-      return await api.candidates.search(params) as Promise<CandidateListResponse>
+      return (await api.candidates.search(params)) as Promise<CandidateListResponse>
     } catch (error) {
       console.error('Error searching candidates:', error)
       throw error

@@ -133,6 +133,9 @@ GOOGLE_API_KEY=your_google_api_key
 
 # Web Search
 TAVILY_API_KEY=your_tavily_api_key
+
+# Hugging Face Configuration
+HF_HUB_LOCAL_DIR_USE_SYMLINKS=0
 ```
 
 ### Frontend Configuration
@@ -156,7 +159,7 @@ docker-compose up -d
 # 5. Run database migrations
 cd backend
 uv sync
-uv run alembic upgrade head
+uv run alembic upgrade head  # even if you dont run it here, it will automatically run when server starts
 
 # 6. Start backend (http://localhost:8000)
 uv run fastapi dev
@@ -222,55 +225,6 @@ All agent interactions are traced and logged via **LangSmith** for debugging and
 - **[APScheduler](https://apscheduler.readthedocs.io/)** - Advanced Python scheduler for cron jobs
 - **[Redis](https://redis.io/)** - In-memory data store for caching
 - **[Qdrant](https://qdrant.tech/)** - Vector database for semantic search
-
----
-
-## 📁 Project Structure
-
-```
-ConvexHire/
-├── backend/                    # FastAPI backend
-│   ├── app/
-│   │   ├── agents/            # LangGraph AI agents
-│   │   │   ├── jd_generator/  # Job description generation
-│   │   │   ├── shortlisting/  # Candidate screening agents
-│   │   │   └── scheduler/     # Email & scheduling automation
-│   │   ├── api/               # API routes
-│   │   │   ├── v1/            # API version 1
-│   │   │   ├── auth.py        # Authentication endpoints
-│   │   │   └── dependencies.py
-│   │   ├── core/              # Core configurations
-│   │   │   ├── config.py      # Settings management
-│   │   │   ├── security.py    # Auth & security
-│   │   │   └── logging_config.py
-│   │   ├── db/                # Database layer
-│   │   │   ├── models/        # SQLAlchemy models
-│   │   │   ├── repositories/  # Data access layer
-│   │   │   └── session.py     # DB session management
-│   │   └── services/          # Business logic
-│   ├── alembic/               # Database migrations
-│   ├── tests/                 # Test suite
-│   └── main.py                # Application entry point
-│
-├── frontend/                   # Next.js frontend
-│   ├── src/
-│   │   ├── app/               # App router pages
-│   │   │   ├── recruiter/     # Recruiter dashboard
-│   │   │   └── candidate/     # Candidate portal
-│   │   ├── components/        # React components
-│   │   │   ├── ui/            # Reusable UI components
-│   │   │   ├── recruiter/     # Recruiter-specific components
-│   │   │   └── candidate/     # Candidate-specific components
-│   │   ├── hooks/             # Custom React hooks
-│   │   ├── services/          # API client services
-│   │   ├── types/             # TypeScript type definitions
-│   │   └── lib/               # Utility functions
-│   ├── public/                # Static assets
-│   └── tailwind.config.ts     # Tailwind configuration
-│
-├── docker-compose.yml          # Infrastructure setup
-└── README.md                   # This file
-```
 
 ---
 

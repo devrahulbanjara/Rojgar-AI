@@ -54,7 +54,7 @@ async def generate_job_draft(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     try:
         logger.info(
@@ -76,7 +76,7 @@ async def generate_job_draft(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate job draft: {e!s}",
-        )
+        ) from e
 
 
 # Job CRUD Operations
@@ -87,17 +87,19 @@ async def generate_job_draft(
 async def create_job(
     request: Request,
     job_data: schemas.JobCreate,
+    background_tasks: BackgroundTasks,
     current_user: Annotated[User, Depends(get_current_active_user)],
     job_service: Annotated[JobService, Depends(get_job_service)],
 ):
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     job_posting = await job_service.create_job(
         job_data=job_data,
         user_id=current_user.user_id,
         organization_id=organization_id,
+        background_tasks=background_tasks,
     )
     return job_posting
 
@@ -121,7 +123,7 @@ async def update_job(
     try:
         verify_user_can_edit_job(current_user, job_posting)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     updated_job = await job_service.update_job(
         job_posting=job_posting, job_data=job_data
     )
@@ -189,7 +191,7 @@ async def trigger_shortlisting(
     try:
         verify_user_can_edit_job(current_user, job)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     # Guard: Don't allow trigger if already running
     if job.shortlist_status == "in_progress":
@@ -220,7 +222,7 @@ async def get_shortlisting_summary(
     try:
         verify_user_can_edit_job(current_user, job)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     return await shortlist_service.get_shortlisting_summary(job_id)
 
@@ -243,7 +245,7 @@ async def finalize_shortlisting(
     try:
         verify_user_can_edit_job(current_user, job)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     result = await shortlist_service.finalize_shortlist(
         job_id,
@@ -357,7 +359,7 @@ async def update_draft(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to update draft: {e!s}",
-            )
+            ) from e
 
 
 @router.post("/emails/drafts/{draft_id}/send", status_code=status.HTTP_200_OK)
@@ -417,7 +419,7 @@ async def create_reference_jd(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     return await reference_jd_service.create_reference_jd(
         organization_id=organization_id, data=data
     )
@@ -435,7 +437,7 @@ async def get_reference_jds(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     reference_jds = await reference_jd_service.get_reference_jds(
         organization_id=organization_id
     )
@@ -466,7 +468,7 @@ async def get_reference_jd_by_id(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     reference_jd = await reference_jd_service.get_reference_jd_by_id(
         reference_jd_id=reference_jd_id, organization_id=organization_id
     )
@@ -493,7 +495,7 @@ async def update_reference_jd(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     reference_jd = await reference_jd_service.update_reference_jd(
         reference_jd_id=reference_jd_id,
         organization_id=organization_id,
@@ -521,7 +523,7 @@ async def delete_reference_jd(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     try:
         reference_jd = await reference_jd_service.delete_reference_jd(
             reference_jd_id=reference_jd_id, organization_id=organization_id

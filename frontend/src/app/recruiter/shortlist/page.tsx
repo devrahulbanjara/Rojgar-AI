@@ -42,12 +42,7 @@ import {
   TooltipTrigger,
 } from '../../../components/ui/tooltip'
 
-
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '../../../components/ui/popover'
+import { Popover, PopoverTrigger, PopoverContent } from '../../../components/ui/popover'
 
 interface EmailDraft {
   draft_id: string
@@ -204,7 +199,7 @@ function ShortlistPageSkeleton() {
             <div className="max-w-5xl mx-auto px-6 py-6 space-y-6 w-full">
               {/* Alert banner skeleton */}
               <AlertBannerSkeleton />
-              
+
               {/* Candidate cards skeleton */}
               {Array.from({ length: 3 }).map((_, index) => (
                 <ShortlistCandidateCardSkeleton key={index} />
@@ -394,7 +389,9 @@ export default function ShortlistPage() {
   }, [selectedJob])
 
   // Email Automation State
-  const [emailWorkflowStep, setEmailWorkflowStep] = useState<'choice' | 'preparing' | 'reviewing' | 'sending'>('choice')
+  const [emailWorkflowStep, setEmailWorkflowStep] = useState<
+    'choice' | 'preparing' | 'reviewing' | 'sending'
+  >('choice')
   const [emailDrafts, setEmailDrafts] = useState<EmailDraft[]>([])
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
   const [editedSubject, setEditedSubject] = useState('')
@@ -430,17 +427,19 @@ export default function ShortlistPage() {
 
   const handlePrepareDrafts = async () => {
     if (!selectedJob) return
-    
+
     // If drafts already exist, just show a message
     if (emailDrafts.length > 0) {
-      toast.info('Email drafts are already prepared. You can edit and send them from each candidate card.')
+      toast.info(
+        'Email drafts are already prepared. You can edit and send them from each candidate card.'
+      )
       setIsEmailPopoverOpen(false)
       return
     }
-    
+
     // Close the popover
     setIsEmailPopoverOpen(false)
-    
+
     setIsProcessingEmails(true)
     try {
       await jobService.prepareEmails(selectedJob.job_id)
@@ -456,28 +455,30 @@ export default function ShortlistPage() {
 
   const handleDirectSend = async () => {
     if (!selectedJob) return
-    
-    const shortlistedCount = selectedJob.candidates.filter(c => c.current_status === 'shortlisted').length
+
+    const shortlistedCount = selectedJob.candidates.filter(
+      c => c.current_status === 'shortlisted'
+    ).length
     const rejectedCount = selectedJob.candidates.filter(c => c.current_status === 'rejected').length
     const totalCount = shortlistedCount + rejectedCount
-    
+
     if (totalCount === 0) {
       toast.error('No candidates to send emails to')
       return
     }
-    
+
     // Close the popover
     setIsEmailPopoverOpen(false)
-    
+
     setIsProcessingEmails(true)
     try {
       toast.info(`Preparing and sending ${totalCount} email${totalCount !== 1 ? 's' : ''}...`)
-      
+
       // Trigger background preparation and direct sending
       await jobService.prepareEmails(selectedJob.job_id, true)
-      
+
       toast.success(`Successfully sent ${totalCount} email${totalCount !== 1 ? 's' : ''}!`)
-      
+
       // Reload drafts to show sent status
       setTimeout(() => loadExistingDrafts(), 2000)
     } catch {
@@ -499,16 +500,14 @@ export default function ShortlistPage() {
         subject: editedSubject,
         body: editedBody,
       })
-      
+
       // Update local state
       setEmailDrafts(prev =>
         prev.map(d =>
-          d.draft_id === draftId
-            ? { ...d, subject: editedSubject, body: editedBody }
-            : d
+          d.draft_id === draftId ? { ...d, subject: editedSubject, body: editedBody } : d
         )
       )
-      
+
       setEditingDraftId(null)
       toast.success('Draft updated successfully')
     } catch {
@@ -526,14 +525,10 @@ export default function ShortlistPage() {
     setSendingDraftIds(prev => new Set(prev).add(draftId))
     try {
       await jobService.sendSingleEmail(draftId)
-      
+
       // Update local state to mark as sent
-      setEmailDrafts(prev =>
-        prev.map(d =>
-          d.draft_id === draftId ? { ...d, is_sent: true } : d
-        )
-      )
-      
+      setEmailDrafts(prev => prev.map(d => (d.draft_id === draftId ? { ...d, is_sent: true } : d)))
+
       toast.success('Email sent successfully')
     } catch {
       toast.error('Failed to send email')
@@ -549,10 +544,10 @@ export default function ShortlistPage() {
   const handleDiscardDraft = async (draftId: string) => {
     try {
       await jobService.discardDraft(draftId)
-      
+
       // Remove from local state
       setEmailDrafts(prev => prev.filter(d => d.draft_id !== draftId))
-      
+
       toast.success('Draft discarded')
     } catch {
       toast.error('Failed to discard draft')
@@ -561,7 +556,7 @@ export default function ShortlistPage() {
 
   const handleBulkSendDrafts = async () => {
     if (!selectedJob) return
-    
+
     const unsentDrafts = emailDrafts.filter(d => !d.is_sent)
     if (unsentDrafts.length === 0) {
       toast.info('All drafts have already been sent')
@@ -571,11 +566,13 @@ export default function ShortlistPage() {
     setIsProcessingEmails(true)
     try {
       await jobService.sendAllEmails(selectedJob.job_id)
-      
+
       // Mark all as sent in local state
       setEmailDrafts(prev => prev.map(d => ({ ...d, is_sent: true })))
-      
-      toast.success(`Successfully sent ${unsentDrafts.length} email${unsentDrafts.length !== 1 ? 's' : ''}`)
+
+      toast.success(
+        `Successfully sent ${unsentDrafts.length} email${unsentDrafts.length !== 1 ? 's' : ''}`
+      )
     } catch {
       toast.error('Failed to send emails')
     } finally {
@@ -585,7 +582,7 @@ export default function ShortlistPage() {
 
   const handleBulkDiscardDrafts = async () => {
     if (!selectedJob) return
-    
+
     const unsentDrafts = emailDrafts.filter(d => !d.is_sent)
     if (unsentDrafts.length === 0) {
       toast.info('No unsent drafts to discard')
@@ -595,14 +592,14 @@ export default function ShortlistPage() {
     setIsProcessingEmails(true)
     try {
       // Discard all unsent drafts
-      await Promise.all(
-        unsentDrafts.map(draft => jobService.discardDraft(draft.draft_id))
-      )
-      
+      await Promise.all(unsentDrafts.map(draft => jobService.discardDraft(draft.draft_id)))
+
       // Remove unsent drafts from local state, keep sent ones
       setEmailDrafts(prev => prev.filter(d => d.is_sent))
-      
-      toast.success(`Successfully discarded ${unsentDrafts.length} draft${unsentDrafts.length !== 1 ? 's' : ''}`)
+
+      toast.success(
+        `Successfully discarded ${unsentDrafts.length} draft${unsentDrafts.length !== 1 ? 's' : ''}`
+      )
     } catch {
       toast.error('Failed to discard drafts')
     } finally {
@@ -615,10 +612,10 @@ export default function ShortlistPage() {
     setIsProcessingEmails(true)
     try {
       await jobService.sendAllEmails(selectedJob.job_id)
-      
+
       // Mark all as sent in local state
       setEmailDrafts(prev => prev.map(d => ({ ...d, is_sent: true })))
-      
+
       toast.success('Status updates sent successfully')
     } catch {
       toast.error('Failed to send updates')
@@ -971,7 +968,11 @@ export default function ShortlistPage() {
                                 : 'Run AI Shortlist'}
                             </Button>
                           )}
-                          <Button variant="outline" size="icon" className="h-9 w-9 text-text-muted bg-background-surface dark:bg-background-surface">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 text-text-muted bg-background-surface dark:bg-background-surface"
+                          >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </div>
@@ -1046,7 +1047,8 @@ export default function ShortlistPage() {
                                       Shortlisting Finalized
                                     </h4>
                                     <p className="text-xs text-primary-700 dark:text-white/80 mt-1.5">
-                                      All decisions have been made and the shortlist for this job is complete.
+                                      All decisions have been made and the shortlist for this job is
+                                      complete.
                                     </p>
                                   </div>
                                 </div>
@@ -1059,11 +1061,18 @@ export default function ShortlistPage() {
                                       <Mail className="w-5 h-5 text-primary-600" />
                                     </div>
                                     <div>
-                                      <h3 className="text-base font-bold text-text-primary leading-tight">Email Candidate Updates</h3>
-                                      <p className="text-xs text-text-secondary mt-0.5">Automated status notifications for all applicants.</p>
+                                      <h3 className="text-base font-bold text-text-primary leading-tight">
+                                        Email Candidate Updates
+                                      </h3>
+                                      <p className="text-xs text-text-secondary mt-0.5">
+                                        Automated status notifications for all applicants.
+                                      </p>
                                     </div>
                                   </div>
-                                  <Popover open={isEmailPopoverOpen} onOpenChange={setIsEmailPopoverOpen}>
+                                  <Popover
+                                    open={isEmailPopoverOpen}
+                                    onOpenChange={setIsEmailPopoverOpen}
+                                  >
                                     <PopoverTrigger asChild>
                                       <ActionButton
                                         variant="primary"
@@ -1077,9 +1086,14 @@ export default function ShortlistPage() {
                                         Send Status Updates
                                       </ActionButton>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-0 overflow-hidden border-border-default shadow-xl bg-background-surface" align="end">
+                                    <PopoverContent
+                                      className="w-80 p-0 overflow-hidden border-border-default shadow-xl bg-background-surface"
+                                      align="end"
+                                    >
                                       <div className="p-3 bg-background-subtle/50 border-b border-border-subtle">
-                                        <h4 className="text-xs font-bold text-text-primary px-1">Choose Method</h4>
+                                        <h4 className="text-xs font-bold text-text-primary px-1">
+                                          Choose Method
+                                        </h4>
                                       </div>
                                       <div className="p-2 space-y-1 bg-background-surface">
                                         <button
@@ -1089,10 +1103,19 @@ export default function ShortlistPage() {
                                           className="w-full flex flex-col items-start p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 text-left transition-colors"
                                         >
                                           <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-text-primary">Review Details</span>
-                                            <Badge colorPalette="blue" className="text-[8px] h-3.5 px-1 font-black uppercase">Recommended</Badge>
+                                            <span className="text-xs font-bold text-text-primary">
+                                              Review Details
+                                            </span>
+                                            <Badge
+                                              colorPalette="blue"
+                                              className="text-[8px] h-3.5 px-1 font-black uppercase"
+                                            >
+                                              Recommended
+                                            </Badge>
                                           </div>
-                                          <p className="text-[10px] text-text-tertiary mt-1 leading-tight">Review AI drafts before sending.</p>
+                                          <p className="text-[10px] text-text-tertiary mt-1 leading-tight">
+                                            Review AI drafts before sending.
+                                          </p>
                                         </button>
                                         <button
                                           onClick={() => {
@@ -1105,11 +1128,20 @@ export default function ShortlistPage() {
                                             {isProcessingEmails ? (
                                               <Loader2 className="w-3.5 h-3.5 text-primary-600 animate-spin" />
                                             ) : null}
-                                            <span className="text-xs font-bold text-text-primary">Direct Send</span>
-                                            <Badge colorPalette="gray" className="text-[8px] h-3.5 px-1 font-black uppercase">Quick Action</Badge>
+                                            <span className="text-xs font-bold text-text-primary">
+                                              Direct Send
+                                            </span>
+                                            <Badge
+                                              colorPalette="gray"
+                                              className="text-[8px] h-3.5 px-1 font-black uppercase"
+                                            >
+                                              Quick Action
+                                            </Badge>
                                           </div>
                                           <p className="text-[10px] text-text-tertiary mt-1 leading-tight">
-                                            {isProcessingEmails ? 'Sending emails...' : 'Send immediately without review.'}
+                                            {isProcessingEmails
+                                              ? 'Sending emails...'
+                                              : 'Send immediately without review.'}
                                           </p>
                                         </button>
                                       </div>
@@ -1121,21 +1153,29 @@ export default function ShortlistPage() {
                                   <div className="flex items-center gap-3 p-3 rounded-lg bg-background-subtle/50 border border-border-subtle">
                                     <div className="w-2 h-2 rounded-full bg-primary-500" />
                                     <div className="flex flex-col">
-                                      <span className="text-xs font-bold text-text-primary">{shortlistStats.shortlisted} Shortlisted</span>
-                                      <span className="text-[10px] text-text-tertiary uppercase font-medium tracking-wide">Next Stage Invite</span>
+                                      <span className="text-xs font-bold text-text-primary">
+                                        {shortlistStats.shortlisted} Shortlisted
+                                      </span>
+                                      <span className="text-[10px] text-text-tertiary uppercase font-medium tracking-wide">
+                                        Next Stage Invite
+                                      </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-3 p-3 rounded-lg bg-background-subtle/50 border border-border-subtle">
                                     <div className="w-2 h-2 rounded-full bg-error-500" />
                                     <div className="flex flex-col">
-                                      <span className="text-xs font-bold text-text-primary">{shortlistStats.rejected} Rejected</span>
-                                      <span className="text-[10px] text-text-tertiary uppercase font-medium tracking-wide">Rejection Notice</span>
+                                      <span className="text-xs font-bold text-text-primary">
+                                        {shortlistStats.rejected} Rejected
+                                      </span>
+                                      <span className="text-[10px] text-text-tertiary uppercase font-medium tracking-wide">
+                                        Rejection Notice
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          ) :
+                          ) : (
                             selectedJob.shortlist_status === 'completed' && (
                               <div className="flex items-center justify-between p-4 px-6 rounded-xl border border-primary-100 bg-primary-50/50 dark:bg-primary-950/10 gap-6">
                                 <div className="flex items-center gap-4">
@@ -1158,14 +1198,22 @@ export default function ShortlistPage() {
                                     size="sm"
                                     onClick={handleAcceptAIRecommendations}
                                     variant="primary"
-                                    disabled={!selectedJob || selectedJob.candidates.length === 0 || finalizeShortlistMutation.isPending}
+                                    disabled={
+                                      !selectedJob ||
+                                      selectedJob.candidates.length === 0 ||
+                                      finalizeShortlistMutation.isPending
+                                    }
                                     className={cn(
                                       'whitespace-nowrap h-9 px-4',
-                                      (!selectedJob || selectedJob.candidates.length === 0 || finalizeShortlistMutation.isPending) &&
-                                      'opacity-50 cursor-not-allowed'
+                                      (!selectedJob ||
+                                        selectedJob.candidates.length === 0 ||
+                                        finalizeShortlistMutation.isPending) &&
+                                        'opacity-50 cursor-not-allowed'
                                     )}
                                   >
-                                    {finalizeShortlistMutation.isPending ? 'Finalizing...' : 'Finalize AI Recommendations'}
+                                    {finalizeShortlistMutation.isPending
+                                      ? 'Finalizing...'
+                                      : 'Finalize AI Recommendations'}
                                   </ActionButton>
                                   <TooltipProvider>
                                     <Tooltip>
@@ -1175,11 +1223,15 @@ export default function ShortlistPage() {
                                             size="sm"
                                             onClick={handleFinishShortlisting}
                                             variant="outline"
-                                            disabled={!allCandidatesReviewed || finalizeShortlistMutation.isPending}
+                                            disabled={
+                                              !allCandidatesReviewed ||
+                                              finalizeShortlistMutation.isPending
+                                            }
                                             className={cn(
                                               'whitespace-nowrap h-9 px-4 flex items-center gap-2',
-                                              (!allCandidatesReviewed || finalizeShortlistMutation.isPending) &&
-                                              'opacity-50 cursor-not-allowed'
+                                              (!allCandidatesReviewed ||
+                                                finalizeShortlistMutation.isPending) &&
+                                                'opacity-50 cursor-not-allowed'
                                             )}
                                           >
                                             {finalizeShortlistMutation.isPending ? (
@@ -1194,7 +1246,8 @@ export default function ShortlistPage() {
                                       {!allCandidatesReviewed && (
                                         <TooltipContent>
                                           <p className="text-xs">
-                                            Review all candidates first ({unreviewedCount} remaining)
+                                            Review all candidates first ({unreviewedCount}{' '}
+                                            remaining)
                                           </p>
                                         </TooltipContent>
                                       )}
@@ -1202,7 +1255,8 @@ export default function ShortlistPage() {
                                   </TooltipProvider>
                                 </div>
                               </div>
-                            )}
+                            )
+                          )}
 
                           {canTriggerAutoShortlist && (
                             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-50 border border-primary-200">
@@ -1275,7 +1329,7 @@ export default function ShortlistPage() {
                                           className={cn(
                                             'bg-primary-600 hover:bg-primary-700 whitespace-nowrap',
                                             !allCandidatesReviewed &&
-                                            'opacity-50 cursor-not-allowed'
+                                              'opacity-50 cursor-not-allowed'
                                           )}
                                         >
                                           <CheckCheck className="w-4 h-4" />
@@ -1295,16 +1349,20 @@ export default function ShortlistPage() {
                               </div>
                             )}
 
-
-                          {(emailWorkflowStep === 'preparing' || emailWorkflowStep === 'sending') && (
+                          {(emailWorkflowStep === 'preparing' ||
+                            emailWorkflowStep === 'sending') && (
                             <div className="flex flex-col items-center justify-center py-20 gap-4">
                               <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
                               <div className="text-center">
                                 <h4 className="font-bold text-text-primary">
-                                  {emailWorkflowStep === 'preparing' ? 'Generating AI Drafts' : 'Sending Updates'}
+                                  {emailWorkflowStep === 'preparing'
+                                    ? 'Generating AI Drafts'
+                                    : 'Sending Updates'}
                                 </h4>
                                 <p className="text-sm text-text-tertiary">
-                                  {emailWorkflowStep === 'preparing' ? 'This may take a few seconds...' : 'Dispatching emails to candidates...'}
+                                  {emailWorkflowStep === 'preparing'
+                                    ? 'This may take a few seconds...'
+                                    : 'Dispatching emails to candidates...'}
                                 </p>
                               </div>
                             </div>
@@ -1314,8 +1372,12 @@ export default function ShortlistPage() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                               <div className="flex items-center justify-between px-1">
                                 <div className="flex flex-col">
-                                  <h3 className="text-lg font-bold text-text-primary">Review Automated Updates</h3>
-                                  <p className="text-sm text-text-tertiary">{emailDrafts.length} Messages Prepared</p>
+                                  <h3 className="text-lg font-bold text-text-primary">
+                                    Review Automated Updates
+                                  </h3>
+                                  <p className="text-sm text-text-tertiary">
+                                    {emailDrafts.length} Messages Prepared
+                                  </p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Button
@@ -1344,24 +1406,35 @@ export default function ShortlistPage() {
                                 </div>
                               </div>
                               <div className="grid gap-4">
-                                {emailDrafts.map((draft) => {
+                                {emailDrafts.map(draft => {
                                   const isEditing = editingDraftId === draft.draft_id
                                   const isSending = sendingDraftIds.has(draft.draft_id)
                                   const isSent = draft.is_sent
 
                                   return (
-                                    <div key={draft.draft_id} className="p-5 rounded-2xl border border-border-default bg-background-surface shadow-sm overflow-hidden hover:border-border-strong transition-all">
+                                    <div
+                                      key={draft.draft_id}
+                                      className="p-5 rounded-2xl border border-border-default bg-background-surface shadow-sm overflow-hidden hover:border-border-strong transition-all"
+                                    >
                                       <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                          <div className={cn(
-                                            "w-2 h-2 rounded-full",
-                                            draft.status === 'shortlisted' ? "bg-primary-500" : "bg-error-500"
-                                          )} />
-                                          <span className="text-sm font-bold text-text-primary">{draft.candidate_name}</span>
+                                          <div
+                                            className={cn(
+                                              'w-2 h-2 rounded-full',
+                                              draft.status === 'shortlisted'
+                                                ? 'bg-primary-500'
+                                                : 'bg-error-500'
+                                            )}
+                                          />
+                                          <span className="text-sm font-bold text-text-primary">
+                                            {draft.candidate_name}
+                                          </span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                           <Badge
-                                            colorPalette={draft.status === 'shortlisted' ? "blue" : "red"}
+                                            colorPalette={
+                                              draft.status === 'shortlisted' ? 'blue' : 'red'
+                                            }
                                             className="text-[10px] font-black uppercase px-2 py-0.5"
                                             style={{ borderRadius: '4px' }}
                                           >
@@ -1379,20 +1452,24 @@ export default function ShortlistPage() {
                                           )}
                                         </div>
                                       </div>
-                                      
+
                                       <div className="text-sm text-text-secondary space-y-3">
                                         {/* Subject */}
                                         <div className="flex gap-2 text-xs">
-                                          <span className="font-bold text-text-tertiary shrink-0">Subject:</span>
+                                          <span className="font-bold text-text-tertiary shrink-0">
+                                            Subject:
+                                          </span>
                                           {isEditing ? (
                                             <input
                                               type="text"
                                               value={editedSubject}
-                                              onChange={(e) => setEditedSubject(e.target.value)}
+                                              onChange={e => setEditedSubject(e.target.value)}
                                               className="flex-1 px-2 py-1 text-xs border border-border-default rounded bg-background-default text-text-primary"
                                             />
                                           ) : (
-                                            <span className="text-text-primary font-medium">{draft.subject}</span>
+                                            <span className="text-text-primary font-medium">
+                                              {draft.subject}
+                                            </span>
                                           )}
                                         </div>
 
@@ -1400,12 +1477,12 @@ export default function ShortlistPage() {
                                         {isEditing ? (
                                           <textarea
                                             value={editedBody}
-                                            onChange={(e) => setEditedBody(e.target.value)}
+                                            onChange={e => setEditedBody(e.target.value)}
                                             rows={12}
                                             className="w-full p-3 text-xs border border-border-default rounded bg-background-default text-text-primary font-mono leading-relaxed"
                                           />
                                         ) : (
-                                          <div 
+                                          <div
                                             className="p-4 bg-background-subtle/50 rounded-xl border border-border-subtle text-xs leading-relaxed [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:text-xs [&_h3]:font-semibold [&_p]:text-xs [&_p]:my-2 [&_strong]:font-semibold [&_a]:text-primary-600 [&_a]:underline [&_*]:!text-text-primary [&_table]:!bg-background-surface [&_td]:!bg-background-surface [&_body]:!bg-background-default [&_img]:!max-w-[120px] [&_img]:!h-auto dark:[&_*]:!text-text-primary dark:[&_table]:!bg-background-surface dark:[&_td]:!bg-background-surface dark:[&_body]:!bg-background-default"
                                             dangerouslySetInnerHTML={{ __html: draft.body }}
                                           />
@@ -1433,7 +1510,9 @@ export default function ShortlistPage() {
                                               </Button>
                                             </>
                                           ) : isSent ? (
-                                            <span className="text-xs text-text-tertiary italic">Email has been sent</span>
+                                            <span className="text-xs text-text-tertiary italic">
+                                              Email has been sent
+                                            </span>
                                           ) : (
                                             <>
                                               <Button
@@ -1487,7 +1566,11 @@ export default function ShortlistPage() {
                                     <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                                     <div>
                                       <p className="text-sm font-semibold text-text-primary">
-                                        {emailDrafts.filter(d => !d.is_sent).length} Draft{emailDrafts.filter(d => !d.is_sent).length !== 1 ? 's' : ''} Ready
+                                        {emailDrafts.filter(d => !d.is_sent).length} Draft
+                                        {emailDrafts.filter(d => !d.is_sent).length !== 1
+                                          ? 's'
+                                          : ''}{' '}
+                                        Ready
                                       </p>
                                       <p className="text-xs text-text-tertiary">
                                         {emailDrafts.filter(d => d.is_sent).length} already sent
@@ -1499,7 +1582,10 @@ export default function ShortlistPage() {
                                       variant="outline"
                                       size="sm"
                                       onClick={handleBulkDiscardDrafts}
-                                      disabled={isProcessingEmails || emailDrafts.filter(d => !d.is_sent).length === 0}
+                                      disabled={
+                                        isProcessingEmails ||
+                                        emailDrafts.filter(d => !d.is_sent).length === 0
+                                      }
                                       className="text-xs bg-background-surface dark:bg-background-surface hover:text-error-600 hover:border-error-200 hover:bg-error-50 dark:hover:bg-error-950/30"
                                     >
                                       <Trash2 className="w-3.5 h-3.5 mr-1.5" />
@@ -1508,7 +1594,10 @@ export default function ShortlistPage() {
                                     <Button
                                       size="sm"
                                       onClick={handleBulkSendDrafts}
-                                      disabled={isProcessingEmails || emailDrafts.filter(d => !d.is_sent).length === 0}
+                                      disabled={
+                                        isProcessingEmails ||
+                                        emailDrafts.filter(d => !d.is_sent).length === 0
+                                      }
                                       className="text-xs bg-primary-600 hover:bg-primary-700"
                                     >
                                       {isProcessingEmails ? (
@@ -1528,47 +1617,51 @@ export default function ShortlistPage() {
                                   return hasScores ? b.score - a.score : 0
                                 })
                                 .map(candidate => {
-                                // Find the email draft for this candidate
-                                const candidateDraft = emailDrafts.find(
-                                  draft => draft.application_id === candidate.application_id
-                                )
-                                
-                                return (
-                                  <ShortlistCandidateCard
-                                    key={candidate.application_id}
-                                    candidate={candidate}
-                                    onShortlist={handleShortlist}
-                                    onReject={handleReject}
-                                    scoreInterpretation={getScoreInterpretation(candidate.score)}
-                                    showScores={
-                                      selectedJob.shortlist_status === 'completed' ||
-                                      selectedJob.shortlist_status === 'in_progress'
-                                    }
-                                    isShortlistingInProgress={
-                                      selectedJob.shortlist_status === 'in_progress'
-                                    }
-                                    isFinalized={selectedJob.final_shortlist_completed}
-                                    emailDraft={candidateDraft}
-                                    isLoadingDraft={isLoadingDrafts && selectedJob.final_shortlist_completed}
-                                    onSaveDraft={async (draftId, subject, body) => {
-                                      try {
-                                        await jobService.updateDraft(draftId, { subject, body })
-                                        setEmailDrafts(prev =>
-                                          prev.map(d =>
-                                            d.draft_id === draftId ? { ...d, subject, body } : d
-                                          )
-                                        )
-                                        toast.success('Draft updated successfully')
-                                      } catch {
-                                        toast.error('Failed to update draft')
+                                  // Find the email draft for this candidate
+                                  const candidateDraft = emailDrafts.find(
+                                    draft => draft.application_id === candidate.application_id
+                                  )
+
+                                  return (
+                                    <ShortlistCandidateCard
+                                      key={candidate.application_id}
+                                      candidate={candidate}
+                                      onShortlist={handleShortlist}
+                                      onReject={handleReject}
+                                      scoreInterpretation={getScoreInterpretation(candidate.score)}
+                                      showScores={
+                                        selectedJob.shortlist_status === 'completed' ||
+                                        selectedJob.shortlist_status === 'in_progress'
                                       }
-                                    }}
-                                    onDiscardDraft={handleDiscardDraft}
-                                    onSendDraft={handleSendSingle}
-                                    isSendingDraft={sendingDraftIds.has(candidateDraft?.draft_id || '')}
-                                  />
-                                )
-                              })}
+                                      isShortlistingInProgress={
+                                        selectedJob.shortlist_status === 'in_progress'
+                                      }
+                                      isFinalized={selectedJob.final_shortlist_completed}
+                                      emailDraft={candidateDraft}
+                                      isLoadingDraft={
+                                        isLoadingDrafts && selectedJob.final_shortlist_completed
+                                      }
+                                      onSaveDraft={async (draftId, subject, body) => {
+                                        try {
+                                          await jobService.updateDraft(draftId, { subject, body })
+                                          setEmailDrafts(prev =>
+                                            prev.map(d =>
+                                              d.draft_id === draftId ? { ...d, subject, body } : d
+                                            )
+                                          )
+                                          toast.success('Draft updated successfully')
+                                        } catch {
+                                          toast.error('Failed to update draft')
+                                        }
+                                      }}
+                                      onDiscardDraft={handleDiscardDraft}
+                                      onSendDraft={handleSendSingle}
+                                      isSendingDraft={sendingDraftIds.has(
+                                        candidateDraft?.draft_id || ''
+                                      )}
+                                    />
+                                  )
+                                })}
                             </>
                           )}
                         </>

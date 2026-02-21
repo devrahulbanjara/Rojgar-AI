@@ -5,6 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.application import JobApplication
 from app.db.models.email_draft import EmailDraft
 from app.db.repositories.base import BaseRepository
 
@@ -21,7 +22,6 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
 
     async def get_by_job(self, job_id: uuid.UUID) -> Sequence[EmailDraft]:
         """Get all email drafts for a specific job (excluding discarded)"""
-        from app.db.models.application import JobApplication
 
         query = (
             select(EmailDraft)
@@ -30,7 +30,7 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
                 EmailDraft.application_id == JobApplication.application_id,
             )
             .where(JobApplication.job_id == job_id)
-            .where(EmailDraft.is_discarded == False)
+            .where(EmailDraft.is_discarded.is_(False))
         )
         result = await self.db.execute(query)
         return result.scalars().all()
@@ -49,7 +49,9 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
                     "body": body,
                     "is_sent": False,  # Reset sent status on update
                 },
-                where=EmailDraft.is_discarded == False,  # Only update if not discarded
+                where=EmailDraft.is_discarded.is_(
+                    False
+                ),  # Only update if not discarded
             )
             .returning(EmailDraft)
         )

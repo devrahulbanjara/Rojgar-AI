@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION_NAME: str = "ConvexHireJobs"
     EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     EMBEDDING_DIM: int = 3072
+    SKILL_EXTRACTION_MODEL: str = "amjad-awad/skill-extractor"
     FAST_LLM: str = "llama-3.1-8b-instant"
     THINK_LLM: str = "openai/gpt-oss-120b"
     BEDROCK_MODEL_ID: str = "anthropic.claude-3-5-sonnet-20240620-v1:0"
