@@ -163,9 +163,9 @@ export default function ResumeDetailSheet({
         isOpen={isOpen}
         onClose={onClose}
         showCloseButton={false}
-        className="max-w-[800px] mx-auto p-0 border-none shadow-none"
+        className="max-w-[900px] mx-auto p-0 border-none shadow-none"
       >
-        <div className="w-full max-w-[800px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
+        <div className="w-full max-w-[900px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
           <DialogTitle className="sr-only">Loading Resume</DialogTitle>
           <DialogDescription className="sr-only">
             Please wait while we fetch the resume details.
@@ -182,9 +182,9 @@ export default function ResumeDetailSheet({
         isOpen={isOpen}
         onClose={onClose}
         showCloseButton={false}
-        className="max-w-[800px] mx-auto p-0 border-none shadow-none"
+        className="max-w-[900px] mx-auto p-0 border-none shadow-none"
       >
-        <div className="w-full max-w-[800px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
+        <div className="w-full max-w-[900px] h-[90vh] bg-background-surface flex flex-col overflow-hidden rounded-[16px] border border-border-default shadow-2xl">
           <DialogTitle className="sr-only">
             {resume.target_job_title || 'General Resume'}
           </DialogTitle>
