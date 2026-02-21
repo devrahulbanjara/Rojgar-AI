@@ -14,7 +14,7 @@ import {
   EmptyTableState,
 } from '../../../components/candidates'
 import { CandidateApplication } from '../../../types/candidate'
-import { Search, FolderOpen, Users } from 'lucide-react'
+import { Search, FolderOpen } from 'lucide-react'
 
 function CandidatesTableSkeleton() {
   return (
@@ -171,12 +171,16 @@ export default function RecruiterCandidatesPage() {
     const counts = {
       applied: 0,
       interviewing: 0,
+      shortlisted: 0,
+      rejected: 0,
       outcome: 0,
     }
     candidates.forEach(candidate => {
       const status = candidate.current_status.toLowerCase()
       if (status === 'applied') counts.applied++
       else if (status === 'interviewing') counts.interviewing++
+      else if (status === 'shortlisted') counts.shortlisted++
+      else if (status === 'rejected') counts.rejected++
       else if (status === 'outcome') counts.outcome++
     })
     return counts
@@ -282,22 +286,11 @@ export default function RecruiterCandidatesPage() {
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-2">
                 <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
-                  Candidates
+                  Candidates ({totalCandidates})
                 </h1>
                 <p className="text-base text-text-secondary">
                   Review and manage candidate applications for your job postings
                 </p>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-2.5 bg-background-surface rounded-lg border border-border-default shadow-sm">
-                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
-                  <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-text-primary leading-tight">
-                    {totalCandidates}
-                  </p>
-                  <p className="text-xs text-text-muted">Total</p>
-                </div>
               </div>
             </div>
             <div className="mt-6 border-b border-border-default/60" />

@@ -1,13 +1,8 @@
-from langchain_aws import ChatBedrockConverse
-
 from app.agents.shortlisting.prompts import FINAL_PROMPT
+from app.integrations.aws.bedrock import get_bedrock_llm
 from app.schemas.agents.shortlist import FinalResponse, ShortlistState
 
-llm = ChatBedrockConverse(
-    model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
-    region_name="us-east-1",
-    temperature=0,
-)
+llm = get_bedrock_llm()
 
 
 def final_node(state: ShortlistState):

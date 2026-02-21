@@ -1,17 +1,12 @@
 from langchain.agents import create_agent
-from langchain_aws import ChatBedrockConverse
-from langchain_tavily import TavilySearch
 
 from app.agents.shortlisting.prompts import CTO_PROMPT
-from app.core.config import settings
+from app.integrations.aws.bedrock import get_bedrock_llm
+from app.integrations.tavily.search import get_tavily_search
 from app.schemas.agents.shortlist import PersonasResponse, ShortlistState
 
-llm = ChatBedrockConverse(
-    model_id="anthropic.claude-3-5-sonnet-20240620-v1:0",
-    region_name="us-east-1",
-    temperature=0,
-)
-websearch_tool = TavilySearch(max_results=3, tavily_api_key=settings.TAVILY_API_KEY)
+llm = get_bedrock_llm()
+websearch_tool = get_tavily_search(max_results=3)
 
 
 def cto_node(state: ShortlistState):

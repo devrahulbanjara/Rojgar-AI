@@ -219,6 +219,27 @@ class ProfileService:
         )
         return await self.candidate_social_link_repo.create(social_link)
 
+    async def add_social_links_bulk(
+        self, user: User, links: list
+    ) -> list[CandidateSocialLink]:
+        """Add multiple social links at once"""
+        profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
+        if not profile:
+            return []
+
+        created_links = []
+        for link_data in links:
+            social_link = CandidateSocialLink(
+                social_link_id=uuid.uuid4(),
+                profile_id=profile.profile_id,
+                **link_data.model_dump(),
+            )
+            created = await self.candidate_social_link_repo.create(social_link)
+            if created:
+                created_links.append(created)
+
+        return created_links
+
     async def delete_social_link(self, user: User, item_id: uuid.UUID) -> bool:
         """Delete social link"""
         profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
