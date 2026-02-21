@@ -16,13 +16,22 @@ class RecruiterCandidateService:
         self.application_repo = application_repo
 
     async def get_organization_candidates(
-        self, organization_id: uuid.UUID, skip: int = 0, limit: int = 100
+        self,
+        organization_id: uuid.UUID,
+        skip: int = 0,
+        limit: int = 100,
+        status_filter: str | None = None,
     ) -> RecruiterCandidateListResponse:
 
         applications = await self.application_repo.get_by_organization(
-            organization_id=organization_id, skip=skip, limit=limit
+            organization_id=organization_id,
+            skip=skip,
+            limit=limit,
+            status_filter=status_filter,
         )
-        total = await self.application_repo.count_by_organization(organization_id)
+        total = await self.application_repo.count_by_organization(
+            organization_id, status_filter=status_filter
+        )
 
         candidate_summaries = []
         for app in applications:
@@ -125,4 +134,54 @@ class RecruiterCandidateService:
             if data.feedback is not None
             else application.feedback,
             message="Application updated successfully",
+        )
+
+    async def search_candidates(
+        self, organization_id: uuid.UUID, query: str, skip: int = 0, limit: int = 100
+    ) -> RecruiterCandidateListResponse:
+        """Search candidates by name, email, skill, or job title"""
+        applications = await self.application_repo.search_by_organization(
+            organization_id=organization_id, query=query, skip=skip, limit=limit
+        )
+        total = await self.application_repo.count_search_by_organization(
+            organization_id=organization_id, query=query
+        )
+
+        candidate_summaries = []
+        for app in applications:
+            candidate_profile = app.candidate_profile
+            user = candidate_profile.user
+
+            social_links = []
+            for link in candidate_profile.social_links:
+                social_links.append(
+                    {
+                        "social_link_id": link.social_link_id,
+                        "type": link.type,
+                        "url": link.url,
+                    }
+                )
+
+            candidate_summaries.append(
+                CandidateApplicationSummary(
+                    application_id=app.application_id,
+                    job_id=app.job_id,
+                    job_title=app.job.title,
+                    candidate_id=app.candidate_profile_id,
+                    name=user.name,
+                    email=user.email,
+                    phone=candidate_profile.phone,
+                    picture=user.picture,
+                    professional_headline=candidate_profile.professional_headline,
+                    professional_summary=candidate_profile.professional_summary,
+                    current_status=app.current_status,
+                    applied_at=app.applied_at,
+                    score=app.score,
+                    feedback=app.feedback,
+                    social_links=social_links,
+                )
+            )
+
+        return RecruiterCandidateListResponse(
+            candidates=candidate_summaries, total=total
         )

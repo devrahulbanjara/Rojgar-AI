@@ -1,56 +1,54 @@
-# Ruff Configuration
-# https://docs.astral.sh/ruff/settings/
-
-# Match the Python version in requires-python
 target-version = "py312"
-
-# Set maximum line length
 line-length = 88
 
-# Exclude common directories
-exclude = [
-    ".venv",
+# 1. Global Exclusions
+extend-exclude = [
+    "migrations",    # Alembic migrations
+    ".venv",         # Virtual environment
+    "venv",
     "__pycache__",
-    ".pytest_cache",
-    "alembic/versions",
-    "notebooks",
+    "build",
+    "dist",
 ]
 
 [lint]
-# Enable recommended rules
 select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # Pyflakes
-    "I",      # isort (import sorting)
-    "UP",     # pyupgrade
-    "B",      # flake8-bugbear
-    "SIM",    # flake8-simplify
+    "E", "W", "F", "I", "UP", "B", "SIM", "N", "PLC", "PLE", "S", "PTH", "RUF",
+    "ASYNC", # async/await validation
+    "TCH",   # circular import management
+    "DTZ",   # timezone-aware datetimes
 ]
 
-# Ignore specific rules
 ignore = [
-    "E501",   # line too long (handled by formatter)
-    "E402",   # module level import not at top (needed for __init__.py exports)
-    "E712",   # comparison to True (needed for SQLAlchemy filters)
-    "F403",   # star imports (legacy code, refactor later)
-    "F405",   # may be undefined from star imports
-    "F821",   # undefined name (SQLAlchemy forward references)
-    "B904",   # raise from (within except clause)
-    "B007",   # unused loop variable
-    "B008",   # function call in default argument (FastAPI Depends pattern)
-    "SIM108", # ternary operator suggestion
+    # --- Formatter Conflicts & Noise ---
+    "E501",   # Ignore line-length violations (let the formatter handle it)
+    "W191", "E111", "E114", "E117", "D206", "D300", "COM812", "ISC001", 
+    
+    # --- FastAPI & SQLAlchemy Specifics ---
+    "B008",   # Allow Depends() in function arguments
+    "S104",   # Allow 0.0.0.0 binding (common in Docker)
 ]
 
-# Allow autofix for all enabled rules
-fixable = ["ALL"]
+[lint.per-file-ignores]
+"__init__.py" = ["F401", "E402"]
+"tests/**" = ["S101", "S105", "S106"]
+# Allow nested imports for circular dependencies in your split models
+"**/models/**/*.py" = ["PLC0415", "TCH001", "TCH002"]
 
 [format]
-# Use double quotes for strings
 quote-style = "double"
-
-# Indent with spaces
 indent-style = "space"
-
-# Format code examples in docstrings
+skip-magic-trailing-comma = false
 docstring-code-format = true
+
+[lint.isort]
+combine-as-imports = true
+known-first-party = ["app"] 
+
+[lint.flake8-type-checking]
+# Keeps models working at runtime
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel", 
+    "sqlalchemy.orm.DeclarativeBase",
+    "sqlalchemy.orm.MappedAsDataclass",
+]

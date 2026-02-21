@@ -53,6 +53,9 @@ export interface Job {
   created_at: string
   updated_at: string
   auto_shortlist?: boolean
+  shortlist_threshold?: number
+  shortlist_status?: string
+  final_shortlist_completed?: boolean
 }
 
 export interface JobFilters {
@@ -84,6 +87,8 @@ export interface JobDetailResponse {
 export interface CreateJobRequest {
   title: string
   company?: string
+  department?: string
+  level?: string
 
   job_summary: string
   job_responsibilities: string[]
@@ -100,23 +105,10 @@ export interface CreateJobRequest {
   salary_currency?: string
   application_deadline?: string
 
-  locationCity?: string
-  locationCountry?: string
-  locationType?: LocationType
-  employmentType?: EmploymentType
-  salaryMin?: number
-  salaryMax?: number
-  currency?: string
-  description?: string
-  requiredSkillsAndExperience?: string[]
-  niceToHave?: string[]
-  benefits?: string[]
-  level?: JobLevel
-  department?: string
-  applicationDeadline?: string
   raw_requirements?: string
   status?: 'draft' | 'active'
   auto_shortlist: boolean
+  shortlist_threshold?: number
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
@@ -128,12 +120,11 @@ export interface JobDraftGenerateRequest {
   raw_requirements: string
   reference_jd_id: string | null
   current_draft?: {
-    title: string
-    description: string
-    requiredSkillsAndExperience: string[]
-    niceToHave: string[]
-    benefits: string[]
-    about_company?: string
+    job_summary: string
+    job_responsibilities: string[]
+    required_qualifications: string[]
+    preferred: string[]
+    compensation_and_benefits: string[]
   } | null
 }
 
@@ -143,13 +134,6 @@ export interface JobDraftResponse {
   required_qualifications?: string[]
   preferred?: string[]
   compensation_and_benefits?: string[]
-
-  title?: string
-  description?: string
-  requiredSkillsAndExperience?: string[]
-  niceToHave?: string[]
-  benefits?: string[]
-  about_company?: string
 }
 
 export interface JobCardProps {

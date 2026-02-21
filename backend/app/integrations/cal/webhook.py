@@ -1,4 +1,3 @@
-
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -9,12 +8,12 @@ app = FastAPI()
 
 
 class CalWebhook(BaseModel):
-    triggerEvent: str
-    createdAt: str
+    trigger_event: str = Field(alias="triggerEvent")
+    created_at: str = Field(alias="createdAt")
     type: str
     title: str
-    startTime: str
-    endTime: str
+    start_time: str = Field(alias="startTime")
+    end_time: str = Field(alias="endTime")
     location: str | None = None
     uid: str
     organizer_name: str = Field(alias="organizer.name")
@@ -35,15 +34,15 @@ async def test():
 @app.post("/webhook/cal/interview-booking")
 async def cal_webhook_handler(data: CalWebhook):
     try:
-        if data.triggerEvent == "BOOKING_CREATED":
+        if data.trigger_event == "BOOKING_CREATED":
             print(
                 f"New Booking: {data.attendee_name} ({data.attendee_email}) | "
-                f"{data.startTime} to {data.endTime}"
+                f"{data.start_time} to {data.end_time}"
             )
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e
 
 
 if __name__ == "__main__":

@@ -60,7 +60,11 @@ async def signup(
         secure=settings.SECURE,
         samesite="lax",
     )
-    return TokenResponse(access_token=token, token_type="bearer", user=new_user)
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",  # noqa: S106
+        user=new_user,
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -91,7 +95,11 @@ async def login(
         secure=settings.SECURE,
         samesite="lax",
     )
-    return TokenResponse(access_token=token, token_type="bearer", user=user)
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",  # noqa: S106
+        user=user,
+    )
 
 
 @router.get("/google")
@@ -156,7 +164,9 @@ async def organization_signup(
     try:
         new_org = await organization_auth_service.create_organization(org_data)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
     token, max_age = organization_auth_service.create_organization_token(
         new_org.organization_id
     )
@@ -169,7 +179,9 @@ async def organization_signup(
         samesite="lax",
     )
     return OrganizationTokenResponse(
-        access_token=token, token_type="bearer", organization=new_org
+        access_token=token,
+        token_type="bearer",  # noqa: S106
+        organization=new_org,
     )
 
 
@@ -208,5 +220,7 @@ async def organization_login(
         samesite="lax",
     )
     return OrganizationTokenResponse(
-        access_token=token, token_type="bearer", organization=organization
+        access_token=token,
+        token_type="bearer",  # noqa: S106
+        organization=organization,
     )
