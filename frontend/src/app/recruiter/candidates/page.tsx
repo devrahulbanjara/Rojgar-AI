@@ -171,12 +171,16 @@ export default function RecruiterCandidatesPage() {
     const counts = {
       applied: 0,
       interviewing: 0,
+      shortlisted: 0,
+      rejected: 0,
       outcome: 0,
     }
     candidates.forEach(candidate => {
       const status = candidate.current_status.toLowerCase()
       if (status === 'applied') counts.applied++
       else if (status === 'interviewing') counts.interviewing++
+      else if (status === 'shortlisted') counts.shortlisted++
+      else if (status === 'rejected') counts.rejected++
       else if (status === 'outcome') counts.outcome++
     })
     return counts

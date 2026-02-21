@@ -1,5 +1,7 @@
 import asyncio
 
+from langgraph.types import Command
+
 from app.core.logging_config import logger
 
 from .graph import create_workflow
@@ -92,7 +94,6 @@ def run_auto_approved(candidates: list[dict], org_name: str = "Our Team") -> lis
 def run_with_approval(
     candidate: dict, org_name: str = "Our Team", thread_id: str = "hitl_demo"
 ) -> dict:
-    from langgraph.types import Command
 
     app = create_workflow()
 
@@ -198,7 +199,7 @@ def main():
         run_auto_approved(candidates, org_name="ConvexHire")
     elif mode == "2":
         print("\nRunning in human-in-the-loop mode...")
-        for idx, candidate in enumerate(candidates):
+        for _, candidate in enumerate(candidates):
             run_with_approval(
                 candidate,
                 org_name="ConvexHire",

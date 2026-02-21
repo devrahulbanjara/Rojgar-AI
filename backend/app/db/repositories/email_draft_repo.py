@@ -20,7 +20,7 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
         return result.scalar_one_or_none()
 
     async def get_by_job(self, job_id: uuid.UUID) -> Sequence[EmailDraft]:
-        """Get all email drafts for a specific job"""
+        """Get all email drafts for a specific job (excluding discarded)"""
         from app.db.models.application import JobApplication
 
         query = (
@@ -30,6 +30,7 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
                 EmailDraft.application_id == JobApplication.application_id,
             )
             .where(JobApplication.job_id == job_id)
+            .where(EmailDraft.is_discarded == False)
         )
         result = await self.db.execute(query)
         return result.scalars().all()
@@ -37,7 +38,7 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
     async def upsert_draft(
         self, application_id: uuid.UUID, subject: str, body: str
     ) -> EmailDraft:
-        """Create or update an email draft for an application"""
+        """Create or update an email draft for an application (only if not discarded)"""
         stmt = (
             insert(EmailDraft)
             .values(application_id=application_id, subject=subject, body=body)
@@ -48,6 +49,7 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
                     "body": body,
                     "is_sent": False,  # Reset sent status on update
                 },
+                where=EmailDraft.is_discarded == False,  # Only update if not discarded
             )
             .returning(EmailDraft)
         )
@@ -81,10 +83,12 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
         return result.scalar_one()
 
     async def delete_draft(self, draft_id: uuid.UUID) -> bool:
-        """Delete a specific draft"""
-        draft = await self.get(draft_id)
-        if draft:
-            await self.db.delete(draft)
-            await self.db.flush()
-            return True
-        return False
+        """Mark a draft as discarded instead of deleting it"""
+        query = (
+            update(EmailDraft)
+            .where(EmailDraft.draft_id == draft_id)
+            .values(is_discarded=True)
+        )
+        result = await self.db.execute(query)
+        await self.db.flush()
+        return result.rowcount > 0

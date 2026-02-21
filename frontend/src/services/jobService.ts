@@ -24,6 +24,7 @@ interface EmailDraft {
   body: string
   is_approved: boolean
   is_sent: boolean
+  is_discarded: boolean
 }
 
 const jobEndpoints = {

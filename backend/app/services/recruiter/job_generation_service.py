@@ -102,5 +102,5 @@ class JobGenerationService:
             logger.info("Job draft generated successfully")
             return result["draft"]
         except Exception as e:
-            logger.error(f"Error in generate_job_draft: {str(e)}", exc_info=True)
+            logger.error(f"Error in generate_job_draft: {e!s}", exc_info=True)
             raise

@@ -59,6 +59,7 @@ interface EmailDraft {
   body: string
   is_approved: boolean
   is_sent: boolean
+  is_discarded: boolean
 }
 
 function ShortlistJobCardSkeleton() {
@@ -397,6 +398,7 @@ export default function ShortlistPage() {
   const [emailDrafts, setEmailDrafts] = useState<EmailDraft[]>([])
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
   const [editedSubject, setEditedSubject] = useState('')
+  const [isEmailPopoverOpen, setIsEmailPopoverOpen] = useState(false)
   const [editedBody, setEditedBody] = useState('')
   const [isProcessingEmails, setIsProcessingEmails] = useState(false)
   const [sendingDraftIds, setSendingDraftIds] = useState<Set<string>>(new Set())
@@ -432,8 +434,12 @@ export default function ShortlistPage() {
     // If drafts already exist, just show a message
     if (emailDrafts.length > 0) {
       toast.info('Email drafts are already prepared. You can edit and send them from each candidate card.')
+      setIsEmailPopoverOpen(false)
       return
     }
+    
+    // Close the popover
+    setIsEmailPopoverOpen(false)
     
     setIsProcessingEmails(true)
     try {
@@ -450,15 +456,32 @@ export default function ShortlistPage() {
 
   const handleDirectSend = async () => {
     if (!selectedJob) return
+    
+    const shortlistedCount = selectedJob.candidates.filter(c => c.current_status === 'shortlisted').length
+    const rejectedCount = selectedJob.candidates.filter(c => c.current_status === 'rejected').length
+    const totalCount = shortlistedCount + rejectedCount
+    
+    if (totalCount === 0) {
+      toast.error('No candidates to send emails to')
+      return
+    }
+    
+    // Close the popover
+    setIsEmailPopoverOpen(false)
+    
     setIsProcessingEmails(true)
     try {
+      toast.info(`Preparing and sending ${totalCount} email${totalCount !== 1 ? 's' : ''}...`)
+      
       // Trigger background preparation and direct sending
       await jobService.prepareEmails(selectedJob.job_id, true)
-      toast.success('Successfully started sending status updates in background')
+      
+      toast.success(`Successfully sent ${totalCount} email${totalCount !== 1 ? 's' : ''}!`)
+      
       // Reload drafts to show sent status
       setTimeout(() => loadExistingDrafts(), 2000)
     } catch {
-      toast.error('Failed to send emails')
+      toast.error('Failed to send emails. Please try again.')
     } finally {
       setIsProcessingEmails(false)
     }
@@ -1040,7 +1063,7 @@ export default function ShortlistPage() {
                                       <p className="text-xs text-text-secondary mt-0.5">Automated status notifications for all applicants.</p>
                                     </div>
                                   </div>
-                                  <Popover>
+                                  <Popover open={isEmailPopoverOpen} onOpenChange={setIsEmailPopoverOpen}>
                                     <PopoverTrigger asChild>
                                       <ActionButton
                                         variant="primary"
@@ -1075,13 +1098,19 @@ export default function ShortlistPage() {
                                           onClick={() => {
                                             handleDirectSend()
                                           }}
-                                          className="w-full flex flex-col items-start p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 text-left transition-colors"
+                                          disabled={isProcessingEmails}
+                                          className="w-full flex flex-col items-start p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           <div className="flex items-center gap-2">
+                                            {isProcessingEmails ? (
+                                              <Loader2 className="w-3.5 h-3.5 text-primary-600 animate-spin" />
+                                            ) : null}
                                             <span className="text-xs font-bold text-text-primary">Direct Send</span>
                                             <Badge colorPalette="gray" className="text-[8px] h-3.5 px-1 font-black uppercase">Quick Action</Badge>
                                           </div>
-                                          <p className="text-[10px] text-text-tertiary mt-1 leading-tight">Send immediately without review.</p>
+                                          <p className="text-[10px] text-text-tertiary mt-1 leading-tight">
+                                            {isProcessingEmails ? 'Sending emails...' : 'Send immediately without review.'}
+                                          </p>
                                         </button>
                                       </div>
                                     </PopoverContent>
