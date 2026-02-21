@@ -10,19 +10,19 @@ from .nodes import (
     send_email,
     wrap_up,
 )
-from .templates import get_interview_email_template
+from .templates import get_email_html_layout
 
 app = create_workflow()
 __all__ = [
     "InterviewSchedulingState",
-    "get_interview_email_template",
-    "send_interview_email",
-    "create_workflow",
     "app",
-    "load_state",
-    "compose_email_draft",
-    "human_approval_gate",
     "approval_router",
+    "compose_email_draft",
+    "create_workflow",
+    "get_email_html_layout",
+    "human_approval_gate",
+    "load_state",
     "send_email",
+    "send_interview_email",
     "wrap_up",
 ]

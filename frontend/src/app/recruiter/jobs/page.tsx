@@ -655,7 +655,9 @@ export default function RecruiterJobsPage() {
           {/* Page Header */}
           <AnimatedContainer direction="up" delay={0.1}>
             <div className="space-y-1.5">
-              <h1 className="text-3xl font-bold text-text-primary tracking-tight">Jobs</h1>
+              <h1 className="text-3xl font-bold text-text-primary tracking-tight">
+                Jobs ({activeCount + draftCount + expiredCount})
+              </h1>
               <p className="text-text-secondary text-sm">
                 Manage your job postings and track applicants
               </p>
@@ -733,8 +735,8 @@ export default function RecruiterJobsPage() {
                 ) : (
                   !isLoadingReferenceJDs && (
                     <div className="flex flex-col items-center justify-center py-24 text-center">
-                      <div className="w-16 h-16 rounded-3xl bg-ai-50 dark:bg-ai-950/30 flex items-center justify-center border border-ai-100 dark:border-ai-900/30 mb-8">
-                        <Briefcase className="w-8 h-8 text-ai-500" />
+                      <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900/30 mb-8">
+                        <Briefcase className="w-8 h-8 text-primary-500" />
                       </div>
                       <h3 className="text-xl font-bold text-text-primary tracking-tight">
                         No reference JDs yet

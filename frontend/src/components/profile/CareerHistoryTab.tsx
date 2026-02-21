@@ -591,9 +591,9 @@ export function CareerHistoryTab({
             >
               <h5 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
                 {editingEduId ? (
-                  <Pencil className="w-5 h-5 text-ai-600" />
+                  <Pencil className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 ) : (
-                  <Plus className="w-5 h-5 text-ai-600" />
+                  <Plus className="w-5 h-5 text-primary-600" />
                 )}
                 {editingEduId ? 'Edit Education Record' : 'Add New Education Record'}
               </h5>
@@ -612,7 +612,7 @@ export function CareerHistoryTab({
                       }))
                     }
                     placeholder="e.g., Herald College Kathmandu"
-                    className="h-11 rounded-xl border-border-default focus:border-ai-500 focus:ring-ai-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                     required
                   />
                 </div>
@@ -630,7 +630,7 @@ export function CareerHistoryTab({
                       }))
                     }
                     placeholder="e.g., B(Hons) in Computer Science"
-                    className="h-11 rounded-xl border-border-default focus:border-ai-500 focus:ring-ai-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                     required
                   />
                 </div>
@@ -648,7 +648,7 @@ export function CareerHistoryTab({
                       }))
                     }
                     placeholder="e.g., Kathmandu, Nepal"
-                    className="h-11 rounded-xl border-border-default focus:border-ai-500 focus:ring-ai-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                   />
                 </div>
                 <div className="space-y-2">
@@ -665,7 +665,7 @@ export function CareerHistoryTab({
                         start_date: e.target.value,
                       }))
                     }
-                    className="h-11 rounded-xl border-border-default focus:border-ai-500 focus:ring-ai-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                   />
                 </div>
                 <div className="space-y-2">
@@ -682,7 +682,7 @@ export function CareerHistoryTab({
                         end_date: e.target.value,
                       }))
                     }
-                    className="h-11 rounded-xl border-border-default focus:border-ai-500 focus:ring-ai-500/20"
+                    className="h-11 rounded-xl border-border-default focus:border-primary focus:ring-primary/20"
                     disabled={educationForm.is_current}
                   />
                 </div>
@@ -701,11 +701,11 @@ export function CareerHistoryTab({
                             end_date: isChecked ? '' : prev.end_date,
                           }))
                         }}
-                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-border-default transition-all checked:border-ai-500 checked:bg-ai-500 hover:border-ai-400"
+                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-border-default transition-all checked:border-primary-500 checked:bg-primary-500 hover:border-primary-400"
                       />
                       <CheckCircle2 className="pointer-events-none absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                     </div>
-                    <span className="font-medium text-text-secondary group-hover:text-ai-600 transition-colors">
+                    <span className="font-medium text-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       Currently studying
                     </span>
                   </label>
@@ -746,7 +746,7 @@ export function CareerHistoryTab({
                 <Button
                   onClick={() => setIsAddingEducation(true)}
                   variant="outline"
-                  className="mt-6 border-ai-200 text-ai-600 hover:bg-ai-50 hover:border-ai-300 rounded"
+                  className="mt-6 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 rounded"
                 >
                   Add Education
                 </Button>
@@ -757,12 +757,12 @@ export function CareerHistoryTab({
               {educationRecords.map(education => (
                 <div
                   key={education.candidate_education_id}
-                  className="group bg-background-surface rounded-xl border border-border-default p-5 hover:border-ai-200 hover:shadow-md transition-all duration-300"
+                  className="group bg-background-surface rounded-xl border border-border-default p-5 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-ai-50 dark:bg-ai-950/30 text-ai-600 dark:text-ai-400 rounded-lg group-hover:bg-ai-100 dark:group-hover:bg-ai-900/30 transition-colors">
+                        <div className="p-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 rounded-lg group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
                           <GraduationCap className="w-5 h-5" />
                         </div>
                         <div>
@@ -778,7 +778,7 @@ export function CareerHistoryTab({
                       <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-tertiary">
                         {education.start_date && (
                           <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                            <Calendar className="w-4 h-4 text-ai-500" />
+                            <Calendar className="w-4 h-4 text-primary-500" />
                             <span className="font-medium">
                               {formatDate(education.start_date)} -{' '}
                               {education.is_current
@@ -789,7 +789,7 @@ export function CareerHistoryTab({
                         )}
                         {education.location && (
                           <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                            <MapPin className="w-4 h-4 text-ai-500" />
+                            <MapPin className="w-4 h-4 text-primary-500" />
                             <span className="font-medium">{education.location}</span>
                           </div>
                         )}

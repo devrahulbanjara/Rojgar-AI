@@ -2,6 +2,7 @@ import React from 'react'
 import Container from './Container'
 import Button from './Button'
 import { PricingContent } from '../../../content/landing-page'
+import { ShineBorder } from '../../../components/ui/shine-border'
 
 interface PricingProps {
   content: PricingContent
@@ -20,19 +21,28 @@ export default function Pricing({ content }: PricingProps) {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-6">
           {content.plans.map((plan, index) => (
             <div
               key={index}
               className={`relative flex flex-col p-10 bg-white rounded-[14px] transition-all duration-300 ${
                 plan.featured
-                  ? 'border-[3px] border-[var(--color-primary-purple)] shadow-[0_8px_16px_rgba(37,99,235,0.12)]'
+                  ? 'border-[3px] border-transparent shadow-[0_8px_16px_rgba(37,99,235,0.12)]'
                   : 'border-[1.5px] border-[var(--color-gray-200)] hover:border-[var(--color-primary-purple)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
               }`}
             >
+              {/* Shine Border for Featured Plan */}
+              {plan.featured && (
+                <ShineBorder
+                  borderWidth={3}
+                  duration={14}
+                  shineColor={['#2563eb', '#3b82f6', '#60a5fa', '#3b82f6', '#2563eb']}
+                  className="rounded-[14px]"
+                />
+              )}
               {/* Featured Badge */}
               {plan.featured && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                   <span className="px-4 py-2 bg-[var(--color-primary-purple)] text-white text-xs font-bold uppercase tracking-wider rounded-full">
                     Recommended
                   </span>

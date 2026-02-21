@@ -8,12 +8,18 @@ from app.schemas.agents.interview_scheduling import InterviewSchedulingState
 def human_approval_gate(state: InterviewSchedulingState) -> dict:
     if state.get("auto_approved", False):
         return {"approved": True}
+
     review_payload = {
+        "application_id": state["application_id"],
         "candidate_name": state["name"],
         "candidate_email": state["email"],
-        "reason": state["reason"],
-        "draft_email": state["draft_email"],
+        "status": state["status"],
+        "score": state["score"],
+        "feedback": state["feedback"],
+        "subject": state["subject"],
+        "draft_email_html": state["draft_email_html"],
     }
+
     approval = interrupt(review_payload)
     return {"approved": approval}
 

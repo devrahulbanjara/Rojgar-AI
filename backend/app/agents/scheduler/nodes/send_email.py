@@ -6,5 +6,6 @@ def send_email(state: InterviewSchedulingState) -> dict:
     return send_interview_email(
         to_email=state["email"],
         candidate_name=state["name"],
-        html_content=state["draft_email"],
+        html_content=state["draft_email_html"],
+        subject=state["subject"],
     )

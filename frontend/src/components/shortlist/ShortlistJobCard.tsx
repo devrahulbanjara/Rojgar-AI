@@ -45,8 +45,8 @@ export function ShortlistJobCard({
     job.status === 'expired'
       ? 'bg-warning-500'
       : job.shortlist_status === 'completed'
-        ? 'bg-success-500'
-        : 'bg-primary-500'
+        ? 'bg-primary-500'
+        : 'bg-primary-400'
 
   const statusLabel =
     job.shortlist_status === 'completed'
