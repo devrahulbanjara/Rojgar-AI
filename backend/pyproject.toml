@@ -33,6 +33,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "logfire[fastapi]>=4.24.0",
     "uvicorn>=0.38.0",
+    "python-dotenv>=1.2.1",
 ]
 
 [dependency-groups]

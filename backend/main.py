@@ -1,4 +1,5 @@
 import logfire
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -9,6 +10,8 @@ from app.core.config import settings
 from app.core.lifespan import lifespan
 from app.core.limiter import limiter
 from app.core.logging_config import logger
+
+_ = load_dotenv()
 
 app = FastAPI(
     title="ConvexHire API",

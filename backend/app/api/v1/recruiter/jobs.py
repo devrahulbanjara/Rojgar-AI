@@ -328,6 +328,82 @@ async def send_all_emails(
     return await email_service.send_all_drafts(job_id, background_tasks)
 
 
+# Individual Draft Management
+@router.patch("/emails/drafts/{draft_id}", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def update_draft(
+    request: Request,
+    draft_id: uuid.UUID,
+    data: schemas.EmailDraftUpdateRequest,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+
+    from app.api.dependencies import get_db
+    from app.db.repositories.email_draft_repo import EmailDraftRepository
+
+    # Get DB session
+    async for db in get_db():
+        draft_repo = EmailDraftRepository(db)
+
+        try:
+            updated_draft = await draft_repo.update_draft(
+                draft_id=draft_id, subject=data.subject, body=data.body
+            )
+            return {
+                "success": True,
+                "draft_id": str(updated_draft.draft_id),
+                "message": "Draft updated successfully",
+            }
+        except Exception as e:
+            logger.error(f"Failed to update draft {draft_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update draft: {str(e)}",
+            )
+
+
+@router.post("/emails/drafts/{draft_id}/send", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def send_single_email(
+    request: Request,
+    draft_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    email_service: Annotated[EmailBatchService, Depends(get_email_batch_service)],
+):
+    result = await email_service.send_single_draft(draft_id)
+
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("error", "Failed to send email"),
+        )
+
+    return result
+
+
+@router.delete("/emails/drafts/{draft_id}", status_code=status.HTTP_200_OK)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def discard_draft(
+    request: Request,
+    draft_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    from app.api.dependencies import get_db
+    from app.db.repositories.email_draft_repo import EmailDraftRepository
+
+    async for db in get_db():
+        draft_repo = EmailDraftRepository(db)
+
+        success = await draft_repo.delete_draft(draft_id)
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Draft not found"
+            )
+
+        return {"success": True, "message": "Draft discarded successfully"}
+
+
 # Reference JD Operations
 @router.post(
     "/reference-jd",

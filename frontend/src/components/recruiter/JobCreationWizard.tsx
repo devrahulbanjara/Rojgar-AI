@@ -555,7 +555,6 @@ export function JobCreationWizard({
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           {steps.map((step, index) => {
             const Icon = step.icon
-            const isActive = currentStep === step.id
             const isCompleted = currentStep > step.id
 
             return (

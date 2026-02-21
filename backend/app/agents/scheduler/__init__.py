@@ -10,12 +10,12 @@ from .nodes import (
     send_email,
     wrap_up,
 )
-from .templates import get_interview_email_template
+from .templates import get_email_html_layout
 
 app = create_workflow()
 __all__ = [
     "InterviewSchedulingState",
-    "get_interview_email_template",
+    "get_email_html_layout",
     "send_interview_email",
     "create_workflow",
     "app",

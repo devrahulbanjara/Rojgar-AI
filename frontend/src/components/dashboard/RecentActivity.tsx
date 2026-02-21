@@ -116,7 +116,7 @@ export function RecentActivity() {
             return (
               <div
                 key={activity.id}
-                className="group p-4 hover:bg-background-subtle transition-colors duration-200 flex items-start gap-4"
+                className="group p-4 bg-background-surface hover:bg-background-subtle dark:bg-background-surface dark:hover:bg-background-subtle transition-colors duration-200 flex items-start gap-4"
               >
                 {}
                 <div className="flex-shrink-0 w-16 text-right pt-1">

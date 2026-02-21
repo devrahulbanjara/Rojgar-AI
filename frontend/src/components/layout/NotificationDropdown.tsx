@@ -70,17 +70,17 @@ const getActivityIcon = (type: ActivityItem['type']) => {
 const getActivityIconColor = (type: ActivityItem['type']) => {
   switch (type) {
     case 'application':
-      return 'bg-blue-50 text-blue-600'
+      return 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400'
     case 'interview':
-      return 'bg-green-50 text-green-600'
+      return 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'
     case 'offer':
-      return 'bg-green-50 text-green-600'
+      return 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400'
     case 'job_post':
-      return 'bg-purple-50 text-purple-600'
+      return 'bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400'
     case 'status_change':
-      return 'bg-orange-50 text-orange-600'
+      return 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400'
     default:
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
   }
 }
 
@@ -122,9 +122,9 @@ export function NotificationDropdown() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[420px] p-0 shadow-xl border-slate-200" align="end">
+      <PopoverContent className="w-[420px] p-0 shadow-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" align="end">
         {/* Header Section */}
-        <div className="p-4 pb-3 flex justify-between items-start">
+        <div className="p-4 pb-3 flex justify-between items-start bg-white dark:bg-slate-900">
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none">
               Recent Activity
@@ -147,19 +147,19 @@ export function NotificationDropdown() {
 
         {/* Scrollable List */}
         {isLoading ? (
-          <div className="py-10 flex flex-col items-center justify-center">
+          <div className="py-10 flex flex-col items-center justify-center bg-white dark:bg-slate-900">
             <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-500 mt-3">Loading activity...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading activity...</p>
           </div>
         ) : activities.length === 0 ? (
-          <div className="py-10 flex flex-col items-center justify-center">
+          <div className="py-10 flex flex-col items-center justify-center bg-white dark:bg-slate-900">
             <div className="w-10 h-10 rounded-full flex items-center justify-center mb-4 opacity-30">
               <Bell className="w-6 h-6 text-slate-400" />
             </div>
             <p className="text-sm font-medium text-slate-400">No new notifications</p>
           </div>
         ) : (
-          <ScrollArea className="h-[350px]">
+          <ScrollArea className="h-[350px] bg-white dark:bg-slate-900">
             <div className="py-2">
               {groupOrder.map(groupName => {
                 const groupActivities = groupedActivities[groupName]
@@ -168,7 +168,7 @@ export function NotificationDropdown() {
                 return (
                   <div key={groupName} className="mb-4">
                     {/* Group Label */}
-                    <p className="px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <p className="px-4 py-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-white dark:bg-slate-900">
                       {groupName}
                     </p>
 
@@ -185,7 +185,7 @@ export function NotificationDropdown() {
                         <Link
                           key={activity.id}
                           href="#"
-                          className="px-4 py-3 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer relative group"
+                          className="px-4 py-3 flex gap-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer relative group"
                         >
                           {/* Icon/Avatar Container */}
                           <Avatar className="h-9 w-9 border-none">
@@ -235,10 +235,10 @@ export function NotificationDropdown() {
           <>
             <Separator />
             {/* Footer */}
-            <div className="p-2">
+            <div className="p-2 bg-white dark:bg-slate-900">
               <Button
                 variant="ghost"
-                className="w-full text-blue-600 text-[13px] font-semibold hover:bg-blue-50 hover:text-blue-700"
+                className="w-full text-blue-600 dark:text-blue-400 text-[13px] font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-700 dark:hover:text-blue-300"
               >
                 View All Activity <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core import settings
 from app.core.logging_config import logger
 from app.db.models.job import JobPosting
-from app.integrations.llm.provider import get_embedding_model
+from app.integrations.google.embeddings import get_embedding_model
 
 
 class JobVectorService:
