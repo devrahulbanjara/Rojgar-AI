@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import * as React from 'react'
 import {
@@ -51,9 +51,7 @@ export function DeleteConfirmDialog({
                 . This action cannot be undone.
               </>
             ) : (
-              <>
-                {description} This action cannot be undone.
-              </>
+              <>{description} This action cannot be undone.</>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>

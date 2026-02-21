@@ -14,6 +14,19 @@ import type {
   UpdateApplicationRequest,
 } from '../types/application'
 
+interface EmailDraft {
+  draft_id: string
+  application_id: string
+  candidate_name: string
+  candidate_email: string
+  status: string
+  subject: string
+  body: string
+  is_approved: boolean
+  is_sent: boolean
+  is_discarded: boolean
+}
+
 const jobEndpoints = {
   list: '/api/v1/jobs',
   recommendations: '/api/v1/jobs/recommendations',
@@ -24,6 +37,13 @@ const jobEndpoints = {
   update: (id: string) => `/api/v1/recruiter/jobs/${id}`,
   delete: (id: string) => `/api/v1/recruiter/jobs/${id}`,
   expire: (id: string) => `/api/v1/recruiter/jobs/${id}/expire`,
+  finalizeShortlist: (id: string) => `/api/v1/recruiter/jobs/${id}/shortlist/finalize`,
+  prepareEmails: (id: string) => `/api/v1/recruiter/jobs/${id}/emails/prepare`,
+  getEmailDrafts: (id: string) => `/api/v1/recruiter/jobs/${id}/emails/drafts`,
+  sendAllEmails: (id: string) => `/api/v1/recruiter/jobs/${id}/emails/send-all`,
+  updateDraft: (draftId: string) => `/api/v1/recruiter/jobs/emails/drafts/${draftId}`,
+  sendSingleEmail: (draftId: string) => `/api/v1/recruiter/jobs/emails/drafts/${draftId}/send`,
+  discardDraft: (draftId: string) => `/api/v1/recruiter/jobs/emails/drafts/${draftId}`,
 } as const
 
 const applicationEndpoints = {
@@ -135,6 +155,62 @@ export class JobService {
 
     const endpoint = `${jobEndpoints.list}?${queryParams.toString()}`
     return apiClient.get<JobListResponse>(endpoint)
+  }
+
+  static async finalizeShortlist(
+    jobId: string,
+    data: { use_ai_recommendations: boolean; threshold: number }
+  ): Promise<{ success: boolean; updated_applications: number; job_id: string }> {
+    return apiClient.post<{ success: boolean; updated_applications: number; job_id: string }>(
+      jobEndpoints.finalizeShortlist(jobId),
+      data
+    )
+  }
+
+  static async prepareEmails(
+    jobId: string,
+    directSend: boolean = false
+  ): Promise<{ success: boolean; drafts_count: number }> {
+    return apiClient.post<{ success: boolean; drafts_count: number }>(
+      jobEndpoints.prepareEmails(jobId),
+      {
+        direct_send: directSend,
+      }
+    )
+  }
+
+  static async getEmailDrafts(jobId: string): Promise<EmailDraft[]> {
+    return apiClient.get<EmailDraft[]>(jobEndpoints.getEmailDrafts(jobId))
+  }
+
+  static async sendAllEmails(jobId: string): Promise<{ success: boolean; sent_count: number }> {
+    return apiClient.post<{ success: boolean; sent_count: number }>(
+      jobEndpoints.sendAllEmails(jobId),
+      {}
+    )
+  }
+
+  static async updateDraft(
+    draftId: string,
+    data: { subject: string; body: string }
+  ): Promise<{ success: boolean; draft_id: string; message: string }> {
+    return apiClient.patch<{ success: boolean; draft_id: string; message: string }>(
+      jobEndpoints.updateDraft(draftId),
+      data
+    )
+  }
+
+  static async sendSingleEmail(draftId: string): Promise<{ success: boolean; message: string }> {
+    return apiClient.post<{ success: boolean; message: string }>(
+      jobEndpoints.sendSingleEmail(draftId),
+      {}
+    )
+  }
+
+  static async discardDraft(draftId: string): Promise<{ success: boolean; message: string }> {
+    return apiClient.delete<{ success: boolean; message: string }>(
+      jobEndpoints.discardDraft(draftId)
+    )
   }
 }
 

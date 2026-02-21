@@ -108,7 +108,11 @@ export default function ExperienceFormDialog({
   }
 
   return (
-    <Dialog isOpen={open} onClose={() => onOpenChange(false)} className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl">
+    <Dialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      className="max-w-[600px] p-0 overflow-hidden border-none shadow-2xl"
+    >
       <div className="bg-background-surface flex flex-col h-full max-h-[90vh]">
         <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
           <div className="flex items-center gap-5">

@@ -1,14 +1,20 @@
 import uuid
 from collections.abc import Sequence
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.db.models.application import JobApplication, JobApplicationStatusHistory
+from app.core import get_datetime
+from app.db.models.application import (
+    ApplicationStatus,
+    JobApplication,
+    JobApplicationStatusHistory,
+)
 from app.db.models.candidate import CandidateProfile
 from app.db.models.job import JobPosting
-from app.db.models.resume import Resume
+from app.db.models.resume import Resume, ResumeSkills
+from app.db.models.user import User
 from app.db.repositories.base import BaseRepository
 
 
@@ -45,6 +51,9 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
                 selectinload(JobApplication.resume).selectinload(Resume.skills),
                 selectinload(JobApplication.resume).selectinload(Resume.certifications),
                 selectinload(JobApplication.resume).selectinload(Resume.social_links),
+                selectinload(JobApplication.candidate_profile).selectinload(
+                    CandidateProfile.user
+                ),
             )
             .where(JobApplication.application_id == application_id)
         )
@@ -79,8 +88,6 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
         self, job_id: uuid.UUID, skip: int = 0, limit: int = 100
     ) -> Sequence[JobApplication]:
         """Get applications by job ID"""
-        from app.db.models.resume import Resume
-
         query = (
             select(JobApplication)
             .options(
@@ -104,9 +111,13 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
         return result.scalars().all()
 
     async def get_by_organization(
-        self, organization_id: uuid.UUID, skip: int = 0, limit: int = 100
+        self,
+        organization_id: uuid.UUID,
+        skip: int = 0,
+        limit: int = 100,
+        status_filter: str | None = None,
     ) -> Sequence[JobApplication]:
-        """Get applications by organization ID"""
+        """Get applications by organization ID with optional status filter"""
         query = (
             select(JobApplication)
             .options(
@@ -124,18 +135,31 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
                 selectinload(JobApplication.history),
             )
             .where(JobApplication.organization_id == organization_id)
-            .order_by(JobApplication.applied_at.desc())
-            .offset(skip)
-            .limit(limit)
         )
+
+        # Add status filter if provided
+        if status_filter:
+            query = query.where(JobApplication.current_status == status_filter)
+
+        query = (
+            query.order_by(JobApplication.applied_at.desc()).offset(skip).limit(limit)
+        )
+
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def count_by_organization(self, organization_id: uuid.UUID) -> int:
-        """Count applications by organization"""
+    async def count_by_organization(
+        self, organization_id: uuid.UUID, status_filter: str | None = None
+    ) -> int:
+        """Count applications by organization with optional status filter"""
         query = select(func.count(JobApplication.application_id)).where(
             JobApplication.organization_id == organization_id
         )
+
+        # Add status filter if provided
+        if status_filter:
+            query = query.where(JobApplication.current_status == status_filter)
+
         result = await self.db.execute(query)
         return result.scalar_one() or 0
 
@@ -160,6 +184,151 @@ class JobApplicationRepository(BaseRepository[JobApplication]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
 
+    async def update_statuses_by_threshold(
+        self, job_id: uuid.UUID, threshold: int
+    ) -> int:
+        """Update application statuses based on AI score threshold.
+        Candidates >= threshold are shortlisted, others are rejected.
+        Only updates applications that are in 'applied' status.
+        """
+        # Shortlist those >= threshold
+        shortlist_query = (
+            update(JobApplication)
+            .where(
+                JobApplication.job_id == job_id,
+                JobApplication.current_status == ApplicationStatus.APPLIED,
+                JobApplication.score >= threshold,
+            )
+            .values(
+                current_status=ApplicationStatus.SHORTLISTED, updated_at=get_datetime()
+            )
+        )
+        result_shortlist = await self.db.execute(shortlist_query)
+
+        # Reject those < threshold
+        reject_query = (
+            update(JobApplication)
+            .where(
+                JobApplication.job_id == job_id,
+                JobApplication.current_status == ApplicationStatus.APPLIED,
+                JobApplication.score < threshold,
+            )
+            .values(
+                current_status=ApplicationStatus.REJECTED, updated_at=get_datetime()
+            )
+        )
+        result_reject = await self.db.execute(reject_query)
+
+        await self.db.flush()
+        return (result_shortlist.rowcount or 0) + (result_reject.rowcount or 0)
+
+    async def search_by_organization(
+        self, organization_id: uuid.UUID, query: str, skip: int = 0, limit: int = 100
+    ) -> Sequence[JobApplication]:
+        """Search applications by name, email, skill, or job title with relevance scoring"""
+
+        search_pattern = f"%{query.lower()}%"
+        exact_pattern = query.lower()
+
+        # Subquery to check if any skill matches
+        skill_subquery = (
+            select(ResumeSkills.resume_id)
+            .where(func.lower(ResumeSkills.skill_name).like(search_pattern))
+            .scalar_subquery()
+        )
+
+        # Create relevance score: exact matches get higher priority
+        relevance_score = case(
+            # Exact name match = highest priority (1)
+            (func.lower(User.name) == exact_pattern, 1),
+            # Exact email match = high priority (2)
+            (func.lower(User.email) == exact_pattern, 2),
+            # Name starts with query = medium-high priority (3)
+            (func.lower(User.name).like(f"{exact_pattern}%"), 3),
+            # Email starts with query = medium priority (4)
+            (func.lower(User.email).like(f"{exact_pattern}%"), 4),
+            # Name contains query = lower priority (5)
+            (func.lower(User.name).like(search_pattern), 5),
+            # Email contains query = lower priority (6)
+            (func.lower(User.email).like(search_pattern), 6),
+            # Job title match = lower priority (7)
+            (func.lower(JobPosting.title).like(search_pattern), 7),
+            # Skill match = lowest priority (8)
+            else_=8,
+        )
+
+        query_stmt = (
+            select(JobApplication)
+            .options(
+                selectinload(JobApplication.job).selectinload(
+                    JobPosting.job_description
+                ),
+                selectinload(JobApplication.job).selectinload(JobPosting.created_by),
+                selectinload(JobApplication.resume).selectinload(Resume.skills),
+                joinedload(JobApplication.candidate_profile).selectinload(
+                    CandidateProfile.user
+                ),
+                joinedload(JobApplication.candidate_profile).selectinload(
+                    CandidateProfile.social_links
+                ),
+                selectinload(JobApplication.history),
+            )
+            .join(
+                CandidateProfile,
+                JobApplication.candidate_profile_id == CandidateProfile.profile_id,
+            )
+            .join(User, CandidateProfile.user_id == User.user_id)
+            .join(JobPosting, JobApplication.job_id == JobPosting.job_id)
+            .where(JobApplication.organization_id == organization_id)
+            .where(
+                # Search in name, email, job title, or skills
+                func.lower(User.name).like(search_pattern)
+                | func.lower(User.email).like(search_pattern)
+                | func.lower(JobPosting.title).like(search_pattern)
+                | JobApplication.resume_id.in_(skill_subquery)
+            )
+            .order_by(relevance_score.asc(), JobApplication.applied_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        result = await self.db.execute(query_stmt)
+        return result.scalars().all()
+
+    async def count_search_by_organization(
+        self, organization_id: uuid.UUID, query: str
+    ) -> int:
+        """Count search results by name, email, skill, or job title"""
+
+        search_pattern = f"%{query.lower()}%"
+
+        # Subquery to check if any skill matches
+        skill_subquery = (
+            select(ResumeSkills.resume_id)
+            .where(func.lower(ResumeSkills.skill_name).like(search_pattern))
+            .scalar_subquery()
+        )
+
+        query_stmt = (
+            select(func.count(JobApplication.application_id))
+            .join(
+                CandidateProfile,
+                JobApplication.candidate_profile_id == CandidateProfile.profile_id,
+            )
+            .join(User, CandidateProfile.user_id == User.user_id)
+            .join(JobPosting, JobApplication.job_id == JobPosting.job_id)
+            .where(JobApplication.organization_id == organization_id)
+            .where(
+                func.lower(User.name).like(search_pattern)
+                | func.lower(User.email).like(search_pattern)
+                | func.lower(JobPosting.title).like(search_pattern)
+                | JobApplication.resume_id.in_(skill_subquery)
+            )
+        )
+
+        result = await self.db.execute(query_stmt)
+        return result.scalar_one() or 0
+
 
 class JobApplicationStatusHistoryRepository(
     BaseRepository[JobApplicationStatusHistory]
@@ -183,12 +352,8 @@ class JobApplicationStatusHistoryRepository(
         self, application_id: uuid.UUID, status: str
     ) -> JobApplicationStatusHistory:
         """Add a status change record"""
-        import uuid as uuid_lib
-
-        from app.db.models.application import JobApplicationStatusHistory
-
         status_history = JobApplicationStatusHistory(
-            status_history_id=uuid_lib.uuid4(),
+            status_history_id=uuid.uuid4(),
             application_id=application_id,
             status=status,
         )

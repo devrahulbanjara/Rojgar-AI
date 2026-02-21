@@ -44,11 +44,11 @@ jobs:
 
       # Step 4: Run Ruff linter to check for code issues
       - name: Run Ruff linter
-        run: uvx ruff check --fix
+        run: uvx ruff check
 
       # Step 5: Check code formatting (fails if code isn't formatted)
       - name: Check code formatting
-        run: uvx ruff format
+        run: uvx ruff format --check
 
   frontend:
     name: Frontend Lint

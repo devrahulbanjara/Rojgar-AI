@@ -133,7 +133,9 @@ export default function CandidateDashboard() {
             {columns.Applied.map(app => (
               <ApplicationCard key={app.application_id} app={app} color="primary" />
             ))}
-            {columns.Applied.length === 0 && <EmptyState message="No active applications" icon={<Briefcase />} />}
+            {columns.Applied.length === 0 && (
+              <EmptyState message="No active applications" icon={<Briefcase />} />
+            )}
           </div>
         </BoardColumn>
 
@@ -146,7 +148,9 @@ export default function CandidateDashboard() {
             {columns.Interviewing.map(app => (
               <ApplicationCard key={app.application_id} app={app} color="purple" />
             ))}
-            {columns.Interviewing.length === 0 && <EmptyState message="No interviews yet" icon={<Video />} />}
+            {columns.Interviewing.length === 0 && (
+              <EmptyState message="No interviews yet" icon={<Video />} />
+            )}
           </div>
         </BoardColumn>
 
@@ -159,7 +163,9 @@ export default function CandidateDashboard() {
             {columns.Outcome.map(app => (
               <ApplicationCard key={app.application_id} app={app} color="emerald" />
             ))}
-            {columns.Outcome.length === 0 && <EmptyState message="No outcomes yet" icon={<Trophy />} />}
+            {columns.Outcome.length === 0 && (
+              <EmptyState message="No outcomes yet" icon={<Trophy />} />
+            )}
           </div>
         </BoardColumn>
       </div>
@@ -185,23 +191,32 @@ function BoardColumn({
           <div className="p-1.5 rounded-md bg-background-surface border shadow-sm text-text-muted">
             {icon}
           </div>
-          <h2 className="text-[13px] font-bold text-text-tertiary uppercase tracking-widest">{title}</h2>
+          <h2 className="text-[13px] font-bold text-text-tertiary uppercase tracking-widest">
+            {title}
+          </h2>
         </div>
-        <Badge variant="secondary" className="bg-background-muted dark:bg-background-subtle text-text-secondary font-bold h-5 px-2">
+        <Badge
+          variant="secondary"
+          className="bg-background-muted dark:bg-background-subtle text-text-secondary font-bold h-5 px-2"
+        >
           {count}
         </Badge>
       </div>
 
       <div className="flex-1 rounded-xl bg-background-subtle/50 dark:bg-background-muted/30 border-2 border-dashed border-border-default p-3">
-        <div className="space-y-3">
-          {children}
-        </div>
+        <div className="space-y-3">{children}</div>
       </div>
     </div>
   )
 }
 
-function ApplicationCard({ app, color }: { app: ApplicationResponse; color: 'primary' | 'purple' | 'emerald' }) {
+function ApplicationCard({
+  app,
+  color,
+}: {
+  app: ApplicationResponse
+  color: 'primary' | 'purple' | 'emerald'
+}) {
   const statusStyle = STATUS_CONFIG[app.current_status] || STATUS_CONFIG.applied
 
   const borderColorMap = {
@@ -211,13 +226,17 @@ function ApplicationCard({ app, color }: { app: ApplicationResponse; color: 'pri
   }
 
   return (
-    <div className={`bg-background-surface border border-border-default/60 shadow-sm hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-pointer overflow-hidden relative p-5 rounded-xl border-l-[3px] ${borderColorMap[color]} group`}>
+    <div
+      className={`bg-background-surface border border-border-default/60 shadow-sm hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-pointer overflow-hidden relative p-5 rounded-xl border-l-[3px] ${borderColorMap[color]} group`}
+    >
       <div className="space-y-4">
         <div className="space-y-1.5">
           <h3 className="text-lg font-bold text-text-primary leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {app.job.title}
           </h3>
-          <p className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest">{app.organization.name}</p>
+          <p className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest">
+            {app.organization.name}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -235,9 +254,12 @@ function ApplicationCard({ app, color }: { app: ApplicationResponse; color: 'pri
 
         <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-tertiary uppercase tracking-tighter">
-            <Clock className="w-3.5 h-3.5" /> {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
+            <Clock className="w-3.5 h-3.5" />{' '}
+            {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
           </div>
-          <Badge className={`${statusStyle.color.replace('border', 'bg').replace('500', '50')} ${statusStyle.color.replace('border', 'text').replace('500', '600')} dark:${statusStyle.color.replace('border', 'bg').replace('500', '950/30')} dark:${statusStyle.color.replace('border', 'text').replace('500', '400')} border-none text-[10px] font-bold px-2 py-0`}>
+          <Badge
+            className={`${statusStyle.color.replace('border', 'bg').replace('500', '50')} ${statusStyle.color.replace('border', 'text').replace('500', '600')} dark:${statusStyle.color.replace('border', 'bg').replace('500', '950/30')} dark:${statusStyle.color.replace('border', 'text').replace('500', '400')} border-none text-[10px] font-bold px-2 py-0`}
+          >
             {statusStyle.label}
           </Badge>
         </div>

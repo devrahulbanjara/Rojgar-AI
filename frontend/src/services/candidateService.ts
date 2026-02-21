@@ -19,11 +19,8 @@ export class CandidateService {
       if (filters?.job_id) {
         params.job_id = filters.job_id
       }
-      if (filters?.search) {
-        params.search = filters.search
-      }
 
-      return await api.candidates.list(params)
+      return (await api.candidates.list(params)) as Promise<CandidateListResponse>
     } catch (error) {
       console.error('Error fetching candidates:', error)
       throw error
@@ -35,6 +32,17 @@ export class CandidateService {
     page: number = 1,
     limit: number = 20
   ): Promise<CandidateListResponse> {
-    return this.getCandidates(page, limit, { search: query })
+    try {
+      const params: Record<string, string> = {
+        q: query,
+        page: page.toString(),
+        limit: limit.toString(),
+      }
+
+      return (await api.candidates.search(params)) as Promise<CandidateListResponse>
+    } catch (error) {
+      console.error('Error searching candidates:', error)
+      throw error
+    }
   }
 }
