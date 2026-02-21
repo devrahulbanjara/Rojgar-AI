@@ -62,7 +62,7 @@ export function ReferenceJDModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[5px] bg-background-surface shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+      <div className="relative w-full max-w-[900px] max-h-[85vh] flex flex-col rounded-[5px] bg-background-surface shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-10 py-8 pb-8">

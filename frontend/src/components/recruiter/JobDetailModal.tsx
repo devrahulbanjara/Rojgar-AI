@@ -86,8 +86,8 @@ export function JobDetailModal({
   const isExpired = job.status === 'Expired' || job.status.toLowerCase() === 'expired'
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} className="max-w-3xl mx-4" showCloseButton={false}>
-      <div className="max-h-[85vh] overflow-hidden w-full max-w-3xl p-0 flex flex-col bg-background-surface rounded-[5px]">
+    <Dialog isOpen={isOpen} onClose={onClose} className="max-w-[900px] mx-4" showCloseButton={false}>
+      <div className="max-h-[85vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col bg-background-surface rounded-[5px]">
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-10 py-8 pb-8">
