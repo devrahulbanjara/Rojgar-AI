@@ -201,5 +201,10 @@ class EmailDraftResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EmailDraftUpdateRequest(BaseModel):
+    subject: str
+    body: str
+
+
 class EmailPrepareRequest(BaseModel):
     direct_send: bool = False

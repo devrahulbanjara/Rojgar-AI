@@ -6,7 +6,7 @@ from app.agents.jd_generator.prompts import (
     SYSTEM_PROMPT,
 )
 from app.core import settings
-from app.integrations.llm.provider import get_llm
+from app.integrations.groq.provider import get_llm
 from app.schemas.agents.jd_generator import JobDescription, JobState
 
 

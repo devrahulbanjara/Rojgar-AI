@@ -65,3 +65,26 @@ class EmailDraftRepository(BaseRepository[EmailDraft]):
         )
         await self.db.execute(query)
         await self.db.flush()
+
+    async def update_draft(
+        self, draft_id: uuid.UUID, subject: str, body: str
+    ) -> EmailDraft:
+        """Update a specific draft's subject and body"""
+        query = (
+            update(EmailDraft)
+            .where(EmailDraft.draft_id == draft_id)
+            .values(subject=subject, body=body)
+            .returning(EmailDraft)
+        )
+        result = await self.db.execute(query)
+        await self.db.flush()
+        return result.scalar_one()
+
+    async def delete_draft(self, draft_id: uuid.UUID) -> bool:
+        """Delete a specific draft"""
+        draft = await self.get(draft_id)
+        if draft:
+            await self.db.delete(draft)
+            await self.db.flush()
+            return True
+        return False

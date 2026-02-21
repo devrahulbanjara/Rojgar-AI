@@ -22,8 +22,10 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     EMBEDDING_DIM: int = 3072
     FAST_LLM: str = "llama-3.1-8b-instant"
-    THINK_LLM: str = "llama-3.3-70b-versatile"
-    LLM_TEMPERATURE: int = 0
+    THINK_LLM: str = "openai/gpt-oss-120b"
+    BEDROCK_MODEL_ID: str = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    AWS_REGION: str = "us-east-1"
+    LLM_TEMPERATURE: float = 0.2
     LLM_MAX_RETRIES: int = 3
 
     GROQ_API_KEY: str
@@ -32,6 +34,7 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str
     TAVILY_API_KEY: str
     BOOKING_LINK: str = "https://cal.com/convexhire/interview"
+    LOGO_URL: str = "https://heraldcollege.edu.np/images/homepage/about-herald.svg"
 
     RATE_LIMIT_AUTH: str = "50/minute"
     RATE_LIMIT_API: str = "100/minute"
@@ -39,7 +42,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_SHORTLIST_TRIGGER: str = "10/minute"
     RATE_LIMIT_SHORTLIST_SUMMARY: str = "100/minute"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
 
 settings = Settings()  # type: ignore

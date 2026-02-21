@@ -7,6 +7,7 @@ from app.api.dependencies import get_application_service
 from app.core import get_current_active_user
 from app.core.config import settings
 from app.core.limiter import limiter
+from app.core.logging_config import logger
 from app.db.models.user import User
 from app.schemas import ApplicationCreate, ApplicationResponse
 from app.services.candidate.application_service import ApplicationService
@@ -32,14 +33,10 @@ async def get_my_applications(
             current_user.user_id
         )
         if applications is None:
-            # User doesn't have a candidate profile yet - return empty list
             return []
         return applications
     except Exception as e:
-        # Log the error for debugging
-        import logging
-
-        logging.error(
+        logger.error(
             f"Error fetching applications for user {current_user.user_id}: {e}",
             exc_info=True,
         )
