@@ -9,6 +9,7 @@ from .candidate import (
     CandidateSocialLink,
     CandidateWorkExperience,
 )
+from .email_draft import EmailDraft
 from .job import JobDescription, JobPosting, ReferenceJD
 from .organization import Organization
 from .resume import (
@@ -22,27 +23,28 @@ from .resume import (
 from .user import User, UserGoogle, UserRole
 
 __all__ = [
+    "ApplicationStatus",
     "Base",
+    "CandidateCertification",
+    "CandidateEducation",
+    "CandidateProfile",
+    "CandidateSkills",
+    "CandidateSocialLink",
+    "CandidateWorkExperience",
+    "EmailDraft",
+    "JobApplication",
+    "JobApplicationStatusHistory",
+    "JobDescription",
+    "JobPosting",
+    "Organization",
+    "ReferenceJD",
+    "Resume",
+    "ResumeCertification",
+    "ResumeEducation",
+    "ResumeSkills",
+    "ResumeSocialLink",
+    "ResumeWorkExperience",
     "User",
     "UserGoogle",
     "UserRole",
-    "Organization",
-    "CandidateProfile",
-    "CandidateSocialLink",
-    "CandidateWorkExperience",
-    "CandidateEducation",
-    "CandidateCertification",
-    "CandidateSkills",
-    "Resume",
-    "ResumeSocialLink",
-    "ResumeWorkExperience",
-    "ResumeEducation",
-    "ResumeCertification",
-    "ResumeSkills",
-    "JobPosting",
-    "JobDescription",
-    "JobApplication",
-    "JobApplicationStatusHistory",
-    "ApplicationStatus",
-    "ReferenceJD",
 ]

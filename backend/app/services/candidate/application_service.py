@@ -1,5 +1,6 @@
 import uuid
 
+from app.core.logging_config import logger
 from app.db.models.application import ApplicationStatus, JobApplication
 from app.db.repositories.application_repo import (
     JobApplicationRepository,
@@ -131,9 +132,6 @@ class ApplicationService:
                     timestamp=new_application.applied_at,
                 )
             except Exception as e:
-                # Log error but don't fail the application creation
-                import logging
-
-                logging.error(f"Failed to emit activity event: {e}")
+                logger.error(f"Failed to emit activity event: {e}")
 
         return application

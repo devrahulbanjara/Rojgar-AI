@@ -179,7 +179,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="w-full h-10 pl-4 pr-4 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20 flex items-center gap-3"
+                            className="w-full h-10 pl-4 pr-4 py-3 border rounded-xl bg-transparent text-left focus:outline-none text-base text-text-primary transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20 flex items-center gap-3"
                           >
                             {formData.type ? (
                               <>
@@ -311,7 +311,7 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="w-full h-10 pl-4 pr-4 py-3 border rounded-xl bg-background-surface text-left focus:outline-none text-base text-text-primary transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20 flex items-center gap-3"
+                      className="w-full h-10 pl-4 pr-4 py-3 border rounded-xl bg-transparent text-left focus:outline-none text-base text-text-primary transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20 flex items-center gap-3"
                     >
                       {formData.type ? (
                         <>

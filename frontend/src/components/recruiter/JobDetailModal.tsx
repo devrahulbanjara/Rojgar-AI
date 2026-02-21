@@ -2,9 +2,9 @@
 
 import React from 'react'
 import {
-  Briefcase,
   CheckCircle2,
-  Sparkles,
+  Star,
+  Gift,
   X,
   MapPin,
   DollarSign,
@@ -15,6 +15,8 @@ import {
   Ban,
   Trash2,
   BookmarkPlus,
+  FileText,
+  ListChecks,
 } from 'lucide-react'
 import type { Job } from '../../types/job'
 
@@ -84,8 +86,13 @@ export function JobDetailModal({
   const isExpired = job.status === 'Expired' || job.status.toLowerCase() === 'expired'
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} className="max-w-3xl mx-4" showCloseButton={false}>
-      <div className="max-h-[85vh] overflow-hidden w-full max-w-3xl p-0 flex flex-col bg-background-surface rounded-[5px]">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="max-w-[900px] mx-4"
+      showCloseButton={false}
+    >
+      <div className="max-h-[85vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col bg-background-surface rounded-[5px]">
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-10 py-8 pb-8">
@@ -244,7 +251,7 @@ export function JobDetailModal({
               )}
 
               {job.description && (
-                <Section icon={<Briefcase className="w-4 h-4" />} title="Job Summary">
+                <Section icon={<FileText className="w-4 h-4" />} title="Job Summary">
                   <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                     {job.description}
                   </p>
@@ -255,7 +262,7 @@ export function JobDetailModal({
                 const jobWithExtras = job as JobWithExtras
                 return jobWithExtras.job_responsibilities &&
                   jobWithExtras.job_responsibilities.length > 0 ? (
-                  <Section icon={<Briefcase className="w-4 h-4" />} title="Responsibilities">
+                  <Section icon={<ListChecks className="w-4 h-4" />} title="Responsibilities">
                     <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                       {jobWithExtras.job_responsibilities.map((resp: string, index: number) => (
                         <li key={index}>{resp}</li>
@@ -279,7 +286,7 @@ export function JobDetailModal({
               )}
 
               {job.nice_to_have && job.nice_to_have.length > 0 && (
-                <Section icon={<Sparkles className="w-4 h-4" />} title="Preferred">
+                <Section icon={<Star className="w-4 h-4" />} title="Preferred">
                   <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                     {job.nice_to_have.map((item, index) => (
                       <li key={index}>{item}</li>
@@ -289,7 +296,7 @@ export function JobDetailModal({
               )}
 
               {job.benefits && job.benefits.length > 0 && (
-                <Section icon={<Sparkles className="w-4 h-4" />} title="Compensation & Benefits">
+                <Section icon={<Gift className="w-4 h-4" />} title="Compensation & Benefits">
                   <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                     {job.benefits.map((benefit, index) => (
                       <li key={index}>{benefit}</li>
@@ -318,16 +325,16 @@ export function JobDetailModal({
           </div>
           <div className="flex items-center gap-3">
             {onConvertToReferenceJD && (isActive || isExpired) && (
-                <ActionButton
-                  onClick={handleConvertToReferenceJD}
-                  variant="outline"
-                  size="md"
-                  className="text-slate-600 dark:text-slate-400"
-                >
-                  <BookmarkPlus className="w-4 h-4" />
-                  Save as Template
-                </ActionButton>
-              )}
+              <ActionButton
+                onClick={handleConvertToReferenceJD}
+                variant="outline"
+                size="md"
+                className="text-slate-600 dark:text-slate-400"
+              >
+                <BookmarkPlus className="w-4 h-4" />
+                Save as Template
+              </ActionButton>
+            )}
             {isActive && onExpire && (
               <ActionButton
                 onClick={handleExpire}

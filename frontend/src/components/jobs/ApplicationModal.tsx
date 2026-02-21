@@ -96,10 +96,10 @@ export function ApplicationModal({ job, isOpen, onClose }: ApplicationModalProps
             <div className="px-6 py-5 border-b border-border-subtle bg-background-surface">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-text-primary mb-2">
-                    {job.title}
-                  </h2>
-                  <p className="text-sm text-text-secondary mb-3">{job.company?.name || 'Company'}</p>
+                  <h2 className="text-xl font-bold text-text-primary mb-2">{job.title}</h2>
+                  <p className="text-sm text-text-secondary mb-3">
+                    {job.company?.name || 'Company'}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {job.level && (
                       <Badge variant="subtle" colorPalette="gray" className="text-xs">

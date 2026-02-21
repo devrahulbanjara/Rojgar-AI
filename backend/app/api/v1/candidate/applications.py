@@ -7,6 +7,7 @@ from app.api.dependencies import get_application_service
 from app.core import get_current_active_user
 from app.core.config import settings
 from app.core.limiter import limiter
+from app.core.logging_config import logger
 from app.db.models.user import User
 from app.schemas import ApplicationCreate, ApplicationResponse
 from app.services.candidate.application_service import ApplicationService
@@ -27,14 +28,22 @@ async def get_my_applications(
         ApplicationService, Depends(get_application_service)
     ],
 ):
-    applications = await application_service.get_candidate_applications(
-        current_user.user_id
-    )
-    if applications is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Candidate profile not found"
+    try:
+        applications = await application_service.get_candidate_applications(
+            current_user.user_id
         )
-    return applications
+        if applications is None:
+            return []
+        return applications
+    except Exception as e:
+        logger.error(
+            f"Error fetching applications for user {current_user.user_id}: {e}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch applications: {e!s}",
+        ) from e
 
 
 @router.get("/applications/{application_id}", response_model=ApplicationResponse)
@@ -101,4 +110,4 @@ async def create_application(
         status_code = status.HTTP_400_BAD_REQUEST
         if "already applied" in error_msg.lower():
             status_code = status.HTTP_409_CONFLICT
-        raise HTTPException(status_code=status_code, detail=error_msg)
+        raise HTTPException(status_code=status_code, detail=error_msg) from e

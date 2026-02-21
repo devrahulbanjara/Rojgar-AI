@@ -45,8 +45,8 @@ export function ShortlistJobCard({
     job.status === 'expired'
       ? 'bg-warning-500'
       : job.shortlist_status === 'completed'
-        ? 'bg-success-500'
-        : 'bg-primary-500'
+        ? 'bg-primary-500'
+        : 'bg-primary-400'
 
   const statusLabel =
     job.shortlist_status === 'completed'
@@ -59,9 +59,7 @@ export function ShortlistJobCard({
     <div
       className={cn(
         'relative p-3 rounded-xl cursor-pointer transition-all group text-left',
-        isSelected
-          ? 'bg-primary-50/60 dark:bg-primary-950/30'
-          : 'hover:bg-background-subtle',
+        isSelected ? 'bg-primary-50/60 dark:bg-primary-950/30' : 'hover:bg-background-subtle',
         className
       )}
       onClick={onClick}
