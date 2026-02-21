@@ -35,7 +35,7 @@ function AuthCallbackContent() {
         queryClient.setQueryData(queryKeys.auth.user, null)
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/auth/google/callback?code=${encodeURIComponent(code)}`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/auth/google/callback?code=${encodeURIComponent(code)}`,
           {
             method: 'GET',
             credentials: 'include',
@@ -50,7 +50,7 @@ function AuthCallbackContent() {
 
         try {
           const userResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/v1/users/me`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/users/me`,
             {
               credentials: 'include',
             }

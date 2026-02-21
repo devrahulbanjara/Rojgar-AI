@@ -21,8 +21,8 @@ from app.schemas import (
     ResumeWorkExperienceUpdate,
     SkillBase,
     WorkExperienceBase,
+    resume as schemas,
 )
-from app.schemas import resume as schemas
 from app.services.candidate.resume_service import ResumeService
 
 router = APIRouter()

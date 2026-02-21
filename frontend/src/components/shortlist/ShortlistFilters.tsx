@@ -19,7 +19,7 @@ interface ShortlistFiltersProps {
 
 const scoreRangeOptions = [
   { value: 'all', label: 'All Scores', color: null },
-  { value: 'high', label: 'High (80-100)', color: 'bg-success-500' },
+  { value: 'high', label: 'High (80-100)', color: 'bg-primary-500' },
   { value: 'medium', label: 'Medium (60-79)', color: 'bg-warning-500' },
   { value: 'low', label: 'Low (40-59)', color: 'bg-error-500' },
 ]
@@ -123,10 +123,10 @@ export function ShortlistFiltersComponent({
                 type="button"
                 className={cn(
                   'h-9 pl-3 pr-3 py-2 border rounded-xl bg-background-surface text-left focus:outline-none text-sm text-text-primary transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] min-w-[140px] flex items-center gap-2',
-                  'border-border-default hover:border-ai-300 hover:bg-gradient-to-r hover:from-ai-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-ai-500 focus:ring-2 focus:ring-ai-500/20'
+                  'border-border-default hover:border-primary-300 hover:bg-gradient-to-r hover:from-primary-50/30 hover:to-primary-50/30 hover:shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
                 )}
               >
-                <ArrowUpDown className="w-4 h-4 text-ai-500" />
+                <ArrowUpDown className="w-4 h-4 text-primary-500" />
                 <span className="font-medium text-text-primary">{getCurrentSortLabel()}</span>
               </button>
             </DropdownMenuTrigger>
@@ -139,10 +139,10 @@ export function ShortlistFiltersComponent({
                     'flex items-center gap-2.5 cursor-pointer',
                     (filters.dateSort === option.value ||
                       (option.value === 'newest' && !filters.dateSort)) &&
-                      'bg-ai-50/50'
+                      'bg-primary-50/50'
                   )}
                 >
-                  <Calendar className="w-4 h-4 text-ai-500" />
+                  <Calendar className="w-4 h-4 text-primary-500" />
                   <span className="font-medium">{option.label}</span>
                 </DropdownMenuItem>
               ))}
