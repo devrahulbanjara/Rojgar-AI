@@ -146,6 +146,7 @@ class EmailBatchService:
                     "body": d.body,
                     "is_approved": d.is_approved,
                     "is_sent": d.is_sent,
+                    "is_discarded": d.is_discarded,
                 }
             )
         return result

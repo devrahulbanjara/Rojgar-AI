@@ -42,7 +42,7 @@ async def get_my_applications(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch applications: {str(e)}",
+            detail=f"Failed to fetch applications: {e!s}",
         )
 
 

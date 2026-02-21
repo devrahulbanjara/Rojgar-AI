@@ -198,6 +198,7 @@ class EmailDraftResponse(BaseModel):
     body: str
     is_approved: bool
     is_sent: bool
+    is_discarded: bool
     model_config = ConfigDict(from_attributes=True)
 
 

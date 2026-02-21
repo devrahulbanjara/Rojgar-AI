@@ -21,4 +21,4 @@ def send_interview_email(
             server.send_message(msg)
         return {"send_status": "success"}
     except Exception as e:
-        return {"send_status": f"failed: {str(e)}"}
+        return {"send_status": f"failed: {e!s}"}

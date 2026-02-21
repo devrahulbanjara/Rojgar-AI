@@ -10,6 +10,8 @@ interface CandidateFiltersProps {
   statusCounts?: {
     applied: number
     interviewing: number
+    shortlisted: number
+    rejected: number
     outcome: number
   }
 }
@@ -17,10 +19,12 @@ interface CandidateFiltersProps {
 const filterLabels: Record<string, string> = {
   applied: 'Applied',
   interviewing: 'Interviewing',
+  shortlisted: 'Shortlisted',
+  rejected: 'Rejected',
   outcome: 'Outcome',
 }
 
-const allFilters: string[] = ['applied', 'interviewing', 'outcome']
+const allFilters: string[] = ['applied', 'interviewing', 'shortlisted', 'rejected', 'outcome']
 
 export function CandidateFilters({
   activeFilters,

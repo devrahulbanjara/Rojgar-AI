@@ -71,7 +71,7 @@ def get_current_user_id(request: Request) -> uuid.UUID:
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired authentication token. Please log in again. ({str(e)})",
+            detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
         )
     if entity_type != "user":
         raise HTTPException(
@@ -93,7 +93,7 @@ def get_current_organization_id(request: Request) -> uuid.UUID:
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired authentication token. Please log in again. ({str(e)})",
+            detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
         )
     if entity_type != "organization":
         raise HTTPException(
@@ -163,7 +163,7 @@ async def get_current_recruiter_organization_id(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired authentication token. Please log in again. ({str(e)})",
+            detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
         )
 
     # Only accept organization tokens

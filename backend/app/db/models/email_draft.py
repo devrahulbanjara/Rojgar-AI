@@ -22,6 +22,7 @@ class EmailDraft(Base):
     body: Mapped[str] = mapped_column(Text)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
     is_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_discarded: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=get_datetime)
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime, default=get_datetime, onupdate=get_datetime

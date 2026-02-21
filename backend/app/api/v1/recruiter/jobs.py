@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 
 from app.api.dependencies import (
+    get_db,
     get_email_batch_service,
     get_job_generation_service,
     get_job_service,
@@ -19,6 +20,7 @@ from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging_config import logger
 from app.db.models.user import User
+from app.db.repositories.email_draft_repo import EmailDraftRepository
 from app.schemas import job as schemas
 from app.services.job_service import JobService
 from app.services.recruiter.email_batch_service import EmailBatchService
@@ -70,10 +72,10 @@ async def generate_job_draft(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error generating job draft: {str(e)}", exc_info=True)
+        logger.error(f"Error generating job draft: {e!s}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate job draft: {str(e)}",
+            detail=f"Failed to generate job draft: {e!s}",
         )
 
 
@@ -337,10 +339,6 @@ async def update_draft(
     data: schemas.EmailDraftUpdateRequest,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-
-    from app.api.dependencies import get_db
-    from app.db.repositories.email_draft_repo import EmailDraftRepository
-
     # Get DB session
     async for db in get_db():
         draft_repo = EmailDraftRepository(db)
@@ -358,7 +356,7 @@ async def update_draft(
             logger.error(f"Failed to update draft {draft_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to update draft: {str(e)}",
+                detail=f"Failed to update draft: {e!s}",
             )
 
 
@@ -388,9 +386,6 @@ async def discard_draft(
     draft_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    from app.api.dependencies import get_db
-    from app.db.repositories.email_draft_repo import EmailDraftRepository
-
     async for db in get_db():
         draft_repo = EmailDraftRepository(db)
 
