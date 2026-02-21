@@ -1,7 +1,6 @@
 import math
 import uuid
 from collections.abc import Sequence
-from datetime import date
 
 from sqlalchemy import case, delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -9,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core import get_datetime
+from app.core.current_datetime import get_today
 from app.db.models.application import (
     JobApplication,
     JobApplicationStatusHistory,
@@ -47,7 +47,7 @@ class JobRepository(BaseRepository[JobPosting]):
         order_by_date: bool = True,
     ) -> dict:
         """Get paginated visible jobs with filters"""
-        today = date.today()
+        today = get_today()
         base_stmt = (
             select(JobPosting)
             .options(
@@ -156,9 +156,9 @@ class JobRepository(BaseRepository[JobPosting]):
         1. Active jobs past their deadline with auto_shortlist=True
         2. Already expired jobs with auto_shortlist=True and shortlist_status='not_started'
         """
-        today = date.today()
+        today = get_today()
         query = select(JobPosting.job_id).where(
-            JobPosting.auto_shortlist == True,
+            JobPosting.auto_shortlist.is_(True),
             JobPosting.shortlist_status == "not_started",
             or_(
                 # Active jobs that need to be expired
@@ -217,7 +217,7 @@ class JobRepository(BaseRepository[JobPosting]):
 
     async def expire_jobs(self) -> int:
         """Expire jobs past their application deadline"""
-        today = date.today()
+        today = get_today()
         update_stmt = (
             update(JobPosting)
             .where(
@@ -308,7 +308,7 @@ class JobRepository(BaseRepository[JobPosting]):
         job = await self.get(job_id)
         if job:
             job.status = "expired"
-            job.application_deadline = date.today()
+            job.application_deadline = get_today()
             job.updated_at = get_datetime()
             await self.db.flush()
         return job
@@ -429,6 +429,18 @@ class JobRepository(BaseRepository[JobPosting]):
 class JobDescriptionRepository(BaseRepository[JobDescription]):
     def __init__(self, db: AsyncSession):
         super().__init__(JobDescription, db)
+
+    async def update_extracted_skills(
+        self, job_description_id: uuid.UUID, skills: list[str]
+    ) -> None:
+        """Update the extracted_skills field for a job description"""
+        query = (
+            update(JobDescription)
+            .where(JobDescription.job_description_id == job_description_id)
+            .values(extracted_skills=skills, updated_at=get_datetime())
+        )
+        await self.db.execute(query)
+        await self.db.flush()
 
 
 class ReferenceJDRepository(BaseRepository[ReferenceJD]):

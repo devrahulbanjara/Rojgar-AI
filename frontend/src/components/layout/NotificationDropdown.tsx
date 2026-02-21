@@ -122,7 +122,10 @@ export function NotificationDropdown() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[420px] p-0 shadow-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" align="end">
+      <PopoverContent
+        className="w-[420px] p-0 shadow-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+        align="end"
+      >
         {/* Header Section */}
         <div className="p-4 pb-3 flex justify-between items-start bg-white dark:bg-slate-900">
           <div className="space-y-1">

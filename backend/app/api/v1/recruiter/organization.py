@@ -94,7 +94,9 @@ async def create_recruiter(
             password=recruiter_data.password,
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.get("/recruiters/{recruiter_id}", response_model=RecruiterResponse)
@@ -115,7 +117,7 @@ async def get_recruiter(
     try:
         verify_recruiter_belongs_to_organization(recruiter, organization_id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     return recruiter
 
 
@@ -138,7 +140,7 @@ async def update_recruiter(
     try:
         verify_recruiter_belongs_to_organization(recruiter, organization_id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     try:
         updated_recruiter = await recruiter_crud_service.update_recruiter(
             recruiter_id, update_data
@@ -149,7 +151,9 @@ async def update_recruiter(
             )
         return updated_recruiter
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.delete("/recruiters/{recruiter_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -170,7 +174,7 @@ async def remove_recruiter(
     try:
         verify_recruiter_belongs_to_organization(recruiter, organization_id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     deleted_recruiter = await recruiter_crud_service.delete_recruiter(recruiter_id)
     if not deleted_recruiter:
         raise HTTPException(

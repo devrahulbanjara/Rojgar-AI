@@ -1,5 +1,15 @@
 import React, { useState } from 'react'
-import { CheckCircle2, XCircle, Loader2, FileText, Mail, Edit2, Trash2, Send, Save } from 'lucide-react'
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  FileText,
+  Mail,
+  Edit2,
+  Trash2,
+  Send,
+  Save,
+} from 'lucide-react'
 import { cn } from '../../lib/utils'
 import type { ShortlistCandidate } from '../../types/shortlist'
 import { ResumeDetailModal } from './ResumeDetailModal'
@@ -262,10 +272,7 @@ export function ShortlistCandidateCard({
       {isLoadingDraft && isFinalized && (
         <div className="mt-4">
           <Accordion type="single" collapsible className="w-full" defaultValue="email">
-            <AccordionItem
-              value="email"
-              className="border-none bg-background-subtle/40 rounded-xl"
-            >
+            <AccordionItem value="email" className="border-none bg-background-subtle/40 rounded-xl">
               <AccordionTrigger className="px-4 py-2.5 hover:no-underline border-t border-border-subtle/50 rounded-b-none">
                 <div className="flex items-center gap-2 text-[11px] font-bold text-text-tertiary uppercase tracking-tight">
                   <Mail className="w-3.5 h-3.5 text-primary-500" />
@@ -281,7 +288,9 @@ export function ShortlistCandidateCard({
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-sm font-semibold text-text-primary">Preparing Email Draft</p>
-                    <p className="text-xs text-text-tertiary">AI is composing a personalized message...</p>
+                    <p className="text-xs text-text-tertiary">
+                      AI is composing a personalized message...
+                    </p>
                   </div>
                 </div>
               </AccordionContent>
@@ -293,10 +302,7 @@ export function ShortlistCandidateCard({
       {emailDraft && !isLoadingDraft && (
         <div className="mt-4">
           <Accordion type="single" collapsible className="w-full" defaultValue="email">
-            <AccordionItem
-              value="email"
-              className="border-none bg-background-subtle/40 rounded-xl"
-            >
+            <AccordionItem value="email" className="border-none bg-background-subtle/40 rounded-xl">
               <AccordionTrigger className="px-4 py-2.5 hover:no-underline border-t border-border-subtle/50 rounded-b-none">
                 <div className="flex items-center gap-2 text-[11px] font-bold text-text-tertiary uppercase tracking-tight">
                   <Mail className="w-3.5 h-3.5 text-primary-500" />
@@ -322,7 +328,7 @@ export function ShortlistCandidateCard({
                       <input
                         type="text"
                         value={editedSubject}
-                        onChange={(e) => setEditedSubject(e.target.value)}
+                        onChange={e => setEditedSubject(e.target.value)}
                         className="flex-1 px-2 py-1 text-xs border border-border-default rounded bg-background-default text-text-primary"
                       />
                     ) : (
@@ -334,12 +340,12 @@ export function ShortlistCandidateCard({
                   {isEditingDraft ? (
                     <textarea
                       value={editedBody}
-                      onChange={(e) => setEditedBody(e.target.value)}
+                      onChange={e => setEditedBody(e.target.value)}
                       rows={12}
                       className="w-full p-3 text-xs border border-border-default rounded bg-background-default text-text-primary font-mono leading-relaxed"
                     />
                   ) : (
-                    <div 
+                    <div
                       className="p-4 bg-background-subtle/50 rounded-xl border border-border-subtle text-xs leading-relaxed [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:text-xs [&_h3]:font-semibold [&_p]:text-xs [&_p]:my-2 [&_strong]:font-semibold [&_a]:text-primary-600 [&_a]:underline [&_*]:!text-text-primary [&_table]:!bg-background-surface [&_td]:!bg-background-surface [&_body]:!bg-background-default [&_img]:!max-w-[120px] [&_img]:!h-auto dark:[&_*]:!text-text-primary dark:[&_table]:!bg-background-surface dark:[&_td]:!bg-background-surface dark:[&_body]:!bg-background-default"
                       dangerouslySetInnerHTML={{ __html: emailDraft.body }}
                     />

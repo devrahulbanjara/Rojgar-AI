@@ -61,7 +61,12 @@ class JobVectorService:
             return "Unknown Organization"
         return job.organization.name
 
-    async def index_job(self, job: JobPosting, db: AsyncSession | None = None) -> bool:
+    async def index_job(self, job: JobPosting) -> bool:
+        """
+        Index a job in the vector database.
+        Note: This method does NOT update the is_indexed flag in the database.
+        The caller is responsible for updating the database after successful indexing.
+        """
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized")
             return False
@@ -90,16 +95,14 @@ class JobVectorService:
             }
             doc = Document(page_content=text_content, metadata=metadata)
             await self.qdrant.aadd_documents([doc], ids=[str(job.job_id)])
-            job.is_indexed = True
-            if db:
-                await db.flush()
-            logger.info(f"Successfully indexed job {job.job_id}")
+            logger.info(f"Successfully indexed job {job.job_id} in Qdrant")
             return True
         except Exception as e:
-            logger.error(f"Failed to index job {job.job_id}: {e}")
+            logger.error(f"Failed to index job {job.job_id} in Qdrant: {e}")
             return False
 
     async def index_all_pending_jobs(self, db: AsyncSession):
+        """Index all pending jobs and update their is_indexed flag"""
         if not self.qdrant:
             logger.warning("Qdrant vector store not initialized, skipping job indexing")
             return
@@ -109,7 +112,7 @@ class JobVectorService:
                 selectinload(JobPosting.job_description),
                 selectinload(JobPosting.organization),
             )
-            .where(JobPosting.is_indexed == False, JobPosting.status == "active")
+            .where(JobPosting.is_indexed.is_(False), JobPosting.status == "active")
         )
         result = await db.execute(stmt)
         pending_jobs = result.scalars().all()
@@ -124,7 +127,8 @@ class JobVectorService:
         successful = 0
         failed = 0
         for job in pending_jobs:
-            if await self.index_job(job, db):
+            if await self.index_job(job):
+                job.is_indexed = True
                 successful += 1
             else:
                 failed += 1

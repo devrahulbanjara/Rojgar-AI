@@ -137,7 +137,9 @@ class JobCreate(JobCreateUpdateBase):
 
 class JobUpdate(JobCreateUpdateBase):
     title: Annotated[str | None, "Job title"] = None
-    locationType: Annotated[str | None, "Location type"] = None
+    location_type: Annotated[str | None, "Location type"] = Field(
+        default=None, alias="locationType"
+    )
     currency: Annotated[str | None, "Salary currency"] = None
     job_summary: Annotated[str | None, "Job summary"] = None
     job_responsibilities: Annotated[list[str] | None, "Job responsibilities"] = None

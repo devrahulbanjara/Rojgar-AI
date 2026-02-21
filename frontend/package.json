@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check-all": "npm run lint && npm run format",
     "type-check": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
     "clean": "rm -rf .next out dist"

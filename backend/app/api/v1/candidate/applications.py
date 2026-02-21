@@ -43,7 +43,7 @@ async def get_my_applications(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch applications: {e!s}",
-        )
+        ) from e
 
 
 @router.get("/applications/{application_id}", response_model=ApplicationResponse)
@@ -110,4 +110,4 @@ async def create_application(
         status_code = status.HTTP_400_BAD_REQUEST
         if "already applied" in error_msg.lower():
             status_code = status.HTTP_409_CONFLICT
-        raise HTTPException(status_code=status_code, detail=error_msg)
+        raise HTTPException(status_code=status_code, detail=error_msg) from e

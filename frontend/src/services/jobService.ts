@@ -171,9 +171,12 @@ export class JobService {
     jobId: string,
     directSend: boolean = false
   ): Promise<{ success: boolean; drafts_count: number }> {
-    return apiClient.post<{ success: boolean; drafts_count: number }>(jobEndpoints.prepareEmails(jobId), {
-      direct_send: directSend,
-    })
+    return apiClient.post<{ success: boolean; drafts_count: number }>(
+      jobEndpoints.prepareEmails(jobId),
+      {
+        direct_send: directSend,
+      }
+    )
   }
 
   static async getEmailDrafts(jobId: string): Promise<EmailDraft[]> {
@@ -181,7 +184,10 @@ export class JobService {
   }
 
   static async sendAllEmails(jobId: string): Promise<{ success: boolean; sent_count: number }> {
-    return apiClient.post<{ success: boolean; sent_count: number }>(jobEndpoints.sendAllEmails(jobId), {})
+    return apiClient.post<{ success: boolean; sent_count: number }>(
+      jobEndpoints.sendAllEmails(jobId),
+      {}
+    )
   }
 
   static async updateDraft(
@@ -194,18 +200,14 @@ export class JobService {
     )
   }
 
-  static async sendSingleEmail(
-    draftId: string
-  ): Promise<{ success: boolean; message: string }> {
+  static async sendSingleEmail(draftId: string): Promise<{ success: boolean; message: string }> {
     return apiClient.post<{ success: boolean; message: string }>(
       jobEndpoints.sendSingleEmail(draftId),
       {}
     )
   }
 
-  static async discardDraft(
-    draftId: string
-  ): Promise<{ success: boolean; message: string }> {
+  static async discardDraft(draftId: string): Promise<{ success: boolean; message: string }> {
     return apiClient.delete<{ success: boolean; message: string }>(
       jobEndpoints.discardDraft(draftId)
     )

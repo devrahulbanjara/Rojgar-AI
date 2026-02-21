@@ -41,7 +41,7 @@ async def get_all_candidates(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     skip = (page - 1) * limit
     return await candidate_service.get_organization_candidates(
@@ -73,7 +73,7 @@ async def search_candidates(
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     if not q or len(q.strip()) < 2:
         raise HTTPException(
@@ -130,7 +130,7 @@ async def get_application_resume_detail(
             if "Access denied" in str(e)
             else status.HTTP_400_BAD_REQUEST
         )
-        raise HTTPException(status_code=status_code, detail=str(e))
+        raise HTTPException(status_code=status_code, detail=str(e)) from e
 
 
 @router.patch(
@@ -162,4 +162,4 @@ async def update_application(
             if "Access denied" in str(e)
             else status.HTTP_400_BAD_REQUEST
         )
-        raise HTTPException(status_code=status_code, detail=str(e))
+        raise HTTPException(status_code=status_code, detail=str(e)) from e

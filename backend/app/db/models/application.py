@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,6 +12,9 @@ from app.db.base import Base
 from .job import JobPosting
 from .organization import Organization
 from .resume import Resume
+
+if TYPE_CHECKING:
+    from .candidate import CandidateProfile
 
 
 class ApplicationStatus(StrEnum):

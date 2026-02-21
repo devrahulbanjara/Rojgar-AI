@@ -6,7 +6,7 @@ from app.core.config import settings
 
 
 def send_interview_email(
-    to_email: str, candidate_name: str, html_content: str, subject: str = None
+    to_email: str, candidate_name: str, html_content: str, subject: str | None = None
 ) -> dict:
     try:
         msg = MIMEMultipart("alternative")
