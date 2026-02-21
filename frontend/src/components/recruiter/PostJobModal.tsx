@@ -59,7 +59,7 @@ export function PostJobModal({
       <div
         className={cn(
           'relative bg-background-surface rounded-3xl shadow-2xl border border-background-surface/20',
-          'max-h-[90vh] overflow-hidden flex flex-col',
+          'max-h-[92vh] overflow-hidden flex flex-col',
           'animate-in zoom-in-95 duration-300 ease-out',
           'w-[900px] max-w-[95vw]'
         )}
@@ -101,7 +101,10 @@ export function PostJobModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto bg-background-subtle">
+        <div
+          className="flex-1 overflow-y-auto bg-background-subtle"
+          style={{ maxHeight: 'calc(92vh - 140px)' }}
+        >
           <JobCreationWizard
             mode={initialMode || 'agent'}
             onBack={onClose}

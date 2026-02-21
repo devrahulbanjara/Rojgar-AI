@@ -125,14 +125,12 @@ export function useForm<T extends Record<string, unknown>>(
               if (validationError) {
                 return { ...prev, [field]: validationError }
               } else {
-                 
                 const { [field]: _, ...rest } = prev
                 return rest
               }
             })
           } else {
             setErrors(prev => {
-               
               const { [field]: _, ...rest } = prev
               return rest
             })
@@ -140,7 +138,6 @@ export function useForm<T extends Record<string, unknown>>(
         } else {
           setErrors(prev => {
             if (prev[field]) {
-               
               const { [field]: _, ...rest } = prev
               return rest
             }

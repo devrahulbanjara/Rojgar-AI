@@ -20,19 +20,19 @@ services:
     volumes:
       - ./postgres_data:/var/lib/postgresql
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: convexhire-pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: rdbanjara08@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: password123
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+#   pgadmin:
+#     image: dpage/pgadmin4
+#     container_name: convexhire-pgadmin
+#     restart: always
+#     environment:
+#       PGADMIN_DEFAULT_EMAIL: rdbanjara08@gmail.com
+#       PGADMIN_DEFAULT_PASSWORD: password123
+#     ports:
+#       - "5050:80"
+#     depends_on:
+#       - postgres
+#     volumes:
+#       - pgadmin_data:/var/lib/pgadmin
 
-volumes:
-  pgadmin_data:
+# volumes:
+#   pgadmin_data:

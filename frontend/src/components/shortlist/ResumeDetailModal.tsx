@@ -1,5 +1,4 @@
 import React from 'react'
-import { createPortal } from 'react-dom'
 import {
   X,
   MapPin,
@@ -10,14 +9,13 @@ import {
   User,
   Briefcase,
   Wrench,
-  Building,
   Globe,
 } from 'lucide-react'
 import { SiGithub, SiLinkedin } from 'react-icons/si'
 import { UserAvatar } from '../ui/UserAvatar'
 import { LoadingSpinner } from '../common'
 import { useResume } from '../../hooks/useResume'
-
+import { Dialog } from '../ui/dialog'
 import { Badge } from '../ui'
 
 interface ResumeDetailModalProps {
@@ -77,18 +75,14 @@ export function ResumeDetailModal({
 
   if (!isOpen) return null
 
-  return createPortal(
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm animate-in fade-in duration-200 bg-text-primary/40"
-      onClick={onClose}
+  return (
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      className="max-w-[900px] mx-4"
+      showCloseButton={false}
     >
-      <div
-        className="bg-background-surface w-full mx-4 max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200 ease-out rounded-[5px] shadow-2xl"
-        style={{
-          maxWidth: '900px',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
+      <div className="max-h-[90vh] overflow-hidden w-full max-w-[900px] p-0 flex flex-col bg-background-surface rounded-[5px]">
         {/* Header */}
         <div className="px-6 py-5 border-b border-border-subtle bg-background-surface">
           <div className="flex items-start justify-between gap-4">
@@ -97,9 +91,7 @@ export function ResumeDetailModal({
                 <UserAvatar name={candidateName} src={candidatePhoto} className="w-14 h-14" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary mb-1">
-                  {candidateName}
-                </h2>
+                <h2 className="text-xl font-bold text-text-primary mb-1">{candidateName}</h2>
                 {resume?.target_job_title && (
                   <Badge variant="subtle" colorPalette="blue" className="text-xs">
                     {resume.target_job_title}
@@ -159,7 +151,9 @@ export function ResumeDetailModal({
                       Professional Summary
                     </h4>
                   </div>
-                  <p className="text-sm text-text-secondary leading-relaxed">{resume.custom_summary}</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    {resume.custom_summary}
+                  </p>
                 </div>
               )}
 
@@ -186,7 +180,8 @@ export function ResumeDetailModal({
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-text-tertiary">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {formatDate(exp.start_date)} - {exp.is_current ? 'Present' : formatDate(exp.end_date)}
+                            {formatDate(exp.start_date)} -{' '}
+                            {exp.is_current ? 'Present' : formatDate(exp.end_date)}
                           </span>
                           {exp.location && (
                             <span className="flex items-center gap-1">
@@ -196,7 +191,9 @@ export function ResumeDetailModal({
                           )}
                         </div>
                         {exp.description && (
-                          <p className="text-sm text-text-secondary mt-2 leading-relaxed">{exp.description}</p>
+                          <p className="text-sm text-text-secondary mt-2 leading-relaxed">
+                            {exp.description}
+                          </p>
                         )}
                       </div>
                     ))}
@@ -218,14 +215,20 @@ export function ResumeDetailModal({
                   </div>
                   <div className="space-y-4">
                     {resume.educations.map(edu => (
-                      <div key={edu.resume_education_id} className="border-l-2 border-border-subtle pl-4 pb-4 last:pb-0">
+                      <div
+                        key={edu.resume_education_id}
+                        className="border-l-2 border-border-subtle pl-4 pb-4 last:pb-0"
+                      >
                         <h5 className="font-bold text-text-primary">{edu.degree}</h5>
-                        <p className="text-sm text-text-secondary font-medium">{edu.college_name}</p>
+                        <p className="text-sm text-text-secondary font-medium">
+                          {edu.college_name}
+                        </p>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-text-tertiary">
                           {edu.start_date && (
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
-                              {formatDate(edu.start_date)} - {edu.is_current ? 'Present' : formatDate(edu.end_date)}
+                              {formatDate(edu.start_date)} -{' '}
+                              {edu.is_current ? 'Present' : formatDate(edu.end_date)}
                             </span>
                           )}
                           {edu.location && (
@@ -255,7 +258,12 @@ export function ResumeDetailModal({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {resume.skills.map(skill => (
-                      <Badge key={skill.resume_skill_id} variant="subtle" colorPalette="blue" className="text-xs">
+                      <Badge
+                        key={skill.resume_skill_id}
+                        variant="subtle"
+                        colorPalette="blue"
+                        className="text-xs"
+                      >
                         {skill.skill_name}
                       </Badge>
                     ))}
@@ -277,9 +285,14 @@ export function ResumeDetailModal({
                   </div>
                   <div className="space-y-4">
                     {resume.certifications.map(cert => (
-                      <div key={cert.resume_certification_id} className="border-l-2 border-border-subtle pl-4 pb-4 last:pb-0">
+                      <div
+                        key={cert.resume_certification_id}
+                        className="border-l-2 border-border-subtle pl-4 pb-4 last:pb-0"
+                      >
                         <h5 className="font-bold text-text-primary">{cert.certification_name}</h5>
-                        <p className="text-sm text-text-secondary font-medium">{cert.issuing_body}</p>
+                        <p className="text-sm text-text-secondary font-medium">
+                          {cert.issuing_body}
+                        </p>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-text-tertiary">
                           {cert.issue_date && (
                             <span className="flex items-center gap-1">
@@ -336,8 +349,12 @@ export function ResumeDetailModal({
                         >
                           <div className="flex-shrink-0">{getSocialIcon(link.type)}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-xs text-text-primary">{getPlatformName(link.type)}</div>
-                            <div className="text-[10px] text-text-tertiary truncate">{cleanUrl}</div>
+                            <div className="font-semibold text-xs text-text-primary">
+                              {getPlatformName(link.type)}
+                            </div>
+                            <div className="text-[10px] text-text-tertiary truncate">
+                              {cleanUrl}
+                            </div>
                           </div>
                           <ExternalLink className="w-3 h-3 text-text-muted group-hover:text-primary-600 transition-colors flex-shrink-0" />
                         </a>
@@ -350,7 +367,6 @@ export function ResumeDetailModal({
           )}
         </div>
       </div>
-    </div>,
-    document.body
+    </Dialog>
   )
 }

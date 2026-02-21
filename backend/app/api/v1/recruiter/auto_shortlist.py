@@ -28,7 +28,7 @@ async def get_auto_shortlist(
             )
         return {"auto_shortlist": status_val}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
 
 @router.put("/{job_id}/toggle", status_code=status.HTTP_200_OK)
@@ -53,4 +53,4 @@ async def toggle_auto_shortlist(
             if "Only recruiters" in str(e)
             else status.HTTP_400_BAD_REQUEST
         )
-        raise HTTPException(status_code=status_code, detail=str(e))
+        raise HTTPException(status_code=status_code, detail=str(e)) from e

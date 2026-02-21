@@ -14,7 +14,8 @@ import {
   CircleCheck,
   Bookmark,
   Share2,
-  Sparkles,
+  Star,
+  Gift,
   Briefcase,
   Globe,
 } from 'lucide-react'
@@ -262,7 +263,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-warning-50 dark:bg-warning-900/30">
-                <Sparkles className="w-4 h-4 text-warning dark:text-warning-400" />
+                <Star className="w-4 h-4 text-warning dark:text-warning-400" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">Preferred</h2>
             </div>
@@ -281,7 +282,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30">
-                <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-300" />
+                <Gift className="w-4 h-4 text-violet-600 dark:text-violet-300" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">Compensation & Benefits</h2>
             </div>

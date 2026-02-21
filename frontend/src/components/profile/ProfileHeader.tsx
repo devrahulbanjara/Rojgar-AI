@@ -22,7 +22,7 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
             src={user.picture}
             className="w-24 h-24 text-3xl flex-shrink-0"
           />
-          
+
           <div className="flex-1 space-y-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-text-primary">

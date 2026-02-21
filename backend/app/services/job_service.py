@@ -1,15 +1,19 @@
 import uuid
-from datetime import date
+
+from fastapi import BackgroundTasks
 
 from app.core import get_datetime
 from app.core.authorization import verify_user_can_edit_job
+from app.core.current_datetime import get_today
+from app.core.logging_config import logger
 from app.db.models.job import JobDescription, JobPosting, ShortlistStatus
 from app.db.repositories.candidate_repo import CandidateProfileRepository
 from app.db.repositories.job_repo import JobDescriptionRepository, JobRepository
 from app.db.repositories.user_repo import UserRepository
+from app.db.session import AsyncSessionLocal
 from app.integrations.qdrant.vector_service import JobVectorService
 from app.services.recruiter.activity_events import ActivityEventEmitter
-from app.core.logging_config import logger
+from app.services.recruiter.skill_extraction_service import SkillExtractor
 
 VISIBLE_STATUSES = ["active"]
 
@@ -55,7 +59,6 @@ class JobService:
                     job_ids = raw_ids
                     order_by_date = False
             except Exception as e:
-
                 logger.warning(f"Vector search failed for recommendations: {e}")
                 job_ids = None
                 order_by_date = True
@@ -98,9 +101,13 @@ class JobService:
         )
 
     async def create_job(
-        self, job_data, user_id: uuid.UUID, organization_id: uuid.UUID
+        self,
+        job_data,
+        user_id: uuid.UUID,
+        organization_id: uuid.UUID,
+        background_tasks: BackgroundTasks | None = None,
     ):
-        # Create job description
+        # 1. Create Job Description
         job_description_id = uuid.uuid4()
         job_description = JobDescription(
             job_description_id=job_description_id,
@@ -114,7 +121,7 @@ class JobService:
         )
         await self.job_description_repo.create(job_description)
 
-        # Create job posting
+        # 2. Create Job Posting
         job_id = uuid.uuid4()
         application_deadline = job_data.application_deadline
         job_status = job_data.status if job_data.status else "active"
@@ -129,30 +136,42 @@ class JobService:
         )
         await self.job_repo.create(job_posting)
 
-        # Index job in vector service if active
-        if job_status == "active":
-            job_with_relations = await self.job_repo.get_with_details(job_id)
-            if job_with_relations:
-                await self.vector_service.index_job(
-                    job_with_relations, self.job_repo.db
-                )
+        # Commit the transaction NOW.
+        # This ensures background tasks (using different sessions) can see the data.
+        await self.job_repo.db.commit()
 
-        # Get final job with relations and user info
-        job_posting_with_relations = await self.job_repo.get_with_details(job_id)
-        recruiter_user = await self.user_repo.get(user_id)
-        recruiter_name = recruiter_user.name if recruiter_user else None
-
-        # Emit activity event
-        if job_posting_with_relations:
-            await self.activity_emitter.emit_job_created(
-                organization_id=organization_id,
-                recruiter_name=recruiter_name or "System",
-                job_title=job_posting_with_relations.title,
+        # 3. Trigger Background Tasks using IDs only (safer for sessions)
+        if background_tasks and job_status == "active":
+            # Task 1: Vector indexing
+            background_tasks.add_task(
+                self._run_vector_indexing_task,
                 job_id=job_id,
-                timestamp=job_posting_with_relations.created_at,
             )
 
-        return job_posting_with_relations
+            # Task 2: Skill extraction
+            background_tasks.add_task(
+                self._run_skill_extraction_task,
+                job_description_id=job_description_id,
+                job_summary=job_data.job_summary,
+                responsibilities=job_data.job_responsibilities,
+                qualifications=job_data.required_qualifications or [],
+            )
+
+        # 4. Get the full object for return (it's already committed, so we just fetch)
+        job_with_relations = await self.job_repo.get_with_details(job_id)
+
+        # Emit activity (standard logic)
+        recruiter_user = await self.user_repo.get(user_id)
+        if job_with_relations:
+            await self.activity_emitter.emit_job_created(
+                organization_id=organization_id,
+                recruiter_name=recruiter_user.name if recruiter_user else "System",
+                job_title=job_with_relations.title,
+                job_id=job_id,
+                timestamp=job_with_relations.created_at,
+            )
+
+        return job_with_relations
 
     async def auto_expire_jobs(self) -> list[uuid.UUID]:
         """Auto-expire jobs and return IDs of jobs to shortlist"""
@@ -235,9 +254,10 @@ class JobService:
                 job_posting.job_id
             )
             if job_with_relations:
-                await self.vector_service.index_job(
-                    job_with_relations, self.job_repo.db
-                )
+                success = await self.vector_service.index_job(job_with_relations)
+                if success:
+                    job_with_relations.is_indexed = True
+                    await self.job_repo.db.commit()
 
         return await self.job_repo.get_with_details(updated_job.job_id)
 
@@ -270,8 +290,9 @@ class JobService:
             status=job_status,
             is_indexed=False,
             auto_shortlist=job_data.auto_shortlist,
+            shortlist_threshold=job_data.shortlist_threshold,
             shortlist_status=ShortlistStatus.NOT_STARTED,
-            posted_date=date.today(),
+            posted_date=get_today(),
             application_deadline=application_deadline,
             created_at=get_datetime(),
             updated_at=get_datetime(),
@@ -315,3 +336,67 @@ class JobService:
         new_status = not job.auto_shortlist
         updated_job = await self.job_repo.update_auto_shortlist(job_id, new_status)
         return updated_job.auto_shortlist if updated_job else None
+
+    async def _run_skill_extraction_task(
+        self,
+        job_description_id: uuid.UUID,
+        job_summary: str,
+        responsibilities: list[str],
+        qualifications: list[str],
+    ):
+        """Background task to extract skills from job description"""
+        logger.info(f"Background Task: Extracting skills for JD {job_description_id}")
+
+        # Process NLP (This is expensive, do it outside the DB session if possible)
+        skills = SkillExtractor.extract_skills(
+            job_summary, responsibilities, qualifications
+        )
+
+        if skills:
+            try:
+                async with AsyncSessionLocal() as db:
+                    repo = JobDescriptionRepository(db)
+                    # Fetch fresh JD object in this session
+                    jd = await repo.get(job_description_id)
+
+                    if jd:
+                        jd.extracted_skills = skills
+                        await db.commit()
+                        logger.success(
+                            f"Extracted {len(skills)} skills for JD {job_description_id}"
+                        )
+                    else:
+                        logger.error(
+                            f"JD {job_description_id} not found for skill update."
+                        )
+            except Exception as e:
+                logger.error(f"Database error in skill extraction task: {e}")
+        else:
+            logger.warning(f"No skills extracted for JD {job_description_id}")
+
+    async def _run_vector_indexing_task(self, job_id: uuid.UUID):
+        """Background task to index job in vector database"""
+        logger.info(f"Background Task: Indexing job {job_id} in vector database")
+
+        try:
+            # Use a fresh session to fetch the job with relations
+            async with AsyncSessionLocal() as db:
+                job_repo = JobRepository(db)
+                job = await job_repo.get_with_details(job_id)
+
+                if not job:
+                    logger.error(f"Job {job_id} not found in background task.")
+                    return
+
+                # Index in vector database
+                success = await self.vector_service.index_job(job)
+
+                if success:
+                    job.is_indexed = True
+                    await db.commit()
+                    logger.success(f"Successfully indexed and updated job {job_id}")
+                else:
+                    logger.error(f"Failed to index job {job_id} in vector store.")
+
+        except Exception as e:
+            logger.error(f"Error in vector indexing task for job {job_id}: {e}")

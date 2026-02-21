@@ -18,8 +18,8 @@ async def authenticate_websocket_user(
         user_id, entity_type = verify_token(token)
         if entity_type != "user":
             raise ValueError("Invalid token type")
-    except Exception:
-        raise ValueError("Invalid token")
+    except Exception as e:
+        raise ValueError("Invalid token") from e
     result = await db.execute(select(User).where(User.user_id == user_id))
     user = result.scalar_one_or_none()
     if not user:
