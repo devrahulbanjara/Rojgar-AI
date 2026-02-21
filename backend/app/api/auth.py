@@ -62,8 +62,8 @@ async def signup(
     )
     return TokenResponse(
         access_token=token,
-        token_type="bearer",
-        user=new_user,  # noqa: S106
+        token_type="bearer",  # noqa: S106
+        user=new_user,
     )
 
 
@@ -97,8 +97,8 @@ async def login(
     )
     return TokenResponse(
         access_token=token,
-        token_type="bearer",
-        user=user,  # noqa: S106
+        token_type="bearer",  # noqa: S106
+        user=user,
     )
 
 
