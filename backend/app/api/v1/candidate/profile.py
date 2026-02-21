@@ -267,6 +267,22 @@ async def add_social_link(
     return social_link
 
 
+@router.post("/social-links/bulk", response_model=list[schemas.SocialLinkResponse])
+@limiter.limit(settings.RATE_LIMIT_API)
+async def add_social_links_bulk(
+    request: Request,
+    profile_service: Annotated[ProfileService, Depends(get_profile_service)],
+    data: list[schemas.SocialLinkBase],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    social_links = await profile_service.add_social_links_bulk(current_user, data)
+    if not social_links:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found"
+        )
+    return social_links
+
+
 @router.delete("/social-links/{item_id}")
 @limiter.limit(settings.RATE_LIMIT_API)
 async def delete_social_link(

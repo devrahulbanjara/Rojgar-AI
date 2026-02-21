@@ -460,6 +460,17 @@ const config: Config = {
             transform: 'rotate(360deg)',
           },
         },
+        shine: {
+          '0%': {
+            backgroundPosition: '0% 0%',
+          },
+          '50%': {
+            backgroundPosition: '100% 100%',
+          },
+          '100%': {
+            backgroundPosition: '0% 0%',
+          },
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -485,6 +496,7 @@ const config: Config = {
         blink: 'blink 1s step-end infinite',
         'ai-pulse': 'ai-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin-slow 20s linear infinite',
+        shine: 'shine var(--duration, 14s) linear infinite',
       },
     },
   },

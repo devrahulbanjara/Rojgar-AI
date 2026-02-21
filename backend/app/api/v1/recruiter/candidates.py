@@ -2,6 +2,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from loguru import logger
 
 from app.api.dependencies import get_recruiter_candidate_service
 from app.core import get_current_active_user
@@ -34,17 +35,62 @@ async def get_all_candidates(
     current_user: Annotated[User, Depends(get_current_active_user)],
     page: int = 1,
     limit: int = 20,
+    status: str | None = None,
 ):
 
     try:
         organization_id = require_recruiter_with_organization(current_user)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     skip = (page - 1) * limit
     return await candidate_service.get_organization_candidates(
-        organization_id=organization_id, skip=skip, limit=limit
+        organization_id=organization_id, skip=skip, limit=limit, status_filter=status
     )
+
+
+@router.get(
+    "/search",
+    response_model=RecruiterCandidateListResponse,
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit(settings.RATE_LIMIT_API)
+async def search_candidates(
+    request: Request,
+    candidate_service: Annotated[
+        RecruiterCandidateService, Depends(get_recruiter_candidate_service)
+    ],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    q: str,
+    page: int = 1,
+    limit: int = 20,
+):
+    """Search candidates by name, email, skill, or job title"""
+    logger.info(
+        f"Search endpoint called with query: '{q}', page: {page}, limit: {limit}"
+    )
+
+    try:
+        organization_id = require_recruiter_with_organization(current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+
+    if not q or len(q.strip()) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Search query must be at least 2 characters",
+        )
+
+    skip = (page - 1) * limit
+    result = await candidate_service.search_candidates(
+        organization_id=organization_id, query=q.strip(), skip=skip, limit=limit
+    )
+
+    logger.info(
+        f"Search returned {len(result.candidates)} candidates out of {result.total} total"
+    )
+
+    return result
 
 
 @router.get(
@@ -84,7 +130,7 @@ async def get_application_resume_detail(
             if "Access denied" in str(e)
             else status.HTTP_400_BAD_REQUEST
         )
-        raise HTTPException(status_code=status_code, detail=str(e))
+        raise HTTPException(status_code=status_code, detail=str(e)) from e
 
 
 @router.patch(
@@ -116,4 +162,4 @@ async def update_application(
             if "Access denied" in str(e)
             else status.HTTP_400_BAD_REQUEST
         )
-        raise HTTPException(status_code=status_code, detail=str(e))
+        raise HTTPException(status_code=status_code, detail=str(e)) from e
