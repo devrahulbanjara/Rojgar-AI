@@ -27,7 +27,19 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
     professional_summary: profile.professional_summary || '',
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Sync formData with profile when profile prop changes
+  React.useEffect(() => {
+    setFormData({
+      name: profile.full_name || '',
+      phone: profile.phone || '',
+      location_city: profile.location_city || '',
+      location_country: profile.location_country || '',
+      professional_headline: profile.professional_headline || '',
+      professional_summary: profile.professional_summary || '',
+    })
+  }, [profile])
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSaving(true)
 
@@ -41,7 +53,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
         professional_summary: formData.professional_summary || undefined,
       }
 
-      const updatedProfile = await profileService.updateProfile(updateData)
+      const updatedProfile = await profileService.syncProfile(updateData)
       onUpdate(updatedProfile)
       toast.success('Profile updated successfully!')
     } catch (err) {

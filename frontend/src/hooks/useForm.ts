@@ -37,7 +37,7 @@ export interface FormActions<T extends Record<string, unknown>> {
   handleBlur: (field: string) => void
   handleSubmit: (
     onSubmit?: (values: T) => void | Promise<void>
-  ) => (e?: React.FormEvent) => Promise<void>
+  ) => (e?: React.SubmitEvent<HTMLFormElement>) => Promise<void>
   validate: () => boolean
   validateField: (field: keyof T) => string | undefined
 }
@@ -47,7 +47,7 @@ export function useForm<T extends Record<string, unknown>>(
 ): [FormState<T>, FormActions<T>] {
   const {
     initialValues,
-    validationRules = {},
+    validationRules = {} as Partial<Record<keyof T, ValidationRule<T[keyof T]>[]>>,
     onSubmit,
     validateOnChange = true,
     validateOnBlur = true,
@@ -62,23 +62,27 @@ export function useForm<T extends Record<string, unknown>>(
   const isDirty = JSON.stringify(values) !== JSON.stringify(initialValuesRef.current)
 
   const isValid = Object.keys(validationRules || {}).every(field => {
-    const fieldRules = validationRules?.[field as keyof T]
+    const fieldKey = field as keyof T
+    const fieldRules = validationRules[fieldKey]
     if (!fieldRules) return true
 
-    const fieldValue = values[field as keyof T]
+    const fieldValue = values[fieldKey]
     return fieldRules.every(
-      (rule: ValidationRule<T>) => !rule(fieldValue, values as Record<string, unknown>)
+      (rule: ValidationRule<any>) => !rule(fieldValue, values as Record<string, unknown>)
     )
   })
 
   const validateField = useCallback(
     (field: keyof T): string | undefined => {
-      const fieldRules = validationRules?.[field]
+      const fieldRules = validationRules[field]
       if (!fieldRules) return undefined
 
       const fieldValue = values[field] as T[keyof T]
       for (const rule of fieldRules) {
-        const error = rule(fieldValue as T[keyof T], values as Record<string, unknown>)
+        const error = (rule as ValidationRule<any>)(
+          fieldValue,
+          values as Record<string, unknown>
+        )
         if (error) return error
       }
       return undefined
@@ -111,7 +115,7 @@ export function useForm<T extends Record<string, unknown>>(
         const newValues = { ...prev, [field]: value }
 
         if (validateOnChange) {
-          const fieldRules = validationRules?.[field]
+          const fieldRules = validationRules[field]
           if (fieldRules) {
             let validationError: string | undefined
             for (const rule of fieldRules) {
@@ -125,21 +129,24 @@ export function useForm<T extends Record<string, unknown>>(
               if (validationError) {
                 return { ...prev, [field]: validationError }
               } else {
-                const { [field]: _, ...rest } = prev
-                return rest
+                const newErrors = { ...prev }
+                delete newErrors[field]
+                return newErrors
               }
             })
           } else {
             setErrors(prev => {
-              const { [field]: _, ...rest } = prev
-              return rest
+              const newErrors = { ...prev }
+              delete newErrors[field]
+              return newErrors
             })
           }
         } else {
           setErrors(prev => {
             if (prev[field]) {
-              const { [field]: _, ...rest } = prev
-              return rest
+              const newErrors = { ...prev }
+              delete newErrors[field]
+              return newErrors
             }
             return prev
           })
@@ -213,7 +220,7 @@ export function useForm<T extends Record<string, unknown>>(
 
   const handleSubmit = useCallback(
     (customOnSubmit?: (values: T) => void | Promise<void>) => {
-      return async (e?: React.FormEvent) => {
+      return async (e?: React.SubmitEvent<HTMLFormElement>) => {
         if (e) {
           e.preventDefault()
         }

@@ -218,7 +218,10 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                         {company.description ||
                           `${company.name} is looking for talented individuals to join their team.`}
                       </p>
-                      {(company.website || company.location || company.industry) && (
+                      {(company.website || 
+                        ('location' in company && company.location) || 
+                        ('location_city' in company && company.location_city) || 
+                        company.industry) && (
                         <div className="flex gap-3 mt-4">
                           {company.website && (
                             <a

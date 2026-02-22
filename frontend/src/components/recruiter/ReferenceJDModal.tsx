@@ -119,8 +119,8 @@ export function ReferenceJDModal({
               )}
 
               {(jd.required_qualifications || jd.requiredSkillsAndExperience) &&
-                (jd.required_qualifications?.length > 0 ||
-                  jd.requiredSkillsAndExperience?.length > 0) && (
+                ((jd.required_qualifications?.length ?? 0) > 0 ||
+                  (jd.requiredSkillsAndExperience?.length ?? 0) > 0) && (
                   <Section
                     icon={<CheckCircle2 className="w-4 h-4" />}
                     title="Required Qualifications"
@@ -136,7 +136,7 @@ export function ReferenceJDModal({
                 )}
 
               {(jd.preferred || jd.niceToHave) &&
-                (jd.preferred?.length > 0 || jd.niceToHave?.length > 0) && (
+                ((jd.preferred?.length ?? 0) > 0 || (jd.niceToHave?.length ?? 0) > 0) && (
                   <Section icon={<Award className="w-4 h-4" />} title="Preferred">
                     <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                       {(jd.preferred || jd.niceToHave || []).map((skill, i) => (
@@ -147,7 +147,7 @@ export function ReferenceJDModal({
                 )}
 
               {(jd.compensation_and_benefits || jd.benefits) &&
-                (jd.compensation_and_benefits?.length > 0 || jd.benefits?.length > 0) && (
+                ((jd.compensation_and_benefits?.length ?? 0) > 0 || (jd.benefits?.length ?? 0) > 0) && (
                   <Section icon={<Gift className="w-4 h-4" />} title="Compensation & Benefits">
                     <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                       {(jd.compensation_and_benefits || jd.benefits || []).map((benefit, i) => (

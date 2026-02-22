@@ -43,15 +43,25 @@ export function SkillsExpertiseTab({
   certifications: initialCertifications,
 }: SkillsExpertiseTabProps) {
   const [skills, setSkills] = useState<Skill[]>(initialSkills)
+  const [certifications, setCertifications] = useState<Certification[]>(initialCertifications)
+
   const [isAddingSkill, setIsAddingSkill] = useState(false)
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null)
   const [skillForm, setSkillForm] = useState({
     skill_name: '',
   })
 
+  // Sync state with props when they change
+  React.useEffect(() => {
+    setSkills(initialSkills)
+  }, [initialSkills])
+
+  React.useEffect(() => {
+    setCertifications(initialCertifications)
+  }, [initialCertifications])
+
   const { confirm, Dialog } = useDeleteConfirm()
 
-  const [certifications, setCertifications] = useState<Certification[]>(initialCertifications)
   const [isAddingCert, setIsAddingCert] = useState(false)
   const [editingCertId, setEditingCertId] = useState<string | null>(null)
   const [certForm, setCertForm] = useState<CertificationCreate>({
@@ -64,28 +74,34 @@ export function SkillsExpertiseTab({
     does_not_expire: false,
   })
 
-  const handleAddSkill = async (e: React.FormEvent) => {
+  const handleAddSkill = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       const skillData: SkillCreate = {
         skill_name: skillForm.skill_name,
       }
 
+      let updatedSkills: { candidate_skill_id?: string; skill_name: string }[]
       if (editingSkillId) {
-        const updatedSkill = await profileService.updateSkill(editingSkillId, skillData)
-        setSkills(prev =>
-          prev.map(s =>
-            s.candidate_skill_id === editingSkillId ? (updatedSkill as unknown as Skill) : s
-          )
+        updatedSkills = skills.map(s =>
+          s.candidate_skill_id === editingSkillId
+            ? { candidate_skill_id: s.candidate_skill_id, ...skillData }
+            : { candidate_skill_id: s.candidate_skill_id, skill_name: s.skill_name }
         )
-        toast.success('Skill updated successfully!')
-        invalidateRecommendationsCache()
       } else {
-        const newSkill = await profileService.addSkill(skillData)
-        setSkills(prev => [...prev, newSkill as unknown as Skill])
-        toast.success('Skill added successfully!')
-        invalidateRecommendationsCache()
+        updatedSkills = [
+          ...skills.map(s => ({
+            candidate_skill_id: s.candidate_skill_id,
+            skill_name: s.skill_name,
+          })),
+          skillData,
+        ]
       }
+
+      const result = await profileService.syncProfile({ skills: updatedSkills })
+      setSkills(result.skills)
+      toast.success(editingSkillId ? 'Skill updated successfully!' : 'Skill added successfully!')
+      invalidateRecommendationsCache()
 
       setSkillForm({
         skill_name: '',
@@ -111,8 +127,11 @@ export function SkillsExpertiseTab({
       itemName: skillName,
       onConfirm: async () => {
         try {
-          await profileService.deleteSkill(id)
-          setSkills(prev => prev.filter(skill => skill.candidate_skill_id !== id))
+          const updatedSkills = skills
+            .filter(skill => skill.candidate_skill_id !== id)
+            .map(s => ({ candidate_skill_id: s.candidate_skill_id, skill_name: s.skill_name }))
+          const result = await profileService.syncProfile({ skills: updatedSkills })
+          setSkills(result.skills)
           toast.success('Skill deleted successfully!')
           invalidateRecommendationsCache()
 
@@ -135,7 +154,7 @@ export function SkillsExpertiseTab({
     })
   }
 
-  const handleAddCert = async (e: React.FormEvent) => {
+  const handleAddCert = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       const certData: CertificationCreate = {
@@ -146,21 +165,43 @@ export function SkillsExpertiseTab({
         expiration_date: certForm.expiration_date || undefined,
       }
 
+      let updatedCerts: (CertificationCreate & { candidate_certification_id?: string })[]
       if (editingCertId) {
-        const updatedCert = await profileService.updateCertification(editingCertId, certData)
-        setCertifications(prev =>
-          prev.map(c =>
-            c.candidate_certification_id === editingCertId
-              ? (updatedCert as unknown as Certification)
-              : c
-          )
+        updatedCerts = certifications.map(c =>
+          c.candidate_certification_id === editingCertId
+            ? { candidate_certification_id: c.candidate_certification_id, ...certData }
+            : {
+              candidate_certification_id: c.candidate_certification_id,
+              certification_name: c.certification_name,
+              issuing_body: c.issuing_body,
+              credential_id: c.credential_id,
+              credential_url: c.credential_url,
+              issue_date: c.issue_date,
+              expiration_date: c.expiration_date,
+              does_not_expire: c.does_not_expire,
+            }
         )
-        toast.success('Certification updated successfully!')
       } else {
-        const newCert = await profileService.addCertification(certData)
-        setCertifications(prev => [...prev, newCert as unknown as Certification])
-        toast.success('Certification added successfully!')
+        updatedCerts = [
+          ...certifications.map(c => ({
+            candidate_certification_id: c.candidate_certification_id,
+            certification_name: c.certification_name,
+            issuing_body: c.issuing_body,
+            credential_id: c.credential_id,
+            credential_url: c.credential_url,
+            issue_date: c.issue_date,
+            expiration_date: c.expiration_date,
+            does_not_expire: c.does_not_expire,
+          })),
+          certData,
+        ]
       }
+
+      const result = await profileService.syncProfile({ certifications: updatedCerts })
+      setCertifications(result.certifications)
+      toast.success(
+        editingCertId ? 'Certification updated successfully!' : 'Certification added successfully!'
+      )
 
       setCertForm({
         certification_name: '',
@@ -200,8 +241,20 @@ export function SkillsExpertiseTab({
       itemName: `${certName} from ${issuingBody}`,
       onConfirm: async () => {
         try {
-          await profileService.deleteCertification(id)
-          setCertifications(prev => prev.filter(cert => cert.candidate_certification_id !== id))
+          const updatedCerts = certifications
+            .filter(cert => cert.candidate_certification_id !== id)
+            .map(c => ({
+              candidate_certification_id: c.candidate_certification_id,
+              certification_name: c.certification_name,
+              issuing_body: c.issuing_body,
+              credential_id: c.credential_id,
+              credential_url: c.credential_url,
+              issue_date: c.issue_date,
+              expiration_date: c.expiration_date,
+              does_not_expire: c.does_not_expire,
+            }))
+          const result = await profileService.syncProfile({ certifications: updatedCerts })
+          setCertifications(result.certifications)
           toast.success('Certification deleted successfully!')
           if (editingCertId === id) {
             setIsAddingCert(false)
@@ -231,7 +284,7 @@ export function SkillsExpertiseTab({
   return (
     <div className="px-10 py-8">
       <div className="space-y-8">
-        {}
+        { }
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-default">
             <div>
@@ -253,7 +306,7 @@ export function SkillsExpertiseTab({
             )}
           </div>
 
-          {}
+          { }
           {isAddingSkill && (
             <form
               onSubmit={handleAddSkill}
@@ -301,14 +354,14 @@ export function SkillsExpertiseTab({
             </form>
           )}
 
-          {}
+          { }
           {skills.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
                 <Settings className="w-8 h-8 text-text-muted" />
               </div>
-              <h5 className="text-lg font-semibold text-text-primary mb-2">No skills added yet</h5>
-              <p className="text-text-tertiary max-w-sm mx-auto">
+              <h5 className="text-base font-semibold text-text-primary mb-2">No skills added yet</h5>
+              <p className="text-sm text-text-tertiary max-w-sm mx-auto">
                 Add your key skills to help recruiters find you for relevant opportunities.
               </p>
               {!isAddingSkill && (
@@ -326,21 +379,25 @@ export function SkillsExpertiseTab({
               {skills.map(skill => (
                 <div
                   key={skill.candidate_skill_id}
-                  className="group inline-flex items-center gap-2 px-4 py-2.5 bg-ai-50 dark:bg-ai-950/30 text-ai-700 dark:text-ai-300 rounded border border-ai-200 dark:border-ai-800 hover:bg-ai-100 dark:hover:bg-ai-900/30 hover:border-ai-300 dark:hover:border-ai-700 hover:shadow-sm transition-all duration-200"
+                  className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-background-surface border border-border-default rounded-lg hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-sm transition-all duration-200"
                 >
-                  <span className="font-semibold">{skill.skill_name}</span>
-                  <div className="flex items-center gap-1 border-l border-ai-200 pl-2 ml-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <span className="text-sm font-medium text-text-primary">
+                    {skill.skill_name}
+                  </span>
+                  
+                  {/* Compact action buttons that slide in from the right */}
+                  <div className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-all duration-200 -mr-2 group-hover:mr-0">
                     <button
                       onClick={() => handleEditSkill(skill)}
-                      className="flex items-center justify-center w-6 h-6 text-ai-600 hover:bg-background-surface hover:shadow-sm rounded-lg transition-all duration-200"
-                      title="Edit skill"
+                      className="flex items-center justify-center w-6 h-6 text-text-tertiary hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/50 rounded transition-all duration-150"
+                      title="Edit"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteSkill(skill.candidate_skill_id, skill.skill_name)}
-                      className="flex items-center justify-center w-6 h-6 text-ai-600 hover:text-error-600 hover:bg-background-surface hover:shadow-sm rounded-lg transition-all duration-200"
-                      title="Delete skill"
+                      className="flex items-center justify-center w-6 h-6 text-text-tertiary hover:text-error-600 hover:bg-error-50 dark:hover:bg-error-950/50 rounded transition-all duration-150"
+                      title="Delete"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -351,7 +408,7 @@ export function SkillsExpertiseTab({
           )}
         </div>
 
-        {}
+        { }
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-default">
             <div>
@@ -383,7 +440,7 @@ export function SkillsExpertiseTab({
             )}
           </div>
 
-          {}
+          { }
           {isAddingCert && (
             <form
               onSubmit={handleAddCert}
@@ -526,16 +583,16 @@ export function SkillsExpertiseTab({
             </form>
           )}
 
-          {}
+          { }
           {certifications.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
                 <Award className="w-8 h-8 text-text-muted" />
               </div>
-              <h5 className="text-lg font-semibold text-text-primary mb-2">
+              <h5 className="text-base font-semibold text-text-primary mb-2">
                 No certifications added yet
               </h5>
-              <p className="text-text-tertiary max-w-sm mx-auto">
+              <p className="text-sm text-text-tertiary max-w-sm mx-auto">
                 Add your licenses and certifications to demonstrate your expertise.
               </p>
               {!isAddingCert && (

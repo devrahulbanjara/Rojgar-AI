@@ -272,23 +272,23 @@ export const SkeletonProfileHeader: React.FC<{ className?: string }> = ({ classN
 export const SkeletonProfileTab: React.FC<{ className?: string }> = ({ className }) => (
   <div
     className={cn(
-      'bg-background-surface rounded-2xl border border-border-default p-1 shadow-sm',
+      'bg-transparent border-b border-border-subtle w-full',
       className
     )}
   >
-    <div className="flex overflow-x-auto gap-1">
-      {[1, 2, 3, 4].map(index => (
+    <div className="flex gap-8">
+      {[1, 2, 3].map(index => (
         <div
           key={index}
-          className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl"
+          className="flex items-center gap-2 px-0 pb-3"
         >
           <SkeletonLoader
             variant="circular"
-            width={20}
-            height={20}
+            width={16}
+            height={16}
             className="bg-background-subtle"
           />
-          <SkeletonLoader variant="text" width={100} height={14} className="bg-background-subtle" />
+          <SkeletonLoader variant="text" width={120} height={14} className="bg-background-subtle" />
         </div>
       ))}
     </div>

@@ -313,32 +313,32 @@ export default function ResumeListPage() {
     try {
       const resume = await resumeService.getResumeById(id)
       const duplicateData: ResumeCreate = {
-        target_job_title: resume.target_job_title ? `${resume.target_job_title} (Copy)` : null,
+        target_job_title: resume.target_job_title ? `${resume.target_job_title} (Copy)` : undefined,
         custom_summary: resume.custom_summary,
         work_experiences: resume.work_experiences.map(exp => ({
           job_title: exp.job_title,
           company: exp.company,
-          location: exp.location || null,
-          start_date: exp.start_date || null,
-          end_date: exp.end_date || null,
+          location: exp.location || undefined,
+          start_date: exp.start_date || undefined,
+          end_date: exp.end_date || undefined,
           is_current: exp.is_current,
-          description: exp.description || null,
+          description: exp.description || undefined,
         })),
         educations: resume.educations.map(edu => ({
           college_name: edu.college_name,
           degree: edu.degree,
-          location: edu.location || null,
-          start_date: edu.start_date || null,
-          end_date: edu.end_date || null,
+          location: edu.location || undefined,
+          start_date: edu.start_date || undefined,
+          end_date: edu.end_date || undefined,
           is_current: edu.is_current,
         })),
         skills: resume.skills.map(s => ({ skill_name: s.skill_name })),
         certifications: resume.certifications.map(c => ({
           certification_name: c.certification_name,
           issuing_body: c.issuing_body,
-          credential_url: c.credential_url || null,
-          issue_date: c.issue_date || null,
-          expiration_date: c.expiration_date || null,
+          credential_url: c.credential_url || undefined,
+          issue_date: c.issue_date || undefined,
+          expiration_date: c.expiration_date || undefined,
           does_not_expire: c.does_not_expire,
         })),
         social_links: resume.social_links.map(l => ({

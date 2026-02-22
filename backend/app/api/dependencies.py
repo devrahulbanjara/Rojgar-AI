@@ -251,30 +251,10 @@ def get_profile_service(
     candidate_profile_repo: CandidateProfileRepository = Depends(
         get_candidate_profile_repo
     ),
-    candidate_skills_repo: CandidateSkillsRepository = Depends(
-        get_candidate_skills_repo
-    ),
-    candidate_work_experience_repo: CandidateWorkExperienceRepository = Depends(
-        get_candidate_work_experience_repo
-    ),
-    candidate_education_repo: CandidateEducationRepository = Depends(
-        get_candidate_education_repo
-    ),
-    candidate_certification_repo: CandidateCertificationRepository = Depends(
-        get_candidate_certification_repo
-    ),
-    candidate_social_link_repo: CandidateSocialLinkRepository = Depends(
-        get_candidate_social_link_repo
-    ),
     user_repo: UserRepository = Depends(get_user_repo),
 ) -> ProfileService:
     return ProfileService(
         candidate_profile_repo,
-        candidate_skills_repo,
-        candidate_work_experience_repo,
-        candidate_education_repo,
-        candidate_certification_repo,
-        candidate_social_link_repo,
         user_repo,
     )
 

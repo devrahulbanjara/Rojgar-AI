@@ -16,11 +16,14 @@ interface TokenResponse {
     email: string
     name: string
     picture?: string
-    role?: 'candidate' | 'recruiter'
+    role?: 'candidate' | 'recruiter' | 'organization'
     company_id?: string
     is_active: boolean
     created_at: string
     updated_at: string
+    userType?: string
+    organization_id?: string
+    organization?: any
   }
 }
 
@@ -65,22 +68,23 @@ class AuthService {
         if (orgResponse.ok) {
           const orgData = await orgResponse.json()
           return {
-            id: orgData.id.toString(),
+            id: String(orgData.id),
             name: orgData.name,
             email: orgData.email,
             userType: 'organization',
             role: 'organization',
-            organization_id: orgData.id.toString(),
+            organization_id: String(orgData.id),
             organization: {
-              id: orgData.id.toString(),
+              id: String(orgData.id),
               name: orgData.name,
               location_city: orgData.location_city,
               location_country: orgData.location_country,
               website: orgData.website,
               industry: orgData.industry,
             },
-            createdAt: orgData.created_at,
-            updatedAt: orgData.updated_at,
+            is_active: true,
+            created_at: orgData.created_at,
+            updated_at: orgData.updated_at,
           } as TokenResponse['user']
         }
       }
@@ -134,22 +138,23 @@ class AuthService {
       const orgData = await orgResponse.json()
       return {
         user: {
-          id: orgData.organization.id.toString(),
+          id: String(orgData.organization.id),
           name: orgData.organization.name,
           email: orgData.organization.email,
           userType: 'organization',
           role: 'organization',
-          organization_id: orgData.organization.id.toString(),
+          organization_id: String(orgData.organization.id),
           organization: {
-            id: orgData.organization.id.toString(),
+            id: String(orgData.organization.id),
             name: orgData.organization.name,
             location_city: orgData.organization.location_city,
             location_country: orgData.organization.location_country,
             website: orgData.organization.website,
             industry: orgData.organization.industry,
           },
-          createdAt: orgData.organization.created_at,
-          updatedAt: orgData.organization.updated_at,
+          is_active: true,
+          created_at: orgData.organization.created_at,
+          updated_at: orgData.organization.updated_at,
         },
         token: orgData.access_token,
       }

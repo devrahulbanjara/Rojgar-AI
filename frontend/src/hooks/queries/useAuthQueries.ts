@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import type { LoginCredentials, SignupData, User, AuthResponse } from '../../types'
+import type { LoginCredentials, SignupData, User, AuthResponse, UserType } from '../../types'
 import { authService } from '../../services/authService'
 import { queryKeys, clearQueryCache } from '../../lib/queryClient'
 import { ROUTES } from '../../config/constants'
@@ -23,13 +23,12 @@ export const useCurrentUser = () => {
         if (user) {
           const processedUser = {
             ...user,
-            id: (user.id || user.user_id).toString(),
-            userType: user.role,
+            id: user.id?.toString() || '',
+            userType: (user.userType || user.role) as UserType,
           }
 
           if (cachedUser) {
-            const cachedUserRecord = cachedUser as Record<string, unknown>
-            const cachedId = (cachedUser.id || cachedUserRecord.user_id)?.toString()
+            const cachedId = cachedUser.id?.toString()
             const fetchedId = processedUser.id
 
             if (cachedId && fetchedId && cachedId !== fetchedId) {

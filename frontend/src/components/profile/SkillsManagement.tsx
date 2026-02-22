@@ -34,7 +34,7 @@ export function SkillsManagement() {
     }
   }
 
-  const handleAddSkill = async (e: React.FormEvent) => {
+  const handleAddSkill = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!newSkill.trim()) return
 
@@ -93,11 +93,10 @@ export function SkillsManagement() {
 
       {message && (
         <div
-          className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-            message.type === 'success'
+          className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${message.type === 'success'
               ? 'bg-success-50 text-success-700 border-success-200'
               : 'bg-error-50 text-error-700 border-error-200'
-          }`}
+            }`}
         >
           {message.type === 'success' ? (
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
@@ -108,7 +107,7 @@ export function SkillsManagement() {
         </div>
       )}
 
-      {}
+      { }
       <div className="bg-background-subtle rounded-xl p-6 border border-border-default mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Settings className="w-5 h-5 text-primary" />
@@ -150,7 +149,7 @@ export function SkillsManagement() {
         )}
       </div>
 
-      {}
+      { }
       <div>
         {skills.length === 0 ? (
           <div className="text-center py-12 text-text-muted bg-background-subtle rounded-xl border border-border-default">
@@ -187,7 +186,6 @@ export function SkillsManagement() {
               await confirm({
                 title: 'Delete All Skills',
                 description: "You're about to permanently delete all your skills.",
-                variant: 'danger',
                 onConfirm: async () => {
                   try {
                     await skillService.deleteAllSkills()

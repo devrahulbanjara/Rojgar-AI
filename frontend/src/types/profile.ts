@@ -69,14 +69,24 @@ export interface CandidateProfileUpdate {
   location_country?: string
   professional_headline?: string
   professional_summary?: string
+
+  // Nested collections for state synchronization
+  social_links?: SocialLinkSync[]
+  work_experiences?: WorkExperienceSync[]
+  educations?: EducationSync[]
+  certifications?: CertificationSync[]
+  skills?: SkillSync[]
 }
 
-export interface SocialLinkCreate {
+// Sync types: ID is optional (present = update, absent = create)
+export interface SocialLinkSync {
+  social_link_id?: string
   type: string
   url: string
 }
 
-export interface WorkExperienceCreate {
+export interface WorkExperienceSync {
+  candidate_work_experience_id?: string
   job_title: string
   company: string
   location?: string
@@ -86,9 +96,8 @@ export interface WorkExperienceCreate {
   description?: string
 }
 
-export type WorkExperienceUpdate = Partial<WorkExperienceCreate>
-
-export interface EducationCreate {
+export interface EducationSync {
+  candidate_education_id?: string
   college_name: string
   degree: string
   location?: string
@@ -97,9 +106,8 @@ export interface EducationCreate {
   is_current: boolean
 }
 
-export type EducationUpdate = Partial<EducationCreate>
-
-export interface CertificationCreate {
+export interface CertificationSync {
+  candidate_certification_id?: string
   certification_name: string
   issuing_body: string
   credential_id?: string
@@ -109,10 +117,18 @@ export interface CertificationCreate {
   does_not_expire: boolean
 }
 
-export type CertificationUpdate = Partial<CertificationCreate>
-
-export interface SkillCreate {
+export interface SkillSync {
+  candidate_skill_id?: string
   skill_name: string
 }
 
-export type SkillUpdate = Partial<SkillCreate>
+// Legacy aliases for backward compatibility with existing component forms
+export type SocialLinkCreate = SocialLinkSync
+export type WorkExperienceCreate = WorkExperienceSync
+export type EducationCreate = EducationSync
+export type CertificationCreate = CertificationSync
+export type SkillCreate = SkillSync
+export type WorkExperienceUpdate = Partial<WorkExperienceSync>
+export type EducationUpdate = Partial<EducationSync>
+export type CertificationUpdate = Partial<CertificationSync>
+export type SkillUpdate = Partial<SkillSync>

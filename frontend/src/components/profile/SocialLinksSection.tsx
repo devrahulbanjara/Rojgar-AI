@@ -79,7 +79,11 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
 
     setIsSaving(true)
     try {
-      await profileService.addSocialLink(formData)
+      const updatedLinks = [
+        ...socialLinks.map(l => ({ social_link_id: l.social_link_id, type: l.type, url: l.url })),
+        { type: formData.type, url: formData.url },
+      ]
+      await profileService.syncProfile({ social_links: updatedLinks })
       toast.success('Social link added successfully')
       setFormData({ type: '', url: '' })
       setIsAdding(false)
@@ -100,7 +104,12 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
 
     setIsSaving(true)
     try {
-      await profileService.updateSocialLink(id, formData)
+      const updatedLinks = socialLinks.map(l =>
+        l.social_link_id === id
+          ? { social_link_id: l.social_link_id, type: formData.type, url: formData.url }
+          : { social_link_id: l.social_link_id, type: l.type, url: l.url }
+      )
+      await profileService.syncProfile({ social_links: updatedLinks })
       toast.success('Social link updated successfully')
       setEditingId(null)
       setFormData({ type: '', url: '' })
@@ -115,7 +124,10 @@ export function SocialLinksSection({ socialLinks, onUpdate }: SocialLinksSection
 
   const handleDelete = async (id: string) => {
     try {
-      await profileService.deleteSocialLink(id)
+      const updatedLinks = socialLinks
+        .filter(l => l.social_link_id !== id)
+        .map(l => ({ social_link_id: l.social_link_id, type: l.type, url: l.url }))
+      await profileService.syncProfile({ social_links: updatedLinks })
       toast.success('Social link deleted successfully')
       onUpdate()
     } catch (error) {

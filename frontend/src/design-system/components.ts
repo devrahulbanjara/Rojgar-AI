@@ -1,22 +1,14 @@
 export {
   cn,
-  formatDate,
-  formatCurrency,
-  debounce,
-  generateId,
-  isEmpty,
-  capitalize,
-  truncate,
-  formatUserName,
   getDashboardRoute,
-  getUserInitials,
-  delay,
   validateEmail,
   validatePassword,
   validateName,
-  validateConfirmPassword,
-  validateRequired,
 } from '../lib/utils'
+
+// Note: The following utilities are not yet implemented in utils.ts
+// formatDate, formatCurrency, debounce, generateId, isEmpty, capitalize,
+// truncate, formatUserName, getUserInitials, delay, validateConfirmPassword, validateRequired
 
 export { Button } from '../components/ui/button'
 export { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'

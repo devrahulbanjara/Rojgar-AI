@@ -20,7 +20,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setMessage(null)
@@ -59,11 +59,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       {message && (
         <div
-          className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
-            message.type === 'success'
+          className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${message.type === 'success'
               ? 'bg-success-50 text-success-700 border-success-200'
               : 'bg-error-50 text-error-700 border-error-200'
-          }`}
+            }`}
         >
           {message.type === 'success' ? (
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
@@ -75,7 +74,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {}
+        { }
         <div className="bg-background-subtle rounded-xl p-6 border border-border-default">
           <div className="flex items-center gap-2 mb-4">
             <UserIcon className="w-5 h-5 text-primary" />

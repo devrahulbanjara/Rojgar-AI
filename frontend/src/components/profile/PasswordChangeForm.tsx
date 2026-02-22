@@ -43,7 +43,7 @@ export function PasswordChangeForm() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!validateForm()) {
@@ -101,11 +101,10 @@ export function PasswordChangeForm() {
 
       {message && (
         <div
-          className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
-            message.type === 'success'
+          className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${message.type === 'success'
               ? 'bg-success-50 text-success-700 border-success-200'
               : 'bg-error-50 text-error-700 border-error-200'
-          }`}
+            }`}
         >
           {message.type === 'success' ? (
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
@@ -117,7 +116,7 @@ export function PasswordChangeForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {}
+        { }
         <div className="bg-background-surface rounded-2xl p-8 border border-border-default shadow-sm hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border-subtle">
             <div className="w-12 h-12 rounded-xl bg-error-50 flex items-center justify-center text-error-600 shadow-sm border border-error-200">
@@ -148,11 +147,10 @@ export function PasswordChangeForm() {
                   value={formData.currentPassword}
                   onChange={handleChange}
                   placeholder="Enter your current password"
-                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${
-                    errors.currentPassword
+                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${errors.currentPassword
                       ? 'border-error-300 focus:border-error-500 focus:ring-error-500/10'
                       : ''
-                  }`}
+                    }`}
                   required
                 />
               </div>
@@ -179,11 +177,10 @@ export function PasswordChangeForm() {
                   value={formData.newPassword}
                   onChange={handleChange}
                   placeholder="Enter your new password"
-                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${
-                    errors.newPassword
+                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${errors.newPassword
                       ? 'border-error-300 focus:border-error-500 focus:ring-error-500/10'
                       : ''
-                  }`}
+                    }`}
                   required
                 />
               </div>
@@ -217,11 +214,10 @@ export function PasswordChangeForm() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your new password"
-                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${
-                    errors.confirmPassword
+                  className={`w-full h-12 pl-14 border-border-default bg-background-subtle/50 focus:bg-background-surface focus:border-error-500 focus:ring-4 focus:ring-error-500/10 rounded-xl transition-all duration-200 font-medium ${errors.confirmPassword
                       ? 'border-error-300 focus:border-error-500 focus:ring-error-500/10'
                       : ''
-                  }`}
+                    }`}
                   required
                 />
               </div>

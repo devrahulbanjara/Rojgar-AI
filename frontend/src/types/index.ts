@@ -18,6 +18,9 @@ export interface User {
     website?: string
     industry?: string
   }
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -105,7 +108,7 @@ export interface UseFormReturn {
   handleChange: (name: string, value: string) => void
   handleSubmit: (
     onSubmit: (values: Record<string, string>) => Promise<void>
-  ) => (e: React.FormEvent) => void
+  ) => (e: React.SubmitEvent<HTMLFormElement>) => void
   reset: () => void
   setFieldError: (name: string, error: string) => void
 }
@@ -165,6 +168,14 @@ export interface DashboardData {
 
 export * from './job'
 export * from './application'
-
 export * from './profile'
-export * from './resume'
+
+// Resume types - export specific types to avoid conflicts with profile types
+export type {
+  ResumeDetail,
+  SocialLink as ResumeSocialLink,
+  WorkExperience as ResumeWorkExperience,
+  Education as ResumeEducation,
+  Certification as ResumeCertification,
+  Skill as ResumeSkill,
+} from './resume'

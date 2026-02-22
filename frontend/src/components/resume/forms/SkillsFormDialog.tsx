@@ -37,7 +37,7 @@ export default function SkillsFormDialog({
     }
   }, [open, initialData])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 

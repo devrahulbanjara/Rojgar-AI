@@ -217,31 +217,6 @@ export const endpoints = {
 
   candidate: {
     me: '/api/v1/candidate/me',
-    experience: {
-      base: '/api/v1/candidate/me/experience',
-      delete: (id: string) => `/api/v1/candidate/me/experience/${id}`,
-      update: (id: string) => `/api/v1/candidate/me/experience/${id}`,
-    },
-    education: {
-      base: '/api/v1/candidate/me/education',
-      delete: (id: string) => `/api/v1/candidate/me/education/${id}`,
-      update: (id: string) => `/api/v1/candidate/me/education/${id}`,
-    },
-    skills: {
-      base: '/api/v1/candidate/me/skills',
-      delete: (id: string) => `/api/v1/candidate/me/skills/${id}`,
-      update: (id: string) => `/api/v1/candidate/me/skills/${id}`,
-    },
-    certifications: {
-      base: '/api/v1/candidate/me/certifications',
-      delete: (id: string) => `/api/v1/candidate/me/certifications/${id}`,
-      update: (id: string) => `/api/v1/candidate/me/certifications/${id}`,
-    },
-    socialLinks: {
-      base: '/api/v1/candidate/me/social-links',
-      delete: (id: string) => `/api/v1/candidate/me/social-links/${id}`,
-      update: (id: string) => `/api/v1/candidate/me/social-links/${id}`,
-    },
   },
 
   resumes: {
@@ -376,38 +351,7 @@ export const api = {
 
   candidate: {
     getProfile: () => apiClient.get(endpoints.candidate.me),
-    updateProfile: (data: unknown) => apiClient.patch(endpoints.candidate.me, data),
-
-    experience: {
-      add: (data: unknown) => apiClient.post(endpoints.candidate.experience.base, data),
-      delete: (id: string) => apiClient.delete(endpoints.candidate.experience.delete(id)),
-      update: (id: string, data: unknown) =>
-        apiClient.patch(endpoints.candidate.experience.update(id), data),
-    },
-    education: {
-      add: (data: unknown) => apiClient.post(endpoints.candidate.education.base, data),
-      delete: (id: string) => apiClient.delete(endpoints.candidate.education.delete(id)),
-      update: (id: string, data: unknown) =>
-        apiClient.patch(endpoints.candidate.education.update(id), data),
-    },
-    skills: {
-      add: (data: unknown) => apiClient.post(endpoints.candidate.skills.base, data),
-      delete: (id: string) => apiClient.delete(endpoints.candidate.skills.delete(id)),
-      update: (id: string, data: unknown) =>
-        apiClient.patch(endpoints.candidate.skills.update(id), data),
-    },
-    certifications: {
-      add: (data: unknown) => apiClient.post(endpoints.candidate.certifications.base, data),
-      delete: (id: string) => apiClient.delete(endpoints.candidate.certifications.delete(id)),
-      update: (id: string, data: unknown) =>
-        apiClient.patch(endpoints.candidate.certifications.update(id), data),
-    },
-    socialLinks: {
-      add: (data: unknown) => apiClient.post(endpoints.candidate.socialLinks.base, data),
-      delete: (id: string) => apiClient.delete(endpoints.candidate.socialLinks.delete(id)),
-      update: (id: string, data: unknown) =>
-        apiClient.patch(endpoints.candidate.socialLinks.update(id), data),
-    },
+    syncProfile: (data: unknown) => apiClient.patch(endpoints.candidate.me, data),
   },
 
   resumes: {

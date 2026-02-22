@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -13,6 +13,28 @@ from app.schemas.shared import (
 )
 
 
+# --- Sync Schemas (extend Base with optional ID for state synchronization) ---
+class WorkExperienceSync(WorkExperienceBase):
+    candidate_work_experience_id: Optional[UUID] = None
+
+
+class EducationSync(EducationBase):
+    candidate_education_id: Optional[UUID] = None
+
+
+class CertificationSync(CertificationBase):
+    candidate_certification_id: Optional[UUID] = None
+
+
+class SkillSync(SkillBase):
+    candidate_skill_id: Optional[UUID] = None
+
+
+class SocialLinkSync(SocialLinkBase):
+    social_link_id: Optional[UUID] = None
+
+
+# --- Profile Update Schema (accepts nested collections for state sync) ---
 class CandidateProfileUpdate(BaseModel):
     full_name: Annotated[str | None, "Candidate full name"] = None
     phone: Annotated[str | None, "Phone number"] = None
@@ -21,42 +43,15 @@ class CandidateProfileUpdate(BaseModel):
     professional_headline: Annotated[str | None, "Professional headline/title"] = None
     professional_summary: Annotated[str | None, "Professional summary/about"] = None
 
-
-class CertificationUpdate(BaseModel):
-    certification_name: Annotated[str | None, "Certification name"] = None
-    issuing_body: Annotated[str | None, "Issuing organization"] = None
-    credential_id: Annotated[UUID | None, Field(description="Credential ID")] = None
-    credential_url: Annotated[str | None, "Credential verification URL"] = None
-    issue_date: Annotated[date | None, "Date issued"] = None
-    expiration_date: Annotated[date | None, "Expiration date"] = None
-    does_not_expire: Annotated[bool | None, "Whether certification does not expire"] = (
-        None
-    )
+    # Nested collections for state synchronization
+    work_experiences: Optional[list[WorkExperienceSync]] = None
+    educations: Optional[list[EducationSync]] = None
+    certifications: Optional[list[CertificationSync]] = None
+    skills: Optional[list[SkillSync]] = None
+    social_links: Optional[list[SocialLinkSync]] = None
 
 
-class SkillUpdate(BaseModel):
-    skill_name: Annotated[str | None, "Skill name"] = None
-
-
-class WorkExperienceUpdate(BaseModel):
-    job_title: Annotated[str | None, "Job title"] = None
-    company: Annotated[str | None, "Company name"] = None
-    location: Annotated[str | None, "Job location"] = None
-    start_date: Annotated[date | None, "Start date"] = None
-    end_date: Annotated[date | None, "End date"] = None
-    is_current: Annotated[bool | None, "Whether this is the current role"] = None
-    description: Annotated[str | None, "Role description"] = None
-
-
-class EducationUpdate(BaseModel):
-    college_name: Annotated[str | None, "College/university name"] = None
-    degree: Annotated[str | None, "Degree or program"] = None
-    location: Annotated[str | None, "Education location"] = None
-    start_date: Annotated[date | None, "Start date"] = None
-    end_date: Annotated[date | None, "End date"] = None
-    is_current: Annotated[bool | None, "Whether this education is ongoing"] = None
-
-
+# --- Response Schemas ---
 class SocialLinkResponse(SocialLinkBase):
     social_link_id: UUID
     model_config = ConfigDict(from_attributes=True)

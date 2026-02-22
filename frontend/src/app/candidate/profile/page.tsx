@@ -8,8 +8,7 @@ import { ProfileHeader } from '../../../components/profile/ProfileHeader'
 import { ProfileInformationTab } from '../../../components/profile/ProfileInformationTab'
 import { CareerHistoryTab } from '../../../components/profile/CareerHistoryTab'
 import { SkillsExpertiseTab } from '../../../components/profile/SkillsExpertiseTab'
-import { PasswordChangeForm } from '../../../components/profile/PasswordChangeForm'
-import { User, Briefcase, Settings, Shield } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger } from '../../../components/ui'
 import { profileService } from '../../../services/profileService'
 import type { CandidateProfile } from '../../../types/profile'
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner'
@@ -21,9 +20,7 @@ import {
 
 export default function CandidateProfilePage() {
   const { user, isLoading: isAuthLoading, isAuthenticated, refetchUser } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'career' | 'skills' | 'password'>(
-    'profile'
-  )
+  const [activeTab, setActiveTab] = useState<'profile' | 'career' | 'skills'>('profile')
   const [profile, setProfile] = useState<CandidateProfile | null>(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
 
@@ -115,61 +112,57 @@ export default function CandidateProfilePage() {
             <ProfileHeader user={user} profile={profile} />
           </AnimatedContainer>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             <AnimatedContainer direction="up" delay={0.2}>
-              <div className="bg-background-surface rounded-[5px] border border-border-default p-1">
-                <div className="flex overflow-x-auto">
-                  {[
-                    { id: 'profile', label: 'Profile Information', icon: User },
-                    { id: 'career', label: 'Career History', icon: Briefcase },
-                    {
-                      id: 'skills',
-                      label: 'Skills & Expertise',
-                      icon: Settings,
-                    },
-                    { id: 'password', label: 'Security', icon: Shield },
-                  ].map(tab => {
-                    const IconComponent = tab.icon
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() =>
-                          setActiveTab(tab.id as 'profile' | 'career' | 'skills' | 'password')
-                        }
-                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded font-medium transition-all duration-200 whitespace-nowrap ${
-                          activeTab === tab.id
-                            ? 'bg-primary-600 text-white'
-                            : 'text-text-secondary hover:bg-background-subtle hover:text-primary-600 dark:hover:text-primary-400'
-                        }`}
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        <span className="text-sm font-medium">{tab.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+              <Tabs
+                value={activeTab}
+                onValueChange={value => setActiveTab(value as 'profile' | 'career' | 'skills')}
+                className="w-full"
+              >
+                <TabsList className="bg-transparent border-b border-border-subtle rounded-none w-full justify-start h-auto p-0 gap-8">
+                  <TabsTrigger
+                    value="profile"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Profile Information
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="career"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Career History
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="skills"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
+                  >
+                    Skills & Expertise
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </AnimatedContainer>
 
-            {}
             <AnimatedContainer direction="up" delay={0.3}>
               <div className="bg-background-surface rounded-[5px] border border-border-default">
-                {activeTab === 'profile' && profile && (
-                  <ProfileInformationTab profile={profile} onUpdate={handleProfileUpdate} />
+                {profile && (
+                  <>
+                    <div className={activeTab === 'profile' ? 'block' : 'hidden'}>
+                      <ProfileInformationTab profile={profile} onUpdate={handleProfileUpdate} />
+                    </div>
+                    <div className={activeTab === 'career' ? 'block' : 'hidden'}>
+                      <CareerHistoryTab
+                        experiences={profile.work_experiences}
+                        educations={profile.educations}
+                      />
+                    </div>
+                    <div className={activeTab === 'skills' ? 'block' : 'hidden'}>
+                      <SkillsExpertiseTab
+                        skills={profile.skills}
+                        certifications={profile.certifications}
+                      />
+                    </div>
+                  </>
                 )}
-                {activeTab === 'career' && profile && (
-                  <CareerHistoryTab
-                    experiences={profile.work_experiences}
-                    educations={profile.educations}
-                  />
-                )}
-                {activeTab === 'skills' && profile && (
-                  <SkillsExpertiseTab
-                    skills={profile.skills}
-                    certifications={profile.certifications}
-                  />
-                )}
-                {activeTab === 'password' && <PasswordChangeForm />}
               </div>
             </AnimatedContainer>
           </div>

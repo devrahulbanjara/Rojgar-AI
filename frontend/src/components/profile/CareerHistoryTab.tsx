@@ -36,6 +36,15 @@ export function CareerHistoryTab({
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>(initialExperiences)
   const [educationRecords, setEducationRecords] = useState<Education[]>(initialEducations)
 
+  // Sync state with props when they change
+  React.useEffect(() => {
+    setWorkExperiences(initialExperiences)
+  }, [initialExperiences])
+
+  React.useEffect(() => {
+    setEducationRecords(initialEducations)
+  }, [initialEducations])
+
   const [isAddingExperience, setIsAddingExperience] = useState(false)
   const [isAddingEducation, setIsAddingEducation] = useState(false)
 
@@ -63,7 +72,7 @@ export function CareerHistoryTab({
     is_current: false,
   })
 
-  const handleAddExperience = async (e: React.FormEvent) => {
+  const handleAddExperience = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       const experienceData: WorkExperienceCreate = {
@@ -76,21 +85,45 @@ export function CareerHistoryTab({
         description: experienceForm.description || undefined,
       }
 
+      let updatedExperiences: (WorkExperienceCreate & { candidate_work_experience_id?: string })[]
       if (editingExpId) {
-        const updatedExp = await profileService.updateExperience(editingExpId, experienceData)
-        setWorkExperiences(prev =>
-          prev.map(exp =>
-            exp.candidate_work_experience_id === editingExpId
-              ? (updatedExp as unknown as WorkExperience)
-              : exp
-          )
+        updatedExperiences = workExperiences.map(exp =>
+          exp.candidate_work_experience_id === editingExpId
+            ? { candidate_work_experience_id: exp.candidate_work_experience_id, ...experienceData }
+            : {
+              candidate_work_experience_id: exp.candidate_work_experience_id,
+              job_title: exp.job_title,
+              company: exp.company,
+              location: exp.location,
+              start_date: exp.start_date,
+              end_date: exp.end_date,
+              is_current: exp.is_current,
+              description: exp.description,
+            }
         )
-        toast.success('Work experience updated successfully!')
       } else {
-        const newExperience = await profileService.addExperience(experienceData)
-        setWorkExperiences(prev => [...prev, newExperience as unknown as WorkExperience])
-        toast.success('Work experience added successfully!')
+        updatedExperiences = [
+          ...workExperiences.map(exp => ({
+            candidate_work_experience_id: exp.candidate_work_experience_id,
+            job_title: exp.job_title,
+            company: exp.company,
+            location: exp.location,
+            start_date: exp.start_date,
+            end_date: exp.end_date,
+            is_current: exp.is_current,
+            description: exp.description,
+          })),
+          experienceData,
+        ]
       }
+
+      const result = await profileService.syncProfile({ work_experiences: updatedExperiences })
+      setWorkExperiences(result.work_experiences)
+      toast.success(
+        editingExpId
+          ? 'Work experience updated successfully!'
+          : 'Work experience added successfully!'
+      )
 
       setExperienceForm({
         job_title: '',
@@ -130,8 +163,20 @@ export function CareerHistoryTab({
       itemName: `${jobTitle} at ${company}`,
       onConfirm: async () => {
         try {
-          await profileService.deleteExperience(id)
-          setWorkExperiences(prev => prev.filter(exp => exp.candidate_work_experience_id !== id))
+          const updatedExperiences = workExperiences
+            .filter(exp => exp.candidate_work_experience_id !== id)
+            .map(exp => ({
+              candidate_work_experience_id: exp.candidate_work_experience_id,
+              job_title: exp.job_title,
+              company: exp.company,
+              location: exp.location,
+              start_date: exp.start_date,
+              end_date: exp.end_date,
+              is_current: exp.is_current,
+              description: exp.description,
+            }))
+          const result = await profileService.syncProfile({ work_experiences: updatedExperiences })
+          setWorkExperiences(result.work_experiences)
           toast.success('Work experience deleted successfully!')
           if (editingExpId === id) {
             setIsAddingExperience(false)
@@ -158,7 +203,7 @@ export function CareerHistoryTab({
     })
   }
 
-  const handleAddEducation = async (e: React.FormEvent) => {
+  const handleAddEducation = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       const educationData: EducationCreate = {
@@ -170,19 +215,43 @@ export function CareerHistoryTab({
         is_current: educationForm.is_current,
       }
 
+      let updatedEducations: (EducationCreate & { candidate_education_id?: string })[]
       if (editingEduId) {
-        const updatedEdu = await profileService.updateEducation(editingEduId, educationData)
-        setEducationRecords(prev =>
-          prev.map(edu =>
-            edu.candidate_education_id === editingEduId ? (updatedEdu as unknown as Education) : edu
-          )
+        updatedEducations = educationRecords.map(edu =>
+          edu.candidate_education_id === editingEduId
+            ? { candidate_education_id: edu.candidate_education_id, ...educationData }
+            : {
+              candidate_education_id: edu.candidate_education_id,
+              college_name: edu.college_name,
+              degree: edu.degree,
+              location: edu.location,
+              start_date: edu.start_date,
+              end_date: edu.end_date,
+              is_current: edu.is_current,
+            }
         )
-        toast.success('Education record updated successfully!')
       } else {
-        const newEducation = await profileService.addEducation(educationData)
-        setEducationRecords(prev => [...prev, newEducation as unknown as Education])
-        toast.success('Education record added successfully!')
+        updatedEducations = [
+          ...educationRecords.map(edu => ({
+            candidate_education_id: edu.candidate_education_id,
+            college_name: edu.college_name,
+            degree: edu.degree,
+            location: edu.location,
+            start_date: edu.start_date,
+            end_date: edu.end_date,
+            is_current: edu.is_current,
+          })),
+          educationData,
+        ]
       }
+
+      const result = await profileService.syncProfile({ educations: updatedEducations })
+      setEducationRecords(result.educations)
+      toast.success(
+        editingEduId
+          ? 'Education record updated successfully!'
+          : 'Education record added successfully!'
+      )
 
       setEducationForm({
         school_university: '',
@@ -220,8 +289,19 @@ export function CareerHistoryTab({
       itemName: `${degree} from ${institution}`,
       onConfirm: async () => {
         try {
-          await profileService.deleteEducation(id)
-          setEducationRecords(prev => prev.filter(edu => edu.candidate_education_id !== id))
+          const updatedEducations = educationRecords
+            .filter(edu => edu.candidate_education_id !== id)
+            .map(edu => ({
+              candidate_education_id: edu.candidate_education_id,
+              college_name: edu.college_name,
+              degree: edu.degree,
+              location: edu.location,
+              start_date: edu.start_date,
+              end_date: edu.end_date,
+              is_current: edu.is_current,
+            }))
+          const result = await profileService.syncProfile({ educations: updatedEducations })
+          setEducationRecords(result.educations)
           toast.success('Education record deleted successfully!')
           if (editingEduId === id) {
             setIsAddingEducation(false)
@@ -257,7 +337,7 @@ export function CareerHistoryTab({
   return (
     <div className="px-10 py-8">
       <div className="space-y-8">
-        {}
+        { }
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-default">
             <div>
@@ -287,7 +367,7 @@ export function CareerHistoryTab({
             )}
           </div>
 
-          {}
+          { }
           {isAddingExperience && (
             <form
               onSubmit={handleAddExperience}
@@ -453,16 +533,16 @@ export function CareerHistoryTab({
             </form>
           )}
 
-          {}
+          { }
           {workExperiences.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
                 <Briefcase className="w-8 h-8 text-text-muted" />
               </div>
-              <h5 className="text-lg font-semibold text-text-primary mb-2">
+              <h5 className="text-base font-semibold text-text-primary mb-2">
                 No work experience added yet
               </h5>
-              <p className="text-text-tertiary max-w-sm mx-auto">
+              <p className="text-sm text-text-tertiary max-w-sm mx-auto">
                 Add your past work experience to showcase your professional background to
                 recruiters.
               </p>
@@ -554,7 +634,7 @@ export function CareerHistoryTab({
           )}
         </div>
 
-        {}
+        { }
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-default">
             <div>
@@ -583,7 +663,7 @@ export function CareerHistoryTab({
             )}
           </div>
 
-          {}
+          { }
           {isAddingEducation && (
             <form
               onSubmit={handleAddEducation}
@@ -730,16 +810,16 @@ export function CareerHistoryTab({
             </form>
           )}
 
-          {}
+          { }
           {educationRecords.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
                 <GraduationCap className="w-8 h-8 text-text-muted" />
               </div>
-              <h5 className="text-lg font-semibold text-text-primary mb-2">
+              <h5 className="text-base font-semibold text-text-primary mb-2">
                 No education records added yet
               </h5>
-              <p className="text-text-tertiary max-w-sm mx-auto">
+              <p className="text-sm text-text-tertiary max-w-sm mx-auto">
                 Add your educational background to complete your profile.
               </p>
               {!isAddingEducation && (

@@ -53,7 +53,7 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
     }
   }, [jd])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!jd) return
 
@@ -164,13 +164,13 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
           className="flex-1 overflow-y-auto px-10 py-8 bg-background-subtle"
         >
           <div className="space-y-8">
-            {}
+            { }
             <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
               <div className="px-8 py-6 border-b border-border-subtle">
                 <h4 className="text-xl font-bold text-text-primary">Basic Information</h4>
               </div>
               <div className="px-8 py-6 space-y-6">
-                {}
+                { }
                 <div>
                   <label className="block text-sm font-semibold text-text-secondary mb-3">
                     Department
@@ -184,7 +184,7 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
                   />
                 </div>
 
-                {}
+                { }
                 <div>
                   <label className="block text-sm font-semibold text-text-secondary mb-3">
                     Job Summary <span className="text-error-400 dark:text-error-300">*</span>
@@ -201,7 +201,7 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
               </div>
             </div>
 
-            {}
+            { }
             <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
               <div className="px-8 py-6 border-b border-border-subtle">
                 <h4 className="text-xl font-bold text-text-primary">Job Responsibilities</h4>
@@ -290,7 +290,7 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
               </div>
             </div>
 
-            {}
+            { }
             <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
               <div className="px-8 py-6 border-b border-border-subtle">
                 <h4 className="text-xl font-bold text-text-primary">Required Qualifications</h4>
@@ -380,7 +380,7 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
               </div>
             </div>
 
-            {}
+            { }
             <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
               <div className="px-8 py-6 border-b border-border-subtle">
                 <h4 className="text-xl font-bold text-text-primary">Preferred</h4>
@@ -468,7 +468,7 @@ export function ReferenceJDEditModal({ jd, isOpen, onClose, onSave }: ReferenceJ
               </div>
             </div>
 
-            {}
+            { }
             <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
               <div className="px-8 py-6 border-b border-border-subtle">
                 <h4 className="text-xl font-bold text-text-primary">Compensation & Benefits</h4>
