@@ -10,6 +10,7 @@ from .candidate import (
     CandidateWorkExperience,
 )
 from .email_draft import EmailDraft
+from .interview import Interview
 from .job import JobDescription, JobPosting, ReferenceJD
 from .organization import Organization
 from .resume import (
@@ -32,6 +33,7 @@ __all__ = [
     "CandidateSocialLink",
     "CandidateWorkExperience",
     "EmailDraft",
+    "Interview",
     "JobApplication",
     "JobApplicationStatusHistory",
     "JobDescription",

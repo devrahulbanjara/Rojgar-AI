@@ -44,7 +44,7 @@ async def get_active_candidates_count(
     return {"count": count}
 
 
-@router.get("/recent-activity", status_code=status.HTTP_200_OK)
+@router.get("/recent-activity", response_model=list[dict])
 @limiter.limit(settings.RATE_LIMIT_API)
 async def get_recent_activity(
     request: Request,
@@ -52,10 +52,22 @@ async def get_recent_activity(
     stats_service: Annotated[StatsService, Depends(get_stats_service)],
     limit: int = 20,
 ):
-    activities = await stats_service.get_recent_activity(current_user, limit=limit)
-    if activities is None:
+    activity = await stats_service.get_recent_activity(current_user, limit)
+    if activity is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization statistics unavailable",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Recruiter access required.",
         )
-    return {"activities": activities}
+    return activity
+
+
+@router.get("/dashboard-stats")
+@limiter.limit(settings.RATE_LIMIT_API)
+async def get_dashboard_stats(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    stats_service: Annotated[StatsService, Depends(get_stats_service)],
+):
+    """Get all 4 dashboard KPIs in a single call."""
+    stats = await stats_service.get_dashboard_stats(current_user)
+    return stats

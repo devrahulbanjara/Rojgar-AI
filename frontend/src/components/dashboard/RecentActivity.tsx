@@ -1,5 +1,5 @@
 import React from 'react'
-import { User, Calendar, FileText, CheckCircle2, Clock, Briefcase } from 'lucide-react'
+import { User, Calendar, FileText, CheckCircle2, Timer, BriefcaseBusiness } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useRecentActivity, type ActivityItem } from '../../hooks/useRecentActivity'
 import { LoadingSpinner } from '../common/LoadingSpinner'
@@ -38,9 +38,9 @@ const ActivityIcon = ({ type }: { type: ActivityItem['type'] }) => {
     case 'offer':
       return <CheckCircle2 className="w-5 h-5 text-success-600 dark:text-success-400" />
     case 'job_post':
-      return <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+      return <BriefcaseBusiness className="w-5 h-5 text-primary-600 dark:text-primary-400" />
     case 'status_change':
-      return <Clock className="w-5 h-5 text-warning-600 dark:text-warning-400" />
+      return <Timer className="w-5 h-5 text-warning-600 dark:text-warning-400" />
     default:
       return <User className="w-5 h-5 text-text-tertiary" />
   }
@@ -72,7 +72,7 @@ export function RecentActivity() {
         <div className="p-6 border-b border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900">
-              <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <Timer className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>
@@ -94,7 +94,7 @@ export function RecentActivity() {
       <div className="p-6 border-b border-border-subtle">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900">
-            <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <Timer className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-text-primary">Recent Activity</h2>

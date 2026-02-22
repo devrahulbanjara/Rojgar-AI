@@ -4,11 +4,11 @@ import { Dialog, DialogContent } from '../ui/dialog'
 import { ActionButton } from '../ui'
 import { Badge } from '../ui/badge'
 import {
-  MapPin,
+  Navigation,
   DollarSign,
   Calendar,
-  Building2,
-  Clock,
+  BriefcaseBusiness,
+  Timer,
   ArrowRight,
   ExternalLink,
   CheckCircle2,
@@ -124,7 +124,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
             <div className="grid grid-cols-3 gap-6 p-6 rounded-xl border border-border-default bg-slate-50/50 dark:bg-slate-900/30 mb-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 flex-shrink-0 rounded-full bg-primary-600/10 dark:bg-primary-600/20 flex items-center justify-center">
-                  <MapPin className="w-[18px] h-[18px] text-primary-600" />
+                  <Navigation className="w-[18px] h-[18px] text-primary-600" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <p className="text-[11px] uppercase tracking-[0.5px] font-semibold text-slate-500 dark:text-slate-400">
@@ -157,7 +157,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
               <div className="flex items-center gap-3 border-l border-border-default pl-6">
                 <div className="w-10 h-10 flex-shrink-0 rounded-full bg-primary-600/10 dark:bg-primary-600/20 flex items-center justify-center">
-                  <Clock className="w-[18px] h-[18px] text-primary-600" />
+                  <Timer className="w-[18px] h-[18px] text-primary-600" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <p className="text-[11px] uppercase tracking-[0.5px] font-semibold text-slate-500 dark:text-slate-400">
@@ -213,14 +213,17 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
 
                 return (
                   company && (
-                    <Section icon={<Building2 className="w-4 h-4" />} title="About the Company">
+                    <Section
+                      icon={<BriefcaseBusiness className="w-4 h-4" />}
+                      title="About the Company"
+                    >
                       <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                         {company.description ||
                           `${company.name} is looking for talented individuals to join their team.`}
                       </p>
-                      {(company.website || 
-                        ('location' in company && company.location) || 
-                        ('location_city' in company && company.location_city) || 
+                      {(company.website ||
+                        ('location' in company && company.location) ||
+                        ('location_city' in company && company.location_city) ||
                         company.industry) && (
                         <div className="flex gap-3 mt-4">
                           {company.website && (

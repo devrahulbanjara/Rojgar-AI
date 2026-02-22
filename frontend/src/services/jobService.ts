@@ -44,6 +44,7 @@ const jobEndpoints = {
   updateDraft: (draftId: string) => `/api/v1/recruiter/jobs/emails/drafts/${draftId}`,
   sendSingleEmail: (draftId: string) => `/api/v1/recruiter/jobs/emails/drafts/${draftId}/send`,
   discardDraft: (draftId: string) => `/api/v1/recruiter/jobs/emails/drafts/${draftId}`,
+  analyzeFit: (jobId: string) => `/api/v1/jobs/${jobId}/analyze-fit`,
 } as const
 
 const applicationEndpoints = {

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, User, Briefcase } from 'lucide-react'
+import { Loader2, User, BriefcaseBusiness } from 'lucide-react'
 
 interface BasicInfoFormProps {
   open: boolean
@@ -98,7 +98,7 @@ export default function BasicInfoFormDialog({
           <form id="basic-info-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                <Briefcase className="w-3.5 h-3.5" />
+                <BriefcaseBusiness className="w-3.5 h-3.5" />
                 Target Job Title <span className="text-error-500 font-bold">*</span>
               </label>
               <input

@@ -1,7 +1,7 @@
 import React from 'react'
 import type { Application, ApplicationStatus } from '../../types/application'
 import { formatDistanceToNow } from 'date-fns'
-import { Clock, Eye, Gift } from 'lucide-react'
+import { Timer, Eye, Gift } from 'lucide-react'
 
 interface ApplicationTrackingCardProps {
   application: Application
@@ -16,7 +16,7 @@ export const ApplicationTrackingCard: React.FC<ApplicationTrackingCardProps> = (
     switch (status) {
       case 'applied':
         return {
-          icon: Clock,
+          icon: Timer,
           label: 'Applied',
           bgClass: 'bg-info-50',
           textClass: 'text-info-600',
@@ -37,7 +37,7 @@ export const ApplicationTrackingCard: React.FC<ApplicationTrackingCardProps> = (
         }
       default:
         return {
-          icon: Clock,
+          icon: Timer,
           label: 'Applied',
           bgClass: 'bg-info-50',
           textClass: 'text-info-600',

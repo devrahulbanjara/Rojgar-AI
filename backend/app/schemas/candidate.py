@@ -1,8 +1,7 @@
-from datetime import date
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.schemas.shared import (
     CertificationBase,
@@ -15,23 +14,23 @@ from app.schemas.shared import (
 
 # --- Sync Schemas (extend Base with optional ID for state synchronization) ---
 class WorkExperienceSync(WorkExperienceBase):
-    candidate_work_experience_id: Optional[UUID] = None
+    candidate_work_experience_id: UUID | None = None
 
 
 class EducationSync(EducationBase):
-    candidate_education_id: Optional[UUID] = None
+    candidate_education_id: UUID | None = None
 
 
 class CertificationSync(CertificationBase):
-    candidate_certification_id: Optional[UUID] = None
+    candidate_certification_id: UUID | None = None
 
 
 class SkillSync(SkillBase):
-    candidate_skill_id: Optional[UUID] = None
+    candidate_skill_id: UUID | None = None
 
 
 class SocialLinkSync(SocialLinkBase):
-    social_link_id: Optional[UUID] = None
+    social_link_id: UUID | None = None
 
 
 # --- Profile Update Schema (accepts nested collections for state sync) ---
@@ -44,11 +43,11 @@ class CandidateProfileUpdate(BaseModel):
     professional_summary: Annotated[str | None, "Professional summary/about"] = None
 
     # Nested collections for state synchronization
-    work_experiences: Optional[list[WorkExperienceSync]] = None
-    educations: Optional[list[EducationSync]] = None
-    certifications: Optional[list[CertificationSync]] = None
-    skills: Optional[list[SkillSync]] = None
-    social_links: Optional[list[SocialLinkSync]] = None
+    work_experiences: list[WorkExperienceSync] | None = None
+    educations: list[EducationSync] | None = None
+    certifications: list[CertificationSync] | None = None
+    skills: list[SkillSync] | None = None
+    social_links: list[SocialLinkSync] | None = None
 
 
 # --- Response Schemas ---

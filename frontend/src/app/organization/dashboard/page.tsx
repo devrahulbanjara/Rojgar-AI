@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Users, Briefcase, FileText } from 'lucide-react'
+import { Users, BriefcaseBusiness, FileText } from 'lucide-react'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, StatCard } from '../../../components/common'
 import { WelcomeMessage } from '../../../components/dashboard'
@@ -34,7 +34,7 @@ export default function OrganizationDashboard() {
               <StatCard
                 title="Active Jobs"
                 value="45"
-                icon={<Briefcase />}
+                icon={<BriefcaseBusiness />}
                 description="Open positions"
               />
               <StatCard

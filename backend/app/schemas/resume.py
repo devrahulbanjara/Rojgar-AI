@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -13,6 +13,28 @@ from app.schemas.shared import (
 )
 
 
+# --- SYNC SCHEMAS (items with optional IDs for create-or-update) ---
+class ResumeWorkExperienceSync(WorkExperienceBase):
+    resume_work_experience_id: UUID | None = None
+
+
+class ResumeEducationSync(EducationBase):
+    resume_education_id: UUID | None = None
+
+
+class ResumeCertificationSync(CertificationBase):
+    resume_certification_id: UUID | None = None
+
+
+class ResumeSkillSync(SkillBase):
+    resume_skill_id: UUID | None = None
+
+
+class ResumeSocialLinkSync(SocialLinkBase):
+    resume_social_link_id: UUID | None = None
+
+
+# --- CREATE ---
 class ResumeCreate(BaseModel):
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
@@ -27,45 +49,21 @@ class ResumeCreate(BaseModel):
     social_links: Annotated[list[SocialLinkBase] | None, "Social profile links"] = None
 
 
+# --- UPDATE (State Sync) ---
 class ResumeUpdate(BaseModel):
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
+    is_default: Annotated[bool | None, "Set as default resume"] = None
+
+    # Nested Collections for State Sync
+    work_experiences: list[ResumeWorkExperienceSync] | None = None
+    educations: list[ResumeEducationSync] | None = None
+    certifications: list[ResumeCertificationSync] | None = None
+    skills: list[ResumeSkillSync] | None = None
+    social_links: list[ResumeSocialLinkSync] | None = None
 
 
-class ResumeWorkExperienceUpdate(BaseModel):
-    job_title: Annotated[str | None, "Job title"] = None
-    company: Annotated[str | None, "Company name"] = None
-    location: Annotated[str | None, "Job location"] = None
-    start_date: Annotated[date | None, "Employment start date"] = None
-    end_date: Annotated[date | None, "Employment end date"] = None
-    is_current: Annotated[bool | None, "Whether this is the current role"] = None
-    description: Annotated[str | None, "Role description"] = None
-
-
-class ResumeEducationUpdate(BaseModel):
-    college_name: Annotated[str | None, "College or university name"] = None
-    degree: Annotated[str | None, "Degree or program name"] = None
-    location: Annotated[str | None, "Education location"] = None
-    start_date: Annotated[date | None, "Education start date"] = None
-    end_date: Annotated[date | None, "Education end date"] = None
-    is_current: Annotated[bool | None, "Whether this education is ongoing"] = None
-
-
-class ResumeSkillUpdate(BaseModel):
-    skill_name: Annotated[str | None, "Skill name"] = None
-
-
-class ResumeCertificationUpdate(BaseModel):
-    certification_name: Annotated[str | None, "Certification name"] = None
-    issuing_body: Annotated[str | None, "Issuing organization"] = None
-    credential_url: Annotated[str | None, "Credential verification URL"] = None
-    issue_date: Annotated[date | None, "Certification issue date"] = None
-    expiration_date: Annotated[date | None, "Certification expiration date"] = None
-    does_not_expire: Annotated[
-        bool | None, "Whether the certification does not expire"
-    ] = None
-
-
+# --- RESPONSE SCHEMAS ---
 class ResumeSocialLinkResponse(SocialLinkBase):
     resume_social_link_id: UUID
     model_config = ConfigDict(from_attributes=True)
@@ -96,6 +94,7 @@ class ResumeResponse(BaseModel):
     profile_id: UUID
     target_job_title: Annotated[str | None, "Target job title"] = None
     custom_summary: Annotated[str | None, "Custom resume summary"] = None
+    is_default: Annotated[bool, "Whether this is the default resume"] = False
     created_at: Annotated[datetime, Field(description="Resume creation timestamp")]
     updated_at: Annotated[datetime, Field(description="Resume last update timestamp")]
     social_links: Annotated[list[ResumeSocialLinkResponse], "Social links"] = []
@@ -113,5 +112,6 @@ class ResumeResponse(BaseModel):
 class ResumeListResponse(BaseModel):
     resume_id: UUID
     target_job_title: Annotated[str | None, "Target job title"] = None
+    is_default: Annotated[bool, "Whether this is the default resume"] = False
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)

@@ -7,7 +7,7 @@ import {
   Pencil,
   Trash2,
   Plus,
-  Briefcase,
+  BriefcaseBusiness,
   GraduationCap,
   Code,
   Award,
@@ -225,7 +225,10 @@ export default function ResumeDetailSheet({
             <div className="px-10 py-8 space-y-12">
               {/* Summary Section */}
               {resume.custom_summary && (
-                <Section title="Professional Summary" icon={<Briefcase className="w-4 h-4" />}>
+                <Section
+                  title="Professional Summary"
+                  icon={<BriefcaseBusiness className="w-4 h-4" />}
+                >
                   <p className="text-[15px] leading-relaxed text-text-secondary whitespace-pre-wrap">
                     {resume.custom_summary}
                   </p>

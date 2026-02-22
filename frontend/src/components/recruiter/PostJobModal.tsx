@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Briefcase, PenLine } from 'lucide-react'
+import { X, BriefcaseBusiness, PenLine } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { JobCreationWizard } from './JobCreationWizard'
 import type { Job } from '../../types/job'
@@ -84,7 +84,7 @@ export function PostJobModal({
               {jobToEdit ? (
                 <PenLine className="w-7 h-7 text-primary-600 dark:text-primary-400" />
               ) : (
-                <Briefcase className="w-7 h-7 text-primary-600 dark:text-primary-400" />
+                <BriefcaseBusiness className="w-7 h-7 text-primary-600 dark:text-primary-400" />
               )}
             </div>
             <div className="flex-1 min-w-0 pt-1">

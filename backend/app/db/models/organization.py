@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Integer, String, Uuid
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import get_datetime
@@ -26,6 +27,9 @@ class Organization(Base):
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     industry: Mapped[str | None] = mapped_column(String, nullable=True)
     founded_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cal_com_api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    cal_com_event_type_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    smtp_credentials: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )

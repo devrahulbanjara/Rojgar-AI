@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ChevronDown, Brain, Clock } from 'lucide-react'
+import { ChevronDown, Brain, Timer } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 interface AIAnalysisSectionProps {
@@ -104,7 +104,7 @@ export function AIAnalysisSection({ analysis, appliedAt, className }: AIAnalysis
           {appliedAt && (
             <div className="pt-3 border-t border-border-subtle">
               <span className="text-text-tertiary px-1 text-[11px] font-medium inline-flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
+                <Timer className="w-3.5 h-3.5" />
                 Applied {appliedAt}
               </span>
             </div>

@@ -14,6 +14,7 @@ from app.db.repositories.candidate_repo import (
     CandidateWorkExperienceRepository,
 )
 from app.db.repositories.email_draft_repo import EmailDraftRepository
+from app.db.repositories.interview_repo import InterviewRepository
 from app.db.repositories.job_repo import (
     JobDescriptionRepository,
     JobRepository,
@@ -338,11 +339,17 @@ def get_shortlist_service(
     return ShortlistService(application_repo, job_repo)
 
 
+def get_interview_repo(db: AsyncSession = Depends(get_db)) -> InterviewRepository:
+    return InterviewRepository(db)
+
+
 def get_stats_service(
     job_repo: JobRepository = Depends(get_job_repo),
     application_repo: JobApplicationRepository = Depends(get_job_application_repo),
+    email_draft_repo: EmailDraftRepository = Depends(get_email_draft_repo),
+    interview_repo: InterviewRepository = Depends(get_interview_repo),
 ) -> StatsService:
-    return StatsService(job_repo, application_repo)
+    return StatsService(job_repo, application_repo, email_draft_repo, interview_repo)
 
 
 def get_recruiter_candidate_service(

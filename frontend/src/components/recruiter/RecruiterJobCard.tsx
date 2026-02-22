@@ -1,5 +1,5 @@
 import React, { memo } from 'react'
-import { MapPin, DollarSign, Clock, Users, Eye, Zap, MoreHorizontal } from 'lucide-react'
+import { Navigation, DollarSign, Timer, Users, Eye, Zap, MoreHorizontal } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAutoShortlist } from '../../hooks/useAutoShortlist'
 import { toast } from 'sonner'
@@ -206,7 +206,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
           {/* Vertical Hierarchy Spine */}
           <div className="space-y-2.5">
             <div className="flex items-center gap-2.5 text-sm text-text-secondary">
-              <MapPin className="w-4 h-4 text-text-muted flex-shrink-0" />
+              <Navigation className="w-4 h-4 text-text-muted flex-shrink-0" />
               <span className="truncate">{locationDisplay}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm text-text-secondary">
@@ -214,7 +214,7 @@ export const RecruiterJobCard = memo<RecruiterJobCardProps>(
               <span className="font-medium whitespace-nowrap">{formatSalary(job)}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm text-text-secondary">
-              <Clock className="w-4 h-4 text-text-muted flex-shrink-0" />
+              <Timer className="w-4 h-4 text-text-muted flex-shrink-0" />
               <span className="whitespace-nowrap">
                 {formatPostedDate(job.posted_date || job.created_at)}
               </span>

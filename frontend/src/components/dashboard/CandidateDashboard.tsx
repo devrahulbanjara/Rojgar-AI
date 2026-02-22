@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { formatDistanceToNow } from 'date-fns'
-import { STATUS_CONFIG, COLUMN_MAPPING } from '@/utils/statusStyles'
-import { Briefcase, Video, Trophy, MapPin, Building2, Clock } from 'lucide-react'
-import { SkeletonDashboardColumn } from '../common/SkeletonLoader'
-import { Badge } from '../ui/badge'
+import { StatusBar } from './candidate/StatusBar'
+import { NeedsAttention } from './candidate/NeedsAttention'
+import { ApplicationFeed } from './candidate/ApplicationFeed'
+import { RecommendedJobsStrip } from './candidate/RecommendedJobsStrip'
 
 interface JobSummary {
   job_id: string
@@ -23,19 +22,31 @@ interface ApplicationResponse {
   current_status: string
   applied_at: string
   updated_at: string
+  ai_score?: number
+  ai_feedback?: string
   job: JobSummary
   organization: OrganizationSummary
 }
 
+interface RecommendedJob {
+  job_id: string
+  title: string
+  organization_name: string
+  location_city?: string
+  employment_type?: string
+  match_score?: number
+}
+
 export default function CandidateDashboard() {
   const [applications, setApplications] = useState<ApplicationResponse[]>([])
+  const [recommendations, setRecommendations] = useState<RecommendedJob[]>([])
   const [loading, setLoading] = useState(true)
+  const [recsLoading, setRecsLoading] = useState(true)
   const [error, setError] = useState(false)
 
   const fetchApplications = useCallback(async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
       const res = await fetch(`${apiUrl}/api/v1/candidate/applications`, {
         credentials: 'include',
       })
@@ -50,231 +61,97 @@ export default function CandidateDashboard() {
     }
   }, [])
 
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const res = await fetch(`${apiUrl}/api/v1/jobs/recommendations?limit=4`, {
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      // Map from job list response format
+      const mapped: RecommendedJob[] = (data.jobs || []).map((j: Record<string, unknown>) => ({
+        job_id: j.job_id,
+        title: j.title,
+        organization_name: (j.organization as Record<string, string>)?.name || '',
+        location_city: j.location_city,
+        employment_type: j.employment_type,
+      }))
+      setRecommendations(mapped)
+    } catch {
+      // Silently fail — recommendations are optional
+    } finally {
+      setRecsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     fetchApplications()
-  }, [fetchApplications])
+    fetchRecommendations()
+  }, [fetchApplications, fetchRecommendations])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
         event.preventDefault()
         fetchApplications()
+        fetchRecommendations()
       }
     }
-
     window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [fetchApplications])
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [fetchApplications, fetchRecommendations])
 
-  const columns: Record<string, ApplicationResponse[]> = {
-    Applied: [],
-    Interviewing: [],
-    Outcome: [],
+  const hasProfile = true // TODO: wire to actual profile check
+  const hasResume = true // TODO: wire to actual resume count
+  const hasPendingInterview = applications.some(a => a.current_status === 'interviewing')
+
+  if (error) {
+    return <div className="text-center p-20 text-error">Failed to load applications.</div>
   }
-
-  applications.forEach(app => {
-    const colKey = COLUMN_MAPPING[app.current_status] || 'Applied'
-    if (columns[colKey]) {
-      columns[colKey].push(app)
-    } else {
-      columns['Applied'].push(app)
-    }
-  })
-
-  if (error) return <div className="text-center p-20 text-error">Failed to load applications.</div>
 
   if (loading) {
     return (
       <div className="h-full flex flex-col space-y-8 pb-10">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">Your Applications</h1>
-          <p className="text-text-tertiary mt-2 text-lg">Track your job application journey</p>
+        {/* Skeleton stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div
+              key={i}
+              className="h-20 rounded-xl bg-background-muted animate-pulse border border-border-subtle"
+            />
+          ))}
         </div>
-
-        {}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-          <SkeletonDashboardColumn
-            bgColor="bg-primary-50/50 dark:bg-primary-950/30"
-            borderColor="border-primary-200/60 dark:border-primary-800/60"
-            iconColor="bg-primary-200 dark:bg-primary-800"
-            textColor="bg-border-default"
-            badgeColor="bg-primary-100 dark:bg-primary-900/30"
-          />
-          <SkeletonDashboardColumn
-            bgColor="bg-primary-50/50 dark:bg-primary-950/30"
-            borderColor="border-primary-200/60 dark:border-primary-800/60"
-            iconColor="bg-primary-200 dark:bg-primary-800"
-            textColor="bg-border-default"
-            badgeColor="bg-primary-100 dark:bg-primary-900/30"
-          />
-          <SkeletonDashboardColumn
-            bgColor="bg-success-50/50 dark:bg-success-950/30"
-            borderColor="border-success-200/60 dark:border-success-800/60"
-            iconColor="bg-success-200 dark:bg-success-800"
-            textColor="bg-border-default"
-            badgeColor="bg-success-100 dark:bg-success-900/30"
-          />
+        {/* Skeleton feed */}
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div
+              key={i}
+              className="h-24 rounded-xl bg-background-muted animate-pulse border border-border-subtle"
+            />
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col space-y-8 pb-10">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <BoardColumn
-          title="Applied"
-          count={columns.Applied.length}
-          icon={<Briefcase className="w-4 h-4" />}
-        >
-          <div className="space-y-4">
-            {columns.Applied.map(app => (
-              <ApplicationCard key={app.application_id} app={app} color="primary" />
-            ))}
-            {columns.Applied.length === 0 && (
-              <EmptyState message="No active applications" icon={<Briefcase />} />
-            )}
-          </div>
-        </BoardColumn>
+    <div className="h-full flex flex-col space-y-6 pb-10">
+      {/* Tier 1: Status Bar */}
+      <StatusBar applications={applications} />
 
-        <BoardColumn
-          title="Interviewing"
-          count={columns.Interviewing.length}
-          icon={<Video className="w-4 h-4" />}
-        >
-          <div className="space-y-4">
-            {columns.Interviewing.map(app => (
-              <ApplicationCard key={app.application_id} app={app} color="purple" />
-            ))}
-            {columns.Interviewing.length === 0 && (
-              <EmptyState message="No interviews yet" icon={<Video />} />
-            )}
-          </div>
-        </BoardColumn>
+      {/* Tier 2: Needs Attention */}
+      <NeedsAttention
+        hasProfile={hasProfile}
+        hasResume={hasResume}
+        hasPendingInterview={hasPendingInterview}
+      />
 
-        <BoardColumn
-          title="Outcome"
-          count={columns.Outcome.length}
-          icon={<Trophy className="w-4 h-4" />}
-        >
-          <div className="space-y-4">
-            {columns.Outcome.map(app => (
-              <ApplicationCard key={app.application_id} app={app} color="emerald" />
-            ))}
-            {columns.Outcome.length === 0 && (
-              <EmptyState message="No outcomes yet" icon={<Trophy />} />
-            )}
-          </div>
-        </BoardColumn>
-      </div>
-    </div>
-  )
-}
+      {/* Tier 3: Application Feed */}
+      <ApplicationFeed applications={applications} />
 
-function BoardColumn({
-  title,
-  count,
-  icon,
-  children,
-}: {
-  title: string
-  count: number
-  icon: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col h-full space-y-4">
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md bg-background-surface border shadow-sm text-text-muted">
-            {icon}
-          </div>
-          <h2 className="text-[13px] font-bold text-text-tertiary uppercase tracking-widest">
-            {title}
-          </h2>
-        </div>
-        <Badge
-          variant="secondary"
-          className="bg-background-muted dark:bg-background-subtle text-text-secondary font-bold h-5 px-2"
-        >
-          {count}
-        </Badge>
-      </div>
-
-      <div className="flex-1 rounded-xl bg-background-subtle/50 dark:bg-background-muted/30 border-2 border-dashed border-border-default p-3">
-        <div className="space-y-3">{children}</div>
-      </div>
-    </div>
-  )
-}
-
-function ApplicationCard({
-  app,
-  color,
-}: {
-  app: ApplicationResponse
-  color: 'primary' | 'purple' | 'emerald'
-}) {
-  const statusStyle = STATUS_CONFIG[app.current_status] || STATUS_CONFIG.applied
-
-  const borderColorMap = {
-    primary: 'border-l-primary-600',
-    purple: 'border-l-purple-600',
-    emerald: 'border-l-emerald-600',
-  }
-
-  return (
-    <div
-      className={`bg-background-surface border border-border-default/60 shadow-sm hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-pointer overflow-hidden relative p-5 rounded-xl border-l-[3px] ${borderColorMap[color]} group`}
-    >
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <h3 className="text-lg font-bold text-text-primary leading-tight group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-            {app.job.title}
-          </h3>
-          <p className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest">
-            {app.organization.name}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          {app.job.location_city && (
-            <div className="flex items-center gap-2 text-[13px] text-text-secondary font-medium">
-              <MapPin className="w-4 h-4 text-text-muted" /> {app.job.location_city}
-            </div>
-          )}
-          {app.job.employment_type && (
-            <div className="flex items-center gap-2 text-[13px] text-text-secondary font-medium">
-              <Building2 className="w-4 h-4 text-text-muted" /> {app.job.employment_type}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-tertiary uppercase tracking-tighter">
-            <Clock className="w-3.5 h-3.5" />{' '}
-            {formatDistanceToNow(new Date(app.applied_at), { addSuffix: true })}
-          </div>
-          <Badge
-            className={`${statusStyle.color.replace('border', 'bg').replace('500', '50')} ${statusStyle.color.replace('border', 'text').replace('500', '600')} dark:${statusStyle.color.replace('border', 'bg').replace('500', '950/30')} dark:${statusStyle.color.replace('border', 'text').replace('500', '400')} border-none text-[10px] font-bold px-2 py-0`}
-          >
-            {statusStyle.label}
-          </Badge>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function EmptyState({ message, icon }: { message: string; icon: React.ReactNode }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
-      <div className="p-4 bg-background-surface rounded-full border border-dashed border-border-default text-text-muted">
-        {icon && <div className="scale-125">{icon}</div>}
-      </div>
-      <p className="text-sm font-medium text-text-tertiary">{message}</p>
+      {/* Tier 4: Recommended Jobs */}
+      <RecommendedJobsStrip jobs={recommendations} loading={recsLoading} />
     </div>
   )
 }

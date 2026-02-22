@@ -1,5 +1,5 @@
 import React, { memo } from 'react'
-import { Briefcase, FileEdit, BookOpen, Archive } from 'lucide-react'
+import { BriefcaseBusiness, FileEdit, BookOpen, Archive } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Tabs, TabsList, TabsTrigger } from '../ui'
 import { Badge } from '../ui/badge'
@@ -17,7 +17,7 @@ interface JobTabSwitcherProps {
 }
 
 const tabs = [
-  { id: 'active' as TabType, label: 'Active Jobs', icon: Briefcase, color: 'blue' },
+  { id: 'active' as TabType, label: 'Active Jobs', icon: BriefcaseBusiness, color: 'blue' },
   { id: 'drafts' as TabType, label: 'Drafts', icon: FileEdit, color: 'amber' },
   { id: 'expired' as TabType, label: 'Expired', icon: Archive, color: 'rose' },
   { id: 'reference-jds' as TabType, label: 'Reference JDs', icon: BookOpen, color: 'purple' },

@@ -4,8 +4,10 @@ from app.api import auth, users
 from app.api.v1 import jobs as public_jobs
 from app.api.v1.candidate import applications, profile, resumes
 from app.api.v1.recruiter import (
+    action_items,
     auto_shortlist,
     candidates,
+    interviews,
     jobs,
     organization,
     stats,
@@ -43,6 +45,16 @@ v1_router.include_router(
     candidates.router,
     prefix="/recruiter/candidates",
     tags=["recruiter-candidates"],
+)
+v1_router.include_router(
+    action_items.router,
+    prefix="/recruiter/action-items",
+    tags=["recruiter-action-items"],
+)
+v1_router.include_router(
+    interviews.router,
+    prefix="/recruiter/interviews",
+    tags=["recruiter-interviews"],
 )
 v1_router.include_router(
     organization.router,

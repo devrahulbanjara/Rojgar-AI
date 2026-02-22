@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, Award, Building2, Calendar, Link2 } from 'lucide-react'
+import { Loader2, Award, BriefcaseBusiness, Calendar, Link2 } from 'lucide-react'
 import type { Certification } from '@/types/resume'
 
 interface CertificationFormProps {
@@ -112,8 +112,8 @@ export default function CertificationFormDialog({
       <div className="bg-background-surface flex flex-col h-full max-h-[90vh]">
         <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
           <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-2xl bg-warning-600/10 dark:bg-warning-600/20 flex items-center justify-center border border-warning-600/20 shadow-sm">
-              <Award className="w-7 h-7 text-warning-600" />
+            <div className="w-14 h-14 rounded-2xl bg-ai-600/10 dark:bg-ai-600/20 flex items-center justify-center border border-ai-600/20 shadow-sm">
+              <Award className="w-7 h-7 text-ai-600" />
             </div>
             <div>
               <DialogTitle className="text-2xl font-bold tracking-tight text-text-primary">
@@ -142,7 +142,7 @@ export default function CertificationFormDialog({
                 onChange={e => setFormData({ ...formData, certification_name: e.target.value })}
                 placeholder="e.g. AWS Solutions Architect Associate"
                 className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                  focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                   hover:border-border-strong transition-all duration-200
                   text-text-primary font-medium placeholder:text-text-muted"
               />
@@ -150,7 +150,7 @@ export default function CertificationFormDialog({
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                <Building2 className="w-3.5 h-3.5" />
+                <BriefcaseBusiness className="w-3.5 h-3.5" />
                 Issuing Organization <span className="text-error-500 font-bold">*</span>
               </label>
               <input
@@ -160,7 +160,7 @@ export default function CertificationFormDialog({
                 onChange={e => setFormData({ ...formData, issuing_body: e.target.value })}
                 placeholder="e.g. Amazon Web Services"
                 className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                  focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                   hover:border-border-strong transition-all duration-200
                   text-text-primary font-medium placeholder:text-text-muted"
               />
@@ -177,7 +177,7 @@ export default function CertificationFormDialog({
                   value={formData.issue_date}
                   onChange={e => setFormData({ ...formData, issue_date: e.target.value })}
                   className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
-                    focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                    focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                     hover:border-border-strong transition-all duration-200
                     text-text-primary font-medium"
                 />
@@ -193,7 +193,7 @@ export default function CertificationFormDialog({
                   value={formData.expiration_date}
                   onChange={e => setFormData({ ...formData, expiration_date: e.target.value })}
                   className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
-                    focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                    focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                     hover:border-border-strong transition-all duration-200
                     text-text-primary font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-muted"
                 />
@@ -205,7 +205,7 @@ export default function CertificationFormDialog({
                 id="no_expire"
                 checked={formData.does_not_expire}
                 onCheckedChange={c => setFormData({ ...formData, does_not_expire: c as boolean })}
-                className="w-5 h-5 rounded-md border-border-default data-[state=checked]:bg-warning-600 data-[state=checked]:border-warning-600 shadow-sm transition-all"
+                className="w-5 h-5 rounded-md border-border-default data-[state=checked]:bg-ai-600 data-[state=checked]:border-ai-600 shadow-sm transition-all"
               />
               <label
                 htmlFor="no_expire"
@@ -226,7 +226,7 @@ export default function CertificationFormDialog({
                 onChange={e => setFormData({ ...formData, credential_url: e.target.value })}
                 placeholder="https://..."
                 className="w-full h-11 px-4 bg-background-base border border-border-default rounded-xl 
-                  focus:outline-none focus:ring-2 focus:ring-warning-600/20 focus:border-warning-600 
+                  focus:outline-none focus:ring-2 focus:ring-ai-600/20 focus:border-ai-600 
                   hover:border-border-strong transition-all duration-200
                   text-text-primary font-medium placeholder:text-text-muted"
               />
@@ -248,7 +248,7 @@ export default function CertificationFormDialog({
               type="submit"
               form="certification-form"
               disabled={loading}
-              className="h-11 px-8 rounded-xl bg-warning-600 hover:bg-warning-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-warning-600/20 transition-all active:scale-95"
+              className="h-11 px-8 rounded-xl bg-ai-600 hover:bg-ai-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-ai-600/20 transition-all active:scale-95"
             >
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />}
               {initialData ? 'Save Changes' : 'Add Certification'}

@@ -1,5 +1,5 @@
 import React, { memo, useCallback } from 'react'
-import { MapPin, DollarSign, Clock, Bookmark } from 'lucide-react'
+import { Navigation, DollarSign, Timer, Bookmark, Sparkles } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { jobUtils } from '../../services/jobService'
 import type { Job } from '../../types/job'
@@ -138,7 +138,7 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
         {/* Metadata Grid */}
         <div className="grid gap-2.5 text-sm text-text-secondary">
           <div className="flex items-center gap-2.5">
-            <MapPin className="w-4 h-4 text-text-muted flex-shrink-0" />
+            <Navigation className="w-4 h-4 text-text-muted flex-shrink-0" />
             <span className="truncate">{locationDisplay}</span>
           </div>
           <div className="flex items-center gap-2.5">
@@ -146,8 +146,18 @@ export const JobCard = memo<JobCardProps>(({ job, isSelected = false, onSelect, 
             <span className="font-medium whitespace-nowrap">{jobUtils.formatJobSalary(job)}</span>
           </div>
           <div className="flex items-center gap-2.5">
-            <Clock className="w-4 h-4 text-text-muted flex-shrink-0" />
-            <span className="whitespace-nowrap">
+            {(() => {
+              const postedDate = new Date(job.created_at || job.posted_date)
+              const isRecent =
+                !isNaN(postedDate.getTime()) &&
+                Date.now() - postedDate.getTime() < 24 * 60 * 60 * 1000
+              return isRecent ? (
+                <Sparkles className="w-4 h-4 text-amber-500 animate-pulse flex-shrink-0" />
+              ) : (
+                <Timer className="w-4 h-4 text-text-muted flex-shrink-0" />
+              )
+            })()}
+            <span className="whitespace-nowrap flex items-center gap-1.5">
               {jobUtils.formatPostedDate(job.created_at || job.posted_date)}
             </span>
           </div>

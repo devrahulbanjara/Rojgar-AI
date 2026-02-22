@@ -1,11 +1,11 @@
 import React from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, LogOut, Bell, ChevronRight } from 'lucide-react'
+import { Menu, LogOut, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ThemeToggle } from '../common/ThemeToggle'
-import { NotificationDropdown } from './NotificationDropdown'
+
 import { authService } from '../../services/authService'
 import { ROUTES } from '../../config/constants'
 import { UserAvatar } from '../ui/UserAvatar'
@@ -83,12 +83,8 @@ function Breadcrumbs() {
 export function Topbar({ user }: TopbarProps) {
   const { toggleSidebar } = useSidebar()
   const router = useRouter()
-  const pathname = usePathname()
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
-
-  // Determine if user is a recruiter based on role or current path
-  const isRecruiter = user?.role === 'recruiter' || pathname?.startsWith('/recruiter')
 
   const handleLogout = async () => {
     setIsDropdownOpen(false)
@@ -175,19 +171,6 @@ export function Topbar({ user }: TopbarProps) {
           <div className="flex items-center gap-5">
             {/* Theme Toggle */}
             <ThemeToggle variant="icon-only" />
-
-            {/* Notification Bell - Shows Recent Activity for Recruiters */}
-            {isRecruiter ? (
-              <NotificationDropdown />
-            ) : (
-              <button
-                className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background-subtle transition-colors duration-200"
-                aria-label="Notifications"
-                title="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-              </button>
-            )}
 
             {/* Logout Button */}
             <motion.button

@@ -15,7 +15,15 @@ import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
 import { AppShell } from '../../../components/layout/AppShell'
 import { Button, Card, Badge, Tabs, TabsList, TabsTrigger } from '../../../components/ui'
 import { AnimatedContainer, SkeletonJobCard, SkeletonLoader } from '../../../components/common'
-import { RefreshCw, AlertCircle, Search, Briefcase, Bookmark, Clock } from 'lucide-react'
+import {
+  RefreshCw,
+  AlertCircle,
+  Search,
+  BriefcaseBusiness,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { cn } from '../../../lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -486,7 +494,7 @@ export default function Jobs() {
                   applications.length === 0 ? (
                     <div className="col-span-full py-24 flex flex-col items-center justify-center">
                       <div className="w-16 h-16 rounded-3xl bg-success-50 dark:bg-success-900/30 flex items-center justify-center border border-success-100 dark:border-success-800/30 mb-8">
-                        <Briefcase className="w-8 h-8 text-success-500" />
+                        <BriefcaseBusiness className="w-8 h-8 text-success-500" />
                       </div>
                       <h3 className="text-xl font-bold text-text-primary tracking-tight">
                         No applications yet
@@ -580,7 +588,7 @@ export default function Jobs() {
                       disabled={currentPage === 1}
                       className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-30 transition-colors"
                     >
-                      <Clock className="w-5 h-5 -rotate-90" />
+                      <ChevronLeft className="w-5 h-5" />
                     </Button>
                     <span className="text-sm font-bold text-text-secondary px-4">
                       Page {currentPage} of {totalPages}
@@ -592,7 +600,7 @@ export default function Jobs() {
                       disabled={currentPage >= totalPages}
                       className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-30 transition-colors"
                     >
-                      <Clock className="w-5 h-5 rotate-90" />
+                      <ChevronRight className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>

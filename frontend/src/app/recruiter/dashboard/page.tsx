@@ -4,6 +4,9 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect } from 'react'
 import { WelcomeMessage, StatsGrid } from '../../../components/dashboard'
+import { ActionRequired } from '../../../components/dashboard/recruiter/ActionRequired'
+import { LiveActivityFeed } from '../../../components/dashboard/recruiter/LiveActivityFeed'
+import { JobsPipelineTable } from '../../../components/dashboard/recruiter/JobsPipelineTable'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { SkeletonStatCard } from '../../../components/common/SkeletonLoader'
@@ -56,7 +59,7 @@ export default function RecruiterDashboard() {
             <WelcomeMessage firstName={user?.name} organizationName={user?.organization?.name} />
           </AnimatedContainer>
 
-          {/* Tier 2: Stats */}
+          {/* Tier 2: Stats Row */}
           <AnimatedContainer direction="up" delay={0.2}>
             {isStatsLoading ? (
               <div className="grid gap-6 md:grid-cols-4">
@@ -68,6 +71,23 @@ export default function RecruiterDashboard() {
             ) : (
               <StatsGrid stats={stats || {}} userType="recruiter" />
             )}
+          </AnimatedContainer>
+
+          {/* Tier 3: Action Required */}
+          <AnimatedContainer direction="up" delay={0.3}>
+            <ActionRequired />
+          </AnimatedContainer>
+
+          {/* Tier 4: Two-column layout — Activity Feed + Pipeline Table */}
+          <AnimatedContainer direction="up" delay={0.4}>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              <div className="lg:col-span-2">
+                <LiveActivityFeed />
+              </div>
+              <div className="lg:col-span-3">
+                <JobsPipelineTable />
+              </div>
+            </div>
           </AnimatedContainer>
         </div>
       </PageTransition>

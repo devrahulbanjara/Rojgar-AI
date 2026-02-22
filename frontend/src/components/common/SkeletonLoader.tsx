@@ -270,18 +270,10 @@ export const SkeletonProfileHeader: React.FC<{ className?: string }> = ({ classN
 )
 
 export const SkeletonProfileTab: React.FC<{ className?: string }> = ({ className }) => (
-  <div
-    className={cn(
-      'bg-transparent border-b border-border-subtle w-full',
-      className
-    )}
-  >
+  <div className={cn('bg-transparent border-b border-border-subtle w-full', className)}>
     <div className="flex gap-8">
       {[1, 2, 3].map(index => (
-        <div
-          key={index}
-          className="flex items-center gap-2 px-0 pb-3"
-        >
+        <div key={index} className="flex items-center gap-2 px-0 pb-3">
           <SkeletonLoader
             variant="circular"
             width={16}

@@ -1,5 +1,5 @@
 import React from 'react'
-import { ListChecks, Briefcase, Copy } from 'lucide-react'
+import { ListChecks, BriefcaseBusiness, Copy } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { ReferenceJD } from '../../services/referenceJDService'
 import {
@@ -63,7 +63,7 @@ export function ReferenceJDCard({ jd, onClick, onUseTemplate, className }: Refer
         {/* Responsibilities & Requirements Stats */}
         <div className="flex items-center gap-4 text-xs font-semibold text-text-muted">
           <div className="flex items-center gap-1.5">
-            <Briefcase className="w-4 h-4 text-text-tertiary" />
+            <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
             <span>{jobResponsibilities.length} responsibilities</span>
           </div>
           <div className="flex items-center gap-1.5">

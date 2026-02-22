@@ -754,10 +754,6 @@ export default function ShortlistPage() {
     )
   }, [selectedJob, editingThreshold, updateThresholdMutation])
 
-  const getScoreInterpretation = (_score: number) => {
-    return { text: 'Match Score', color: 'text-text-tertiary' }
-  }
-
   const handleShortlist = useCallback(
     (applicationId: string) => {
       updateApplicationMutation.mutate(
@@ -1208,7 +1204,7 @@ export default function ShortlistPage() {
                                       (!selectedJob ||
                                         selectedJob.candidates.length === 0 ||
                                         finalizeShortlistMutation.isPending) &&
-                                      'opacity-50 cursor-not-allowed'
+                                        'opacity-50 cursor-not-allowed'
                                     )}
                                   >
                                     {finalizeShortlistMutation.isPending
@@ -1231,7 +1227,7 @@ export default function ShortlistPage() {
                                               'whitespace-nowrap h-9 px-4 flex items-center gap-2',
                                               (!allCandidatesReviewed ||
                                                 finalizeShortlistMutation.isPending) &&
-                                              'opacity-50 cursor-not-allowed'
+                                                'opacity-50 cursor-not-allowed'
                                             )}
                                           >
                                             {finalizeShortlistMutation.isPending ? (
@@ -1329,7 +1325,7 @@ export default function ShortlistPage() {
                                           className={cn(
                                             'bg-primary-600 hover:bg-primary-700 whitespace-nowrap',
                                             !allCandidatesReviewed &&
-                                            'opacity-50 cursor-not-allowed'
+                                              'opacity-50 cursor-not-allowed'
                                           )}
                                         >
                                           <CheckCheck className="w-4 h-4" />
@@ -1351,22 +1347,22 @@ export default function ShortlistPage() {
 
                           {(emailWorkflowStep === 'preparing' ||
                             emailWorkflowStep === 'sending') && (
-                              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                                <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-                                <div className="text-center">
-                                  <h4 className="font-bold text-text-primary">
-                                    {emailWorkflowStep === 'preparing'
-                                      ? 'Generating AI Drafts'
-                                      : 'Sending Updates'}
-                                  </h4>
-                                  <p className="text-sm text-text-tertiary">
-                                    {emailWorkflowStep === 'preparing'
-                                      ? 'This may take a few seconds...'
-                                      : 'Dispatching emails to candidates...'}
-                                  </p>
-                                </div>
+                            <div className="flex flex-col items-center justify-center py-20 gap-4">
+                              <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+                              <div className="text-center">
+                                <h4 className="font-bold text-text-primary">
+                                  {emailWorkflowStep === 'preparing'
+                                    ? 'Generating AI Drafts'
+                                    : 'Sending Updates'}
+                                </h4>
+                                <p className="text-sm text-text-tertiary">
+                                  {emailWorkflowStep === 'preparing'
+                                    ? 'This may take a few seconds...'
+                                    : 'Dispatching emails to candidates...'}
+                                </p>
                               </div>
-                            )}
+                            </div>
+                          )}
 
                           {emailWorkflowStep === 'reviewing' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">

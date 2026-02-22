@@ -5,7 +5,7 @@ import { User } from '../../types/index'
 import { CandidateProfile } from '../../types/profile'
 import { UserAvatar } from '../ui/UserAvatar'
 import { Badge } from '../ui/badge'
-import { MapPin, Mail } from 'lucide-react'
+import { Navigation, Mail } from 'lucide-react'
 
 interface ProfileHeaderProps {
   user: User
@@ -41,7 +41,7 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
                   variant="secondary"
                   className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-0 text-[14px] font-medium"
                 >
-                  <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                  <Navigation className="w-3.5 h-3.5 mr-1.5" />
                   {profile.location_city}, {profile.location_country}
                 </Badge>
               )}

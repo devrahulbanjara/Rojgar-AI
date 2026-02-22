@@ -1,13 +1,13 @@
 import React from 'react'
 import {
   X,
-  MapPin,
+  Navigation,
   Calendar,
   GraduationCap,
   Award,
   ExternalLink,
   User,
-  Briefcase,
+  BriefcaseBusiness,
   Wrench,
   Globe,
 } from 'lucide-react'
@@ -163,7 +163,7 @@ export function ResumeDetailModal({
                   <div className="relative pl-6 mb-4">
                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary-500 rounded-full" />
                     <div className="absolute left-[-11px] top-0 w-5 h-5 rounded bg-background-surface border-2 border-primary-500 flex items-center justify-center">
-                      <Briefcase className="w-3 h-3 text-primary-600" />
+                      <BriefcaseBusiness className="w-3 h-3 text-primary-600" />
                     </div>
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">
                       Work Experience
@@ -185,7 +185,7 @@ export function ResumeDetailModal({
                           </span>
                           {exp.location && (
                             <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
+                              <Navigation className="w-3 h-3" />
                               {exp.location}
                             </span>
                           )}
@@ -233,7 +233,7 @@ export function ResumeDetailModal({
                           )}
                           {edu.location && (
                             <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
+                              <Navigation className="w-3 h-3" />
                               {edu.location}
                             </span>
                           )}

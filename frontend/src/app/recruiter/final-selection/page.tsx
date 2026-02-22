@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, LoadingSpinner } from '../../../components/common'
 import { useAuth } from '../../../hooks/useAuth'
-import { Award, CheckCircle, Clock } from 'lucide-react'
+import { Award, CheckCircle, Timer } from 'lucide-react'
 
 export default function FinalSelectionPage() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
@@ -47,7 +47,7 @@ export default function FinalSelectionPage() {
                   <span className="text-xs text-text-muted">Selected</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2 bg-background-surface rounded-lg border border-border-default shadow-sm">
-                  <Clock className="w-4 h-4 text-warning-600 dark:text-warning-400" />
+                  <Timer className="w-4 h-4 text-warning-600 dark:text-warning-400" />
                   <span className="font-semibold text-sm text-text-primary">0</span>
                   <span className="text-xs text-text-muted">Pending</span>
                 </div>

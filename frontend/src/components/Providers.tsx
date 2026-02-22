@@ -11,14 +11,17 @@ import {
 } from '../lib/queryClient'
 import { apiClient } from '../lib/api'
 import { ROUTES } from '../config/constants'
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 
 function ToasterProvider() {
   return <Toaster position="top-right" expand={false} closeButton duration={4000} />
 }
 
 export function Providers({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+
   useEffect(() => {
+    setMounted(true)
     restoreQueryCache()
 
     apiClient.setUnauthorizedHandler(() => {
@@ -51,6 +54,14 @@ export function Providers({ children }: { children: ReactNode }) {
       persistQueryCache()
     }
   }, [])
+
+  if (!mounted) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div style={{ visibility: 'hidden' }}>{children}</div>
+      </QueryClientProvider>
+    )
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

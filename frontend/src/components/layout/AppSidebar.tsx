@@ -5,14 +5,13 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   LayoutDashboard,
-  Briefcase,
+  BriefcaseBusiness,
   Users,
   Search,
   FileText,
   Calendar,
-  BarChart3,
   User,
-  ListChecks,
+  MessageSquare,
 } from 'lucide-react'
 
 import {
@@ -39,11 +38,11 @@ export function AppSidebar({ role }: AppSidebarProps) {
 
   const recruiterItems = [
     { title: 'Dashboard', url: '/recruiter/dashboard', icon: LayoutDashboard },
-    { title: 'Jobs', url: '/recruiter/jobs', icon: Briefcase },
+    { title: 'Jobs', url: '/recruiter/jobs', icon: BriefcaseBusiness },
     { title: 'Candidates', url: '/recruiter/candidates', icon: Users },
-    { title: 'Shortlist', url: '/recruiter/shortlist', icon: ListChecks },
     { title: 'Interviews', url: '/recruiter/interviews', icon: Calendar },
-    { title: 'Final Selection', url: '/recruiter/final-selection', icon: BarChart3 },
+    { title: 'AI Assistant', url: '/recruiter/assistant', icon: MessageSquare },
+    { title: 'Organization', url: '/recruiter/organization', icon: BriefcaseBusiness },
   ]
 
   const candidateItems = [

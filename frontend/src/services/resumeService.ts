@@ -1,12 +1,6 @@
 import axios from 'axios'
 import { API_CONFIG } from '../config/constants'
-import {
-  ResumeCreate,
-  ResumeResponse,
-  ResumeListResponse,
-  ResumeUpdate,
-  WorkExperienceBase,
-} from '@/types/resume'
+import { ResumeCreate, ResumeResponse, ResumeListResponse, ResumeUpdate } from '@/types/resume'
 
 const API_URL = `${API_CONFIG.baseUrl}/api/v1`
 
@@ -34,7 +28,11 @@ export const resumeService = {
     return response.data
   },
 
-  async updateResume(id: string, data: ResumeUpdate): Promise<ResumeResponse> {
+  /**
+   * State-sync update: replaces nested collections in one PATCH call.
+   * Items with IDs → update. Items without IDs → create. Missing items → delete.
+   */
+  async syncResume(id: string, data: ResumeUpdate): Promise<ResumeResponse> {
     const response = await api.patch(`/candidate/resumes/${id}`, data)
     return response.data
   },
@@ -43,12 +41,16 @@ export const resumeService = {
     await api.delete(`/candidate/resumes/${id}`)
   },
 
-  async addExperience(resumeId: string, data: WorkExperienceBase): Promise<unknown> {
-    const response = await api.post(`/candidate/resumes/${resumeId}/experience`, data)
+  /**
+   * Upload a PDF resume and get AI-parsed structured data back.
+   * The returned data can be used to create a new resume via createResumeFork.
+   */
+  async uploadPdf(file: File): Promise<ResumeCreate> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post('/candidate/resumes/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return response.data
-  },
-
-  async deleteExperience(resumeId: string, itemId: string): Promise<void> {
-    await api.delete(`/candidate/resumes/${resumeId}/experience/${itemId}`)
   },
 }

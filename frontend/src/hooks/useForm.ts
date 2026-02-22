@@ -68,6 +68,7 @@ export function useForm<T extends Record<string, unknown>>(
 
     const fieldValue = values[fieldKey]
     return fieldRules.every(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (rule: ValidationRule<any>) => !rule(fieldValue, values as Record<string, unknown>)
     )
   })
@@ -79,10 +80,8 @@ export function useForm<T extends Record<string, unknown>>(
 
       const fieldValue = values[field] as T[keyof T]
       for (const rule of fieldRules) {
-        const error = (rule as ValidationRule<any>)(
-          fieldValue,
-          values as Record<string, unknown>
-        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const error = (rule as ValidationRule<any>)(fieldValue, values as Record<string, unknown>)
         if (error) return error
       }
       return undefined

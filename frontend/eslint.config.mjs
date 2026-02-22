@@ -20,6 +20,11 @@ export default [
       'next-env.d.ts',
       '*.config.js',
       '*.config.ts',
+      '*.config.mjs',
+      'next.config.*',
+      'tailwind.config.*',
+      'postcss.config.*',
+      '**/__tests__/**',
     ],
   },
   // JavaScript files

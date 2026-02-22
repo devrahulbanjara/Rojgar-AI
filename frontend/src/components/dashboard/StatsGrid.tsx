@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { StatCard } from '../common/StatCard'
-import { FileText, Calendar, Trophy, BriefcaseIcon, Users, TrendingUp } from 'lucide-react'
+import { FileText, Calendar, Trophy, BriefcaseBusiness, Users, TrendingUp } from 'lucide-react'
 import type { DashboardStats } from '../../types'
 
 interface StatsGridProps {
@@ -36,7 +36,7 @@ export const StatsGrid = memo<StatsGridProps>(
       {
         title: 'Active Jobs',
         value: stats.activeJobs || 0,
-        icon: <BriefcaseIcon />,
+        icon: <BriefcaseBusiness />,
         description: 'Jobs currently posted',
       },
       {

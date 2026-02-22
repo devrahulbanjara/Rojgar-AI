@@ -1,5 +1,13 @@
+import io
+import json
 import uuid
+from typing import Any
 
+import pdfplumber
+from langchain_core.messages import HumanMessage, SystemMessage
+
+from app.core.config import settings
+from app.core.logging_config import logger
 from app.db.models.resume import (
     Resume,
     ResumeCertification,
@@ -18,18 +26,8 @@ from app.db.repositories.resume_repo import (
     ResumeSocialLinkRepository,
     ResumeWorkExperienceRepository,
 )
-from app.schemas import (
-    CertificationBase,
-    EducationBase,
-    ResumeCertificationUpdate,
-    ResumeCreate,
-    ResumeEducationUpdate,
-    ResumeSkillUpdate,
-    ResumeUpdate,
-    ResumeWorkExperienceUpdate,
-    SkillBase,
-    WorkExperienceBase,
-)
+from app.integrations.groq.provider import get_llm
+from app.schemas.resume import ResumeCreate, ResumeUpdate
 
 
 class ResumeService:
@@ -51,8 +49,10 @@ class ResumeService:
         self.resume_certification_repo = resume_certification_repo
         self.resume_social_link_repo = resume_social_link_repo
 
+    # ---- Core CRUD ----
+
     async def create_resume_fork(self, user: User, data: ResumeCreate) -> Resume | None:
-        """Create a new resume by forking from profile"""
+        """Create a new resume by forking from profile data."""
         profile = await self.candidate_profile_repo.get_full_profile(user.user_id)
         if not profile:
             return None
@@ -154,206 +154,225 @@ class ResumeService:
         return await self.get_resume(user, new_resume_id)
 
     async def get_resume(self, user: User, resume_id: uuid.UUID) -> Resume | None:
-        """Get resume by ID for a user"""
+        """Get resume by ID for a user."""
         resume = await self.resume_repo.get_with_details(resume_id)
         if not resume:
             return None
-        # Verify ownership
         profile = await self.candidate_profile_repo.get_by_user_id(user.user_id)
         if profile and resume.profile_id == profile.profile_id:
             return resume
         return None
 
     async def list_resumes(self, user: User) -> list[Resume]:
-        """List all resumes for a user"""
+        """List all resumes for a user."""
         resumes = await self.resume_repo.get_by_user_id(user.user_id)
         return list(resumes)
 
-    async def update_resume(
-        self, user: User, resume_id: uuid.UUID, data: ResumeUpdate
-    ) -> Resume | None:
-        """Update resume"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        update_data = data.model_dump(exclude_unset=True)
-        await self.resume_repo.update(resume_id, **update_data)
-        return await self.get_resume(user, resume_id)
-
     async def delete_resume(self, user: User, resume_id: uuid.UUID) -> Resume | None:
-        """Delete resume"""
+        """Delete a resume."""
         resume = await self.get_resume(user, resume_id)
         if resume:
             await self.resume_repo.delete(resume_id)
         return resume
 
-    async def add_experience(
-        self, user: User, resume_id: uuid.UUID, data: WorkExperienceBase
-    ) -> ResumeWorkExperience | None:
-        """Add work experience to resume"""
+    # ---- State Sync ----
+
+    async def sync_resume(
+        self, user: User, resume_id: uuid.UUID, data: ResumeUpdate
+    ) -> Resume | None:
+        """Sync resume using full-state replacement for nested collections."""
         resume = await self.get_resume(user, resume_id)
         if not resume:
             return None
-        experience = ResumeWorkExperience(
-            resume_work_experience_id=uuid.uuid4(),
-            resume_id=resume_id,
-            **data.model_dump(),
-        )
-        return await self.resume_work_experience_repo.create(experience)
 
-    async def delete_experience(
-        self, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
-    ) -> ResumeWorkExperience | None:
-        """Delete work experience"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        experience = await self.resume_work_experience_repo.get(item_id)
-        if experience and experience.resume_id == resume_id:
-            await self.resume_work_experience_repo.delete(item_id)
-            return experience
-        return None
+        # Update scalar fields
+        scalar_fields = {}
+        if data.target_job_title is not None:
+            scalar_fields["target_job_title"] = data.target_job_title
+        if data.custom_summary is not None:
+            scalar_fields["custom_summary"] = data.custom_summary
+        if data.is_default is not None:
+            scalar_fields["is_default"] = data.is_default
+            # If setting as default, unset all other defaults for this profile
+            if data.is_default:
+                all_resumes = await self.resume_repo.get_by_user_id(user.user_id)
+                for r in all_resumes:
+                    if r.resume_id != resume_id and r.is_default:
+                        await self.resume_repo.update(r.resume_id, is_default=False)
 
-    async def update_experience(
+        if scalar_fields:
+            await self.resume_repo.update(resume_id, **scalar_fields)
+
+        # Sync nested collections
+        if data.work_experiences is not None:
+            await self._sync_collection(
+                resume_id=resume_id,
+                existing=resume.work_experiences,
+                incoming=data.work_experiences,
+                id_field="resume_work_experience_id",
+                model_class=ResumeWorkExperience,
+                repo=self.resume_work_experience_repo,
+                field_names=[
+                    "job_title",
+                    "company",
+                    "location",
+                    "start_date",
+                    "end_date",
+                    "is_current",
+                    "description",
+                ],
+            )
+
+        if data.educations is not None:
+            await self._sync_collection(
+                resume_id=resume_id,
+                existing=resume.educations,
+                incoming=data.educations,
+                id_field="resume_education_id",
+                model_class=ResumeEducation,
+                repo=self.resume_education_repo,
+                field_names=[
+                    "college_name",
+                    "degree",
+                    "location",
+                    "start_date",
+                    "end_date",
+                    "is_current",
+                ],
+            )
+
+        if data.skills is not None:
+            await self._sync_collection(
+                resume_id=resume_id,
+                existing=resume.skills,
+                incoming=data.skills,
+                id_field="resume_skill_id",
+                model_class=ResumeSkills,
+                repo=self.resume_skill_repo,
+                field_names=["skill_name"],
+            )
+
+        if data.certifications is not None:
+            await self._sync_collection(
+                resume_id=resume_id,
+                existing=resume.certifications,
+                incoming=data.certifications,
+                id_field="resume_certification_id",
+                model_class=ResumeCertification,
+                repo=self.resume_certification_repo,
+                field_names=[
+                    "certification_name",
+                    "issuing_body",
+                    "credential_url",
+                    "issue_date",
+                    "expiration_date",
+                    "does_not_expire",
+                ],
+            )
+
+        if data.social_links is not None:
+            await self._sync_collection(
+                resume_id=resume_id,
+                existing=resume.social_links,
+                incoming=data.social_links,
+                id_field="resume_social_link_id",
+                model_class=ResumeSocialLink,
+                repo=self.resume_social_link_repo,
+                field_names=["type", "url"],
+            )
+
+        return await self.get_resume(user, resume_id)
+
+    async def _sync_collection(
         self,
-        user: User,
         resume_id: uuid.UUID,
-        item_id: uuid.UUID,
-        data: ResumeWorkExperienceUpdate,
-    ) -> ResumeWorkExperience | None:
-        """Update work experience"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        experience = await self.resume_work_experience_repo.get(item_id)
-        if not experience or experience.resume_id != resume_id:
-            return None
-        update_data = data.model_dump(exclude_unset=True)
-        return await self.resume_work_experience_repo.update(item_id, **update_data)
+        existing: list[Any],
+        incoming: list[Any],
+        id_field: str,
+        model_class: type,
+        repo: Any,
+        field_names: list[str],
+    ) -> None:
+        """Generic state-sync: create/update/delete nested items."""
+        existing_map = {getattr(item, id_field): item for item in existing}
+        incoming_ids = set()
 
-    async def add_education(
-        self, user: User, resume_id: uuid.UUID, data: EducationBase
-    ) -> ResumeEducation | None:
-        """Add education to resume"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        education = ResumeEducation(
-            resume_education_id=uuid.uuid4(), resume_id=resume_id, **data.model_dump()
-        )
-        return await self.resume_education_repo.create(education)
+        for item in incoming:
+            item_id = getattr(item, id_field, None)
 
-    async def delete_education(
-        self, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
-    ) -> ResumeEducation | None:
-        """Delete education"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        education = await self.resume_education_repo.get(item_id)
-        if education and education.resume_id == resume_id:
-            await self.resume_education_repo.delete(item_id)
-            return education
-        return None
+            if item_id and item_id in existing_map:
+                # Update existing
+                incoming_ids.add(item_id)
+                update_data = {
+                    f: getattr(item, f)
+                    for f in field_names
+                    if getattr(item, f, None) is not None
+                }
+                if update_data:
+                    await repo.update(item_id, **update_data)
+            else:
+                # Create new
+                new_id = uuid.uuid4()
+                create_kwargs = {id_field: new_id, "resume_id": resume_id}
+                for f in field_names:
+                    val = getattr(item, f, None)
+                    if val is not None:
+                        create_kwargs[f] = val
+                new_item = model_class(**create_kwargs)
+                await repo.create(new_item)
 
-    async def update_education(
-        self,
-        user: User,
-        resume_id: uuid.UUID,
-        item_id: uuid.UUID,
-        data: ResumeEducationUpdate,
-    ) -> ResumeEducation | None:
-        """Update education"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        education = await self.resume_education_repo.get(item_id)
-        if not education or education.resume_id != resume_id:
-            return None
-        update_data = data.model_dump(exclude_unset=True)
-        return await self.resume_education_repo.update(item_id, **update_data)
+        # Delete items not in incoming
+        for old_id in existing_map:
+            if old_id not in incoming_ids:
+                await repo.delete(old_id)
 
-    async def add_skill(
-        self, user: User, resume_id: uuid.UUID, data: SkillBase
-    ) -> ResumeSkills | None:
-        """Add skill to resume"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        skill = ResumeSkills(
-            resume_skill_id=uuid.uuid4(), resume_id=resume_id, **data.model_dump()
-        )
-        return await self.resume_skill_repo.create(skill)
+    # ---- PDF Parsing ----
 
-    async def delete_skill(
-        self, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
-    ) -> ResumeSkills | None:
-        """Delete skill"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        skill = await self.resume_skill_repo.get(item_id)
-        if skill and skill.resume_id == resume_id:
-            await self.resume_skill_repo.delete(item_id)
-            return skill
-        return None
+    async def parse_pdf_resume(self, file_bytes: bytes) -> dict:
+        """Parse a PDF resume using pdfplumber + LLM structured output."""
+        text = ""
+        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
 
-    async def update_skill(
-        self,
-        user: User,
-        resume_id: uuid.UUID,
-        item_id: uuid.UUID,
-        data: ResumeSkillUpdate,
-    ) -> ResumeSkills | None:
-        """Update skill"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        skill = await self.resume_skill_repo.get(item_id)
-        if not skill or skill.resume_id != resume_id:
-            return None
-        update_data = data.model_dump(exclude_unset=True)
-        return await self.resume_skill_repo.update(item_id, **update_data)
+        if not text.strip():
+            return {"error": "Could not extract text from PDF"}
 
-    async def add_certification(
-        self, user: User, resume_id: uuid.UUID, data: CertificationBase
-    ) -> ResumeCertification | None:
-        """Add certification to resume"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        cert_data = data.model_dump(exclude={"credential_id"})
-        certification = ResumeCertification(
-            resume_certification_id=uuid.uuid4(), resume_id=resume_id, **cert_data
-        )
-        return await self.resume_certification_repo.create(certification)
+        try:
+            llm = get_llm(settings.THINK_LLM)
+            system_prompt = """You are a resume parsing assistant. Extract structured data from the resume text.
+Return a JSON object with these exact fields:
+{
+  "target_job_title": "string or null",
+  "custom_summary": "string or null",
+  "work_experiences": [{"job_title": "str", "company": "str", "location": "str or null", "start_date": "YYYY-MM-DD or null", "end_date": "YYYY-MM-DD or null", "is_current": false, "description": "str or null"}],
+  "educations": [{"college_name": "str", "degree": "str", "location": "str or null", "start_date": "YYYY-MM-DD or null", "end_date": "YYYY-MM-DD or null", "is_current": false}],
+  "skills": [{"skill_name": "str"}],
+  "certifications": [{"certification_name": "str", "issuing_body": "str or null", "credential_url": "str or null", "issue_date": "YYYY-MM-DD or null", "expiration_date": "YYYY-MM-DD or null", "does_not_expire": true}],
+  "social_links": [{"type": "str", "url": "str"}]
+}
+Return ONLY the JSON, no other text."""
 
-    async def delete_certification(
-        self, user: User, resume_id: uuid.UUID, item_id: uuid.UUID
-    ) -> ResumeCertification | None:
-        """Delete certification"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        certification = await self.resume_certification_repo.get(item_id)
-        if certification and certification.resume_id == resume_id:
-            await self.resume_certification_repo.delete(item_id)
-            return certification
-        return None
+            response = await llm.ainvoke(
+                [
+                    SystemMessage(content=system_prompt),
+                    HumanMessage(content=f"Parse this resume:\n\n{text[:8000]}"),
+                ]
+            )
 
-    async def update_certification(
-        self,
-        user: User,
-        resume_id: uuid.UUID,
-        item_id: uuid.UUID,
-        data: ResumeCertificationUpdate,
-    ) -> ResumeCertification | None:
-        """Update certification"""
-        resume = await self.get_resume(user, resume_id)
-        if not resume:
-            return None
-        certification = await self.resume_certification_repo.get(item_id)
-        if not certification or certification.resume_id != resume_id:
-            return None
-        update_data = data.model_dump(exclude_unset=True)
-        return await self.resume_certification_repo.update(item_id, **update_data)
+            content = response.content.strip()
+            # Extract JSON from potential markdown code blocks
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+
+            return json.loads(content)
+        except Exception as e:
+            logger.error(f"Error parsing PDF resume with LLM: {e}")
+            return {
+                "error": f"Failed to parse resume: {e!s}",
+                "raw_text": text[:2000],
+            }

@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { LoadingSpinner } from '../common/LoadingSpinner'
-import { User as UserIcon, Globe, UserCheck, Briefcase } from 'lucide-react'
+import { User as UserIcon, Globe, UserCheck, BriefcaseBusiness } from 'lucide-react'
 import type { CandidateProfile, CandidateProfileUpdate } from '../../types/profile'
 import { toast } from 'sonner'
 import { SocialLinksSection } from './SocialLinksSection'
@@ -155,7 +155,7 @@ export function ProfileInformationTab({ profile, onUpdate }: ProfileInformationT
         </Section>
 
         {/* Professional Summary Section */}
-        <Section icon={<Briefcase className="w-4 h-4" />} title="Professional Summary">
+        <Section icon={<BriefcaseBusiness className="w-4 h-4" />} title="Professional Summary">
           <div className="space-y-6">
             <div className="space-y-2">
               <Label

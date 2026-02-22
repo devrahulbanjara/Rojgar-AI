@@ -12,7 +12,14 @@ import { Checkbox } from '@/components/ui/checkbox'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, GraduationCap, Building2, BookOpen, MapPin, Calendar } from 'lucide-react'
+import {
+  Loader2,
+  GraduationCap,
+  BriefcaseBusiness,
+  BookOpen,
+  Navigation,
+  Calendar,
+} from 'lucide-react'
 import type { Education } from '@/types/resume'
 
 interface EducationFormProps {
@@ -132,7 +139,7 @@ export default function EducationFormDialog({
           <form id="education-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                <Building2 className="w-3.5 h-3.5" />
+                <BriefcaseBusiness className="w-3.5 h-3.5" />
                 School / College <span className="text-error-500 font-bold">*</span>
               </label>
               <input
@@ -168,7 +175,7 @@ export default function EducationFormDialog({
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" />
+                <Navigation className="w-3.5 h-3.5" />
                 Location
               </label>
               <input

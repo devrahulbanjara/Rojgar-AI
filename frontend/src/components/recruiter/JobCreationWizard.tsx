@@ -4,18 +4,18 @@ import {
   ArrowRight,
   Check,
   Wand2,
-  Building2,
+  BriefcaseBusiness,
   DollarSign,
   FileText,
   Loader2,
   RotateCcw,
-  Briefcase,
+  CheckCircle2,
   Pencil,
   X as XIcon,
   Bot,
-  MapPin,
+  Navigation,
   Globe,
-  Clock,
+  Timer,
   Users,
   Target,
   Award,
@@ -46,9 +46,9 @@ interface JobCreationWizardProps {
 
 const getSteps = () => {
   return [
-    { id: 1, title: 'Basic Info', icon: Building2 },
+    { id: 1, title: 'Basic Info', icon: BriefcaseBusiness },
     { id: 2, title: 'Job Details', icon: FileText },
-    { id: 3, title: 'Requirements', icon: Briefcase },
+    { id: 3, title: 'Requirements', icon: CheckCircle2 },
     { id: 4, title: 'Compensation', icon: DollarSign },
   ]
 }
@@ -656,7 +656,7 @@ export function JobCreationWizard({
                         {/* Job Title */}
                         <div>
                           <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
-                            <Briefcase className="w-4 h-4 text-text-tertiary" />
+                            <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                             Job Title <span className="text-error">*</span>
                           </label>
                           <input
@@ -672,7 +672,7 @@ export function JobCreationWizard({
                         <div className="grid grid-cols-2 gap-5">
                           <div>
                             <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-text-tertiary" />
+                              <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                               Department <span className="text-error">*</span>
                             </label>
                             <SelectDropdown
@@ -816,7 +816,7 @@ export function JobCreationWizard({
                     <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
                       <div className="px-6 py-5 border-b border-border-subtle flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
-                          <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                          <BriefcaseBusiness className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         </div>
                         <div>
                           <h4 className="text-lg font-bold text-text-primary">
@@ -831,7 +831,7 @@ export function JobCreationWizard({
                         {/* Job Title */}
                         <div>
                           <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
-                            <Briefcase className="w-4 h-4 text-text-tertiary" />
+                            <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                             Job Title <span className="text-error">*</span>
                           </label>
                           <input
@@ -847,7 +847,7 @@ export function JobCreationWizard({
                         <div className="grid grid-cols-2 gap-5">
                           <div>
                             <label className="text-sm font-semibold text-text-secondary mb-2 flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-text-tertiary" />
+                              <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                               Department <span className="text-error">*</span>
                             </label>
                             <SelectDropdown
@@ -1068,14 +1068,14 @@ export function JobCreationWizard({
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
                   <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
-                      <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      <BriefcaseBusiness className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <h4 className="text-xl font-bold text-text-primary">Basic Information</h4>
                   </div>
                   <div className="px-8 py-6 space-y-6">
                     <div>
                       <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
-                        <Briefcase className="w-4 h-4 text-text-tertiary" />
+                        <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                         Job Title <span className="text-error">*</span>
                       </label>
                       <input
@@ -1096,7 +1096,7 @@ export function JobCreationWizard({
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-text-tertiary" />
+                          <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                           Department <span className="text-error">*</span>
                         </label>
                         <SelectDropdown
@@ -1297,7 +1297,7 @@ export function JobCreationWizard({
                 <div className="bg-background-surface rounded-xl border border-border-default shadow-sm">
                   <div className="px-8 py-6 border-b border-border-subtle flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      <Navigation className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <h4 className="text-xl font-bold text-text-primary">Location & Employment</h4>
                   </div>
@@ -1305,7 +1305,7 @@ export function JobCreationWizard({
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-text-tertiary" />
+                          <Navigation className="w-4 h-4 text-text-tertiary" />
                           City <span className="text-error">*</span>
                         </label>
                         <input
@@ -1344,7 +1344,7 @@ export function JobCreationWizard({
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-text-tertiary" />
+                        <BriefcaseBusiness className="w-4 h-4 text-text-tertiary" />
                         Location Type <span className="text-error">*</span>
                       </label>
                       <SelectDropdown
@@ -1365,7 +1365,7 @@ export function JobCreationWizard({
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-text-secondary mb-3 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-text-tertiary" />
+                        <Timer className="w-4 h-4 text-text-tertiary" />
                         Employment Type <span className="text-error">*</span>
                       </label>
                       <SelectDropdown

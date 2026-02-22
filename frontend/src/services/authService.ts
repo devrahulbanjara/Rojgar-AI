@@ -23,7 +23,14 @@ interface TokenResponse {
     updated_at: string
     userType?: string
     organization_id?: string
-    organization?: any
+    organization?: {
+      id: string
+      name: string
+      location_city?: string
+      location_country?: string
+      website?: string
+      industry?: string
+    }
   }
 }
 

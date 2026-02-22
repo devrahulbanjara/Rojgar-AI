@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from .config import settings
@@ -17,3 +17,8 @@ def get_datetime_tz() -> datetime:
 def get_today() -> date:
     """Returns current date in Nepal timezone"""
     return datetime.now(ZoneInfo(settings.TIMEZONE)).date()
+
+
+def get_timedelta(**kwargs) -> timedelta:
+    """Returns timedelta object"""
+    return timedelta(**kwargs)

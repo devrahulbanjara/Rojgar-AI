@@ -21,6 +21,9 @@ class Resume(Base):
     )
     target_job_title: Mapped[str | None] = mapped_column(String, nullable=True)
     custom_summary: Mapped[str | None] = mapped_column(String, nullable=True)
+    is_default: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=get_datetime, nullable=False
     )

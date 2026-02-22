@@ -1,10 +1,4 @@
-export {
-  cn,
-  getDashboardRoute,
-  validateEmail,
-  validatePassword,
-  validateName,
-} from '../lib/utils'
+export { cn, getDashboardRoute, validateEmail, validatePassword, validateName } from '../lib/utils'
 
 // Note: The following utilities are not yet implemented in utils.ts
 // formatDate, formatCurrency, debounce, generateId, isEmpty, capitalize,

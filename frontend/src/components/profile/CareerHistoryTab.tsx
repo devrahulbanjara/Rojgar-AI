@@ -5,13 +5,12 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import {
-  Briefcase,
+  BriefcaseBusiness,
   GraduationCap,
   Plus,
   Trash2,
   Calendar,
-  MapPin,
-  Building,
+  Navigation,
   Pencil,
   CheckCircle2,
 } from 'lucide-react'
@@ -91,15 +90,15 @@ export function CareerHistoryTab({
           exp.candidate_work_experience_id === editingExpId
             ? { candidate_work_experience_id: exp.candidate_work_experience_id, ...experienceData }
             : {
-              candidate_work_experience_id: exp.candidate_work_experience_id,
-              job_title: exp.job_title,
-              company: exp.company,
-              location: exp.location,
-              start_date: exp.start_date,
-              end_date: exp.end_date,
-              is_current: exp.is_current,
-              description: exp.description,
-            }
+                candidate_work_experience_id: exp.candidate_work_experience_id,
+                job_title: exp.job_title,
+                company: exp.company,
+                location: exp.location,
+                start_date: exp.start_date,
+                end_date: exp.end_date,
+                is_current: exp.is_current,
+                description: exp.description,
+              }
         )
       } else {
         updatedExperiences = [
@@ -221,14 +220,14 @@ export function CareerHistoryTab({
           edu.candidate_education_id === editingEduId
             ? { candidate_education_id: edu.candidate_education_id, ...educationData }
             : {
-              candidate_education_id: edu.candidate_education_id,
-              college_name: edu.college_name,
-              degree: edu.degree,
-              location: edu.location,
-              start_date: edu.start_date,
-              end_date: edu.end_date,
-              is_current: edu.is_current,
-            }
+                candidate_education_id: edu.candidate_education_id,
+                college_name: edu.college_name,
+                degree: edu.degree,
+                location: edu.location,
+                start_date: edu.start_date,
+                end_date: edu.end_date,
+                is_current: edu.is_current,
+              }
         )
       } else {
         updatedEducations = [
@@ -337,7 +336,7 @@ export function CareerHistoryTab({
   return (
     <div className="px-10 py-8">
       <div className="space-y-8">
-        { }
+        {}
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-default">
             <div>
@@ -367,7 +366,7 @@ export function CareerHistoryTab({
             )}
           </div>
 
-          { }
+          {}
           {isAddingExperience && (
             <form
               onSubmit={handleAddExperience}
@@ -533,11 +532,11 @@ export function CareerHistoryTab({
             </form>
           )}
 
-          { }
+          {}
           {workExperiences.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
-                <Briefcase className="w-8 h-8 text-text-muted" />
+                <BriefcaseBusiness className="w-8 h-8 text-text-muted" />
               </div>
               <h5 className="text-base font-semibold text-text-primary mb-2">
                 No work experience added yet
@@ -567,7 +566,7 @@ export function CareerHistoryTab({
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 rounded-lg group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
-                          <Building className="w-5 h-5" />
+                          <BriefcaseBusiness className="w-5 h-5" />
                         </div>
                         <div>
                           <h5 className="font-bold text-text-primary text-lg">
@@ -589,7 +588,7 @@ export function CareerHistoryTab({
                         </div>
                         {experience.location && (
                           <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                            <MapPin className="w-4 h-4 text-primary-500" />
+                            <Navigation className="w-4 h-4 text-primary-500" />
                             <span className="font-medium">{experience.location}</span>
                           </div>
                         )}
@@ -634,7 +633,7 @@ export function CareerHistoryTab({
           )}
         </div>
 
-        { }
+        {}
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-default">
             <div>
@@ -663,7 +662,7 @@ export function CareerHistoryTab({
             )}
           </div>
 
-          { }
+          {}
           {isAddingEducation && (
             <form
               onSubmit={handleAddEducation}
@@ -810,7 +809,7 @@ export function CareerHistoryTab({
             </form>
           )}
 
-          { }
+          {}
           {educationRecords.length === 0 ? (
             <div className="text-center py-12 bg-background-subtle rounded-2xl border border-dashed border-border-default">
               <div className="w-16 h-16 bg-background-surface rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border-subtle">
@@ -869,7 +868,7 @@ export function CareerHistoryTab({
                         )}
                         {education.location && (
                           <div className="flex items-center gap-1.5 bg-background-subtle px-3 py-1 rounded-lg border border-border-subtle">
-                            <MapPin className="w-4 h-4 text-primary-500" />
+                            <Navigation className="w-4 h-4 text-primary-500" />
                             <span className="font-medium">{education.location}</span>
                           </div>
                         )}

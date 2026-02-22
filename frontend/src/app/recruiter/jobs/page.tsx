@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { Plus, FolderOpen, Briefcase } from 'lucide-react'
+import { Plus, FolderOpen, BriefcaseBusiness } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '../../../components/layout/AppShell'
 import { PageTransition, AnimatedContainer, SkeletonLoader } from '../../../components/common'
@@ -736,7 +736,7 @@ export default function RecruiterJobsPage() {
                   !isLoadingReferenceJDs && (
                     <div className="flex flex-col items-center justify-center py-24 text-center">
                       <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-950/30 flex items-center justify-center border border-primary-100 dark:border-primary-900/30 mb-8">
-                        <Briefcase className="w-8 h-8 text-primary-500" />
+                        <BriefcaseBusiness className="w-8 h-8 text-primary-500" />
                       </div>
                       <h3 className="text-xl font-bold text-text-primary tracking-tight">
                         No reference JDs yet

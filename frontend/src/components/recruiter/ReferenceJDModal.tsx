@@ -2,7 +2,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import {
   X,
-  Briefcase,
+  BriefcaseBusiness,
   FileText,
   CheckCircle2,
   Gift,
@@ -101,7 +101,7 @@ export function ReferenceJDModal({
             {/* Content Sections with clean left border design */}
             <div className="space-y-8">
               {(jd.job_summary || jd.role_overview) && (
-                <Section icon={<Briefcase className="w-4 h-4" />} title="Job Summary">
+                <Section icon={<BriefcaseBusiness className="w-4 h-4" />} title="Job Summary">
                   <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
                     {jd.job_summary || jd.role_overview}
                   </p>
@@ -109,7 +109,7 @@ export function ReferenceJDModal({
               )}
 
               {jd.job_responsibilities && jd.job_responsibilities.length > 0 && (
-                <Section icon={<Briefcase className="w-4 h-4" />} title="Responsibilities">
+                <Section icon={<BriefcaseBusiness className="w-4 h-4" />} title="Responsibilities">
                   <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                     {jd.job_responsibilities.map((resp, i) => (
                       <li key={i}>{resp}</li>
@@ -147,7 +147,8 @@ export function ReferenceJDModal({
                 )}
 
               {(jd.compensation_and_benefits || jd.benefits) &&
-                ((jd.compensation_and_benefits?.length ?? 0) > 0 || (jd.benefits?.length ?? 0) > 0) && (
+                ((jd.compensation_and_benefits?.length ?? 0) > 0 ||
+                  (jd.benefits?.length ?? 0) > 0) && (
                   <Section icon={<Gift className="w-4 h-4" />} title="Compensation & Benefits">
                     <ul className="list-disc list-inside space-y-2 ml-1 text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                       {(jd.compensation_and_benefits || jd.benefits || []).map((benefit, i) => (

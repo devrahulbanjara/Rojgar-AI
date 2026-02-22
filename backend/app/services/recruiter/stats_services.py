@@ -2,9 +2,16 @@ import uuid
 from datetime import timedelta
 from typing import Any
 
+from sqlalchemy import func, select
+
 from app.core import get_datetime
+from app.db.models.application import JobApplication
+from app.db.models.email_draft import EmailDraft
+from app.db.models.job import JobPosting
 from app.db.models.user import User
 from app.db.repositories.application_repo import JobApplicationRepository
+from app.db.repositories.email_draft_repo import EmailDraftRepository
+from app.db.repositories.interview_repo import InterviewRepository
 from app.db.repositories.job_repo import JobRepository
 
 
@@ -13,9 +20,13 @@ class StatsService:
         self,
         job_repo: JobRepository,
         application_repo: JobApplicationRepository,
+        email_draft_repo: EmailDraftRepository | None = None,
+        interview_repo: InterviewRepository | None = None,
     ):
         self.job_repo = job_repo
         self.application_repo = application_repo
+        self.email_draft_repo = email_draft_repo
+        self.interview_repo = interview_repo
 
     def _ensure_org_id(self, user: User) -> uuid.UUID | None:
         """Ensure user has organization ID"""
@@ -153,3 +164,47 @@ class StatsService:
         # Sort all activities by timestamp
         activities.sort(key=lambda x: x["timestamp"], reverse=True)
         return activities[:limit]
+
+    async def get_pending_email_drafts_count(self, user: User) -> int:
+        """Count pending (unsent, undiscarded) email drafts for organization."""
+        org_id = self._ensure_org_id(user)
+        if not org_id or not self.email_draft_repo:
+            return 0
+
+        query = (
+            select(func.count())
+            .select_from(EmailDraft)
+            .join(
+                JobApplication,
+                EmailDraft.application_id == JobApplication.application_id,
+            )
+            .join(JobPosting, JobApplication.job_id == JobPosting.job_id)
+            .where(
+                JobPosting.organization_id == org_id,
+                EmailDraft.is_sent == False,  # noqa: E712
+                EmailDraft.is_discarded == False,  # noqa: E712
+            )
+        )
+        result = await self.email_draft_repo.db.execute(query)
+        return result.scalar_one()
+
+    async def get_interviews_this_week_count(self, user: User) -> int:
+        """Count interviews scheduled this week for organization."""
+        org_id = self._ensure_org_id(user)
+        if not org_id or not self.interview_repo:
+            return 0
+        return await self.interview_repo.count_this_week(org_id)
+
+    async def get_dashboard_stats(self, user: User) -> dict[str, Any]:
+        """Get all 4 dashboard KPIs in one call."""
+        active_jobs = await self.get_active_jobs_count(user)
+        active_candidates = await self.get_active_candidates_count(user)
+        pending_emails = await self.get_pending_email_drafts_count(user)
+        interviews_this_week = await self.get_interviews_this_week_count(user)
+
+        return {
+            "active_jobs": active_jobs or 0,
+            "active_candidates": active_candidates or 0,
+            "pending_email_drafts": pending_emails,
+            "interviews_this_week": interviews_this_week,
+        }

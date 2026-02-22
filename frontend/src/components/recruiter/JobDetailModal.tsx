@@ -6,10 +6,10 @@ import {
   Star,
   Gift,
   X,
-  MapPin,
+  Navigation,
   DollarSign,
-  Clock,
-  Building2,
+  Timer,
+  BriefcaseBusiness,
   ExternalLink,
   Edit,
   Ban,
@@ -175,7 +175,7 @@ export function JobDetailModal({
             <div className="grid grid-cols-3 gap-6 p-6 rounded-xl border border-border-default bg-slate-50/50 dark:bg-slate-900/30 mb-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 flex-shrink-0 rounded-full bg-primary-600/10 dark:bg-primary-600/20 flex items-center justify-center">
-                  <MapPin className="w-[18px] h-[18px] text-primary-600" />
+                  <Navigation className="w-[18px] h-[18px] text-primary-600" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <p className="text-[11px] uppercase tracking-[0.5px] font-semibold text-slate-500 dark:text-slate-400">
@@ -208,7 +208,7 @@ export function JobDetailModal({
 
               <div className="flex items-center gap-3 border-l border-border-default pl-6">
                 <div className="w-10 h-10 flex-shrink-0 rounded-full bg-primary-600/10 dark:bg-primary-600/20 flex items-center justify-center">
-                  <Clock className="w-[18px] h-[18px] text-primary-600" />
+                  <Timer className="w-[18px] h-[18px] text-primary-600" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <p className="text-[11px] uppercase tracking-[0.5px] font-semibold text-slate-500 dark:text-slate-400">
@@ -224,7 +224,7 @@ export function JobDetailModal({
             {/* Content Sections with clean left border design */}
             <div className="space-y-8">
               {job.company && (
-                <Section icon={<Building2 className="w-4 h-4" />} title="About the Company">
+                <Section icon={<BriefcaseBusiness className="w-4 h-4" />} title="About the Company">
                   <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                     {job.company.description ||
                       `${job.company.name} is looking for talented individuals to join their team.`}

@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { API_CONFIG } from '@/config/constants'
-import { Loader2, Briefcase, Building2, MapPin, Calendar, FileText } from 'lucide-react'
+import { Loader2, BriefcaseBusiness, Navigation, Calendar, FileText } from 'lucide-react'
 import type { ResumeWorkExperienceResponse } from '@/types/resume'
 
 interface ExperienceFormProps {
@@ -117,7 +117,7 @@ export default function ExperienceFormDialog({
         <div className="p-8 border-b border-border-subtle bg-background-surface shrink-0">
           <div className="flex items-center gap-5">
             <div className="w-14 h-14 rounded-2xl bg-primary-600/10 dark:bg-primary-600/20 flex items-center justify-center border border-primary-600/20 shadow-sm">
-              <Briefcase className="w-7 h-7 text-primary-600" />
+              <BriefcaseBusiness className="w-7 h-7 text-primary-600" />
             </div>
             <div>
               <DialogTitle className="text-2xl font-bold tracking-tight text-text-primary">
@@ -137,7 +137,7 @@ export default function ExperienceFormDialog({
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                  <Briefcase className="w-3.5 h-3.5" />
+                  <BriefcaseBusiness className="w-3.5 h-3.5" />
                   Job Title <span className="text-error-500 font-bold">*</span>
                 </label>
                 <input
@@ -154,7 +154,7 @@ export default function ExperienceFormDialog({
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                  <Building2 className="w-3.5 h-3.5" />
+                  <BriefcaseBusiness className="w-3.5 h-3.5" />
                   Company <span className="text-error-500 font-bold">*</span>
                 </label>
                 <input
@@ -173,7 +173,7 @@ export default function ExperienceFormDialog({
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" />
+                <Navigation className="w-3.5 h-3.5" />
                 Location
               </label>
               <input
