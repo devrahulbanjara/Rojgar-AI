@@ -1,0 +1,243 @@
+// ============================================================
+// EXPLORE CATEGORIES SECTION
+// ============================================================
+
+@use "sass:color";
+@use "../variables" as *;
+@use "../mixins" as *;
+
+.explore {
+  position: relative;
+  border-top: 1px solid $color-gray-200;
+  background: $color-white;
+  overflow: hidden;
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+
+  // ── Background decoration (right side) ──────────────────
+  &__bg {
+    position: absolute;
+    top: 0;
+    right: -10%;
+    rotate: 20deg;
+    width: auto;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  // ── Logos bar ────────────────────────────────────────────
+  &__logos {
+    padding-block: $space-6;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+
+  &__logos-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: $space-8;
+
+    @include lg {
+      gap: $space-12;
+    }
+  }
+
+  &__logo {
+    opacity: 0.6;
+    padding-top: $space-4;
+    filter: grayscale(1);
+    @include transition(opacity, $transition-fast);
+
+    &:hover {
+      opacity: 1;
+    }
+
+    img {
+      height: 50px;
+      width: auto;
+      display: block;
+    }
+  }
+
+  // ── Main split ───────────────────────────────────────────
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $space-10;
+    position: relative;
+    z-index: 1;
+
+    @include lg {
+      flex-direction: row;
+      align-items: center;
+      gap: $space-10;
+    }
+  }
+
+  // ── Left ─────────────────────────────────────────────────
+  &__left {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $space-5;
+
+    @include lg {
+      width: 36%;
+    }
+  }
+
+  &__heading {
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    line-height: $line-height-tight;
+    color: $color-gray-900;
+    letter-spacing: -0.02em;
+
+    @include md {
+      font-size: $font-size-5xl;
+    }
+  }
+
+  &__heading-accent {
+    color: $color-primary;
+  }
+
+  &__subtitle {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    line-height: $line-height-loose;
+    max-width: 380px;
+  }
+
+  &__cta {
+    position: relative;
+    overflow: hidden;
+    border-radius: $radius-md !important;
+    padding: $space-3 $space-8 !important;
+    font-size: $font-size-base !important;
+    font-weight: $font-weight-semibold;
+    z-index: 0;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-color: color.adjust($color-primary, $lightness: -12%);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform $transition-base;
+      z-index: -1;
+    }
+
+    &:hover::before {
+      transform: scaleY(1);
+      transform-origin: bottom;
+    }
+  }
+
+  // ── Right / Carousel ──────────────────────────────────────
+  &__carousel {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    min-width: 0;
+  }
+
+  &__swiper {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // ── Nav arrows ───────────────────────────────────────────
+  &__nav {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: $radius-full;
+    background: $color-white;
+    border: 1.5px solid $color-gray-200;
+    box-shadow: $shadow-sm;
+    color: $color-gray-700;
+    z-index: 10;
+    @include transition(all, $transition-fast);
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover {
+      background: $color-primary;
+      border-color: $color-primary;
+      color: $color-white;
+      box-shadow: 0 4px 12px rgba($color-primary, 0.35);
+    }
+
+    &.swiper-button-disabled {
+      opacity: 0.35;
+      cursor: default;
+      pointer-events: none;
+    }
+  }
+
+  // ── Card ────────────────────────────────────────────────
+  &__card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    max-height: 300px;
+    border-radius: $radius-xl;
+    overflow: hidden;
+    cursor: pointer;
+
+    @include lg {
+      max-height: none;
+    }
+
+    &:hover {
+      .explore__card-img {
+        transform: scale(1.06);
+      }
+    }
+  }
+
+  &__card-img {
+    object-fit: cover;
+    @include transition(transform, 0.5s ease);
+  }
+
+  &__card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba($color-black, 0.72) 0%,
+      rgba($color-black, 0.1) 55%,
+      transparent 100%
+    );
+    border-radius: inherit;
+  }
+
+  &__card-label {
+    position: absolute;
+    bottom: $space-4;
+    left: $space-4;
+    right: $space-4;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-white;
+    letter-spacing: 0.01em;
+  }
+}
