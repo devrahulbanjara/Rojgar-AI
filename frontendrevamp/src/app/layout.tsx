@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Lato, Geist_Mono } from "next/font/google";
 import StoreProvider from "@/providers/StoreProvider";
+import "@/app/globals.css";
 import "@/styles/main.scss";
 import MainLayout from "@/components/layout/MainLayout";
 

@@ -10,7 +10,9 @@
   right: 0;
   z-index: $z-sticky;
   height: 68px;
-  will-change: top;
+  will-change: top, opacity, transform;
+  // Hidden until GSAP entrance animation runs (prevents flash of unstyled header)
+  opacity: 0;
 
   // ── Modifier: scrolled (applied via GSAP) ──────────────────
   &--scrolled {

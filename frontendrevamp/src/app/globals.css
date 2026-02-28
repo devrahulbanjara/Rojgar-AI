@@ -1,0 +1,9 @@
+/*
+  Critical baseline styles — loaded before any SCSS bundle.
+  Prevents the black FOUC flash that occurs during SSR → hydration.
+*/
+html,
+body {
+  background-color: #ffffff;
+  color: #111827;
+}
