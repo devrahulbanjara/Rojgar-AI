@@ -1,0 +1,190 @@
+// ============================================================
+// FAQ SECTION
+// ============================================================
+
+@use "../variables" as *;
+@use "../mixins" as *;
+
+.faq {
+  position: relative;
+  background: $color-white;
+  overflow: hidden;
+ 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  // ── Decorative background ─────────────────────────────────
+  &__bg {
+    position: absolute;
+    top: -40px;
+    right: -100px;
+    width: 480px;
+    height: auto;
+    opacity: 0.7;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+
+    @include md {
+      width: 520px;
+    }
+  }
+
+  // ── Inner wrapper ─────────────────────────────────────────
+  &__inner {
+    position: relative;
+    z-index: 1;
+    gap: $space-12;
+    padding-block: $space-16;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  // ── Section heading ───────────────────────────────────────
+  &__header {
+    @include lg {
+      position: sticky;
+      top: 100px;
+    }
+  }
+
+  &__heading {
+    font-family: $font-heading;
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+    letter-spacing: -0.02em;
+    margin-bottom: $space-3;
+
+    @include md {
+      font-size: 2.75rem;
+    }
+  }
+
+  &__subheading {
+    font-size: $font-size-lg;
+    color: $color-gray-500;
+    line-height: $line-height-normal;
+    max-width: 520px;
+    margin-inline: auto;
+    margin-top: $space-2;
+  }
+
+  // ── Accordion list ────────────────────────────────────────
+  &__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    padding-top: clamp(30px, 5vw, 60px);
+    margin: 0 auto;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  // ── Accordion item ────────────────────────────────────────
+  &__item {
+    border-bottom: 1px solid $color-gray-200;
+    @include transition(background-color, $transition-base);
+
+    &:first-child {
+      border-top: 1px solid $color-gray-200;
+    }
+
+    &--open {
+      background-color: rgba($color-primary, 0.03);
+      border-radius: $radius-md;
+      border-color: transparent;
+
+      + .faq__item {
+        border-top: 1px solid $color-gray-200;
+      }
+    }
+  }
+
+  // ── Trigger button ────────────────────────────────────────
+  &__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-4;
+    padding: $space-5 $space-3;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    border-radius: $radius-md;
+    @include transition(background-color, $transition-fast);
+
+    &:hover {
+      background-color: rgba($color-primary, 0.04);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+      border-radius: $radius-sm;
+    }
+  }
+
+  &__question {
+    font-family: $font-heading;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    line-height: $line-height-normal;
+    flex: 1;
+    padding-inline: 16px;
+
+    @include md {
+      font-size: $font-size-lg;
+    }
+  }
+
+  // ── +/− icon ──────────────────────────────────────────────
+  &__icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-primary;
+    @include transition(transform, $transition-base);
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  // ── Answer panel — grid-template-rows animation ───────────
+  // Smoothly transitions from 0fr → 1fr without JS height calc
+  &__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &__item--open &__panel {
+    grid-template-rows: 1fr;
+  }
+
+  &__answer {
+    overflow: hidden;
+    text-align: justify;
+    padding-inline: 16px;
+
+    p {
+      padding-bottom: $space-5;
+      padding-top: $space-1;
+      padding-inline: $space-3;
+      font-size: $font-size-base;
+      color: $color-gray-500;
+      line-height: $line-height-loose;
+    }
+  }
+}

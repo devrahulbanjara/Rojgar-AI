@@ -4,13 +4,26 @@ import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
+import Link from "next/link";
 
 const LOGOS = [
-  { src: "/homepage/exploreSection/google.svg", alt: "Google" },
-  { src: "/homepage/exploreSection/notion.svg", alt: "Notion" },
-  { src: "/homepage/exploreSection/shopify.svg", alt: "Shopify" },
-  { src: "/homepage/exploreSection/spotify.svg", alt: "Spotify" },
-  { src: "/homepage/exploreSection/stripe.svg", alt: "Stripe" },
+  { src: "/homepage/logoMarquee/google.png", alt: "Google" },
+  { src: "/homepage/logoMarquee/fusemachines.png", alt: "Fusemachines" },
+  { src: "/homepage/logoMarquee/leapfrog.png", alt: "Leapfrog" },
+  { src: "/homepage/logoMarquee/cotiviti.webp", alt: "Cotiviti" },
+  { src: "/homepage/logoMarquee/f1soft.png", alt: "F1Soft" },
+  { src: "/homepage/logoMarquee/logpoint.webp", alt: "Logpoint" },
+  { src: "/homepage/logoMarquee/ingtech.svg", alt: "Ingtech" },
+  { src: "/homepage/logoMarquee/innovateTech.svg", alt: "Innovate Tech" },
+  { src: "/homepage/logoMarquee/LISNepal.webp", alt: "LIS Nepal" },
+  { src: "/homepage/logoMarquee/adexLtd.webp", alt: "Adex Ltd" },
+  { src: "/homepage/logoMarquee/cedargate.png", alt: "Cedargate" },
+  { src: "/homepage/logoMarquee/clocoNepal.webp", alt: "Cloco Nepal" },
+  { src: "/homepage/logoMarquee/ebPearls.jpg", alt: "EB Pearls" },
+  { src: "/homepage/logoMarquee/infoDevelopers.webp", alt: "Info Developers" },
+  { src: "/homepage/logoMarquee/softbenzinfosys.png", alt: "Softbenz Infosys" },
+  { src: "/homepage/logoMarquee/vairavTech.png", alt: "Vairav Tech" },
+  { src: "/homepage/logoMarquee/ycotek.jpg", alt: "Ycotek" },
 ];
 
 const CATEGORIES = [
@@ -57,11 +70,13 @@ export default function ExploreCategories() {
         className="explore__bg"
         aria-hidden="true"
       />
-      {/* Logos bar */}
+
+      {/* Logos marquee */}
       <div className="explore__logos">
-        <div className="container explore__logos-inner">
-          {LOGOS.map((logo) => (
-            <div key={logo.alt} className="explore__logo">
+        <div className="explore__marquee-track">
+          {/* Duplicate for seamless loop */}
+          {[...LOGOS, ...LOGOS].map((logo, i) => (
+            <div key={i} className="explore__logo">
               <Image src={logo.src} alt={logo.alt} width={120} height={36} />
             </div>
           ))}
@@ -80,9 +95,9 @@ export default function ExploreCategories() {
             Discover the most in-demand roles and start finding opportunities
             that match your expertise.
           </p>
-          <a href="/jobs" className="btn btn--primary explore__cta">
+          <Link href="/jobs" className="btn btn--primary explore__cta">
             See All Jobs
-          </a>
+          </Link>
         </div>
 
         {/* Right — Swiper */}
@@ -148,6 +163,26 @@ export default function ExploreCategories() {
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
+        </div>
+      </div>
+
+      {/* Stats strip */}
+      <div className="container explore__stats">
+        <div className="explore__stat">
+          <span className="explore__stat-number">50+</span>
+          <span className="explore__stat-desc">Job Categories</span>
+        </div>
+        <div className="explore__stat">
+          <span className="explore__stat-number">12k+</span>
+          <span className="explore__stat-desc">Active Listings</span>
+        </div>
+        <div className="explore__stat">
+          <span className="explore__stat-number">500+</span>
+          <span className="explore__stat-desc">Partner Companies</span>
+        </div>
+        <div className="explore__stat">
+          <span className="explore__stat-number">3,400+</span>
+          <span className="explore__stat-desc">Candidates Hired</span>
         </div>
       </div>
     </section>

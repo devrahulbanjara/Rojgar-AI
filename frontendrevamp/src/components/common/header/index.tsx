@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import Image from "next/image";
+import Link from "next/link";
 
 const NAV_LINKS = [
   { href: "/jobs", label: "Jobs" },
@@ -16,6 +17,20 @@ export default function Header() {
   const drawerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // ── Entrance: slide down from above viewport (first page load only) ──
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const STORAGE_KEY = "ch_header_animated";
+    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    sessionStorage.setItem(STORAGE_KEY, "1");
+    gsap.fromTo(
+      header,
+      { y: -110, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", delay: 0.1 },
+    );
+  }, []);
 
   // ── Scroll: floating pill → full-width sticky ──────────────
   useEffect(() => {
@@ -115,7 +130,7 @@ export default function Header() {
       <header className="header" ref={headerRef}>
         <div className="container header__inner">
           {/* Logo */}
-          <a href="/" className="header__logo">
+          <Link href="/" className="header__logo">
             <Image
               src="/logo/logo.png"
               alt="ConvexHire Logo"
@@ -123,16 +138,16 @@ export default function Header() {
               height={26}
               className="header__logo-image"
             />
-          </a>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="header__nav" aria-label="Main navigation">
             <ul className="header__nav-list">
               {NAV_LINKS.map((link) => (
                 <li key={link.href} className="header__nav-item">
-                  <a href={link.href} className="header__nav-link">
+                  <Link href={link.href} className="header__nav-link">
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -140,18 +155,18 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="header__actions">
-            <a
+            <Link
               href="/login"
               className="header__action-btn header__action-btn--login btn btn--ghost btn--dark"
             >
               Login
-            </a>
-            <a
+            </Link>
+            <Link
               href="/signup"
               className="header__action-btn header__action-btn--signup btn btn--primary"
             >
               Sign Up
-            </a>
+            </Link>
           </div>
 
           {/* Hamburger */}
@@ -179,14 +194,14 @@ export default function Header() {
       <div ref={drawerRef} className="header__drawer" aria-hidden={!isMenuOpen}>
         {/* Drawer top */}
         <div className="header__drawer-top">
-          <a href="/" className="header__drawer-logo" onClick={closeMenu}>
+          <Link href="/" className="header__drawer-logo" onClick={closeMenu}>
             <Image
               src="/logo/logo.png"
               alt="ConvexHire Logo"
               width={110}
               height={24}
             />
-          </a>
+          </Link>
           <button
             className="header__drawer-close"
             onClick={closeMenu}
@@ -202,13 +217,13 @@ export default function Header() {
           <ul className="header__drawer-nav-list">
             {NAV_LINKS.map((link) => (
               <li key={link.href} className="header__drawer-nav-item">
-                <a
+                <Link
                   href={link.href}
                   className="header__drawer-nav-link"
                   onClick={closeMenu}
                 >
                   {link.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -216,20 +231,20 @@ export default function Header() {
 
         {/* Drawer actions */}
         <div className="header__drawer-actions">
-          <a
+          <Link
             href="/login"
             className="header__drawer-btn header__drawer-btn--login btn btn--ghost"
             onClick={closeMenu}
           >
             Login
-          </a>
-          <a
+          </Link>
+          <Link
             href="/signup"
             className="header__drawer-btn header__drawer-btn--signup btn btn--primary"
             onClick={closeMenu}
           >
             Sign Up
-          </a>
+          </Link>
         </div>
       </div>
     </>

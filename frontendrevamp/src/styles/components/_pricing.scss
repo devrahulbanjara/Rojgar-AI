@@ -1,0 +1,334 @@
+// ============================================================
+// PRICING SECTION
+// ============================================================
+
+@use "sass:color";
+@use "../variables" as *;
+@use "../mixins" as *;
+
+.pricing {
+  position: relative;
+  padding-block: $space-20 $space-24;
+  overflow: hidden;
+  background-color: $color-white;
+
+  // ── Background SVG — bottom right ────────────────────────
+  &__bg {
+    position: absolute;
+    bottom: 5%;
+    left: -35%;
+    rotate: 180deg;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+
+  // ── Section header ────────────────────────────────────────
+  &__header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    margin-bottom: $space-12;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+    margin: 0;
+
+    @include lg {
+      font-size: $font-size-5xl;
+    }
+  }
+
+  &__subtitle {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    max-width: 560px;
+    line-height: $line-height-loose;
+    margin: 0;
+
+    @include md {
+      font-size: $font-size-lg;
+    }
+  }
+
+  // ── Cards grid ────────────────────────────────────────────
+  &__grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: $space-10;
+    gap: $space-6;
+    align-items: center;
+
+    @include md {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include lg {
+      grid-template-columns: repeat(3, 1fr);
+      gap: $space-8;
+    }
+  }
+
+  // ── Solid-border wrapper ──────────────────────────────────
+  // Creates the coloured border by using a solid background
+  // with an inner white card sitting on top.
+  &__card-wrap {
+    padding: 1.5px;
+    border-radius: $radius-2xl;
+    background-color: rgba($color-primary, 0.35);
+    @include transition(background-color, $transition-base);
+
+    &:hover {
+      background-color: rgba($color-primary, 0.7);
+    }
+
+    // Featured (middle) card — full-opacity border, bigger elevation
+    &--featured {
+      padding: 2px;
+      background-color: $color-primary;
+      transform: translateY(-$space-3);
+      box-shadow: $shadow-xl;
+
+      @include lg {
+        transform: translateY(-$space-6);
+      }
+
+      &:hover {
+        background-color: color.adjust($color-primary, $lightness: -8%);
+      }
+    }
+  }
+
+  // ── Inner card ────────────────────────────────────────────
+  &__card {
+    background-color: $color-white;
+    border-radius: calc(#{$radius-2xl} - 2px);
+    padding: $space-8;
+    display: flex;
+    flex-direction: column;
+    gap: $space-6;
+    height: 100%;
+  }
+
+  // ── Card head: audience badge + plan name + price ─────────
+  &__card-head {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-1 $space-3;
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    width: fit-content;
+    background-color: $color-gray-100;
+    color: $color-gray-600;
+
+    &--featured {
+      background-color: rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+  }
+
+  &__plan-name {
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    margin: 0;
+  }
+
+  &__price-row {
+    display: flex;
+    align-items: baseline;
+    gap: $space-1;
+  }
+
+  &__currency {
+    font-family: $font-heading;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-500;
+  }
+
+  &__amount {
+    font-family: $font-heading;
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: 1;
+  }
+
+  &__period {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    margin-left: $space-1;
+  }
+
+  // ── Divider ───────────────────────────────────────────────
+  &__divider {
+    height: 1px;
+    background-color: $color-gray-100;
+    margin: 0;
+    border: none;
+  }
+
+  // ── Feature list ─────────────────────────────────────────
+  &__features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    flex: 1;
+  }
+
+  &__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    line-height: $line-height-normal;
+  }
+
+  &__feature-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+
+    &--check {
+      color: $color-success;
+    }
+
+    &--lock {
+      color: $color-gray-300;
+    }
+  }
+
+  &__feature-text {
+    &--muted {
+      color: $color-gray-400;
+      text-decoration: line-through;
+    }
+  }
+
+  // ── CTA button ────────────────────────────────────────────
+  &__cta {
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    width: 100%;
+    padding: $space-3 $space-6;
+    min-height: 3rem;
+    font-family: $font-body;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    border-radius: $radius-full;
+    text-decoration: none;
+    cursor: pointer;
+    border: 2px solid transparent;
+    @include transition(color border-color, $transition-base);
+
+    // Outline style (free + enterprise)
+    &--outline {
+      color: $color-primary;
+      border-color: rgba($color-primary, 0.45);
+      background-color: transparent;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: $color-primary;
+        transform: scaleY(0);
+        transform-origin: top;
+        transition: transform $transition-base;
+        z-index: -1;
+      }
+
+      &:hover {
+        color: $color-white;
+        border-color: $color-primary;
+
+        &::before {
+          transform: scaleY(1);
+          transform-origin: bottom;
+        }
+      }
+    }
+
+    // Filled solid (featured)
+    &--filled {
+      color: $color-white;
+      background-color: $color-primary;
+      border-color: $color-primary;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: color.adjust($color-primary, $lightness: -10%);
+        transform: scaleY(0);
+        transform-origin: top;
+        transition: transform $transition-base;
+        z-index: -1;
+      }
+
+      &:hover::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
+    }
+  }
+
+  // ── "Most Popular" ribbon on featured card wrap ───────────
+  &__ribbon {
+    position: absolute;
+    top: -$space-4;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding: $space-1 $space-4;
+    background-color: $color-primary;
+    color: $color-white;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: $radius-full;
+    box-shadow: $shadow-md;
+    z-index: 2;
+  }
+
+  // Card wrap needs relative to anchor the ribbon
+  &__card-wrap--featured {
+    position: relative;
+  }
+}

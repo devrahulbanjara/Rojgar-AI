@@ -8,59 +8,180 @@
 
 .explore {
   position: relative;
-  border-top: 1px solid $color-gray-200;
   background: $color-white;
   overflow: hidden;
-  min-height: 70vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: $space-6;
+  padding-top: $space-10;
+  padding-bottom: $space-10;
+
+  @include md {
+    gap: $space-8;
+    padding-top: $space-12;
+    padding-bottom: $space-12;
+  }
+
+  @include lg {
+    gap: $space-10;
+    padding-top: $space-16;
+    padding-bottom: $space-16;
+  }
 
   // ── Background decoration (right side) ──────────────────
   &__bg {
     position: absolute;
-    top: 0;
-    right: -10%;
-    rotate: 20deg;
-    width: auto;
+    top: 200px;
+    left: -600px;
+    rotate: 250deg;
+    width: 75%;
     height: 100%;
     z-index: 0;
     pointer-events: none;
   }
 
-  // ── Logos bar ────────────────────────────────────────────
+  // ── Stats strip ───────────────────────────────────────────
+  &__stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative; 
+    text-align: center;
+    z-index: 1;
+
+    @include md {
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    padding: $space-5 $space-4;
+
+    &:nth-child(odd) {
+      padding-left: 0;
+      border-right: 1px solid $color-gray-100;
+    }
+
+    &:nth-child(even) {
+      padding-right: 0;
+    }
+
+    &:nth-child(-n + 2) {
+      border-bottom: 1px solid $color-gray-100;
+      padding-bottom: $space-5;
+    }
+
+    &:nth-child(n + 3) {
+      padding-top: $space-5;
+    }
+
+    @include md {
+      &:nth-child(odd),
+      &:nth-child(even),
+      &:nth-child(-n + 2),
+      &:nth-child(n + 3) {
+        padding: 0;
+        padding-inline: $space-6;
+        border: none;
+      }
+
+      &:not(:last-child) {
+        border-right: 1px solid $color-gray-100;
+      }
+
+      &:first-child {
+        padding-left: 0;
+      }
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+  }
+
+  &__stat-number {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+    line-height: 1;
+    letter-spacing: -0.02em;
+
+    @include md {
+      font-size: $font-size-3xl;
+    }
+
+    @include lg {
+      font-size: $font-size-4xl;
+    }
+  }
+
+  &__stat-desc {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    font-weight: $font-weight-medium;
+
+    @include md {
+      font-size: $font-size-base;
+    }
+  }
+
+  // ── Logos marquee ─────────────────────────────────────────
   &__logos {
     padding-block: $space-6;
     position: relative;
     z-index: 1;
     flex-shrink: 0;
+    overflow: hidden;
+    // Fade edges
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #{$color-black} 8%,
+      #{$color-black} 92%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #{$color-black} 8%,
+      #{$color-black} 92%,
+      transparent 100%
+    );
   }
 
-  &__logos-inner {
+  &__marquee-track {
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: $space-8;
-
-    @include lg {
-      gap: $space-12;
-    }
+    gap: $space-12;
+    width: max-content;
+    // Always running — never paused, including on hover
+    animation: explore-marquee 30s linear infinite;
   }
 
   &__logo {
-    opacity: 0.6;
-    padding-top: $space-4;
-    filter: grayscale(1);
-    @include transition(opacity, $transition-fast);
-
-    &:hover {
-      opacity: 1;
-    }
+    flex-shrink: 0;
+    opacity: 1;
+    @include transition(all, 0.25s ease);
+    cursor: default;
 
     img {
-      height: 50px;
+      height: 40px;
       width: auto;
       display: block;
+    }
+  }
+
+  @keyframes explore-marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
     }
   }
 
