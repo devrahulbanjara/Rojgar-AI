@@ -22,22 +22,24 @@
 
   &__bg-top {
     position: absolute;
-    max-width: 400px;
+    max-width: 500px;
     width: 100%;
     height: fit-content !important;
     top: 0%;
     left: 0%;
     z-index: 0;
+    opacity: 0; // GSAP entrance will reveal
   }
 
   &__bg-bottom {
     position: absolute;
-    max-width: 300px;
+    max-width: 400px;
     width: 100%;
     height: fit-content !important;
     bottom: 0%;
     right: 0%;
     z-index: 0;
+    opacity: 0; // GSAP entrance will reveal
   }
 
   &__inner {

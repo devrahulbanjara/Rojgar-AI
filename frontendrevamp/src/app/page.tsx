@@ -1,11 +1,15 @@
-import MainLayout from "@/components/layout/MainLayout";
 import Image from "next/image";
 import ExploreCategories from "@/components/sections/ExploreCategories";
+import HeroAnimations from "@/components/sections/HeroAnimations";
+import WhyPreferUs from "@/components/sections/WhyPreferUs";
+import FAQ from "@/components/sections/FAQ";
+import Pricing from "@/components/sections/Pricing";
 
 export default function Home() {
   return (
     <section className="homepage">
       <div className="heroSection">
+        <HeroAnimations />
         <Image
           src="/bg/bg-ui.svg"
           alt=""
@@ -115,9 +119,13 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="exploreMoreCategoriesSection">
-        <ExploreCategories />
-      </div>
+      <ExploreCategories />
+
+      <WhyPreferUs />
+
+      <Pricing />
+
+      <FAQ />
     </section>
   );
 }
