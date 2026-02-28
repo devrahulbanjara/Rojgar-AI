@@ -23,7 +23,11 @@ export default function Header() {
     const header = headerRef.current;
     if (!header) return;
     const STORAGE_KEY = "ch_header_animated";
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    if (sessionStorage.getItem(STORAGE_KEY)) {
+      // Already animated this session — make header immediately visible
+      gsap.set(header, { y: 0, opacity: 1 });
+      return;
+    }
     sessionStorage.setItem(STORAGE_KEY, "1");
     gsap.fromTo(
       header,
@@ -54,6 +58,8 @@ export default function Header() {
       }
     };
 
+    // Initialise immediately in case browser restores scroll position
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
