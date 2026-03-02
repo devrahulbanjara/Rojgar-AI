@@ -1,1 +1,0 @@
-"""Qdrant vector store integration."""
