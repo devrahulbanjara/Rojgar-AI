@@ -1,0 +1,3940 @@
+// ============================================================
+// DASHBOARD — Shared styles for all dashboard views
+// ============================================================
+
+@use "sass:color";
+@use "../variables" as *;
+@use "../mixins" as *;
+
+// ── Dashboard Shell ──────────────────────────────────────────
+.dash-shell {
+  display: flex;
+  min-height: 100vh;
+  background: $color-gray-100;
+}
+
+// ── Sidebar ──────────────────────────────────────────────────
+.dash-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: $color-white;
+  border-right: 1px solid $color-gray-200;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: $z-sticky;
+  transition: width $transition-base;
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-6 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+    text-decoration: none;
+
+    &-icon {
+      width: 36px;
+      height: 36px;
+      background: $color-primary;
+      border-radius: $radius-lg;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $color-white;
+      font-weight: $font-weight-bold;
+      font-size: $font-size-sm;
+      font-family: $font-heading;
+      flex-shrink: 0;
+    }
+
+    &-text {
+      font-family: $font-heading;
+      font-weight: $font-weight-bold;
+      font-size: $font-size-lg;
+      color: $color-gray-900;
+      letter-spacing: -0.01em;
+    }
+  }
+
+  &__user {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+
+    &-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: $radius-full;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: $color-gray-200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: $font-heading;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-base;
+      color: $color-primary;
+    }
+
+    &-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &-name {
+      font-family: $font-heading;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      color: $color-gray-900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &-role {
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+      margin-top: 2px;
+    }
+
+    &-status {
+      width: 8px;
+      height: 8px;
+      border-radius: $radius-full;
+      background: $color-success;
+      flex-shrink: 0;
+    }
+  }
+
+  &__nav {
+    flex: 1;
+    padding: $space-4 $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__nav-group {
+    margin-bottom: $space-4;
+
+    &-label {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: $color-gray-400;
+      padding: $space-2 $space-3;
+      margin-bottom: $space-1;
+    }
+  }
+
+  &__nav-item {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3 $space-3;
+    border-radius: $radius-lg;
+    text-decoration: none;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-600;
+    cursor: pointer;
+    transition: all $transition-fast;
+    position: relative;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+
+    &:hover {
+      background: rgba($color-primary, 0.06);
+      color: $color-primary;
+
+      .dash-sidebar__nav-icon {
+        color: $color-primary;
+      }
+    }
+
+    &--active {
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+      font-weight: $font-weight-semibold;
+
+      .dash-sidebar__nav-icon {
+        color: $color-primary;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        background: $color-primary;
+        border-radius: 0 $radius-full $radius-full 0;
+      }
+    }
+
+    &--danger {
+      color: $color-accent;
+
+      &:hover {
+        background: rgba($color-accent, 0.08);
+        color: $color-accent;
+      }
+    }
+  }
+
+  &__nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: $color-gray-400;
+    transition: color $transition-fast;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__nav-badge {
+    margin-left: auto;
+    background: $color-primary;
+    color: $color-white;
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    padding: 2px 7px;
+    border-radius: $radius-full;
+    line-height: 1.4;
+  }
+
+  &__footer {
+    padding: $space-4 $space-3;
+    border-top: 1px solid $color-gray-200;
+  }
+}
+
+// ── Main Content ──────────────────────────────────────────────
+.dash-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Page Content ──────────────────────────────────────────────
+.dash-content {
+  flex: 1;
+  padding: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+// ── Page Header ──────────────────────────────────────────────
+.dash-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-4;
+  flex-wrap: wrap;
+
+  &__left {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__subtitle {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+}
+
+// ── Stats Cards ──────────────────────────────────────────────
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-5;
+}
+
+.stat-card {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-5 $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  transition: box-shadow $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-xl;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--primary {
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+
+    &--success {
+      background: rgba($color-success, 0.1);
+      color: $color-success;
+    }
+
+    &--warning {
+      background: rgba($color-warning, 0.15);
+      color: color.adjust($color-warning, $lightness: -20%);
+    }
+
+    &--secondary {
+      background: rgba($color-secondary, 0.1);
+      color: $color-secondary;
+    }
+
+    &--accent {
+      background: rgba($color-accent, 0.1);
+      color: $color-accent;
+    }
+  }
+
+  &__trend {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    padding: 3px 8px;
+    border-radius: $radius-full;
+
+    &--up {
+      background: rgba($color-success, 0.1);
+      color: $color-success;
+    }
+
+    &--down {
+      background: rgba($color-accent, 0.1);
+      color: $color-accent;
+    }
+  }
+
+  &__value {
+    font-family: $font-heading;
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+  }
+
+  &__label {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+  }
+}
+
+// ── Cards ────────────────────────────────────────────────────
+.dash-card {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  transition: box-shadow $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+
+  &__header {
+    padding: $space-5 $space-6;
+    border-bottom: 1px solid $color-gray-200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-4;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+  }
+
+  &__subtitle {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    margin-top: 2px;
+  }
+
+  &__body {
+    padding: $space-6;
+  }
+
+  &__footer {
+    padding: $space-4 $space-6;
+    border-top: 1px solid $color-gray-200;
+    background: $color-gray-100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+}
+
+// ── Table ────────────────────────────────────────────────────
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  th {
+    text-align: left;
+    padding: $space-3 $space-5;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-gray-400;
+    background: $color-gray-100;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  td {
+    padding: $space-4 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+    color: $color-gray-700;
+    vertical-align: middle;
+
+    &:first-child {
+      color: $color-gray-900;
+      font-weight: $font-weight-medium;
+    }
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: rgba($color-primary, 0.02);
+  }
+}
+
+// ── Badges / Status ──────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: 1.4;
+
+  &--primary {
+    background: rgba($color-primary, 0.1);
+    color: $color-primary;
+  }
+  &--success {
+    background: rgba($color-success, 0.1);
+    color: color.adjust($color-success, $lightness: -10%);
+  }
+  &--warning {
+    background: rgba($color-warning, 0.2);
+    color: color.adjust($color-warning, $lightness: -25%);
+  }
+  &--danger {
+    background: rgba($color-accent, 0.1);
+    color: $color-accent;
+  }
+  &--secondary {
+    background: rgba($color-secondary, 0.1);
+    color: $color-secondary;
+  }
+  &--gray {
+    background: $color-gray-100;
+    color: $color-gray-600;
+  }
+}
+
+// ── Job Cards (User Dashboard) ────────────────────────────────
+.job-card {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-5;
+  cursor: pointer;
+  transition: all $transition-fast;
+  position: relative;
+
+  &:hover,
+  &--active {
+    border-color: rgba($color-primary, 0.4);
+    box-shadow:
+      0 0 0 3px rgba($color-primary, 0.08),
+      $shadow-md;
+  }
+
+  &--active {
+    border-color: $color-primary;
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+    margin-bottom: $space-3;
+  }
+
+  &__logo {
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-lg;
+    border: 1px solid $color-gray-200;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--logo-bg, #{$color-gray-100});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-base;
+    color: var(--logo-color, #{$color-primary});
+  }
+
+  &__title-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__company {
+    font-size: $font-size-xs;
+    color: $color-primary;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__location {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+  }
+
+  &__bookmark {
+    width: 32px;
+    height: 32px;
+    border-radius: $radius-lg;
+    border: 1px solid $color-gray-200;
+    background: $color-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: $color-gray-400;
+    flex-shrink: 0;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+    margin-bottom: $space-3;
+  }
+
+  &__tag {
+    font-size: $font-size-xs;
+    padding: 3px 10px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  &__desc {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    line-height: $line-height-normal;
+    margin-bottom: $space-3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    flex-wrap: wrap;
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: $space-1;
+    }
+
+    svg {
+      width: 13px;
+      height: 13px;
+    }
+  }
+}
+
+// ── Job Detail Panel ──────────────────────────────────────────
+.job-detail {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+
+  &__cover {
+    height: 100px;
+    background: linear-gradient(
+      135deg,
+      var(--job-color-from, #{rgba($color-primary, 0.15)}) 0%,
+      var(--job-color-to, #{rgba($color-secondary, 0.1)}) 100%
+    );
+    position: relative;
+  }
+
+  &__header {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__logo-wrap {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: $space-3;
+  }
+
+  &__logo {
+    width: 56px;
+    height: 56px;
+    border-radius: $radius-xl;
+    border: 3px solid $color-white;
+    background: var(--job-logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-xl;
+    box-shadow: $shadow-md;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $space-2;
+  }
+
+  &__action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-lg;
+    border: 1px solid $color-gray-200;
+    background: $color-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: $color-gray-500;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+  }
+
+  &__meta {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-bottom: $space-1;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xl;
+    color: $color-gray-900;
+    margin-bottom: $space-1;
+  }
+
+  &__company {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  &__stats {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__stats-title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+    margin-bottom: $space-4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__stats-row {
+    display: flex;
+    align-items: center;
+    gap: $space-5;
+  }
+
+  &__donut-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__donut-center {
+    position: absolute;
+    text-align: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+    pointer-events: none;
+  }
+
+  &__stats-info {
+    flex: 1;
+  }
+
+  &__stats-total {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-2xl;
+    color: $color-gray-900;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  &__stats-label {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    margin-bottom: $space-3;
+  }
+
+  &__legend {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__legend-item {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    color: $color-gray-600;
+
+    &-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: $radius-full;
+      flex-shrink: 0;
+
+      &--primary {
+        background: $color-primary;
+      }
+      &--secondary {
+        background: $color-secondary;
+      }
+      &--accent {
+        background: $color-accent;
+      }
+    }
+  }
+
+  &__match {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+
+    &-label {
+      color: $color-text-muted;
+    }
+
+    &-value {
+      background: rgba($color-success, 0.12);
+      color: $color-success;
+      padding: 3px 10px;
+      border-radius: $radius-full;
+    }
+  }
+
+  &__info {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: $space-4;
+  }
+
+  &__info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    &-label {
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+    }
+
+    &-value {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: $color-gray-800;
+    }
+  }
+
+  &__about {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+
+    h4 {
+      font-family: $font-heading;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      color: $color-gray-900;
+      margin-bottom: $space-3;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      color: $color-gray-500;
+      line-height: $line-height-loose;
+    }
+
+    &-link {
+      color: $color-primary;
+      text-decoration: none;
+      font-weight: $font-weight-medium;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__cta {
+    padding: $space-5;
+    display: flex;
+    gap: $space-3;
+  }
+
+  &__apply-btn {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: $color-primary;
+    color: $color-white;
+    border-radius: $radius-full;
+    z-index: 0;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-color: color.adjust($color-primary, $lightness: -12%);
+      transform: scaleY(0);
+      transform-origin: top; // un-hover: empties from bottom → top
+      transition: transform $transition-base;
+      z-index: -1;
+    }
+
+    &:hover::before {
+      transform: scaleY(1);
+      transform-origin: bottom; // hover: fills from bottom → top
+    }
+  }
+
+  &__msg-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-lg;
+    border: 1px solid $color-gray-200;
+    background: $color-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: $color-gray-500;
+    flex-shrink: 0;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+  }
+}
+
+// ── Filters ──────────────────────────────────────────────────
+.dash-filters {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  flex-wrap: wrap;
+
+  &__chip {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    background: rgba($color-primary, 0.08);
+    border: 1px solid rgba($color-primary, 0.2);
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: $color-primary;
+      display: flex;
+      align-items: center;
+      padding: 0;
+      font-size: 14px;
+    }
+  }
+
+  &__clear {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: $space-2 $space-1;
+  }
+}
+
+// ── Profile Sidebar (User) ────────────────────────────────────
+.profile-card {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+
+  &__avatar-wrap {
+    padding: $space-6 $space-5 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border-bottom: 1px solid $color-gray-200;
+    padding-bottom: $space-5;
+  }
+
+  &__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: $radius-full;
+    object-fit: cover;
+    background: rgba($color-primary, 0.1);
+    border: 3px solid rgba($color-primary, 0.2);
+    margin-bottom: $space-3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-2xl;
+    color: $color-primary;
+  }
+
+  &__name {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    margin-bottom: 2px;
+  }
+
+  &__title {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    margin-bottom: $space-3;
+  }
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    padding: 4px 12px;
+    border-radius: $radius-full;
+    background: rgba($color-success, 0.1);
+    color: color.adjust($color-success, $lightness: -10%);
+
+    &-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: $radius-full;
+      background: $color-success;
+    }
+  }
+
+  &__details {
+    padding: $space-4 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__details-title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-gray-400;
+    margin-bottom: $space-3;
+  }
+
+  &__detail-item {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    margin-bottom: $space-3;
+    font-size: $font-size-xs;
+    color: $color-gray-700;
+
+    &-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: $radius-md;
+      background: $color-gray-100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $color-gray-500;
+      flex-shrink: 0;
+    }
+
+    &-label {
+      font-size: 10px;
+      color: $color-gray-400;
+    }
+
+    &-value {
+      font-weight: $font-weight-medium;
+      color: $color-gray-800;
+    }
+  }
+
+  &__skills {
+    padding: $space-4 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__skills-title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-gray-400;
+    margin-bottom: $space-3;
+  }
+
+  &__skills-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+
+  &__skill {
+    font-size: $font-size-xs;
+    padding: 4px 12px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+    border: 1px solid rgba($color-primary, 0.15);
+  }
+
+  &__cta {
+    padding: $space-4 $space-5;
+  }
+
+  &__edit-btn {
+    width: 100%;
+    padding: $space-3;
+    border-radius: $radius-lg;
+    border: 1px solid $color-gray-200;
+    background: $color-white;
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    cursor: pointer;
+    transition: all $transition-fast;
+    text-align: center;
+
+    &:hover {
+      border-color: $color-primary;
+      color: $color-primary;
+      background: rgba($color-primary, 0.04);
+    }
+  }
+}
+
+// ── Candidate Row (HR/Company) ────────────────────────────────
+.candidate-row {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border-bottom: 1px solid $color-gray-200;
+  transition: background $transition-fast;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba($color-primary, 0.02);
+  }
+
+  &__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xs;
+    color: $color-primary;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+  }
+
+  &__sub {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__score {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    color: $color-primary;
+    background: rgba($color-primary, 0.08);
+    padding: 3px 10px;
+    border-radius: $radius-full;
+    flex-shrink: 0;
+  }
+}
+
+// ── Activity Feed ─────────────────────────────────────────────
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.activity-item {
+  display: flex;
+  gap: $space-3;
+  padding: $space-4 0;
+  border-bottom: 1px solid $color-gray-200;
+  position: relative;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-full;
+    background: $color-primary;
+    margin-top: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
+  }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__text {
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    line-height: $line-height-normal;
+
+    strong {
+      color: $color-gray-900;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &__time {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-top: 3px;
+  }
+}
+
+// ── Progress Bar ─────────────────────────────────────────────
+.progress-bar {
+  height: 6px;
+  border-radius: $radius-full;
+  background: $color-gray-200;
+  overflow: hidden;
+
+  &__fill {
+    height: 100%;
+    border-radius: $radius-full;
+    background: $color-primary;
+    transition: width $transition-slow;
+
+    &--success {
+      background: $color-success;
+    }
+
+    &--warning {
+      background: $color-warning;
+    }
+  }
+}
+
+// ── Two/Three column grid ─────────────────────────────────────
+.dash-grid {
+  display: grid;
+  gap: $space-6;
+
+  &--2col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  &--3col {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  &--sidebar-right {
+    grid-template-columns: 1fr 320px;
+  }
+
+  &--sidebar-left {
+    grid-template-columns: 260px 1fr;
+  }
+}
+
+// ── Jobs Layout ──────────────────────────────────────────────
+.jobs-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr 360px;
+  gap: $space-5;
+  align-items: start;
+
+  &__sidebar {
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    padding: $space-5;
+    position: sticky;
+    top: 80px;
+  }
+
+  &__sidebar-title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+    margin-bottom: $space-4;
+  }
+
+  &__filter-group {
+    margin-bottom: $space-5;
+
+    &-label {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: $color-gray-400;
+      margin-bottom: $space-3;
+    }
+  }
+
+  &__filter-option {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 0;
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-primary;
+    }
+
+    input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: $color-primary;
+    }
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────
+@media (max-width: $bp-lg) {
+  .dash-sidebar {
+    width: 72px;
+    min-width: 72px;
+
+    &__logo-text,
+    &__nav-group-label,
+    &__user-info,
+    &__user-status,
+    &__nav-badge {
+      display: none;
+    }
+
+    &__nav-item {
+      justify-content: center;
+      padding: $space-3;
+    }
+
+    &__nav-icon {
+      width: 22px;
+      height: 22px;
+    }
+
+    &__user {
+      justify-content: center;
+    }
+  }
+
+  .jobs-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+// ── Dashboard Navbar — always attached to top ────────────────
+.dash-navbar {
+  position: sticky;
+  top: 0;
+  z-index: $z-sticky;
+  background: $color-white;
+  border-bottom: 1px solid rgba($color-black, 0.07);
+  box-shadow: 0 2px 16px rgba($color-black, 0.08);
+
+  // ── Inner: 3-column grid so nav is perfectly centred ────────
+  &__inner {
+    width: 100%;
+    height: 68px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 $space-10;
+  }
+
+  // ── Logo ────────────────────────────────────────────────────
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: opacity $transition-fast;
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  &__logo-image {
+    height: 28px;
+    width: auto;
+    display: block;
+  }
+
+  // ── Nav (centre column) ─────────────────────────────────────
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    justify-content: center;
+  }
+
+  &__nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: $space-2 $space-4;
+    border-radius: $radius-md;
+    font-family: $font-heading;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: rgba($color-black, 0.7);
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      color $transition-fast,
+      background-color $transition-fast;
+
+    // Underline slide-in indicator (matches homepage header)
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 4px;
+      left: $space-4;
+      right: $space-4;
+      height: 2px;
+      background: $color-primary;
+      border-radius: $radius-full;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform $transition-fast;
+    }
+
+    &:hover {
+      color: rgba($color-black, 0.9);
+
+      &::after {
+        transform: scaleX(1);
+      }
+    }
+
+    &--active {
+      color: $color-primary;
+
+      &::after {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  // ── Right section ───────────────────────────────────────────
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    justify-content: flex-end;
+  }
+
+  // ── Expandable search ───────────────────────────────────────
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    transition: all $transition-base;
+
+    &-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: $radius-lg;
+      border: 1px solid $color-gray-200;
+      background: $color-white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: $color-gray-500;
+      flex-shrink: 0;
+      transition: all $transition-fast;
+      z-index: 1;
+
+      &:hover {
+        border-color: $color-primary;
+        color: $color-primary;
+      }
+    }
+
+    &-input {
+      width: 0;
+      max-width: 0;
+      border: none;
+      outline: none;
+      background: none;
+      font-size: $font-size-sm;
+      font-family: $font-body;
+      color: $color-gray-800;
+      padding: 0;
+      transition: all $transition-base;
+      opacity: 0;
+      pointer-events: none;
+
+      &::placeholder {
+        color: $color-gray-400;
+      }
+    }
+
+    &--open {
+      background: $color-white;
+      border: 1px solid $color-primary;
+      border-radius: $radius-lg;
+      padding: 0 $space-3 0 0;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+
+      .dash-navbar__search-btn {
+        border: none;
+        background: none;
+        border-radius: $radius-lg 0 0 $radius-lg;
+        color: $color-primary;
+      }
+
+      .dash-navbar__search-input {
+        width: 220px;
+        max-width: 220px;
+        opacity: 1;
+        pointer-events: auto;
+        padding: 0 $space-2;
+      }
+    }
+  }
+
+  // ── Icon buttons ────────────────────────────────────────────
+  &__icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-lg;
+    border: 1px solid $color-gray-200;
+    background: $color-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: $color-gray-500;
+    transition: all $transition-fast;
+    position: relative;
+    flex-shrink: 0;
+
+    &:hover {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+  }
+
+  &__notif-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: $radius-full;
+    background: $color-accent;
+    border: 2px solid $color-white;
+    pointer-events: none;
+  }
+
+  // ── Profile ─────────────────────────────────────────────────
+  &__profile {
+    position: relative;
+  }
+
+  &__avatar-btn {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    background: none;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-full;
+    padding: 3px 10px 3px 3px;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $color-primary;
+      background: rgba($color-primary, 0.04);
+    }
+  }
+
+  &__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.12);
+    color: $color-primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-xs;
+    flex-shrink: 0;
+  }
+
+  &__avatar-chevron {
+    color: $color-gray-400;
+    transition: transform $transition-fast;
+    flex-shrink: 0;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  // ── Dropdown ────────────────────────────────────────────────
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-xl;
+    overflow: hidden;
+    z-index: $z-dropdown;
+    animation: dashDropdownIn $transition-fast forwards;
+  }
+
+  &__dropdown-user {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-4;
+    background: rgba($color-primary, 0.03);
+  }
+
+  &__dropdown-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.12);
+    color: $color-primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    flex-shrink: 0;
+    border: 2px solid rgba($color-primary, 0.2);
+  }
+
+  &__dropdown-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__dropdown-name {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__dropdown-role {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    margin-top: 1px;
+  }
+
+  &__dropdown-divider {
+    height: 1px;
+    background: $color-gray-200;
+    margin: $space-1 0;
+  }
+
+  &__dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all $transition-fast;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+
+    svg {
+      color: $color-gray-400;
+      flex-shrink: 0;
+      transition: color $transition-fast;
+    }
+
+    &:hover {
+      background: rgba($color-primary, 0.05);
+      color: $color-primary;
+
+      svg {
+        color: $color-primary;
+      }
+    }
+
+    &--danger {
+      color: $color-accent;
+
+      svg {
+        color: $color-accent;
+      }
+
+      &:hover {
+        background: rgba($color-accent, 0.06);
+        color: $color-accent;
+      }
+    }
+  }
+}
+
+@keyframes dashDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ── Dashboard page wrapper ─────────────────────────────────────
+.dash-page {
+  min-height: calc(100vh - 78px);
+  background: $color-gray-100;
+}
+
+// ── Stats column-count modifiers ──────────────────────────────
+.dash-stats {
+  &--3col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  &--4col {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  &--5col {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+// ── Stat-card centred variant (pipeline page) ─────────────────
+.stat-card {
+  &--centered {
+    text-align: center;
+  }
+
+  &__value--colored {
+    color: var(--stat-value-color, #{$color-primary});
+    font-size: $font-size-2xl;
+  }
+
+  &__icon-emoji {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+}
+
+// ── Pipeline icon wrap (candidates page) ──────────────────────
+.pipeline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-lg;
+  background: var(--pipeline-bg, #{$color-gray-100});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto $space-2;
+}
+
+// ── Select element shared style ───────────────────────────────
+.dash-select {
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-lg;
+  padding: $space-2 $space-3;
+  font-size: $font-size-xs;
+  background: $color-white;
+  cursor: pointer;
+  color: $color-gray-700;
+  font-family: $font-body;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+
+  // Slightly taller variant used in admin header
+  &--md {
+    padding: $space-2 $space-3;
+    font-size: $font-size-xs;
+  }
+}
+
+// ── Table utilities ────────────────────────────────────────────
+.table-scroll {
+  overflow-x: auto;
+}
+
+.cell-user {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-full;
+    background: var(--avatar-bg, #{rgba($color-primary, 0.1)});
+    color: var(--avatar-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-xs;
+    flex-shrink: 0;
+
+    &--sm {
+      width: 30px;
+      height: 30px;
+    }
+    &--rect {
+      border-radius: $radius-lg;
+    }
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+  }
+
+  &__sub {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-top: 1px;
+  }
+}
+
+.cell-meta {
+  color: $color-gray-500;
+  font-size: $font-size-sm;
+}
+.cell-muted {
+  color: $color-gray-400;
+  font-size: $font-size-xs;
+}
+.cell-actions {
+  display: flex;
+  gap: $space-2;
+}
+
+// ── Progress cell (admin jobs) ─────────────────────────────────
+.cell-progress {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+
+  &__count {
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+  }
+}
+
+// ── Filter bar ─────────────────────────────────────────────────
+.dash-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex-wrap: wrap;
+}
+
+.dash-results-hint {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  color: $color-gray-400;
+}
+
+// ── Activity dot color modifiers ──────────────────────────────
+.activity-item__dot {
+  &--warning {
+    background: $color-warning;
+    box-shadow: 0 0 0 3px rgba($color-warning, 0.15);
+  }
+  &--success {
+    background: $color-success;
+    box-shadow: 0 0 0 3px rgba($color-success, 0.15);
+  }
+}
+
+// ── Vertical column stack ──────────────────────────────────────
+.dash-col-stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+// ── Item list row (company / admin list items) ─────────────────
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 0;
+
+  & + & {
+    border-top: 1px solid $color-gray-200;
+  }
+
+  &--pad {
+    padding: $space-4 0;
+  }
+
+  &__logo {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-lg;
+    background: var(--logo-bg, #{rgba($color-primary, 0.1)});
+    color: var(--logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+  }
+
+  &__sub {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-top: 1px;
+  }
+
+  &__right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  &__expires {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--expires-color, #{$color-gray-500});
+  }
+}
+
+// ── Match / score badges ───────────────────────────────────────
+.match-badge {
+  background: rgba($color-success, 0.1);
+  color: $color-success;
+  border-radius: $radius-full;
+  padding: 2px $space-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.score-pill {
+  background: var(--score-bg, #{rgba($color-primary, 0.1)});
+  color: var(--score-color, #{$color-primary});
+  border-radius: $radius-full;
+  padding: 3px $space-3;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+
+.score-badge {
+  font-family: $font-heading;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-sm;
+  color: var(--score-color, #{$color-primary});
+}
+
+// ── Application status dot ────────────────────────────────────
+.app-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: $radius-full;
+  flex-shrink: 0;
+  background: var(--dot-color, #{$color-gray-400});
+}
+
+// ── Skill pills ────────────────────────────────────────────────
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+  padding: 1px $space-2;
+  border-radius: $radius-full;
+}
+
+.skill-pill {
+  font-size: $font-size-xs;
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+  padding: 1px $space-2;
+  border-radius: $radius-full;
+}
+
+// ── Stage progress bar (candidates table) ─────────────────────
+.stage-progress {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+
+  &__bar {
+    width: 18px;
+    height: 4px;
+    border-radius: $radius-sm;
+    background: var(--bar-color, #{$color-gray-200});
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-left: $space-1;
+  }
+}
+
+// ── Donut SVG ring ─────────────────────────────────────────────
+.donut-ring {
+  transition: stroke-dasharray 0.6s ease;
+}
+
+// ── Jobs page ─────────────────────────────────────────────────
+.dash-content--pad-top {
+  padding-block: $space-12;
+}
+
+.job-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-4;
+
+  &__count {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-700;
+  }
+
+  &__sort {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+  }
+}
+
+.job-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.job-card__meta-time {
+  margin-left: auto;
+}
+
+// ── Note / muted inline text ───────────────────────────────────
+.text-note {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-regular;
+  color: $color-gray-400;
+}
+
+// ── Topbar search width variants ──────────────────────────────
+.dash-topbar__search--md {
+  width: 260px;
+}
+.dash-topbar__search--lg {
+  width: 280px;
+}
+
+// ── Company jobs — mini stats grid ────────────────────────────
+.job-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $space-3;
+
+  &__item {
+    text-align: center;
+  }
+
+  &__value {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-xl;
+    color: var(--mini-stat-color, #{$color-primary});
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-top: 2px;
+  }
+}
+
+// ── Company jobs — card footer ────────────────────────────────
+.job-card-footer {
+  margin-top: $space-4;
+  padding-top: $space-3;
+  border-top: 1px solid $color-gray-200;
+  display: flex;
+  justify-content: space-between;
+  font-size: $font-size-xs;
+  color: $color-gray-400;
+
+  &__expires {
+    color: var(--expires-color, #{$color-gray-400});
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// ── Expiry table cell (with dynamic colour) ────────────────────
+.expires-cell {
+  color: var(--expires-color, #{$color-gray-400});
+  font-size: $font-size-xs;
+}
+
+// ── Page-header hint text ──────────────────────────────────────
+.page-header-hint {
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+}
+
+// ── dash-card__body padding variants ──────────────────────────
+.dash-card__body--no-top {
+  padding-top: 0;
+}
+.dash-card__body--activity {
+  padding: 0 $space-6;
+}
+
+// ── Clickable card ─────────────────────────────────────────────
+.dash-card--clickable {
+  cursor: pointer;
+}
+
+// ── Job card title + badge row ─────────────────────────────────
+.job-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+// ── Job card tags row (with bottom margin) ─────────────────────
+.job-card__tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-bottom: $space-4;
+}
+
+// ── Progress bar width variants ────────────────────────────────
+.progress-bar--narrow-sm {
+  width: 60px;
+}
+.progress-bar--narrow-md {
+  width: 80px;
+}
+
+// ── Item-row logo circle variant ───────────────────────────────
+.item-row__logo--circle {
+  border-radius: $radius-full;
+}
+
+// ── Cell-actions top margin variant ───────────────────────────
+.cell-actions--mt {
+  margin-top: 2px;
+}
+
+// ── HR dashboard 3-col layout ─────────────────────────────────
+.hr-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 340px;
+  gap: $space-4;
+  align-items: start;
+}
+
+// ── Small dash-card title ──────────────────────────────────────
+.dash-card__title--sm {
+  font-size: $font-size-sm;
+}
+
+// ── Interview / shortlist list item ───────────────────────────
+.interview-item {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: $radius-full;
+    background: var(--avatar-bg, #{$color-gray-100});
+    color: var(--avatar-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: $font-weight-bold;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+  }
+
+  &__sub {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// ── Extra-small badge ──────────────────────────────────────────
+.badge--xs {
+  font-size: 0.65rem !important;
+}
+
+// ── Job card header right side ─────────────────────────────────
+.job-card__header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: $space-2;
+  flex-shrink: 0;
+}
+
+// ── Job card days-left badge ───────────────────────────────────
+.job-card__days-left {
+  font-size: $font-size-xs;
+  color: var(--expires-color, #{$color-gray-400});
+  font-weight: $font-weight-semibold;
+}
+
+// ============================================================
+// APPLICATIONS PAGE
+// ============================================================
+
+.apps-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  gap: $space-5;
+  align-items: start;
+
+  &__sidebar {
+    position: sticky;
+    top: 88px;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+    min-width: 0;
+  }
+
+  &__detail {
+    position: sticky;
+    top: 88px;
+  }
+}
+
+// ── Apps sidebar (stage filter) ───────────────────────────────
+.apps-sidebar {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-4;
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: $color-gray-400;
+    padding: $space-2 $space-2;
+    margin-bottom: $space-2;
+  }
+
+  &__stages {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__stage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-2 $space-3;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all $transition-fast;
+    width: 100%;
+    text-align: left;
+
+    &:hover {
+      background: rgba($color-primary, 0.06);
+      color: $color-primary;
+    }
+
+    &--active {
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+      font-weight: $font-weight-semibold;
+    }
+
+    &-label {
+      flex: 1;
+      text-align: left;
+    }
+
+    &-count {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      padding: 1px 7px;
+      border-radius: $radius-full;
+      background: $color-gray-100;
+      color: $color-gray-500;
+      margin-left: $space-2;
+    }
+  }
+
+  &--active &__stage-count {
+    background: rgba($color-primary, 0.15);
+    color: $color-primary;
+  }
+
+  &__divider {
+    height: 1px;
+    background: $color-gray-200;
+    margin: $space-4 0 $space-3;
+  }
+
+  &__types {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__type-btn {
+    text-align: left;
+    padding: $space-2 $space-3;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: rgba($color-primary, 0.06);
+      color: $color-primary;
+    }
+
+    &--active {
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+// ── Search row ────────────────────────────────────────────────
+.apps-search-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.apps-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-lg;
+  padding: $space-2 $space-3;
+  transition: border-color $transition-fast;
+
+  svg {
+    color: $color-gray-400;
+    flex-shrink: 0;
+  }
+
+  &:focus-within {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: $font-size-sm;
+    font-family: $font-body;
+    color: $color-gray-800;
+    background: none;
+
+    &::placeholder {
+      color: $color-gray-400;
+    }
+  }
+}
+
+.apps-results-count {
+  font-size: $font-size-xs;
+  color: $color-gray-400;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// ── Application list ──────────────────────────────────────────
+.apps-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.apps-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-12 $space-6;
+  text-align: center;
+  color: $color-gray-400;
+  font-size: $font-size-sm;
+
+  svg {
+    color: $color-gray-300;
+  }
+}
+
+// ── Application item card ─────────────────────────────────────
+.app-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.4);
+    box-shadow: $shadow-sm;
+  }
+
+  &--active {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+  }
+
+  &__logo {
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-lg;
+    background: var(--app-logo-bg, #{rgba($color-primary, 0.1)});
+    color: var(--app-logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-base;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  &__role {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__company {
+    font-size: $font-size-xs;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__meta {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__sep {
+    color: $color-gray-300;
+  }
+}
+
+// ── Application detail panel ──────────────────────────────────
+.app-detail {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+    background: rgba($color-primary, 0.02);
+  }
+
+  &__logo {
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-lg;
+    background: var(--app-logo-bg, #{rgba($color-primary, 0.1)});
+    color: var(--app-logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-lg;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__role {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    margin-bottom: 2px;
+  }
+
+  &__company {
+    font-size: $font-size-sm;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+    margin-bottom: 2px;
+  }
+
+  &__location {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+  }
+
+  &__section {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+
+  &__section-title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: $color-gray-400;
+    margin-bottom: $space-3;
+  }
+
+  &__activity {
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    line-height: $line-height-normal;
+  }
+
+  &__facts {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__fact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    &-label {
+      font-size: $font-size-xs;
+      color: $color-gray-400;
+    }
+
+    &-value {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: $color-gray-800;
+    }
+  }
+
+  &__actions {
+    padding: $space-4 $space-5;
+    display: flex;
+    gap: $space-3;
+    border-top: 1px solid $color-gray-200;
+  }
+}
+
+.app-detail-empty {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  font-size: $font-size-sm;
+  color: $color-gray-400;
+}
+
+// ── Application timeline ──────────────────────────────────────
+.app-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.app-timeline__step {
+  display: flex;
+  gap: $space-3;
+
+  &-content {
+    padding-bottom: $space-4;
+  }
+}
+
+.app-timeline__marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.app-timeline__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: $radius-full;
+  border: 2px solid $color-gray-300;
+  background: $color-white;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+  margin-top: 3px;
+
+  .app-timeline__step--done & {
+    border-color: $color-primary;
+    background: $color-primary;
+  }
+
+  .app-timeline__step--current & {
+    border-color: $color-primary;
+    background: $color-white;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.2);
+  }
+}
+
+.app-timeline__line {
+  width: 2px;
+  flex: 1;
+  min-height: 28px;
+  background: $color-gray-200;
+  margin: 4px 0 0;
+
+  .app-timeline__step--done & {
+    background: $color-primary;
+  }
+}
+
+.app-timeline__content {
+  padding-bottom: $space-4;
+  padding-left: $space-1;
+  flex: 1;
+}
+
+.app-timeline__stage {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-gray-700;
+
+  .app-timeline__step--done & {
+    color: $color-gray-900;
+    font-weight: $font-weight-semibold;
+  }
+
+  .app-timeline__step--current & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.app-timeline__date {
+  font-size: $font-size-xs;
+  color: $color-gray-400;
+  margin-top: 2px;
+}
+
+// ── Responsive: applications ───────────────────────────────────
+@media (max-width: $bp-lg) {
+  .apps-layout {
+    grid-template-columns: 1fr;
+
+    &__sidebar {
+      position: static;
+    }
+
+    &__detail {
+      position: static;
+    }
+  }
+}
+
+// ============================================================
+// RESUME PAGE
+// ============================================================
+
+// ── Resume grid ────────────────────────────────────────────────
+.resume-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: $space-5;
+}
+
+// ── Resume card ────────────────────────────────────────────────
+.resume-card {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.4);
+    box-shadow: $shadow-md;
+  }
+
+  &__preview-inner {
+    width: 100%;
+    background: $color-white;
+    padding: $space-4;
+    font-size: $font-size-xs;
+    max-height: 160px;
+    overflow: hidden;
+  }
+
+  &__preview-name {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    margin-bottom: 2px;
+  }
+
+  &__preview-headline {
+    font-size: $font-size-xs;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+    margin-bottom: $space-2;
+  }
+
+  &__preview-divider {
+    height: 1px;
+    background: $color-gray-200;
+    margin: $space-2 0;
+  }
+
+  &__preview-body {
+    font-size: 0.65rem;
+    color: $color-gray-500;
+    line-height: $line-height-normal;
+  }
+
+  &__info {
+    padding: $space-4 $space-5;
+  }
+
+  &__name {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    margin-bottom: $space-1;
+  }
+
+  &__meta {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    margin-bottom: $space-4;
+  }
+
+  &__sep {
+    color: $color-gray-300;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $space-2;
+  }
+}
+
+// ── Add resume card (dashed) ───────────────────────────────────
+.resume-add-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  min-height: 280px;
+  border: 2px dashed $color-gray-200;
+  border-radius: $radius-xl;
+  background: none;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-gray-400;
+  font-family: $font-heading;
+  transition: all $transition-fast;
+
+  svg {
+    color: $color-gray-300;
+    transition: color $transition-fast;
+  }
+
+  &:hover {
+    border-color: $color-primary;
+    color: $color-primary;
+
+    svg {
+      color: $color-primary;
+    }
+  }
+}
+
+// ── Resume empty state ─────────────────────────────────────────
+.resume-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  padding: $space-20;
+  text-align: center;
+  color: $color-gray-400;
+  font-size: $font-size-sm;
+
+  svg {
+    color: $color-gray-300;
+  }
+}
+
+// ── Resume editor ──────────────────────────────────────────────
+.resume-editor {
+  display: flex;
+  flex-direction: column;
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+
+  &__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-4;
+    padding: $space-4 $space-6;
+    border-bottom: 1px solid $color-gray-200;
+    background: $color-gray-100;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    flex: 1;
+    text-align: center;
+  }
+
+  &__topbar-actions {
+    display: flex;
+    gap: $space-2;
+  }
+
+  &__body {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 600px;
+  }
+
+  &__nav {
+    border-right: 1px solid $color-gray-200;
+    display: flex;
+    flex-direction: column;
+    padding: $space-4;
+    gap: 2px;
+    background: $color-white;
+  }
+
+  &__nav-item {
+    display: block;
+    padding: $space-3;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-600;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: all $transition-fast;
+    width: 100%;
+
+    &:hover {
+      background: rgba($color-primary, 0.06);
+      color: $color-primary;
+    }
+
+    &--active {
+      background: rgba($color-primary, 0.1);
+      color: $color-primary;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &__nav-divider {
+    height: 1px;
+    background: $color-gray-200;
+    margin: $space-3 0;
+  }
+
+  &__nav-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: $color-gray-400;
+    padding: $space-1 $space-3 $space-2;
+  }
+
+  &__import-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  &__form {
+    padding: $space-6;
+    overflow-y: auto;
+  }
+}
+
+// ── Resume section ─────────────────────────────────────────────
+.resume-section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-lg;
+    color: $color-gray-900;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+}
+
+// ── Resume entry (exp/edu) ─────────────────────────────────────
+.resume-entry {
+  background: $color-gray-100;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-5;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+  }
+
+  &__remove {
+    width: 24px;
+    height: 24px;
+    border-radius: $radius-md;
+    border: 1px solid $color-gray-200;
+    background: $color-white;
+    cursor: pointer;
+    color: $color-gray-400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-base;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $color-accent;
+      color: $color-accent;
+    }
+  }
+}
+
+// ── Resume form grid ───────────────────────────────────────────
+.resume-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-4;
+}
+
+// ── Resume field ───────────────────────────────────────────────
+.resume-field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &--checkbox {
+    justify-content: flex-end;
+    padding-bottom: $space-1;
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__input {
+    padding: $space-3;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-family: $font-body;
+    color: $color-gray-800;
+    background: $color-white;
+    transition: border-color $transition-fast;
+    outline: none;
+    width: 100%;
+
+    &:focus {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+    }
+
+    &::placeholder {
+      color: $color-gray-300;
+    }
+
+    &:disabled {
+      background: $color-gray-100;
+      color: $color-gray-400;
+      cursor: not-allowed;
+    }
+  }
+
+  &__textarea {
+    padding: $space-3;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-family: $font-body;
+    color: $color-gray-800;
+    background: $color-white;
+    transition: border-color $transition-fast;
+    outline: none;
+    resize: vertical;
+    width: 100%;
+    line-height: $line-height-normal;
+
+    &:focus {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+    }
+
+    &::placeholder {
+      color: $color-gray-300;
+    }
+  }
+
+  &__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: $color-primary;
+      cursor: pointer;
+    }
+  }
+}
+
+// ── Skills input row ───────────────────────────────────────────
+.skills-input-row {
+  display: flex;
+  gap: $space-3;
+  align-items: flex-end;
+
+  .resume-field__input {
+    flex: 1;
+  }
+}
+
+// ── Skills chip list ───────────────────────────────────────────
+.resume-skills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-top: $space-3;
+}
+
+.resume-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  background: rgba($color-primary, 0.08);
+  border: 1px solid rgba($color-primary, 0.18);
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+
+  &__remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba($color-primary, 0.6);
+    font-size: $font-size-sm;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $color-accent;
+    }
+  }
+}
+
+// ── Responsive: resume ──────────────────────────────────────────
+@media (max-width: $bp-md) {
+  .resume-editor__body {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-editor__nav {
+    border-right: none;
+    border-bottom: 1px solid $color-gray-200;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: $space-3;
+  }
+
+  .resume-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ============================================================
+// PROFILE PAGE
+// ============================================================
+
+// ── Profile layout ─────────────────────────────────────────────
+.profile-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: $space-5;
+  align-items: start;
+
+  &__aside {
+    position: sticky;
+    top: 88px;
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: $space-5;
+    min-width: 0;
+  }
+}
+
+// ── Profile aside card ─────────────────────────────────────────
+.profile-aside-card {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-6 $space-5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: $space-2;
+
+  &__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.1);
+    border: 3px solid rgba($color-primary, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-2xl;
+    color: $color-primary;
+    margin-bottom: $space-1;
+  }
+
+  &__name {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+  }
+
+  &__headline {
+    font-size: $font-size-xs;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  &__location {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__divider {
+    width: 100%;
+    height: 1px;
+    background: $color-gray-200;
+    margin: $space-3 0;
+  }
+
+  &__stats {
+    display: flex;
+    width: 100%;
+    gap: $space-4;
+    justify-content: center;
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+  }
+
+  &__stat-value {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-xl;
+    color: $color-gray-900;
+  }
+
+  &__stat-label {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+  }
+}
+
+// ── Profile tabs ───────────────────────────────────────────────
+.profile-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: $color-gray-100;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-1;
+  width: fit-content;
+
+  &__tab {
+    padding: $space-2 $space-5;
+    border-radius: $radius-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-600;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all $transition-fast;
+    white-space: nowrap;
+
+    &:hover {
+      color: $color-gray-900;
+    }
+
+    &--active {
+      background: $color-white;
+      color: $color-primary;
+      font-weight: $font-weight-semibold;
+      box-shadow: $shadow-sm;
+    }
+  }
+}
+
+// ── Profile section ────────────────────────────────────────────
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-4;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-lg;
+    color: $color-gray-900;
+  }
+}
+
+// ── Profile block (card-like container) ───────────────────────
+.profile-block {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-5 $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-4;
+  }
+
+  &__header-actions {
+    display: flex;
+    gap: $space-2;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+  }
+
+  &__sub {
+    font-weight: $font-weight-regular;
+    color: $color-gray-500;
+    font-size: $font-size-sm;
+  }
+}
+
+// ── Profile about text ─────────────────────────────────────────
+.profile-about-text {
+  font-size: $font-size-sm;
+  color: $color-gray-700;
+  line-height: $line-height-loose;
+}
+
+// ── Profile info grid ──────────────────────────────────────────
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-4;
+}
+
+.profile-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  &__label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.04em;
+    color: $color-gray-400;
+    text-transform: uppercase;
+  }
+
+  &__value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-800;
+  }
+}
+
+// ── Profile experience view (read-only) ────────────────────────
+.profile-exp-view {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    flex-wrap: wrap;
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+  }
+
+  &__desc {
+    font-size: $font-size-sm;
+    color: $color-gray-600;
+    line-height: $line-height-normal;
+  }
+}
+
+// ── Profile empty state ────────────────────────────────────────
+.profile-empty {
+  padding: $space-8;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $color-gray-400;
+  background: $color-gray-100;
+  border-radius: $radius-lg;
+}
+
+// ── Responsive: profile ────────────────────────────────────────
+@media (max-width: $bp-lg) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+
+    &__aside {
+      position: static;
+    }
+  }
+
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Resume card hover overlay ──────────────────────────────────
+.resume-card__preview {
+  position: relative;
+  cursor: pointer;
+
+  &-hover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    background: rgba($color-primary, 0.85);
+    color: $color-white;
+    opacity: 0;
+    transition: opacity $transition-base;
+    border-radius: $radius-md $radius-md 0 0;
+    font-weight: $font-weight-medium;
+    font-size: $font-size-sm;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &:hover &-hover,
+  &:focus-visible &-hover {
+    opacity: 1;
+  }
+}
+
+// ── Resume Viewer overlay (.rv-*) ──────────────────────────────
+.rv-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: $color-gray-100;
+  overflow: hidden;
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-4;
+    padding: $space-3 $space-6;
+    background: $color-white;
+    border-bottom: 1px solid $color-gray-200;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  &__bar-title {
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-800;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__bar-left,
+  &__bar-right {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-shrink: 0;
+  }
+
+  &__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: $space-10 $space-4;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+}
+
+// ── Resume document page ───────────────────────────────────────
+.rv-page-shadow {
+  background: $color-white;
+  width: 100%;
+  max-width: 820px;
+  box-shadow: $shadow-lg;
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.rv-doc {
+  padding: $space-10 $space-12;
+  font-family: $font-body;
+  font-size: $font-size-sm;
+  color: $color-gray-800;
+  line-height: 1.6;
+
+  @media (max-width: $bp-md) {
+    padding: $space-6 $space-4;
+  }
+}
+
+// ── Resume header ──────────────────────────────────────────────
+.rv-header {
+  margin-bottom: $space-6;
+  text-align: center;
+
+  &__name {
+    font-family: $font-heading;
+    font-size: 2rem;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $color-gray-900;
+    line-height: 1.15;
+    margin-bottom: $space-1;
+  }
+
+  &__headline {
+    font-style: italic;
+    font-size: $font-size-base;
+    color: $color-gray-600;
+    margin-bottom: $space-4;
+  }
+
+  &__contacts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: $space-2 $space-5;
+    font-size: $font-size-xs;
+    color: $color-gray-600;
+  }
+
+  &__contact {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+
+    svg {
+      flex-shrink: 0;
+      color: $color-gray-500;
+    }
+  }
+}
+
+.rv-link {
+  color: $color-gray-800;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary;
+    text-decoration: underline;
+  }
+}
+
+// ── Resume sections ────────────────────────────────────────────
+.rv-section {
+  margin-bottom: $space-6;
+
+  &__heading {
+    font-family: $font-heading;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $color-gray-900;
+    border-bottom: 2px solid $color-gray-900;
+    padding-bottom: $space-1;
+    margin-bottom: $space-4;
+  }
+
+  &__body {
+    font-size: $font-size-sm;
+    color: $color-gray-700;
+    line-height: 1.7;
+  }
+}
+
+// ── Experience entries ─────────────────────────────────────────
+.rv-exp {
+  margin-bottom: $space-5;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: $space-1;
+    margin-bottom: $space-1;
+  }
+
+  &__title {
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    font-size: $font-size-base;
+  }
+
+  &__company {
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    font-size: $font-size-sm;
+    margin-bottom: $space-1;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+    margin-bottom: $space-2;
+  }
+
+  &__meta-item {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+  }
+}
+
+.rv-bullets {
+  margin: 0;
+  padding-left: $space-5;
+  font-size: $font-size-sm;
+  color: $color-gray-700;
+  line-height: 1.7;
+
+  li {
+    margin-bottom: $space-1;
+  }
+}
+
+// ── Education entries ──────────────────────────────────────────
+.rv-edu {
+  margin-bottom: $space-4;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: $space-1;
+    margin-bottom: $space-1;
+  }
+
+  &__degree {
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    font-size: $font-size-base;
+  }
+
+  &__institution {
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    font-size: $font-size-sm;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+    margin-top: $space-1;
+  }
+}
+
+// ── Skills chips ───────────────────────────────────────────────
+.rv-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+
+  &__chip {
+    display: inline-block;
+    padding: $space-1 $space-3;
+    border: 1px solid $color-gray-300;
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    background: $color-gray-100;
+    white-space: nowrap;
+  }
+}
+
+// ── Print styles ───────────────────────────────────────────────
+@media print {
+  .rv-overlay__bar {
+    display: none;
+  }
+
+  .rv-overlay {
+    position: static;
+    background: $color-white;
+  }
+
+  .rv-overlay__scroll {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .rv-page-shadow {
+    box-shadow: none;
+    max-width: 100%;
+  }
+}
