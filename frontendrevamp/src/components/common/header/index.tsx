@@ -163,13 +163,13 @@ export default function Header() {
           <div className="header__actions">
             <Link
               href="/login"
-              className="header__action-btn header__action-btn--login btn btn--ghost btn--dark"
+              className="btn btn--md btn--outline"
             >
               Login
             </Link>
             <Link
               href="/signup"
-              className="header__action-btn header__action-btn--signup btn btn--primary"
+              className="btn btn--md btn--primary"
             >
               Sign Up
             </Link>

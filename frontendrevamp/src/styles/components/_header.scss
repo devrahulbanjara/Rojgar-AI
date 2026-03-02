@@ -140,35 +140,7 @@
 
     // Modifier: login
     &--login {
-      position: relative;
-      overflow: hidden;
-      font-weight: $font-weight-semibold;
-      color: $color-black !important;
-      border-color: rgba($color-primary, 0.45) !important;
-      background-color: transparent !important;
-      z-index: 0;
-
-      // Fill layer
-      &::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-color: $color-primary;
-        transform: scaleY(0);
-        transform-origin: top; // un-hover: collapses upward (bottom → top)
-        transition: transform $transition-base;
-        z-index: -1;
-      }
-
-      &:hover {
-        color: $color-white !important;
-        border-color: $color-primary !important;
-
-        &::before {
-          transform: scaleY(1);
-          transform-origin: bottom;
-        }
-      }
+      
     }
 
     // Modifier: signup

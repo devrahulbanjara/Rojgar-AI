@@ -46,8 +46,11 @@
   text-decoration: none;
 
   // Appearance
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
   border: 2px solid transparent;
-  border-radius: $radius-md;
+  border-radius: $radius-full;
   background-color: $color-gray-200;
   color: $color-gray-800;
   cursor: pointer;
@@ -55,14 +58,38 @@
   vertical-align: middle;
 
   // Transition
-  @include transition(all, $transition-fast);
+  @include transition(color border-color background-color, $transition-fast);
 
   // Focus ring
   @include focus-ring($color-primary);
 
-  // Default hover (neutral)
-  &:hover:not(:disabled) {
+  // Fill layer — sweeps up from bottom on hover, retreats on mouse-out
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
     background-color: $color-gray-300;
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform $transition-base;
+    z-index: -1;
+  }
+
+  // Default hover (neutral) — trigger fill
+  &:hover:not(:disabled) {
+  border: 2px solid $color-gray-300;
+    background-color: $color-gray-200;
+
+    &::before {
+      transform: scaleY(1);
+      transform-origin: bottom;
+    }
+  }
+
+  // Ensure icon + text sit above the fill layer
+  > * {
+    position: relative;
+    z-index: 1;
   }
 
   &:active:not(:disabled) {
@@ -127,7 +154,7 @@
   width: 100%;
 }
 
-// Pill (fully rounded)
+// Pill (fully rounded) — kept for explicit use, already default
 .btn--pill {
   border-radius: $radius-full;
 }
@@ -144,6 +171,12 @@ $btn-variants: (
     $color-primary,
     $color-white,
     color.adjust($color-primary, $lightness: -10%),
+    $color-primary,
+  ),
+  "outline": (
+    $color-primary,
+    $color-white,
+    $color-primary,
     $color-primary,
   ),
   "secondary": (
@@ -196,10 +229,19 @@ $btn-variants: (
     color: $text;
     border-color: $bg;
 
-    &:hover:not(:disabled) {
+    &::before {
       background-color: $hover-bg;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: $bg;
       border-color: $hover-bg;
       color: $text;
+
+      &::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
     }
 
     &:active:not(:disabled) {
@@ -214,31 +256,60 @@ $btn-variants: (
     color: $bg;
     border-color: $border;
 
-    &:hover:not(:disabled) {
+    &::before {
       background-color: $bg;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: transparent;
       color: $text;
       border-color: $bg;
+
+      &::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
     }
 
     &:active:not(:disabled) {
-      background-color: $hover-bg;
+      background-color: transparent;
       border-color: $hover-bg;
+
+      &::before {
+        background-color: $hover-bg;
+      }
     }
   }
 
   // --- Ghost ---
   .btn--ghost.btn--#{$name} {
     background-color: transparent;
-    color: $bg;
+    color: $color-gray-700;
     border-color: transparent;
 
+    &::before {
+      background-color: $color-gray-200;
+    }
+
     &:hover:not(:disabled) {
-      background-color: rgba($bg, 0.12);
-      border-color: transparent;
+      background-color: transparent;
+      border-color: $color-gray-200;
+      color: $color-gray-900;
+
+      &::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
     }
 
     &:active:not(:disabled) {
-      background-color: rgba($bg, 0.22);
+      background-color: transparent;
+
+      &::before {
+        background-color: $color-gray-200;
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
     }
   }
 }
@@ -309,10 +380,10 @@ $btn-variants: (
     border-radius: 0;
 
     &:first-child {
-      border-radius: $radius-md 0 0 $radius-md;
+      border-radius: $radius-full 0 0 $radius-full;
     }
     &:last-child {
-      border-radius: 0 $radius-md $radius-md 0;
+      border-radius: 0 $radius-full $radius-full 0;
     }
 
     &:not(:first-child) {
