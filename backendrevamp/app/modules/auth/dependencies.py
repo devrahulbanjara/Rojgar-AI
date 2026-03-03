@@ -1,10 +1,12 @@
 # app/modules/auth/dependencies.py
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.database import get_db
 from app.core.security import decode_access_token
+from app.modules.auth.enums import UserRole
 from app.modules.auth.models import User
 
 # tokenUrl must match the path of the swagger login route we will create
@@ -37,5 +39,23 @@ async def get_verified_user(user: User = Depends(get_current_user)) -> User:
     if not user.is_email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Email not verified"
+        )
+    return user
+
+
+async def require_candidate(user: User = Depends(get_current_user)) -> User:
+    if user.primary_role != UserRole.candidate:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Candidate role required",
+        )
+    return user
+
+
+async def require_recruiter(user: User = Depends(get_current_user)) -> User:
+    if user.primary_role != UserRole.recruiter:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Recruiter role required",
         )
     return user

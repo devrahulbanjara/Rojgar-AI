@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,9 +7,15 @@ class Settings(BaseSettings):
     # App
     app_name: str = "ConvexHire API"
     debug: bool = False
-    environment: str = "Dev"  # dev, prod
+    environment: Literal["dev", "prod", "test"] = "dev"
     allowed_origins: list[str] = ["http://localhost:3000"]
     app_version: str = "1.0.0"
+
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str
+    smtp_password: str
+    mail_from: str
 
     # Auth
     secret_key: str

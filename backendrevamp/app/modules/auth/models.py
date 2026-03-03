@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Boolean, ForeignKey, func, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.core.database import Base
-from app.modules.auth.enums import UserRole, MembershipRole, MembershipStatus
+from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 
 
 class User(Base):
@@ -26,10 +29,14 @@ class User(Base):
     primary_role: Mapped[UserRole] = mapped_column(nullable=False)
     email_verify_token: Mapped[str | None] = mapped_column(String(255), index=True)
     password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)
-    password_reset_expires_at: Mapped[datetime | None]
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
@@ -54,9 +61,11 @@ class OAuthAccount(Base):
     )
     provider: Mapped[str] = mapped_column(String(50), nullable=False)
     provider_account_id: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     user: Mapped[User] = relationship(back_populates="oauth_accounts")
@@ -86,8 +95,12 @@ class RefreshToken(Base):
     jti: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True, index=True
     )
-    expires_at: Mapped[datetime] = mapped_column(nullable=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     user: Mapped[User] = relationship(back_populates="refresh_tokens")
 
@@ -105,9 +118,11 @@ class Company(Base):
     industry: Mapped[str | None] = mapped_column(String(100))
     company_size: Mapped[str | None] = mapped_column(String(50))
     description: Mapped[str | None]
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     memberships: Mapped[list[CompanyMembership]] = relationship(
@@ -132,9 +147,11 @@ class CompanyMembership(Base):
         nullable=False, server_default="pending"
     )
     job_title: Mapped[str | None] = mapped_column(String(100))
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     user: Mapped[User] = relationship(back_populates="memberships")
