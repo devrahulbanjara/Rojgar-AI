@@ -1,3 +1,4 @@
+import AuthGuard from "@/components/common/AuthGuard";
 import DashNavbar from "@/components/layout/DashNavbar";
 
 export default function CompanyLayout({
@@ -6,14 +7,9 @@ export default function CompanyLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <DashNavbar
-        role="company"
-        userName="Pickolab Studio"
-        userRole="Company Account"
-        userInitials="PS"
-      />
+    <AuthGuard requiredRole="company">
+      <DashNavbar role="company" />
       <main className="dash-page">{children}</main>
-    </>
+    </AuthGuard>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
-export type DashRole = "user" | "admin" | "company" | "hr";
+export type DashRole = "user" | "admin" | "company" | "hr" | "recruiter";
 
 type NavItem = { label: string; href: string };
 
@@ -42,6 +42,15 @@ function buildNavItems(role: DashRole, companySlug?: string): NavItem[] {
       { label: "My Jobs", href: "/company/jobs" },
       { label: "Applications", href: "/company/applications" },
       { label: "Candidates", href: "/company/candidates" },
+    ];
+  }
+  if (role === "recruiter") {
+    return [
+      { label: "Dashboard", href: "/recruiter" },
+      { label: "My Jobs", href: "/recruiter/jobs" },
+      { label: "Candidates", href: "/recruiter/candidates" },
+      { label: "Interviews", href: "/recruiter/interviews" },
+      { label: "Profile", href: "/recruiter/profile" },
     ];
   }
   // hr

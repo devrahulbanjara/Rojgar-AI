@@ -3,10 +3,32 @@
 import { useState, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  useSignupMutation,
+  initiateGoogleOAuth,
+} from "@/store/services/authApi";
+import {
+  useRegisterCompanyMutation,
+  useRequestJoinCompanyMutation,
+} from "@/store/services/companyApi";
+import { parseApiError, applyFieldErrors } from "@/lib/apiError";
+import { toast } from "react-toastify";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Step type ──────────────────────────────────────────────────────────────
 
-interface SignupFormState {
+type FlowStep =
+  | "credentials"
+  | "intent"
+  | "company-choice"
+  | "company-details"
+  | "join-company"
+  | "email-verify"
+  | "join-pending";
+
+// ── Form state types ───────────────────────────────────────────────────────
+
+interface CredentialsState {
   fullName: string;
   email: string;
   password: string;
@@ -14,16 +36,29 @@ interface SignupFormState {
   acceptTerms: boolean;
 }
 
-interface FormErrors {
+interface CompanyDetailsState {
+  companyName: string;
+  industry: string;
+  companySize: string;
+  website: string;
+  location: string;
+  description: string;
+}
+
+interface FormErrors extends Record<string, string | undefined> {
   fullName?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
   acceptTerms?: string;
+  companyName?: string;
+  industry?: string;
+  companySize?: string;
+  joinCompanyName?: string;
   form?: string;
 }
 
-// ── Inline SVG icons ───────────────────────────────────────────────────────
+// ── SVG Icons ──────────────────────────────────────────────────────────────
 
 function EyeIcon() {
   return (
@@ -95,15 +130,146 @@ function GoogleIcon() {
   );
 }
 
-function LinkedInIcon() {
+function ArrowLeftIcon() {
   return (
     <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
-      fill="#0A66C2"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
     >
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m4.5 12.75 6 6 9-13.5"
+      />
+    </svg>
+  );
+}
+
+function BriefcaseIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z"
+      />
+    </svg>
+  );
+}
+
+function SearchJobIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+      />
+    </svg>
+  );
+}
+
+function BuildingIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z"
+      />
+    </svg>
+  );
+}
+
+function UserPlusIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
+      />
+    </svg>
+  );
+}
+
+function EnvelopeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      />
     </svg>
   );
 }
@@ -112,12 +278,12 @@ function LinkedInIcon() {
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-function validateForm(values: SignupFormState): FormErrors {
+function validateCredentials(values: CredentialsState): FormErrors {
   const errors: FormErrors = {};
 
   if (!values.fullName.trim()) {
     errors.fullName = "Full name is required.";
-  } else if (values.fullName.trim().split(" ").length < 2) {
+  } else if (values.fullName.trim().split(/\s+/).filter(Boolean).length < 2) {
     errors.fullName = "Please enter your first and last name.";
   }
 
@@ -131,7 +297,7 @@ function validateForm(values: SignupFormState): FormErrors {
     errors.password = "Password is required.";
   } else if (!PASSWORD_REGEX.test(values.password)) {
     errors.password =
-      "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.";
+      "Password must be at least 8 characters with an uppercase letter, a lowercase letter, and a number.";
   }
 
   if (!values.confirmPassword) {
@@ -147,7 +313,17 @@ function validateForm(values: SignupFormState): FormErrors {
   return errors;
 }
 
-// ── Password strength indicator ────────────────────────────────────────────
+function validateCompanyDetails(values: CompanyDetailsState): FormErrors {
+  const errors: FormErrors = {};
+  if (!values.companyName.trim())
+    errors.companyName = "Company name is required.";
+  if (!values.industry.trim()) errors.industry = "Please select an industry.";
+  if (!values.companySize.trim())
+    errors.companySize = "Please select a company size.";
+  return errors;
+}
+
+// ── Password strength ──────────────────────────────────────────────────────
 
 type StrengthLevel = "none" | "weak" | "fair" | "strong";
 
@@ -163,82 +339,327 @@ function getPasswordStrength(password: string): StrengthLevel {
   return "strong";
 }
 
-const STRENGTH_LABELS: Record<StrengthLevel, string> = {
-  none: "",
-  weak: "Weak",
-  fair: "Fair",
-  strong: "Strong",
-};
+function PasswordStrengthBar({ strength }: { strength: StrengthLevel }) {
+  const labels: Record<StrengthLevel, string> = {
+    none: "",
+    weak: "Weak",
+    fair: "Fair",
+    strong: "Strong",
+  };
+  return (
+    <div className="auth__strength" aria-live="polite" aria-atomic="true">
+      <div className="auth__strength-bars">
+        <div
+          className={`auth__strength-bar auth__strength-bar--${strength !== "none" ? "active" : "empty"}`}
+        />
+        <div
+          className={`auth__strength-bar auth__strength-bar--${strength === "fair" || strength === "strong" ? "active" : "empty"}`}
+        />
+        <div
+          className={`auth__strength-bar auth__strength-bar--${strength === "strong" ? "active" : "empty"}`}
+        />
+      </div>
+      <span
+        className={`auth__strength-label auth__strength-label--${strength}`}
+        aria-label={`Password strength: ${labels[strength]}`}
+      >
+        {labels[strength]}
+      </span>
+    </div>
+  );
+}
 
-// ── Component ──────────────────────────────────────────────────────────────
+// ── Step indicator ─────────────────────────────────────────────────────────
+
+const VISIBLE_STEPS = [
+  { label: "Account", group: 1 },
+  { label: "Purpose", group: 2 },
+  { label: "Company", group: 3 },
+];
+
+function getStepGroup(step: FlowStep): number {
+  const map: Record<FlowStep, number> = {
+    credentials: 1,
+    intent: 2,
+    "company-choice": 3,
+    "company-details": 3,
+    "join-company": 3,
+    "email-verify": 2,
+    "join-pending": 3,
+  };
+  return map[step] ?? 1;
+}
+
+function StepIndicator({ currentStep }: { currentStep: FlowStep }) {
+  const currentGroup = getStepGroup(currentStep);
+  return (
+    <div className="auth__steps">
+      {VISIBLE_STEPS.map((step, idx) => {
+        const isDone = step.group < currentGroup;
+        const isActive = step.group === currentGroup;
+        return (
+          <div
+            key={step.label}
+            className={`auth__step${isDone ? " auth__step--done" : isActive ? " auth__step--active" : ""}`}
+          >
+            <div className="auth__step-node">
+              <div className="auth__step-circle">
+                {isDone ? <CheckIcon /> : idx + 1}
+              </div>
+              <span className="auth__step-text">{step.label}</span>
+            </div>
+            {idx < VISIBLE_STEPS.length - 1 && (
+              <div
+                className={`auth__step-line${isDone ? " auth__step-line--done" : ""}`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────
 
 export default function SignupPage() {
-  const [formValues, setFormValues] = useState<SignupFormState>({
+  const router = useRouter();
+  const [signup, { isLoading: isSigningUp }] = useSignupMutation();
+  const [registerCompany, { isLoading: isRegisteringCompany }] =
+    useRegisterCompanyMutation();
+  const [requestJoinCompany, { isLoading: isRequestingJoin }] =
+    useRequestJoinCompanyMutation();
+  const isLoading = isSigningUp || isRegisteringCompany || isRequestingJoin;
+
+  const [step, setStep] = useState<FlowStep>("credentials");
+
+  const [creds, setCreds] = useState<CredentialsState>({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
     acceptTerms: false,
   });
-
-  const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [formAlert, setFormAlert] = useState<{
-    type: "error" | "success";
-    message: string;
-  } | null>(null);
 
-  const passwordStrength = getPasswordStrength(formValues.password);
+  const [companyDetails, setCompanyDetails] = useState<CompanyDetailsState>({
+    companyName: "",
+    industry: "",
+    companySize: "",
+    website: "",
+    location: "",
+    description: "",
+  });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const [joinCompanyName, setJoinCompanyName] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
+  const passwordStrength = getPasswordStrength(creds.password);
+
+  function clearError(field: string) {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  }
+
+  // ── Step 1: Credentials ────────────────────────────────────────────────
+
+  function handleCredChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value, type, checked } = e.target;
-    setFormValues((prev) => ({
+    setCreds((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    clearError(name);
+  }
+
+  function handleCredentialsContinue(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const errs = validateCredentials(creds);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    setStep("intent");
+  }
+
+  // ── Step 2: Intent ─────────────────────────────────────────────────────
+
+  async function handleIntentCandidate() {
+    try {
+      const result = await signup({
+        full_name: creds.fullName,
+        email: creds.email,
+        password: creds.password,
+        primary_role: "candidate",
+      }).unwrap();
+
+      if (result.success) {
+        setStep("email-verify");
+      } else {
+        toast.error(
+          result.message ?? "Something went wrong. Please try again.",
+        );
+      }
+    } catch (err: unknown) {
+      const fieldMap: Record<string, string> = {
+        full_name: "fullName",
+        email: "email",
+        password: "password",
+      };
+      const parsed = parseApiError(err, fieldMap);
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
+      if (!hadFieldErrors) toast.error(parsed.message);
+      if (Object.keys(parsed.fieldErrors ?? {}).length > 0)
+        setStep("credentials");
     }
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setFormAlert(null);
+  // ── Step 3a: Create company ────────────────────────────────────────────
 
-    const validationErrors = validateForm(formValues);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+  function handleCompanyDetailChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) {
+    const { name, value } = e.target;
+    setCompanyDetails((prev) => ({ ...prev, [name]: value }));
+    clearError(name);
+  }
+
+  async function handleCreateCompany(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const errs = validateCompanyDetails(companyDetails);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
       return;
     }
 
-    setIsLoading(true);
     try {
-      // TODO: Replace with real registration call
-      await new Promise((resolve) => setTimeout(resolve, 1400));
-      setFormAlert({
-        type: "success",
-        message: "Account created! Check your email to verify your address.",
-      });
-    } catch {
-      setFormAlert({
-        type: "error",
-        message: "Something went wrong. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      const signupResult = await signup({
+        full_name: creds.fullName,
+        email: creds.email,
+        password: creds.password,
+        primary_role: "company",
+      }).unwrap();
+
+      if (!signupResult.success) {
+        toast.error(signupResult.message ?? "Signup failed.");
+        return;
+      }
+
+      await registerCompany({
+        company_name: companyDetails.companyName,
+        industry: companyDetails.industry,
+        company_size: companyDetails.companySize,
+        website: companyDetails.website || undefined,
+        location: companyDetails.location || undefined,
+        description: companyDetails.description || undefined,
+      }).unwrap();
+
+      toast.success(
+        "Company created! Check your email to verify your account.",
+      );
+      router.push("/login");
+    } catch (err: unknown) {
+      const fieldMap: Record<string, string> = {
+        full_name: "fullName",
+        email: "email",
+        password: "password",
+        company_name: "companyName",
+        industry: "industry",
+        company_size: "companySize",
+      };
+      const parsed = parseApiError(err, fieldMap);
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
+      if (!hadFieldErrors) toast.error(parsed.message);
     }
   }
 
-  function handleSocialSignup(provider: string) {
-    // TODO: Replace with real OAuth redirect
-    console.log(`Signup with ${provider}`);
+  // ── Step 3b: Join company ──────────────────────────────────────────────
+
+  async function handleJoinCompany(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!joinCompanyName.trim()) {
+      setErrors({ joinCompanyName: "Please enter the company name." });
+      return;
+    }
+
+    try {
+      const signupResult = await signup({
+        full_name: creds.fullName,
+        email: creds.email,
+        password: creds.password,
+        primary_role: "recruiter",
+      }).unwrap();
+
+      if (!signupResult.success) {
+        toast.error(signupResult.message ?? "Signup failed.");
+        return;
+      }
+
+      await requestJoinCompany({
+        company_name: joinCompanyName.trim(),
+      }).unwrap();
+      setStep("join-pending");
+    } catch (err: unknown) {
+      const fieldMap: Record<string, string> = {
+        full_name: "fullName",
+        email: "email",
+        password: "password",
+        company_name: "joinCompanyName",
+      };
+      const parsed = parseApiError(err, fieldMap);
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
+      if (!hadFieldErrors) toast.error(parsed.message);
+    }
   }
+
+  // ── Render ─────────────────────────────────────────────────────────────
+
+  const stepMeta: Partial<
+    Record<FlowStep, { title: string; subtitle: string }>
+  > = {
+    credentials: {
+      title: "Create your account",
+      subtitle:
+        "Start exploring top career opportunities across Nepal and beyond.",
+    },
+    intent: {
+      title: "What brings you here?",
+      subtitle:
+        "Tell us how you plan to use ConvexHire so we can personalise your experience.",
+    },
+    "company-choice": {
+      title: "Set up your company",
+      subtitle:
+        "Create a new company profile or join one that already exists on ConvexHire.",
+    },
+    "company-details": {
+      title: "Create your company",
+      subtitle: "Fill in the details to set up your company profile.",
+    },
+    "join-company": {
+      title: "Join an existing company",
+      subtitle:
+        "Enter the company name. An email will be sent to the admin for approval.",
+    },
+    "email-verify": {
+      title: "Check your inbox",
+      subtitle:
+        "We've sent a verification email. Click the link to activate your account.",
+    },
+    "join-pending": {
+      title: "Request sent!",
+      subtitle:
+        "The company admin has been notified. You'll get an email once approved.",
+    },
+  };
+
+  const meta = stepMeta[step] ?? stepMeta.credentials!;
+  const isWide = step === "company-details";
 
   return (
     <main className="auth">
-      {/* Background decorations */}
       <Image
         src="/bg/bg-ui-v3.svg"
         alt=""
@@ -258,278 +679,602 @@ export default function SignupPage() {
         priority={false}
       />
 
-      <div className="auth__inner">
+      <div className={`auth__inner${isWide ? " auth__inner--wide" : ""}`}>
+        {/* Step indicator */}
+        {step !== "credentials" &&
+          step !== "email-verify" &&
+          step !== "join-pending" && <StepIndicator currentStep={step} />}
+
+        {/* Back button */}
+        {(step === "intent" ||
+          step === "company-choice" ||
+          step === "company-details" ||
+          step === "join-company") && (
+          <button
+            type="button"
+            className="auth__back-btn"
+            onClick={() => {
+              if (step === "intent") setStep("credentials");
+              else if (step === "company-choice") setStep("intent");
+              else setStep("company-choice");
+            }}
+          >
+            <ArrowLeftIcon />
+            Back
+          </button>
+        )}
+
         {/* Header */}
         <header className="auth__header">
-          <h1 className="auth__title">Create your account</h1>
-          <p className="auth__subtitle">
-            Start exploring top career opportunities across Nepal and beyond.
-          </p>
+          <h1 className="auth__title">{meta.title}</h1>
+          <p className="auth__subtitle">{meta.subtitle}</p>
         </header>
 
-        {/* Card */}
-        <div className="auth__card">
-          {/* Form-level alert */}
-          {formAlert && (
-            <div
-              className={`auth__alert auth__alert--${formAlert.type}`}
-              role="alert"
+        {/* ── STEP 1: Credentials ───────────────────────────────────────── */}
+        {step === "credentials" && (
+          <div className="auth__card">
+            <div className="auth__social-btns">
+              <button
+                type="button"
+                className="auth__social-btn"
+                onClick={() => initiateGoogleOAuth()}
+              >
+                <GoogleIcon />
+                Sign up with Google
+              </button>
+            </div>
+            <div className="auth__divider">
+              <span>or sign up with email</span>
+            </div>
+
+            <form
+              className="auth__form"
+              onSubmit={handleCredentialsContinue}
+              noValidate
             >
-              {formAlert.message}
-            </div>
-          )}
-
-          <form className="auth__form" onSubmit={handleSubmit} noValidate>
-            {/* Full name */}
-            <div className="auth__field">
-              <label htmlFor="fullName" className="auth__label">
-                Full name
-              </label>
-              <div className="auth__input-wrap">
-                <input
-                  id="fullName"
-                  type="text"
-                  name="fullName"
-                  autoComplete="name"
-                  placeholder="Your full name"
-                  value={formValues.fullName}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className={`auth__input${errors.fullName ? " auth__input--error" : ""}`}
-                  aria-describedby={
-                    errors.fullName ? "fullName-error" : undefined
-                  }
-                />
-              </div>
-              {errors.fullName && (
-                <span
-                  id="fullName-error"
-                  className="auth__error-msg"
-                  role="alert"
-                >
-                  {errors.fullName}
-                </span>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="auth__field">
-              <label htmlFor="email" className="auth__label">
-                Email address
-              </label>
-              <div className="auth__input-wrap">
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={formValues.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className={`auth__input${errors.email ? " auth__input--error" : ""}`}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                />
-              </div>
-              {errors.email && (
-                <span id="email-error" className="auth__error-msg" role="alert">
-                  {errors.email}
-                </span>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="auth__field">
-              <label htmlFor="password" className="auth__label">
-                Password
-              </label>
-              <div className="auth__input-wrap">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  autoComplete="new-password"
-                  placeholder="Create a strong password"
-                  value={formValues.password}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className={`auth__input auth__input--password${errors.password ? " auth__input--error" : ""}`}
-                  aria-describedby={
-                    errors.password ? "password-error" : undefined
-                  }
-                />
-                <button
-                  type="button"
-                  className="auth__pw-toggle"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
-                </button>
+              <div className="auth__field">
+                <label htmlFor="fullName" className="auth__label">
+                  Full name
+                </label>
+                <div className="auth__input-wrap">
+                  <input
+                    id="fullName"
+                    type="text"
+                    name="fullName"
+                    autoComplete="name"
+                    placeholder="Your full name"
+                    value={creds.fullName}
+                    onChange={handleCredChange}
+                    className={`auth__input${errors.fullName ? " auth__input--error" : ""}`}
+                    aria-describedby={
+                      errors.fullName ? "fullName-error" : undefined
+                    }
+                  />
+                </div>
+                {errors.fullName && (
+                  <span
+                    id="fullName-error"
+                    className="auth__error-msg"
+                    role="alert"
+                  >
+                    {errors.fullName}
+                  </span>
+                )}
               </div>
 
-              {/* Strength indicator */}
-              {passwordStrength !== "none" && (
-                <PasswordStrengthBar strength={passwordStrength} />
-              )}
-
-              {errors.password && (
-                <span
-                  id="password-error"
-                  className="auth__error-msg"
-                  role="alert"
-                >
-                  {errors.password}
-                </span>
-              )}
-            </div>
-
-            {/* Confirm password */}
-            <div className="auth__field">
-              <label htmlFor="confirmPassword" className="auth__label">
-                Confirm password
-              </label>
-              <div className="auth__input-wrap">
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  autoComplete="new-password"
-                  placeholder="Re-enter your password"
-                  value={formValues.confirmPassword}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className={`auth__input auth__input--password${errors.confirmPassword ? " auth__input--error" : ""}`}
-                  aria-describedby={
-                    errors.confirmPassword ? "confirmPassword-error" : undefined
-                  }
-                />
-                <button
-                  type="button"
-                  className="auth__pw-toggle"
-                  onClick={() => setShowConfirmPassword((v) => !v)}
-                  aria-label={
-                    showConfirmPassword ? "Hide password" : "Show password"
-                  }
-                >
-                  {showConfirmPassword ? <EyeSlashIcon /> : <EyeIcon />}
-                </button>
+              <div className="auth__field">
+                <label htmlFor="email" className="auth__label">
+                  Email address
+                </label>
+                <div className="auth__input-wrap">
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={creds.email}
+                    onChange={handleCredChange}
+                    className={`auth__input${errors.email ? " auth__input--error" : ""}`}
+                    aria-describedby={errors.email ? "email-error" : undefined}
+                  />
+                </div>
+                {errors.email && (
+                  <span
+                    id="email-error"
+                    className="auth__error-msg"
+                    role="alert"
+                  >
+                    {errors.email}
+                  </span>
+                )}
               </div>
-              {errors.confirmPassword && (
-                <span
-                  id="confirmPassword-error"
-                  className="auth__error-msg"
-                  role="alert"
-                >
-                  {errors.confirmPassword}
-                </span>
-              )}
-            </div>
 
-            {/* Terms acceptance */}
-            <div className="auth__field">
-              <label className="auth__terms">
-                <input
-                  type="checkbox"
-                  name="acceptTerms"
-                  checked={formValues.acceptTerms}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  aria-describedby={
-                    errors.acceptTerms ? "terms-error" : undefined
-                  }
-                />
-                <span>
-                  I agree to the{" "}
-                  <Link href="/terms">Terms &amp; Conditions</Link> and{" "}
-                  <Link href="/privacy">Privacy Policy</Link>
-                </span>
-              </label>
-              {errors.acceptTerms && (
-                <span id="terms-error" className="auth__error-msg" role="alert">
-                  {errors.acceptTerms}
-                </span>
-              )}
-            </div>
+              <div className="auth__field">
+                <label htmlFor="password" className="auth__label">
+                  Password
+                </label>
+                <div className="auth__input-wrap">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    autoComplete="new-password"
+                    placeholder="Create a strong password"
+                    value={creds.password}
+                    onChange={handleCredChange}
+                    className={`auth__input auth__input--password${errors.password ? " auth__input--error" : ""}`}
+                  />
+                  <button
+                    type="button"
+                    className="auth__pw-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                  </button>
+                </div>
+                {passwordStrength !== "none" && (
+                  <PasswordStrengthBar strength={passwordStrength} />
+                )}
+                {errors.password && (
+                  <span
+                    id="password-error"
+                    className="auth__error-msg"
+                    role="alert"
+                  >
+                    {errors.password}
+                  </span>
+                )}
+              </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
-              aria-busy={isLoading}
-            >
-              {isLoading ? "Creating account…" : "Create account"}
-            </button>
-          </form>
+              <div className="auth__field">
+                <label htmlFor="confirmPassword" className="auth__label">
+                  Confirm password
+                </label>
+                <div className="auth__input-wrap">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    autoComplete="new-password"
+                    placeholder="Re-enter your password"
+                    value={creds.confirmPassword}
+                    onChange={handleCredChange}
+                    className={`auth__input auth__input--password${errors.confirmPassword ? " auth__input--error" : ""}`}
+                  />
+                  <button
+                    type="button"
+                    className="auth__pw-toggle"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showConfirmPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <span
+                    id="confirmPassword-error"
+                    className="auth__error-msg"
+                    role="alert"
+                  >
+                    {errors.confirmPassword}
+                  </span>
+                )}
+              </div>
 
-          {/* Divider */}
-          <div className="auth__divider">
-            <span>or sign up with</span>
+              <div className="auth__field">
+                <label className="auth__terms">
+                  <input
+                    type="checkbox"
+                    name="acceptTerms"
+                    checked={creds.acceptTerms}
+                    onChange={handleCredChange}
+                    aria-describedby={
+                      errors.acceptTerms ? "terms-error" : undefined
+                    }
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link href="/terms">Terms &amp; Conditions</Link> and{" "}
+                    <Link href="/privacy">Privacy Policy</Link>
+                  </span>
+                </label>
+                {errors.acceptTerms && (
+                  <span
+                    id="terms-error"
+                    className="auth__error-msg"
+                    role="alert"
+                  >
+                    {errors.acceptTerms}
+                  </span>
+                )}
+              </div>
+
+              <button type="submit" className="auth__submit">
+                Continue
+              </button>
+            </form>
           </div>
+        )}
 
-          {/* Social signup */}
-          <div className="auth__social-btns">
-            <button
-              type="button"
-              className="auth__social-btn"
-              onClick={() => handleSocialSignup("google")}
-              disabled={isLoading}
-            >
-              <GoogleIcon />
-              Sign up with Google
-            </button>
-            <button
-              type="button"
-              className="auth__social-btn"
-              onClick={() => handleSocialSignup("linkedin")}
-              disabled={isLoading}
-            >
-              <LinkedInIcon />
-              Sign up with LinkedIn
-            </button>
+        {/* ── STEP 2: Intent ────────────────────────────────────────────── */}
+        {step === "intent" && (
+          <div className="auth__card">
+            <div className="auth__intent-cards">
+              <button
+                type="button"
+                className="auth__intent-card"
+                onClick={handleIntentCandidate}
+                disabled={isLoading}
+              >
+                <div className="auth__intent-icon auth__intent-icon--candidate">
+                  <SearchJobIcon />
+                </div>
+                <div className="auth__intent-body">
+                  <span className="auth__intent-title">Looking for a job</span>
+                  <span className="auth__intent-desc">
+                    Browse thousands of job listings and apply with ease.
+                  </span>
+                </div>
+                <span className="auth__intent-arrow" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="auth__intent-card"
+                onClick={() => setStep("company-choice")}
+                disabled={isLoading}
+              >
+                <div className="auth__intent-icon auth__intent-icon--hiring">
+                  <BriefcaseIcon />
+                </div>
+                <div className="auth__intent-body">
+                  <span className="auth__intent-title">Hiring talent</span>
+                  <span className="auth__intent-desc">
+                    Post jobs, manage candidates, and grow your team.
+                  </span>
+                </div>
+                <span className="auth__intent-arrow" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            </div>
+            {isLoading && (
+              <p className="auth__loading-note">Setting up your account…</p>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* ── STEP 3: Company choice ─────────────────────────────────────── */}
+        {step === "company-choice" && (
+          <div className="auth__card">
+            <div className="auth__intent-cards">
+              <button
+                type="button"
+                className="auth__intent-card"
+                onClick={() => setStep("company-details")}
+              >
+                <div className="auth__intent-icon auth__intent-icon--create">
+                  <BuildingIcon />
+                </div>
+                <div className="auth__intent-body">
+                  <span className="auth__intent-title">
+                    Create a new company
+                  </span>
+                  <span className="auth__intent-desc">
+                    Set up your company profile and start posting jobs
+                    immediately.
+                  </span>
+                </div>
+                <span className="auth__intent-arrow" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="auth__intent-card"
+                onClick={() => setStep("join-company")}
+              >
+                <div className="auth__intent-icon auth__intent-icon--join">
+                  <UserPlusIcon />
+                </div>
+                <div className="auth__intent-body">
+                  <span className="auth__intent-title">
+                    Join an existing company
+                  </span>
+                  <span className="auth__intent-desc">
+                    Request to join your company's workspace on ConvexHire.
+                  </span>
+                </div>
+                <span className="auth__intent-arrow" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3a: Company details ───────────────────────────────────── */}
+        {step === "company-details" && (
+          <div className="auth__card">
+            <form
+              className="auth__form"
+              onSubmit={handleCreateCompany}
+              noValidate
+            >
+              <div className="auth__field">
+                <label htmlFor="companyName" className="auth__label">
+                  Company name <span className="auth__required">*</span>
+                </label>
+                <div className="auth__input-wrap">
+                  <input
+                    id="companyName"
+                    type="text"
+                    name="companyName"
+                    placeholder="Acme Corporation"
+                    value={companyDetails.companyName}
+                    onChange={handleCompanyDetailChange}
+                    disabled={isLoading}
+                    className={`auth__input${errors.companyName ? " auth__input--error" : ""}`}
+                  />
+                </div>
+                {errors.companyName && (
+                  <span className="auth__error-msg" role="alert">
+                    {errors.companyName}
+                  </span>
+                )}
+              </div>
+
+              <div className="auth__field-grid">
+                <div className="auth__field">
+                  <label htmlFor="industry" className="auth__label">
+                    Industry <span className="auth__required">*</span>
+                  </label>
+                  <div className="auth__input-wrap">
+                    <select
+                      id="industry"
+                      name="industry"
+                      value={companyDetails.industry}
+                      onChange={handleCompanyDetailChange}
+                      disabled={isLoading}
+                      className={`auth__input auth__input--select${errors.industry ? " auth__input--error" : ""}`}
+                    >
+                      <option value="">Select industry…</option>
+                      <option value="technology">Technology</option>
+                      <option value="finance">Finance &amp; Banking</option>
+                      <option value="healthcare">Healthcare</option>
+                      <option value="education">Education</option>
+                      <option value="retail">Retail &amp; E-commerce</option>
+                      <option value="manufacturing">Manufacturing</option>
+                      <option value="consulting">Consulting</option>
+                      <option value="media">Media &amp; Entertainment</option>
+                      <option value="logistics">
+                        Logistics &amp; Supply Chain
+                      </option>
+                      <option value="real_estate">Real Estate</option>
+                      <option value="ngo">NGO / Non-profit</option>
+                      <option value="government">Government</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  {errors.industry && (
+                    <span className="auth__error-msg" role="alert">
+                      {errors.industry}
+                    </span>
+                  )}
+                </div>
+
+                <div className="auth__field">
+                  <label htmlFor="companySize" className="auth__label">
+                    Company size <span className="auth__required">*</span>
+                  </label>
+                  <div className="auth__input-wrap">
+                    <select
+                      id="companySize"
+                      name="companySize"
+                      value={companyDetails.companySize}
+                      onChange={handleCompanyDetailChange}
+                      disabled={isLoading}
+                      className={`auth__input auth__input--select${errors.companySize ? " auth__input--error" : ""}`}
+                    >
+                      <option value="">Select size…</option>
+                      <option value="1-10">1 – 10 employees</option>
+                      <option value="11-50">11 – 50 employees</option>
+                      <option value="51-200">51 – 200 employees</option>
+                      <option value="201-500">201 – 500 employees</option>
+                      <option value="501-1000">501 – 1 000 employees</option>
+                      <option value="1001+">1 001+ employees</option>
+                    </select>
+                  </div>
+                  {errors.companySize && (
+                    <span className="auth__error-msg" role="alert">
+                      {errors.companySize}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="auth__field-grid">
+                <div className="auth__field">
+                  <label htmlFor="website" className="auth__label">
+                    Website <span className="auth__optional">(optional)</span>
+                  </label>
+                  <div className="auth__input-wrap">
+                    <input
+                      id="website"
+                      type="url"
+                      name="website"
+                      placeholder="https://yourcompany.com"
+                      value={companyDetails.website}
+                      onChange={handleCompanyDetailChange}
+                      disabled={isLoading}
+                      className="auth__input"
+                    />
+                  </div>
+                </div>
+
+                <div className="auth__field">
+                  <label htmlFor="location" className="auth__label">
+                    Location <span className="auth__optional">(optional)</span>
+                  </label>
+                  <div className="auth__input-wrap">
+                    <input
+                      id="location"
+                      type="text"
+                      name="location"
+                      placeholder="Kathmandu, Nepal"
+                      value={companyDetails.location}
+                      onChange={handleCompanyDetailChange}
+                      disabled={isLoading}
+                      className="auth__input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="auth__field">
+                <label htmlFor="description" className="auth__label">
+                  Short description{" "}
+                  <span className="auth__optional">(optional)</span>
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  placeholder="Tell candidates what your company does…"
+                  value={companyDetails.description}
+                  onChange={handleCompanyDetailChange}
+                  disabled={isLoading}
+                  className="auth__textarea"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
+                aria-busy={isLoading}
+              >
+                {isLoading ? "Creating company…" : "Create company & continue"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ── STEP 3b: Join company ──────────────────────────────────────── */}
+        {step === "join-company" && (
+          <div className="auth__card">
+            <form
+              className="auth__form"
+              onSubmit={handleJoinCompany}
+              noValidate
+            >
+              <div className="auth__field">
+                <label htmlFor="joinCompanyName" className="auth__label">
+                  Company name
+                </label>
+                <div className="auth__input-wrap">
+                  <input
+                    id="joinCompanyName"
+                    type="text"
+                    name="joinCompanyName"
+                    placeholder="Enter the exact company name"
+                    value={joinCompanyName}
+                    onChange={(e) => {
+                      setJoinCompanyName(e.target.value);
+                      clearError("joinCompanyName");
+                    }}
+                    disabled={isLoading}
+                    className={`auth__input${errors.joinCompanyName ? " auth__input--error" : ""}`}
+                  />
+                </div>
+                {errors.joinCompanyName && (
+                  <span className="auth__error-msg" role="alert">
+                    {errors.joinCompanyName}
+                  </span>
+                )}
+                <p className="auth__field-hint">
+                  Enter the company name exactly as it appears on ConvexHire. An
+                  email will be sent to the company admin to verify your
+                  request.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
+                aria-busy={isLoading}
+              >
+                {isLoading ? "Sending request…" : "Send join request"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ── SUCCESS: Email verify ──────────────────────────────────────── */}
+        {step === "email-verify" && (
+          <div className="auth__card auth__card--success">
+            <div className="auth__success-icon">
+              <EnvelopeIcon />
+            </div>
+            <p className="auth__success-detail">
+              We sent an email to <strong>{creds.email}</strong>. Click the link
+              to verify your address and access your dashboard.
+            </p>
+            <p className="auth__success-note">
+              Didn&apos;t get it? Check your spam folder, or{" "}
+              <button
+                type="button"
+                className="auth__inline-link"
+                onClick={() => handleIntentCandidate()}
+              >
+                resend the email
+              </button>
+              .
+            </p>
+            <Link href="/login" className="auth__submit auth__submit--link">
+              Go to sign in
+            </Link>
+          </div>
+        )}
+
+        {/* ── SUCCESS: Join pending ──────────────────────────────────────── */}
+        {step === "join-pending" && (
+          <div className="auth__card auth__card--success">
+            <div className="auth__success-icon auth__success-icon--pending">
+              <ClockIcon />
+            </div>
+            <p className="auth__success-detail">
+              Your request to join <strong>{joinCompanyName}</strong> has been
+              sent. We&apos;ll email you at <strong>{creds.email}</strong> once
+              the admin approves it.
+            </p>
+            <p className="auth__success-note">
+              While you wait, check your inbox to verify your email address.
+            </p>
+            <Link href="/login" className="auth__submit auth__submit--link">
+              Go to sign in
+            </Link>
+          </div>
+        )}
 
         {/* Switch to login */}
-        <p className="auth__switch">
-          Already have an account?
-          <Link href="/login">Sign in</Link>
-        </p>
+        {(step === "credentials" || step === "intent") && (
+          <p className="auth__switch">
+            Already have an account?
+            <Link href="/login">Sign in</Link>
+          </p>
+        )}
       </div>
     </main>
-  );
-}
-
-// ── Password Strength Bar ──────────────────────────────────────────────────
-
-function PasswordStrengthBar({ strength }: { strength: StrengthLevel }) {
-  const STRENGTH_LABELS: Record<StrengthLevel, string> = {
-    none: "",
-    weak: "Weak",
-    fair: "Fair",
-    strong: "Strong",
-  };
-
-  return (
-    <div className="auth__strength" aria-live="polite" aria-atomic="true">
-      <div className="auth__strength-bars">
-        <div
-          className={`auth__strength-bar auth__strength-bar--${strength !== "none" ? "active" : "empty"}`}
-        />
-        <div
-          className={`auth__strength-bar auth__strength-bar--${strength === "fair" || strength === "strong" ? "active" : "empty"}`}
-        />
-        <div
-          className={`auth__strength-bar auth__strength-bar--${strength === "strong" ? "active" : "empty"}`}
-        />
-      </div>
-      <span
-        className={`auth__strength-label auth__strength-label--${strength}`}
-        aria-label={`Password strength: ${STRENGTH_LABELS[strength]}`}
-      >
-        {STRENGTH_LABELS[strength]}
-      </span>
-    </div>
   );
 }

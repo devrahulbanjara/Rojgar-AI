@@ -748,4 +748,297 @@
       color: color.adjust($color-success, $lightness: -15%);
     }
   }
+
+  // ── Wide inner wrapper (company details step) ─────────────────────────
+  &__inner--wide {
+    max-width: 640px;
+  }
+
+  // ── Intent / company-choice cards ─────────────────────────────────────
+  &__intent-cards {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+  }
+
+  &__intent-card {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    width: 100%;
+    padding: $space-5 $space-6;
+    background-color: $color-white;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-xl;
+    cursor: pointer;
+    text-align: left;
+    @include transition(all, $transition-base);
+
+    &:hover:not(:disabled) {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__intent-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-xl;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    &--candidate {
+      background-color: rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+
+    &--hiring {
+      background-color: rgba($color-secondary, 0.1);
+      color: $color-secondary;
+    }
+
+    &--create {
+      background-color: rgba($color-success, 0.1);
+      color: $color-success;
+    }
+
+    &--join {
+      background-color: rgba($color-warning, 0.15);
+      color: color.adjust($color-warning, $lightness: -20%);
+    }
+  }
+
+  &__intent-body {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    flex: 1;
+  }
+
+  &__intent-title {
+    font-family: $font-heading;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__intent-desc {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    line-height: $line-height-normal;
+  }
+
+  &__intent-arrow {
+    font-size: $font-size-xl;
+    color: $color-gray-400;
+    line-height: 1;
+    flex-shrink: 0;
+    @include transition(transform color, $transition-fast);
+
+    .auth__intent-card:hover & {
+      color: $color-primary;
+      transform: translateX(3px);
+    }
+  }
+
+  // ── Two-column field grid ─────────────────────────────────────────────
+  &__field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-4;
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ── Select input ──────────────────────────────────────────────────────
+  &__input--select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right $space-4 center;
+    background-size: 16px;
+    padding-right: $space-10;
+    cursor: pointer;
+  }
+
+  // ── Textarea ──────────────────────────────────────────────────────────
+  &__textarea {
+    width: 100%;
+    padding: $space-3 $space-4;
+    font-family: $font-body;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    background-color: $color-white;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-xl;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    line-height: $line-height-normal;
+    @include transition(border-color, $transition-fast);
+
+    &::placeholder {
+      color: $color-gray-400;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: $color-gray-300;
+    }
+
+    &:focus {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      background-color: $color-gray-100;
+    }
+  }
+
+  // ── Label helpers ─────────────────────────────────────────────────────
+  &__required {
+    color: $color-error;
+    font-size: $font-size-sm;
+  }
+
+  &__optional {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-regular;
+    color: $color-gray-400;
+  }
+
+  // ── Field hint text ───────────────────────────────────────────────────
+  &__field-hint {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+    line-height: $line-height-normal;
+    margin-top: $space-2;
+  }
+
+  // ── Success card ──────────────────────────────────────────────────────
+  &__card--success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+    text-align: center;
+    padding: $space-10;
+  }
+
+  &__success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: $radius-full;
+    background-color: rgba($color-primary, 0.1);
+    color: $color-primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    &--pending {
+      background-color: rgba($color-warning, 0.15);
+      color: color.adjust($color-warning, $lightness: -20%);
+    }
+  }
+
+  &__success-detail {
+    font-size: $font-size-base;
+    color: $color-gray-700;
+    line-height: $line-height-normal;
+    margin: 0;
+
+    strong {
+      color: $color-gray-900;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &__success-note {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    line-height: $line-height-normal;
+    margin: 0;
+  }
+
+  // ── Inline link (resend, etc.) ────────────────────────────────────────
+  &__inline-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+    cursor: pointer;
+    @include transition(opacity, $transition-fast);
+
+    &:hover {
+      opacity: 0.75;
+      text-decoration: underline;
+    }
+  }
+
+  // ── Loading note ──────────────────────────────────────────────────────
+  &__loading-note {
+    text-align: center;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    margin-top: $space-4;
+    padding-top: $space-4;
+    border-top: 1px solid $color-gray-100;
+  }
+
+  // ── Submit as link (for success screens) ─────────────────────────────
+  &__submit--link {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: $space-2;
+  }
+
+  // ── Email not verified block (inside login card) ──────────────────────
+  &__unverified {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+    padding: $space-6;
+    background-color: rgba($color-warning, 0.06);
+    border: 1px solid rgba($color-warning, 0.25);
+    border-radius: $radius-xl;
+    text-align: center;
+    margin-bottom: $space-5;
+
+    .auth__success-icon {
+      background-color: rgba($color-warning, 0.15);
+      color: color.adjust($color-warning, $lightness: -20%);
+    }
+  }
 }

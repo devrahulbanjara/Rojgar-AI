@@ -9,6 +9,13 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+} from "@/store/services/authApi";
+import { parseApiError } from "@/lib/apiError";
+import { toast } from "react-toastify";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -307,11 +314,12 @@ export default function ForgotPasswordPage() {
   }>({});
 
   // Shared
-  const [isLoading, setIsLoading] = useState(false);
-  const [formAlert, setFormAlert] = useState<{
-    type: "error" | "success";
-    message: string;
-  } | null>(null);
+  const router = useRouter();
+  const [forgotPassword, { isLoading: isSendingCode }] =
+    useForgotPasswordMutation();
+  const [resetPassword, { isLoading: isResetting }] =
+    useResetPasswordMutation();
+  const isLoading = isSendingCode || isResetting;
 
   // ── Cooldown timer ────────────────────────────────────────
   function startCooldown() {
@@ -330,97 +338,108 @@ export default function ForgotPasswordPage() {
   // ── Step 1: send code ─────────────────────────────────────
   async function handleEmailSubmit(e: FormEvent) {
     e.preventDefault();
-    setFormAlert(null);
     const err = validateEmail(email);
     if (err) {
       setEmailError(err);
       return;
     }
-    setIsLoading(true);
     try {
-      // TODO: Replace with real API call
-      await new Promise((r) => setTimeout(r, 1000));
-      setStep(2);
-      startCooldown();
-    } catch {
-      setFormAlert({
-        type: "error",
-        message: "Failed to send code. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      const result = await forgotPassword({ email }).unwrap();
+      if (result.success) {
+        setStep(2);
+        startCooldown();
+      } else {
+        toast.error(result.message ?? "Failed to send code. Please try again.");
+      }
+    } catch (err: unknown) {
+      const { message } = parseApiError(
+        err,
+        { email: "email" },
+        "Failed to send code. Please try again.",
+      );
+      toast.error(message);
     }
   }
 
   // ── Step 2: verify OTP ────────────────────────────────────
+  // The OTP is the reset token issued by the backend. We validate it
+  // on the server only when calling /auth/reset-password in step 3,
+  // so here we just confirm all 6 digits are filled and advance.
   async function handleOtpSubmit(e: FormEvent) {
     e.preventDefault();
-    setFormAlert(null);
     const code = otp.join("");
     if (code.length < OTP_LENGTH) {
       setOtpError("Please enter all 6 digits.");
       return;
     }
-    setIsLoading(true);
-    try {
-      // TODO: Replace with real API call
-      await new Promise((r) => setTimeout(r, 1000));
-      setStep(3);
-    } catch {
-      setOtpError("Invalid or expired code. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    setStep(3);
   }
 
   async function handleResend() {
     if (resendCooldown > 0) return;
-    setFormAlert(null);
     setOtp(Array(OTP_LENGTH).fill(""));
     setOtpError(undefined);
-    setIsLoading(true);
     try {
-      // TODO: Replace with real API call
-      await new Promise((r) => setTimeout(r, 800));
-      startCooldown();
-      setFormAlert({
-        type: "success",
-        message: "A new code has been sent to your email.",
-      });
-    } catch {
-      setFormAlert({
-        type: "error",
-        message: "Failed to resend. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      const result = await forgotPassword({ email }).unwrap();
+      if (result.success) {
+        startCooldown();
+        toast.success("A new code has been sent to your email.");
+      } else {
+        toast.error(result.message ?? "Failed to resend. Please try again.");
+      }
+    } catch (err: unknown) {
+      const { message } = parseApiError(
+        err,
+        {},
+        "Failed to resend. Please try again.",
+      );
+      toast.error(message);
     }
   }
 
   // ── Step 3: reset password ────────────────────────────────
   async function handlePasswordSubmit(e: FormEvent) {
     e.preventDefault();
-    setFormAlert(null);
     const errs = validateNewPasswords(password, confirmPassword);
     if (Object.keys(errs).length > 0) {
       setPasswordErrors(errs);
       return;
     }
-    setIsLoading(true);
     try {
-      // TODO: Replace with real API call
-      await new Promise((r) => setTimeout(r, 1200));
-      setFormAlert({
-        type: "success",
-        message: "Password reset successfully! You can now sign in.",
+      const result = await resetPassword({
+        token: otp.join(""),
+        new_password: password,
+      }).unwrap();
+
+      if (result.success) {
+        toast.success(
+          result.message ??
+            "Password reset successfully! Redirecting to sign in…",
+        );
+        setTimeout(() => router.push("/login"), 1800);
+      } else {
+        toast.error(
+          result.message ?? "Something went wrong. Please try again.",
+        );
+      }
+    } catch (err: unknown) {
+      const parsed = parseApiError(err, {
+        token: "_token",
+        new_password: "_password",
       });
-    } catch {
-      setFormAlert({
-        type: "error",
-        message: "Something went wrong. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      // Token errors — kick back to OTP step
+      if (parsed.fieldErrors._token) {
+        setStep(2);
+        setOtp(Array(OTP_LENGTH).fill(""));
+        setOtpError(parsed.fieldErrors._token);
+        return;
+      }
+      // Password field errors
+      if (parsed.fieldErrors._password) {
+        setPasswordErrors({ password: parsed.fieldErrors._password });
+        return;
+      }
+      toast.error(parsed.message);
     }
   }
 
@@ -483,16 +502,6 @@ export default function ForgotPasswordPage() {
 
         {/* Card */}
         <div className="auth__card">
-          {/* Form-level alert */}
-          {formAlert && (
-            <div
-              className={`auth__alert auth__alert--${formAlert.type}`}
-              role="alert"
-            >
-              {formAlert.message}
-            </div>
-          )}
-
           {/* ── STEP 1: Email ── */}
           {step === 1 && (
             <form
@@ -596,7 +605,6 @@ export default function ForgotPasswordPage() {
                   setStep(1);
                   setOtp(Array(OTP_LENGTH).fill(""));
                   setOtpError(undefined);
-                  setFormAlert(null);
                 }}
                 style={{ alignSelf: "center" }}
               >
