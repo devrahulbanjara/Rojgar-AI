@@ -3,6 +3,14 @@
 import { useState, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  useLoginMutation,
+  initiateGoogleOAuth,
+} from "@/store/services/authApi";
+import { parseApiError, applyFieldErrors } from "@/lib/apiError";
+import { getRoleDashboard } from "@/lib/roleRoutes";
+import { toast } from "react-toastify";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -12,7 +20,7 @@ interface LoginFormState {
   rememberMe: boolean;
 }
 
-interface FormErrors {
+interface FormErrors extends Record<string, string | undefined> {
   email?: string;
   password?: string;
   form?: string;
@@ -103,6 +111,24 @@ function LinkedInIcon() {
   );
 }
 
+function EnvelopeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+      />
+    </svg>
+  );
+}
+
 // ── Validation ─────────────────────────────────────────────────────────────
 
 function validateForm(values: LoginFormState): FormErrors {
@@ -132,13 +158,12 @@ export default function LoginPage() {
     rememberMe: false,
   });
 
+  const router = useRouter();
+  const [login, { isLoading }] = useLoginMutation();
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [formAlert, setFormAlert] = useState<{
-    type: "error" | "success";
-    message: string;
-  } | null>(null);
+  const [emailUnverified, setEmailUnverified] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value, type, checked } = e.target;
@@ -154,7 +179,6 @@ export default function LoginPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setFormAlert(null);
 
     const validationErrors = validateForm(formValues);
     if (Object.keys(validationErrors).length > 0) {
@@ -162,27 +186,49 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
     try {
-      // TODO: Replace with real auth call
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      setFormAlert({
-        type: "success",
-        message: "Signed in successfully! Redirecting…",
-      });
-    } catch {
-      setFormAlert({
-        type: "error",
-        message: "Invalid credentials. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
+      const result = await login({
+        email: formValues.email,
+        password: formValues.password,
+        remember_me: formValues.rememberMe,
+      }).unwrap();
+
+      if (result.success) {
+        toast.success("Signed in! Redirecting…");
+        router.push(getRoleDashboard(result.data?.user?.primary_role));
+      } else {
+        toast.error(result.message ?? "Login failed. Please try again.");
+      }
+    } catch (err: unknown) {
+      const fieldMap: Record<string, string> = {
+        email: "email",
+        password: "password",
+      };
+      // Check for email-not-verified error (403 or specific message)
+      const rtkErr = err as { status?: number; data?: { message?: string } };
+      const errMsg = rtkErr?.data?.message ?? "";
+      if (
+        rtkErr?.status === 403 ||
+        /not verified|email.*verif|verif.*email/i.test(errMsg)
+      ) {
+        setEmailUnverified(true);
+        return;
+      }
+      const parsed = parseApiError(
+        err,
+        fieldMap,
+        "Invalid credentials. Please try again.",
+      );
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
+      if (!hadFieldErrors) {
+        toast.error(parsed.message);
+      }
     }
   }
 
-  function handleSocialLogin(provider: string) {
-    // TODO: Replace with real OAuth redirect
-    console.log(`Login with ${provider}`);
+  function handleSocialLogin() {
+    initiateGoogleOAuth();
+    return;
   }
 
   return (
@@ -218,137 +264,154 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="auth__card">
-          {/* Form-level alert */}
-          {formAlert && (
-            <div
-              className={`auth__alert auth__alert--${formAlert.type}`}
-              role="alert"
-            >
-              {formAlert.message}
+          {/* Email not verified alert */}
+          {emailUnverified && (
+            <div className="auth__unverified">
+              <div className="auth__success-icon">
+                <EnvelopeIcon />
+              </div>
+              <p className="auth__success-detail">
+                Your email address hasn&apos;t been verified yet. Please check{" "}
+                <strong>{formValues.email || "your inbox"}</strong> for the
+                verification link.
+              </p>
+              <p className="auth__success-note">
+                Didn&apos;t receive it?{" "}
+                <button
+                  type="button"
+                  className="auth__inline-link"
+                  onClick={() => setEmailUnverified(false)}
+                >
+                  Try a different account
+                </button>
+              </p>
             </div>
           )}
 
-          <form className="auth__form" onSubmit={handleSubmit} noValidate>
-            {/* Email */}
-            <div className="auth__field">
-              <label htmlFor="email" className="auth__label">
-                Email address
-              </label>
-              <div className="auth__input-wrap">
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={formValues.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className={`auth__input${errors.email ? " auth__input--error" : ""}`}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                />
-              </div>
-              {errors.email && (
-                <span id="email-error" className="auth__error-msg" role="alert">
-                  {errors.email}
-                </span>
-              )}
-            </div>
+          {!emailUnverified && (
+            <>
+              <form className="auth__form" onSubmit={handleSubmit} noValidate>
+                {/* Email */}
+                <div className="auth__field">
+                  <label htmlFor="email" className="auth__label">
+                    Email address
+                  </label>
+                  <div className="auth__input-wrap">
+                    <input
+                      id="email"
+                      type="email"
+                      name="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      value={formValues.email}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      className={`auth__input${errors.email ? " auth__input--error" : ""}`}
+                      aria-describedby={
+                        errors.email ? "email-error" : undefined
+                      }
+                    />
+                  </div>
+                  {errors.email && (
+                    <span
+                      id="email-error"
+                      className="auth__error-msg"
+                      role="alert"
+                    >
+                      {errors.email}
+                    </span>
+                  )}
+                </div>
 
-            {/* Password */}
-            <div className="auth__field">
-              <label htmlFor="password" className="auth__label">
-                Password
-              </label>
-              <div className="auth__input-wrap">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  autoComplete="current-password"
-                  placeholder="Enter your password"
-                  value={formValues.password}
-                  onChange={handleChange}
+                {/* Password */}
+                <div className="auth__field">
+                  <label htmlFor="password" className="auth__label">
+                    Password
+                  </label>
+                  <div className="auth__input-wrap">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      autoComplete="current-password"
+                      placeholder="Enter your password"
+                      value={formValues.password}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      className={`auth__input auth__input--password${errors.password ? " auth__input--error" : ""}`}
+                      aria-describedby={
+                        errors.password ? "password-error" : undefined
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="auth__pw-toggle"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <span
+                      id="password-error"
+                      className="auth__error-msg"
+                      role="alert"
+                    >
+                      {errors.password}
+                    </span>
+                  )}
+                </div>
+
+                {/* Remember me + Forgot password */}
+                <div className="auth__field-row">
+                  <label className="auth__checkbox-field">
+                    <input
+                      type="checkbox"
+                      name="rememberMe"
+                      checked={formValues.rememberMe}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                    <span>Remember me</span>
+                  </label>
+                  <Link href="/forgot-password" className="auth__forgot">
+                    Forgot password?
+                  </Link>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
                   disabled={isLoading}
-                  className={`auth__input auth__input--password${errors.password ? " auth__input--error" : ""}`}
-                  aria-describedby={
-                    errors.password ? "password-error" : undefined
-                  }
-                />
+                  className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
+                  aria-busy={isLoading}
+                >
+                  {isLoading ? "Signing in…" : "Sign in"}
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="auth__divider">
+                <span>or continue with</span>
+              </div>
+
+              {/* Social login */}
+              <div className="auth__social-btns">
                 <button
                   type="button"
-                  className="auth__pw-toggle"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="auth__social-btn"
+                  onClick={() => handleSocialLogin()}
+                  disabled={isLoading}
                 >
-                  {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                  <GoogleIcon />
+                  Continue with Google
                 </button>
               </div>
-              {errors.password && (
-                <span
-                  id="password-error"
-                  className="auth__error-msg"
-                  role="alert"
-                >
-                  {errors.password}
-                </span>
-              )}
-            </div>
-
-            {/* Remember me + Forgot password */}
-            <div className="auth__field-row">
-              <label className="auth__checkbox-field">
-                <input
-                  type="checkbox"
-                  name="rememberMe"
-                  checked={formValues.rememberMe}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                <span>Remember me</span>
-              </label>
-              <Link href="/forgot-password" className="auth__forgot">
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
-              aria-busy={isLoading}
-            >
-              {isLoading ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="auth__divider">
-            <span>or continue with</span>
-          </div>
-
-          {/* Social login */}
-          <div className="auth__social-btns">
-            <button
-              type="button"
-              className="auth__social-btn"
-              onClick={() => handleSocialLogin("google")}
-              disabled={isLoading}
-            >
-              <GoogleIcon />
-              Continue with Google
-            </button>
-            <button
-              type="button"
-              className="auth__social-btn"
-              onClick={() => handleSocialLogin("linkedin")}
-              disabled={isLoading}
-            >
-              <LinkedInIcon />
-              Continue with LinkedIn
-            </button>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Switch to signup */}

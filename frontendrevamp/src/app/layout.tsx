@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Poppins, Lato, Geist_Mono } from "next/font/google";
 import StoreProvider from "@/providers/StoreProvider";
+import LenisProvider from "@/providers/LenisProvider";
+import Toaster from "@/components/common/Toaster";
 import "@/app/globals.css";
 import "@/styles/main.scss";
+import "react-toastify/dist/ReactToastify.css";
 import MainLayout from "@/components/layout/MainLayout";
 
 const poppins = Poppins({
@@ -42,9 +45,10 @@ export default function RootLayout({
         className={`${poppins.variable} ${lato.variable} ${geistMono.variable}`}
       >
         <StoreProvider>
-          <MainLayout>
-            {children}
-          </MainLayout>
+          <LenisProvider>
+            <MainLayout>{children}</MainLayout>
+          </LenisProvider>
+          <Toaster />
         </StoreProvider>
       </body>
     </html>

@@ -1,3 +1,4 @@
+import AuthGuard from "@/components/common/AuthGuard";
 import DashNavbar from "@/components/layout/DashNavbar";
 
 export default function UserDashboardLayout({
@@ -6,14 +7,9 @@ export default function UserDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <DashNavbar
-        role="user"
-        userName="Alex Chen"
-        userRole="UI/UX Designer"
-        userInitials="AC"
-      />
+    <AuthGuard requiredRole="candidate">
+      <DashNavbar role="user" />
       <main className="dash-page">{children}</main>
-    </>
+    </AuthGuard>
   );
 }
