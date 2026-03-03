@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime, timedelta, timezone
+
 import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+
 from app.core.config import settings
 
 ph = PasswordHasher()
@@ -60,8 +62,8 @@ def decode_access_token(token: str) -> str | None:
         )
         if payload.get("type") != "access":
             return None
-        return payload.get("sub")
-    except jwt.PyJWTError:
+        return payload["sub"]
+    except (jwt.PyJWTError, KeyError):
         return None
 
 
@@ -73,6 +75,31 @@ def decode_refresh_token(token: str) -> tuple[str, str] | None:
         )
         if payload.get("type") != "refresh":
             return None
-        return payload.get("sub"), payload.get("jti")
+        return payload["sub"], payload["jti"]
+    except (jwt.PyJWTError, KeyError):
+        return None
+
+
+def create_signup_token(data: dict) -> str:
+    """Creates a 15-minute token containing Google profile info for Two-Phase Social Signup."""
+    payload = data.copy()
+    payload.update(
+        {
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+            "type": "signup",
+        }
+    )
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_signup_token(token: str) -> dict | None:
+    """Validates a signup token; returns the payload dict or None if invalid/expired."""
+    try:
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+        if payload.get("type") != "signup":
+            return None
+        return payload
     except jwt.PyJWTError:
         return None

@@ -45,6 +45,11 @@ class TokenResponse(AppModel):
     token_type: str = "bearer"
 
 
+class GoogleRegisterRequest(AppModel):
+    signup_token: str
+    primary_role: UserRole
+
+
 class AuthUserResponse(AppModel):
     id: UUID
     full_name: str

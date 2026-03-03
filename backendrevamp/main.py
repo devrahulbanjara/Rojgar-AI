@@ -1,19 +1,20 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException
+
+import logfire
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
-from app.core.database import engine
-from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.core.exception_handlers import register_exception_handlers
-from app.modules.auth.router import router as auth_router
-from app.core.database import get_db
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-import logfire
 
-# from app.modules.users.router import router as users_router
+from app.core.config import settings
+from app.core.database import engine, get_db
+from app.core.exception_handlers import register_exception_handlers
+
 # from app.modules.companies.router import router as companies_router
 from app.core.logging_config import setup_logging
+from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.modules.auth.router import router as auth_router
+from app.modules.dashboards.router import router as dash_router
 
 setup_logging()
 
@@ -49,8 +50,7 @@ logfire.instrument_fastapi(app)
 register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-# app.include_router(users_router,     prefix="/users",     tags=["Users"])
-# app.include_router(companies_router, prefix="/companies", tags=["Companies"])
+app.include_router(dash_router, prefix="/dashboards", tags=["Dashboards"])
 
 
 @app.get("/", tags=["System"], response_model=UnifiedResponse[dict])

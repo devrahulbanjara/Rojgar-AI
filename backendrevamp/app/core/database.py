@@ -1,10 +1,13 @@
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    AsyncAttrs,
 )
 from sqlalchemy.orm import DeclarativeBase
+
 from app.core.config import settings
 
 engine = create_async_engine(
@@ -31,11 +34,10 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 # FastAPI dependency — one session per request, always closed
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise
