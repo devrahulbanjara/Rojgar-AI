@@ -117,6 +117,7 @@ class Company(Base):
     domain: Mapped[str | None] = mapped_column(String(255), unique=True)
     industry: Mapped[str | None] = mapped_column(String(100))
     company_size: Mapped[str | None] = mapped_column(String(50))
+    location: Mapped[str | None] = mapped_column(String(255))
     description: Mapped[str | None]
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

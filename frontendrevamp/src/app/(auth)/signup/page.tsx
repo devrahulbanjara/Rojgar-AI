@@ -548,6 +548,7 @@ export default function SignupPage() {
       }
 
       await registerCompany({
+        setup_token: signupResult.data?.setup_token ?? "",
         company_name: companyDetails.companyName,
         industry: companyDetails.industry,
         company_size: companyDetails.companySize,
@@ -557,7 +558,7 @@ export default function SignupPage() {
       }).unwrap();
 
       toast.success(
-        "Company created! Check your email to verify your account.",
+        "Almost there! Please check your email to verify and activate your company.",
       );
       router.push("/login");
     } catch (err: unknown) {
@@ -598,6 +599,7 @@ export default function SignupPage() {
       }
 
       await requestJoinCompany({
+        setup_token: signupResult.data?.setup_token ?? "",
         company_name: joinCompanyName.trim(),
       }).unwrap();
       setStep("join-pending");

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from app.modules.auth.enums import UserRole
+from app.modules.auth.enums import MembershipStatus, UserRole
 
 
 class AppModel(BaseModel):
@@ -16,6 +16,13 @@ class SignupRequest(AppModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     primary_role: UserRole
+
+
+# --- Signup response data (only present for company/recruiter flows) ---
+
+
+class SignupData(AppModel):
+    setup_token: str | None = None
 
 
 class LoginRequest(AppModel):
@@ -57,6 +64,7 @@ class AuthUserResponse(AppModel):
     primary_role: UserRole
     is_email_verified: bool
     avatar_url: str | None = None
+    membership_status: MembershipStatus | None = None
 
 
 class LoginResponse(AppModel):
@@ -72,3 +80,4 @@ class UserResponse(AppModel):
     is_email_verified: bool
     avatar_url: str | None = None
     created_at: datetime
+    membership_status: MembershipStatus | None = None

@@ -4,8 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { useAppSelector } from "@/store/hooks";
 
-export type DashRole = "user" | "admin" | "company" | "hr" | "recruiter";
+// DashRole only includes the three layouts that actually instantiate DashNavbar.
+// "hr" and "recruiter" were removed — both those users are served by the "company" layout.
+export type DashRole = "user" | "admin" | "company";
 
 type NavItem = { label: string; href: string };
 
@@ -14,11 +17,9 @@ type DashNavbarProps = {
   userName?: string;
   userRole?: string;
   userInitials?: string;
-  /** required when role is "hr" to build hrefs */
-  companySlug?: string;
 };
 
-function buildNavItems(role: DashRole, companySlug?: string): NavItem[] {
+function buildNavItems(role: DashRole, isCompanyAdmin?: boolean): NavItem[] {
   if (role === "user") {
     return [
       { label: "Dashboard", href: "/dashboard" },
@@ -36,31 +37,17 @@ function buildNavItems(role: DashRole, companySlug?: string): NavItem[] {
       { label: "Users", href: "/admin/users" },
     ];
   }
-  if (role === "company") {
-    return [
-      { label: "Dashboard", href: "/company" },
-      { label: "My Jobs", href: "/company/jobs" },
-      { label: "Applications", href: "/company/applications" },
-      { label: "Candidates", href: "/company/candidates" },
-    ];
-  }
-  if (role === "recruiter") {
-    return [
-      { label: "Dashboard", href: "/recruiter" },
-      { label: "My Jobs", href: "/recruiter/jobs" },
-      { label: "Candidates", href: "/recruiter/candidates" },
-      { label: "Interviews", href: "/recruiter/interviews" },
-      { label: "Profile", href: "/recruiter/profile" },
-    ];
-  }
-  // hr
-  const base = `/${companySlug}/hr`;
-  return [
-    { label: "Dashboard", href: base },
-    { label: "My Jobs", href: `${base}/jobs` },
-    { label: "Applications", href: `${base}/candidates` },
-    { label: "Resumes", href: `${base}/resumes` },
+  // "company" — shared by both company admins and approved recruiters
+  const items: NavItem[] = [
+    { label: "Dashboard", href: "/company" },
+    { label: "My Jobs", href: "/company/jobs" },
+    { label: "Applications", href: "/company/applications" },
+    { label: "Candidates", href: "/company/candidates" },
   ];
+  if (isCompanyAdmin) {
+    items.push({ label: "Recruiters", href: "/company/recruiters" });
+  }
+  return items;
 }
 
 export default function DashNavbar({
@@ -68,10 +55,11 @@ export default function DashNavbar({
   userName = "User",
   userRole = "Member",
   userInitials = "U",
-  companySlug,
 }: DashNavbarProps) {
   const pathname = usePathname();
-  const navItems = buildNavItems(role, companySlug);
+  const { user } = useAppSelector((s) => s.auth);
+  const isCompanyAdmin = user?.primary_role === "company";
+  const navItems = buildNavItems(role, isCompanyAdmin);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState("");
@@ -116,10 +104,10 @@ export default function DashNavbar({
   }
 
   return (
-    <header className="dash-navbar">
+    <nav className="dash-navbar">
       <div className="dash-navbar__inner container">
-        {/* Logo */}
-        <Link href="/" className="dash-navbar__logo">
+        {/* Logo — links to the role's dashboard root */}
+        <Link href={navItems[0].href} className="dash-navbar__logo">
           <Image
             src="/logo/logo.png"
             alt="ConvexHire"
@@ -257,9 +245,7 @@ export default function DashNavbar({
                       ? "/dashboard/profile"
                       : role === "admin"
                         ? "/admin/profile"
-                        : role === "company"
-                          ? "/company/settings"
-                          : `/${companySlug}/hr/profile`
+                        : "/company/settings"
                   }
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
@@ -286,9 +272,7 @@ export default function DashNavbar({
                       ? "/dashboard"
                       : role === "admin"
                         ? "/admin"
-                        : role === "company"
-                          ? "/company"
-                          : `/${companySlug}/hr`
+                        : "/company"
                   }
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
@@ -363,6 +347,6 @@ export default function DashNavbar({
         {/* /__right */}
       </div>
       {/* /__inner */}
-    </header>
+    </nav>
   );
 }

@@ -28,6 +28,7 @@ from app.modules.auth.schemas import (
     LoginRequest,
     LoginResponse,
     ResetPasswordRequest,
+    SignupData,
     SignupRequest,
     TokenResponse,
     UserResponse,
@@ -40,15 +41,16 @@ db = Depends(get_db)
 
 
 @router.post(
-    "/signup", response_model=UnifiedResponse[None], status_code=status.HTTP_201_CREATED
+    "/signup", response_model=UnifiedResponse[SignupData], status_code=status.HTTP_201_CREATED
 )
 async def signup(
     payload: SignupRequest,
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
-    await service.signup(db, payload, bg_tasks)
+    data = await service.signup(db, payload, bg_tasks)
     return ResponseBuilder.success(
+        data=data,
         message="Account created. Please verify your email.",
         status_code=status.HTTP_201_CREATED,
     )
@@ -121,8 +123,12 @@ async def login_swagger(
 
 
 @router.get("/me", response_model=UnifiedResponse[UserResponse])
-async def get_me(current_user: User = Depends(get_current_user)):
-    return ResponseBuilder.success(data=current_user, message="Profile retrieved")
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.get_me_data(db, current_user)
+    return ResponseBuilder.success(data=data, message="Profile retrieved")
 
 
 # --- Google OAuth ---

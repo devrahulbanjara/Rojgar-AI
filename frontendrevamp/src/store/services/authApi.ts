@@ -2,6 +2,7 @@ import { baseApi, type ApiResponse } from "./baseApi";
 import {
   clearCredentials,
   setCredentials,
+  updateUser,
   type AuthUser,
 } from "../slices/authSlice";
 
@@ -52,8 +53,14 @@ export interface RefreshData {
   token_type: "bearer";
 }
 
+/** Returned by POST /auth/signup for company and recruiter roles. */
+export interface SignupData {
+  setup_token: string | null;
+}
+
 // Convenience alias for endpoints that return data: null
 type EmptyResponse = ApiResponse<null>;
+type SignupResponse = ApiResponse<SignupData | null>;
 
 // ---------------------------------------------------------------------------
 // Auth API
@@ -61,8 +68,8 @@ type EmptyResponse = ApiResponse<null>;
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** POST /auth/signup — 201, data: null */
-    signup: builder.mutation<EmptyResponse, SignupRequest>({
+    /** POST /auth/signup — 201, data: SignupData | null */
+    signup: builder.mutation<SignupResponse, SignupRequest>({
       query: (body) => ({
         url: "/auth/signup",
         method: "POST",
@@ -170,10 +177,8 @@ export const authApi = baseApi.injectEndpoints({
         try {
           const { data } = await queryFulfilled;
           if (data.success && data.data) {
-            // Keep localStorage user record in sync
-            if (typeof window !== "undefined") {
-              localStorage.setItem("auth_user", JSON.stringify(data.data));
-            }
+            // Keep Redux state and localStorage in sync with latest server data
+            dispatch(updateUser(data.data));
           }
         } catch {
           // unauthenticated — handled by reauth wrapper

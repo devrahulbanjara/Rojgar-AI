@@ -9,18 +9,27 @@
  *
  * Usage:
  *   <AuthGuard requiredRole="candidate">{children}</AuthGuard>
+ *   <AuthGuard requiredRole={["company", "recruiter"]}>{children}</AuthGuard>
  */
 
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import { useAppSelector } from "@/store/hooks";
 import { getRoleDashboard } from "@/lib/roleRoutes";
 import type { PrimaryRole } from "@/lib/types/user";
 
 interface AuthGuardProps {
-  /** The role that is allowed to access this section. */
-  requiredRole: PrimaryRole;
+  /** One role or an array of roles allowed to access this section. */
+  requiredRole: PrimaryRole | PrimaryRole[];
   children: ReactNode;
+}
+
+function hasRequiredRole(
+  role: PrimaryRole,
+  required: PrimaryRole | PrimaryRole[],
+): boolean {
+  return Array.isArray(required) ? required.includes(role) : role === required;
 }
 
 export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
@@ -34,19 +43,25 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
 
     if (!isAuthenticated || !user) {
       // Not logged in — send to login with a return URL
+      toast.error("Please log in to access that page.");
       const next = encodeURIComponent(pathname);
       router.replace(`/login?next=${next}`);
       return;
     }
 
-    if (user.primary_role !== requiredRole) {
+    if (!hasRequiredRole(user.primary_role, requiredRole)) {
       // Logged in but wrong role — send to their own dashboard
+      toast.error("You don't have permission to access that page.");
       router.replace(getRoleDashboard(user.primary_role));
     }
   }, [isAuthenticated, user, requiredRole, pathname, router]);
 
   // While redirecting, render nothing (avoids content flash)
-  if (!isAuthenticated || !user || user.primary_role !== requiredRole) {
+  if (
+    !isAuthenticated ||
+    !user ||
+    !hasRequiredRole(user.primary_role, requiredRole)
+  ) {
     return null;
   }
 

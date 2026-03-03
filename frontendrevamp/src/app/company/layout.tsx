@@ -1,5 +1,118 @@
+"use client";
+
 import AuthGuard from "@/components/common/AuthGuard";
 import DashNavbar from "@/components/layout/DashNavbar";
+import { useAppSelector } from "@/store/hooks";
+import { useLazyGetMeQuery } from "@/store/services/authApi";
+import { useLogoutMutation } from "@/store/services/authApi";
+
+// ---------------------------------------------------------------------------
+// Inner layout — rendered only after AuthGuard confirms authentication
+// ---------------------------------------------------------------------------
+
+function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
+  const { user } = useAppSelector((s) => s.auth);
+  const [triggerGetMe, { isFetching }] = useLazyGetMeQuery();
+  const [logout] = useLogoutMutation();
+
+  // Gate recruiters who have not yet been approved by the company admin
+  if (user?.primary_role === "recruiter") {
+    const ms = user.membership_status;
+
+    if (ms !== "active") {
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            gap: "1.5rem",
+            padding: "2rem",
+            textAlign: "center",
+            background: "var(--color-bg, #0a0a0a)",
+            color: "var(--color-text, #fff)",
+          }}
+        >
+          {ms === "rejected" ? (
+            <>
+              <div style={{ fontSize: "3rem" }}>🚫</div>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
+                Access Denied
+              </h2>
+              <p
+                style={{
+                  color: "var(--color-muted)",
+                  maxWidth: 420,
+                  margin: 0,
+                }}
+              >
+                Your request to join the company has been rejected by the
+                company admin. Please contact the company directly if you
+                believe this is a mistake.
+              </p>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: "3rem" }}>⏳</div>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
+                Pending Approval
+              </h2>
+              <p
+                style={{
+                  color: "var(--color-muted)",
+                  maxWidth: 420,
+                  margin: 0,
+                }}
+              >
+                Your account is waiting for approval from the company admin.
+                You&apos;ll be able to access the dashboard once they approve
+                your request.
+              </p>
+            </>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            {ms !== "rejected" && (
+              <button
+                className="btn btn--outline btn--sm"
+                disabled={isFetching}
+                onClick={() => triggerGetMe()}
+              >
+                {isFetching ? "Checking…" : "Refresh Status"}
+              </button>
+            )}
+            <button
+              className="btn btn--danger btn--sm"
+              onClick={() => logout()}
+            >
+              Log Out
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  return (
+    <>
+      <DashNavbar role="company" />
+      <main className="dash-page">{children}</main>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Exported layout
+// ---------------------------------------------------------------------------
 
 export default function CompanyLayout({
   children,
@@ -7,9 +120,8 @@ export default function CompanyLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard requiredRole="company">
-      <DashNavbar role="company" />
-      <main className="dash-page">{children}</main>
+    <AuthGuard requiredRole={["company", "recruiter"]}>
+      <CompanyLayoutInner>{children}</CompanyLayoutInner>
     </AuthGuard>
   );
 }

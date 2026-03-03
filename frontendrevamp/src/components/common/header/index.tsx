@@ -133,7 +133,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="header" ref={headerRef}>
+      <nav className="header" ref={headerRef}>
         <div className="container header__inner">
           {/* Logo */}
           <Link href="/" className="header__logo">
@@ -186,7 +186,7 @@ export default function Header() {
             <span className="header__hamburger-line" />
           </button>
         </div>
-      </header>
+      </nav>
 
       {/* Overlay */}
       <div
@@ -239,14 +239,14 @@ export default function Header() {
         <div className="header__drawer-actions">
           <Link
             href="/login"
-            className="header__drawer-btn header__drawer-btn--login btn btn--ghost"
+            className="btn btn--outline"
             onClick={closeMenu}
           >
             Login
           </Link>
           <Link
             href="/signup"
-            className="header__drawer-btn header__drawer-btn--signup btn btn--primary"
+            className="btn btn--primary"
             onClick={closeMenu}
           >
             Sign Up

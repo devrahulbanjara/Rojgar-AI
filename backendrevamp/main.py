@@ -11,6 +11,7 @@ from app.core.database import engine, get_db
 from app.core.exception_handlers import register_exception_handlers
 
 # from app.modules.companies.router import router as companies_router
+from app.modules.company.router import router as company_router
 from app.core.logging_config import setup_logging
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.auth.router import router as auth_router
@@ -51,6 +52,7 @@ register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(dash_router, prefix="/dashboards", tags=["Dashboards"])
+app.include_router(company_router, prefix="/company", tags=["Company"])
 
 
 @app.get("/", tags=["System"], response_model=UnifiedResponse[dict])

@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useAppSelector } from "@/store/hooks";
+import { useGetCompanyRecruitersQuery } from "@/store/services/companyApi";
+import type { RecruiterMember } from "@/store/services/companyApi";
 
 const stats = [
   {
@@ -129,6 +134,17 @@ const recentActivity = [
 ];
 
 export default function CompanyDashboardPage() {
+  const { user } = useAppSelector((s) => s.auth);
+  const isCompanyAdmin = user?.primary_role === "company";
+
+  const { data: recruitersResp } = useGetCompanyRecruitersQuery(undefined, {
+    skip: !isCompanyAdmin,
+  });
+
+  const recruiters: RecruiterMember[] = (recruitersResp as any)?.data ?? [];
+  const activeRecruiters = recruiters.filter((r) => r.status === "active");
+  const pendingRecruiters = recruiters.filter((r) => r.status === "pending");
+
   return (
     <>
       <div className="dash-content container">
@@ -302,6 +318,69 @@ export default function CompanyDashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Recruiters summary — company admin only */}
+        {isCompanyAdmin && (
+          <div className="dash-card">
+            <div className="dash-card__header">
+              <div>
+                <div className="dash-card__title">Your Recruiters</div>
+                <div className="dash-card__subtitle">
+                  Team members posting jobs and screening candidates
+                </div>
+              </div>
+              <Link
+                href="/company/recruiters"
+                className="btn btn--outline btn--sm"
+              >
+                Manage
+              </Link>
+            </div>
+            <div className="dash-card__body dash-card__body--no-top">
+              <div
+                className="dash-stats"
+                style={{ gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}
+              >
+                <div className="stat-card">
+                  <div className="stat-card__header">
+                    <div className="stat-card__icon-emoji">👥</div>
+                  </div>
+                  <div className="stat-card__value">
+                    {activeRecruiters.length}
+                  </div>
+                  <div className="stat-card__label">Active Recruiters</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-card__header">
+                    <div className="stat-card__icon-emoji">⏳</div>
+                    {pendingRecruiters.length > 0 && (
+                      <span
+                        className="stat-card__trend stat-card__trend--up"
+                        style={{ background: "#f59e0b1A", color: "#f59e0b" }}
+                      >
+                        +{pendingRecruiters.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="stat-card__value">
+                    {pendingRecruiters.length}
+                  </div>
+                  <div className="stat-card__label">Pending Requests</div>
+                </div>
+              </div>
+              {pendingRecruiters.length > 0 && (
+                <Link
+                  href="/company/recruiters"
+                  className="btn btn--warning btn--sm"
+                  style={{ marginTop: "1rem", display: "inline-flex" }}
+                >
+                  Review {pendingRecruiters.length} pending request
+                  {pendingRecruiters.length > 1 ? "s" : ""}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
