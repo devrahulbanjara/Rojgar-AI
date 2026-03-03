@@ -30,8 +30,8 @@ from app.modules.auth.schemas import (
 async def signup(
     db: AsyncSession, payload: SignupRequest, bg_tasks: BackgroundTasks
 ) -> dict:
-    result = await db.execute(select(User).where(User.email == payload.email))
-    if result.scalar_one_or_none():
+    user_exists = await db.execute(select(User).where(User.email == payload.email)).scalar_one_or_none()
+    if user_exists:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
