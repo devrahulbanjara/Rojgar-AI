@@ -7,6 +7,7 @@ import type {
   UpdateJobRequest,
   JobApplication,
   Paginated,
+  RecruiterMember,
 } from "@/lib/types/user";
 
 // Re-export canonical types for components that import from this file
@@ -17,6 +18,7 @@ export type {
   UpdateJobRequest,
   JobApplication,
   Paginated,
+  RecruiterMember,
 };
 
 // ---------------------------------------------------------------------------
@@ -24,6 +26,7 @@ export type {
 // ---------------------------------------------------------------------------
 
 export interface RegisterCompanyRequest {
+  setup_token: string;
   company_name: string;
   industry: string;
   company_size: string;
@@ -33,6 +36,7 @@ export interface RegisterCompanyRequest {
 }
 
 export interface JoinCompanyRequest {
+  setup_token: string;
   company_name: string;
   message?: string;
 }
@@ -149,11 +153,8 @@ export const companyApi = baseApi.injectEndpoints({
       invalidatesTags: ["Candidates", "Applications"],
     }),
 
-    /** POST /company/register — create a new company and set current user as admin */
-    registerCompany: builder.mutation<
-      ApiResponse<CompanyProfile>,
-      RegisterCompanyRequest
-    >({
+    /** POST /company/register — stage company details and resend verification email */
+    registerCompany: builder.mutation<EmptyResponse, RegisterCompanyRequest>({
       query: (body) => ({
         url: "/company/register",
         method: "POST",
@@ -169,6 +170,38 @@ export const companyApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+    }),
+
+    // -----------------------------------------------------------------------
+    // Recruiter management (company admin only)
+    // -----------------------------------------------------------------------
+
+    /** GET /company/me/recruiters */
+    getCompanyRecruiters: builder.query<ApiResponse<RecruiterMember[]>, void>({
+      query: () => "/company/me/recruiters",
+      providesTags: ["Company"],
+    }),
+
+    /** PATCH /company/me/recruiters/:membershipId/status */
+    updateRecruiterStatus: builder.mutation<
+      ApiResponse<RecruiterMember>,
+      { membershipId: string; status: "active" | "rejected" }
+    >({
+      query: ({ membershipId, status }) => ({
+        url: `/company/me/recruiters/${membershipId}/status`,
+        method: "PATCH",
+        body: { status },
+      }),
+      invalidatesTags: ["Company"],
+    }),
+
+    /** DELETE /company/me/recruiters/:membershipId */
+    removeRecruiter: builder.mutation<EmptyResponse, string>({
+      query: (membershipId) => ({
+        url: `/company/me/recruiters/${membershipId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Company"],
     }),
   }),
   overrideExisting: false,
@@ -186,4 +219,7 @@ export const {
   useUpdateCandidateStatusMutation,
   useRegisterCompanyMutation,
   useRequestJoinCompanyMutation,
+  useGetCompanyRecruitersQuery,
+  useUpdateRecruiterStatusMutation,
+  useRemoveRecruiterMutation,
 } = companyApi;

@@ -1041,4 +1041,41 @@
       color: color.adjust($color-warning, $lightness: -20%);
     }
   }
+
+  // ── Verify-email page status icons ────────────────────────────────────
+  &__status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    margin: 0 auto;
+
+    &--loading {
+      color: $color-primary;
+      background-color: rgba($color-primary, 0.08);
+    }
+
+    &--success {
+      color: $color-success;
+      background-color: rgba($color-success, 0.1);
+    }
+
+    &--error {
+      color: $color-error;
+      background-color: rgba($color-error, 0.1);
+    }
+  }
+
+  &__spinner-icon {
+    animation: auth-spin 0.9s linear infinite;
+    color: $color-primary;
+  }
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

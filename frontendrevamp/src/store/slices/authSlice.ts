@@ -73,6 +73,12 @@ const authSlice = createSlice({
       saveToStorage("auth_user", JSON.stringify(action.payload.user));
     },
 
+    /** Called when only the user record needs updating (e.g. after /auth/me refresh) */
+    updateUser(state, action: PayloadAction<AuthUser>) {
+      state.user = action.payload;
+      saveToStorage("auth_user", JSON.stringify(action.payload));
+    },
+
     /** Called after a silent token refresh (access_token only) */
     updateAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload;
@@ -91,7 +97,11 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, updateAccessToken, clearCredentials } =
-  authSlice.actions;
+export const {
+  setCredentials,
+  updateAccessToken,
+  updateUser,
+  clearCredentials,
+} = authSlice.actions;
 
 export default authSlice.reducer;

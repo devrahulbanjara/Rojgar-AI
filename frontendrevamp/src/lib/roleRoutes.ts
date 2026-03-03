@@ -7,7 +7,7 @@ import type { PrimaryRole } from "./types/user";
 /** The "home" dashboard for each role. */
 export const ROLE_DASHBOARDS: Record<PrimaryRole, string> = {
   candidate: "/dashboard",
-  recruiter: "/recruiter",
+  recruiter: "/company",
   company: "/company",
   admin: "/admin",
 };
@@ -25,10 +25,12 @@ export function getRoleDashboard(role: PrimaryRole | undefined | null): string {
 // Route → required role mapping (used by AuthGuard)
 // ---------------------------------------------------------------------------
 
-/** Each protected route prefix and the single role that may access it. */
+/**
+ * Each protected route prefix and the role(s) that may access it.
+ * Note: /recruiter/* is not listed here because those pages redirect → /company.
+ */
 export const PROTECTED_ROUTES: { prefix: string; role: PrimaryRole }[] = [
   { prefix: "/dashboard", role: "candidate" },
-  { prefix: "/recruiter", role: "recruiter" },
   { prefix: "/company", role: "company" },
   { prefix: "/admin", role: "admin" },
 ];

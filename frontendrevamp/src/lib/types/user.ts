@@ -10,6 +10,18 @@
 
 export type PrimaryRole = "candidate" | "company" | "recruiter" | "admin";
 
+export type MembershipStatus = "active" | "pending" | "rejected";
+
+export interface RecruiterMember {
+  membership_id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+  status: MembershipStatus;
+  joined_at: string;
+}
+
 export type ApplicationStatus =
   | "applied"
   | "under_review"
@@ -47,6 +59,8 @@ export interface BaseUser {
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
+  /** Only present for recruiter users: their CompanyMembership approval status. */
+  membership_status?: MembershipStatus;
 }
 
 // ---------------------------------------------------------------------------

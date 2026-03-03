@@ -9,7 +9,7 @@ import { ToastContainer } from "react-toastify";
 export default function Toaster() {
   return (
     <ToastContainer
-      position="bottom-right"
+      position="top-right"
       autoClose={4000}
       hideProgressBar={false}
       newestOnTop
@@ -17,7 +17,8 @@ export default function Toaster() {
       pauseOnFocusLoss
       draggable
       pauseOnHover
-      theme="dark"
+      theme="light"
+      toastStyle={{ backgroundColor: "#ffffff", color: "#111827" }}
     />
   );
 }

@@ -59,3 +59,21 @@ async def require_recruiter(user: User = Depends(get_current_user)) -> User:
             detail="Access denied: Recruiter role required",
         )
     return user
+
+
+async def require_company(user: User = Depends(get_current_user)) -> User:
+    if user.primary_role != UserRole.company:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Company role required",
+        )
+    return user
+
+
+async def require_admin(user: User = Depends(get_current_user)) -> User:
+    if user.primary_role != UserRole.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Admin role required",
+        )
+    return user
