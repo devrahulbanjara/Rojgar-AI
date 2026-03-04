@@ -1,17 +1,15 @@
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import EmailStr, Field
+
+from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus, UserRole
-
-
-class AppModel(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Requests ---
 
 
-class SignupRequest(AppModel):
+class SignupRequest(BaseSchema):
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
@@ -21,43 +19,43 @@ class SignupRequest(AppModel):
 # --- Signup response data (only present for company/recruiter flows) ---
 
 
-class SignupData(AppModel):
+class SignupData(BaseSchema):
     setup_token: str | None = None
 
 
-class LoginRequest(AppModel):
+class LoginRequest(BaseSchema):
     email: EmailStr
     password: str
     remember_me: bool = False
 
 
-class ForgotPasswordRequest(AppModel):
+class ForgotPasswordRequest(BaseSchema):
     email: EmailStr
 
 
-class ResetPasswordRequest(AppModel):
+class ResetPasswordRequest(BaseSchema):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
 
 
-class VerifyEmailRequest(AppModel):
+class VerifyEmailRequest(BaseSchema):
     token: str
 
 
 # --- Responses ---
 
 
-class TokenResponse(AppModel):
+class TokenResponse(BaseSchema):
     access_token: str
     token_type: str = "bearer"
 
 
-class GoogleRegisterRequest(AppModel):
+class GoogleRegisterRequest(BaseSchema):
     signup_token: str
     primary_role: UserRole
 
 
-class AuthUserResponse(AppModel):
+class AuthUserResponse(BaseSchema):
     id: UUID
     full_name: str
     email: EmailStr
@@ -67,12 +65,12 @@ class AuthUserResponse(AppModel):
     membership_status: MembershipStatus | None = None
 
 
-class LoginResponse(AppModel):
+class LoginResponse(BaseSchema):
     tokens: TokenResponse
     user: AuthUserResponse
 
 
-class UserResponse(AppModel):
+class UserResponse(BaseSchema):
     id: UUID
     full_name: str
     email: EmailStr

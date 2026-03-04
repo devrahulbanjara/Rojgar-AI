@@ -124,13 +124,26 @@ def create_pending_signup_token(data: dict) -> str:
 def decode_pending_signup_token(token: str) -> dict | None:
     """
     Validates a pending-signup JWT.
-    Returns the full payload dict if valid and ``type`` starts with ``"pending_"``, else None.
+    Returns the full payload dict if the ``type`` is one of the recognised
+    signup-flow values, else None.
+
+    Recognised types:
+      • ``"setup"``             – recruiter/admin after initial signup, before company step
+      • ``"pending_candidate"`` – candidate awaiting email verification
+      • ``"pending_company"``   – recruiter_admin; carries company details
+      • ``"pending_recruiter"`` – recruiter; carries join-company details
     """
+    _VALID_TYPES = {
+        "setup",
+        "pending_candidate",
+        "pending_company",
+        "pending_recruiter",
+    }
     try:
         payload = jwt.decode(
             token, settings.secret_key, algorithms=[settings.algorithm]
         )
-        if not str(payload.get("type", "")).startswith("pending_"):
+        if payload.get("type") not in _VALID_TYPES:
             return None
         return payload
     except (jwt.PyJWTError, KeyError):

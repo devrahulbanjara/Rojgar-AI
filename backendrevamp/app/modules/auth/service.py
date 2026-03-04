@@ -19,9 +19,13 @@ from app.core.security import (
     verify_password,
 )
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
-from app.modules.auth.models import Company, CompanyMembership, OAuthAccount, RefreshToken, User
+from app.modules.auth.models import (
+    OAuthAccount,
+    RefreshToken,
+    User,
+)
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.auth.schemas import (
-    AuthUserResponse,
     ForgotPasswordRequest,
     GoogleRegisterRequest,
     LoginRequest,
@@ -31,41 +35,12 @@ from app.modules.auth.schemas import (
     UserResponse,
     VerifyEmailRequest,
 )
-
-
-async def _get_membership_status(
-    db: AsyncSession, user: User
-) -> MembershipStatus | None:
-    """Return the membership status for recruiter users; None for all other roles."""
-    if user.primary_role != UserRole.recruiter:
-        return None
-    result = await db.execute(
-        select(CompanyMembership)
-        .where(CompanyMembership.user_id == user.id)
-        .order_by(CompanyMembership.created_at.desc())
-        .limit(1)
-    )
-    membership = result.scalar_one_or_none()
-    return membership.status if membership else None
-
-
-async def _build_user_dict(db: AsyncSession, user: User) -> dict:
-    """Build a user dict (matching AuthUserResponse) enriched with membership_status."""
-    ms = await _get_membership_status(db, user)
-    return {
-        "id": user.id,
-        "full_name": user.full_name,
-        "email": user.email,
-        "primary_role": user.primary_role,
-        "is_email_verified": user.is_email_verified,
-        "avatar_url": user.avatar_url,
-        "membership_status": ms,
-    }
+from app.modules.auth.utils import build_user_dict, get_membership_status
 
 
 async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
-    """Return a UserResponse enriched with membership_status for /auth/me."""
-    ms = await _get_membership_status(db, user)
+    """Return authenticated user's profile with membership status."""
+    ms = await get_membership_status(db, user)
     return UserResponse(
         id=user.id,
         full_name=user.full_name,
@@ -81,44 +56,42 @@ async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
 async def signup(
     db: AsyncSession, payload: SignupRequest, bg_tasks: BackgroundTasks
 ) -> SignupData:
-    """
-    Stage 1 of signup: validate uniqueness, build a signed pending-signup JWT,
-    and send it as the email-verification link.
-    NO database row is written here — the user is created only when they click
-    the verification link (see verify_email below).
-    """
+    """Validate email uniqueness, generate pending-signup token, and send verification email."""
     result = await db.execute(select(User).where(User.email == payload.email))
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
 
-    # Build the pending token.  For simple candidates we use type="pending_candidate";
-    # company/recruiter tokens are later upgraded by their respective staging endpoints.
-    pending_token = create_pending_signup_token({
-        "type": "pending_candidate",
+    # Build the common pending data shared by all roles.
+    pending_data = {
         "full_name": payload.full_name,
         "email": payload.email,
         "password_hash": hash_password(payload.password),
         "primary_role": payload.primary_role.value,
-    })
+    }
 
-    bg_tasks.add_task(EmailService.send_verification, payload.email, pending_token)
-    logger.info(f"Pending signup initiated for {payload.email}")
-
-    # For company/recruiter the frontend must call /company/register or
-    # /company/join-request next, passing this token as setup_token so those
-    # endpoints can bundle company data and re-send the final verification email.
-    needs_setup = payload.primary_role in (UserRole.company, UserRole.recruiter)
-    return SignupData(setup_token=pending_token if needs_setup else None)
+    if payload.primary_role == UserRole.candidate:
+        # Candidates: send verification email immediately; no setup step needed.
+        pending_data["type"] = "pending_candidate"
+        token = create_pending_signup_token(pending_data)
+        bg_tasks.add_task(EmailService.send_verification, payload.email, token)
+        logger.info(f"Candidate signup initiated for {payload.email}")
+        return SignupData(setup_token=None)
+    else:
+        # Recruiters / admins: no email sent yet.
+        # The setup_token is used to attach company details before the first
+        # and only verification email is dispatched by the company endpoints.
+        pending_data["type"] = "setup"
+        token = create_pending_signup_token(pending_data)
+        logger.info(
+            f"Recruiter/admin signup initiated for {payload.email} (awaiting company step)"
+        )
+        return SignupData(setup_token=token)
 
 
 async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
-    """
-    Stage 2 of signup: decode the pending-signup JWT from the email link and
-    create the user in the database (plus company / join-request if applicable).
-    The user is marked is_email_verified=True from the moment of creation.
-    """
+    """Decode token from email link and create verified user (+ company/membership if applicable)."""
     data = decode_pending_signup_token(payload.token)
     if not data:
         raise HTTPException(
@@ -128,7 +101,6 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
 
     email: str = data["email"]
 
-    # Idempotency: clicking the link a second time just returns success
     existing = await db.execute(select(User).where(User.email == email))
     if existing.scalar_one_or_none():
         logger.info(f"Duplicate verify-email click ignored for {email}")
@@ -137,12 +109,23 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
     user = User(
         full_name=data["full_name"],
         email=email,
-        password_hash=data["password_hash"],
+        password_hash=data.get("password_hash"),  # None for social users
         primary_role=UserRole(data["primary_role"]),
+        avatar_url=data.get("avatar_url"),
         is_email_verified=True,
     )
     db.add(user)
     await db.flush()  # generate user.id before creating related rows
+
+    # Link OAuth account if this originated from a Google signup
+    if data.get("google_id"):
+        db.add(
+            OAuthAccount(
+                user_id=user.id,
+                provider="google",
+                provider_account_id=data["google_id"],
+            )
+        )
 
     token_type: str = data.get("type", "")
 
@@ -157,12 +140,14 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
         )
         db.add(company)
         await db.flush()
-        db.add(CompanyMembership(
-            user_id=user.id,
-            company_id=company.id,
-            role=MembershipRole.admin,
-            status=MembershipStatus.active,
-        ))
+        db.add(
+            CompanyMembership(
+                user_id=user.id,
+                company_id=company.id,
+                role=MembershipRole.admin,
+                status=MembershipStatus.active,
+            )
+        )
         logger.info(f"Company '{company.name}' created for {email} on verification")
 
     elif token_type == "pending_recruiter" and data.get("join_company_name"):
@@ -171,19 +156,24 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
         )
         company = company_result.scalar_one_or_none()
         if company:
-            db.add(CompanyMembership(
-                user_id=user.id,
-                company_id=company.id,
-                role=MembershipRole.recruiter,
-                status=MembershipStatus.pending,
-            ))
-            logger.info(f"Recruiter {email} pending join for '{data['join_company_name']}' created")
+            db.add(
+                CompanyMembership(
+                    user_id=user.id,
+                    company_id=company.id,
+                    role=MembershipRole.recruiter,
+                    status=MembershipStatus.pending,
+                )
+            )
+            logger.info(
+                f"Recruiter {email} pending join for '{data['join_company_name']}' created"
+            )
 
     await db.commit()
     logger.info(f"User created via email verification: {email}")
 
 
 async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> dict:
+    """Verify credentials, create tokens, set refresh cookie, and return user data."""
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
 
@@ -218,14 +208,19 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
     # This ensures the frontend only sees the access_token
     tokens.pop("refresh_token")
 
-    user_dict = await _build_user_dict(db, user)
+    user_dict = await build_user_dict(db, user)
     return {"tokens": tokens, "user": user_dict}
 
 
 async def google_register(
     db: AsyncSession, payload: GoogleRegisterRequest, response: Response
 ) -> dict:
-    """Complete Two-Phase Social Signup: validate the signup token, create the user, and log them in."""
+    """Validate signup token, create user from Google data, and return logged-in user + tokens.
+
+    For non-candidate roles the user is NOT created immediately.
+    Instead a ``setup`` token is returned so the frontend can redirect
+    the user to the Company Registration / Join-Company step first.
+    """
     data = decode_signup_token(payload.signup_token)
     if not data:
         raise HTTPException(
@@ -241,7 +236,24 @@ async def google_register(
             detail="An account with this email already exists. Please log in.",
         )
 
-    # Create the User and OAuthAccount atomically
+    # ---- Non-candidate: defer user creation until company step is done ----
+    if payload.primary_role in (UserRole.recruiter, UserRole.recruiter_admin):
+        pending_data = {
+            "type": "setup",
+            "full_name": data["full_name"],
+            "email": data["email"],
+            "google_id": data["google_id"],
+            "avatar_url": data.get("avatar_url"),
+            "password_hash": None,  # social users have no password
+            "primary_role": payload.primary_role.value,
+        }
+        setup_token = create_pending_signup_token(pending_data)
+        logger.info(
+            f"Google recruiter/admin signup deferred for {data['email']} (awaiting company step)"
+        )
+        return {"action": "requires_setup", "setup_token": setup_token}
+
+    # ---- Candidate: create user immediately (as before) ----
     user = User(
         full_name=data["full_name"],
         email=data["email"],
@@ -273,12 +285,12 @@ async def google_register(
     await db.commit()
 
     logger.info(f"New user registered via Google: {user.email} as {user.primary_role}")
-    tokens.pop("refresh_token")
-    user_dict = await _build_user_dict(db, user)
+    user_dict = await build_user_dict(db, user)
     return {"tokens": tokens, "user": user_dict}
 
 
 async def login_swagger(db: AsyncSession, payload: OAuth2PasswordRequestForm) -> dict:
+    """Verify credentials and return access token (Swagger UI compatibility)."""
     result = await db.execute(select(User).where(User.email == payload.username))
     user = result.scalar_one_or_none()
 
@@ -312,6 +324,7 @@ async def login_swagger(db: AsyncSession, payload: OAuth2PasswordRequestForm) ->
 async def refresh_tokens(
     db: AsyncSession, refresh_token: str | None, response: Response
 ) -> dict:
+    """Validate and rotate refresh token, return new access token."""
     # 1. Check if token exists
     if not refresh_token:
         raise HTTPException(
@@ -375,6 +388,7 @@ async def refresh_tokens(
 async def logout(
     db: AsyncSession, refresh_token: str | None, response: Response
 ) -> dict:
+    """Revoke refresh token and clear authentication cookie."""
     # 1. Delete from DB (only if a token was provided — handles already-logged-out users)
     if refresh_token:
         decoded = decode_refresh_token(refresh_token)
@@ -391,6 +405,7 @@ async def logout(
 async def forgot_password(
     db: AsyncSession, payload: ForgotPasswordRequest, bg_tasks: BackgroundTasks
 ) -> dict:
+    """Generate reset token and send password reset email (if user exists)."""
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
 
@@ -404,14 +419,13 @@ async def forgot_password(
 
         # Queue the reset email AFTER the commit succeeds.
         # If the commit failed, this never runs — no email for a token that doesn't exist.
-        bg_tasks.add_task(
-            EmailService.send_password_reset, user.email, reset_token
-        )
+        bg_tasks.add_task(EmailService.send_password_reset, user.email, reset_token)
 
     return {"message": "If that email exists, a reset link has been sent"}
 
 
 async def reset_password(db: AsyncSession, payload: ResetPasswordRequest) -> dict:
+    """Validate reset token and update password, revoke all refresh tokens."""
     result = await db.execute(
         select(User).where(User.password_reset_token == payload.token)
     )

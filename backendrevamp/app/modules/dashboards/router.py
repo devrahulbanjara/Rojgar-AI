@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends
 
 from app.core.responses import ResponseBuilder
-from app.modules.auth.dependencies import require_candidate, require_recruiter
+from app.modules.auth.dependencies import (
+    require_candidate,
+    require_recruiter_privileges,
+)
 from app.modules.auth.models import User
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
@@ -29,7 +32,9 @@ async def get_candidate_dashboard(
 
 
 @router.get("/recruiter")
-async def get_recruiter_dashboard(current_user: User = Depends(require_recruiter)):
+async def get_recruiter_dashboard(
+    current_user: User = Depends(require_recruiter_privileges),
+):
     # Accessing the user ID
     recruiter_id = current_user.id
 

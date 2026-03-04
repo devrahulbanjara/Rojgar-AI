@@ -1,12 +1,9 @@
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
+from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus
-
-
-class AppModel(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------------------------------------------------------------------------
@@ -14,8 +11,8 @@ class AppModel(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class RegisterCompanyRequest(AppModel):
-    """Payload sent by the frontend after signing up with primary_role='company'."""
+class RegisterCompanyRequest(BaseSchema):
+    """Payload sent by the frontend after signing up with primary_role='recruiter_admin'."""
 
     setup_token: str
     company_name: str = Field(min_length=1, max_length=255)
@@ -26,7 +23,7 @@ class RegisterCompanyRequest(AppModel):
     description: str | None = None
 
 
-class JoinCompanyRequest(AppModel):
+class JoinCompanyRequest(BaseSchema):
     """Payload sent by recruiters requesting to join an existing company."""
 
     setup_token: str
@@ -39,7 +36,7 @@ class JoinCompanyRequest(AppModel):
 # ---------------------------------------------------------------------------
 
 
-class CompanyResponse(AppModel):
+class CompanyResponse(BaseSchema):
     id: UUID
     name: str
     industry: str | None = None
@@ -54,8 +51,9 @@ class CompanyResponse(AppModel):
 # ---------------------------------------------------------------------------
 
 
-class RecruiterMemberResponse(AppModel):
+class RecruiterMemberResponse(BaseSchema):
     """A single recruiter member of the company, as seen by the company admin."""
+
     membership_id: UUID
     user_id: UUID
     full_name: str
@@ -65,8 +63,9 @@ class RecruiterMemberResponse(AppModel):
     joined_at: datetime
 
 
-class UpdateRecruiterStatusRequest(AppModel):
+class UpdateRecruiterStatusRequest(BaseSchema):
     """Approve or reject a pending recruiter join request."""
+
     status: MembershipStatus = Field(
         ...,
         description="Must be 'active' (approve) or 'rejected' (reject)",

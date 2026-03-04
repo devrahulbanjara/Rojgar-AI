@@ -49,57 +49,57 @@ type EmptyResponse = ApiResponse<null>;
 
 export const companyApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** GET /company/me */
+    /** GET /companies/me */
     getMyCompany: builder.query<CompanyProfile, void>({
-      query: () => "/company/me",
+      query: () => "/companies/me",
       providesTags: ["Company"],
     }),
 
-    /** PATCH /company/me */
+    /** PATCH /companies/me */
     updateCompany: builder.mutation<
       CompanyProfile,
       UpdateCompanyProfileRequest
     >({
       query: (body) => ({
-        url: "/company/me",
+        url: "/companies/me",
         method: "PATCH",
         body,
       }),
       invalidatesTags: ["Company"],
     }),
 
-    /** GET /company/me/jobs */
+    /** GET /companies/me/jobs */
     getCompanyJobs: builder.query<
       Paginated<JobListing>,
       { page?: number; limit?: number; status?: JobListing["status"] }
     >({
       query: ({ page = 1, limit = 10, status } = {}) => ({
-        url: "/company/me/jobs",
+        url: "/companies/me/jobs",
         params: { page, limit, ...(status && { status }) },
       }),
       providesTags: ["Jobs"],
     }),
 
-    /** GET /company/me/jobs/:id */
+    /** GET /companies/me/jobs/:id */
     getCompanyJobById: builder.query<JobListing, string>({
-      query: (id) => `/company/me/jobs/${id}`,
+      query: (id) => `/companies/me/jobs/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Jobs", id }],
     }),
 
-    /** POST /company/me/jobs */
+    /** POST /companies/me/jobs */
     createJob: builder.mutation<JobListing, CreateJobRequest>({
       query: (body) => ({
-        url: "/company/me/jobs",
+        url: "/companies/me/jobs",
         method: "POST",
         body,
       }),
       invalidatesTags: ["Jobs"],
     }),
 
-    /** PATCH /company/me/jobs/:id */
+    /** PATCH /companies/me/jobs/:id */
     updateJob: builder.mutation<JobListing, { id: string } & UpdateJobRequest>({
       query: ({ id, ...body }) => ({
-        url: `/company/me/jobs/${id}`,
+        url: `/companies/me/jobs/${id}`,
         method: "PATCH",
         body,
       }),
@@ -109,16 +109,16 @@ export const companyApi = baseApi.injectEndpoints({
       ],
     }),
 
-    /** DELETE /company/me/jobs/:id */
+    /** DELETE /companies/me/jobs/:id */
     deleteJob: builder.mutation<{ message: string }, string>({
       query: (id) => ({
-        url: `/company/me/jobs/${id}`,
+        url: `/companies/me/jobs/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Jobs"],
     }),
 
-    /** GET /company/me/candidates */
+    /** GET /companies/me/candidates */
     getCompanyCandidates: builder.query<
       Paginated<JobApplication>,
       {
@@ -129,7 +129,7 @@ export const companyApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ page = 1, limit = 10, jobId, status } = {}) => ({
-        url: "/company/me/candidates",
+        url: "/companies/me/candidates",
         params: {
           page,
           limit,
@@ -140,33 +140,33 @@ export const companyApi = baseApi.injectEndpoints({
       providesTags: ["Candidates"],
     }),
 
-    /** PATCH /company/me/candidates/:applicationId/status */
+    /** PATCH /companies/me/candidates/:applicationId/status */
     updateCandidateStatus: builder.mutation<
       JobApplication,
       { applicationId: string; status: JobApplication["status"] }
     >({
       query: ({ applicationId, status }) => ({
-        url: `/company/me/candidates/${applicationId}/status`,
+        url: `/companies/me/candidates/${applicationId}/status`,
         method: "PATCH",
         body: { status },
       }),
       invalidatesTags: ["Candidates", "Applications"],
     }),
 
-    /** POST /company/register — stage company details and resend verification email */
+    /** POST /companies/register — stage company details and resend verification email */
     registerCompany: builder.mutation<EmptyResponse, RegisterCompanyRequest>({
       query: (body) => ({
-        url: "/company/register",
+        url: "/companies/register",
         method: "POST",
         body,
       }),
       invalidatesTags: ["Company"],
     }),
 
-    /** POST /company/join-request — request to join an existing company */
+    /** POST /companies/join-request — request to join an existing company */
     requestJoinCompany: builder.mutation<EmptyResponse, JoinCompanyRequest>({
       query: (body) => ({
-        url: "/company/join-request",
+        url: "/companies/join-request",
         method: "POST",
         body,
       }),
@@ -176,29 +176,29 @@ export const companyApi = baseApi.injectEndpoints({
     // Recruiter management (company admin only)
     // -----------------------------------------------------------------------
 
-    /** GET /company/me/recruiters */
+    /** GET /companies/me/recruiters */
     getCompanyRecruiters: builder.query<ApiResponse<RecruiterMember[]>, void>({
-      query: () => "/company/me/recruiters",
+      query: () => "/companies/me/recruiters",
       providesTags: ["Company"],
     }),
 
-    /** PATCH /company/me/recruiters/:membershipId/status */
+    /** PATCH /companies/me/recruiters/:membershipId/status */
     updateRecruiterStatus: builder.mutation<
       ApiResponse<RecruiterMember>,
       { membershipId: string; status: "active" | "rejected" }
     >({
       query: ({ membershipId, status }) => ({
-        url: `/company/me/recruiters/${membershipId}/status`,
+        url: `/companies/me/recruiters/${membershipId}/status`,
         method: "PATCH",
         body: { status },
       }),
       invalidatesTags: ["Company"],
     }),
 
-    /** DELETE /company/me/recruiters/:membershipId */
+    /** DELETE /companies/me/recruiters/:membershipId */
     removeRecruiter: builder.mutation<EmptyResponse, string>({
       query: (membershipId) => ({
-        url: `/company/me/recruiters/${membershipId}`,
+        url: `/companies/me/recruiters/${membershipId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Company"],

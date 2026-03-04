@@ -41,7 +41,10 @@ db = Depends(get_db)
 
 
 @router.post(
-    "/signup", response_model=UnifiedResponse[SignupData], status_code=status.HTTP_201_CREATED
+    "/signup",
+    response_model=UnifiedResponse[SignupData],
+    status_code=status.HTTP_201_CREATED,
+    summary="Stage 1 of local signup: validates credentials and sends verification email",
 )
 async def signup(
     payload: SignupRequest,
@@ -56,19 +59,31 @@ async def signup(
     )
 
 
-@router.post("/verify-email", response_model=UnifiedResponse[None])
+@router.post(
+    "/verify-email",
+    response_model=UnifiedResponse[None],
+    summary="Complete account creation after email verification",
+)
 async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = db):
     await service.verify_email(db, payload)
     return ResponseBuilder.success(message="Email verified successfully")
 
 
-@router.post("/login", response_model=UnifiedResponse[LoginResponse])
+@router.post(
+    "/login",
+    response_model=UnifiedResponse[LoginResponse],
+    summary="Authenticate with email and password, return access and refresh tokens",
+)
 async def login(payload: LoginRequest, response: Response, db: AsyncSession = db):
     result = await service.login(db, payload, response)
     return ResponseBuilder.success(data=result, message="Login successful")
 
 
-@router.post("/refresh", response_model=UnifiedResponse[TokenResponse])
+@router.post(
+    "/refresh",
+    response_model=UnifiedResponse[TokenResponse],
+    summary="Refresh expired access token using refresh token cookie",
+)
 async def refresh(
     response: Response,
     refresh_token: str | None = Cookie(None),
@@ -78,7 +93,11 @@ async def refresh(
     return ResponseBuilder.success(data=result, message="Tokens refreshed")
 
 
-@router.post("/logout", response_model=UnifiedResponse[None])
+@router.post(
+    "/logout",
+    response_model=UnifiedResponse[None],
+    summary="Invalidate refresh token and clear authentication cookies",
+)
 async def logout(
     response: Response,
     refresh_token: str | None = Cookie(None),
@@ -88,7 +107,11 @@ async def logout(
     return ResponseBuilder.success(message="Logged out successfully")
 
 
-@router.post("/forgot-password", response_model=UnifiedResponse[None])
+@router.post(
+    "/forgot-password",
+    response_model=UnifiedResponse[None],
+    summary="Initiate password reset flow: sends reset link to email",
+)
 async def forgot_password(
     payload: ForgotPasswordRequest,
     bg_tasks: BackgroundTasks,
@@ -100,7 +123,11 @@ async def forgot_password(
     )
 
 
-@router.post("/reset-password", response_model=UnifiedResponse[None])
+@router.post(
+    "/reset-password",
+    response_model=UnifiedResponse[None],
+    summary="Complete password reset using token from reset link",
+)
 async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = db):
     await service.reset_password(db, payload)
     return ResponseBuilder.success(
@@ -122,7 +149,11 @@ async def login_swagger(
 # --- Protected Routes ---
 
 
-@router.get("/me", response_model=UnifiedResponse[UserResponse])
+@router.get(
+    "/me",
+    response_model=UnifiedResponse[UserResponse],
+    summary="Get authenticated user's profile information",
+)
 async def get_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = db,
@@ -134,7 +165,10 @@ async def get_me(
 # --- Google OAuth ---
 
 
-@router.get("/google")
+@router.get(
+    "/google",
+    summary="Initiate Google OAuth flow: redirects to Google login",
+)
 async def google_login(response: Response):
     csrf_token = secrets.token_urlsafe(16)
 
@@ -152,7 +186,10 @@ async def google_login(response: Response):
     return RedirectResponse(url)
 
 
-@router.get("/google/callback")
+@router.get(
+    "/google/callback",
+    summary="Handle Google OAuth callback: creates or logs in user",
+)
 async def google_callback(
     code: str,
     state: str,
@@ -176,13 +213,13 @@ async def google_callback(
     "/google/register",
     response_model=UnifiedResponse[LoginResponse],
     status_code=status.HTTP_201_CREATED,
+    summary="Complete two-phase Google signup: consume signup_token and create account",
 )
 async def google_register(
     payload: GoogleRegisterRequest,
     response: Response,
     db: AsyncSession = db,
 ):
-    """Complete Two-Phase Social Signup: consume the signup_token and create the account."""
     result = await service.google_register(db, payload, response)
     return ResponseBuilder.success(
         data=result,
