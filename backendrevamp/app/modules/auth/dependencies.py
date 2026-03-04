@@ -61,11 +61,45 @@ async def require_recruiter(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-async def require_company(user: User = Depends(get_current_user)) -> User:
-    if user.primary_role != UserRole.company:
+async def require_recruiter_admin(user: User = Depends(get_current_user)) -> User:
+    if user.primary_role != UserRole.recruiter_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied: Company role required",
+            detail="Access denied: Recruiter-admin role required",
+        )
+    return user
+
+
+async def require_recruiter_privileges(user: User = Depends(get_current_user)) -> User:
+    """The standard dependency for Job management and Dashboards.
+
+    Allows both staff recruiters and company admins.
+    """
+    if user.primary_role not in (UserRole.recruiter, UserRole.recruiter_admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Recruiter or Company Admin role required",
+        )
+    return user
+
+
+async def require_active_membership(
+    user: User = Depends(require_recruiter_privileges),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Higher-security gate: ensures the recruiter holds an *active* company membership.
+
+    Use this on endpoints where a pending or rejected recruiter must be blocked
+    (e.g. posting jobs, viewing applications).
+    """
+    from app.modules.auth.utils import get_membership_status
+    from app.modules.auth.enums import MembershipStatus as MS
+
+    ms = await get_membership_status(db, user)
+    if ms != MS.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your company membership is not active.",
         )
     return user
 

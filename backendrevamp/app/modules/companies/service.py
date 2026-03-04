@@ -6,22 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_pending_signup_token, decode_pending_signup_token
 from app.integrations.email.service import EmailService
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
-from app.modules.auth.models import Company, CompanyMembership, User
-from app.modules.company.schemas import (
+from app.modules.auth.models import User
+from app.modules.companies.models import Company, CompanyMembership
+from app.modules.companies.schemas import (
     JoinCompanyRequest,
     RecruiterMemberResponse,
     RegisterCompanyRequest,
     UpdateRecruiterStatusRequest,
 )
-
-
-# ---------------------------------------------------------------------------
-# Stage 2 helpers (called immediately after POST /auth/signup)
-# No database rows are written here.  Everything is bundled into a new
-# pending-signup JWT and the verification email is (re-)sent.
-# The actual User / Company / CompanyMembership rows are created in
-# POST /auth/verify-email when the user clicks the link.
-# ---------------------------------------------------------------------------
+from app.modules.companies.utils import get_admin_company
 
 
 async def register_company(
@@ -29,24 +22,18 @@ async def register_company(
     payload: RegisterCompanyRequest,
     bg_tasks: BackgroundTasks,
 ) -> None:
-    """
-    Stage 2 of the company signup flow.
-
-    Decodes the pending-signup token returned by POST /auth/signup, validates
-    the role, bundles the company details into a new ``pending_company`` JWT,
-    and resends the verification email containing the updated link.
-    """
+    """Decode token, validate company role, bundle company details, and resend verification email."""
     data = decode_pending_signup_token(payload.setup_token)
-    if not data:
+    if not data or data.get("type") != "setup":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired setup token. Please sign up again.",
+            detail="Invalid session for company registration.",
         )
 
-    if data.get("primary_role") != UserRole.company:
+    if data.get("primary_role") != UserRole.recruiter_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only users with the 'company' role can register a company.",
+            detail="Only users with the 'recruiter_admin' role can register a company.",
         )
 
     email: str = data["email"]
@@ -60,19 +47,21 @@ async def register_company(
         )
 
     # Build a new pending token that carries the company details
-    company_pending_token = create_pending_signup_token({
-        "type": "pending_company",
-        "full_name": data["full_name"],
-        "email": email,
-        "password_hash": data["password_hash"],
-        "primary_role": data["primary_role"],
-        "company_name": payload.company_name,
-        "industry": payload.industry,
-        "company_size": payload.company_size,
-        "website": payload.website,
-        "location": payload.location,
-        "description": payload.description,
-    })
+    company_pending_token = create_pending_signup_token(
+        {
+            "type": "pending_company",
+            "full_name": data["full_name"],
+            "email": email,
+            "password_hash": data["password_hash"],
+            "primary_role": data["primary_role"],
+            "company_name": payload.company_name,
+            "industry": payload.industry,
+            "company_size": payload.company_size,
+            "website": payload.website,
+            "location": payload.location,
+            "description": payload.description,
+        }
+    )
 
     bg_tasks.add_task(EmailService.send_verification, email, company_pending_token)
     logger.info(f"Company signup verification email sent to {email}")
@@ -83,18 +72,12 @@ async def request_join_company(
     payload: JoinCompanyRequest,
     bg_tasks: BackgroundTasks,
 ) -> None:
-    """
-    Stage 2 of the recruiter signup flow.
-
-    Validates that the target company exists, then bundles the join-request
-    details into a new ``pending_recruiter`` JWT and resends the verification
-    email.  The pending CompanyMembership is created inside verify_email.
-    """
+    """Validate company exists, bundle join request details, and resend verification email."""
     data = decode_pending_signup_token(payload.setup_token)
-    if not data:
+    if not data or data.get("type") != "setup":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired setup token. Please sign up again.",
+            detail="Invalid session for join request.",
         )
 
     if data.get("primary_role") != UserRole.recruiter:
@@ -123,57 +106,27 @@ async def request_join_company(
             detail="This email has already been verified. Please log in.",
         )
 
-    recruiter_pending_token = create_pending_signup_token({
-        "type": "pending_recruiter",
-        "full_name": data["full_name"],
-        "email": email,
-        "password_hash": data["password_hash"],
-        "primary_role": data["primary_role"],
-        "join_company_name": payload.company_name,
-        "message": payload.message,
-    })
+    recruiter_pending_token = create_pending_signup_token(
+        {
+            "type": "pending_recruiter",
+            "full_name": data["full_name"],
+            "email": email,
+            "password_hash": data["password_hash"],
+            "primary_role": data["primary_role"],
+            "join_company_name": payload.company_name,
+            "message": payload.message,
+        }
+    )
 
     bg_tasks.add_task(EmailService.send_verification, email, recruiter_pending_token)
     logger.info(f"Recruiter join-request verification email sent to {email}")
 
 
-# ---------------------------------------------------------------------------
-# Recruiter management (company-admin only)
-# ---------------------------------------------------------------------------
-
-
-async def _get_admin_company(db: AsyncSession, user: User) -> Company:
-    """Return the Company that this company-admin user owns; 404 if not set up."""
-    result = await db.execute(
-        select(CompanyMembership).where(
-            CompanyMembership.user_id == user.id,
-            CompanyMembership.role == MembershipRole.admin,
-            CompanyMembership.status == MembershipStatus.active,
-        )
-    )
-    membership = result.scalar_one_or_none()
-    if not membership:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No active company found for this account.",
-        )
-    company_result = await db.execute(
-        select(Company).where(Company.id == membership.company_id)
-    )
-    company = company_result.scalar_one_or_none()
-    if not company:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Company not found.",
-        )
-    return company
-
-
 async def list_company_recruiters(
     db: AsyncSession, user: User
 ) -> list[RecruiterMemberResponse]:
-    """Return all recruiter memberships for the company admin's company."""
-    company = await _get_admin_company(db, user)
+    """List all recruiters for the admin's company."""
+    company = await get_admin_company(db, user)
     result = await db.execute(
         select(CompanyMembership, User)
         .join(User, CompanyMembership.user_id == User.id)
@@ -204,8 +157,8 @@ async def update_recruiter_status(
     membership_id: str,
     payload: UpdateRecruiterStatusRequest,
 ) -> RecruiterMemberResponse:
-    """Approve or reject a recruiter's join request."""
-    company = await _get_admin_company(db, user)
+    """Update recruiter membership status (approve or reject)."""
+    company = await get_admin_company(db, user)
 
     if payload.status not in (MembershipStatus.active, MembershipStatus.rejected):
         raise HTTPException(
@@ -248,11 +201,9 @@ async def update_recruiter_status(
     )
 
 
-async def remove_recruiter(
-    db: AsyncSession, user: User, membership_id: str
-) -> None:
-    """Remove a recruiter from the company (delete their membership)."""
-    company = await _get_admin_company(db, user)
+async def remove_recruiter(db: AsyncSession, user: User, membership_id: str) -> None:
+    """Delete recruiter membership from company."""
+    company = await get_admin_company(db, user)
 
     result = await db.execute(
         select(CompanyMembership).where(
@@ -270,6 +221,4 @@ async def remove_recruiter(
 
     await db.delete(membership)
     await db.commit()
-    logger.info(
-        f"Company {company.name}: recruiter membership {membership_id} removed"
-    )
+    logger.info(f"Company {company.name}: recruiter membership {membership_id} removed")

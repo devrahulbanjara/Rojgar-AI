@@ -62,8 +62,6 @@ examples/
 outputs/
 output/
 **/output/
-**/resumes/
-**/job_descriptions/
 
 checkpoints/
 model_outputs/

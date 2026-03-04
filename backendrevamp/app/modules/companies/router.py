@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.modules.auth.dependencies import require_company
+from app.modules.auth.dependencies import require_recruiter_admin
 from app.modules.auth.models import User
-from app.modules.company import service
-from app.modules.company.schemas import (
+from app.modules.companies import service
+from app.modules.companies.schemas import (
     JoinCompanyRequest,
     RecruiterMemberResponse,
     RegisterCompanyRequest,
@@ -22,18 +22,13 @@ db = Depends(get_db)
     "/register",
     response_model=UnifiedResponse[None],
     status_code=status.HTTP_201_CREATED,
-    summary="Stage 2 of company signup — bundles details and resends verification email",
+    summary="Stage 2 of company signup: bundles details and resends verification email",
 )
 async def register_company(
     payload: RegisterCompanyRequest,
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
-    """
-    Stores company details in the pending-signup JWT and resends the
-    verification email.  The Company row is created when the user clicks
-    the verification link (POST /auth/verify-email).
-    """
     await service.register_company(db, payload, bg_tasks)
     return ResponseBuilder.success(
         data=None,
@@ -46,18 +41,13 @@ async def register_company(
     "/join-request",
     response_model=UnifiedResponse[None],
     status_code=status.HTTP_201_CREATED,
-    summary="Stage 2 of recruiter signup — bundles join details and resends verification email",
+    summary="Stage 2 of recruiter signup: bundles join details and resends verification email",
 )
 async def request_join_company(
     payload: JoinCompanyRequest,
     bg_tasks: BackgroundTasks,
     db: AsyncSession = db,
 ):
-    """
-    Stores recruiter join-request details in the pending-signup JWT and
-    resends the verification email.  The CompanyMembership is created when
-    the user clicks the verification link (POST /auth/verify-email).
-    """
     await service.request_join_company(db, payload, bg_tasks)
     return ResponseBuilder.success(
         message="Almost there! Please check your email to verify your account and submit your join request.",
@@ -71,7 +61,7 @@ async def request_join_company(
     summary="List all recruiter members of the authenticated company admin's company",
 )
 async def get_company_recruiters(
-    user: User = Depends(require_company),
+    user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
     data = await service.list_company_recruiters(db, user)
@@ -86,7 +76,7 @@ async def get_company_recruiters(
 async def update_recruiter_status(
     membership_id: str,
     payload: UpdateRecruiterStatusRequest,
-    user: User = Depends(require_company),
+    user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
     data = await service.update_recruiter_status(db, user, membership_id, payload)
@@ -100,7 +90,7 @@ async def update_recruiter_status(
 )
 async def remove_recruiter(
     membership_id: str,
-    user: User = Depends(require_company),
+    user: User = Depends(require_recruiter_admin),
     db: AsyncSession = db,
 ):
     await service.remove_recruiter(db, user, membership_id)

@@ -4,8 +4,7 @@ from enum import Enum
 class UserRole(str, Enum):
     candidate = "candidate"
     recruiter = "recruiter"
-    company = "company"
-    admin = "admin"
+    recruiter_admin = "recruiter_admin"
 
 
 class MembershipRole(str, Enum):
