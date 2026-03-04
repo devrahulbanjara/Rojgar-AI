@@ -12,7 +12,7 @@
  *   <AuthGuard requiredRole={["company", "recruiter"]}>{children}</AuthGuard>
  */
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useAppSelector } from "@/store/hooks";
@@ -37,6 +37,13 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   const pathname = usePathname();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
 
+  // Ensure the initial client render matches the server (both output null)
+  // before the Redux store is rehydrated from localStorage.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     // Still hydrating from localStorage — wait
     if (typeof window === "undefined") return;
@@ -57,6 +64,8 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   }, [isAuthenticated, user, requiredRole, pathname, router]);
 
   // While redirecting, render nothing (avoids content flash)
+  if (!mounted) return null;
+
   if (
     !isAuthenticated ||
     !user ||
