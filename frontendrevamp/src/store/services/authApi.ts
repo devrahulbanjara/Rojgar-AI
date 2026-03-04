@@ -95,7 +95,7 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+      async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           if (data.success && data.data) {
@@ -103,6 +103,7 @@ export const authApi = baseApi.injectEndpoints({
               setCredentials({
                 accessToken: data.data.tokens.access_token,
                 user: data.data.user,
+                rememberMe: args.remember_me ?? false,
               }),
             );
           }

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { Poppins, Lato, Geist_Mono } from "next/font/google";
 import StoreProvider from "@/providers/StoreProvider";
 import LenisProvider from "@/providers/LenisProvider";
-import Toaster from "@/components/common/Toaster";
+import MainLayout from "@/components/layout/MainLayout";
+// ToasterNoSSR is a Client Component that uses dynamic(ssr:false) internally,
+// which is the correct pattern for Server Component layouts.
+import ToasterNoSSR from "@/components/common/ToasterNoSSR";
 import "@/app/globals.css";
 import "@/styles/main.scss";
 import "react-toastify/dist/ReactToastify.css";
-import MainLayout from "@/components/layout/MainLayout";
 
 const poppins = Poppins({
   variable: "--font-heading",
@@ -48,7 +50,7 @@ export default function RootLayout({
           <LenisProvider>
             <MainLayout>{children}</MainLayout>
           </LenisProvider>
-          <Toaster />
+          <ToasterNoSSR />
         </StoreProvider>
       </body>
     </html>

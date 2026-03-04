@@ -4,6 +4,8 @@ import { ToastContainer } from "react-toastify";
 
 /**
  * Global toast container — mounted once in the root layout.
+ * Imported via next/dynamic with ssr:false in layout.tsx so it never
+ * participates in SSR and won't cause hydration mismatches.
  * Call toast.success / toast.error / toast.info anywhere in the app.
  */
 export default function Toaster() {
