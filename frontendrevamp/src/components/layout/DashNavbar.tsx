@@ -5,6 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAppSelector } from "@/store/hooks";
+import {
+  DismissRegular,
+  SearchRegular,
+  AlertRegular,
+  ChevronDownRegular,
+  PersonRegular,
+  GridRegular,
+  DocumentRegular,
+  ArrowExitRegular,
+} from "@fluentui/react-icons";
 
 // DashRole uses the three canonical roles.
 export type DashRole = "candidate" | "recruiter_admin" | "recruiter";
@@ -132,33 +142,9 @@ export default function DashNavbar({
               aria-label="Toggle search"
             >
               {searchOpen ? (
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <DismissRegular style={{ fontSize: 16 }} />
               ) : (
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <SearchRegular style={{ fontSize: 16 }} />
               )}
             </button>
             <input
@@ -173,19 +159,7 @@ export default function DashNavbar({
           {/* Notifications */}
           <button className="dash-navbar__icon-btn" title="Notifications">
             <div className="dash-navbar__notif-dot" />
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
+            <AlertRegular style={{ fontSize: 18 }} />
           </button>
 
           {/* Profile dropdown */}
@@ -197,19 +171,10 @@ export default function DashNavbar({
               aria-expanded={dropdownOpen}
             >
               <div className="dash-navbar__avatar">{userInitials}</div>
-              <svg
+              <ChevronDownRegular
                 className={`dash-navbar__avatar-chevron${dropdownOpen ? " dash-navbar__avatar-chevron--open" : ""}`}
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+                style={{ fontSize: 12 }}
+              />
             </button>
 
             {dropdownOpen && (
@@ -236,46 +201,16 @@ export default function DashNavbar({
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
+                  <PersonRegular style={{ fontSize: 15 }} />
                   View Profile
                 </Link>
 
                 <Link
-                  href={
-                    role === "candidate"
-                      ? "/dashboard"
-                      : "/company"
-                  }
+                  href={role === "candidate" ? "/dashboard" : "/company"}
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                  </svg>
+                  <GridRegular style={{ fontSize: 15 }} />
                   Dashboard
                 </Link>
 
@@ -284,19 +219,7 @@ export default function DashNavbar({
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
+                  <DocumentRegular style={{ fontSize: 15 }} />
                   My Resume
                 </Link>
 
@@ -307,20 +230,7 @@ export default function DashNavbar({
                   className="dash-navbar__dropdown-item dash-navbar__dropdown-item--danger"
                   onClick={() => setDropdownOpen(false)}
                 >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
+                  <ArrowExitRegular style={{ fontSize: 15 }} />
                   Log Out
                 </Link>
               </div>

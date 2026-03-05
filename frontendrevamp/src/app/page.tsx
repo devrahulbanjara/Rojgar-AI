@@ -4,6 +4,7 @@ import HeroAnimations from "@/components/sections/HeroAnimations";
 import WhyPreferUs from "@/components/sections/WhyPreferUs";
 import FAQ from "@/components/sections/FAQ";
 import Pricing from "@/components/sections/Pricing";
+import { SearchRegular, LocationRegular } from "@fluentui/react-icons";
 
 export default function Home() {
   return (
@@ -41,20 +42,10 @@ export default function Home() {
           {/* Search bar */}
           <div className="homepage__search">
             <div className="homepage__search-field">
-              <svg
+              <SearchRegular
                 className="homepage__search-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
                 aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
+              />
               <input
                 className="homepage__search-input"
                 type="text"
@@ -64,20 +55,10 @@ export default function Home() {
             </div>
             <div className="homepage__search-divider" aria-hidden="true" />
             <div className="homepage__search-field">
-              <svg
+              <LocationRegular
                 className="homepage__search-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
                 aria-hidden="true"
-              >
-                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
+              />
               <input
                 className="homepage__search-input"
                 type="text"

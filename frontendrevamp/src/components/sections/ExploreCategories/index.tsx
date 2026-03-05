@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import Link from "next/link";
+import { ChevronLeftRegular, ChevronRightRegular } from "@fluentui/react-icons";
 
 const LOGOS = [
   { src: "/homepage/logoMarquee/google.png", alt: "Google" },
@@ -106,16 +107,7 @@ export default function ExploreCategories() {
             className="explore__nav explore__nav--prev"
             aria-label="Previous"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
+            <ChevronLeftRegular aria-hidden="true" />
           </button>
 
           <Swiper
@@ -152,16 +144,7 @@ export default function ExploreCategories() {
           </Swiper>
 
           <button className="explore__nav explore__nav--next" aria-label="Next">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+            <ChevronRightRegular aria-hidden="true" />
           </button>
         </div>
       </div>

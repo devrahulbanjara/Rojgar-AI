@@ -10,6 +10,7 @@ import {
   type CandidateProfileData,
   type UpdateProfileRequest,
 } from "@/store/services/profileApi";
+import { DocumentRegular, LocationRegular } from "@fluentui/react-icons";
 
 // ── Local form types ───────────────────────────────────────────
 
@@ -396,19 +397,7 @@ export default function ProfilePage() {
         <div className="dash-page-header__actions">
           <span className={statusClass}>{statusHint}</span>
           <Link href="/dashboard/resume" className="btn btn--outline btn--sm">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
+            <DocumentRegular width={13} height={13} aria-hidden="true" />
             My Resumes
           </Link>
         </div>
@@ -425,19 +414,7 @@ export default function ProfilePage() {
             </div>
             {form.location && (
               <div className="profile-aside-card__location">
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
+                <LocationRegular width={13} height={13} aria-hidden="true" />
                 {form.location}
               </div>
             )}

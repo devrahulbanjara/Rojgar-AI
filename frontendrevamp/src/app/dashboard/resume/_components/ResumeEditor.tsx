@@ -8,6 +8,7 @@ import type {
 } from "@/lib/types/resume";
 import { SECTIONS, type Section, uid } from "./resumeUtils";
 import SkillsSection from "./SkillsSection";
+import { ArrowLeftRegular } from "@fluentui/react-icons";
 
 // ── Resume editor form ─────────────────────────────────────────────────────
 
@@ -114,19 +115,7 @@ export default function ResumeEditor({
       {/* Editor topbar */}
       <div className="resume-editor__topbar">
         <button className="btn btn--ghost btn--sm" onClick={onClose}>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
+          <ArrowLeftRegular style={{ fontSize: 14 }} />
           Back to Resumes
         </button>
         <div className="resume-editor__title">{draft.name}</div>

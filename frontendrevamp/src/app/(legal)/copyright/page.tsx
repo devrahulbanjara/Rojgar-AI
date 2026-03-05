@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  CalendarRegular,
+  ShieldCheckmarkRegular,
+  ChevronRightRegular,
+} from "@fluentui/react-icons";
 
 export const metadata: Metadata = {
   title: "Copyright Notice — ConvexHire",
@@ -24,21 +29,21 @@ export default function CopyrightPage() {
   return (
     <div className="legal">
       <Image
-              src="/bg/bg-ui-v4.svg"
-              alt=""
-              width={700}
-              height={700}
-              className="legal__bg-top"
-              aria-hidden="true"
-            />
-            <Image
-              src="/bg/bg-ui-v3.svg"
-              alt=""
-              width={640}
-              height={640}
-              className="legal__bg-bottom"
-              aria-hidden="true"
-            />
+        src="/bg/bg-ui-v4.svg"
+        alt=""
+        width={700}
+        height={700}
+        className="legal__bg-top"
+        aria-hidden="true"
+      />
+      <Image
+        src="/bg/bg-ui-v3.svg"
+        alt=""
+        width={640}
+        height={640}
+        className="legal__bg-bottom"
+        aria-hidden="true"
+      />
 
       {/* Hero */}
       <div className="legal__hero">
@@ -46,35 +51,12 @@ export default function CopyrightPage() {
           <h1 className="legal__title">Copyright Notice</h1>
           <div className="legal__meta">
             <span className="legal__meta-item">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <CalendarRegular aria-hidden="true" />
               Effective: 1 Falgun 2081 BS (13 February 2025)
             </span>
             <span className="legal__meta-sep" aria-hidden="true" />
             <span className="legal__meta-item">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
+              <ShieldCheckmarkRegular aria-hidden="true" />
               Copyright Act 2059 (Nepal)
             </span>
           </div>
@@ -422,45 +404,15 @@ export default function CopyrightPage() {
 
           <nav className="legal__related" aria-label="Related policies">
             <Link href="/privacy" className="legal__related-link">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+              <ChevronRightRegular aria-hidden="true" />
               Privacy Policy
             </Link>
             <Link href="/cookies" className="legal__related-link">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+              <ChevronRightRegular aria-hidden="true" />
               Cookie Policy
             </Link>
             <Link href="/terms" className="legal__related-link">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+              <ChevronRightRegular aria-hidden="true" />
               Terms &amp; Conditions
             </Link>
           </nav>
