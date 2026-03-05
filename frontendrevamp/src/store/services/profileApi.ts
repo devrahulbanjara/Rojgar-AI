@@ -87,7 +87,7 @@ export const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** GET /profiles/me — authenticated candidate's own profile */
     getMyProfile: builder.query<ProfileApiResponse, void>({
-      query: () => "/profiles/me",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me`,
       providesTags: ["Profile"],
     }),
 
@@ -95,7 +95,7 @@ export const profileApi = baseApi.injectEndpoints({
     updateMyProfile: builder.mutation<ProfileApiResponse, UpdateProfileRequest>(
       {
         query: (body) => ({
-          url: "/profiles/me",
+          url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me`,
           method: "PUT",
           body,
         }),
@@ -105,7 +105,7 @@ export const profileApi = baseApi.injectEndpoints({
 
     /** GET /profiles/{user_id} — public profile by user ID */
     getPublicProfile: builder.query<ProfileApiResponse, string>({
-      query: (userId) => `/profiles/${userId}`,
+      query: (userId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/${userId}`,
       providesTags: (_result, _error, id) => [{ type: "Profile", id }],
     }),
   }),

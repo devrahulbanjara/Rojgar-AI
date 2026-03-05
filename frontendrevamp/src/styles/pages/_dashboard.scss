@@ -3655,7 +3655,7 @@
   display: flex;
   flex-direction: column;
   background: $color-gray-100;
-  overflow: hidden;
+  overflow: hidden; // clip the bar; scroll handled by __scroll child
 
   &__bar {
     display: flex;
@@ -3948,4 +3948,87 @@
   justify-content: center;
   min-height: 60vh;
   gap: $space-4;
+}
+
+// ── Resume field hint / error ─────────────────────────────────
+
+.resume-field__hint {
+  font-size: $font-size-xs;
+  color: $color-gray-400;
+  margin-top: $space-1;
+}
+
+.resume-field__error {
+  font-size: $font-size-xs;
+  color: $color-error;
+  margin-top: $space-2;
+}
+
+// ── Create Resume Modal ───────────────────────────────────────
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: $z-modal;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-4;
+}
+
+.modal {
+  background: $color-white;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-xl;
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-5 $space-6;
+    border-bottom: 1px solid $color-gray-100;
+  }
+
+  &__title {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: $font-size-lg;
+    line-height: 1;
+    color: $color-gray-400;
+    cursor: pointer;
+    padding: 0 $space-1;
+    border-radius: $radius-md;
+
+    &:hover {
+      color: $color-gray-700;
+      background: $color-gray-100;
+    }
+  }
+
+  &__body {
+    padding: $space-6;
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-3;
+    padding: $space-4 $space-6;
+    border-top: 1px solid $color-gray-100;
+    background: $color-gray-100;
+  }
 }

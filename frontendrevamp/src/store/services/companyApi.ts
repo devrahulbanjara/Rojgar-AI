@@ -51,7 +51,7 @@ export const companyApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** GET /companies/me */
     getMyCompany: builder.query<CompanyProfile, void>({
-      query: () => "/companies/me",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me`,
       providesTags: ["Company"],
     }),
 
@@ -61,7 +61,7 @@ export const companyApi = baseApi.injectEndpoints({
       UpdateCompanyProfileRequest
     >({
       query: (body) => ({
-        url: "/companies/me",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me`,
         method: "PATCH",
         body,
       }),
@@ -74,7 +74,7 @@ export const companyApi = baseApi.injectEndpoints({
       { page?: number; limit?: number; status?: JobListing["status"] }
     >({
       query: ({ page = 1, limit = 10, status } = {}) => ({
-        url: "/companies/me/jobs",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/jobs`,
         params: { page, limit, ...(status && { status }) },
       }),
       providesTags: ["Jobs"],
@@ -82,14 +82,14 @@ export const companyApi = baseApi.injectEndpoints({
 
     /** GET /companies/me/jobs/:id */
     getCompanyJobById: builder.query<JobListing, string>({
-      query: (id) => `/companies/me/jobs/${id}`,
+      query: (id) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/jobs/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Jobs", id }],
     }),
 
     /** POST /companies/me/jobs */
     createJob: builder.mutation<JobListing, CreateJobRequest>({
       query: (body) => ({
-        url: "/companies/me/jobs",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/jobs`,
         method: "POST",
         body,
       }),
@@ -99,7 +99,7 @@ export const companyApi = baseApi.injectEndpoints({
     /** PATCH /companies/me/jobs/:id */
     updateJob: builder.mutation<JobListing, { id: string } & UpdateJobRequest>({
       query: ({ id, ...body }) => ({
-        url: `/companies/me/jobs/${id}`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/jobs/${id}`,
         method: "PATCH",
         body,
       }),
@@ -112,7 +112,7 @@ export const companyApi = baseApi.injectEndpoints({
     /** DELETE /companies/me/jobs/:id */
     deleteJob: builder.mutation<{ message: string }, string>({
       query: (id) => ({
-        url: `/companies/me/jobs/${id}`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/jobs/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Jobs"],
@@ -129,7 +129,7 @@ export const companyApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ page = 1, limit = 10, jobId, status } = {}) => ({
-        url: "/companies/me/candidates",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/candidates`,
         params: {
           page,
           limit,
@@ -146,7 +146,7 @@ export const companyApi = baseApi.injectEndpoints({
       { applicationId: string; status: JobApplication["status"] }
     >({
       query: ({ applicationId, status }) => ({
-        url: `/companies/me/candidates/${applicationId}/status`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/candidates/${applicationId}/status`,
         method: "PATCH",
         body: { status },
       }),
@@ -156,7 +156,7 @@ export const companyApi = baseApi.injectEndpoints({
     /** POST /companies/register — stage company details and resend verification email */
     registerCompany: builder.mutation<EmptyResponse, RegisterCompanyRequest>({
       query: (body) => ({
-        url: "/companies/register",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/register`,
         method: "POST",
         body,
       }),
@@ -166,7 +166,7 @@ export const companyApi = baseApi.injectEndpoints({
     /** POST /companies/join-request — request to join an existing company */
     requestJoinCompany: builder.mutation<EmptyResponse, JoinCompanyRequest>({
       query: (body) => ({
-        url: "/companies/join-request",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/join-request`,
         method: "POST",
         body,
       }),
@@ -178,7 +178,7 @@ export const companyApi = baseApi.injectEndpoints({
 
     /** GET /companies/me/recruiters */
     getCompanyRecruiters: builder.query<ApiResponse<RecruiterMember[]>, void>({
-      query: () => "/companies/me/recruiters",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/recruiters`,
       providesTags: ["Company"],
     }),
 
@@ -188,7 +188,7 @@ export const companyApi = baseApi.injectEndpoints({
       { membershipId: string; status: "active" | "rejected" }
     >({
       query: ({ membershipId, status }) => ({
-        url: `/companies/me/recruiters/${membershipId}/status`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/recruiters/${membershipId}/status`,
         method: "PATCH",
         body: { status },
       }),
@@ -198,7 +198,7 @@ export const companyApi = baseApi.injectEndpoints({
     /** DELETE /companies/me/recruiters/:membershipId */
     removeRecruiter: builder.mutation<EmptyResponse, string>({
       query: (membershipId) => ({
-        url: `/companies/me/recruiters/${membershipId}`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/recruiters/${membershipId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Company"],

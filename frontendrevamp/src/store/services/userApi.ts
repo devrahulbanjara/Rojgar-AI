@@ -18,7 +18,7 @@ export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** GET /users/me/profile */
     getCandidateProfile: builder.query<CandidateProfile, void>({
-      query: () => "/users/me/profile",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/profile`,
       providesTags: ["User"],
     }),
 
@@ -28,7 +28,7 @@ export const userApi = baseApi.injectEndpoints({
       UpdateCandidateProfileRequest
     >({
       query: (body) => ({
-        url: "/users/me/profile",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/profile`,
         method: "PATCH",
         body,
       }),
@@ -37,14 +37,14 @@ export const userApi = baseApi.injectEndpoints({
 
     /** GET /users/me/resumes */
     getResumes: builder.query<Resume[], void>({
-      query: () => "/users/me/resumes",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/resumes`,
       providesTags: ["User"],
     }),
 
     /** POST /users/me/resumes (multipart/form-data) */
     uploadResume: builder.mutation<Resume, FormData>({
       query: (formData) => ({
-        url: "/users/me/resumes",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/resumes`,
         method: "POST",
         body: formData,
       }),
@@ -54,7 +54,7 @@ export const userApi = baseApi.injectEndpoints({
     /** DELETE /users/me/resumes/:id */
     deleteResume: builder.mutation<{ message: string }, string>({
       query: (id) => ({
-        url: `/users/me/resumes/${id}`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/resumes/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["User"],
@@ -66,7 +66,7 @@ export const userApi = baseApi.injectEndpoints({
       { page?: number; limit?: number; status?: JobApplication["status"] }
     >({
       query: ({ page = 1, limit = 10, status } = {}) => ({
-        url: "/users/me/applications",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/applications`,
         params: { page, limit, ...(status && { status }) },
       }),
       providesTags: ["Applications"],
@@ -74,7 +74,7 @@ export const userApi = baseApi.injectEndpoints({
 
     /** GET /users/me/applications/:id */
     getApplicationById: builder.query<JobApplication, string>({
-      query: (id) => `/users/me/applications/${id}`,
+      query: (id) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/applications/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Applications", id }],
     }),
   }),

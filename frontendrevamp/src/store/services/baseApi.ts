@@ -43,7 +43,7 @@ export interface ApiResponse<T = null> {
 // ---------------------------------------------------------------------------
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: "/api",
+  baseUrl: "", // all endpoints use absolute NEXT_PUBLIC_BACKEND_URL URLs
   credentials: "include", // sends HttpOnly refresh_token cookie on every request
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as { auth: { accessToken: string | null } }).auth
@@ -74,7 +74,11 @@ const baseQueryWithReauth: BaseQueryFn<
 
     // refresh_token is in the HttpOnly cookie — just POST with no body
     const refreshResult = await rawBaseQuery(
-      { url: "/auth/refresh", method: "POST", body: {} },
+      {
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
+        method: "POST",
+        body: {},
+      },
       api,
       extraOptions,
     );
@@ -113,6 +117,7 @@ export const baseApi = createApi({
     "Candidates",
     "Interviews",
     "Profile",
+    "Resumes",
   ],
   endpoints: () => ({}),
 });

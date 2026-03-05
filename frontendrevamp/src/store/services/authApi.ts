@@ -76,7 +76,7 @@ export const authApi = baseApi.injectEndpoints({
     /** POST /auth/signup — 201, data: SignupData | null */
     signup: builder.mutation<SignupResponse, SignupRequest>({
       query: (body) => ({
-        url: "/auth/signup",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
         method: "POST",
         body,
       }),
@@ -85,7 +85,7 @@ export const authApi = baseApi.injectEndpoints({
     /** POST /auth/verify-email — 200, data: null */
     verifyEmail: builder.mutation<EmptyResponse, VerifyEmailRequest>({
       query: (body) => ({
-        url: "/auth/verify-email",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify-email`,
         method: "POST",
         body,
       }),
@@ -96,7 +96,7 @@ export const authApi = baseApi.injectEndpoints({
      *  refresh_token is set as HttpOnly cookie by the backend. */
     login: builder.mutation<ApiResponse<LoginData>, LoginRequest>({
       query: (body) => ({
-        url: "/auth/login",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
         method: "POST",
         body,
       }),
@@ -123,7 +123,7 @@ export const authApi = baseApi.injectEndpoints({
      *  The reauth wrapper in baseApi calls this transparently on 401. */
     refresh: builder.mutation<ApiResponse<RefreshData>, void>({
       query: () => ({
-        url: "/auth/refresh",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
         method: "POST",
         body: {},
       }),
@@ -134,7 +134,7 @@ export const authApi = baseApi.injectEndpoints({
      *  We clear Redux + localStorage here. */
     logout: builder.mutation<EmptyResponse, void>({
       query: () => ({
-        url: "/auth/logout",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`,
         method: "POST",
         body: {},
       }),
@@ -160,7 +160,7 @@ export const authApi = baseApi.injectEndpoints({
     /** POST /auth/forgot-password — 200, data: null */
     forgotPassword: builder.mutation<EmptyResponse, ForgotPasswordRequest>({
       query: (body) => ({
-        url: "/auth/forgot-password",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forgot-password`,
         method: "POST",
         body,
       }),
@@ -169,7 +169,7 @@ export const authApi = baseApi.injectEndpoints({
     /** POST /auth/reset-password — 200, data: null */
     resetPassword: builder.mutation<EmptyResponse, ResetPasswordRequest>({
       query: (body) => ({
-        url: "/auth/reset-password",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/reset-password`,
         method: "POST",
         body,
       }),
@@ -177,7 +177,7 @@ export const authApi = baseApi.injectEndpoints({
 
     /** GET /auth/me — 200, data: AuthUser */
     getMe: builder.query<ApiResponse<AuthUser>, void>({
-      query: () => "/auth/me",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
       providesTags: ["User"],
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
@@ -195,7 +195,7 @@ export const authApi = baseApi.injectEndpoints({
     /** POST /auth/google/register — 201, data: LoginData | SignupData */
     googleRegister: builder.mutation<ApiResponse<LoginData | SignupData>, GoogleRegisterRequest>({
       query: (body) => ({
-        url: "/auth/google/register",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google/register`,
         method: "POST",
         body,
       }),
