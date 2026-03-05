@@ -8,7 +8,7 @@ export default function UserDashboardLayout({
 }) {
   return (
     <AuthGuard requiredRole="candidate">
-      <DashNavbar role="user" />
+      <DashNavbar role="candidate" />
       <main className="dash-page">{children}</main>
     </AuthGuard>
   );

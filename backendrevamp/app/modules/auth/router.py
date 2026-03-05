@@ -5,7 +5,6 @@ from fastapi import (
     BackgroundTasks,
     Cookie,
     Depends,
-    HTTPException,
     Response,
     status,
 )
@@ -169,11 +168,11 @@ async def get_me(
     "/google",
     summary="Initiate Google OAuth flow: redirects to Google login",
 )
-async def google_login(response: Response):
+async def google_login():
     csrf_token = secrets.token_urlsafe(16)
+    url = get_google_auth_url(csrf_token)
 
-    # Store the CSRF token in a short-lived httpOnly cookie.
-    # Google will echo it back in the state param so we can verify it on callback.
+    response = RedirectResponse(url)
     response.set_cookie(
         key="oauth_state",
         value=csrf_token,
@@ -181,9 +180,7 @@ async def google_login(response: Response):
         max_age=600,
         samesite="lax",
     )
-
-    url = get_google_auth_url(csrf_token)
-    return RedirectResponse(url)
+    return response
 
 
 @router.get(
@@ -193,25 +190,53 @@ async def google_login(response: Response):
 async def google_callback(
     code: str,
     state: str,
-    response: Response,
     oauth_state: str | None = Cookie(None),
     db: AsyncSession = db,
 ):
+    import json
+    from urllib.parse import urlencode
+    from app.core.config import settings
+
     # 1. state IS the raw CSRF token — compare directly
     if not oauth_state or state != oauth_state:
-        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+        return RedirectResponse(f"{settings.frontend_url}/login?error=invalid_state")
+
+    # Create the redirect response object first so oauth logic can set cookies on it
+    redirect_resp = RedirectResponse(url="/")
 
     # 2. Clean up the CSRF cookie immediately
-    response.delete_cookie("oauth_state")
+    redirect_resp.delete_cookie("oauth_state")
 
     # 3. Run the OAuth callback logic (new users receive a signup_token; existing users are logged in)
-    result = await google_oauth_callback(db, code, response)
-    return ResponseBuilder.success(data=result, message="Google login successful")
+    try:
+        result = await google_oauth_callback(db, code, redirect_resp)
+    except Exception:
+        redirect_resp.headers["location"] = (
+            f"{settings.frontend_url}/login?error=oauth_failed"
+        )
+        return redirect_resp
+
+    params = {}
+    if result["action"] == "login":
+        params["access_token"] = result["tokens"]["access_token"]
+        user_schema = UserResponse.model_validate(result["user"]).model_dump(
+            mode="json"
+        )
+        params["user"] = json.dumps(user_schema)
+    else:
+        params["setup_token"] = result["signup_token"]
+        params["user_info"] = json.dumps(result["user_info"])
+        params["action"] = "requires_setup"
+
+    redirect_resp.headers["location"] = (
+        f"{settings.frontend_url}/auth/oauth-callback?{urlencode(params)}"
+    )
+    return redirect_resp
 
 
 @router.post(
     "/google/register",
-    response_model=UnifiedResponse[LoginResponse],
+    response_model=UnifiedResponse[LoginResponse | SignupData],
     status_code=status.HTTP_201_CREATED,
     summary="Complete two-phase Google signup: consume signup_token and create account",
 )

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useSignupMutation,
   initiateGoogleOAuth,
+  useGoogleRegisterMutation,
 } from "@/store/services/authApi";
 import {
   useRegisterCompanyMutation,
@@ -422,16 +423,30 @@ function StepIndicator({ currentStep }: { currentStep: FlowStep }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isOAuth = searchParams.get("oauth") === "true";
+  const setupToken = searchParams.get("setup_token") || "";
+  let userInfo: { email?: string; full_name?: string } = {};
+  try {
+    const uiStr = searchParams.get("user_info");
+    if (uiStr) {
+      userInfo = JSON.parse(decodeURIComponent(uiStr));
+    }
+  } catch (e) {
+    console.error("Failed to parse user_info", e);
+  }
+
   const [signup, { isLoading: isSigningUp }] = useSignupMutation();
+  const [googleRegister, { isLoading: isGoogleRegistering }] = useGoogleRegisterMutation();
   const [registerCompany, { isLoading: isRegisteringCompany }] =
     useRegisterCompanyMutation();
   const [requestJoinCompany, { isLoading: isRequestingJoin }] =
     useRequestJoinCompanyMutation();
-  const isLoading = isSigningUp || isRegisteringCompany || isRequestingJoin;
+  const isLoading = isSigningUp || isRegisteringCompany || isRequestingJoin || isGoogleRegistering;
 
-  const [step, setStep] = useState<FlowStep>("credentials");
+  const [step, setStep] = useState<FlowStep>(isOAuth ? "intent" : "credentials");
 
   const [creds, setCreds] = useState<CredentialsState>({
     fullName: "",
@@ -440,6 +455,9 @@ export default function SignupPage() {
     confirmPassword: "",
     acceptTerms: false,
   });
+
+  const displayEmail = isOAuth ? userInfo.email : creds.email;
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -471,34 +489,45 @@ export default function SignupPage() {
     clearError(name);
   }
 
-  function handleCredentialsContinue(e: FormEvent<HTMLFormElement>) {
+  function handleCredentialsContinue(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const errs = validateCredentials(creds);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
-      return;
+      setStep("intent");
     }
-    setErrors({});
-    setStep("intent");
   }
-
-  // ── Step 2: Intent ─────────────────────────────────────────────────────
 
   async function handleIntentCandidate() {
     try {
-      const result = await signup({
-        full_name: creds.fullName,
-        email: creds.email,
-        password: creds.password,
-        primary_role: "candidate",
-      }).unwrap();
+      if (isOAuth) {
+        const result = await googleRegister({
+          signup_token: setupToken,
+          primary_role: "candidate",
+        }).unwrap();
 
-      if (result.success) {
-        setStep("email-verify");
+        if (result.success) {
+          router.push("/candidate");
+        } else {
+          toast.error(
+            result.message ?? "Something went wrong. Please try again.",
+          );
+        }
       } else {
-        toast.error(
-          result.message ?? "Something went wrong. Please try again.",
-        );
+        const result = await signup({
+          full_name: creds.fullName,
+          email: creds.email,
+          password: creds.password,
+          primary_role: "candidate",
+        }).unwrap();
+
+        if (result.success) {
+          setStep("email-verify");
+        } else {
+          toast.error(
+            result.message ?? "Something went wrong. Please try again.",
+          );
+        }
       }
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
@@ -509,7 +538,7 @@ export default function SignupPage() {
       const parsed = parseApiError(err, fieldMap);
       const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
       if (!hadFieldErrors) toast.error(parsed.message);
-      if (Object.keys(parsed.fieldErrors ?? {}).length > 0)
+      if (!isOAuth && Object.keys(parsed.fieldErrors ?? {}).length > 0)
         setStep("credentials");
     }
   }
@@ -526,7 +555,7 @@ export default function SignupPage() {
     clearError(name);
   }
 
-  async function handleCreateCompany(e: FormEvent<HTMLFormElement>) {
+  async function handleCreateCompany(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const errs = validateCompanyDetails(companyDetails);
     if (Object.keys(errs).length > 0) {
@@ -535,20 +564,44 @@ export default function SignupPage() {
     }
 
     try {
-      const signupResult = await signup({
-        full_name: creds.fullName,
-        email: creds.email,
-        password: creds.password,
-        primary_role: "company",
-      }).unwrap();
+      let finalSetupToken = "";
+      if (isOAuth) {
+        const signupResult = await googleRegister({
+          signup_token: setupToken,
+          primary_role: "recruiter_admin",
+        }).unwrap();
 
-      if (!signupResult.success) {
-        toast.error(signupResult.message ?? "Signup failed.");
-        return;
+        if (!signupResult.success || !signupResult.data) {
+          toast.error(signupResult.message ?? "Signup failed.");
+          return;
+        }
+
+        const data = signupResult.data;
+        if (data && "setup_token" in data) {
+          finalSetupToken = (data as { setup_token: string }).setup_token || "";
+        } else {
+          // If they already exist and were logged in by googleRegister,
+          // they won't have a setup_token (they're done).
+          router.push("/company");
+          return;
+        }
+      } else {
+        const signupResult = await signup({
+          full_name: creds.fullName,
+          email: creds.email,
+          password: creds.password,
+          primary_role: "recruiter_admin",
+        }).unwrap();
+
+        if (!signupResult.success || !signupResult.data?.setup_token) {
+          toast.error(signupResult.message ?? "Signup failed.");
+          return;
+        }
+        finalSetupToken = signupResult.data.setup_token;
       }
 
       await registerCompany({
-        setup_token: signupResult.data?.setup_token ?? "",
+        setup_token: finalSetupToken,
         company_name: companyDetails.companyName,
         industry: companyDetails.industry,
         company_size: companyDetails.companySize,
@@ -578,7 +631,7 @@ export default function SignupPage() {
 
   // ── Step 3b: Join company ──────────────────────────────────────────────
 
-  async function handleJoinCompany(e: FormEvent<HTMLFormElement>) {
+  async function handleJoinCompany(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!joinCompanyName.trim()) {
       setErrors({ joinCompanyName: "Please enter the company name." });
@@ -586,20 +639,37 @@ export default function SignupPage() {
     }
 
     try {
-      const signupResult = await signup({
-        full_name: creds.fullName,
-        email: creds.email,
-        password: creds.password,
-        primary_role: "recruiter",
-      }).unwrap();
+      let finalSetupToken = "";
+      if (isOAuth) {
+        const signupResult = await googleRegister({
+          signup_token: setupToken,
+          primary_role: "recruiter",
+        }).unwrap();
 
-      if (!signupResult.success) {
-        toast.error(signupResult.message ?? "Signup failed.");
-        return;
+        const data = signupResult.data;
+        if (!signupResult.success || !data || !("setup_token" in data)) {
+          toast.error(signupResult.message ?? "Signup failed.");
+          return;
+        }
+        finalSetupToken = (data as { setup_token: string }).setup_token;
+      } else {
+        const signupResult = await signup({
+          full_name: creds.fullName,
+          email: creds.email,
+          password: creds.password,
+          primary_role: "recruiter",
+        }).unwrap();
+
+        const data = signupResult.data;
+        if (!signupResult.success || !data || !("setup_token" in data)) {
+          toast.error(signupResult.message ?? "Signup failed.");
+          return;
+        }
+        finalSetupToken = (data as { setup_token: string }).setup_token;
       }
 
       await requestJoinCompany({
-        setup_token: signupResult.data?.setup_token ?? "",
+        setup_token: finalSetupToken,
         company_name: joinCompanyName.trim(),
       }).unwrap();
       setStep("join-pending");
@@ -692,19 +762,19 @@ export default function SignupPage() {
           step === "company-choice" ||
           step === "company-details" ||
           step === "join-company") && (
-          <button
-            type="button"
-            className="auth__back-btn"
-            onClick={() => {
-              if (step === "intent") setStep("credentials");
-              else if (step === "company-choice") setStep("intent");
-              else setStep("company-choice");
-            }}
-          >
-            <ArrowLeftIcon />
-            Back
-          </button>
-        )}
+            <button
+              type="button"
+              className="auth__back-btn"
+              onClick={() => {
+                if (step === "intent") setStep("credentials");
+                else if (step === "company-choice") setStep("intent");
+                else setStep("company-choice");
+              }}
+            >
+              <ArrowLeftIcon />
+              Back
+            </button>
+          )}
 
         {/* Header */}
         <header className="auth__header">
@@ -993,7 +1063,7 @@ export default function SignupPage() {
                     Join an existing company
                   </span>
                   <span className="auth__intent-desc">
-                    Request to join your company's workspace on ConvexHire.
+                    Request to join your company&apos;s workspace on ConvexHire.
                   </span>
                 </div>
                 <span className="auth__intent-arrow" aria-hidden="true">
@@ -1229,7 +1299,7 @@ export default function SignupPage() {
               <EnvelopeIcon />
             </div>
             <p className="auth__success-detail">
-              We sent an email to <strong>{creds.email}</strong>. Click the link
+              We sent an email to <strong>{displayEmail}</strong>. Click the link
               to verify your address and access your dashboard.
             </p>
             <p className="auth__success-note">
@@ -1257,7 +1327,7 @@ export default function SignupPage() {
             </div>
             <p className="auth__success-detail">
               Your request to join <strong>{joinCompanyName}</strong> has been
-              sent. We&apos;ll email you at <strong>{creds.email}</strong> once
+              sent. We&apos;ll email you at <strong>{displayEmail}</strong> once
               the admin approves it.
             </p>
             <p className="auth__success-note">
@@ -1272,11 +1342,19 @@ export default function SignupPage() {
         {/* Switch to login */}
         {(step === "credentials" || step === "intent") && (
           <p className="auth__switch">
-            Already have an account?
+            Already have an account?{" "}
             <Link href="/login">Sign in</Link>
           </p>
         )}
       </div>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="auth__loading">Loading...</div>}>
+      <SignupContent />
+    </Suspense>
   );
 }

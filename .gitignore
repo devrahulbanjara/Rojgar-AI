@@ -36,6 +36,7 @@ instance/
 **/trial.ipynb
 
 .env
+.env.local
 .envrc
 .venv/
 env/

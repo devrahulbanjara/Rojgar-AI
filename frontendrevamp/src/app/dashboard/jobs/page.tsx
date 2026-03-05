@@ -178,7 +178,7 @@ function DonutChart({
 
 export default function UserJobsPage() {
   const [selectedJob, setSelectedJob] = useState(JOBS[1]);
-  const [searchVal, setSearchVal] = useState("");
+  const [searchVal] = useState("");
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
 
   const filtered = JOBS.filter((j) => {

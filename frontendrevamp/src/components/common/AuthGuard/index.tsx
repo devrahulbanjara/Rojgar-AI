@@ -9,7 +9,7 @@
  *
  * Usage:
  *   <AuthGuard requiredRole="candidate">{children}</AuthGuard>
- *   <AuthGuard requiredRole={["company", "recruiter"]}>{children}</AuthGuard>
+ *   <AuthGuard requiredRole={["recruiter_admin", "recruiter"]}>{children}</AuthGuard>
  */
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -41,6 +41,7 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   // before the Redux store is rehydrated from localStorage.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

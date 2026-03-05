@@ -14,7 +14,12 @@ export interface SignupRequest {
   full_name: string;
   email: string;
   password: string;
-  primary_role: "candidate" | "company" | "recruiter";
+  primary_role: "candidate" | "recruiter_admin" | "recruiter";
+}
+
+export interface GoogleRegisterRequest {
+  signup_token: string;
+  primary_role: "candidate" | "recruiter_admin" | "recruiter";
 }
 
 export interface VerifyEmailRequest {
@@ -186,6 +191,31 @@ export const authApi = baseApi.injectEndpoints({
         }
       },
     }),
+
+    /** POST /auth/google/register — 201, data: LoginData | SignupData */
+    googleRegister: builder.mutation<ApiResponse<LoginData | SignupData>, GoogleRegisterRequest>({
+      query: (body) => ({
+        url: "/auth/google/register",
+        method: "POST",
+        body,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data.success && data.data && "tokens" in data.data) {
+            dispatch(
+              setCredentials({
+                accessToken: data.data.tokens.access_token,
+                user: data.data.user,
+                rememberMe: true, // we assume true for oauth
+              }),
+            );
+          }
+        } catch {
+          // failure
+        }
+      },
+    }),
   }),
   overrideExisting: true,
 });
@@ -200,6 +230,7 @@ export const {
   useResetPasswordMutation,
   useGetMeQuery,
   useLazyGetMeQuery,
+  useGoogleRegisterMutation,
 } = authApi;
 
 // ---------------------------------------------------------------------------
@@ -208,11 +239,18 @@ export const {
 
 /**
  * Kick off the Google OAuth flow by redirecting the browser to the backend's
- * Google auth route (proxied through Next.js /api rewrite).
- * The backend handles the consent screen and eventually redirects to
- * /auth/oauth-callback?access_token=JWT
+ * Google auth route directly (bypassing the Next.js proxy).
+ * This ensures the auth cookie is set on the correct domain (backend) for
+ * when Google redirects back to the backend's callback URL.
  */
 export function initiateGoogleOAuth(): void {
   if (typeof window === "undefined") return;
-  window.location.href = "/api/auth/google";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+
+  if (!apiUrl) {
+    console.error("NEXT_PUBLIC_API_URL environment variable is not defined");
+    return;
+  }
+
+  window.location.href = `${apiUrl}/auth/google`;
 }

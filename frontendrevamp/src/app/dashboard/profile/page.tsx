@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-// ── Types ──────────────────────────────────────────────────────
 type ExperienceEntry = {
   id: string;
   title: string;

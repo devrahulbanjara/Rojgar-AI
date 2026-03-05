@@ -1,20 +1,5 @@
 "use client";
 
-/**
- * Google OAuth Callback — lives at /auth/oauth-callback
- *
- * Flow recap:
- *  1. User clicks "Continue with Google"
- *  2. Browser is sent to /api/auth/google (Next.js proxies → backend)
- *  3. Backend → Google consent → Google → backend /auth/google/callback
- *  4. Backend processes the code, then redirects browser here:
- *       /auth/oauth-callback?access_token=<JWT>
- *       (refresh_token set as HttpOnly cookie)
- *  5. This page stores credentials in Redux + localStorage, then
- *     redirects to the user's role-specific dashboard.
- *  6. On any failure it sends the user back to /login?error=oauth_failed.
- */
-
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch } from "@/store/hooks";
@@ -36,6 +21,19 @@ export default function OAuthCallbackPage() {
     async function handleCallback() {
       const accessToken = searchParams.get("access_token");
       const errorParam = searchParams.get("error");
+      const actionParam = searchParams.get("action");
+      const setupToken = searchParams.get("setup_token");
+      const userInfoStr = searchParams.get("user_info");
+
+      if (actionParam === "requires_setup" && setupToken && userInfoStr) {
+        const params = new URLSearchParams({
+          oauth: "true",
+          setup_token: setupToken,
+          user_info: userInfoStr,
+        });
+        router.replace(`/signup?${params.toString()}`);
+        return;
+      }
 
       if (errorParam || !accessToken) {
         toast.error("Google sign-in failed. Please try again.");
@@ -44,11 +42,8 @@ export default function OAuthCallbackPage() {
       }
 
       try {
-        // Persist the token so RTK Query's prepareHeaders will include it
         localStorage.setItem("access_token", accessToken);
 
-        // Try to read a user object forwarded as a query param (some backends
-        // do this). If absent, fall back to fetching /auth/me via the API.
         const userParam = searchParams.get("user");
         let user: AuthUser | null = null;
         if (userParam) {
@@ -60,8 +55,6 @@ export default function OAuthCallbackPage() {
         }
 
         if (!user) {
-          // Fetch /auth/me — token is now in localStorage so the request
-          // will include the Authorization header via baseApi's prepareHeaders.
           const res = await fetch("/api/auth/me", {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
@@ -77,7 +70,6 @@ export default function OAuthCallbackPage() {
           return;
         }
 
-        // Commit to Redux + localStorage
         dispatch(setCredentials({ accessToken, user }));
         localStorage.setItem("auth_user", JSON.stringify(user));
 

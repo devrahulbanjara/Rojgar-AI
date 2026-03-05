@@ -6,9 +6,8 @@ import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAppSelector } from "@/store/hooks";
 
-// DashRole only includes the three layouts that actually instantiate DashNavbar.
-// "hr" and "recruiter" were removed — both those users are served by the "company" layout.
-export type DashRole = "user" | "admin" | "company";
+// DashRole uses the three canonical roles.
+export type DashRole = "candidate" | "recruiter_admin" | "recruiter";
 
 type NavItem = { label: string; href: string };
 
@@ -19,8 +18,8 @@ type DashNavbarProps = {
   userInitials?: string;
 };
 
-function buildNavItems(role: DashRole, isCompanyAdmin?: boolean): NavItem[] {
-  if (role === "user") {
+function buildNavItems(role: DashRole): NavItem[] {
+  if (role === "candidate") {
     return [
       { label: "Dashboard", href: "/dashboard" },
       { label: "Jobs", href: "/dashboard/jobs" },
@@ -29,22 +28,14 @@ function buildNavItems(role: DashRole, isCompanyAdmin?: boolean): NavItem[] {
       { label: "Profile", href: "/dashboard/profile" },
     ];
   }
-  if (role === "admin") {
-    return [
-      { label: "Dashboard", href: "/admin" },
-      { label: "Jobs", href: "/admin/jobs" },
-      { label: "Applications", href: "/admin/applications" },
-      { label: "Users", href: "/admin/users" },
-    ];
-  }
-  // "company" — shared by both company admins and approved recruiters
+  // "recruiter" or "recruiter_admin" — both share the company layout
   const items: NavItem[] = [
     { label: "Dashboard", href: "/company" },
     { label: "My Jobs", href: "/company/jobs" },
     { label: "Applications", href: "/company/applications" },
     { label: "Candidates", href: "/company/candidates" },
   ];
-  if (isCompanyAdmin) {
+  if (role === "recruiter_admin") {
     items.push({ label: "Recruiters", href: "/company/recruiters" });
   }
   return items;
@@ -58,8 +49,9 @@ export default function DashNavbar({
 }: DashNavbarProps) {
   const pathname = usePathname();
   const { user } = useAppSelector((s) => s.auth);
-  const isCompanyAdmin = user?.primary_role === "company";
-  const navItems = buildNavItems(role, isCompanyAdmin);
+  // Optional: override `role` prop with the actual authenticated primary_role if available
+  const activeRole = user?.primary_role || role;
+  const navItems = buildNavItems(activeRole as DashRole);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState("");
@@ -93,12 +85,8 @@ export default function DashNavbar({
 
   function isActive(href: string) {
     if (href === "/") return pathname === href;
-    // match exact for dashboard root (e.g. /admin or /dashboard)
-    const isRoot =
-      href === "/dashboard" ||
-      href === "/admin" ||
-      href === "/company" ||
-      href.endsWith("/hr");
+    // match exact for dashboard root
+    const isRoot = href === "/dashboard" || href === "/company";
     if (isRoot) return pathname === href;
     return pathname.startsWith(href);
   }
@@ -241,11 +229,9 @@ export default function DashNavbar({
 
                 <Link
                   href={
-                    role === "user"
+                    role === "candidate"
                       ? "/dashboard/profile"
-                      : role === "admin"
-                        ? "/admin/profile"
-                        : "/company/settings"
+                      : "/company/settings"
                   }
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
@@ -268,11 +254,9 @@ export default function DashNavbar({
 
                 <Link
                   href={
-                    role === "user"
+                    role === "candidate"
                       ? "/dashboard"
-                      : role === "admin"
-                        ? "/admin"
-                        : "/company"
+                      : "/company"
                   }
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}

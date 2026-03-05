@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -96,7 +96,7 @@ function ResetPasswordInner() {
   // Warn early if the link has no token
   const missingToken = !token;
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const errs = validatePasswords(password, confirmPassword);
     if (Object.keys(errs).length > 0) {
@@ -129,7 +129,7 @@ function ResetPasswordInner() {
       if (parsed.fieldErrors._token) {
         toast.error(
           parsed.fieldErrors._token +
-            " Please request a new password reset link.",
+          " Please request a new password reset link.",
         );
         return;
       }
