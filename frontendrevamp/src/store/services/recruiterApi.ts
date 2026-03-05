@@ -20,7 +20,7 @@ export const recruiterApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** GET /recruiter/me */
     getRecruiterProfile: builder.query<RecruiterProfile, void>({
-      query: () => "/recruiter/me",
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/me`,
       providesTags: ["User"],
     }),
 
@@ -30,7 +30,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       UpdateRecruiterProfileRequest
     >({
       query: (body) => ({
-        url: "/recruiter/me",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/me`,
         method: "PATCH",
         body,
       }),
@@ -43,7 +43,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       { page?: number; limit?: number; status?: JobListing["status"] }
     >({
       query: ({ page = 1, limit = 10, status } = {}) => ({
-        url: "/recruiter/jobs",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/jobs`,
         params: { page, limit, ...(status && { status }) },
       }),
       providesTags: ["Jobs"],
@@ -60,7 +60,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ jobId, page = 1, limit = 10, status }) => ({
-        url: `/recruiter/jobs/${jobId}/applications`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/jobs/${jobId}/applications`,
         params: { page, limit, ...(status && { status }) },
       }),
       providesTags: (_result, _error, { jobId }) => [
@@ -75,7 +75,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       { applicationId: string; status: JobApplication["status"] }
     >({
       query: ({ applicationId, status }) => ({
-        url: `/recruiter/applications/${applicationId}/status`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/applications/${applicationId}/status`,
         method: "PATCH",
         body: { status },
       }),
@@ -97,7 +97,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ page = 1, limit = 10, jobId, status } = {}) => ({
-        url: "/recruiter/candidates",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/candidates`,
         params: {
           page,
           limit,
@@ -114,7 +114,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       { status?: InterviewSchedule["status"] }
     >({
       query: ({ status } = {}) => ({
-        url: "/recruiter/interviews",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews`,
         params: status ? { status } : undefined,
       }),
       providesTags: ["Interviews"],
@@ -126,7 +126,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       ScheduleInterviewRequest
     >({
       query: (body) => ({
-        url: "/recruiter/interviews",
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews`,
         method: "POST",
         body,
       }),
@@ -142,7 +142,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ id, ...body }) => ({
-        url: `/recruiter/interviews/${id}`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews/${id}`,
         method: "PATCH",
         body,
       }),
@@ -152,7 +152,7 @@ export const recruiterApi = baseApi.injectEndpoints({
     /** DELETE /recruiter/interviews/:id */
     cancelInterview: builder.mutation<{ message: string }, string>({
       query: (id) => ({
-        url: `/recruiter/interviews/${id}`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Interviews"],
