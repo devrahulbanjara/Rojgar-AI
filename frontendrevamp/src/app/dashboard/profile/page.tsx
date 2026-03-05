@@ -1,104 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useAppSelector } from "@/store/hooks";
+import Loader from "@/components/common/Loader";
+import {
+  useGetMyProfileQuery,
+  useUpdateMyProfileMutation,
+  type CandidateProfileData,
+  type UpdateProfileRequest,
+} from "@/store/services/profileApi";
 
-type ExperienceEntry = {
-  id: string;
+// ── Local form types ───────────────────────────────────────────
+
+type FormExperience = {
+  /** Client-side stable key for list rendering. */
+  _key: string;
   title: string;
-  company: string;
-  location: string;
+  company_name: string;
+  /** "YYYY-MM" format used by <input type="month"> */
   startDate: string;
   endDate: string;
+  /** When true, end_date is sent as null to the API. */
   current: boolean;
+  /** Multi-line text; each non-empty line becomes one item in description[]. */
   description: string;
 };
 
-type EducationEntry = {
-  id: string;
-  degree: string;
+type FormEducation = {
+  _key: string;
   institution: string;
-  location: string;
+  degree: string;
+  field_of_study: string;
   startDate: string;
   endDate: string;
-  gpa: string;
 };
 
-type ProfileData = {
-  fullName: string;
+type FormProfile = {
   headline: string;
-  email: string;
+  summary: string;
   phone: string;
   location: string;
-  website: string;
-  about: string;
-  experience: ExperienceEntry[];
-  education: EducationEntry[];
+  linkedin_url: string;
+  github_url: string;
+  portfolio_url: string;
+  /** Stored as string so the number input works without parse errors. */
+  years_of_experience: string;
+  experiences: FormExperience[];
+  educations: FormEducation[];
   skills: string[];
 };
 
-// ── Initial data ───────────────────────────────────────────────
-const INITIAL_PROFILE: ProfileData = {
-  fullName: "Alex Chen",
-  headline: "UI/UX Designer",
-  email: "alex.chen@email.com",
-  phone: "+1 (415) 555-0198",
-  location: "San Francisco, CA",
-  website: "alexchen.design",
-  about:
-    "Creative and detail-oriented UI/UX Designer with 4+ years of experience crafting user-centric digital products. Proficient in Figma, design systems, and user research. Passionate about building accessible, beautiful interfaces that solve real problems.",
-  experience: [
-    {
-      id: "e1",
-      title: "Senior UI/UX Designer",
-      company: "Acme Corp",
-      location: "San Francisco, CA",
-      startDate: "2022-06",
-      endDate: "",
-      current: true,
-      description:
-        "Led end-to-end design for the core product dashboard, increasing user engagement by 32%. Managed a design system used across 6 product teams.",
-    },
-    {
-      id: "e2",
-      title: "UI Designer",
-      company: "DesignCo",
-      location: "Remote",
-      startDate: "2020-09",
-      endDate: "2022-05",
-      current: false,
-      description:
-        "Designed mobile-first interfaces for fintech clients. Collaborated with engineering to ensure pixel-perfect delivery.",
-    },
-  ],
-  education: [
-    {
-      id: "ed1",
-      degree: "B.S. in Graphic Design",
-      institution: "California College of the Arts",
-      location: "San Francisco, CA",
-      startDate: "2016-09",
-      endDate: "2020-05",
-      gpa: "3.8",
-    },
-  ],
-  skills: [
-    "Figma",
-    "Prototyping",
-    "User Research",
-    "React",
-    "CSS / SCSS",
-    "Design Systems",
-    "Accessibility",
-    "Wireframing",
-    "Motion Design",
-  ],
-};
+// ── Helpers ────────────────────────────────────────────────────
 
-function uid() {
+function uid(): string {
   return Math.random().toString(36).slice(2);
 }
 
-function formatDate(value: string) {
+/** "YYYY-MM-DD" → "YYYY-MM" suitable for <input type="month">. Null → "". */
+function parseApiDate(d: string | null | undefined): string {
+  if (!d) return "";
+  return d.slice(0, 7);
+}
+
+/** "YYYY-MM" → "YYYY-MM-01" for the API. Empty string → null. */
+function toApiDate(d: string): string | null {
+  return d ? `${d}-01` : null;
+}
+
+/** string[] → textarea value (one per line). */
+function descToText(desc: string[]): string {
+  return desc.join("\n");
+}
+
+/** textarea value → string[] (filter blank lines). */
+function textToDesc(text: string): string[] {
+  return text.split("\n").filter((l) => l.trim().length > 0);
+}
+
+/** "YYYY-MM" → "Jan 2024" display label. "" → "Present". */
+function formatDate(value: string): string {
   if (!value) return "Present";
   const [year, month] = value.split("-");
   const months = [
@@ -118,107 +99,292 @@ function formatDate(value: string) {
   return `${months[parseInt(month, 10) - 1]} ${year}`;
 }
 
-// ── Profile sections ───────────────────────────────────────────
+/** Map API profile data → local form state. */
+function apiToForm(data: CandidateProfileData): FormProfile {
+  return {
+    headline: data.headline ?? "",
+    summary: data.summary ?? "",
+    phone: data.phone ?? "",
+    location: data.location ?? "",
+    linkedin_url: data.linkedin_url ?? "",
+    github_url: data.github_url ?? "",
+    portfolio_url: data.portfolio_url ?? "",
+    years_of_experience: data.years_of_experience?.toString() ?? "",
+    experiences: data.experiences.map((e) => ({
+      _key: e.id ?? uid(),
+      title: e.title,
+      company_name: e.company_name,
+      startDate: parseApiDate(e.start_date),
+      endDate: parseApiDate(e.end_date),
+      current: !e.end_date,
+      description: descToText(e.description),
+    })),
+    educations: data.educations.map((e) => ({
+      _key: e.id ?? uid(),
+      institution: e.institution,
+      degree: e.degree ?? "",
+      field_of_study: e.field_of_study ?? "",
+      startDate: parseApiDate(e.start_date),
+      endDate: parseApiDate(e.end_date),
+    })),
+    skills: data.skills.map((s) => s.skill_name),
+  };
+}
+
+/** Map local form state → PUT /profiles/me request body. */
+function formToApiUpdate(form: FormProfile): UpdateProfileRequest {
+  return {
+    headline: form.headline || null,
+    summary: form.summary || null,
+    phone: form.phone || null,
+    location: form.location || null,
+    linkedin_url: form.linkedin_url || null,
+    github_url: form.github_url || null,
+    portfolio_url: form.portfolio_url || null,
+    years_of_experience: form.years_of_experience
+      ? parseInt(form.years_of_experience, 10)
+      : null,
+    experiences: form.experiences.map((e) => ({
+      company_name: e.company_name,
+      title: e.title,
+      start_date: toApiDate(e.startDate),
+      end_date: e.current ? null : toApiDate(e.endDate),
+      description: textToDesc(e.description),
+    })),
+    educations: form.educations.map((e) => ({
+      institution: e.institution,
+      degree: e.degree || null,
+      field_of_study: e.field_of_study || null,
+      start_date: toApiDate(e.startDate),
+      end_date: toApiDate(e.endDate),
+    })),
+    skills: form.skills.map((s) => ({ skill_name: s })),
+  };
+}
+
+const EMPTY_FORM: FormProfile = {
+  headline: "",
+  summary: "",
+  phone: "",
+  location: "",
+  linkedin_url: "",
+  github_url: "",
+  portfolio_url: "",
+  years_of_experience: "",
+  experiences: [],
+  educations: [],
+  skills: [],
+};
+
+// ── Section tabs definition ────────────────────────────────────
+
 const SECTIONS = ["Overview", "Experience", "Education", "Skills"] as const;
 type Section = (typeof SECTIONS)[number];
 
-// ── Main page ──────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// Main page component
+// ════════════════════════════════════════════════════════════
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE);
+  // ── Auth user (name / email come from auth, not from profile API) ──────
+  const user = useAppSelector((state) => state.auth.user);
+
+  // ── RTK Query ───────────────────────────────────────────────────────────
+  const {
+    data: profileResp,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetMyProfileQuery();
+
+  const [updateProfile, { isLoading: isSaving }] = useUpdateMyProfileMutation();
+
+  // ── Local form state ─────────────────────────────────────────────────────
+  const [form, setForm] = useState<FormProfile>(EMPTY_FORM);
   const [activeSection, setActiveSection] = useState<Section>("Overview");
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [skillInput, setSkillInput] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  function updateField<K extends keyof ProfileData>(
-    key: K,
-    value: ProfileData[K],
-  ) {
-    setProfile((prev) => ({ ...prev, [key]: value }));
+  // Populate local form when API data arrives.
+  useEffect(() => {
+    if (profileResp?.data) {
+      setForm(apiToForm(profileResp.data));
+    }
+  }, [profileResp]);
+
+  // ── Save helpers ─────────────────────────────────────────────────────────
+
+  const saveProfile = useCallback(
+    async (targetForm?: FormProfile) => {
+      setSaveError(null);
+      setSaveSuccess(false);
+      try {
+        await updateProfile(formToApiUpdate(targetForm ?? form)).unwrap();
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+      } catch (err: unknown) {
+        const msg =
+          (err as { data?: { message?: string } })?.data?.message ??
+          "Failed to save. Please try again.";
+        setSaveError(msg);
+      }
+    },
+    [form, updateProfile],
+  );
+
+  async function finishEditing(key: string, latestForm?: FormProfile) {
+    void key;
+    setEditingSection(null);
+    await saveProfile(latestForm);
   }
 
-  // ── Experience ────────────────────────────────────────────────
+  // ── Generic field setter ─────────────────────────────────────────────────
+
+  function set<K extends keyof FormProfile>(key: K, value: FormProfile[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // ── Experience helpers ────────────────────────────────────────────────────
+
   function updateExp(
-    id: string,
-    field: keyof ExperienceEntry,
+    k: string,
+    field: keyof FormExperience,
     value: string | boolean,
   ) {
-    updateField(
-      "experience",
-      profile.experience.map((e) =>
-        e.id === id ? { ...e, [field]: value } : e,
+    set(
+      "experiences",
+      form.experiences.map((e) =>
+        e._key === k ? { ...e, [field]: value } : e,
       ),
     );
   }
+
   function addExp() {
-    const entry: ExperienceEntry = {
-      id: uid(),
+    const entry: FormExperience = {
+      _key: uid(),
       title: "",
-      company: "",
-      location: "",
+      company_name: "",
       startDate: "",
       endDate: "",
       current: false,
       description: "",
     };
-    updateField("experience", [...profile.experience, entry]);
-    setEditingSection(entry.id);
-  }
-  function removeExp(id: string) {
-    updateField(
-      "experience",
-      profile.experience.filter((e) => e.id !== id),
-    );
-    if (editingSection === id) setEditingSection(null);
+    set("experiences", [...form.experiences, entry]);
+    setEditingSection(entry._key);
   }
 
-  // ── Education ────────────────────────────────────────────────
-  function updateEdu(id: string, field: keyof EducationEntry, value: string) {
-    updateField(
-      "education",
-      profile.education.map((e) =>
-        e.id === id ? { ...e, [field]: value } : e,
-      ),
+  async function removeExp(k: string) {
+    const next = form.experiences.filter((e) => e._key !== k);
+    if (editingSection === k) setEditingSection(null);
+    const nextForm = { ...form, experiences: next };
+    setForm(nextForm);
+    await saveProfile(nextForm);
+  }
+
+  // ── Education helpers ─────────────────────────────────────────────────────
+
+  function updateEdu(k: string, field: keyof FormEducation, value: string) {
+    set(
+      "educations",
+      form.educations.map((e) => (e._key === k ? { ...e, [field]: value } : e)),
     );
   }
+
   function addEdu() {
-    const entry: EducationEntry = {
-      id: uid(),
-      degree: "",
+    const entry: FormEducation = {
+      _key: uid(),
       institution: "",
-      location: "",
+      degree: "",
+      field_of_study: "",
       startDate: "",
       endDate: "",
-      gpa: "",
     };
-    updateField("education", [...profile.education, entry]);
-    setEditingSection(entry.id);
-  }
-  function removeEdu(id: string) {
-    updateField(
-      "education",
-      profile.education.filter((e) => e.id !== id),
-    );
-    if (editingSection === id) setEditingSection(null);
+    set("educations", [...form.educations, entry]);
+    setEditingSection(entry._key);
   }
 
-  // ── Skills ───────────────────────────────────────────────────
+  async function removeEdu(k: string) {
+    const next = form.educations.filter((e) => e._key !== k);
+    if (editingSection === k) setEditingSection(null);
+    const nextForm = { ...form, educations: next };
+    setForm(nextForm);
+    await saveProfile(nextForm);
+  }
+
+  // ── Skills helpers ────────────────────────────────────────────────────────
+
   function addSkill() {
     const s = skillInput.trim();
-    if (s && !profile.skills.includes(s)) {
-      updateField("skills", [...profile.skills, s]);
-      setSkillInput("");
-    }
+    if (!s || form.skills.includes(s)) return;
+    const next = [...form.skills, s];
+    setSkillInput("");
+    const nextForm = { ...form, skills: next };
+    setForm(nextForm);
+    saveProfile(nextForm);
   }
+
   function removeSkill(sk: string) {
-    updateField(
-      "skills",
-      profile.skills.filter((s) => s !== sk),
+    const next = form.skills.filter((s) => s !== sk);
+    const nextForm = { ...form, skills: next };
+    setForm(nextForm);
+    saveProfile(nextForm);
+  }
+
+  // ── Derived display values ────────────────────────────────────────────────
+
+  const displayName = user?.full_name ?? "—";
+  const initials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  // ── Loading / error states ────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="dash-content container">
+        <div className="profile-loading">
+          <Loader size="lg" />
+        </div>
+      </div>
     );
   }
+
+  if (isError) {
+    return (
+      <div className="dash-content container">
+        <div className="profile-error">
+          <p>Failed to load profile.</p>
+          <button className="btn btn--primary btn--sm" onClick={refetch}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const statusHint = isSaving
+    ? "Saving…"
+    : saveError
+      ? saveError
+      : saveSuccess
+        ? "Saved ✓"
+        : "Changes saved automatically";
+
+  const statusClass =
+    "page-header-hint" +
+    (saveError ? " page-header-hint--error" : "") +
+    (saveSuccess ? " page-header-hint--success" : "");
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="dash-content container">
-      {/* Page Header */}
+      {/* ── Page header ── */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">My Profile</h2>
@@ -228,60 +394,70 @@ export default function ProfilePage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <span className="page-header-hint">
-            Changes are saved automatically
-          </span>
+          <span className={statusClass}>{statusHint}</span>
+          <Link href="/dashboard/resume" className="btn btn--outline btn--sm">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            My Resumes
+          </Link>
         </div>
       </div>
 
       <div className="profile-layout">
-        {/* Left: avatar & summary card */}
+        {/* ── Aside: avatar + summary card ── */}
         <aside className="profile-layout__aside">
           <div className="profile-aside-card">
-            <div className="profile-aside-card__avatar">
-              {profile.fullName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)}
-            </div>
-            <div className="profile-aside-card__name">{profile.fullName}</div>
+            <div className="profile-aside-card__avatar">{initials}</div>
+            <div className="profile-aside-card__name">{displayName}</div>
             <div className="profile-aside-card__headline">
-              {profile.headline}
+              {form.headline || "No headline set"}
             </div>
-            <div className="profile-aside-card__location">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              {profile.location}
-            </div>
+            {form.location && (
+              <div className="profile-aside-card__location">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                {form.location}
+              </div>
+            )}
             <div className="profile-aside-card__divider" />
             <div className="profile-aside-card__stats">
               <div className="profile-aside-card__stat">
                 <div className="profile-aside-card__stat-value">
-                  {profile.experience.length}
+                  {form.experiences.length}
                 </div>
                 <div className="profile-aside-card__stat-label">Roles</div>
               </div>
               <div className="profile-aside-card__stat">
                 <div className="profile-aside-card__stat-value">
-                  {profile.education.length}
+                  {form.educations.length}
                 </div>
                 <div className="profile-aside-card__stat-label">Degrees</div>
               </div>
               <div className="profile-aside-card__stat">
                 <div className="profile-aside-card__stat-value">
-                  {profile.skills.length}
+                  {form.skills.length}
                 </div>
                 <div className="profile-aside-card__stat-label">Skills</div>
               </div>
@@ -289,9 +465,9 @@ export default function ProfilePage() {
           </div>
         </aside>
 
-        {/* Right: section tabs + content */}
+        {/* ── Main: tabs + sections ── */}
         <div className="profile-layout__main">
-          {/* Section tabs */}
+          {/* Tabs */}
           <div className="profile-tabs">
             {SECTIONS.map((s) => (
               <button
@@ -304,46 +480,54 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Overview */}
+          {/* ── Overview ──────────────────────────────────────────────── */}
           {activeSection === "Overview" && (
             <div className="profile-section">
-              {/* Contact & personal info */}
+              {/* Personal info block */}
               <div className="profile-block">
                 <div className="profile-block__header">
                   <div className="profile-block__title">
                     Personal Information
                   </div>
                   <button
-                    className="btn btn--ghost btn--sm"
+                    className="btn btn--primary btn--sm"
+                    disabled={isSaving}
                     onClick={() =>
-                      setEditingSection(
-                        editingSection === "personal" ? null : "personal",
-                      )
+                      editingSection === "personal"
+                        ? finishEditing("personal")
+                        : setEditingSection("personal")
                     }
                   >
-                    {editingSection === "personal" ? "Done" : "Edit"}
+                    {editingSection === "personal" ? "Save" : "Edit"}
                   </button>
                 </div>
+
                 {editingSection === "personal" ? (
                   <div className="resume-form-grid">
                     {(
                       [
-                        ["fullName", "Full Name", "text"],
                         ["headline", "Professional Headline", "text"],
-                        ["email", "Email", "email"],
                         ["phone", "Phone", "tel"],
                         ["location", "Location", "text"],
-                        ["website", "Website / LinkedIn", "url"],
-                      ] as [keyof ProfileData, string, string][]
+                        [
+                          "years_of_experience",
+                          "Years of Experience",
+                          "number",
+                        ],
+                        ["linkedin_url", "LinkedIn URL", "url"],
+                        ["github_url", "GitHub URL", "url"],
+                        ["portfolio_url", "Portfolio / Website URL", "url"],
+                      ] as [keyof FormProfile, string, string][]
                     ).map(([field, label, type]) => (
                       <div className="resume-field" key={field}>
                         <label className="resume-field__label">{label}</label>
                         <input
                           className="resume-field__input"
                           type={type}
-                          value={profile[field] as string}
-                          onChange={(e) => updateField(field, e.target.value)}
+                          value={form[field] as string}
+                          onChange={(e) => set(field, e.target.value)}
                           placeholder={label}
+                          min={type === "number" ? 0 : undefined}
                         />
                       </div>
                     ))}
@@ -351,12 +535,18 @@ export default function ProfilePage() {
                 ) : (
                   <div className="profile-info-grid">
                     {[
-                      { label: "Full Name", value: profile.fullName },
-                      { label: "Headline", value: profile.headline },
-                      { label: "Email", value: profile.email },
-                      { label: "Phone", value: profile.phone },
-                      { label: "Location", value: profile.location },
-                      { label: "Website", value: profile.website },
+                      { label: "Full Name", value: displayName },
+                      { label: "Email", value: user?.email ?? "—" },
+                      { label: "Headline", value: form.headline },
+                      { label: "Phone", value: form.phone },
+                      { label: "Location", value: form.location },
+                      {
+                        label: "Years of Experience",
+                        value: form.years_of_experience,
+                      },
+                      { label: "LinkedIn", value: form.linkedin_url },
+                      { label: "GitHub", value: form.github_url },
+                      { label: "Portfolio", value: form.portfolio_url },
                     ].map(({ label, value }) => (
                       <div className="profile-info-item" key={label}>
                         <span className="profile-info-item__label">
@@ -371,85 +561,95 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* About / Summary */}
+              {/* Summary block */}
               <div className="profile-block">
                 <div className="profile-block__header">
-                  <div className="profile-block__title">About / Summary</div>
+                  <div className="profile-block__title">
+                    Professional Summary
+                  </div>
                   <button
-                    className="btn btn--ghost btn--sm"
+                    className="btn btn--primary btn--sm"
+                    disabled={isSaving}
                     onClick={() =>
-                      setEditingSection(
-                        editingSection === "about" ? null : "about",
-                      )
+                      editingSection === "summary"
+                        ? finishEditing("summary")
+                        : setEditingSection("summary")
                     }
                   >
-                    {editingSection === "about" ? "Done" : "Edit"}
+                    {editingSection === "summary" ? "Save" : "Edit"}
                   </button>
                 </div>
-                {editingSection === "about" ? (
+
+                {editingSection === "summary" ? (
                   <textarea
                     className="resume-field__textarea"
                     rows={6}
-                    value={profile.about}
-                    onChange={(e) => updateField("about", e.target.value)}
-                    placeholder="Write a compelling professional summary..."
+                    value={form.summary}
+                    onChange={(e) => set("summary", e.target.value)}
+                    placeholder="Write a compelling professional summary…"
                   />
                 ) : (
                   <p className="profile-about-text">
-                    {profile.about || "No summary added yet."}
+                    {form.summary || "No summary added yet."}
                   </p>
                 )}
               </div>
             </div>
           )}
 
-          {/* Experience */}
+          {/* ── Experience ──────────────────────────────────────────────── */}
           {activeSection === "Experience" && (
             <div className="profile-section">
               <div className="profile-section__header">
                 <div className="profile-section__title">Work Experience</div>
-                <button className="btn btn--outline btn--sm" onClick={addExp}>
+                <button
+                  className="btn btn--outline btn--sm"
+                  onClick={addExp}
+                  disabled={isSaving}
+                >
                   + Add
                 </button>
               </div>
 
-              {profile.experience.length === 0 && (
+              {form.experiences.length === 0 && (
                 <div className="profile-empty">No experience added yet.</div>
               )}
 
-              {profile.experience.map((exp) => (
-                <div className="profile-block" key={exp.id}>
+              {form.experiences.map((exp) => (
+                <div className="profile-block" key={exp._key}>
                   <div className="profile-block__header">
                     <div className="profile-block__title">
                       {exp.title || "Untitled Role"}
-                      {exp.company && (
+                      {exp.company_name && (
                         <span className="profile-block__sub">
                           {" "}
-                          · {exp.company}
+                          · {exp.company_name}
                         </span>
                       )}
                     </div>
                     <div className="profile-block__header-actions">
                       <button
-                        className="btn btn--ghost btn--sm"
+                        className="btn btn--primary btn--sm"
+                        disabled={isSaving}
                         onClick={() =>
-                          setEditingSection(
-                            editingSection === exp.id ? null : exp.id,
-                          )
+                          editingSection === exp._key
+                            ? finishEditing(exp._key)
+                            : setEditingSection(exp._key)
                         }
                       >
-                        {editingSection === exp.id ? "Done" : "Edit"}
+                        {editingSection === exp._key ? "Save" : "Edit"}
                       </button>
                       <button
                         className="btn btn--accent btn--sm"
-                        onClick={() => removeExp(exp.id)}
+                        disabled={isSaving}
+                        onClick={() => removeExp(exp._key)}
                       >
                         Remove
                       </button>
                     </div>
                   </div>
 
-                  {editingSection === exp.id ? (
+                  {editingSection === exp._key ? (
                     <>
                       <div className="resume-form-grid">
                         <div className="resume-field">
@@ -460,7 +660,7 @@ export default function ProfilePage() {
                             className="resume-field__input"
                             value={exp.title}
                             onChange={(e) =>
-                              updateExp(exp.id, "title", e.target.value)
+                              updateExp(exp._key, "title", e.target.value)
                             }
                             placeholder="Job Title"
                           />
@@ -469,24 +669,15 @@ export default function ProfilePage() {
                           <label className="resume-field__label">Company</label>
                           <input
                             className="resume-field__input"
-                            value={exp.company}
+                            value={exp.company_name}
                             onChange={(e) =>
-                              updateExp(exp.id, "company", e.target.value)
+                              updateExp(
+                                exp._key,
+                                "company_name",
+                                e.target.value,
+                              )
                             }
-                            placeholder="Company"
-                          />
-                        </div>
-                        <div className="resume-field">
-                          <label className="resume-field__label">
-                            Location
-                          </label>
-                          <input
-                            className="resume-field__input"
-                            value={exp.location}
-                            onChange={(e) =>
-                              updateExp(exp.id, "location", e.target.value)
-                            }
-                            placeholder="Location"
+                            placeholder="Company Name"
                           />
                         </div>
                         <div className="resume-field">
@@ -498,7 +689,7 @@ export default function ProfilePage() {
                             type="month"
                             value={exp.startDate}
                             onChange={(e) =>
-                              updateExp(exp.id, "startDate", e.target.value)
+                              updateExp(exp._key, "startDate", e.target.value)
                             }
                           />
                         </div>
@@ -512,7 +703,7 @@ export default function ProfilePage() {
                             value={exp.endDate}
                             disabled={exp.current}
                             onChange={(e) =>
-                              updateExp(exp.id, "endDate", e.target.value)
+                              updateExp(exp._key, "endDate", e.target.value)
                             }
                           />
                         </div>
@@ -522,7 +713,7 @@ export default function ProfilePage() {
                               type="checkbox"
                               checked={exp.current}
                               onChange={(e) =>
-                                updateExp(exp.id, "current", e.target.checked)
+                                updateExp(exp._key, "current", e.target.checked)
                               }
                             />
                             Currently working here
@@ -531,23 +722,27 @@ export default function ProfilePage() {
                       </div>
                       <div className="resume-field">
                         <label className="resume-field__label">
-                          Description
+                          Description{" "}
+                          <span className="resume-field__hint">
+                            (one achievement per line)
+                          </span>
                         </label>
                         <textarea
                           className="resume-field__textarea"
                           rows={4}
                           value={exp.description}
                           onChange={(e) =>
-                            updateExp(exp.id, "description", e.target.value)
+                            updateExp(exp._key, "description", e.target.value)
                           }
-                          placeholder="Describe your role, achievements..."
+                          placeholder={
+                            "Led end-to-end design for the core product\nIncreased engagement by 32%"
+                          }
                         />
                       </div>
                     </>
                   ) : (
                     <div className="profile-exp-view">
                       <div className="profile-exp-view__meta">
-                        {exp.location && <span>{exp.location}</span>}
                         {(exp.startDate || exp.endDate || exp.current) && (
                           <span>
                             {formatDate(exp.startDate)} —{" "}
@@ -559,9 +754,14 @@ export default function ProfilePage() {
                         )}
                       </div>
                       {exp.description && (
-                        <p className="profile-exp-view__desc">
-                          {exp.description}
-                        </p>
+                        <ul className="profile-exp-view__desc-list">
+                          {exp.description
+                            .split("\n")
+                            .filter(Boolean)
+                            .map((line, i) => (
+                              <li key={i}>{line}</li>
+                            ))}
+                        </ul>
                       )}
                     </div>
                   )}
@@ -570,22 +770,26 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Education */}
+          {/* ── Education ───────────────────────────────────────────────── */}
           {activeSection === "Education" && (
             <div className="profile-section">
               <div className="profile-section__header">
                 <div className="profile-section__title">Education</div>
-                <button className="btn btn--outline btn--sm" onClick={addEdu}>
+                <button
+                  className="btn btn--outline btn--sm"
+                  onClick={addEdu}
+                  disabled={isSaving}
+                >
                   + Add
                 </button>
               </div>
 
-              {profile.education.length === 0 && (
+              {form.educations.length === 0 && (
                 <div className="profile-empty">No education added yet.</div>
               )}
 
-              {profile.education.map((edu) => (
-                <div className="profile-block" key={edu.id}>
+              {form.educations.map((edu) => (
+                <div className="profile-block" key={edu._key}>
                   <div className="profile-block__header">
                     <div className="profile-block__title">
                       {edu.degree || "Untitled Degree"}
@@ -598,25 +802,27 @@ export default function ProfilePage() {
                     </div>
                     <div className="profile-block__header-actions">
                       <button
-                        className="btn btn--ghost btn--sm"
+                        className="btn btn--primary btn--sm"
+                        disabled={isSaving}
                         onClick={() =>
-                          setEditingSection(
-                            editingSection === edu.id ? null : edu.id,
-                          )
+                          editingSection === edu._key
+                            ? finishEditing(edu._key)
+                            : setEditingSection(edu._key)
                         }
                       >
-                        {editingSection === edu.id ? "Done" : "Edit"}
+                        {editingSection === edu._key ? "Save" : "Edit"}
                       </button>
                       <button
                         className="btn btn--accent btn--sm"
-                        onClick={() => removeEdu(edu.id)}
+                        disabled={isSaving}
+                        onClick={() => removeEdu(edu._key)}
                       >
                         Remove
                       </button>
                     </div>
                   </div>
 
-                  {editingSection === edu.id ? (
+                  {editingSection === edu._key ? (
                     <div className="resume-form-grid">
                       <div className="resume-field">
                         <label className="resume-field__label">
@@ -626,7 +832,7 @@ export default function ProfilePage() {
                           className="resume-field__input"
                           value={edu.degree}
                           onChange={(e) =>
-                            updateEdu(edu.id, "degree", e.target.value)
+                            updateEdu(edu._key, "degree", e.target.value)
                           }
                           placeholder="B.S. Computer Science"
                         />
@@ -639,20 +845,26 @@ export default function ProfilePage() {
                           className="resume-field__input"
                           value={edu.institution}
                           onChange={(e) =>
-                            updateEdu(edu.id, "institution", e.target.value)
+                            updateEdu(edu._key, "institution", e.target.value)
                           }
                           placeholder="University Name"
                         />
                       </div>
                       <div className="resume-field">
-                        <label className="resume-field__label">Location</label>
+                        <label className="resume-field__label">
+                          Field of Study
+                        </label>
                         <input
                           className="resume-field__input"
-                          value={edu.location}
+                          value={edu.field_of_study}
                           onChange={(e) =>
-                            updateEdu(edu.id, "location", e.target.value)
+                            updateEdu(
+                              edu._key,
+                              "field_of_study",
+                              e.target.value,
+                            )
                           }
-                          placeholder="City, State"
+                          placeholder="e.g. Computer Science"
                         />
                       </div>
                       <div className="resume-field">
@@ -664,7 +876,7 @@ export default function ProfilePage() {
                           type="month"
                           value={edu.startDate}
                           onChange={(e) =>
-                            updateEdu(edu.id, "startDate", e.target.value)
+                            updateEdu(edu._key, "startDate", e.target.value)
                           }
                         />
                       </div>
@@ -675,35 +887,23 @@ export default function ProfilePage() {
                           type="month"
                           value={edu.endDate}
                           onChange={(e) =>
-                            updateEdu(edu.id, "endDate", e.target.value)
+                            updateEdu(edu._key, "endDate", e.target.value)
                           }
-                        />
-                      </div>
-                      <div className="resume-field">
-                        <label className="resume-field__label">
-                          GPA (optional)
-                        </label>
-                        <input
-                          className="resume-field__input"
-                          value={edu.gpa}
-                          onChange={(e) =>
-                            updateEdu(edu.id, "gpa", e.target.value)
-                          }
-                          placeholder="3.8"
                         />
                       </div>
                     </div>
                   ) : (
                     <div className="profile-exp-view">
                       <div className="profile-exp-view__meta">
-                        {edu.location && <span>{edu.location}</span>}
+                        {edu.field_of_study && (
+                          <span>{edu.field_of_study}</span>
+                        )}
                         {(edu.startDate || edu.endDate) && (
                           <span>
                             {formatDate(edu.startDate)} —{" "}
                             {formatDate(edu.endDate)}
                           </span>
                         )}
-                        {edu.gpa && <span>GPA {edu.gpa}</span>}
                       </div>
                     </div>
                   )}
@@ -712,7 +912,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Skills */}
+          {/* ── Skills ──────────────────────────────────────────────────── */}
           {activeSection === "Skills" && (
             <div className="profile-section">
               <div className="profile-section__header">
@@ -722,7 +922,7 @@ export default function ProfilePage() {
                 <div className="skills-input-row">
                   <input
                     className="resume-field__input"
-                    placeholder="Add a skill (e.g. Figma) and press Enter"
+                    placeholder="Add a skill (e.g. React) and press Enter"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -735,16 +935,19 @@ export default function ProfilePage() {
                   <button
                     className="btn btn--primary btn--sm"
                     onClick={addSkill}
+                    disabled={isSaving}
                   >
                     Add
                   </button>
                 </div>
+
                 <div className="resume-skills-wrap">
-                  {profile.skills.map((sk) => (
+                  {form.skills.map((sk) => (
                     <div className="resume-skill-chip" key={sk}>
                       {sk}
                       <button
                         className="resume-skill-chip__remove"
+                        disabled={isSaving}
                         onClick={() => removeSkill(sk)}
                         aria-label={`Remove ${sk}`}
                       >
@@ -753,7 +956,8 @@ export default function ProfilePage() {
                     </div>
                   ))}
                 </div>
-                {profile.skills.length === 0 && (
+
+                {form.skills.length === 0 && (
                   <div className="profile-empty">No skills added yet.</div>
                 )}
               </div>

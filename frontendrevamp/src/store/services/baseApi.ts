@@ -112,6 +112,7 @@ export const baseApi = createApi({
     "Applications",
     "Candidates",
     "Interviews",
+    "Profile",
   ],
   endpoints: () => ({}),
 });
