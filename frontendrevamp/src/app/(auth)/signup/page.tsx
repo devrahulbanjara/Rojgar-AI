@@ -494,6 +494,7 @@ function SignupContent() {
     const errs = validateCredentials(creds);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+    } else {
       setStep("intent");
     }
   }
