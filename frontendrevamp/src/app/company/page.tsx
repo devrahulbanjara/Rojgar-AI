@@ -135,13 +135,13 @@ const recentActivity = [
 
 export default function CompanyDashboardPage() {
   const { user } = useAppSelector((s) => s.auth);
-  const isCompanyAdmin = user?.primary_role === "company";
+  const isCompanyAdmin = user?.primary_role === "recruiter_admin";
 
   const { data: recruitersResp } = useGetCompanyRecruitersQuery(undefined, {
     skip: !isCompanyAdmin,
   });
 
-  const recruiters: RecruiterMember[] = (recruitersResp as any)?.data ?? [];
+  const recruiters: RecruiterMember[] = recruitersResp?.data ?? [];
   const activeRecruiters = recruiters.filter((r) => r.status === "active");
   const pendingRecruiters = recruiters.filter((r) => r.status === "pending");
 
@@ -192,7 +192,7 @@ export default function CompanyDashboardPage() {
               </Link>
             </div>
             <div className="dash-card__body dash-card__body--no-top">
-              {activeJobs.map((job, i) => (
+              {activeJobs.map((job) => (
                 <div key={job.title} className="item-row item-row--pad">
                   <div
                     className="item-row__logo"
@@ -252,7 +252,7 @@ export default function CompanyDashboardPage() {
               </Link>
             </div>
             <div className="dash-card__body dash-card__body--no-top">
-              {topCandidates.map((c, i) => (
+              {topCandidates.map((c) => (
                 <div key={c.name} className="item-row item-row--pad">
                   <div
                     className="item-row__logo item-row__logo--circle"

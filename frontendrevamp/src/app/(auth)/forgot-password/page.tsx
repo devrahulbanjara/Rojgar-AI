@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useForgotPasswordMutation } from "@/store/services/authApi";
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
 
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const err = validateEmail(email);
     if (err) {

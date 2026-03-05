@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -11,9 +12,6 @@ import {
 } from "@/store/services/companyApi";
 import type { RecruiterMember } from "@/store/services/companyApi";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function getInitials(name: string) {
   return name
@@ -48,17 +46,13 @@ function StatusBadge({ status }: { status: RecruiterMember["status"] }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
 
 export default function RecruitersPage() {
   const router = useRouter();
   const { user } = useAppSelector((s) => s.auth);
 
-  // Recruiters (non-admin company members) cannot manage other recruiters
   useEffect(() => {
-    if (user && user.primary_role !== "company") {
+    if (user && user.primary_role !== "recruiter_admin") {
       toast.error("Only company admins can manage recruiters.");
       router.replace("/company");
     }
@@ -69,7 +63,7 @@ export default function RecruitersPage() {
     isLoading,
     isError,
   } = useGetCompanyRecruitersQuery(undefined, {
-    skip: user?.primary_role !== "company",
+    skip: user?.primary_role !== "recruiter_admin",
   });
 
   const [updateStatus, { isLoading: isUpdating }] =
@@ -77,9 +71,9 @@ export default function RecruitersPage() {
   const [removeRecruiter, { isLoading: isRemoving }] =
     useRemoveRecruiterMutation();
 
-  if (!user || user.primary_role !== "company") return null;
+  if (!user || user.primary_role !== "recruiter_admin") return null;
 
-  const recruiters: RecruiterMember[] = (response as any)?.data ?? [];
+  const recruiters: RecruiterMember[] = response?.data ?? [];
 
   const pending = recruiters.filter((r) => r.status === "pending");
   const active = recruiters.filter((r) => r.status === "active");
@@ -272,9 +266,11 @@ function RecruiterRow({
   return (
     <div className="item-row item-row--pad">
       {recruiter.avatar_url ? (
-        <img
+        <Image
           src={recruiter.avatar_url}
           alt={recruiter.full_name}
+          width={40}
+          height={40}
           className="item-row__logo item-row__logo--circle"
           style={{ objectFit: "cover" }}
         />

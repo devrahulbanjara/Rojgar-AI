@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+
+if (!API_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL environment variable is not defined");
+}
 
 const nextConfig: NextConfig = {
   /* config options here */

@@ -6,16 +6,12 @@ import { useAppSelector } from "@/store/hooks";
 import { useLazyGetMeQuery } from "@/store/services/authApi";
 import { useLogoutMutation } from "@/store/services/authApi";
 
-// ---------------------------------------------------------------------------
-// Inner layout — rendered only after AuthGuard confirms authentication
-// ---------------------------------------------------------------------------
 
 function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
   const { user } = useAppSelector((s) => s.auth);
   const [triggerGetMe, { isFetching }] = useLazyGetMeQuery();
   const [logout] = useLogoutMutation();
 
-  // Gate recruiters who have not yet been approved by the company admin
   if (user?.primary_role === "recruiter") {
     const ms = user.membership_status;
 
@@ -104,7 +100,7 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <DashNavbar role="company" />
+      <DashNavbar role="recruiter_admin" />
       <main className="dash-page">{children}</main>
     </>
   );
@@ -120,7 +116,7 @@ export default function CompanyLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard requiredRole={["company", "recruiter"]}>
+    <AuthGuard requiredRole={["recruiter_admin", "recruiter"]}>
       <CompanyLayoutInner>{children}</CompanyLayoutInner>
     </AuthGuard>
   );

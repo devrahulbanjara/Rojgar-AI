@@ -102,9 +102,11 @@ function VerifyEmailInner() {
     calledRef.current = true;
 
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setErrorMessage(
         "No verification token found. Please use the link sent to your email.",
       );
+       
       setStatus("error");
       return;
     }

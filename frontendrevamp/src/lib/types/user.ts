@@ -8,7 +8,7 @@
 // Shared primitives
 // ---------------------------------------------------------------------------
 
-export type PrimaryRole = "candidate" | "company" | "recruiter" | "admin";
+export type PrimaryRole = "candidate" | "recruiter_admin" | "recruiter";
 
 export type MembershipStatus = "active" | "pending" | "rejected";
 

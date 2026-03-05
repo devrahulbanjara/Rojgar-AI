@@ -16,7 +16,7 @@ export type NavGroup = {
 };
 
 type DashSidebarProps = {
-  role: "user" | "admin" | "company" | "hr";
+  role: "candidate" | "recruiter_admin" | "recruiter";
   navGroups: NavGroup[];
   userName?: string;
   userRole?: string;

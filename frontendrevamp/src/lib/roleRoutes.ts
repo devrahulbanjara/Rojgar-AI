@@ -8,8 +8,7 @@ import type { PrimaryRole } from "./types/user";
 export const ROLE_DASHBOARDS: Record<PrimaryRole, string> = {
   candidate: "/dashboard",
   recruiter: "/company",
-  company: "/company",
-  admin: "/admin",
+  recruiter_admin: "/company",
 };
 
 /**
@@ -29,17 +28,16 @@ export function getRoleDashboard(role: PrimaryRole | undefined | null): string {
  * Each protected route prefix and the role(s) that may access it.
  * Note: /recruiter/* is not listed here because those pages redirect → /company.
  */
-export const PROTECTED_ROUTES: { prefix: string; role: PrimaryRole }[] = [
-  { prefix: "/dashboard", role: "candidate" },
-  { prefix: "/company", role: "company" },
-  { prefix: "/admin", role: "admin" },
+export const PROTECTED_ROUTES: { prefix: string; roles: PrimaryRole[] }[] = [
+  { prefix: "/dashboard", roles: ["candidate"] },
+  { prefix: "/company", roles: ["recruiter_admin", "recruiter"] },
 ];
 
 /**
- * Given a pathname, returns the role required to access it,
+ * Given a pathname, returns the roles required to access it,
  * or `null` if the route is not role-restricted.
  */
-export function getRequiredRole(pathname: string): PrimaryRole | null {
+export function getRequiredRoles(pathname: string): PrimaryRole[] | null {
   const match = PROTECTED_ROUTES.find((r) => pathname.startsWith(r.prefix));
-  return match?.role ?? null;
+  return match?.roles ?? null;
 }
