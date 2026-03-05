@@ -1,0 +1,104 @@
+// ============================================================
+// LOADER — Minimal thin circular spinner
+// ============================================================
+@use "../variables" as *;
+
+@keyframes loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loader {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+
+  &--fill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+  }
+
+  &__ring {
+    flex-shrink: 0;
+    fill: none;
+    animation: loader-spin 0.9s linear infinite;
+  }
+
+  // Faint full track
+  &__track {
+    fill: none;
+    stroke: rgba($color-primary, 0.1);
+  }
+
+  // Short arc — just ~25% of the circumference
+  &__arc {
+    fill: none;
+    stroke: $color-primary;
+    stroke-linecap: round;
+    // 2π × 18 ≈ 113 — show ~28px, hide the rest
+    stroke-dasharray: 28 85;
+    stroke-dashoffset: 0;
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    font-family: $font-body;
+    color: $color-text-muted;
+    letter-spacing: 0.02em;
+    font-weight: $font-weight-regular;
+  }
+
+  // ── Sizes — ring dimensions + unified stroke-width ────────────
+
+  &--sm {
+    .loader__ring {
+      width: 16px;
+      height: 16px;
+    }
+    .loader__track,
+    .loader__arc {
+      stroke-width: 1.5;
+    }
+    // recalc dash for r=18 SVG viewBox scaled: keep proportions
+    .loader__arc {
+      stroke-dasharray: 28 85;
+    }
+  }
+
+  &--md {
+    .loader__ring {
+      width: 28px;
+      height: 28px;
+    }
+    .loader__track,
+    .loader__arc {
+      stroke-width: 1.75;
+    }
+  }
+
+  &--lg {
+    .loader__ring {
+      width: 40px;
+      height: 40px;
+    }
+    .loader__track,
+    .loader__arc {
+      stroke-width: 1.75;
+    }
+  }
+
+  &--xl {
+    .loader__ring {
+      width: 56px;
+      height: 56px;
+    }
+    .loader__track,
+    .loader__arc {
+      stroke-width: 1.5;
+    }
+  }
+}

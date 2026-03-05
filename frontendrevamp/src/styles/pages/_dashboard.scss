@@ -3937,3 +3937,15 @@
     max-width: 100%;
   }
 }
+
+// ── Profile loading / error states ───────────────────────────
+
+.profile-loading,
+.profile-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: $space-4;
+}

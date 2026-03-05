@@ -152,7 +152,7 @@ export default function CompanyJobsPage() {
                   </div>
                   <div className="cell-actions">
                     <button className="btn btn--outline btn--sm">View</button>
-                    <button className="btn btn--ghost btn--sm">Edit</button>
+                    <button className="btn btn--primary btn--sm">Edit</button>
                   </div>
                 </div>
                 <div className="dash-card__body">
@@ -263,7 +263,7 @@ export default function CompanyJobsPage() {
                       </td>
                       <td>
                         <div className="cell-actions">
-                          <button className="btn btn--ghost btn--sm">
+                          <button className="btn btn--primary btn--sm">
                             Edit
                           </button>
                           <button className="btn btn--outline btn--sm">
