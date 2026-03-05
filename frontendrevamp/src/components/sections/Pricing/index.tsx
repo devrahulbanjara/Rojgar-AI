@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CheckmarkRegular, LockClosedRegular } from "@fluentui/react-icons";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -95,43 +96,11 @@ const TIERS: PricingTier[] = [
 // ── Icons ──────────────────────────────────────────────────────────────────
 
 function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={2.5}
-      stroke="currentColor"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m4.5 12.75 6 6 9-13.5"
-      />
-    </svg>
-  );
+  return <CheckmarkRegular className={className} aria-hidden="true" />;
 }
 
 function LockIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={2}
-      stroke="currentColor"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-      />
-    </svg>
-  );
+  return <LockClosedRegular className={className} aria-hidden="true" />;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────

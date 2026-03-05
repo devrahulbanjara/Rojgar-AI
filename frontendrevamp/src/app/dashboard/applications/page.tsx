@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SearchRegular } from "@fluentui/react-icons";
 
 const STATUS_STAGES = [
   { key: "all", label: "All Applications", count: 24 },
@@ -287,19 +288,7 @@ export default function ApplicationsPage() {
           {/* Search bar */}
           <div className="apps-search-row">
             <div className="apps-search">
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              <SearchRegular width={15} height={15} aria-hidden="true" />
               <input
                 className="apps-search__input"
                 type="text"
@@ -317,19 +306,7 @@ export default function ApplicationsPage() {
           <div className="apps-list">
             {filtered.length === 0 ? (
               <div className="apps-empty">
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <SearchRegular width={40} height={40} aria-hidden="true" />
                 <p>No applications match your filters.</p>
               </div>
             ) : (

@@ -1,6 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import {
+  ClockRegular,
+  AlertRegular,
+  DataBarVerticalRegular,
+  TargetRegular,
+  BrainCircuitRegular,
+} from "@fluentui/react-icons";
 
 const BLOCKS = [
   {
@@ -69,85 +76,11 @@ const BLOCKS = [
 ];
 
 const ICONS: Record<string, React.ReactNode> = {
-  clock: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  ),
-  bell: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  ),
-  chart: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-    </svg>
-  ),
-  target: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
-  ),
-  brain: (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
-      <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
-      <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
-      <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
-      <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
-      <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
-      <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
-      <path d="M6 18a4 4 0 0 1-1.967-.516" />
-      <path d="M19.967 17.484A4 4 0 0 1 18 18" />
-    </svg>
-  ),
+  clock: <ClockRegular aria-hidden="true" />,
+  bell: <AlertRegular aria-hidden="true" />,
+  chart: <DataBarVerticalRegular aria-hidden="true" />,
+  target: <TargetRegular aria-hidden="true" />,
+  brain: <BrainCircuitRegular aria-hidden="true" />,
 };
 
 export default function WhyPreferUs() {
