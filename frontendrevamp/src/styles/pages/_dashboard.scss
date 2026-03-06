@@ -2873,6 +2873,9 @@
   border-radius: $radius-xl;
   overflow: hidden;
   transition: all $transition-fast;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
 
   &:hover {
     border-color: rgba($color-primary, 0.4);
@@ -2917,6 +2920,9 @@
 
   &__info {
     padding: $space-4 $space-5;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   &__name {
@@ -2933,16 +2939,30 @@
     display: flex;
     align-items: center;
     gap: $space-2;
-    margin-bottom: $space-4;
+    margin-bottom: $space-3;
   }
 
   &__sep {
     color: $color-gray-300;
   }
 
+  &__summary {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    line-height: $line-height-normal;
+    flex: 1;
+    // italic+muted treatment for the empty-state hint
+    &:has(+ .resume-card__actions) {
+      margin-bottom: $space-3;
+    }
+  }
+
   &__actions {
     display: flex;
     gap: $space-2;
+    margin-top: auto;
+    padding-top: $space-3;
+    border-top: 1px solid $color-gray-100;
   }
 }
 
@@ -3587,6 +3607,55 @@
     font-size: $font-size-sm;
     color: $color-gray-600;
     line-height: $line-height-normal;
+  }
+}
+
+// ── Profile completion progress bar ──────────────────────────
+.profile-completion {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+    font-weight: $font-weight-medium;
+  }
+
+  &__pct {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+  }
+
+  &__bar {
+    width: 100%;
+    height: 6px;
+    background: $color-gray-100;
+    border-radius: $radius-full;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: $radius-full;
+    transition: width 0.5s ease;
+    background: $color-primary;
+
+    &--warning {
+      background: #f59e0b;
+    }
+
+    &--success {
+      background: #10b981;
+    }
   }
 }
 
