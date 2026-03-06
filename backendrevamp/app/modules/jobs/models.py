@@ -3,9 +3,10 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Uuid, func
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.modules.companies.models import Company
 from app.shared.enums import JobStatus, LocationType
 
 
@@ -20,6 +21,7 @@ class Job(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    category: Mapped[str | None] = mapped_column(String(50), index=True)
     location: Mapped[str | None] = mapped_column(String(255))
     location_type: Mapped[LocationType] = mapped_column(
         nullable=False, server_default="onsite"
@@ -43,3 +45,4 @@ class Job(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    company: Mapped[Company] = relationship("Company", lazy="raise")

@@ -17,6 +17,7 @@ class JobBase(BaseSchema):
     sub-classes tighten constraints where needed."""
 
     title: str | None = Field(default=None, max_length=255)
+    category: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
     location_type: LocationType | None = None
     salary_min: int | None = None
@@ -69,14 +70,31 @@ class JobUpdate(JobBase):
 # ---------------------------------------------------------------------------
 
 
+class CompanySnippet(BaseSchema):
+    """Minimal company info embedded in job responses."""
+
+    id: UUID
+    name: str
+    industry: str | None = None
+    company_size: str | None = None
+    location: str | None = None
+    website_url: str | None = None
+    description: str | None = None
+
+
 class JobListItem(BaseSchema):
     """Lightweight summary for job listings (no heavy text fields)."""
 
     id: UUID
     company_id: UUID
+    company: CompanySnippet
     title: str
+    category: str | None = None
     location: str | None = None
     location_type: LocationType
+    salary_min: int | None = None
+    salary_max: int | None = None
+    currency: str = "NPR"
     status: JobStatus
     created_at: datetime
 
@@ -86,8 +104,10 @@ class JobDetailResponse(BaseSchema):
 
     id: UUID
     company_id: UUID
+    company: CompanySnippet
     posted_by: UUID | None = None
     title: str
+    category: str | None = None
     location: str | None = None
     location_type: LocationType
     salary_min: int | None = None

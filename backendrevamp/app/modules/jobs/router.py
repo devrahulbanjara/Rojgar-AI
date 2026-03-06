@@ -49,11 +49,14 @@ async def search_jobs(
     q: str | None = Query(default=None, description="Search keyword for title"),
     location: str | None = Query(default=None),
     location_type: LocationType | None = Query(default=None),
+    category: str | None = Query(default=None),
+    salary_min: int | None = Query(default=None, ge=0),
+    salary_max: int | None = Query(default=None, ge=0),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = db,
 ):
-    data = await service.search_jobs(db, q, location, location_type, page, size)
+    data = await service.search_jobs(db, q, location, location_type, category, salary_min, salary_max, page, size)
     return ResponseBuilder.success(data=data, message="Jobs fetched.")
 
 
