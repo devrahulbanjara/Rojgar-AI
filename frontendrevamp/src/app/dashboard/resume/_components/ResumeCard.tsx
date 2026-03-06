@@ -50,6 +50,12 @@ export default function ResumeCard({
           )}
           <span>Updated {resume.updatedAt}</span>
         </div>
+        <div className="resume-card__summary">
+          {resume.summary
+            ? resume.summary.slice(0, 100) +
+              (resume.summary.length > 100 ? "\u2026" : "")
+            : "No summary added yet — click Edit to write one."}
+        </div>
         <div className="resume-card__actions">
           <button
             className="btn btn--outline btn--sm"

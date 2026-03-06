@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useAppSelector } from "@/store/hooks";
 import Loader from "@/components/common/Loader";
@@ -343,6 +343,22 @@ export default function ProfilePage() {
     .toUpperCase()
     .slice(0, 2);
 
+  // ── Profile completion score (0–100) ─────────────────────────────────────
+
+  const profileCompletion = useMemo(() => {
+    let score = 0;
+    if (form.headline) score += 10;
+    if (form.summary) score += 15;
+    if (form.phone) score += 5;
+    if (form.location) score += 5;
+    if (form.years_of_experience) score += 5;
+    if (form.linkedin_url || form.github_url || form.portfolio_url) score += 10;
+    if (form.experiences.length > 0) score += 20;
+    if (form.educations.length > 0) score += 15;
+    if (form.skills.length >= 3) score += 15;
+    return score;
+  }, [form]);
+
   // ── Loading / error states ────────────────────────────────────────────────
 
   if (isLoading) {
@@ -437,6 +453,23 @@ export default function ProfilePage() {
                   {form.skills.length}
                 </div>
                 <div className="profile-aside-card__stat-label">Skills</div>
+              </div>
+            </div>
+            <div className="profile-aside-card__divider" />
+            <div className="profile-completion">
+              <div className="profile-completion__header">
+                <span className="profile-completion__label">
+                  Profile Completion
+                </span>
+                <span className="profile-completion__pct">
+                  {profileCompletion}%
+                </span>
+              </div>
+              <div className="profile-completion__bar">
+                <div
+                  className={`profile-completion__fill${profileCompletion >= 80 ? " profile-completion__fill--success" : profileCompletion >= 40 ? "" : " profile-completion__fill--warning"}`}
+                  style={{ width: `${profileCompletion}%` }}
+                />
               </div>
             </div>
           </div>
