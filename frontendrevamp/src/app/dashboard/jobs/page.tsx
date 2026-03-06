@@ -1,313 +1,751 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { toast } from "react-toastify";
 import {
   BookmarkRegular,
   BriefcaseRegular,
   LocationRegular,
-  PeopleRegular,
   ClockRegular,
-  ShareRegular,
-  ChatRegular,
+  SearchRegular,
+  DismissRegular,
+  ArrowRightRegular,
+  ChevronDownRegular,
 } from "@fluentui/react-icons";
+import Loader from "@/components/common/Loader";
+import {
+  useSearchJobsQuery,
+  useGetJobByIdQuery,
+  type JobListItem,
+  type JobDetail,
+  type LocationType,
+  type SearchJobsParams,
+} from "@/store/services/jobsApi";
+import { useApplyToJobMutation } from "@/store/services/applicationsApi";
+import { useGetMyResumesQuery } from "@/store/services/resumeApi";
 
-const JOBS = [
-  {
-    id: 1,
-    title: "Visual Designer",
-    company: "Pickolab Studio",
-    location: "Semarang, IND",
-    type: "Full Time",
-    tags: ["3D Design", "Blender", "After Effect", "Illustration"],
-    desc: "The Visual Designer conveys design concepts into wireframes and high fidelity, quality prototypes that match project requirement, product objective, brand identity...",
-    applied: 74,
-    daysLeft: 3,
-    salary: "$90/hr",
-    experience: "Min. 2 Years",
-    logo: "P",
-    logoColor: "#7928CA",
-    totalCandidates: 74,
-    newApplicants: 21,
-    approved: 46,
-    rejected: 15,
-    matchLevel: 68,
-    about:
-      "Pickolab Studio is a creative design agency based in Semarang, Indonesia. We specialize in crafting compelling visual experiences that align with brand strategy and product goals. Join our growing team to work on world-class design projects.",
-  },
-  {
-    id: 2,
-    title: "Product Designer",
-    company: "Pickolab Studio",
-    location: "Semarang, IND",
-    type: "Full Time",
-    tags: ["UI/UX Designer", "Design Thinking", "Figma", "4+"],
-    desc: "The Product Designer is responsible for articulating and conceptualizing our product vision and to shape our features from start to finish. You will not only be improving...",
-    applied: 50,
-    daysLeft: 5,
-    salary: "$200/mo",
-    experience: "Min. 1 Year",
-    logo: "P",
-    logoColor: "#7928CA",
-    totalCandidates: 67,
-    newApplicants: 21,
-    approved: 46,
-    rejected: 15,
-    matchLevel: 70,
-    about:
-      "The Product Designer is responsible for articulating and conceptualizing our product vision and to shape our features from start to finish. You will not only be improving the user experience via UI and UX, but drive business value through great design decisions.",
-  },
-  {
-    id: 3,
-    title: "Senior Interaction Designer",
-    company: "Shopee",
-    location: "Semarang, IND",
-    type: "Full Time",
-    tags: ["UI Designer", "Motion Graphic", "After Effect", "3+"],
-    desc: "The Senior Interaction Designer is responsible for certain phases of design projects assigned to be implemented into outputs such as design research reports...",
-    applied: 48,
-    daysLeft: 12,
-    salary: "$150/hr",
-    experience: "Min. 3 Years",
-    logo: "S",
-    logoColor: "#EE4D2D",
-    totalCandidates: 48,
-    newApplicants: 18,
-    approved: 22,
-    rejected: 8,
-    matchLevel: 75,
-    about:
-      "Shopee is Southeast Asia's premier e-commerce platform. We are looking for a Senior Interaction Designer to lead design initiatives for our enterprise products, improving UX for millions of users.",
-  },
-  {
-    id: 4,
-    title: "UX Researcher",
-    company: "Tokopedia",
-    location: "Jakarta, IND",
-    type: "Part Time",
-    tags: ["User Research", "Figma", "Miro"],
-    desc: "Conduct user research and usability testing sessions. Synthesize qualitative and quantitative data to generate actionable insights for product teams...",
-    applied: 31,
-    daysLeft: 7,
-    salary: "$80/hr",
-    experience: "Min. 2 Years",
-    logo: "T",
-    logoColor: "#42B549",
-    totalCandidates: 31,
-    newApplicants: 12,
-    approved: 14,
-    rejected: 5,
-    matchLevel: 83,
-    about:
-      "Tokopedia is Indonesia's largest digital marketplace. Our UX Research team is core to how we build products that serve tens of millions of users.",
-  },
-  {
-    id: 5,
-    title: "Motion Designer",
-    company: "GoTo Group",
-    location: "Jakarta, IND",
-    type: "Full Time",
-    tags: ["After Effects", "Cinema 4D", "Lottie"],
-    desc: "Create motion graphics, animated explainers, and UI animations that communicate complex ideas simply and bring product interfaces to life...",
-    applied: 22,
-    daysLeft: 10,
-    salary: "$110/hr",
-    experience: "Min. 2 Years",
-    logo: "G",
-    logoColor: "#E42729",
-    totalCandidates: 22,
-    newApplicants: 9,
-    approved: 10,
-    rejected: 3,
-    matchLevel: 61,
-    about:
-      "GoTo Group is the largest digital ecosystem in Indonesia, combining Gojek and Tokopedia into one powerhouse.",
-  },
-];
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-function DonutChart({
-  total,
-  approved,
-  rejected,
-  newApplicants,
+const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
+  onsite: "On-site",
+  remote: "Remote",
+  hybrid: "Hybrid",
+};
+
+// ---------------------------------------------------------------------------
+// Category and salary band constants
+// ---------------------------------------------------------------------------
+
+const CATEGORY_LABELS: Record<string, string> = {
+  frontend: "Frontend",
+  backend: "Backend",
+  full_stack: "Full Stack",
+  mobile: "Mobile",
+  data: "Data",
+  ml_ai: "ML / AI",
+  devops: "DevOps",
+  design: "Design",
+  product: "Product",
+  management: "Management",
+  security: "Security",
+  qa: "QA",
+  other: "Other",
+};
+
+interface SalaryBand {
+  label: string;
+  salary_min?: number;
+  salary_max?: number;
+}
+
+function formatSalary(
+  min?: number | null,
+  max?: number | null,
+  currency = "NPR",
+): string | null {
+  if (!min && !max) return null;
+  if (min && max)
+    return `${currency} ${min.toLocaleString()} – ${max.toLocaleString()}`;
+  if (min) return `From ${currency} ${min.toLocaleString()}`;
+  return `Up to ${currency} ${max!.toLocaleString()}`;
+}
+
+function formatDate(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 7) return `${diff} days ago`;
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Apply modal — shows resume picker then submits application
+// ---------------------------------------------------------------------------
+
+function ApplyModal({
+  jobId,
+  jobTitle,
+  onClose,
 }: {
-  total: number;
-  approved: number;
-  rejected: number;
-  newApplicants: number;
+  jobId: string;
+  jobTitle: string;
+  onClose: () => void;
 }) {
-  const size = 100;
-  const r = 38;
-  const cx = 50;
-  const cy = 50;
-  const circ = 2 * Math.PI * r;
+  const { data: resumesResp, isLoading: loadingResumes } =
+    useGetMyResumesQuery();
+  const [applyToJob, { isLoading: applying }] = useApplyToJobMutation();
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
 
-  const approvedPct = approved / total;
-  const rejectedPct = rejected / total;
-  const newPct = newApplicants / total;
+  const resumes = resumesResp?.data ?? [];
 
-  const approvedDash = approvedPct * circ;
-  const rejectedDash = rejectedPct * circ;
-  const newDash = newPct * circ;
-
-  const segments = [
-    { dash: approvedDash, offset: 0, color: "#7928ca" },
-    { dash: rejectedDash, offset: -approvedDash, color: "#ff4d4d" },
-    { dash: newDash, offset: -(approvedDash + rejectedDash), color: "#0070f3" },
-  ];
+  async function handleSubmit() {
+    if (!selectedResumeId) return;
+    try {
+      await applyToJob({ job_id: jobId, resume_id: selectedResumeId }).unwrap();
+      toast.success("Application submitted successfully!");
+      onClose();
+    } catch (err: unknown) {
+      const msg = (err as { data?: { message?: string } })?.data?.message;
+      toast.error(msg ?? "Failed to submit application.");
+    }
+  }
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* bg track */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="none"
-        stroke="#f4f4f5"
-        strokeWidth="14"
-      />
-      {segments.map((seg, i) => (
-        <circle
-          key={i}
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="none"
-          stroke={seg.color}
-          strokeWidth="14"
-          strokeDasharray={`${seg.dash} ${circ - seg.dash}`}
-          strokeDashoffset={circ * 0.25 + seg.offset}
-          strokeLinecap="butt"
-          className="donut-ring"
-        />
-      ))}
-    </svg>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div
+        className="modal modal--md"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="apply-modal-title"
+      >
+        <div className="modal__header">
+          <div className="modal__title" id="apply-modal-title">
+            Apply to {jobTitle}
+          </div>
+          <button
+            className="btn btn--ghost btn--sm"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <DismissRegular width={16} height={16} />
+          </button>
+        </div>
+        <div className="modal__body">
+          {loadingResumes ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "1.5rem 0",
+              }}
+            >
+              <Loader size="sm" />
+            </div>
+          ) : resumes.length === 0 ? (
+            <p style={{ color: "var(--color-muted,#6b7280)" }}>
+              You need to{" "}
+              <a href="/dashboard/resume" className="auth__inline-link">
+                create a resume
+              </a>{" "}
+              before applying.
+            </p>
+          ) : (
+            <>
+              <p
+                style={{
+                  marginBottom: "0.75rem",
+                  fontSize: "0.875rem",
+                  color: "var(--color-muted,#6b7280)",
+                }}
+              >
+                Select a resume to submit with your application:
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                {resumes.map((r) => (
+                  <label
+                    key={r.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      padding: "0.75rem",
+                      borderRadius: "0.5rem",
+                      border: `1.5px solid ${selectedResumeId === r.id ? "var(--color-primary,#7c3aed)" : "var(--color-gray-200,#e5e7eb)"}`,
+                      cursor: "pointer",
+                      background:
+                        selectedResumeId === r.id
+                          ? "var(--color-primary-50,#ede9fe)"
+                          : "",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="resume"
+                      value={r.id}
+                      checked={selectedResumeId === r.id}
+                      onChange={() => setSelectedResumeId(r.id)}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{r.resume_name}</div>
+                      {r.headline && (
+                        <div
+                          style={{
+                            fontSize: "0.8125rem",
+                            color: "var(--color-muted,#6b7280)",
+                          }}
+                        >
+                          {r.headline}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="modal__footer">
+          <button className="btn btn--ghost" onClick={onClose}>
+            Cancel
+          </button>
+          {resumes.length > 0 && (
+            <button
+              className="btn btn--primary"
+              onClick={handleSubmit}
+              disabled={!selectedResumeId || applying}
+            >
+              {applying ? "Submitting…" : "Submit Application"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
-export default function UserJobsPage() {
-  const [selectedJob, setSelectedJob] = useState(JOBS[1]);
-  const [searchVal] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+// ---------------------------------------------------------------------------
+// Job preview right panel — short overview + CTA buttons
+// ---------------------------------------------------------------------------
 
-  const filtered = JOBS.filter((j) => {
-    const matchSearch =
-      !searchVal ||
-      j.title.toLowerCase().includes(searchVal.toLowerCase()) ||
-      j.company.toLowerCase().includes(searchVal.toLowerCase());
-    const matchType = typeFilter.length === 0 || typeFilter.includes(j.type);
-    return matchSearch && matchType;
-  });
+function JobPreviewPanel({
+  jobId,
+  allJobs,
+  onApply,
+}: {
+  jobId: string;
+  allJobs: JobListItem[];
+  onApply: () => void;
+}) {
+  const { data: resp, isLoading } = useGetJobByIdQuery(jobId);
+  const job: JobDetail | undefined = resp?.data;
 
-  const toggleType = (t: string) =>
-    setTypeFilter((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+  if (isLoading)
+    return (
+      <div className="job-preview">
+        <div className="job-preview__empty">
+          <Loader size="md" />
+        </div>
+      </div>
     );
+
+  if (!job)
+    return (
+      <div className="job-preview">
+        <div className="job-preview__empty">
+          <p>Could not load job details.</p>
+        </div>
+      </div>
+    );
+
+  const salary = formatSalary(job.salary_min, job.salary_max, job.currency);
+  const isOpen = job.status === "open";
+  const openRolesCount = allJobs.filter(
+    (j) => j.company_id === job.company_id,
+  ).length;
+
+  return (
+    <div className="job-preview">
+      <div
+        className="job-preview__cover"
+        style={
+          {
+            "--jp-from": "rgba(0,112,243,0.18)",
+            "--jp-to": "rgba(121,40,202,0.1)",
+          } as React.CSSProperties
+        }
+      >
+        <div
+          className="job-preview__logo"
+          style={{ "--jp-logo": "#7928ca" } as React.CSSProperties}
+        >
+          {job.title[0]}
+        </div>
+      </div>
+
+      <div className="job-preview__header">
+        <div className="job-preview__date">
+          Posted {formatDate(job.created_at)}
+        </div>
+        <div className="job-preview__title">{job.title}</div>
+        <div className="job-preview__company">{job.company?.name}</div>
+        <div className="job-preview__location">
+          <LocationRegular width={12} height={12} aria-hidden="true" />
+          {job.location ?? "Location not specified"} ·{" "}
+          {LOCATION_TYPE_LABELS[job.location_type]}
+        </div>
+      </div>
+
+      <div className="job-preview__company-meta">
+        {job.company?.industry && <span>{job.company.industry}</span>}
+        {job.company?.company_size && <span>· {job.company.company_size}</span>}
+        {openRolesCount > 1 && (
+          <span className="job-preview__chip job-preview__chip--success">
+            {openRolesCount} open roles
+          </span>
+        )}
+      </div>
+
+      <div className="job-preview__chips">
+        <span className="job-preview__chip">
+          {LOCATION_TYPE_LABELS[job.location_type]}
+        </span>
+        {salary && <span className="job-preview__chip">{salary}</span>}
+        <span
+          className={`job-preview__chip${isOpen ? " job-preview__chip--success" : " job-preview__chip--gray"}`}
+        >
+          {isOpen ? "Actively Hiring" : job.status}
+        </span>
+      </div>
+
+      {job.overview && (
+        <div className="job-preview__overview">
+          <div className="job-preview__overview-label">About the Role</div>
+          <p className="job-preview__overview-text">{job.overview}</p>
+        </div>
+      )}
+
+      <div className="job-preview__cta">
+        <Link
+          href={`/dashboard/jobs/${job.id}`}
+          className="job-preview__view-btn"
+        >
+          View Details
+          <ArrowRightRegular width={14} height={14} aria-hidden="true" />
+        </Link>
+        <button
+          className="job-preview__quick-btn"
+          onClick={onApply}
+          disabled={!isOpen}
+        >
+          {isOpen ? "Quick Apply" : `Applications ${job.status}`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
+
+export default function UserJobsPage() {
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [locationInput, setLocationInput] = useState("");
+  const [location, setLocation] = useState("");
+  const [locationTypeFilter, setLocationTypeFilter] =
+    useState<LocationType | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [salaryMinInput, setSalaryMinInput] = useState("");
+  const [salaryMaxInput, setSalaryMaxInput] = useState("");
+  const [salaryMin, setSalaryMin] = useState<number | undefined>(undefined);
+  const [salaryMax, setSalaryMax] = useState<number | undefined>(undefined);
+  const [workTypeOpen, setWorkTypeOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [applyingToJob, setApplyingToJob] = useState<JobListItem | null>(null);
+
+  const workTypeRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        workTypeRef.current &&
+        !workTypeRef.current.contains(e.target as Node)
+      )
+        setWorkTypeOpen(false);
+      if (
+        categoryRef.current &&
+        !categoryRef.current.contains(e.target as Node)
+      )
+        setCategoryOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const queryParams: SearchJobsParams = {
+    q: search || undefined,
+    location: location || undefined,
+    location_type: locationTypeFilter ?? undefined,
+    category: categoryFilter ?? undefined,
+    salary_min: salaryMin,
+    salary_max: salaryMax,
+  };
+
+  const {
+    data: jobsResp,
+    isLoading,
+    isError,
+  } = useSearchJobsQuery(queryParams);
+
+  const jobs: JobListItem[] = jobsResp?.data ?? [];
+  const resolvedId = selectedJobId ?? jobs[0]?.id ?? null;
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setSearch(searchInput);
+    setLocation(locationInput);
+    setSelectedJobId(null);
+  }
 
   return (
     <>
       <div className="dash-content container dash-content--pad-top">
-        {/* Three-column layout */}
         <div className="jobs-layout">
-          {/* Filter Sidebar */}
+          {/* ── Filter Sidebar ── */}
           <div className="jobs-layout__sidebar">
             <div className="jobs-layout__sidebar-title">Filters</div>
 
-            <div className="jobs-layout__filter-group">
-              <div className="jobs-layout__filter-group-label">Job Type</div>
-              {["Full Time", "Part Time", "Remote", "Contract"].map((t) => (
-                <label key={t} className="jobs-layout__filter-option">
-                  <input
-                    type="checkbox"
-                    checked={typeFilter.includes(t)}
-                    onChange={() => toggleType(t)}
-                  />
-                  {t}
-                </label>
-              ))}
-            </div>
-
-            <div className="jobs-layout__filter-group">
-              <div className="jobs-layout__filter-group-label">Experience</div>
-              {["Entry Level", "Mid Level", "Senior", "Lead"].map((t) => (
-                <label key={t} className="jobs-layout__filter-option">
-                  <input type="checkbox" readOnly />
-                  {t}
-                </label>
-              ))}
-            </div>
-
-            <div className="jobs-layout__filter-group">
-              <div className="jobs-layout__filter-group-label">
-                Salary Range
+            {/* Pill search input */}
+            <form onSubmit={handleSearch}>
+              <div className="jobs-sidebar-search">
+                <span className="jobs-sidebar-search__icon">
+                  <SearchRegular width={16} height={16} aria-hidden="true" />
+                </span>
+                <input
+                  className="jobs-sidebar-search__input"
+                  placeholder="Search jobs…"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="jobs-sidebar-search__btn"
+                  aria-label="Search"
+                >
+                  <SearchRegular width={12} height={12} aria-hidden="true" />
+                </button>
               </div>
-              {["$50/hr–$80/hr", "$80/hr–$120/hr", "$120/hr–$200/hr"].map(
-                (t) => (
-                  <label key={t} className="jobs-layout__filter-option">
-                    <input type="checkbox" readOnly />
-                    {t}
-                  </label>
-                ),
-              )}
+            </form>
+
+            {/* Work Type dropdown */}
+            <div className="jobs-layout__filter-group">
+              <div className="jobs-layout__filter-group-label">Work Type</div>
+              <div className="jobs-filter-dropdown" ref={workTypeRef}>
+                <button
+                  type="button"
+                  className={`jobs-filter-dropdown__trigger${workTypeOpen ? " jobs-filter-dropdown__trigger--open" : ""}${locationTypeFilter !== null ? " jobs-filter-dropdown__trigger--active" : ""}`}
+                  onClick={() => setWorkTypeOpen((v) => !v)}
+                >
+                  <span>
+                    {locationTypeFilter
+                      ? LOCATION_TYPE_LABELS[locationTypeFilter]
+                      : "All Types"}
+                  </span>
+                  <ChevronDownRegular
+                    className={`jobs-filter-dropdown__chevron${workTypeOpen ? " jobs-filter-dropdown__chevron--open" : ""}`}
+                    width={12}
+                    height={12}
+                  />
+                </button>
+                {workTypeOpen && (
+                  <div className="jobs-filter-dropdown__menu">
+                    {(
+                      [
+                        null,
+                        "onsite",
+                        "remote",
+                        "hybrid",
+                      ] as (LocationType | null)[]
+                    ).map((t) => (
+                      <button
+                        key={String(t)}
+                        type="button"
+                        className={`jobs-filter-dropdown__option${locationTypeFilter === t ? " jobs-filter-dropdown__option--active" : ""}`}
+                        onClick={() => {
+                          setLocationTypeFilter(t);
+                          setSelectedJobId(null);
+                          setWorkTypeOpen(false);
+                        }}
+                      >
+                        <span className="jobs-filter-dropdown__option-dot" />
+                        {t === null ? "All Types" : LOCATION_TYPE_LABELS[t]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Location text filter */}
             <div className="jobs-layout__filter-group">
               <div className="jobs-layout__filter-group-label">Location</div>
-              {["Semarang", "Jakarta", "Remote"].map((t) => (
-                <label key={t} className="jobs-layout__filter-option">
-                  <input type="checkbox" readOnly />
-                  {t}
-                </label>
-              ))}
+              <div className="jobs-sidebar-search">
+                <span className="jobs-sidebar-search__icon">
+                  <LocationRegular width={15} height={15} aria-hidden="true" />
+                </span>
+                <input
+                  className="jobs-sidebar-search__input"
+                  placeholder="e.g. Kathmandu…"
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setLocation(locationInput);
+                      setSelectedJobId(null);
+                    }
+                  }}
+                />
+                {locationInput && (
+                  <button
+                    type="button"
+                    className="jobs-sidebar-search__btn"
+                    aria-label="Clear location"
+                    onClick={() => {
+                      setLocationInput("");
+                      setLocation("");
+                      setSelectedJobId(null);
+                    }}
+                  >
+                    <DismissRegular width={11} height={11} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Category dropdown */}
+            <div className="jobs-layout__filter-group">
+              <div className="jobs-layout__filter-group-label">Category</div>
+              <div className="jobs-filter-dropdown" ref={categoryRef}>
+                <button
+                  type="button"
+                  className={`jobs-filter-dropdown__trigger${categoryOpen ? " jobs-filter-dropdown__trigger--open" : ""}${categoryFilter !== null ? " jobs-filter-dropdown__trigger--active" : ""}`}
+                  onClick={() => setCategoryOpen((v) => !v)}
+                >
+                  <span>
+                    {categoryFilter
+                      ? CATEGORY_LABELS[categoryFilter]
+                      : "All Categories"}
+                  </span>
+                  <ChevronDownRegular
+                    className={`jobs-filter-dropdown__chevron${categoryOpen ? " jobs-filter-dropdown__chevron--open" : ""}`}
+                    width={12}
+                    height={12}
+                  />
+                </button>
+                {categoryOpen && (
+                  <div className="jobs-filter-dropdown__menu">
+                    <button
+                      type="button"
+                      className={`jobs-filter-dropdown__option${categoryFilter === null ? " jobs-filter-dropdown__option--active" : ""}`}
+                      onClick={() => {
+                        setCategoryFilter(null);
+                        setSelectedJobId(null);
+                        setCategoryOpen(false);
+                      }}
+                    >
+                      <span className="jobs-filter-dropdown__option-dot" />
+                      All Categories
+                    </button>
+                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`jobs-filter-dropdown__option${categoryFilter === key ? " jobs-filter-dropdown__option--active" : ""}`}
+                        onClick={() => {
+                          setCategoryFilter(key);
+                          setSelectedJobId(null);
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <span className="jobs-filter-dropdown__option-dot" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Salary range inputs */}
+            <div className="jobs-layout__filter-group jobs-layout__filter-group--last">
+              <div className="jobs-layout__filter-group-label">
+                Salary (NPR)
+              </div>
+              <div className="jobs-salary-range">
+                <input
+                  type="number"
+                  className="jobs-salary-range__input"
+                  placeholder="Min"
+                  value={salaryMinInput}
+                  onChange={(e) => setSalaryMinInput(e.target.value)}
+                  onBlur={() => {
+                    const v = salaryMinInput
+                      ? Number(salaryMinInput)
+                      : undefined;
+                    setSalaryMin(v);
+                    setSelectedJobId(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const v = salaryMinInput
+                        ? Number(salaryMinInput)
+                        : undefined;
+                      setSalaryMin(v);
+                      setSelectedJobId(null);
+                    }
+                  }}
+                />
+                <span className="jobs-salary-range__sep">···</span>
+                <input
+                  type="number"
+                  className="jobs-salary-range__input"
+                  placeholder="Max"
+                  value={salaryMaxInput}
+                  onChange={(e) => setSalaryMaxInput(e.target.value)}
+                  onBlur={() => {
+                    const v = salaryMaxInput
+                      ? Number(salaryMaxInput)
+                      : undefined;
+                    setSalaryMax(v);
+                    setSelectedJobId(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const v = salaryMaxInput
+                        ? Number(salaryMaxInput)
+                        : undefined;
+                      setSalaryMax(v);
+                      setSelectedJobId(null);
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Job List */}
+          {/* ── Job List ── */}
           <div>
             <div className="job-list-header">
-              <p className="job-list-header__count">
-                {filtered.length} Job Active
-              </p>
-              <div className="job-list-header__sort">
-                Sort by
-                <select className="dash-select">
-                  <option>Popular Job</option>
-                  <option>Newest</option>
-                  <option>Highest Pay</option>
-                  <option>Best Match</option>
-                </select>
+              <div className="job-list-header__count">
+                {isLoading
+                  ? ""
+                  : `${jobs.length} job${jobs.length !== 1 ? "s" : ""} found`}
               </div>
             </div>
 
+            {isLoading && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "320px",
+                }}
+              >
+                <Loader size="lg" />
+              </div>
+            )}
+
+            {isError && (
+              <div className="dash-card">
+                <div className="dash-card__body">Failed to load jobs.</div>
+              </div>
+            )}
+
+            {!isLoading && !isError && jobs.length === 0 && (
+              <div className="dash-card">
+                <div
+                  className="dash-card__body"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "2rem",
+                    gap: "0.75rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <BriefcaseRegular
+                    style={{
+                      width: 32,
+                      height: 32,
+                      color: "var(--color-muted,#9ca3af)",
+                    }}
+                  />
+                  <p>No jobs match your search.</p>
+                </div>
+              </div>
+            )}
+
             <div className="job-list-stack">
-              {filtered.map((job) => (
+              {jobs.map((job) => (
                 <div
                   key={job.id}
-                  className={`job-card${selectedJob.id === job.id ? " job-card--active" : ""}`}
-                  onClick={() => setSelectedJob(job)}
+                  className={`job-card${resolvedId === job.id ? " job-card--active" : ""}`}
+                  onClick={() => setSelectedJobId(job.id)}
                 >
                   <div className="job-card__header">
                     <div
                       className="job-card__logo"
                       style={
                         {
-                          "--logo-bg": job.logoColor + "1A",
-                          "--logo-color": job.logoColor,
+                          "--logo-bg": "#7928CA1A",
+                          "--logo-color": "#7928CA",
                         } as React.CSSProperties
                       }
                     >
-                      {job.logo}
+                      {job.title[0]}
                     </div>
                     <div className="job-card__title-wrap">
                       <div className="job-card__title">{job.title}</div>
                       <div className="job-card__company">
-                        {job.company}
-                        <span className="job-card__location">
-                          · {job.location}
-                        </span>
+                        {job.company?.name}
+                      </div>
+                      <div className="job-card__location">
+                        {job.location && (
+                          <>
+                            <LocationRegular
+                              style={{ width: 11, height: 11 }}
+                              aria-hidden="true"
+                            />{" "}
+                            {job.location} ·{" "}
+                          </>
+                        )}
+                        {LOCATION_TYPE_LABELS[job.location_type]}
                       </div>
                     </div>
-                    <button className="job-card__bookmark" title="Save job">
+                    <button
+                      className="job-card__bookmark"
+                      title="Save job"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <BookmarkRegular
                         width={14}
                         height={14}
@@ -317,14 +755,24 @@ export default function UserJobsPage() {
                   </div>
 
                   <div className="job-card__tags">
-                    {job.tags.slice(0, 4).map((tag) => (
-                      <span key={tag} className="job-card__tag">
-                        {tag}
+                    <span className="job-card__tag">
+                      {LOCATION_TYPE_LABELS[job.location_type]}
+                    </span>
+                    {job.category && (
+                      <span className="job-card__tag">
+                        {CATEGORY_LABELS[job.category] ?? job.category}
                       </span>
-                    ))}
+                    )}
+                    {(job.salary_min || job.salary_max) && (
+                      <span className="job-card__tag">
+                        {formatSalary(
+                          job.salary_min,
+                          job.salary_max,
+                          job.currency,
+                        )}
+                      </span>
+                    )}
                   </div>
-
-                  <p className="job-card__desc">{job.desc}</p>
 
                   <div className="job-card__meta">
                     <span>
@@ -333,27 +781,21 @@ export default function UserJobsPage() {
                         height={12}
                         aria-hidden="true"
                       />
-                      {job.type}
+                      {LOCATION_TYPE_LABELS[job.location_type]}
                     </span>
-                    <span>
-                      <LocationRegular
-                        width={12}
-                        height={12}
-                        aria-hidden="true"
-                      />
-                      {job.location}
-                    </span>
-                    <span>
-                      <PeopleRegular
-                        width={12}
-                        height={12}
-                        aria-hidden="true"
-                      />
-                      {job.applied} applied
-                    </span>
+                    {job.location && (
+                      <span>
+                        <LocationRegular
+                          width={12}
+                          height={12}
+                          aria-hidden="true"
+                        />
+                        {job.location}
+                      </span>
+                    )}
                     <span className="job-card__meta-time">
                       <ClockRegular width={12} height={12} aria-hidden="true" />
-                      {job.daysLeft} days left
+                      {formatDate(job.created_at)}
                     </span>
                   </div>
                 </div>
@@ -361,149 +803,43 @@ export default function UserJobsPage() {
             </div>
           </div>
 
-          {/* Job Detail */}
-          <div className="job-detail">
-            {/* Cover */}
-            <div
-              className="job-detail__cover"
-              style={
-                {
-                  "--job-color-from": selectedJob.logoColor + "22",
-                  "--job-color-to": selectedJob.logoColor + "0D",
-                } as React.CSSProperties
-              }
+          {/* ── Job Preview Panel ── */}
+          {isLoading ? (
+            <div className="job-preview">
+              <div className="job-preview__empty">
+                <Loader size="lg" />
+              </div>
+            </div>
+          ) : resolvedId ? (
+            <JobPreviewPanel
+              jobId={resolvedId}
+              allJobs={jobs}
+              onApply={() => {
+                const j = jobs.find((x) => x.id === resolvedId);
+                if (j) setApplyingToJob(j);
+              }}
             />
-
-            {/* Header */}
-            <div className="job-detail__header">
-              <div className="job-detail__logo-wrap">
-                <div
-                  className="job-detail__logo"
-                  style={
-                    {
-                      "--job-logo-color": selectedJob.logoColor,
-                    } as React.CSSProperties
-                  }
-                >
-                  {selectedJob.logo}
-                </div>
-                <div className="job-detail__actions">
-                  <button className="job-detail__action-btn" title="Save">
-                    <BookmarkRegular
-                      width={15}
-                      height={15}
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <button className="job-detail__action-btn" title="Share">
-                    <ShareRegular width={15} height={15} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-              <div className="job-detail__meta">
-                Created {selectedJob.daysLeft * 2} Days ago
-              </div>
-              <div className="job-detail__title">{selectedJob.title}</div>
-              <div className="job-detail__company">
-                <LocationRegular width={13} height={13} aria-hidden="true" />
-                {selectedJob.company} · {selectedJob.location}
+          ) : (
+            <div className="job-preview">
+              <div className="job-preview__empty">
+                <BriefcaseRegular
+                  style={{ width: 40, height: 40, opacity: 0.3 }}
+                />
+                <p>Select a job to preview details</p>
               </div>
             </div>
-
-            {/* Applicants Summary */}
-            <div className="job-detail__stats">
-              <div className="job-detail__stats-title">
-                Applicants Summary
-                <div className="job-detail__match">
-                  <span className="job-detail__match-label">Match level</span>
-                  <span className="job-detail__match-value">
-                    {selectedJob.matchLevel}%
-                  </span>
-                </div>
-              </div>
-              <div className="job-detail__stats-row">
-                <div className="job-detail__donut-wrap">
-                  <DonutChart
-                    total={selectedJob.totalCandidates}
-                    approved={selectedJob.approved}
-                    rejected={selectedJob.rejected}
-                    newApplicants={selectedJob.newApplicants}
-                  />
-                  <div className="job-detail__donut-center">
-                    {selectedJob.totalCandidates}
-                  </div>
-                </div>
-                <div className="job-detail__stats-info">
-                  <div className="job-detail__stats-total">
-                    {selectedJob.totalCandidates}
-                    <span className="text-note">/100</span>
-                  </div>
-                  <div className="job-detail__stats-label">Total Candidate</div>
-                  <div className="job-detail__legend">
-                    <div className="job-detail__legend-item">
-                      <div className="job-detail__legend-item-dot job-detail__legend-item-dot--primary" />
-                      New Applicants ({selectedJob.newApplicants})
-                    </div>
-                    <div className="job-detail__legend-item">
-                      <div className="job-detail__legend-item-dot job-detail__legend-item-dot--secondary" />
-                      Approved ({selectedJob.approved})
-                    </div>
-                    <div className="job-detail__legend-item">
-                      <div className="job-detail__legend-item-dot job-detail__legend-item-dot--accent" />
-                      Rejected ({selectedJob.rejected})
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Info grid */}
-            <div className="job-detail__info">
-              <div className="job-detail__info-grid">
-                <div className="job-detail__info-item">
-                  <span className="job-detail__info-item-label">Job Type</span>
-                  <span className="job-detail__info-item-value">
-                    {selectedJob.type}
-                  </span>
-                </div>
-                <div className="job-detail__info-item">
-                  <span className="job-detail__info-item-label">
-                    Experience
-                  </span>
-                  <span className="job-detail__info-item-value">
-                    {selectedJob.experience}
-                  </span>
-                </div>
-                <div className="job-detail__info-item">
-                  <span className="job-detail__info-item-label">Salary</span>
-                  <span className="job-detail__info-item-value">
-                    {selectedJob.salary}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* About Job Role */}
-            <div className="job-detail__about">
-              <h4>About Job Role</h4>
-              <p>
-                {selectedJob.about.slice(0, 180)}…{" "}
-                <a href="#" className="job-detail__about-link">
-                  View Detail Job
-                </a>
-              </p>
-            </div>
-
-            {/* CTA */}
-            <div className="job-detail__cta">
-              <button className="job-detail__apply-btn">Apply Job</button>
-              <button className="job-detail__msg-btn" title="Message">
-                <ChatRegular width={16} height={16} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Apply modal */}
+      {applyingToJob && (
+        <ApplyModal
+          jobId={applyingToJob.id}
+          jobTitle={applyingToJob.title}
+          onClose={() => setApplyingToJob(null)}
+        />
+      )}
     </>
   );
 }

@@ -497,19 +497,24 @@
   border-radius: $radius-xl;
   padding: $space-5;
   cursor: pointer;
-  transition: all $transition-fast;
+  transition:
+    all $transition-base,
+    transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
 
-  &:hover,
-  &--active {
+  &:hover {
     border-color: rgba($color-primary, 0.4);
     box-shadow:
       0 0 0 3px rgba($color-primary, 0.08),
       $shadow-md;
+    transform: translateY(-2px);
   }
 
   &--active {
     border-color: $color-primary;
+    box-shadow:
+      0 0 0 3px rgba($color-primary, 0.08),
+      $shadow-md;
   }
 
   &__header {
@@ -1333,6 +1338,25 @@
     padding: $space-5;
     position: sticky;
     top: 80px;
+    overflow: visible;
+  }
+
+  &__sidebar-inner {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overflow-x: visible;
+    padding-right: 2px;
+
+    &::-webkit-scrollbar {
+      width: 3px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $color-gray-200;
+      border-radius: $radius-full;
+    }
   }
 
   &__sidebar-title {
@@ -1353,6 +1377,10 @@
       letter-spacing: 0.06em;
       color: $color-gray-400;
       margin-bottom: $space-3;
+    }
+
+    &--last {
+      margin-bottom: 0;
     }
   }
 
@@ -4100,4 +4128,847 @@
     border-top: 1px solid $color-gray-100;
     background: $color-gray-100;
   }
+}
+
+// ── Jobs Sidebar Search (pill) ────────────────────────────────
+.jobs-sidebar-search {
+  position: relative;
+  margin-bottom: $space-5;
+
+  &__input {
+    width: 100%;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-full;
+    padding: $space-3 calc(#{$space-8} + #{$space-2}) $space-3
+      calc(#{$space-8} + #{$space-2});
+    font-size: $font-size-sm;
+    font-family: $font-body;
+    color: $color-gray-800;
+    background: $color-gray-100;
+    transition: all $transition-fast;
+    outline: none;
+    box-sizing: border-box;
+
+    &::placeholder {
+      color: $color-gray-400;
+    }
+
+    &:focus {
+      border-color: $color-primary;
+      background: $color-white;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+    }
+  }
+
+  &__icon {
+    position: absolute;
+    left: $space-4;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $color-gray-400;
+    display: flex;
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+  }
+
+  &__btn {
+    position: absolute;
+    right: $space-2;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: $radius-full;
+    background: $color-primary;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: $color-white;
+    transition: background $transition-fast;
+
+    &:hover {
+      background: color.adjust($color-primary, $lightness: -10%);
+    }
+  }
+}
+
+// ── Jobs Filter Pills ─────────────────────────────────────────
+.jobs-filter-pills {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin-bottom: $space-5;
+}
+
+.jobs-filter-pill {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-family: $font-body;
+  font-weight: $font-weight-medium;
+  border: 1.5px solid $color-gray-200;
+  background: $color-white;
+  color: $color-gray-600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.4);
+    color: $color-primary;
+    background: rgba($color-primary, 0.04);
+  }
+
+  &--active {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: $color-white;
+
+    .jobs-filter-pill__dot {
+      background: rgba($color-white, 0.5);
+    }
+  }
+
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: $radius-full;
+    background: $color-gray-300;
+    flex-shrink: 0;
+    transition: background $transition-fast;
+  }
+}
+
+// ── Jobs Filter Dropdown ──────────────────────────────────────
+@keyframes jobsDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.jobs-filter-dropdown {
+  position: relative;
+
+  &__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-2;
+    padding: $space-3 $space-4;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-full;
+    font-size: $font-size-sm;
+    font-family: $font-body;
+    background: $color-white;
+    color: $color-gray-600;
+    cursor: pointer;
+    transition: all $transition-fast;
+    text-align: left;
+
+    span {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      border-color: rgba($color-primary, 0.4);
+      color: $color-primary;
+      background: rgba($color-primary, 0.04);
+    }
+
+    &--open {
+      border-color: $color-primary;
+      background: rgba($color-primary, 0.06);
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &--active {
+      background: $color-primary;
+      border-color: $color-primary;
+      color: $color-white;
+
+      span {
+        color: $color-white;
+        font-weight: $font-weight-medium;
+      }
+
+      .jobs-filter-dropdown__chevron {
+        color: rgba($color-white, 0.8);
+      }
+    }
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    color: $color-gray-400;
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    background: $color-white;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-lg;
+    z-index: 50;
+    overflow: hidden;
+    max-height: 220px;
+    overflow-y: auto;
+    transform-origin: top center;
+    animation: jobsDropdownIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+    &::-webkit-scrollbar {
+      width: 3px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $color-gray-200;
+      border-radius: $radius-full;
+    }
+  }
+
+  &__option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 9px $space-4;
+    font-size: $font-size-sm;
+    font-family: $font-body;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $color-gray-600;
+    text-align: left;
+    transition: background $transition-fast;
+
+    transition:
+      background $transition-fast,
+      color $transition-fast,
+      transform $transition-fast;
+
+    &:hover {
+      background: rgba($color-primary, 0.05);
+      color: $color-primary;
+      transform: translateX(3px);
+    }
+
+    &--active {
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+      background: rgba($color-primary, 0.08);
+    }
+
+    &-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: $radius-full;
+      background: currentColor;
+      opacity: 0.4;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ── Jobs Salary Range ─────────────────────────────────────────
+.jobs-salary-range {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    padding: $space-3 $space-4;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-family: $font-body;
+    color: $color-gray-800;
+    background: $color-gray-100;
+    outline: none;
+    transition: all $transition-fast;
+
+    // hide native number spinners
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    -moz-appearance: textfield;
+
+    &::placeholder {
+      color: $color-gray-400;
+    }
+
+    &:focus {
+      border-color: $color-primary;
+      background: $color-white;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+    }
+  }
+
+  &__sep {
+    font-size: 0.625rem;
+    color: $color-gray-400;
+    font-weight: $font-weight-bold;
+    flex-shrink: 0;
+    letter-spacing: 0.2em;
+    line-height: 1;
+  }
+}
+
+// ── Job Preview Panel (right column) ─────────────────────────
+.job-preview {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+
+  &__cover {
+    height: 80px;
+    background: linear-gradient(
+      135deg,
+      var(--jp-from, #{rgba($color-primary, 0.15)}) 0%,
+      var(--jp-to, #{rgba($color-secondary, 0.1)}) 100%
+    );
+    position: relative;
+  }
+
+  &__logo {
+    position: absolute;
+    bottom: -24px;
+    left: $space-5;
+    width: 52px;
+    height: 52px;
+    border-radius: $radius-xl;
+    border: 3px solid $color-white;
+    background: var(--jp-logo, #{$color-secondary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-lg;
+    box-shadow: $shadow-md;
+  }
+
+  &__header {
+    padding: calc(#{$space-8} + #{$space-2}) $space-5 $space-4;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__date {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-bottom: 4px;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-lg;
+    color: $color-gray-900;
+    margin-bottom: 4px;
+  }
+
+  &__company {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+    margin-bottom: 4px;
+  }
+
+  &__location {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+    padding: $space-4 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+  }
+
+  &__company-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $space-3;
+    padding: $space-3 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+    font-size: $font-size-xs;
+    color: $color-gray-500;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    padding: 3px 10px;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+
+    &--success {
+      background: rgba($color-success, 0.1);
+      color: color.adjust($color-success, $lightness: -10%);
+    }
+
+    &--gray {
+      background: $color-gray-100;
+      color: $color-gray-600;
+    }
+  }
+
+  &__overview {
+    padding: $space-5;
+    border-bottom: 1px solid $color-gray-200;
+
+    &-label {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: $color-gray-400;
+      margin-bottom: $space-2;
+    }
+
+    &-text {
+      font-size: $font-size-sm;
+      color: $color-gray-500;
+      line-height: $line-height-loose;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  &__cta {
+    padding: $space-5;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__view-btn {
+    width: 100%;
+    padding: $space-3;
+    border-radius: $radius-full;
+    background: $color-primary;
+    color: $color-white;
+    border: none;
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    transition: background $transition-fast;
+
+    &:hover {
+      background: color.adjust($color-primary, $lightness: -10%);
+      color: $color-white;
+    }
+  }
+
+  &__quick-btn {
+    width: 100%;
+    padding: $space-3;
+    border-radius: $radius-full;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+    border: 1.5px solid rgba($color-primary, 0.2);
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: rgba($color-primary, 0.15);
+      border-color: rgba($color-primary, 0.35);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__empty {
+    padding: $space-10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-3;
+    color: $color-gray-400;
+    text-align: center;
+
+    p {
+      font-size: $font-size-sm;
+      margin: 0;
+    }
+  }
+}
+
+// ── Job Detail Page — Back link ───────────────────────────────
+.jd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-gray-500;
+  text-decoration: none;
+  margin-bottom: $space-6;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+// ── Job Detail Page — Hero ────────────────────────────────────
+.jd-hero {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  margin-bottom: $space-5;
+
+  &__cover {
+    height: 140px;
+    background: linear-gradient(
+      135deg,
+      var(--jd-from, #{rgba($color-primary, 0.18)}) 0%,
+      var(--jd-mid, #{rgba($color-secondary, 0.12)}) 60%,
+      var(--jd-to, #{rgba($color-accent, 0.06)}) 100%
+    );
+    position: relative;
+  }
+
+  &__logo {
+    position: absolute;
+    bottom: -32px;
+    left: $space-6;
+    width: 68px;
+    height: 68px;
+    border-radius: $radius-xl;
+    border: 4px solid $color-white;
+    background: var(--jd-logo, #{$color-secondary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-white;
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-2xl;
+    box-shadow: $shadow-lg;
+  }
+
+  &__body {
+    padding: calc(#{$space-10} + #{$space-4}) $space-6 $space-6;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-6;
+    flex-wrap: wrap;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__date {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-bottom: $space-2;
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-3xl;
+    color: $color-gray-900;
+    margin: 0 0 $space-3;
+    line-height: $line-height-tight;
+  }
+
+  &__company {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+    margin-bottom: $space-2;
+  }
+
+  &__location {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+  }
+
+  &__apply-wrap {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: $space-2;
+    padding-top: $space-4;
+  }
+
+  &__apply-btn {
+    padding: $space-3 $space-8;
+    border-radius: $radius-full;
+    background: $color-primary;
+    color: $color-white;
+    border: none;
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background $transition-fast;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: color.adjust($color-primary, $lightness: -12%);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform $transition-base;
+      z-index: 0;
+    }
+
+    span {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover::before {
+      transform: scaleY(1);
+      transform-origin: bottom;
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+
+      &::before {
+        display: none;
+      }
+    }
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+    padding: $space-4 $space-6;
+    border-top: 1px solid $color-gray-200;
+    background: $color-gray-100;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-1;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    padding: 4px 12px;
+    border-radius: $radius-full;
+    background: $color-white;
+    color: $color-gray-700;
+    border: 1px solid $color-gray-200;
+
+    &--primary {
+      background: rgba($color-primary, 0.08);
+      color: $color-primary;
+      border-color: transparent;
+    }
+
+    &--success {
+      background: rgba($color-success, 0.1);
+      color: color.adjust($color-success, $lightness: -10%);
+      border-color: transparent;
+    }
+
+    &--secondary {
+      background: rgba($color-secondary, 0.08);
+      color: $color-secondary;
+      border-color: transparent;
+    }
+  }
+}
+
+// ── Job Detail Page — Content Sections ───────────────────────
+.jd-section {
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  padding: $space-6;
+  margin-bottom: $space-5;
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+    margin: 0 0 $space-4;
+    padding-bottom: $space-3;
+    border-bottom: 1px solid $color-gray-100;
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: $color-primary;
+      border-radius: $radius-full;
+      flex-shrink: 0;
+    }
+  }
+
+  &__text {
+    font-size: $font-size-sm;
+    color: $color-gray-600;
+    line-height: $line-height-loose;
+    margin: 0;
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+    font-size: $font-size-sm;
+    color: $color-gray-600;
+    line-height: $line-height-normal;
+
+    &::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: $radius-full;
+      background: $color-primary;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+
+  &__tag {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    padding: 4px 14px;
+    border-radius: $radius-full;
+    background: rgba($color-success, 0.1);
+    color: color.adjust($color-success, $lightness: -10%);
+    border: 1px solid rgba($color-success, 0.2);
+  }
+}
+
+// ── Job Detail Page — Recommended ────────────────────────────
+.jd-recommended {
+  margin-top: $space-8;
+  margin-bottom: $space-12;
+
+  &__title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xl;
+    color: $color-gray-900;
+    margin: 0 0 $space-5;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: $space-4;
+  }
+}
+
+// ── Job list header count ──────────────────────────────────────
+.job-list-header {
+  margin-bottom: $space-4;
+
+  &__count {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.job-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
 }

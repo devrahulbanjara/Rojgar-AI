@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
@@ -63,7 +64,10 @@ async def create_job(
     )
     db.add(job)
     await db.commit()
-    await db.refresh(job)
+    result = await db.execute(
+        select(Job).options(selectinload(Job.company)).where(Job.id == job.id)
+    )
+    job = result.scalar_one()
     logger.info(f"Job '{job.title}' created by user {user.id}")
     return JobDetailResponse.model_validate(job)
 
@@ -73,11 +77,14 @@ async def search_jobs(
     q: str | None,
     location: str | None,
     location_type: LocationType | None,
+    category: str | None,
+    salary_min: int | None,
+    salary_max: int | None,
     page: int,
     size: int,
 ) -> list[JobListItem]:
-    """Search open jobs with optional keyword / location filters."""
-    stmt = select(Job).where(Job.status == JobStatus.open)
+    """Search open jobs with optional keyword / location / salary filters."""
+    stmt = select(Job).options(selectinload(Job.company)).where(Job.status == JobStatus.open)
 
     if q:
         stmt = stmt.where(Job.title.ilike(f"%{q}%"))
@@ -85,6 +92,14 @@ async def search_jobs(
         stmt = stmt.where(Job.location.ilike(f"%{location}%"))
     if location_type:
         stmt = stmt.where(Job.location_type == location_type)
+    if category:
+        stmt = stmt.where(Job.category == category)
+    if salary_min is not None:
+        # Show jobs whose upper bound reaches at least the desired minimum
+        stmt = stmt.where(Job.salary_max >= salary_min)
+    if salary_max is not None:
+        # Show jobs whose lower bound is within the budget
+        stmt = stmt.where(Job.salary_min <= salary_max)
 
     stmt = stmt.order_by(Job.created_at.desc())
     stmt = stmt.offset((page - 1) * size).limit(size)
@@ -98,7 +113,10 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     """List all jobs belonging to the user's company."""
     company_id = await _get_user_company_id(db, user)
     result = await db.execute(
-        select(Job).where(Job.company_id == company_id).order_by(Job.created_at.desc())
+        select(Job)
+        .options(selectinload(Job.company))
+        .where(Job.company_id == company_id)
+        .order_by(Job.created_at.desc())
     )
     jobs = result.scalars().all()
     return [JobListItem.model_validate(j) for j in jobs]
@@ -106,7 +124,9 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
 
 async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
     """Get full job details including description."""
-    result = await db.execute(select(Job).where(Job.id == job_id))
+    result = await db.execute(
+        select(Job).options(selectinload(Job.company)).where(Job.id == job_id)
+    )
     job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(
@@ -151,7 +171,10 @@ async def update_job(
             setattr(job, field, value)
 
     await db.commit()
-    await db.refresh(job)
+    result = await db.execute(
+        select(Job).options(selectinload(Job.company)).where(Job.id == job.id)
+    )
+    job = result.scalar_one()
     logger.info(f"Job '{job.title}' updated by user {user.id}")
     return JobDetailResponse.model_validate(job)
 
