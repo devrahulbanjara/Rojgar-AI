@@ -50,6 +50,7 @@ async def create_job(
         company_id=company_id,
         posted_by=user.id,
         title=payload.title,
+        category=payload.category,
         location=payload.location,
         location_type=payload.location_type,
         salary_min=payload.salary_min,
@@ -84,7 +85,11 @@ async def search_jobs(
     size: int,
 ) -> list[JobListItem]:
     """Search open jobs with optional keyword / location / salary filters."""
-    stmt = select(Job).options(selectinload(Job.company)).where(Job.status == JobStatus.open)
+    stmt = (
+        select(Job)
+        .options(selectinload(Job.company))
+        .where(Job.status == JobStatus.open)
+    )
 
     if q:
         stmt = stmt.where(Job.title.ilike(f"%{q}%"))

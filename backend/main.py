@@ -39,6 +39,10 @@ app = FastAPI(
     version=f"📦 {settings.app_version}",
     docs_url="/docs" if settings.environment == "dev" else None,  # hide docs in prod
     redoc_url=None,
+    contact={
+        "name": "Rahul Dev Banjara",
+        "email": "rdbanjara07@gmail.com",
+    },
 )
 
 app.add_middleware(
@@ -54,7 +58,7 @@ logfire.instrument_fastapi(app)
 register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(dash_router, prefix="/dashboards", tags=["Dashboards"])
+app.include_router(dash_router)
 app.include_router(companies_router, prefix="/companies", tags=["Companies"])
 app.include_router(profiles_router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes_router, prefix="/resumes", tags=["Resumes"])

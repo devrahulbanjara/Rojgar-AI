@@ -56,7 +56,9 @@ async def search_jobs(
     size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = db,
 ):
-    data = await service.search_jobs(db, q, location, location_type, category, salary_min, salary_max, page, size)
+    data = await service.search_jobs(
+        db, q, location, location_type, category, salary_min, salary_max, page, size
+    )
     return ResponseBuilder.success(data=data, message="Jobs fetched.")
 
 
