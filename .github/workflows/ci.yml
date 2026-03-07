@@ -40,8 +40,54 @@ jobs:
       - name: Check code formatting
         run: uvx ruff format --check
 
+      - name: Validate required secrets
+        run: |
+          missing=()
+          [[ -z "$SECRET_KEY" ]]       && missing+=(SECRET_KEY)
+          [[ -z "$TEST_DB_USER" ]]     && missing+=(TEST_DB_USER)
+          [[ -z "$TEST_DB_PASSWORD" ]] && missing+=(TEST_DB_PASSWORD)
+          [[ -z "$TEST_DB_HOST" ]]     && missing+=(TEST_DB_HOST)
+          [[ -z "$TEST_DB_NAME" ]]     && missing+=(TEST_DB_NAME)
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "❌ Missing required GitHub secrets: ${missing[*]}"
+            echo "Add them at: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✅ All required secrets are present"
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
+          TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          TEST_DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
+
       - name: Integration tests
         run: uv run pytest
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ALGORITHM: HS256
+          ENVIRONMENT: test
+          FRONTEND_URL: http://localhost:3000
+          BACKEND_URL: http://localhost:8000
+          SEND_EMAILS: false
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: 587
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
+          DB_USER: ${{ secrets.TEST_DB_USER }}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          DB_PORT: ${{ secrets.TEST_DB_PORT }}
+          DB_NAME: ${{ secrets.TEST_DB_NAME }}
+          TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
+          TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          TEST_DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          TEST_DB_PORT: ${{ secrets.TEST_DB_PORT }}
+          TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
 
   frontend:
     name: Frontend
@@ -65,6 +111,7 @@ jobs:
         with:
           node-version: 24
           cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
