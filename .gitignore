@@ -88,7 +88,6 @@ tmp/
 temp/
 
 .DS_Store
-.vscode/*
 !.vscode/extensions.json
 .idea/
 *.swp
@@ -101,9 +100,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-backend/tests/test_resumes/
 .shared
-.cursor
 qdrant_data/
-.vscode
 postgres_data/
