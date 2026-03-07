@@ -13,8 +13,6 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
@@ -23,7 +21,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizelegibility;
 }
 
 img,
@@ -73,7 +71,9 @@ table {
   border-spacing: 0;
 }
 
+/* stylelint-disable selector-id-pattern */
 #root,
 #__next {
   isolation: isolate;
 }
+/* stylelint-enable selector-id-pattern */

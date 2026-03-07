@@ -1,88 +1,88 @@
-import { baseApi, type ApiResponse } from "./baseApi";
+import { type ApiResponse, baseApi } from './baseApi'
 
 // ---------------------------------------------------------------------------
 // Types — match the actual backend schema (app/modules/jobs/schemas.py)
 // ---------------------------------------------------------------------------
 
-export type JobStatus = "draft" | "open" | "closed" | "archived";
-export type LocationType = "onsite" | "remote" | "hybrid";
+export type JobStatus = 'draft' | 'open' | 'closed' | 'archived'
+export type LocationType = 'onsite' | 'remote' | 'hybrid'
 
 /** Minimal company info embedded in job responses */
 export interface CompanySnippet {
-  id: string;
-  name: string;
-  industry: string | null;
-  company_size: string | null;
-  location: string | null;
-  website_url: string | null;
-  description: string | null;
+  id: string
+  name: string
+  industry: string | null
+  company_size: string | null
+  location: string | null
+  website_url: string | null
+  description: string | null
 }
 
 /** Lightweight summary returned by list endpoints */
 export interface JobListItem {
-  id: string;
-  company_id: string;
-  company?: CompanySnippet;
-  title: string;
-  category: string | null;
-  location: string | null;
-  location_type: LocationType;
-  salary_min: number | null;
-  salary_max: number | null;
-  currency: string;
-  status: JobStatus;
-  created_at: string;
+  id: string
+  company_id: string
+  company?: CompanySnippet
+  title: string
+  category: string | null
+  location: string | null
+  location_type: LocationType
+  salary_min: number | null
+  salary_max: number | null
+  currency: string
+  status: JobStatus
+  created_at: string
 }
 
 /** Full job detail including description fields */
 export interface JobDetail {
-  id: string;
-  company_id: string;
-  company?: CompanySnippet;
-  posted_by: string | null;
-  title: string;
-  category: string | null;
-  location: string | null;
-  location_type: LocationType;
-  salary_min: number | null;
-  salary_max: number | null;
-  currency: string;
-  status: JobStatus;
-  overview: string | null;
-  responsibilities: string[];
-  requirements: string[];
-  preferred_qualifications: string[];
-  benefits: string[];
-  created_at: string;
-  updated_at: string;
+  id: string
+  company_id: string
+  company?: CompanySnippet
+  posted_by: string | null
+  title: string
+  category: string | null
+  location: string | null
+  location_type: LocationType
+  salary_min: number | null
+  salary_max: number | null
+  currency: string
+  status: JobStatus
+  overview: string | null
+  responsibilities: string[]
+  requirements: string[]
+  preferred_qualifications: string[]
+  benefits: string[]
+  created_at: string
+  updated_at: string
 }
 
 export interface CreateJobPayload {
-  title: string;
-  location?: string;
-  location_type?: LocationType;
-  salary_min?: number;
-  salary_max?: number;
-  currency?: string;
-  status?: JobStatus;
-  overview?: string;
-  responsibilities?: string[];
-  requirements?: string[];
-  preferred_qualifications?: string[];
-  benefits?: string[];
+  title: string
+  location?: string
+  location_type?: LocationType
+  salary_min?: number
+  salary_max?: number
+  currency?: string
+  status?: JobStatus
+  overview?: string
+  responsibilities?: string[]
+  requirements?: string[]
+  preferred_qualifications?: string[]
+  benefits?: string[]
 }
 
-export type UpdateJobPayload = Partial<CreateJobPayload>;
+export type UpdateJobPayload = Partial<CreateJobPayload>
 
 export interface SearchJobsParams {
-  q?: string;
-  location?: string;
-  location_type?: LocationType;
-  category?: string;
-  salary_min?: number;
-  salary_max?: number;
-  page?: number;
-  size?: number;
+  q?: string
+  location?: string
+  location_type?: LocationType
+  category?: string
+  salary_min?: number
+  salary_max?: number
+  page?: number
+  size?: number
 }
 
 // ---------------------------------------------------------------------------
@@ -115,58 +115,52 @@ export const jobsApi = baseApi.injectEndpoints({
           size,
         },
       }),
-      providesTags: ["Jobs"],
+      providesTags: ['Jobs'],
     }),
 
     /** POST /jobs/ — create a new job posting (company admin or recruiter) */
     createJob: builder.mutation<ApiResponse<JobDetail>, CreateJobPayload>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
-      invalidatesTags: ["Jobs"],
+      invalidatesTags: ['Jobs'],
     }),
 
     /** GET /jobs/company/me — list all jobs posted by the current user's company */
     getCompanyJobs: builder.query<ApiResponse<JobListItem[]>, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/company/me`,
-      providesTags: ["Jobs"],
+      providesTags: ['Jobs'],
     }),
 
     /** GET /jobs/{job_id} — get full job details including description */
     getJobById: builder.query<ApiResponse<JobDetail>, string>({
       query: (id) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}`,
-      providesTags: (_result, _error, id) => [{ type: "Jobs", id }],
+      providesTags: (_result, _error, id) => [{ type: 'Jobs', id }],
     }),
 
     /** PATCH /jobs/{job_id} — update a job posting (owner only) */
-    updateJob: builder.mutation<
-      ApiResponse<JobDetail>,
-      { id: string } & UpdateJobPayload
-    >({
+    updateJob: builder.mutation<ApiResponse<JobDetail>, { id: string } & UpdateJobPayload>({
       query: ({ id, ...body }) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}`,
-        method: "PATCH",
+        method: 'PATCH',
         body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Jobs", id },
-        "Jobs",
-      ],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs'],
     }),
 
     /** DELETE /jobs/{job_id} — delete a job posting (owner only) */
     deleteJob: builder.mutation<ApiResponse<null>, string>({
       query: (id) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}`,
-        method: "DELETE",
+        method: 'DELETE',
       }),
-      invalidatesTags: ["Jobs"],
+      invalidatesTags: ['Jobs'],
     }),
   }),
   overrideExisting: false,
-});
+})
 
 export const {
   useSearchJobsQuery,
@@ -175,4 +169,4 @@ export const {
   useGetJobByIdQuery,
   useUpdateJobMutation,
   useDeleteJobMutation,
-} = jobsApi;
+} = jobsApi

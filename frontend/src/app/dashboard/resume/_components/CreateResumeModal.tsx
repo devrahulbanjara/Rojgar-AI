@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 
 // ── Modal for naming a new resume before creation ─────────────────────────
 
@@ -10,17 +10,17 @@ export default function CreateResumeModal({
   isLoading,
   error,
 }: {
-  onConfirm: (name: string) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-  error: string | null;
+  onConfirm: (name: string) => void
+  onCancel: () => void
+  isLoading: boolean
+  error: string | null
 }) {
-  const [name, setName] = useState("");
+  const [name, setName] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
     if (name.trim()) {
-      onConfirm(name.trim());
+      onConfirm(name.trim())
     }
   }
 
@@ -29,11 +29,7 @@ export default function CreateResumeModal({
       <div className="modal">
         <div className="modal__header">
           <h3 className="modal__title">Create New Resume</h3>
-          <button
-            className="modal__close"
-            onClick={onCancel}
-            aria-label="Close"
-          >
+          <button className="modal__close" onClick={onCancel} aria-label="Close">
             x
           </button>
         </div>
@@ -69,11 +65,11 @@ export default function CreateResumeModal({
               className="btn btn--primary btn--sm"
               disabled={isLoading || !name.trim()}
             >
-              {isLoading ? "Creating..." : "Create Resume"}
+              {isLoading ? 'Creating...' : 'Create Resume'}
             </button>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 }

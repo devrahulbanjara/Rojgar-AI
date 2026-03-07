@@ -1,24 +1,21 @@
-"use client";
+'use client'
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { use } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import {
-  upsertResume,
-  updateResume,
-  apiResumeToUi,
-} from "@/store/slices/resumeSlice";
-import {
-  useGetResumeByIdQuery,
-  useUpdateResumeMutation,
-} from "@/store/services/resumeApi";
-import type { Resume } from "@/lib/types/resume";
-import Loader from "@/components/common/Loader";
-import ResumeTemplate from "../_components/ResumeTemplate";
-import ResumeEditor from "../_components/ResumeEditor";
-import { ArrowLeftRegular, PrintRegular } from "@fluentui/react-icons";
+import { useEffect, useRef, useState } from 'react'
+import { use } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+
+import { useRouter } from 'next/navigation'
+
+import type { Resume } from '@/lib/types/resume'
+import type { RootState } from '@/store'
+import { useGetResumeByIdQuery, useUpdateResumeMutation } from '@/store/services/resumeApi'
+import { apiResumeToUi, updateResume, upsertResume } from '@/store/slices/resumeSlice'
+import { ArrowLeft, Printer } from 'lucide-react'
+
+import Loader from '@/components/common/Loader'
+
+import ResumeEditor from '../_components/ResumeEditor'
+import ResumeTemplate from '../_components/ResumeTemplate'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -38,9 +35,7 @@ function uiResumeToApiUpdate(r: Resume) {
       title: exp.title,
       start_date: exp.startDate ? `${exp.startDate}-01` : null,
       end_date: exp.current ? null : exp.endDate ? `${exp.endDate}-01` : null,
-      description: exp.description
-        ? exp.description.split("\n").filter(Boolean)
-        : [],
+      description: exp.description ? exp.description.split('\n').filter(Boolean) : [],
     })),
     educations: r.education.map((edu) => ({
       institution: edu.institution,
@@ -50,7 +45,7 @@ function uiResumeToApiUpdate(r: Resume) {
       end_date: edu.endDate ? `${edu.endDate}-01` : null,
     })),
     skills: r.skills.map((s) => ({ skill_name: s })),
-  };
+  }
 }
 
 // ── Resume Viewer (full-screen) ────────────────────────────────────────────
@@ -60,17 +55,17 @@ function ResumeViewer({
   onBack,
   onEdit,
 }: {
-  resume: Resume;
-  onBack: () => void;
-  onEdit: () => void;
+  resume: Resume
+  onBack: () => void
+  onEdit: () => void
 }) {
-  const printRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null)
 
   function handlePrint() {
-    const content = printRef.current;
-    if (!content) return;
-    const win = window.open("", "_blank");
-    if (!win) return;
+    const content = printRef.current
+    if (!content) return
+    const win = window.open('', '_blank')
+    if (!win) return
     win.document.write(`
       <html>
         <head>
@@ -103,24 +98,24 @@ function ResumeViewer({
         </head>
         <body>${content.innerHTML}</body>
       </html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
-    win.close();
+    `)
+    win.document.close()
+    win.focus()
+    win.print()
+    win.close()
   }
 
   return (
     <div className="rv-overlay">
       <div className="rv-overlay__bar">
         <button className="btn btn--ghost btn--sm" onClick={onBack}>
-          <ArrowLeftRegular style={{ fontSize: 14 }} />
+          <ArrowLeft size={14} />
           Back
         </button>
         <span className="rv-overlay__title">{resume.name}</span>
         <div className="rv-overlay__actions">
           <button className="btn btn--ghost btn--sm" onClick={handlePrint}>
-            <PrintRegular style={{ fontSize: 14 }} />
+            <Printer size={14} />
             Print / PDF
           </button>
           <button className="btn btn--primary btn--sm" onClick={onEdit}>
@@ -136,7 +131,7 @@ function ResumeViewer({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────
@@ -145,71 +140,56 @@ export default function ResumeDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ mode?: string }>
 }) {
-  const { id } = use(params);
-  const { mode } = use(searchParams);
-  const isEditMode = mode === "edit";
+  const { id } = use(params)
+  const { mode } = use(searchParams)
+  const isEditMode = mode === 'edit'
 
-  const router = useRouter();
-  const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user);
+  const router = useRouter()
+  const dispatch = useDispatch()
+  const user = useSelector((state: RootState) => state.auth.user)
 
   // Auto-fetch the full resume on mount
-  const {
-    data: resumeResponse,
-    isLoading,
-    isError,
-  } = useGetResumeByIdQuery(id);
+  const { data: resumeResponse, isLoading, isError } = useGetResumeByIdQuery(id)
 
   // Sync fetched data into Redux
   useEffect(() => {
     if (resumeResponse?.success && resumeResponse.data) {
-      const ui = apiResumeToUi(
-        resumeResponse.data,
-        user?.full_name ?? "",
-        user?.email ?? "",
-      );
-      dispatch(upsertResume(ui));
+      const ui = apiResumeToUi(resumeResponse.data, user?.full_name ?? '', user?.email ?? '')
+      dispatch(upsertResume(ui))
     }
-  }, [resumeResponse, dispatch, user]);
+  }, [resumeResponse, dispatch, user])
 
   // Also read from Redux so edits stay live
-  const resume = useSelector((state: RootState) =>
-    state.resumes.resumes.find((r) => r.id === id),
-  );
+  const resume = useSelector((state: RootState) => state.resumes.resumes.find((r) => r.id === id))
 
-  const [updateResumeMutation, { isLoading: isSaving }] =
-    useUpdateResumeMutation();
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [updateResumeMutation, { isLoading: isSaving }] = useUpdateResumeMutation()
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   async function handleSave(updated: Resume) {
-    setSaveError(null);
+    setSaveError(null)
     try {
       const result = await updateResumeMutation({
         id,
         body: uiResumeToApiUpdate(updated),
-      }).unwrap();
+      }).unwrap()
       if (result.success && result.data) {
-        const ui = apiResumeToUi(
-          result.data,
-          user?.full_name ?? "",
-          user?.email ?? "",
-        );
-        dispatch(upsertResume(ui));
+        const ui = apiResumeToUi(result.data, user?.full_name ?? '', user?.email ?? '')
+        dispatch(upsertResume(ui))
         // Go back to view mode after saving
-        router.replace(`/dashboard/resume/${id}`);
+        router.replace(`/dashboard/resume/${id}`)
       } else {
-        setSaveError("Failed to save. Please try again.");
+        setSaveError('Failed to save. Please try again.')
       }
     } catch {
-      setSaveError("An error occurred while saving.");
+      setSaveError('An error occurred while saving.')
     }
   }
 
   function handleResumeChange(updated: Resume) {
-    dispatch(updateResume(updated));
+    dispatch(updateResume(updated))
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -221,7 +201,7 @@ export default function ResumeDetailPage({
           <Loader size="lg" />
         </div>
       </div>
-    );
+    )
   }
 
   if (!resume) {
@@ -231,13 +211,13 @@ export default function ResumeDetailPage({
           <p>Resume not found.</p>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => router.push("/dashboard/resume")}
+            onClick={() => router.push('/dashboard/resume')}
           >
             Back to Resumes
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   if (isError) {
@@ -247,13 +227,13 @@ export default function ResumeDetailPage({
           <p>Failed to load resume.</p>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => router.push("/dashboard/resume")}
+            onClick={() => router.push('/dashboard/resume')}
           >
             Back to Resumes
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   if (isEditMode) {
@@ -262,21 +242,21 @@ export default function ResumeDetailPage({
         {saveError && <p className="resume-field__error">{saveError}</p>}
         <ResumeEditor
           resume={resume}
-          onClose={() => router.push("/dashboard/resume")}
+          onClose={() => router.push('/dashboard/resume')}
           onPreview={() => router.replace(`/dashboard/resume/${id}`)}
           onSave={handleSave}
           onChange={handleResumeChange}
           isSaving={isSaving}
         />
       </div>
-    );
+    )
   }
 
   return (
     <ResumeViewer
       resume={resume}
-      onBack={() => router.push("/dashboard/resume")}
+      onBack={() => router.push('/dashboard/resume')}
       onEdit={() => router.push(`/dashboard/resume/${id}?mode=edit`)}
     />
-  );
+  )
 }

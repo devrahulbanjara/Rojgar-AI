@@ -1,49 +1,44 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  useLoginMutation,
-  initiateGoogleOAuth,
-} from "@/store/services/authApi";
-import { parseApiError, applyFieldErrors } from "@/lib/apiError";
-import { getRoleDashboard } from "@/lib/roleRoutes";
-import { toast } from "react-toastify";
-import { EyeRegular, EyeOffRegular, MailRegular } from "@fluentui/react-icons";
+import { useState } from 'react'
+import { toast } from 'react-toastify'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+import { applyFieldErrors, parseApiError } from '@/lib/apiError'
+import { getRoleDashboard } from '@/lib/roleRoutes'
+import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
+import { Eye, EyeOff, Mail } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface LoginFormState {
-  email: string;
-  password: string;
-  rememberMe: boolean;
+  email: string
+  password: string
+  rememberMe: boolean
 }
 
 interface FormErrors extends Record<string, string | undefined> {
-  email?: string;
-  password?: string;
-  form?: string;
+  email?: string
+  password?: string
+  form?: string
 }
 
 // ── Inline SVG icons ───────────────────────────────────────────────────────
 
 function EyeIcon() {
-  return <EyeRegular aria-hidden="true" />;
+  return <Eye aria-hidden="true" />
 }
 
 function EyeSlashIcon() {
-  return <EyeOffRegular aria-hidden="true" />;
+  return <EyeOff aria-hidden="true" />
 }
 
 function GoogleIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -61,68 +56,68 @@ function GoogleIcon() {
         fill="#EA4335"
       />
     </svg>
-  );
+  )
 }
 
 function EnvelopeIcon() {
-  return <MailRegular />;
+  return <Mail />
 }
 
 // ── Validation ─────────────────────────────────────────────────────────────
 
 function validateForm(values: LoginFormState): FormErrors {
-  const errors: FormErrors = {};
+  const errors: FormErrors = {}
 
   if (!values.email.trim()) {
-    errors.email = "Email address is required.";
+    errors.email = 'Email address is required.'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "Please enter a valid email address.";
+    errors.email = 'Please enter a valid email address.'
   }
 
   if (!values.password) {
-    errors.password = "Password is required.";
+    errors.password = 'Password is required.'
   } else if (values.password.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
+    errors.password = 'Password must be at least 6 characters.'
   }
 
-  return errors;
+  return errors
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
   const [formValues, setFormValues] = useState<LoginFormState>({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
     rememberMe: false,
-  });
+  })
 
-  const router = useRouter();
-  const [login, { isLoading }] = useLoginMutation();
+  const router = useRouter()
+  const [login, { isLoading }] = useLoginMutation()
 
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailUnverified, setEmailUnverified] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [showPassword, setShowPassword] = useState(false)
+  const [emailUnverified, setEmailUnverified] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target
     setFormValues((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+      [name]: type === 'checkbox' ? checked : value,
+    }))
     // Clear field error on change
     if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
   }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
+    e.preventDefault()
 
-    const validationErrors = validateForm(formValues);
+    const validationErrors = validateForm(formValues)
     if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
+      setErrors(validationErrors)
+      return
     }
 
     try {
@@ -130,44 +125,37 @@ export default function LoginPage() {
         email: formValues.email,
         password: formValues.password,
         remember_me: formValues.rememberMe,
-      }).unwrap();
+      }).unwrap()
 
       if (result.success) {
-        toast.success("Signed in! Redirecting…");
-        router.push(getRoleDashboard(result.data?.user?.primary_role));
+        toast.success('Signed in! Redirecting…')
+        router.push(getRoleDashboard(result.data?.user?.primary_role))
       } else {
-        toast.error(result.message ?? "Login failed. Please try again.");
+        toast.error(result.message ?? 'Login failed. Please try again.')
       }
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
-        email: "email",
-        password: "password",
-      };
-      // Check for email-not-verified error (403 or specific message)
-      const rtkErr = err as { status?: number; data?: { message?: string } };
-      const errMsg = rtkErr?.data?.message ?? "";
-      if (
-        rtkErr?.status === 403 ||
-        /not verified|email.*verif|verif.*email/i.test(errMsg)
-      ) {
-        setEmailUnverified(true);
-        return;
+        email: 'email',
+        password: 'password',
       }
-      const parsed = parseApiError(
-        err,
-        fieldMap,
-        "Invalid credentials. Please try again.",
-      );
-      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
+      // Check for email-not-verified error (403 or specific message)
+      const rtkErr = err as { status?: number; data?: { message?: string } }
+      const errMsg = rtkErr?.data?.message ?? ''
+      if (rtkErr?.status === 403 || /not verified|email.*verif|verif.*email/i.test(errMsg)) {
+        setEmailUnverified(true)
+        return
+      }
+      const parsed = parseApiError(err, fieldMap, 'Invalid credentials. Please try again.')
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
       if (!hadFieldErrors) {
-        toast.error(parsed.message);
+        toast.error(parsed.message)
       }
     }
   }
 
   function handleSocialLogin() {
-    initiateGoogleOAuth();
-    return;
+    initiateGoogleOAuth()
+    return
   }
 
   return (
@@ -210,12 +198,11 @@ export default function LoginPage() {
                 <EnvelopeIcon />
               </div>
               <p className="auth__success-detail">
-                Your email address hasn&apos;t been verified yet. Please check{" "}
-                <strong>{formValues.email || "your inbox"}</strong> for the
-                verification link.
+                Your email address hasn&apos;t been verified yet. Please check{' '}
+                <strong>{formValues.email || 'your inbox'}</strong> for the verification link.
               </p>
               <p className="auth__success-note">
-                Didn&apos;t receive it?{" "}
+                Didn&apos;t receive it?{' '}
                 <button
                   type="button"
                   className="auth__inline-link"
@@ -245,18 +232,12 @@ export default function LoginPage() {
                       value={formValues.email}
                       onChange={handleChange}
                       disabled={isLoading}
-                      className={`auth__input${errors.email ? " auth__input--error" : ""}`}
-                      aria-describedby={
-                        errors.email ? "email-error" : undefined
-                      }
+                      className={`auth__input${errors.email ? ' auth__input--error' : ''}`}
+                      aria-describedby={errors.email ? 'email-error' : undefined}
                     />
                   </div>
                   {errors.email && (
-                    <span
-                      id="email-error"
-                      className="auth__error-msg"
-                      role="alert"
-                    >
+                    <span id="email-error" className="auth__error-msg" role="alert">
                       {errors.email}
                     </span>
                   )}
@@ -270,35 +251,27 @@ export default function LoginPage() {
                   <div className="auth__input-wrap">
                     <input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       name="password"
                       autoComplete="current-password"
                       placeholder="Enter your password"
                       value={formValues.password}
                       onChange={handleChange}
                       disabled={isLoading}
-                      className={`auth__input auth__input--password${errors.password ? " auth__input--error" : ""}`}
-                      aria-describedby={
-                        errors.password ? "password-error" : undefined
-                      }
+                      className={`auth__input auth__input--password${errors.password ? ' auth__input--error' : ''}`}
+                      aria-describedby={errors.password ? 'password-error' : undefined}
                     />
                     <button
                       type="button"
                       className="auth__pw-toggle"
                       onClick={() => setShowPassword((v) => !v)}
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
                     </button>
                   </div>
                   {errors.password && (
-                    <span
-                      id="password-error"
-                      className="auth__error-msg"
-                      role="alert"
-                    >
+                    <span id="password-error" className="auth__error-msg" role="alert">
                       {errors.password}
                     </span>
                   )}
@@ -325,10 +298,10 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
+                  className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                   aria-busy={isLoading}
                 >
-                  {isLoading ? "Signing in…" : "Sign in"}
+                  {isLoading ? 'Signing in…' : 'Sign in'}
                 </button>
               </form>
 
@@ -360,5 +333,5 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
-  );
+  )
 }

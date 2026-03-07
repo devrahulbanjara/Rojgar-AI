@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 /**
  * Safety-net redirect shim.
@@ -10,18 +10,26 @@
  * If the user somehow lands here, immediately forward all query params to
  * the real handler at /auth/oauth-callback.
  */
+import { Suspense, useEffect } from 'react'
 
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function OAuthCallbackRedirect() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+function OAuthCallbackInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const qs = searchParams.toString();
-    router.replace(`/auth/oauth-callback${qs ? `?${qs}` : ""}`);
-  }, [router, searchParams]);
+    const qs = searchParams.toString()
+    router.replace(`/auth/oauth-callback${qs ? `?${qs}` : ''}`)
+  }, [router, searchParams])
 
-  return null;
+  return null
+}
+
+export default function OAuthCallbackRedirect() {
+  return (
+    <Suspense>
+      <OAuthCallbackInner />
+    </Suspense>
+  )
 }

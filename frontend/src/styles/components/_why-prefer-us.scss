@@ -2,14 +2,14 @@
 // WHY PREFER US SECTION
 // ============================================================
 
-@use "../variables" as *;
-@use "../mixins" as *;
+@use '../variables' as *;
+@use '../mixins' as *;
 
 // ── Accent bg map (image-side background per color variant) ──
 $block-colors: (
-  "secondary": $color-secondary,
-  "warning": $color-warning,
-  "accent": $color-accent,
+  'secondary': $color-secondary,
+  'warning': $color-warning,
+  'accent': $color-accent,
 );
 
 // ── Section wrapper ──────────────────────────────────────────
@@ -71,6 +71,7 @@ $block-colors: (
     .why-prefer__text {
       order: 1;
     }
+
     .why-prefer__img-wrap {
       order: 2;
     }
@@ -80,6 +81,7 @@ $block-colors: (
       .why-prefer__text {
         order: unset;
       }
+
       .why-prefer__img-wrap {
         order: unset;
       }
@@ -100,9 +102,11 @@ $block-colors: (
     &--secondary .why-prefer__feature-icon {
       color: $color-secondary;
     }
+
     &--warning .why-prefer__feature-icon {
       color: $color-warning;
     }
+
     &--accent .why-prefer__feature-icon {
       color: $color-accent;
     }

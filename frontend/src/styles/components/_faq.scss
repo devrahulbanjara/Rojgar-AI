@@ -2,14 +2,13 @@
 // FAQ SECTION
 // ============================================================
 
-@use "../variables" as *;
-@use "../mixins" as *;
+@use '../variables' as *;
+@use '../mixins' as *;
 
 .faq {
   position: relative;
   background: $color-white;
   overflow: hidden;
- 
   display: flex;
   flex-direction: column;
   justify-content: center;

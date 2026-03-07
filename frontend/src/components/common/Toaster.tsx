@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { ToastContainer } from "react-toastify";
+import { ToastContainer } from 'react-toastify'
 
 /**
  * Global toast container — mounted once in the root layout.
@@ -20,7 +20,7 @@ export default function Toaster() {
       draggable
       pauseOnHover
       theme="light"
-      toastStyle={{ backgroundColor: "#ffffff", color: "#111827" }}
+      toastStyle={{ backgroundColor: '#ffffff', color: '#111827' }}
     />
-  );
+  )
 }

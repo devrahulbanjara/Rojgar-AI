@@ -2,9 +2,9 @@
 // EXPLORE CATEGORIES SECTION
 // ============================================================
 
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 .explore {
   position: relative;
@@ -46,7 +46,7 @@
   &__stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    position: relative; 
+    position: relative;
     text-align: center;
     z-index: 1;
 
@@ -98,6 +98,7 @@
       &:first-child {
         padding-left: 0;
       }
+
       &:last-child {
         padding-right: 0;
       }
@@ -137,15 +138,9 @@
     z-index: 1;
     flex-shrink: 0;
     overflow: hidden;
+
     // Fade edges
     mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      #{$color-black} 8%,
-      #{$color-black} 92%,
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
       to right,
       transparent 0%,
       #{$color-black} 8%,
@@ -159,6 +154,7 @@
     align-items: center;
     gap: $space-12;
     width: max-content;
+
     // Always running — never paused, including on hover
     animation: explore-marquee 30s linear infinite;
   }
@@ -167,6 +163,7 @@
     flex-shrink: 0;
     opacity: 1;
     @include transition(all, 0.25s ease);
+
     cursor: default;
 
     img {
@@ -180,6 +177,7 @@
     from {
       transform: translateX(0);
     }
+
     to {
       transform: translateX(-50%);
     }
@@ -247,7 +245,7 @@
     z-index: 0;
 
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       inset: 0;
       background-color: color.adjust($color-primary, $lightness: -12%);

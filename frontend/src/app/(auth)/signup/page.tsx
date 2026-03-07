@@ -1,93 +1,91 @@
-"use client";
+'use client'
 
-import { useState, Suspense } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from 'react'
+import { toast } from 'react-toastify'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+
+import { applyFieldErrors, parseApiError } from '@/lib/apiError'
 import {
-  useSignupMutation,
   initiateGoogleOAuth,
   useGoogleRegisterMutation,
-} from "@/store/services/authApi";
+  useSignupMutation,
+} from '@/store/services/authApi'
 import {
   useRegisterCompanyMutation,
   useRequestJoinCompanyMutation,
-} from "@/store/services/companyApi";
-import { parseApiError, applyFieldErrors } from "@/lib/apiError";
-import { toast } from "react-toastify";
+} from '@/store/services/companyApi'
 import {
-  EyeRegular,
-  EyeOffRegular,
-  ArrowLeftRegular,
-  CheckmarkRegular,
-  BriefcaseRegular,
-  SearchRegular,
-  BuildingRegular,
-  PersonAddRegular,
-  MailRegular,
-  ClockRegular,
-} from "@fluentui/react-icons";
+  ArrowLeft,
+  Briefcase,
+  Building,
+  Check,
+  Clock,
+  Eye,
+  EyeOff,
+  Mail,
+  Search,
+  UserPlus,
+} from 'lucide-react'
 
 // ── Step type ──────────────────────────────────────────────────────────────
 
 type FlowStep =
-  | "credentials"
-  | "intent"
-  | "company-choice"
-  | "company-details"
-  | "join-company"
-  | "email-verify"
-  | "join-pending";
+  | 'credentials'
+  | 'intent'
+  | 'company-choice'
+  | 'company-details'
+  | 'join-company'
+  | 'email-verify'
+  | 'join-pending'
 
 // ── Form state types ───────────────────────────────────────────────────────
 
 interface CredentialsState {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptTerms: boolean;
+  fullName: string
+  email: string
+  password: string
+  confirmPassword: string
+  acceptTerms: boolean
 }
 
 interface CompanyDetailsState {
-  companyName: string;
-  industry: string;
-  companySize: string;
-  website: string;
-  location: string;
-  description: string;
+  companyName: string
+  industry: string
+  companySize: string
+  website: string
+  location: string
+  description: string
 }
 
 interface FormErrors extends Record<string, string | undefined> {
-  fullName?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  acceptTerms?: string;
-  companyName?: string;
-  industry?: string;
-  companySize?: string;
-  joinCompanyName?: string;
-  form?: string;
+  fullName?: string
+  email?: string
+  password?: string
+  confirmPassword?: string
+  acceptTerms?: string
+  companyName?: string
+  industry?: string
+  companySize?: string
+  joinCompanyName?: string
+  form?: string
 }
 
 // ── SVG Icons ──────────────────────────────────────────────────────────────
 
 function EyeIcon() {
-  return <EyeRegular aria-hidden="true" />;
+  return <Eye aria-hidden="true" />
 }
 
 function EyeSlashIcon() {
-  return <EyeOffRegular aria-hidden="true" />;
+  return <EyeOff aria-hidden="true" />
 }
 
 function GoogleIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -105,123 +103,122 @@ function GoogleIcon() {
         fill="#EA4335"
       />
     </svg>
-  );
+  )
 }
 
 function ArrowLeftIcon() {
-  return <ArrowLeftRegular />;
+  return <ArrowLeft />
 }
 
 function CheckIcon() {
-  return <CheckmarkRegular />;
+  return <Check />
 }
 
 function BriefcaseIcon() {
-  return <BriefcaseRegular />;
+  return <Briefcase />
 }
 
 function SearchJobIcon() {
-  return <SearchRegular />;
+  return <Search />
 }
 
 function BuildingIcon() {
-  return <BuildingRegular />;
+  return <Building />
 }
 
 function UserPlusIcon() {
-  return <PersonAddRegular />;
+  return <UserPlus />
 }
 
 function EnvelopeIcon() {
-  return <MailRegular />;
+  return <Mail />
 }
 
 function ClockIcon() {
-  return <ClockRegular />;\n}
+  return <Clock />
+}
 
 // ── Validation ─────────────────────────────────────────────────────────────
 
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
 function validateCredentials(values: CredentialsState): FormErrors {
-  const errors: FormErrors = {};
+  const errors: FormErrors = {}
 
   if (!values.fullName.trim()) {
-    errors.fullName = "Full name is required.";
+    errors.fullName = 'Full name is required.'
   } else if (values.fullName.trim().split(/\s+/).filter(Boolean).length < 2) {
-    errors.fullName = "Please enter your first and last name.";
+    errors.fullName = 'Please enter your first and last name.'
   }
 
   if (!values.email.trim()) {
-    errors.email = "Email address is required.";
+    errors.email = 'Email address is required.'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "Please enter a valid email address.";
+    errors.email = 'Please enter a valid email address.'
   }
 
   if (!values.password) {
-    errors.password = "Password is required.";
+    errors.password = 'Password is required.'
   } else if (!PASSWORD_REGEX.test(values.password)) {
     errors.password =
-      "Password must be at least 8 characters with an uppercase letter, a lowercase letter, and a number.";
+      'Password must be at least 8 characters with an uppercase letter, a lowercase letter, and a number.'
   }
 
   if (!values.confirmPassword) {
-    errors.confirmPassword = "Please confirm your password.";
+    errors.confirmPassword = 'Please confirm your password.'
   } else if (values.password !== values.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match.";
+    errors.confirmPassword = 'Passwords do not match.'
   }
 
   if (!values.acceptTerms) {
-    errors.acceptTerms = "You must accept the Terms & Conditions to continue.";
+    errors.acceptTerms = 'You must accept the Terms & Conditions to continue.'
   }
 
-  return errors;
+  return errors
 }
 
 function validateCompanyDetails(values: CompanyDetailsState): FormErrors {
-  const errors: FormErrors = {};
-  if (!values.companyName.trim())
-    errors.companyName = "Company name is required.";
-  if (!values.industry.trim()) errors.industry = "Please select an industry.";
-  if (!values.companySize.trim())
-    errors.companySize = "Please select a company size.";
-  return errors;
+  const errors: FormErrors = {}
+  if (!values.companyName.trim()) errors.companyName = 'Company name is required.'
+  if (!values.industry.trim()) errors.industry = 'Please select an industry.'
+  if (!values.companySize.trim()) errors.companySize = 'Please select a company size.'
+  return errors
 }
 
 // ── Password strength ──────────────────────────────────────────────────────
 
-type StrengthLevel = "none" | "weak" | "fair" | "strong";
+type StrengthLevel = 'none' | 'weak' | 'fair' | 'strong'
 
 function getPasswordStrength(password: string): StrengthLevel {
-  if (!password) return "none";
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^a-zA-Z0-9]/.test(password)) score++;
-  if (score <= 1) return "weak";
-  if (score === 2) return "fair";
-  return "strong";
+  if (!password) return 'none'
+  let score = 0
+  if (password.length >= 8) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[0-9]/.test(password)) score++
+  if (/[^a-zA-Z0-9]/.test(password)) score++
+  if (score <= 1) return 'weak'
+  if (score === 2) return 'fair'
+  return 'strong'
 }
 
 function PasswordStrengthBar({ strength }: { strength: StrengthLevel }) {
   const labels: Record<StrengthLevel, string> = {
-    none: "",
-    weak: "Weak",
-    fair: "Fair",
-    strong: "Strong",
-  };
+    none: '',
+    weak: 'Weak',
+    fair: 'Fair',
+    strong: 'Strong',
+  }
   return (
     <div className="auth__strength" aria-live="polite" aria-atomic="true">
       <div className="auth__strength-bars">
         <div
-          className={`auth__strength-bar auth__strength-bar--${strength !== "none" ? "active" : "empty"}`}
+          className={`auth__strength-bar auth__strength-bar--${strength !== 'none' ? 'active' : 'empty'}`}
         />
         <div
-          className={`auth__strength-bar auth__strength-bar--${strength === "fair" || strength === "strong" ? "active" : "empty"}`}
+          className={`auth__strength-bar auth__strength-bar--${strength === 'fair' || strength === 'strong' ? 'active' : 'empty'}`}
         />
         <div
-          className={`auth__strength-bar auth__strength-bar--${strength === "strong" ? "active" : "empty"}`}
+          className={`auth__strength-bar auth__strength-bar--${strength === 'strong' ? 'active' : 'empty'}`}
         />
       </div>
       <span
@@ -231,135 +228,129 @@ function PasswordStrengthBar({ strength }: { strength: StrengthLevel }) {
         {labels[strength]}
       </span>
     </div>
-  );
+  )
 }
 
 // ── Step indicator ─────────────────────────────────────────────────────────
 
 const VISIBLE_STEPS = [
-  { label: "Account", group: 1 },
-  { label: "Purpose", group: 2 },
-  { label: "Company", group: 3 },
-];
+  { label: 'Account', group: 1 },
+  { label: 'Purpose', group: 2 },
+  { label: 'Company', group: 3 },
+]
 
 function getStepGroup(step: FlowStep): number {
   const map: Record<FlowStep, number> = {
     credentials: 1,
     intent: 2,
-    "company-choice": 3,
-    "company-details": 3,
-    "join-company": 3,
-    "email-verify": 2,
-    "join-pending": 3,
-  };
-  return map[step] ?? 1;
+    'company-choice': 3,
+    'company-details': 3,
+    'join-company': 3,
+    'email-verify': 2,
+    'join-pending': 3,
+  }
+  return map[step] ?? 1
 }
 
 function StepIndicator({ currentStep }: { currentStep: FlowStep }) {
-  const currentGroup = getStepGroup(currentStep);
+  const currentGroup = getStepGroup(currentStep)
   return (
     <div className="auth__steps">
       {VISIBLE_STEPS.map((step, idx) => {
-        const isDone = step.group < currentGroup;
-        const isActive = step.group === currentGroup;
+        const isDone = step.group < currentGroup
+        const isActive = step.group === currentGroup
         return (
           <div
             key={step.label}
-            className={`auth__step${isDone ? " auth__step--done" : isActive ? " auth__step--active" : ""}`}
+            className={`auth__step${isDone ? ' auth__step--done' : isActive ? ' auth__step--active' : ''}`}
           >
             <div className="auth__step-node">
-              <div className="auth__step-circle">
-                {isDone ? <CheckIcon /> : idx + 1}
-              </div>
+              <div className="auth__step-circle">{isDone ? <CheckIcon /> : idx + 1}</div>
               <span className="auth__step-text">{step.label}</span>
             </div>
             {idx < VISIBLE_STEPS.length - 1 && (
-              <div
-                className={`auth__step-line${isDone ? " auth__step-line--done" : ""}`}
-              />
+              <div className={`auth__step-line${isDone ? ' auth__step-line--done' : ''}`} />
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────
 
 function SignupContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const isOAuth = searchParams.get("oauth") === "true";
-  const setupToken = searchParams.get("setup_token") || "";
-  let userInfo: { email?: string; full_name?: string } = {};
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isOAuth = searchParams.get('oauth') === 'true'
+  const setupToken = searchParams.get('setup_token') || ''
+  let userInfo: { email?: string; full_name?: string } = {}
   try {
-    const uiStr = searchParams.get("user_info");
+    const uiStr = searchParams.get('user_info')
     if (uiStr) {
-      userInfo = JSON.parse(decodeURIComponent(uiStr));
+      userInfo = JSON.parse(decodeURIComponent(uiStr))
     }
   } catch (e) {
-    console.error("Failed to parse user_info", e);
+    console.error('Failed to parse user_info', e)
   }
 
-  const [signup, { isLoading: isSigningUp }] = useSignupMutation();
-  const [googleRegister, { isLoading: isGoogleRegistering }] = useGoogleRegisterMutation();
-  const [registerCompany, { isLoading: isRegisteringCompany }] =
-    useRegisterCompanyMutation();
-  const [requestJoinCompany, { isLoading: isRequestingJoin }] =
-    useRequestJoinCompanyMutation();
-  const isLoading = isSigningUp || isRegisteringCompany || isRequestingJoin || isGoogleRegistering;
+  const [signup, { isLoading: isSigningUp }] = useSignupMutation()
+  const [googleRegister, { isLoading: isGoogleRegistering }] = useGoogleRegisterMutation()
+  const [registerCompany, { isLoading: isRegisteringCompany }] = useRegisterCompanyMutation()
+  const [requestJoinCompany, { isLoading: isRequestingJoin }] = useRequestJoinCompanyMutation()
+  const isLoading = isSigningUp || isRegisteringCompany || isRequestingJoin || isGoogleRegistering
 
-  const [step, setStep] = useState<FlowStep>(isOAuth ? "intent" : "credentials");
+  const [step, setStep] = useState<FlowStep>(isOAuth ? 'intent' : 'credentials')
 
   const [creds, setCreds] = useState<CredentialsState>({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
     acceptTerms: false,
-  });
+  })
 
-  const displayEmail = isOAuth ? userInfo.email : creds.email;
+  const displayEmail = isOAuth ? userInfo.email : creds.email
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [companyDetails, setCompanyDetails] = useState<CompanyDetailsState>({
-    companyName: "",
-    industry: "",
-    companySize: "",
-    website: "",
-    location: "",
-    description: "",
-  });
+    companyName: '',
+    industry: '',
+    companySize: '',
+    website: '',
+    location: '',
+    description: '',
+  })
 
-  const [joinCompanyName, setJoinCompanyName] = useState("");
-  const [errors, setErrors] = useState<FormErrors>({});
-  const passwordStrength = getPasswordStrength(creds.password);
+  const [joinCompanyName, setJoinCompanyName] = useState('')
+  const [errors, setErrors] = useState<FormErrors>({})
+  const passwordStrength = getPasswordStrength(creds.password)
 
   function clearError(field: string) {
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
   }
 
   // ── Step 1: Credentials ────────────────────────────────────────────────
 
   function handleCredChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target
     setCreds((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    clearError(name);
+      [name]: type === 'checkbox' ? checked : value,
+    }))
+    clearError(name)
   }
 
   function handleCredentialsContinue(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const errs = validateCredentials(creds);
+    e.preventDefault()
+    const errs = validateCredentials(creds)
     if (Object.keys(errs).length > 0) {
-      setErrors(errs);
+      setErrors(errs)
     } else {
-      setStep("intent");
+      setStep('intent')
     }
   }
 
@@ -368,101 +359,94 @@ function SignupContent() {
       if (isOAuth) {
         const result = await googleRegister({
           signup_token: setupToken,
-          primary_role: "candidate",
-        }).unwrap();
+          primary_role: 'candidate',
+        }).unwrap()
 
         if (result.success) {
-          router.push("/candidate");
+          router.push('/candidate')
         } else {
-          toast.error(
-            result.message ?? "Something went wrong. Please try again.",
-          );
+          toast.error(result.message ?? 'Something went wrong. Please try again.')
         }
       } else {
         const result = await signup({
           full_name: creds.fullName,
           email: creds.email,
           password: creds.password,
-          primary_role: "candidate",
-        }).unwrap();
+          primary_role: 'candidate',
+        }).unwrap()
 
         if (result.success) {
-          setStep("email-verify");
+          setStep('email-verify')
         } else {
-          toast.error(
-            result.message ?? "Something went wrong. Please try again.",
-          );
+          toast.error(result.message ?? 'Something went wrong. Please try again.')
         }
       }
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
-        full_name: "fullName",
-        email: "email",
-        password: "password",
-      };
-      const parsed = parseApiError(err, fieldMap);
-      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
-      if (!hadFieldErrors) toast.error(parsed.message);
-      if (!isOAuth && Object.keys(parsed.fieldErrors ?? {}).length > 0)
-        setStep("credentials");
+        full_name: 'fullName',
+        email: 'email',
+        password: 'password',
+      }
+      const parsed = parseApiError(err, fieldMap)
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
+      if (!hadFieldErrors) toast.error(parsed.message)
+      if (!isOAuth && Object.keys(parsed.fieldErrors ?? {}).length > 0) setStep('credentials')
     }
   }
 
   // ── Step 3a: Create company ────────────────────────────────────────────
 
   function handleCompanyDetailChange(
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) {
-    const { name, value } = e.target;
-    setCompanyDetails((prev) => ({ ...prev, [name]: value }));
-    clearError(name);
+    const { name, value } = e.target
+    setCompanyDetails((prev) => ({ ...prev, [name]: value }))
+    clearError(name)
   }
 
   async function handleCreateCompany(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const errs = validateCompanyDetails(companyDetails);
+    e.preventDefault()
+    const errs = validateCompanyDetails(companyDetails)
     if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
+      setErrors(errs)
+      return
     }
 
     try {
-      let finalSetupToken = "";
+      let finalSetupToken = ''
       if (isOAuth) {
         const signupResult = await googleRegister({
           signup_token: setupToken,
-          primary_role: "recruiter_admin",
-        }).unwrap();
+          primary_role: 'recruiter_admin',
+        }).unwrap()
 
         if (!signupResult.success || !signupResult.data) {
-          toast.error(signupResult.message ?? "Signup failed.");
-          return;
+          toast.error(signupResult.message ?? 'Signup failed.')
+          return
         }
 
-        const data = signupResult.data;
-        if (data && "setup_token" in data) {
-          finalSetupToken = (data as { setup_token: string }).setup_token || "";
+        const data = signupResult.data
+        if (data && 'setup_token' in data) {
+          finalSetupToken = (data as { setup_token: string }).setup_token || ''
         } else {
           // If they already exist and were logged in by googleRegister,
           // they won't have a setup_token (they're done).
-          router.push("/company");
-          return;
+          router.push('/company')
+          return
         }
       } else {
         const signupResult = await signup({
           full_name: creds.fullName,
           email: creds.email,
           password: creds.password,
-          primary_role: "recruiter_admin",
-        }).unwrap();
+          primary_role: 'recruiter_admin',
+        }).unwrap()
 
         if (!signupResult.success || !signupResult.data?.setup_token) {
-          toast.error(signupResult.message ?? "Signup failed.");
-          return;
+          toast.error(signupResult.message ?? 'Signup failed.')
+          return
         }
-        finalSetupToken = signupResult.data.setup_token;
+        finalSetupToken = signupResult.data.setup_token
       }
 
       await registerCompany({
@@ -473,127 +457,117 @@ function SignupContent() {
         website: companyDetails.website || undefined,
         location: companyDetails.location || undefined,
         description: companyDetails.description || undefined,
-      }).unwrap();
+      }).unwrap()
 
-      toast.success(
-        "Almost there! Please check your email to verify and activate your company.",
-      );
-      router.push("/login");
+      toast.success('Almost there! Please check your email to verify and activate your company.')
+      router.push('/login')
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
-        full_name: "fullName",
-        email: "email",
-        password: "password",
-        company_name: "companyName",
-        industry: "industry",
-        company_size: "companySize",
-      };
-      const parsed = parseApiError(err, fieldMap);
-      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
-      if (!hadFieldErrors) toast.error(parsed.message);
+        full_name: 'fullName',
+        email: 'email',
+        password: 'password',
+        company_name: 'companyName',
+        industry: 'industry',
+        company_size: 'companySize',
+      }
+      const parsed = parseApiError(err, fieldMap)
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
+      if (!hadFieldErrors) toast.error(parsed.message)
     }
   }
 
   // ── Step 3b: Join company ──────────────────────────────────────────────
 
   async function handleJoinCompany(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
+    e.preventDefault()
     if (!joinCompanyName.trim()) {
-      setErrors({ joinCompanyName: "Please enter the company name." });
-      return;
+      setErrors({ joinCompanyName: 'Please enter the company name.' })
+      return
     }
 
     try {
-      let finalSetupToken = "";
+      let finalSetupToken = ''
       if (isOAuth) {
         const signupResult = await googleRegister({
           signup_token: setupToken,
-          primary_role: "recruiter",
-        }).unwrap();
+          primary_role: 'recruiter',
+        }).unwrap()
 
-        const data = signupResult.data;
-        if (!signupResult.success || !data || !("setup_token" in data)) {
-          toast.error(signupResult.message ?? "Signup failed.");
-          return;
+        const data = signupResult.data
+        if (!signupResult.success || !data || !('setup_token' in data)) {
+          toast.error(signupResult.message ?? 'Signup failed.')
+          return
         }
-        finalSetupToken = (data as { setup_token: string }).setup_token;
+        finalSetupToken = (data as { setup_token: string }).setup_token
       } else {
         const signupResult = await signup({
           full_name: creds.fullName,
           email: creds.email,
           password: creds.password,
-          primary_role: "recruiter",
-        }).unwrap();
+          primary_role: 'recruiter',
+        }).unwrap()
 
-        const data = signupResult.data;
-        if (!signupResult.success || !data || !("setup_token" in data)) {
-          toast.error(signupResult.message ?? "Signup failed.");
-          return;
+        const data = signupResult.data
+        if (!signupResult.success || !data || !('setup_token' in data)) {
+          toast.error(signupResult.message ?? 'Signup failed.')
+          return
         }
-        finalSetupToken = (data as { setup_token: string }).setup_token;
+        finalSetupToken = (data as { setup_token: string }).setup_token
       }
 
       await requestJoinCompany({
         setup_token: finalSetupToken,
         company_name: joinCompanyName.trim(),
-      }).unwrap();
-      setStep("join-pending");
+      }).unwrap()
+      setStep('join-pending')
     } catch (err: unknown) {
       const fieldMap: Record<string, string> = {
-        full_name: "fullName",
-        email: "email",
-        password: "password",
-        company_name: "joinCompanyName",
-      };
-      const parsed = parseApiError(err, fieldMap);
-      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors);
-      if (!hadFieldErrors) toast.error(parsed.message);
+        full_name: 'fullName',
+        email: 'email',
+        password: 'password',
+        company_name: 'joinCompanyName',
+      }
+      const parsed = parseApiError(err, fieldMap)
+      const hadFieldErrors = applyFieldErrors(parsed.fieldErrors, setErrors)
+      if (!hadFieldErrors) toast.error(parsed.message)
     }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────
 
-  const stepMeta: Partial<
-    Record<FlowStep, { title: string; subtitle: string }>
-  > = {
+  const stepMeta: Partial<Record<FlowStep, { title: string; subtitle: string }>> = {
     credentials: {
-      title: "Create your account",
-      subtitle:
-        "Start exploring top career opportunities across Nepal and beyond.",
+      title: 'Create your account',
+      subtitle: 'Start exploring top career opportunities across Nepal and beyond.',
     },
     intent: {
-      title: "What brings you here?",
-      subtitle:
-        "Tell us how you plan to use ConvexHire so we can personalise your experience.",
+      title: 'What brings you here?',
+      subtitle: 'Tell us how you plan to use ConvexHire so we can personalise your experience.',
     },
-    "company-choice": {
-      title: "Set up your company",
-      subtitle:
-        "Create a new company profile or join one that already exists on ConvexHire.",
+    'company-choice': {
+      title: 'Set up your company',
+      subtitle: 'Create a new company profile or join one that already exists on ConvexHire.',
     },
-    "company-details": {
-      title: "Create your company",
-      subtitle: "Fill in the details to set up your company profile.",
+    'company-details': {
+      title: 'Create your company',
+      subtitle: 'Fill in the details to set up your company profile.',
     },
-    "join-company": {
-      title: "Join an existing company",
-      subtitle:
-        "Enter the company name. An email will be sent to the admin for approval.",
+    'join-company': {
+      title: 'Join an existing company',
+      subtitle: 'Enter the company name. An email will be sent to the admin for approval.',
     },
-    "email-verify": {
-      title: "Check your inbox",
-      subtitle:
-        "We've sent a verification email. Click the link to activate your account.",
+    'email-verify': {
+      title: 'Check your inbox',
+      subtitle: "We've sent a verification email. Click the link to activate your account.",
     },
-    "join-pending": {
-      title: "Request sent!",
-      subtitle:
-        "The company admin has been notified. You'll get an email once approved.",
+    'join-pending': {
+      title: 'Request sent!',
+      subtitle: "The company admin has been notified. You'll get an email once approved.",
     },
-  };
+  }
 
-  const meta = stepMeta[step] ?? stepMeta.credentials!;
-  const isWide = step === "company-details";
+  const meta = stepMeta[step] ?? stepMeta.credentials!
+  const isWide = step === 'company-details'
 
   return (
     <main className="auth">
@@ -616,30 +590,30 @@ function SignupContent() {
         priority={false}
       />
 
-      <div className={`auth__inner${isWide ? " auth__inner--wide" : ""}`}>
+      <div className={`auth__inner${isWide ? ' auth__inner--wide' : ''}`}>
         {/* Step indicator */}
-        {step !== "credentials" &&
-          step !== "email-verify" &&
-          step !== "join-pending" && <StepIndicator currentStep={step} />}
+        {step !== 'credentials' && step !== 'email-verify' && step !== 'join-pending' && (
+          <StepIndicator currentStep={step} />
+        )}
 
         {/* Back button */}
-        {(step === "intent" ||
-          step === "company-choice" ||
-          step === "company-details" ||
-          step === "join-company") && (
-            <button
-              type="button"
-              className="auth__back-btn"
-              onClick={() => {
-                if (step === "intent") setStep("credentials");
-                else if (step === "company-choice") setStep("intent");
-                else setStep("company-choice");
-              }}
-            >
-              <ArrowLeftIcon />
-              Back
-            </button>
-          )}
+        {(step === 'intent' ||
+          step === 'company-choice' ||
+          step === 'company-details' ||
+          step === 'join-company') && (
+          <button
+            type="button"
+            className="auth__back-btn"
+            onClick={() => {
+              if (step === 'intent') setStep('credentials')
+              else if (step === 'company-choice') setStep('intent')
+              else setStep('company-choice')
+            }}
+          >
+            <ArrowLeftIcon />
+            Back
+          </button>
+        )}
 
         {/* Header */}
         <header className="auth__header">
@@ -648,7 +622,7 @@ function SignupContent() {
         </header>
 
         {/* ── STEP 1: Credentials ───────────────────────────────────────── */}
-        {step === "credentials" && (
+        {step === 'credentials' && (
           <div className="auth__card">
             <div className="auth__social-btns">
               <button
@@ -664,11 +638,7 @@ function SignupContent() {
               <span>or sign up with email</span>
             </div>
 
-            <form
-              className="auth__form"
-              onSubmit={handleCredentialsContinue}
-              noValidate
-            >
+            <form className="auth__form" onSubmit={handleCredentialsContinue} noValidate>
               <div className="auth__field">
                 <label htmlFor="fullName" className="auth__label">
                   Full name
@@ -682,18 +652,12 @@ function SignupContent() {
                     placeholder="Your full name"
                     value={creds.fullName}
                     onChange={handleCredChange}
-                    className={`auth__input${errors.fullName ? " auth__input--error" : ""}`}
-                    aria-describedby={
-                      errors.fullName ? "fullName-error" : undefined
-                    }
+                    className={`auth__input${errors.fullName ? ' auth__input--error' : ''}`}
+                    aria-describedby={errors.fullName ? 'fullName-error' : undefined}
                   />
                 </div>
                 {errors.fullName && (
-                  <span
-                    id="fullName-error"
-                    className="auth__error-msg"
-                    role="alert"
-                  >
+                  <span id="fullName-error" className="auth__error-msg" role="alert">
                     {errors.fullName}
                   </span>
                 )}
@@ -712,16 +676,12 @@ function SignupContent() {
                     placeholder="you@example.com"
                     value={creds.email}
                     onChange={handleCredChange}
-                    className={`auth__input${errors.email ? " auth__input--error" : ""}`}
-                    aria-describedby={errors.email ? "email-error" : undefined}
+                    className={`auth__input${errors.email ? ' auth__input--error' : ''}`}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
                   />
                 </div>
                 {errors.email && (
-                  <span
-                    id="email-error"
-                    className="auth__error-msg"
-                    role="alert"
-                  >
+                  <span id="email-error" className="auth__error-msg" role="alert">
                     {errors.email}
                   </span>
                 )}
@@ -734,34 +694,26 @@ function SignupContent() {
                 <div className="auth__input-wrap">
                   <input
                     id="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     autoComplete="new-password"
                     placeholder="Create a strong password"
                     value={creds.password}
                     onChange={handleCredChange}
-                    className={`auth__input auth__input--password${errors.password ? " auth__input--error" : ""}`}
+                    className={`auth__input auth__input--password${errors.password ? ' auth__input--error' : ''}`}
                   />
                   <button
                     type="button"
                     className="auth__pw-toggle"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
                   </button>
                 </div>
-                {passwordStrength !== "none" && (
-                  <PasswordStrengthBar strength={passwordStrength} />
-                )}
+                {passwordStrength !== 'none' && <PasswordStrengthBar strength={passwordStrength} />}
                 {errors.password && (
-                  <span
-                    id="password-error"
-                    className="auth__error-msg"
-                    role="alert"
-                  >
+                  <span id="password-error" className="auth__error-msg" role="alert">
                     {errors.password}
                   </span>
                 )}
@@ -774,31 +726,25 @@ function SignupContent() {
                 <div className="auth__input-wrap">
                   <input
                     id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     name="confirmPassword"
                     autoComplete="new-password"
                     placeholder="Re-enter your password"
                     value={creds.confirmPassword}
                     onChange={handleCredChange}
-                    className={`auth__input auth__input--password${errors.confirmPassword ? " auth__input--error" : ""}`}
+                    className={`auth__input auth__input--password${errors.confirmPassword ? ' auth__input--error' : ''}`}
                   />
                   <button
                     type="button"
                     className="auth__pw-toggle"
                     onClick={() => setShowConfirmPassword((v) => !v)}
-                    aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
-                    }
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
                     {showConfirmPassword ? <EyeSlashIcon /> : <EyeIcon />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <span
-                    id="confirmPassword-error"
-                    className="auth__error-msg"
-                    role="alert"
-                  >
+                  <span id="confirmPassword-error" className="auth__error-msg" role="alert">
                     {errors.confirmPassword}
                   </span>
                 )}
@@ -811,22 +757,15 @@ function SignupContent() {
                     name="acceptTerms"
                     checked={creds.acceptTerms}
                     onChange={handleCredChange}
-                    aria-describedby={
-                      errors.acceptTerms ? "terms-error" : undefined
-                    }
+                    aria-describedby={errors.acceptTerms ? 'terms-error' : undefined}
                   />
                   <span>
-                    I agree to the{" "}
-                    <Link href="/terms">Terms &amp; Conditions</Link> and{" "}
+                    I agree to the <Link href="/terms">Terms &amp; Conditions</Link> and{' '}
                     <Link href="/privacy">Privacy Policy</Link>
                   </span>
                 </label>
                 {errors.acceptTerms && (
-                  <span
-                    id="terms-error"
-                    className="auth__error-msg"
-                    role="alert"
-                  >
+                  <span id="terms-error" className="auth__error-msg" role="alert">
                     {errors.acceptTerms}
                   </span>
                 )}
@@ -840,7 +779,7 @@ function SignupContent() {
         )}
 
         {/* ── STEP 2: Intent ────────────────────────────────────────────── */}
-        {step === "intent" && (
+        {step === 'intent' && (
           <div className="auth__card">
             <div className="auth__intent-cards">
               <button
@@ -866,7 +805,7 @@ function SignupContent() {
               <button
                 type="button"
                 className="auth__intent-card"
-                onClick={() => setStep("company-choice")}
+                onClick={() => setStep('company-choice')}
                 disabled={isLoading}
               >
                 <div className="auth__intent-icon auth__intent-icon--hiring">
@@ -883,31 +822,26 @@ function SignupContent() {
                 </span>
               </button>
             </div>
-            {isLoading && (
-              <p className="auth__loading-note">Setting up your account…</p>
-            )}
+            {isLoading && <p className="auth__loading-note">Setting up your account…</p>}
           </div>
         )}
 
         {/* ── STEP 3: Company choice ─────────────────────────────────────── */}
-        {step === "company-choice" && (
+        {step === 'company-choice' && (
           <div className="auth__card">
             <div className="auth__intent-cards">
               <button
                 type="button"
                 className="auth__intent-card"
-                onClick={() => setStep("company-details")}
+                onClick={() => setStep('company-details')}
               >
                 <div className="auth__intent-icon auth__intent-icon--create">
                   <BuildingIcon />
                 </div>
                 <div className="auth__intent-body">
-                  <span className="auth__intent-title">
-                    Create a new company
-                  </span>
+                  <span className="auth__intent-title">Create a new company</span>
                   <span className="auth__intent-desc">
-                    Set up your company profile and start posting jobs
-                    immediately.
+                    Set up your company profile and start posting jobs immediately.
                   </span>
                 </div>
                 <span className="auth__intent-arrow" aria-hidden="true">
@@ -918,15 +852,13 @@ function SignupContent() {
               <button
                 type="button"
                 className="auth__intent-card"
-                onClick={() => setStep("join-company")}
+                onClick={() => setStep('join-company')}
               >
                 <div className="auth__intent-icon auth__intent-icon--join">
                   <UserPlusIcon />
                 </div>
                 <div className="auth__intent-body">
-                  <span className="auth__intent-title">
-                    Join an existing company
-                  </span>
+                  <span className="auth__intent-title">Join an existing company</span>
                   <span className="auth__intent-desc">
                     Request to join your company&apos;s workspace on ConvexHire.
                   </span>
@@ -940,13 +872,9 @@ function SignupContent() {
         )}
 
         {/* ── STEP 3a: Company details ───────────────────────────────────── */}
-        {step === "company-details" && (
+        {step === 'company-details' && (
           <div className="auth__card">
-            <form
-              className="auth__form"
-              onSubmit={handleCreateCompany}
-              noValidate
-            >
+            <form className="auth__form" onSubmit={handleCreateCompany} noValidate>
               <div className="auth__field">
                 <label htmlFor="companyName" className="auth__label">
                   Company name <span className="auth__required">*</span>
@@ -960,7 +888,7 @@ function SignupContent() {
                     value={companyDetails.companyName}
                     onChange={handleCompanyDetailChange}
                     disabled={isLoading}
-                    className={`auth__input${errors.companyName ? " auth__input--error" : ""}`}
+                    className={`auth__input${errors.companyName ? ' auth__input--error' : ''}`}
                   />
                 </div>
                 {errors.companyName && (
@@ -982,7 +910,7 @@ function SignupContent() {
                       value={companyDetails.industry}
                       onChange={handleCompanyDetailChange}
                       disabled={isLoading}
-                      className={`auth__input auth__input--select${errors.industry ? " auth__input--error" : ""}`}
+                      className={`auth__input auth__input--select${errors.industry ? ' auth__input--error' : ''}`}
                     >
                       <option value="">Select industry…</option>
                       <option value="technology">Technology</option>
@@ -993,9 +921,7 @@ function SignupContent() {
                       <option value="manufacturing">Manufacturing</option>
                       <option value="consulting">Consulting</option>
                       <option value="media">Media &amp; Entertainment</option>
-                      <option value="logistics">
-                        Logistics &amp; Supply Chain
-                      </option>
+                      <option value="logistics">Logistics &amp; Supply Chain</option>
                       <option value="real_estate">Real Estate</option>
                       <option value="ngo">NGO / Non-profit</option>
                       <option value="government">Government</option>
@@ -1020,7 +946,7 @@ function SignupContent() {
                       value={companyDetails.companySize}
                       onChange={handleCompanyDetailChange}
                       disabled={isLoading}
-                      className={`auth__input auth__input--select${errors.companySize ? " auth__input--error" : ""}`}
+                      className={`auth__input auth__input--select${errors.companySize ? ' auth__input--error' : ''}`}
                     >
                       <option value="">Select size…</option>
                       <option value="1-10">1 – 10 employees</option>
@@ -1079,8 +1005,7 @@ function SignupContent() {
 
               <div className="auth__field">
                 <label htmlFor="description" className="auth__label">
-                  Short description{" "}
-                  <span className="auth__optional">(optional)</span>
+                  Short description <span className="auth__optional">(optional)</span>
                 </label>
                 <textarea
                   id="description"
@@ -1097,23 +1022,19 @@ function SignupContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
+                className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? "Creating company…" : "Create company & continue"}
+                {isLoading ? 'Creating company…' : 'Create company & continue'}
               </button>
             </form>
           </div>
         )}
 
         {/* ── STEP 3b: Join company ──────────────────────────────────────── */}
-        {step === "join-company" && (
+        {step === 'join-company' && (
           <div className="auth__card">
-            <form
-              className="auth__form"
-              onSubmit={handleJoinCompany}
-              noValidate
-            >
+            <form className="auth__form" onSubmit={handleJoinCompany} noValidate>
               <div className="auth__field">
                 <label htmlFor="joinCompanyName" className="auth__label">
                   Company name
@@ -1126,11 +1047,11 @@ function SignupContent() {
                     placeholder="Enter the exact company name"
                     value={joinCompanyName}
                     onChange={(e) => {
-                      setJoinCompanyName(e.target.value);
-                      clearError("joinCompanyName");
+                      setJoinCompanyName(e.target.value)
+                      clearError('joinCompanyName')
                     }}
                     disabled={isLoading}
-                    className={`auth__input${errors.joinCompanyName ? " auth__input--error" : ""}`}
+                    className={`auth__input${errors.joinCompanyName ? ' auth__input--error' : ''}`}
                   />
                 </div>
                 {errors.joinCompanyName && (
@@ -1139,36 +1060,35 @@ function SignupContent() {
                   </span>
                 )}
                 <p className="auth__field-hint">
-                  Enter the company name exactly as it appears on ConvexHire. An
-                  email will be sent to the company admin to verify your
-                  request.
+                  Enter the company name exactly as it appears on ConvexHire. An email will be sent
+                  to the company admin to verify your request.
                 </p>
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`auth__submit${isLoading ? " auth__submit--loading" : ""}`}
+                className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? "Sending request…" : "Send join request"}
+                {isLoading ? 'Sending request…' : 'Send join request'}
               </button>
             </form>
           </div>
         )}
 
         {/* ── SUCCESS: Email verify ──────────────────────────────────────── */}
-        {step === "email-verify" && (
+        {step === 'email-verify' && (
           <div className="auth__card auth__card--success">
             <div className="auth__success-icon">
               <EnvelopeIcon />
             </div>
             <p className="auth__success-detail">
-              We sent an email to <strong>{displayEmail}</strong>. Click the link
-              to verify your address and access your dashboard.
+              We sent an email to <strong>{displayEmail}</strong>. Click the link to verify your
+              address and access your dashboard.
             </p>
             <p className="auth__success-note">
-              Didn&apos;t get it? Check your spam folder, or{" "}
+              Didn&apos;t get it? Check your spam folder, or{' '}
               <button
                 type="button"
                 className="auth__inline-link"
@@ -1185,15 +1105,14 @@ function SignupContent() {
         )}
 
         {/* ── SUCCESS: Join pending ──────────────────────────────────────── */}
-        {step === "join-pending" && (
+        {step === 'join-pending' && (
           <div className="auth__card auth__card--success">
             <div className="auth__success-icon auth__success-icon--pending">
               <ClockIcon />
             </div>
             <p className="auth__success-detail">
-              Your request to join <strong>{joinCompanyName}</strong> has been
-              sent. We&apos;ll email you at <strong>{displayEmail}</strong> once
-              the admin approves it.
+              Your request to join <strong>{joinCompanyName}</strong> has been sent. We&apos;ll
+              email you at <strong>{displayEmail}</strong> once the admin approves it.
             </p>
             <p className="auth__success-note">
               While you wait, check your inbox to verify your email address.
@@ -1205,15 +1124,14 @@ function SignupContent() {
         )}
 
         {/* Switch to login */}
-        {(step === "credentials" || step === "intent") && (
+        {(step === 'credentials' || step === 'intent') && (
           <p className="auth__switch">
-            Already have an account?{" "}
-            <Link href="/login">Sign in</Link>
+            Already have an account? <Link href="/login">Sign in</Link>
           </p>
         )}
       </div>
     </main>
-  );
+  )
 }
 
 export default function SignupPage() {
@@ -1221,5 +1139,5 @@ export default function SignupPage() {
     <Suspense fallback={<div className="auth__loading">Loading...</div>}>
       <SignupContent />
     </Suspense>
-  );
+  )
 }

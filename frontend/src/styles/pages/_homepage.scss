@@ -2,9 +2,9 @@
 // HOMEPAGE
 // ============================================================
 
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 .homepage {
   overflow: hidden;
@@ -47,6 +47,7 @@
     z-index: 1;
     padding-top: clamp($space-8, 15vw, $space-12);
     @include flex-center;
+
     flex-direction: column;
     gap: $space-6;
   }
@@ -164,7 +165,7 @@
 
     // Fill layer — darker gradient, slides up on hover
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       inset: 0;
       background: color.adjust($color-primary, $lightness: -12%);
@@ -224,6 +225,7 @@
     left: 50%;
     transform: translateX(-50%);
     width: 60vw;
+
     img {
       width: 100%;
       height: auto;

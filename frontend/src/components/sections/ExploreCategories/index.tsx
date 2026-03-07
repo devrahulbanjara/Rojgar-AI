@@ -1,63 +1,64 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-import "swiper/css";
-import Link from "next/link";
-import { ChevronLeftRegular, ChevronRightRegular } from "@fluentui/react-icons";
+import Image from 'next/image'
+import Link from 'next/link'
+
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import 'swiper/css'
+import { Navigation } from 'swiper/modules'
+import { Swiper, SwiperSlide } from 'swiper/react'
 
 const LOGOS = [
-  { src: "/homepage/logoMarquee/google.png", alt: "Google" },
-  { src: "/homepage/logoMarquee/fusemachines.png", alt: "Fusemachines" },
-  { src: "/homepage/logoMarquee/leapfrog.png", alt: "Leapfrog" },
-  { src: "/homepage/logoMarquee/cotiviti.webp", alt: "Cotiviti" },
-  { src: "/homepage/logoMarquee/f1soft.png", alt: "F1Soft" },
-  { src: "/homepage/logoMarquee/logpoint.webp", alt: "Logpoint" },
-  { src: "/homepage/logoMarquee/ingtech.svg", alt: "Ingtech" },
-  { src: "/homepage/logoMarquee/innovateTech.svg", alt: "Innovate Tech" },
-  { src: "/homepage/logoMarquee/LISNepal.webp", alt: "LIS Nepal" },
-  { src: "/homepage/logoMarquee/adexLtd.webp", alt: "Adex Ltd" },
-  { src: "/homepage/logoMarquee/cedargate.png", alt: "Cedargate" },
-  { src: "/homepage/logoMarquee/clocoNepal.webp", alt: "Cloco Nepal" },
-  { src: "/homepage/logoMarquee/ebPearls.jpg", alt: "EB Pearls" },
-  { src: "/homepage/logoMarquee/infoDevelopers.webp", alt: "Info Developers" },
-  { src: "/homepage/logoMarquee/softbenzinfosys.png", alt: "Softbenz Infosys" },
-  { src: "/homepage/logoMarquee/vairavTech.png", alt: "Vairav Tech" },
-  { src: "/homepage/logoMarquee/ycotek.jpg", alt: "Ycotek" },
-];
+  { src: '/homepage/logoMarquee/google.png', alt: 'Google' },
+  { src: '/homepage/logoMarquee/fusemachines.png', alt: 'Fusemachines' },
+  { src: '/homepage/logoMarquee/leapfrog.png', alt: 'Leapfrog' },
+  { src: '/homepage/logoMarquee/cotiviti.webp', alt: 'Cotiviti' },
+  { src: '/homepage/logoMarquee/f1soft.png', alt: 'F1Soft' },
+  { src: '/homepage/logoMarquee/logpoint.webp', alt: 'Logpoint' },
+  { src: '/homepage/logoMarquee/ingtech.svg', alt: 'Ingtech' },
+  { src: '/homepage/logoMarquee/innovateTech.svg', alt: 'Innovate Tech' },
+  { src: '/homepage/logoMarquee/LISNepal.webp', alt: 'LIS Nepal' },
+  { src: '/homepage/logoMarquee/adexLtd.webp', alt: 'Adex Ltd' },
+  { src: '/homepage/logoMarquee/cedargate.png', alt: 'Cedargate' },
+  { src: '/homepage/logoMarquee/clocoNepal.webp', alt: 'Cloco Nepal' },
+  { src: '/homepage/logoMarquee/ebPearls.jpg', alt: 'EB Pearls' },
+  { src: '/homepage/logoMarquee/infoDevelopers.webp', alt: 'Info Developers' },
+  { src: '/homepage/logoMarquee/softbenzinfosys.png', alt: 'Softbenz Infosys' },
+  { src: '/homepage/logoMarquee/vairavTech.png', alt: 'Vairav Tech' },
+  { src: '/homepage/logoMarquee/ycotek.jpg', alt: 'Ycotek' },
+]
 
 const CATEGORIES = [
   {
-    src: "/homepage/exploreSection/cards/graphicDesign.png",
-    label: "Graphic Design",
+    src: '/homepage/exploreSection/cards/graphicDesign.png',
+    label: 'Graphic Design',
   },
   {
-    src: "/homepage/exploreSection/cards/uiuxDesign.png",
-    label: "UI/UX Design",
+    src: '/homepage/exploreSection/cards/uiuxDesign.png',
+    label: 'UI/UX Design',
   },
   {
-    src: "/homepage/exploreSection/cards/videoEditing.png",
-    label: "Video Editing",
+    src: '/homepage/exploreSection/cards/videoEditing.png',
+    label: 'Video Editing',
   },
   {
-    src: "/homepage/exploreSection/cards/development.png",
-    label: "Development",
+    src: '/homepage/exploreSection/cards/development.png',
+    label: 'Development',
   },
   {
-    src: "/homepage/exploreSection/cards/contentWriting.png",
-    label: "Content Writing",
+    src: '/homepage/exploreSection/cards/contentWriting.png',
+    label: 'Content Writing',
   },
-  { src: "/homepage/exploreSection/cards/seo.png", label: "SEO" },
+  { src: '/homepage/exploreSection/cards/seo.png', label: 'SEO' },
   {
-    src: "/homepage/exploreSection/cards/3dAnimation.png",
-    label: "3D Animation",
+    src: '/homepage/exploreSection/cards/3dAnimation.png',
+    label: '3D Animation',
   },
   {
-    src: "/homepage/exploreSection/cards/visualAssistant.png",
-    label: "Virtual Assistant",
+    src: '/homepage/exploreSection/cards/visualAssistant.png',
+    label: 'Virtual Assistant',
   },
-];
+]
 
 export default function ExploreCategories() {
   return (
@@ -89,12 +90,11 @@ export default function ExploreCategories() {
         {/* Left */}
         <div className="explore__left">
           <h2 className="explore__heading">
-            Explore Top Job{" "}
-            <span className="explore__heading-accent">Categories</span>
+            Explore Top Job <span className="explore__heading-accent">Categories</span>
           </h2>
           <p className="explore__subtitle">
-            Discover the most in-demand roles and start finding opportunities
-            that match your expertise.
+            Discover the most in-demand roles and start finding opportunities that match your
+            expertise.
           </p>
           <Link href="/jobs" className="btn btn--primary explore__cta">
             See All Jobs
@@ -103,18 +103,15 @@ export default function ExploreCategories() {
 
         {/* Right — Swiper */}
         <div className="explore__carousel">
-          <button
-            className="explore__nav explore__nav--prev"
-            aria-label="Previous"
-          >
-            <ChevronLeftRegular aria-hidden="true" />
+          <button className="explore__nav explore__nav--prev" aria-label="Previous">
+            <ChevronLeft aria-hidden="true" />
           </button>
 
           <Swiper
             modules={[Navigation]}
             navigation={{
-              prevEl: ".explore__nav--prev",
-              nextEl: ".explore__nav--next",
+              prevEl: '.explore__nav--prev',
+              nextEl: '.explore__nav--next',
             }}
             slidesPerView={1.3}
             spaceBetween={16}
@@ -144,7 +141,7 @@ export default function ExploreCategories() {
           </Swiper>
 
           <button className="explore__nav explore__nav--next" aria-label="Next">
-            <ChevronRightRegular aria-hidden="true" />
+            <ChevronRight aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -169,5 +166,5 @@ export default function ExploreCategories() {
         </div>
       </div>
     </section>
-  );
+  )
 }

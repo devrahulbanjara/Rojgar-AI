@@ -1,7 +1,7 @@
 // ============================================================
 // LOADER — Minimal thin circular spinner
 // ============================================================
-@use "../variables" as *;
+@use '../variables' as *;
 
 @keyframes loader-spin {
   to {
@@ -39,6 +39,7 @@
     fill: none;
     stroke: $color-primary;
     stroke-linecap: round;
+
     // 2π × 18 ≈ 113 — show ~28px, hide the rest
     stroke-dasharray: 28 85;
     stroke-dashoffset: 0;
@@ -59,10 +60,12 @@
       width: 16px;
       height: 16px;
     }
+
     .loader__track,
     .loader__arc {
       stroke-width: 1.5;
     }
+
     // recalc dash for r=18 SVG viewBox scaled: keep proportions
     .loader__arc {
       stroke-dasharray: 28 85;
@@ -74,6 +77,7 @@
       width: 28px;
       height: 28px;
     }
+
     .loader__track,
     .loader__arc {
       stroke-width: 1.75;
@@ -85,6 +89,7 @@
       width: 40px;
       height: 40px;
     }
+
     .loader__track,
     .loader__arc {
       stroke-width: 1.75;
@@ -96,6 +101,7 @@
       width: 56px;
       height: 56px;
     }
+
     .loader__track,
     .loader__arc {
       stroke-width: 1.5;

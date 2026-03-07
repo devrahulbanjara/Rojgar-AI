@@ -2,9 +2,9 @@
 // DASHBOARD — Shared styles for all dashboard views
 // ============================================================
 
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 // ── Dashboard Shell ──────────────────────────────────────────
 .dash-shell {
@@ -172,7 +172,7 @@
       }
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         left: 0;
         top: 50%;
@@ -468,22 +468,27 @@
     background: rgba($color-primary, 0.1);
     color: $color-primary;
   }
+
   &--success {
     background: rgba($color-success, 0.1);
     color: color.adjust($color-success, $lightness: -10%);
   }
+
   &--warning {
     background: rgba($color-warning, 0.2);
     color: color.adjust($color-warning, $lightness: -25%);
   }
+
   &--danger {
     background: rgba($color-accent, 0.1);
     color: $color-accent;
   }
+
   &--secondary {
     background: rgba($color-secondary, 0.1);
     color: $color-secondary;
   }
+
   &--gray {
     background: $color-gray-100;
     color: $color-gray-600;
@@ -814,9 +819,11 @@
       &--primary {
         background: $color-primary;
       }
+
       &--secondary {
         background: $color-secondary;
       }
+
       &--accent {
         background: $color-accent;
       }
@@ -915,7 +922,7 @@
     z-index: 0;
 
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       inset: 0;
       background-color: color.adjust($color-primary, $lightness: -12%);
@@ -1343,16 +1350,17 @@
 
   &__sidebar-inner {
     max-height: calc(100vh - 120px);
-    overflow-y: auto;
-    overflow-x: visible;
+    overflow: visible auto;
     padding-right: 2px;
 
     &::-webkit-scrollbar {
       width: 3px;
     }
+
     &::-webkit-scrollbar-track {
       background: transparent;
     }
+
     &::-webkit-scrollbar-thumb {
       background: $color-gray-200;
       border-radius: $radius-full;
@@ -1397,7 +1405,7 @@
       color: $color-primary;
     }
 
-    input[type="checkbox"] {
+    input[type='checkbox'] {
       width: 15px;
       height: 15px;
       accent-color: $color-primary;
@@ -1501,7 +1509,7 @@
 
     // Underline slide-in indicator (matches homepage header)
     &::after {
-      content: "";
+      content: '';
       position: absolute;
       bottom: 4px;
       left: $space-4;
@@ -1703,7 +1711,7 @@
     box-shadow: $shadow-xl;
     overflow: hidden;
     z-index: $z-dropdown;
-    animation: dashDropdownIn $transition-fast forwards;
+    animation: dash-dropdown-in $transition-fast forwards;
   }
 
   &__dropdown-user {
@@ -1803,11 +1811,12 @@
   }
 }
 
-@keyframes dashDropdownIn {
+@keyframes dash-dropdown-in {
   from {
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1825,9 +1834,11 @@
   &--3col {
     grid-template-columns: repeat(3, 1fr);
   }
+
   &--4col {
     grid-template-columns: repeat(4, 1fr);
   }
+
   &--5col {
     grid-template-columns: repeat(5, 1fr);
   }
@@ -1913,6 +1924,7 @@
       width: 30px;
       height: 30px;
     }
+
     &--rect {
       border-radius: $radius-lg;
     }
@@ -1940,10 +1952,12 @@
   color: $color-gray-500;
   font-size: $font-size-sm;
 }
+
 .cell-muted {
   color: $color-gray-400;
   font-size: $font-size-xs;
 }
+
 .cell-actions {
   display: flex;
   gap: $space-2;
@@ -1981,6 +1995,7 @@
     background: $color-warning;
     box-shadow: 0 0 0 3px rgba($color-warning, 0.15);
   }
+
   &--success {
     background: $color-success;
     box-shadow: 0 0 0 3px rgba($color-success, 0.15);
@@ -2182,6 +2197,7 @@
 .dash-topbar__search--md {
   width: 260px;
 }
+
 .dash-topbar__search--lg {
   width: 280px;
 }
@@ -2242,6 +2258,7 @@
 .dash-card__body--no-top {
   padding-top: 0;
 }
+
 .dash-card__body--activity {
   padding: 0 $space-6;
 }
@@ -2270,6 +2287,7 @@
 .progress-bar--narrow-sm {
   width: 60px;
 }
+
 .progress-bar--narrow-md {
   width: 80px;
 }
@@ -2608,7 +2626,7 @@
     font-weight: $font-weight-bold;
     font-size: $font-size-base;
     flex-shrink: 0;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgb(0 0 0 / 6%);
   }
 
   &__body {
@@ -2687,7 +2705,7 @@
     font-weight: $font-weight-bold;
     font-size: $font-size-lg;
     flex-shrink: 0;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgb(0 0 0 / 6%);
   }
 
   &__info {
@@ -2979,6 +2997,7 @@
     color: $color-gray-400;
     line-height: $line-height-normal;
     flex: 1;
+
     // italic+muted treatment for the empty-state hint
     &:has(+ .resume-card__actions) {
       margin-bottom: $space-3;
@@ -3299,7 +3318,7 @@
     color: $color-gray-700;
     cursor: pointer;
 
-    input[type="checkbox"] {
+    input[type='checkbox'] {
       width: 15px;
       height: 15px;
       accent-color: $color-primary;
@@ -3366,8 +3385,7 @@
   .resume-editor__nav {
     border-right: none;
     border-bottom: 1px solid $color-gray-200;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-flow: row wrap;
     padding: $space-3;
   }
 
@@ -4067,7 +4085,7 @@
   position: fixed;
   inset: 0;
   z-index: $z-modal;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgb(0 0 0 / 45%);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -4139,8 +4157,7 @@
     width: 100%;
     border: 1.5px solid $color-gray-200;
     border-radius: $radius-full;
-    padding: $space-3 calc(#{$space-8} + #{$space-2}) $space-3
-      calc(#{$space-8} + #{$space-2});
+    padding: $space-3 calc(#{$space-8} + #{$space-2}) $space-3 calc(#{$space-8} + #{$space-2});
     font-size: $font-size-sm;
     font-family: $font-body;
     color: $color-gray-800;
@@ -4247,11 +4264,12 @@
 }
 
 // ── Jobs Filter Dropdown ──────────────────────────────────────
-@keyframes jobsDropdownIn {
+@keyframes jobs-dropdown-in {
   from {
     opacity: 0;
     transform: translateY(-8px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -4343,11 +4361,12 @@
     max-height: 220px;
     overflow-y: auto;
     transform-origin: top center;
-    animation: jobsDropdownIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: jobs-dropdown-in 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
 
     &::-webkit-scrollbar {
       width: 3px;
     }
+
     &::-webkit-scrollbar-thumb {
       background: $color-gray-200;
       border-radius: $radius-full;
@@ -4368,7 +4387,6 @@
     color: $color-gray-600;
     text-align: left;
     transition: background $transition-fast;
-
     transition:
       background $transition-fast,
       color $transition-fast,
@@ -4390,7 +4408,7 @@
       width: 6px;
       height: 6px;
       border-radius: $radius-full;
-      background: currentColor;
+      background: currentcolor;
       opacity: 0.4;
       flex-shrink: 0;
     }
@@ -4419,10 +4437,11 @@
     // hide native number spinners
     &::-webkit-outer-spin-button,
     &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
+      appearance: none;
       margin: 0;
     }
-    -moz-appearance: textfield;
+
+    appearance: textfield;
 
     &::placeholder {
       color: $color-gray-400;
@@ -4782,7 +4801,7 @@
     overflow: hidden;
 
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       inset: 0;
       background: color.adjust($color-primary, $lightness: -12%);
@@ -4874,7 +4893,7 @@
     gap: $space-3;
 
     &::before {
-      content: "";
+      content: '';
       display: inline-block;
       width: 4px;
       height: 16px;
@@ -4909,7 +4928,7 @@
     line-height: $line-height-normal;
 
     &::before {
-      content: "";
+      content: '';
       width: 6px;
       height: 6px;
       border-radius: $radius-full;

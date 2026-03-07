@@ -7,11 +7,10 @@ $color-primary: #0070f3;
 $color-secondary: #7928ca;
 $color-accent: #ff4d4d;
 $color-success: #0cce6b;
-$color-warning: #ffcc00;
-$color-error: #ff3333;
-
-$color-white: #ffffff;
-$color-black: #000000;
+$color-warning: #fc0;
+$color-error: #f33;
+$color-white: #fff;
+$color-black: #000;
 $color-gray-100: #f4f4f5;
 $color-gray-200: #e4e4e7;
 $color-gray-300: #d1d5db;
@@ -31,19 +30,18 @@ $color-text-muted: $color-gray-500;
 // --- Typography ---
 $font-heading:
   var(--font-heading),
-  "Poppins",
+  'Poppins',
   system-ui,
   -apple-system,
   sans-serif;
 $font-body:
   var(--font-body),
-  "Lato",
+  'Lato',
   system-ui,
   -apple-system,
   sans-serif;
 $font-sans: $font-body; // alias — use $font-body directly when possible
-$font-mono: var(--font-mono), "Courier New", monospace;
-
+$font-mono: var(--font-mono), 'Courier New', monospace;
 $font-size-xs: 0.75rem; // 12px
 $font-size-sm: 0.875rem; // 14px
 $font-size-base: 1rem; // 16px
@@ -59,7 +57,6 @@ $font-weight-regular: 400;
 $font-weight-medium: 500;
 $font-weight-semibold: 600; // default heading weight (Poppins SemiBold)
 $font-weight-bold: 700;
-
 $line-height-tight: 1.25;
 $line-height-normal: 1.5;
 $line-height-loose: 1.75;
@@ -87,16 +84,16 @@ $radius-2xl: 1rem;
 $radius-full: 9999px;
 
 // --- Shadows ---
-$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
 $shadow-md:
-  0 4px 6px -1px rgb(0 0 0 / 0.1),
-  0 2px 4px -2px rgb(0 0 0 / 0.1);
+  0 4px 6px -1px rgb(0 0 0 / 10%),
+  0 2px 4px -2px rgb(0 0 0 / 10%);
 $shadow-lg:
-  0 10px 15px -3px rgb(0 0 0 / 0.1),
-  0 4px 6px -4px rgb(0 0 0 / 0.1);
+  0 10px 15px -3px rgb(0 0 0 / 10%),
+  0 4px 6px -4px rgb(0 0 0 / 10%);
 $shadow-xl:
-  0 20px 25px -5px rgb(0 0 0 / 0.1),
-  0 8px 10px -6px rgb(0 0 0 / 0.1);
+  0 20px 25px -5px rgb(0 0 0 / 10%),
+  0 8px 10px -6px rgb(0 0 0 / 10%);
 
 // --- Breakpoints ---
 $bp-sm: 640px;

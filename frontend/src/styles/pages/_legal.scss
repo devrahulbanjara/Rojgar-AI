@@ -3,9 +3,9 @@
 // Shared layout for all /privacy /cookies /terms /copyright
 // ============================================================
 
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 // ── Page wrapper ────────────────────────────────────────────
 .legal {
@@ -64,7 +64,7 @@
     margin-bottom: $space-5;
 
     &::before {
-      content: "";
+      content: '';
       display: inline-block;
       width: 6px;
       height: 6px;
@@ -173,6 +173,7 @@
     margin-left: -2px;
     text-decoration: none;
     @include transition(all, $transition-fast);
+
     line-height: $line-height-loose;
 
     &:hover {
@@ -240,7 +241,7 @@
   &__list {
     list-style: none;
     padding: 0;
-    margin: 0 0 $space-4 0;
+    margin: 0 0 $space-4;
     display: flex;
     flex-direction: column;
     gap: $space-3;
@@ -253,7 +254,7 @@
       line-height: $line-height-loose;
 
       &::before {
-        content: "";
+        content: '';
         display: inline-block;
         width: 6px;
         height: 6px;

@@ -1,14 +1,14 @@
-import React from "react";
+import React from 'react'
 
 interface LoaderProps {
   /** Visual size of the spinner. Defaults to "md". */
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   /** Optional label shown below the spinner. Hidden when omitted. */
-  label?: string;
+  label?: string
   /** Fill the nearest positioned ancestor (e.g. a panel). Defaults to false. */
-  fill?: boolean;
+  fill?: boolean
   /** Extra class names forwarded to the root element. */
-  className?: string;
+  className?: string
 }
 
 /**
@@ -19,24 +19,14 @@ interface LoaderProps {
  *   <Loader label="Loading…" />       // spinner + text
  *   <Loader fill size="lg" />         // centered inside a panel
  */
-export default function Loader({
-  size = "md",
-  label,
-  fill = false,
-  className = "",
-}: LoaderProps) {
+export default function Loader({ size = 'md', label, fill = false, className = '' }: LoaderProps) {
   return (
     <div
-      className={[
-        "loader",
-        `loader--${size}`,
-        fill ? "loader--fill" : "",
-        className,
-      ]
+      className={['loader', `loader--${size}`, fill ? 'loader--fill' : '', className]
         .filter(Boolean)
-        .join(" ")}
+        .join(' ')}
       role="status"
-      aria-label={label ?? "Loading"}
+      aria-label={label ?? 'Loading'}
     >
       <svg
         className="loader__ring"
@@ -51,5 +41,5 @@ export default function Loader({
       </svg>
       {label && <span className="loader__label">{label}</span>}
     </div>
-  );
+  )
 }

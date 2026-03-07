@@ -1,51 +1,53 @@
-"use client";
+'use client'
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import Link from "next/link";
+import { useEffect, useRef, useState } from 'react'
 
-const STORAGE_KEY = "cookie-consent";
+import Link from 'next/link'
+
+import gsap from 'gsap'
+
+const STORAGE_KEY = 'cookie-consent'
 
 export default function CookieBanner() {
-  const bannerRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
 
   // ── On mount: check stored preference ─────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setVisible(true);
+      setVisible(true)
     }
-  }, []);
+  }, [])
 
   // ── Animate in when visible becomes true ──────────────────
   useEffect(() => {
-    if (!visible || !bannerRef.current) return;
+    if (!visible || !bannerRef.current) return
 
     gsap.fromTo(
       bannerRef.current,
-      { y: "120%", opacity: 0 },
-      { y: "0%", opacity: 1, duration: 0.52, ease: "power3.out", delay: 0.6 },
-    );
-  }, [visible]);
+      { y: '120%', opacity: 0 },
+      { y: '0%', opacity: 1, duration: 0.52, ease: 'power3.out', delay: 0.6 },
+    )
+  }, [visible])
 
-  const dismiss = (choice: "accepted" | "rejected") => {
-    const banner = bannerRef.current;
-    if (!banner) return;
+  const dismiss = (choice: 'accepted' | 'rejected') => {
+    const banner = bannerRef.current
+    if (!banner) return
 
-    localStorage.setItem(STORAGE_KEY, choice);
+    localStorage.setItem(STORAGE_KEY, choice)
 
     gsap.to(banner, {
-      y: "120%",
+      y: '120%',
       opacity: 0,
       duration: 0.38,
-      ease: "power3.in",
+      ease: 'power3.in',
       onComplete: () => setVisible(false),
-    });
-  };
+    })
+  }
 
-  if (!visible) return null;
+  if (!visible) return null
 
   return (
     <div
@@ -65,8 +67,8 @@ export default function CookieBanner() {
         <div className="cookie-banner__content">
           <p className="cookie-banner__title">We use cookies</p>
           <p className="cookie-banner__desc">
-            We use cookies to improve your experience, analyse traffic, and
-            personalise content. You can choose to accept or decline.{" "}
+            We use cookies to improve your experience, analyse traffic, and personalise content. You
+            can choose to accept or decline.{' '}
             <Link href="/privacy" className="cookie-banner__link">
               Learn more
             </Link>
@@ -77,18 +79,18 @@ export default function CookieBanner() {
         <div className="cookie-banner__actions">
           <button
             className="btn cookie-banner__btn cookie-banner__btn--reject"
-            onClick={() => dismiss("rejected")}
+            onClick={() => dismiss('rejected')}
           >
             Decline
           </button>
           <button
             className="btn btn--primary cookie-banner__btn cookie-banner__btn--accept"
-            onClick={() => dismiss("accepted")}
+            onClick={() => dismiss('accepted')}
           >
             Accept All
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -2,9 +2,9 @@
 // AUTH PAGES — Login & Signup
 // ============================================================
 
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 .auth {
   position: relative;
@@ -82,7 +82,7 @@
     text-transform: uppercase;
 
     &::before {
-      content: "";
+      content: '';
       display: inline-block;
       width: 6px;
       height: 6px;
@@ -222,6 +222,7 @@
     cursor: pointer;
     color: $color-gray-400;
     @include transition(color, $transition-fast);
+
     line-height: 1;
 
     &:hover {
@@ -250,7 +251,7 @@
     gap: $space-2;
     cursor: pointer;
 
-    input[type="checkbox"] {
+    input[type='checkbox'] {
       width: 16px;
       height: 16px;
       accent-color: $color-primary;
@@ -303,7 +304,7 @@
 
     // Fill layer — collapses upward when not hovered
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       inset: 0;
       background-color: color.adjust($color-primary, $lightness: -12%);
@@ -349,7 +350,7 @@
 
     &::before,
     &::after {
-      content: "";
+      content: '';
       display: block;
       height: 1px;
       background-color: $color-gray-200;
@@ -389,7 +390,7 @@
 
     // Fill layer — slides up on hover
     &::before {
-      content: "";
+      content: '';
       position: absolute;
       inset: 0;
       background-color: $color-gray-100;
@@ -428,7 +429,7 @@
     align-items: flex-start;
     gap: $space-2;
 
-    input[type="checkbox"] {
+    input[type='checkbox'] {
       width: 16px;
       height: 16px;
       margin-top: 2px;
@@ -515,12 +516,15 @@
     &--weak {
       color: $color-error;
     }
+
     &--fair {
       color: $color-warning;
     }
+
     &--strong {
       color: $color-success;
     }
+
     &--none {
       color: transparent;
     }
@@ -639,13 +643,13 @@
     outline: none;
     caret-color: $color-primary;
     @include transition(border-color box-shadow, $transition-fast);
+
     // hide browser number spinners
     appearance: textfield;
-    -moz-appearance: textfield;
 
     &::-webkit-outer-spin-button,
     &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
+      appearance: none;
       margin: 0;
     }
 
@@ -864,7 +868,7 @@
     grid-template-columns: 1fr 1fr;
     gap: $space-4;
 
-    @media (max-width: 480px) {
+    @media (width <= 480px) {
       grid-template-columns: 1fr;
     }
   }
@@ -872,7 +876,6 @@
   // ── Select input ──────────────────────────────────────────────────────
   &__input--select {
     appearance: none;
-    -webkit-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right $space-4 center;

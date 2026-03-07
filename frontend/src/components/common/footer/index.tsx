@@ -1,8 +1,8 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image'
+import Link from 'next/link'
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear()
 
   return (
     <footer className="footer">
@@ -10,16 +10,9 @@ export default function Footer() {
         {/* Brand */}
         <div className="footer__brand">
           <Link href="/" className="footer__logo">
-            <Image
-              src="/logo/logo.png"
-              alt="ConvexHire Logo"
-              width={120}
-              height={26}
-            />
+            <Image src="/logo/logo.png" alt="ConvexHire Logo" width={120} height={26} />
           </Link>
-          <p className="footer__tagline">
-            Find your next engineering role — fast.
-          </p>
+          <p className="footer__tagline">Find your next engineering role — fast.</p>
         </div>
 
         {/* Link columns */}
@@ -107,9 +100,7 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="footer__bottom">
         <div className="container footer__bottom-inner">
-          <p className="footer__copy">
-            &copy; {currentYear} ConvexHire. All rights reserved.
-          </p>
+          <p className="footer__copy">&copy; {currentYear} ConvexHire. All rights reserved.</p>
           <div className="footer__socials">
             <Link
               href="https://twitter.com"
@@ -163,5 +154,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  );
+  )
 }
