@@ -1,16 +1,17 @@
-import { baseApi } from "./baseApi";
 import type {
-  RecruiterProfile,
-  UpdateRecruiterProfileRequest,
-  JobListing,
-  JobApplication,
   InterviewSchedule,
-  ScheduleInterviewRequest,
+  JobApplication,
+  JobListing,
   Paginated,
-} from "@/lib/types/user";
+  RecruiterProfile,
+  ScheduleInterviewRequest,
+  UpdateRecruiterProfileRequest,
+} from '@/lib/types/user'
+
+import { baseApi } from './baseApi'
 
 // Re-export canonical types for components that import from this file
-export type { RecruiterProfile, InterviewSchedule, ScheduleInterviewRequest };
+export type { RecruiterProfile, InterviewSchedule, ScheduleInterviewRequest }
 
 // ---------------------------------------------------------------------------
 // Recruiter API
@@ -21,42 +22,39 @@ export const recruiterApi = baseApi.injectEndpoints({
     /** GET /recruiter/me */
     getRecruiterProfile: builder.query<RecruiterProfile, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/me`,
-      providesTags: ["User"],
+      providesTags: ['User'],
     }),
 
     /** PATCH /recruiter/me */
-    updateRecruiterProfile: builder.mutation<
-      RecruiterProfile,
-      UpdateRecruiterProfileRequest
-    >({
+    updateRecruiterProfile: builder.mutation<RecruiterProfile, UpdateRecruiterProfileRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/me`,
-        method: "PATCH",
+        method: 'PATCH',
         body,
       }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ['User'],
     }),
 
     /** GET /recruiter/jobs — jobs managed by this recruiter */
     getRecruiterJobs: builder.query<
       Paginated<JobListing>,
-      { page?: number; limit?: number; status?: JobListing["status"] }
+      { page?: number; limit?: number; status?: JobListing['status'] }
     >({
       query: ({ page = 1, limit = 10, status } = {}) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/jobs`,
         params: { page, limit, ...(status && { status }) },
       }),
-      providesTags: ["Jobs"],
+      providesTags: ['Jobs'],
     }),
 
     /** GET /recruiter/jobs/:jobId/applications */
     getJobApplications: builder.query<
       Paginated<JobApplication>,
       {
-        jobId: string;
-        page?: number;
-        limit?: number;
-        status?: JobApplication["status"];
+        jobId: string
+        page?: number
+        limit?: number
+        status?: JobApplication['status']
       }
     >({
       query: ({ jobId, page = 1, limit = 10, status }) => ({
@@ -64,25 +62,25 @@ export const recruiterApi = baseApi.injectEndpoints({
         params: { page, limit, ...(status && { status }) },
       }),
       providesTags: (_result, _error, { jobId }) => [
-        "Applications",
-        { type: "Applications", id: jobId },
+        'Applications',
+        { type: 'Applications', id: jobId },
       ],
     }),
 
     /** PATCH /recruiter/applications/:applicationId/status */
     updateApplicationStatus: builder.mutation<
       JobApplication,
-      { applicationId: string; status: JobApplication["status"] }
+      { applicationId: string; status: JobApplication['status'] }
     >({
       query: ({ applicationId, status }) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/applications/${applicationId}/status`,
-        method: "PATCH",
+        method: 'PATCH',
         body: { status },
       }),
       invalidatesTags: (_result, _error, { applicationId }) => [
-        "Applications",
-        "Candidates",
-        { type: "Applications", id: applicationId },
+        'Applications',
+        'Candidates',
+        { type: 'Applications', id: applicationId },
       ],
     }),
 
@@ -90,10 +88,10 @@ export const recruiterApi = baseApi.injectEndpoints({
     getRecruiterCandidates: builder.query<
       Paginated<JobApplication>,
       {
-        page?: number;
-        limit?: number;
-        jobId?: string;
-        status?: JobApplication["status"];
+        page?: number
+        limit?: number
+        jobId?: string
+        status?: JobApplication['status']
       }
     >({
       query: ({ page = 1, limit = 10, jobId, status } = {}) => ({
@@ -105,61 +103,55 @@ export const recruiterApi = baseApi.injectEndpoints({
           ...(status && { status }),
         },
       }),
-      providesTags: ["Candidates"],
+      providesTags: ['Candidates'],
     }),
 
     /** GET /recruiter/interviews */
-    getInterviews: builder.query<
-      InterviewSchedule[],
-      { status?: InterviewSchedule["status"] }
-    >({
+    getInterviews: builder.query<InterviewSchedule[], { status?: InterviewSchedule['status'] }>({
       query: ({ status } = {}) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews`,
         params: status ? { status } : undefined,
       }),
-      providesTags: ["Interviews"],
+      providesTags: ['Interviews'],
     }),
 
     /** POST /recruiter/interviews */
-    scheduleInterview: builder.mutation<
-      InterviewSchedule,
-      ScheduleInterviewRequest
-    >({
+    scheduleInterview: builder.mutation<InterviewSchedule, ScheduleInterviewRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
-      invalidatesTags: ["Interviews"],
+      invalidatesTags: ['Interviews'],
     }),
 
     /** PATCH /recruiter/interviews/:id */
     updateInterview: builder.mutation<
       InterviewSchedule,
       Partial<ScheduleInterviewRequest> & {
-        id: string;
-        status?: InterviewSchedule["status"];
+        id: string
+        status?: InterviewSchedule['status']
       }
     >({
       query: ({ id, ...body }) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews/${id}`,
-        method: "PATCH",
+        method: 'PATCH',
         body,
       }),
-      invalidatesTags: ["Interviews"],
+      invalidatesTags: ['Interviews'],
     }),
 
     /** DELETE /recruiter/interviews/:id */
     cancelInterview: builder.mutation<{ message: string }, string>({
       query: (id) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/interviews/${id}`,
-        method: "DELETE",
+        method: 'DELETE',
       }),
-      invalidatesTags: ["Interviews"],
+      invalidatesTags: ['Interviews'],
     }),
   }),
   overrideExisting: false,
-});
+})
 
 export const {
   useGetRecruiterProfileQuery,
@@ -172,4 +164,4 @@ export const {
   useScheduleInterviewMutation,
   useUpdateInterviewMutation,
   useCancelInterviewMutation,
-} = recruiterApi;
+} = recruiterApi

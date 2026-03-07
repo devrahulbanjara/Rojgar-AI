@@ -1,37 +1,38 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ArrowExitRegular } from "@fluentui/react-icons";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+import { LogOut } from 'lucide-react'
 
 export type NavItem = {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  badge?: number;
-};
+  label: string
+  href: string
+  icon: React.ReactNode
+  badge?: number
+}
 
 export type NavGroup = {
-  groupLabel?: string;
-  items: NavItem[];
-};
+  groupLabel?: string
+  items: NavItem[]
+}
 
 type DashSidebarProps = {
-  role: "candidate" | "recruiter_admin" | "recruiter";
-  navGroups: NavGroup[];
-  userName?: string;
-  userRole?: string;
-  userInitials?: string;
-  companySlug?: string;
-};
+  role: 'candidate' | 'recruiter_admin' | 'recruiter'
+  navGroups: NavGroup[]
+  userName?: string
+  userRole?: string
+  userInitials?: string
+  companySlug?: string
+}
 
 export default function DashSidebar({
   navGroups,
-  userName = "User",
-  userRole = "Member",
-  userInitials = "U",
+  userName = 'User',
+  userRole = 'Member',
+  userInitials = 'U',
 }: DashSidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
     <aside className="dash-sidebar">
@@ -56,29 +57,24 @@ export default function DashSidebar({
         {navGroups.map((group, gi) => (
           <div key={gi} className="dash-sidebar__nav-group">
             {group.groupLabel && (
-              <div className="dash-sidebar__nav-group-label">
-                {group.groupLabel}
-              </div>
+              <div className="dash-sidebar__nav-group-label">{group.groupLabel}</div>
             )}
             {group.items.map((item) => {
               const active =
-                pathname === item.href ||
-                (item.href !== "/" && pathname.startsWith(item.href));
+                pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`dash-sidebar__nav-item${active ? " dash-sidebar__nav-item--active" : ""}`}
+                  className={`dash-sidebar__nav-item${active ? ' dash-sidebar__nav-item--active' : ''}`}
                 >
                   <span className="dash-sidebar__nav-icon">{item.icon}</span>
                   <span>{item.label}</span>
                   {item.badge ? (
-                    <span className="dash-sidebar__nav-badge">
-                      {item.badge}
-                    </span>
+                    <span className="dash-sidebar__nav-badge">{item.badge}</span>
                   ) : null}
                 </Link>
-              );
+              )
             })}
           </div>
         ))}
@@ -86,16 +82,13 @@ export default function DashSidebar({
 
       {/* Footer */}
       <div className="dash-sidebar__footer">
-        <Link
-          href="/login"
-          className="dash-sidebar__nav-item dash-sidebar__nav-item--danger"
-        >
+        <Link href="/login" className="dash-sidebar__nav-item dash-sidebar__nav-item--danger">
           <span className="dash-sidebar__nav-icon">
-            <ArrowExitRegular style={{ fontSize: 18 }} />
+            <LogOut size={18} />
           </span>
           <span>Log Out</span>
         </Link>
       </div>
     </aside>
-  );
+  )
 }

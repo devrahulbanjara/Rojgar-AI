@@ -1,87 +1,81 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import {
-  setResumes,
-  upsertResume,
-  removeResume,
-  apiResumeToUi,
-} from "@/store/slices/resumeSlice";
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+
+import { useRouter } from 'next/navigation'
+
+import type { RootState } from '@/store'
 import {
   useCreateResumeMutation,
-  useGetMyResumesQuery,
   useDeleteResumeMutation,
-} from "@/store/services/resumeApi";
-import Loader from "@/components/common/Loader";
-import ResumeCard from "./_components/ResumeCard";
-import CreateResumeModal from "./_components/CreateResumeModal";
-import { AddRegular, DocumentRegular } from "@fluentui/react-icons";
+  useGetMyResumesQuery,
+} from '@/store/services/resumeApi'
+import { apiResumeToUi, removeResume, setResumes, upsertResume } from '@/store/slices/resumeSlice'
+import { FileText, Plus } from 'lucide-react'
+
+import Loader from '@/components/common/Loader'
+
+import CreateResumeModal from './_components/CreateResumeModal'
+import ResumeCard from './_components/ResumeCard'
 
 // ── Resume list page ───────────────────────────────────────────────────────
 // Clicking View or Edit routes to /dashboard/resume/[id] (view or edit mode).
 
 export default function ResumePage() {
-  const router = useRouter();
-  const dispatch = useDispatch();
-  const resumes = useSelector((state: RootState) => state.resumes.resumes);
-  const user = useSelector((state: RootState) => state.auth.user);
+  const router = useRouter()
+  const dispatch = useDispatch()
+  const resumes = useSelector((state: RootState) => state.resumes.resumes)
+  const user = useSelector((state: RootState) => state.auth.user)
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // ── RTK Query hooks ────────────────────────────────────────────────────────
-  const { data: resumesResponse, isLoading: isLoadingResumes } =
-    useGetMyResumesQuery();
-  const [createResume, { isLoading: isCreating }] = useCreateResumeMutation();
-  const [deleteResumeMutation] = useDeleteResumeMutation();
+  const { data: resumesResponse, isLoading: isLoadingResumes } = useGetMyResumesQuery()
+  const [createResume, { isLoading: isCreating }] = useCreateResumeMutation()
+  const [deleteResumeMutation] = useDeleteResumeMutation()
 
   // Sync API response → Redux
   useEffect(() => {
     if (resumesResponse?.data) {
       const uiResumes = resumesResponse.data.map((r) =>
-        apiResumeToUi(r, user?.full_name ?? "", user?.email ?? ""),
-      );
-      dispatch(setResumes(uiResumes));
+        apiResumeToUi(r, user?.full_name ?? '', user?.email ?? ''),
+      )
+      dispatch(setResumes(uiResumes))
     }
-  }, [resumesResponse, dispatch, user]);
+  }, [resumesResponse, dispatch, user])
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   async function handleCreateConfirm(name: string) {
-    setCreateError(null);
+    setCreateError(null)
     try {
-      const result = await createResume({ resume_name: name }).unwrap();
+      const result = await createResume({ resume_name: name }).unwrap()
       if (result.success && result.data) {
-        const uiResume = apiResumeToUi(
-          result.data,
-          user?.full_name ?? "",
-          user?.email ?? "",
-        );
-        dispatch(upsertResume(uiResume));
-        setShowCreateModal(false);
+        const uiResume = apiResumeToUi(result.data, user?.full_name ?? '', user?.email ?? '')
+        dispatch(upsertResume(uiResume))
+        setShowCreateModal(false)
         // Open in edit mode immediately
-        router.push(`/dashboard/resume/${uiResume.id}?mode=edit`);
+        router.push(`/dashboard/resume/${uiResume.id}?mode=edit`)
       } else {
-        setCreateError(result.message ?? "Failed to create resume.");
+        setCreateError(result.message ?? 'Failed to create resume.')
       }
     } catch {
-      setCreateError("An error occurred. Please try again.");
+      setCreateError('An error occurred. Please try again.')
     }
   }
 
   async function handleDelete(id: string) {
-    setDeletingId(id);
+    setDeletingId(id)
     try {
-      await deleteResumeMutation(id).unwrap();
-      dispatch(removeResume(id));
+      await deleteResumeMutation(id).unwrap()
+      dispatch(removeResume(id))
     } catch {
       // silently fail — could add toast here
     } finally {
-      setDeletingId(null);
+      setDeletingId(null)
     }
   }
 
@@ -94,8 +88,8 @@ export default function ResumePage() {
         <CreateResumeModal
           onConfirm={handleCreateConfirm}
           onCancel={() => {
-            setShowCreateModal(false);
-            setCreateError(null);
+            setShowCreateModal(false)
+            setCreateError(null)
           }}
           isLoading={isCreating}
           error={createError}
@@ -111,11 +105,8 @@ export default function ResumePage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <button
-            className="btn btn--primary"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <AddRegular style={{ fontSize: 14 }} />
+          <button className="btn btn--primary" onClick={() => setShowCreateModal(true)}>
+            <Plus size={14} />
             New Resume
           </button>
         </div>
@@ -131,12 +122,9 @@ export default function ResumePage() {
       {/* Empty state */}
       {!isLoadingResumes && resumes.length === 0 && (
         <div className="resume-empty-state">
-          <DocumentRegular style={{ fontSize: 48, opacity: 0.4 }} />
+          <FileText size={48} style={{ opacity: 0.4 }} />
           <p>No resumes yet. Create your first one.</p>
-          <button
-            className="btn btn--primary"
-            onClick={() => setShowCreateModal(true)}
-          >
+          <button className="btn btn--primary" onClick={() => setShowCreateModal(true)}>
             Create Resume
           </button>
         </div>
@@ -156,15 +144,12 @@ export default function ResumePage() {
               isViewing={false}
             />
           ))}
-          <button
-            className="resume-add-card"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <AddRegular style={{ fontSize: 28, opacity: 0.6 }} />
+          <button className="resume-add-card" onClick={() => setShowCreateModal(true)}>
+            <Plus size={28} style={{ opacity: 0.6 }} />
             <span>Create New Resume</span>
           </button>
         </div>
       )}
     </div>
-  );
+  )
 }

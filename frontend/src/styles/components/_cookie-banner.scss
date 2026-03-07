@@ -1,6 +1,6 @@
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 // ── Block ────────────────────────────────────────────────────
 .cookie-banner {
@@ -33,7 +33,7 @@
     }
 
     // Stack vertically on small screens
-    @media (max-width: 639px) {
+    @media (width <= 639px) {
       flex-direction: column;
       align-items: flex-start;
       border-radius: $radius-xl;
@@ -47,7 +47,7 @@
     flex-shrink: 0;
     line-height: 1;
 
-    @media (max-width: 639px) {
+    @media (width <= 639px) {
       font-size: 1.75rem;
     }
   }
@@ -90,7 +90,7 @@
     gap: $space-2;
     flex-shrink: 0;
 
-    @media (max-width: 639px) {
+    @media (width <= 639px) {
       width: 100%;
       justify-content: flex-end;
     }
@@ -114,7 +114,7 @@
       z-index: 0;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-color: $color-gray-100;
@@ -142,7 +142,7 @@
       z-index: 0;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-color: color.adjust($color-primary, $lightness: -12%);

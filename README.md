@@ -36,32 +36,38 @@ ConvexHire is an AI-powered recruitment platform that automates your hiring work
 ### ✨ Key Features
 
 **🤖 AI-Powered Job Management**
+
 - Generate professional job descriptions using AI agents
 - Reference-based JD generation for consistency
 - Multi-step wizard with AI assistance
 
 **🎯 Intelligent Candidate Screening**
+
 - Dual AI agent evaluation system (HR + Technical perspectives)
 - Automated resume parsing and analysis
 - Semantic search using vector embeddings
 - Shortlisting with detailed reasoning
 
 **📧 Automated Communication**
+
 - Smart email composition for candidates
 - Interview scheduling and reminders
 - Automated follow-ups and status updates
 
 **🔍 Advanced Search & Filtering**
+
 - Vector-based semantic candidate search
 - Filter by skills, experience, and qualifications
 - Searchable talent database
 
 **📊 Analytics & Insights**
+
 - Real-time recruitment metrics
 - Application tracking and status monitoring
 - AI decision transparency and audit trails
 
 **👥 Role-Based Access**
+
 - Separate dashboards for recruiters and candidates
 - Secure authentication and authorization
 - Organization-level data isolation
@@ -71,7 +77,8 @@ ConvexHire is an AI-powered recruitment platform that automates your hiring work
 ## 🚀 Quick Setup
 
 > [!IMPORTANT]
-> **Prerequisites:** 
+> **Prerequisites:**
+>
 > - [uv](https://docs.astral.sh/uv/getting-started/installation/) - Fast Python package installer
 > - Node.js 18+ and npm
 > - Docker and Docker Compose
@@ -144,7 +151,7 @@ Edit `frontend/.env.local`:
 
 ```env
 # Backend API URL
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
 # Google OAuth Client ID
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
@@ -195,6 +202,7 @@ All agent interactions are traced and logged via **LangSmith** for debugging and
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **[Next.js 16](https://nextjs.org/)** - React framework with App Router
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
 - **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
@@ -202,6 +210,7 @@ All agent interactions are traced and logged via **LangSmith** for debugging and
 - **[Shadcn/ui](https://ui.shadcn.com/)** - Re-usable component library
 
 ### Backend
+
 - **[FastAPI](https://fastapi.tiangolo.com/)** - Modern Python web framework
 - **[SQLAlchemy](https://www.sqlalchemy.org/)** - SQL toolkit and ORM
 - **[PostgreSQL](https://www.postgresql.org/)** - Relational database
@@ -209,6 +218,7 @@ All agent interactions are traced and logged via **LangSmith** for debugging and
 - **[Pydantic](https://docs.pydantic.dev/)** - Data validation using Python type hints
 
 ### AI & LLM
+
 - **[LangGraph](https://langchain-ai.github.io/langgraph/)** - Multi-agent workflow orchestration
 - **[LangChain](https://www.langchain.com/)** - LLM application framework
 - **[Groq](https://groq.com/)** - Fast LLM inference
@@ -216,11 +226,13 @@ All agent interactions are traced and logged via **LangSmith** for debugging and
 - **[Tavily](https://tavily.com/)** - AI-powered web search API
 
 ### Observability & Logging
+
 - **[LangSmith](https://smith.langchain.com/)** - LLM observability, request/response tracing, and debugging
 - **[Pydantic Logfire](https://pydantic.dev/logfire)** - Structured logging and observability platform
 - **[Loguru](https://github.com/Delgan/loguru)** - Python logging made simple
 
 ### Infrastructure & DevOps
+
 - **[Docker](https://www.docker.com/)** - Containerization
 - **[APScheduler](https://apscheduler.readthedocs.io/)** - Advanced Python scheduler for cron jobs
 - **[Redis](https://redis.io/)** - In-memory data store for caching

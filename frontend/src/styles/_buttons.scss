@@ -17,10 +17,10 @@
 //   </button>
 // ============================================================
 
-@use "sass:color";
-@use "sass:list";
-@use "variables" as *;
-@use "mixins" as *;
+@use 'sass:color';
+@use 'sass:list';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 // ============================================================
 // Base Button
@@ -65,7 +65,7 @@
 
   // Fill layer — sweeps up from bottom on hover, retreats on mouse-out
   &::before {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     background-color: $color-gray-300;
@@ -77,7 +77,7 @@
 
   // Default hover (neutral) — trigger fill
   &:hover:not(:disabled) {
-  border: 2px solid $color-gray-300;
+    border: 2px solid $color-gray-300;
     background-color: $color-gray-200;
 
     &::before {
@@ -99,7 +99,7 @@
 
   // Disabled state
   &:disabled,
-  &[aria-disabled="true"] {
+  &[aria-disabled='true'] {
     opacity: 0.45;
     cursor: not-allowed;
     pointer-events: none;
@@ -110,7 +110,7 @@
     flex-shrink: 0;
     width: 1em;
     height: 1em;
-    fill: currentColor;
+    fill: currentcolor;
   }
 }
 
@@ -167,49 +167,49 @@
 
 // Map: name -> (bg, text, hover-bg, border)
 $btn-variants: (
-  "primary": (
+  'primary': (
     $color-primary,
     $color-white,
     color.adjust($color-primary, $lightness: -10%),
     $color-primary,
   ),
-  "outline": (
+  'outline': (
     $color-primary,
     $color-white,
     $color-primary,
     $color-primary,
   ),
-  "secondary": (
+  'secondary': (
     $color-secondary,
     $color-white,
     color.adjust($color-secondary, $lightness: -10%),
     $color-secondary,
   ),
-  "accent": (
+  'accent': (
     $color-accent,
     $color-white,
     color.adjust($color-accent, $lightness: -10%),
     $color-accent,
   ),
-  "success": (
+  'success': (
     $color-success,
     $color-white,
     color.adjust($color-success, $lightness: -10%),
     $color-success,
   ),
-  "warning": (
+  'warning': (
     $color-warning,
     $color-gray-900,
     color.adjust($color-warning, $lightness: -10%),
     $color-warning,
   ),
-  "error": (
+  'error': (
     $color-error,
     $color-white,
     color.adjust($color-error, $lightness: -10%),
     $color-error,
   ),
-  "dark": (
+  'dark': (
     $color-gray-900,
     $color-white,
     $color-gray-700,
@@ -329,13 +329,13 @@ $btn-variants: (
   }
 
   &::after {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     margin: auto;
     width: 1.1em;
     height: 1.1em;
-    border: 2px solid currentColor;
+    border: 2px solid currentcolor;
     border-top-color: transparent;
     border-radius: $radius-full;
     animation: btn-spin 0.65s linear infinite;
@@ -361,6 +361,7 @@ $btn-variants: (
     min-height: 2.25rem;
     min-width: 2.25rem;
   }
+
   &.btn--lg {
     min-height: 3rem;
     min-width: 3rem;
@@ -382,6 +383,7 @@ $btn-variants: (
     &:first-child {
       border-radius: $radius-full 0 0 $radius-full;
     }
+
     &:last-child {
       border-radius: 0 $radius-full $radius-full 0;
     }
@@ -397,6 +399,7 @@ $btn-variants: (
       &:first-child {
         border-radius: $radius-full 0 0 $radius-full;
       }
+
       &:last-child {
         border-radius: 0 $radius-full $radius-full 0;
       }

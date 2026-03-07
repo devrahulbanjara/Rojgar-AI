@@ -1,103 +1,103 @@
-import { PeopleRegular, SearchRegular } from "@fluentui/react-icons";
+import { Search, Users } from 'lucide-react'
 
 const candidates = [
   {
-    name: "Alex Chen",
-    role: "UI/UX Designer",
-    job: "Product Designer",
+    name: 'Alex Chen',
+    role: 'UI/UX Designer',
+    job: 'Product Designer',
     score: 94,
-    status: "Shortlisted",
-    stage: "Interview",
-    initials: "AC",
-    color: "#0070f3",
-    skills: ["Figma", "Prototyping", "UI Design"],
-    applied: "2 days ago",
+    status: 'Shortlisted',
+    stage: 'Interview',
+    initials: 'AC',
+    color: '#0070f3',
+    skills: ['Figma', 'Prototyping', 'UI Design'],
+    applied: '2 days ago',
   },
   {
-    name: "Maria Santos",
-    role: "Product Designer",
-    job: "Visual Designer",
+    name: 'Maria Santos',
+    role: 'Product Designer',
+    job: 'Visual Designer',
     score: 91,
-    status: "Shortlisted",
-    stage: "Technical",
-    initials: "MS",
-    color: "#7928ca",
-    skills: ["Design Thinking", "Research", "Figma"],
-    applied: "3 days ago",
+    status: 'Shortlisted',
+    stage: 'Technical',
+    initials: 'MS',
+    color: '#7928ca',
+    skills: ['Design Thinking', 'Research', 'Figma'],
+    applied: '3 days ago',
   },
   {
-    name: "James Park",
-    role: "UX Researcher",
-    job: "Senior Interaction",
+    name: 'James Park',
+    role: 'UX Researcher',
+    job: 'Senior Interaction',
     score: 88,
-    status: "In Review",
-    stage: "Screening",
-    initials: "JP",
-    color: "#0cce6b",
-    skills: ["User Testing", "Miro", "Analytics"],
-    applied: "1 day ago",
+    status: 'In Review',
+    stage: 'Screening',
+    initials: 'JP',
+    color: '#0cce6b',
+    skills: ['User Testing', 'Miro', 'Analytics'],
+    applied: '1 day ago',
   },
   {
-    name: "Lily Wang",
-    role: "Visual Designer",
-    job: "Visual Designer",
+    name: 'Lily Wang',
+    role: 'Visual Designer',
+    job: 'Visual Designer',
     score: 85,
-    status: "Applied",
-    stage: "Applied",
-    initials: "LW",
-    color: "#f59e0b",
-    skills: ["Illustration", "After Effects", "Blender"],
-    applied: "4 hours ago",
+    status: 'Applied',
+    stage: 'Applied',
+    initials: 'LW',
+    color: '#f59e0b',
+    skills: ['Illustration', 'After Effects', 'Blender'],
+    applied: '4 hours ago',
   },
   {
-    name: "Carlos Rivera",
-    role: "Motion Designer",
-    job: "Visual Designer",
+    name: 'Carlos Rivera',
+    role: 'Motion Designer',
+    job: 'Visual Designer',
     score: 82,
-    status: "Applied",
-    stage: "Applied",
-    initials: "CR",
-    color: "#ff4d4d",
-    skills: ["After Effects", "Cinema 4D", "Lottie"],
-    applied: "6 hours ago",
+    status: 'Applied',
+    stage: 'Applied',
+    initials: 'CR',
+    color: '#ff4d4d',
+    skills: ['After Effects', 'Cinema 4D', 'Lottie'],
+    applied: '6 hours ago',
   },
   {
-    name: "Emma Larsson",
-    role: "UX Designer",
-    job: "Product Designer",
+    name: 'Emma Larsson',
+    role: 'UX Designer',
+    job: 'Product Designer',
     score: 79,
-    status: "In Review",
-    stage: "Screening",
-    initials: "EL",
-    color: "#5E6AD2",
-    skills: ["Figma", "Wireframing", "UX Research"],
-    applied: "1 day ago",
+    status: 'In Review',
+    stage: 'Screening',
+    initials: 'EL',
+    color: '#5E6AD2',
+    skills: ['Figma', 'Wireframing', 'UX Research'],
+    applied: '1 day ago',
   },
   {
-    name: "David Kim",
-    role: "UI Designer",
-    job: "Visual Designer",
+    name: 'David Kim',
+    role: 'UI Designer',
+    job: 'Visual Designer',
     score: 76,
-    status: "Rejected",
-    stage: "Rejected",
-    initials: "DK",
-    color: "#9ca3af",
-    skills: ["Sketch", "InVision"],
-    applied: "5 days ago",
+    status: 'Rejected',
+    stage: 'Rejected',
+    initials: 'DK',
+    color: '#9ca3af',
+    skills: ['Sketch', 'InVision'],
+    applied: '5 days ago',
   },
   {
-    name: "Sofia Greco",
-    role: "Product Designer",
-    job: "Senior Interaction",
+    name: 'Sofia Greco',
+    role: 'Product Designer',
+    job: 'Senior Interaction',
     score: 88,
-    status: "Shortlisted",
-    stage: "Interview",
-    initials: "SG",
-    color: "#0cce6b",
-    skills: ["UX Design", "Figma", "Prototyping"],
-    applied: "2 days ago",
+    status: 'Shortlisted',
+    stage: 'Interview',
+    initials: 'SG',
+    color: '#0cce6b',
+    skills: ['UX Design', 'Figma', 'Prototyping'],
+    applied: '2 days ago',
   },
-];
+]
 
 const stageOrder: Record<string, number> = {
   Applied: 1,
@@ -105,7 +105,7 @@ const stageOrder: Record<string, number> = {
   Technical: 3,
   Interview: 4,
   Offer: 5,
-};
+}
 
 export default function CompanyCandidatesPage() {
   return (
@@ -123,47 +123,42 @@ export default function CompanyCandidatesPage() {
         {/* Pipeline summary */}
         <div className="dash-stats dash-stats--5col">
           {[
-            { label: "Applied", value: 74, color: "#9ca3af", bg: "#f4f4f5" },
+            { label: 'Applied', value: 74, color: '#9ca3af', bg: '#f4f4f5' },
             {
-              label: "Screening",
+              label: 'Screening',
               value: 28,
-              color: "#0070f3",
-              bg: "rgba(0,112,243,0.08)",
+              color: '#0070f3',
+              bg: 'rgba(0,112,243,0.08)',
             },
             {
-              label: "Technical",
+              label: 'Technical',
               value: 12,
-              color: "#7928ca",
-              bg: "rgba(121,40,202,0.08)",
+              color: '#7928ca',
+              bg: 'rgba(121,40,202,0.08)',
             },
             {
-              label: "Interview",
+              label: 'Interview',
               value: 8,
-              color: "#f59e0b",
-              bg: "rgba(245,158,11,0.1)",
+              color: '#f59e0b',
+              bg: 'rgba(245,158,11,0.1)',
             },
             {
-              label: "Offer",
+              label: 'Offer',
               value: 3,
-              color: "#0cce6b",
-              bg: "rgba(12,206,107,0.1)",
+              color: '#0cce6b',
+              bg: 'rgba(12,206,107,0.1)',
             },
           ].map((s) => (
             <div key={s.label} className="stat-card stat-card--centered">
               <div
                 className="pipeline-icon"
-                style={{ "--pipeline-bg": s.bg } as React.CSSProperties}
+                style={{ '--pipeline-bg': s.bg } as React.CSSProperties}
               >
-                <PeopleRegular
-                  width={18}
-                  height={18}
-                  stroke={s.color}
-                  aria-hidden="true"
-                />
+                <Users size={18} stroke={s.color} aria-hidden="true" />
               </div>
               <div
                 className="stat-card__value stat-card__value--colored"
-                style={{ "--stat-value-color": s.color } as React.CSSProperties}
+                style={{ '--stat-value-color': s.color } as React.CSSProperties}
               >
                 {s.value}
               </div>
@@ -175,7 +170,7 @@ export default function CompanyCandidatesPage() {
         {/* Filters */}
         <div className="dash-filter-bar">
           <div className="dash-topbar__search dash-topbar__search--md">
-            <SearchRegular width={16} height={16} aria-hidden="true" />
+            <Search size={16} aria-hidden="true" />
             <input placeholder="Search candidates..." />
           </div>
           <select className="dash-select">
@@ -184,10 +179,10 @@ export default function CompanyCandidatesPage() {
             <option>Visual Designer</option>
             <option>Senior Interaction Designer</option>
           </select>
-          {["All", "Shortlisted", "In Review", "Applied"].map((f) => (
+          {['All', 'Shortlisted', 'In Review', 'Applied'].map((f) => (
             <button
               key={f}
-              className={`btn btn--sm ${f === "All" ? "btn--primary" : "btn--ghost"}`}
+              className={`btn btn--sm ${f === 'All' ? 'btn--primary' : 'btn--ghost'}`}
             >
               {f}
             </button>
@@ -219,8 +214,8 @@ export default function CompanyCandidatesPage() {
                           className="cell-user__avatar"
                           style={
                             {
-                              "--avatar-bg": c.color + "1A",
-                              "--avatar-color": c.color,
+                              '--avatar-bg': c.color + '1A',
+                              '--avatar-color': c.color,
                             } as React.CSSProperties
                           }
                         >
@@ -247,12 +242,8 @@ export default function CompanyCandidatesPage() {
                         className="score-badge"
                         style={
                           {
-                            "--score-color":
-                              c.score >= 90
-                                ? "#0cce6b"
-                                : c.score >= 80
-                                  ? "#0070f3"
-                                  : "#f59e0b",
+                            '--score-color':
+                              c.score >= 90 ? '#0cce6b' : c.score >= 80 ? '#0070f3' : '#f59e0b',
                           } as React.CSSProperties
                         }
                       >
@@ -262,18 +253,18 @@ export default function CompanyCandidatesPage() {
                     <td>
                       {/* Stage progress */}
                       <div className="stage-progress">
-                        {["S", "T", "I", "O"].map((step, idx) => (
+                        {['S', 'T', 'I', 'O'].map((step, idx) => (
                           <div
                             key={step}
                             className="stage-progress__bar"
                             style={
                               {
-                                "--bar-color":
+                                '--bar-color':
                                   (stageOrder[c.stage] || 0) > idx + 1
-                                    ? "#0070f3"
+                                    ? '#0070f3'
                                     : stageOrder[c.stage] === idx + 2
-                                      ? "rgba(0,112,243,0.4)"
-                                      : "#e4e4e7",
+                                      ? 'rgba(0,112,243,0.4)'
+                                      : '#e4e4e7',
                               } as React.CSSProperties
                             }
                           />
@@ -283,7 +274,7 @@ export default function CompanyCandidatesPage() {
                     </td>
                     <td>
                       <span
-                        className={`badge badge--${c.status === "Shortlisted" ? "success" : c.status === "In Review" ? "warning" : c.status === "Rejected" ? "danger" : "gray"}`}
+                        className={`badge badge--${c.status === 'Shortlisted' ? 'success' : c.status === 'In Review' ? 'warning' : c.status === 'Rejected' ? 'danger' : 'gray'}`}
                       >
                         {c.status}
                       </span>
@@ -291,12 +282,8 @@ export default function CompanyCandidatesPage() {
                     <td className="cell-muted">{c.applied}</td>
                     <td>
                       <div className="cell-actions">
-                        <button className="btn btn--outline btn--sm">
-                          Review
-                        </button>
-                        <button className="btn btn--ghost btn--sm">
-                          Schedule
-                        </button>
+                        <button className="btn btn--outline btn--sm">Review</button>
+                        <button className="btn btn--ghost btn--sm">Schedule</button>
                       </div>
                     </td>
                   </tr>
@@ -311,7 +298,7 @@ export default function CompanyCandidatesPage() {
               {[1, 2, 3].map((n) => (
                 <button
                   key={n}
-                  className={`btn btn--sm ${n === 1 ? "btn--primary" : "btn--ghost"}`}
+                  className={`btn btn--sm ${n === 1 ? 'btn--primary' : 'btn--ghost'}`}
                 >
                   {n}
                 </button>
@@ -322,5 +309,5 @@ export default function CompanyCandidatesPage() {
         </div>
       </div>
     </>
-  );
+  )
 }

@@ -12,17 +12,16 @@
  * RTK Query surfaces these as a thrown error with shape:
  *   { status: number, data: ApiResponse<null> }
  */
-
-import type { ApiFieldError, ApiResponse } from "@/store/services/baseApi";
+import type { ApiFieldError, ApiResponse } from '@/store/services/baseApi'
 
 // ---------------------------------------------------------------------------
 // Raw RTK error wrapper (what `.unwrap()` / catch receives)
 // ---------------------------------------------------------------------------
 
 interface RtkErrorShape {
-  status?: number | string;
-  data?: ApiResponse<null>;
-  error?: string;
+  status?: number | string
+  data?: ApiResponse<null>
+  error?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -31,15 +30,15 @@ interface RtkErrorShape {
 
 export interface ParsedApiError {
   /** Human-readable summary message to show in a form banner */
-  message: string;
+  message: string
   /**
    * Field-level errors keyed by the FORM field name.
    * Only populated when the server returned a validation error array.
    * e.g. { email: "value is not a valid email address" }
    */
-  fieldErrors: Record<string, string>;
+  fieldErrors: Record<string, string>
   /** HTTP status code if available */
-  status: number | string | undefined;
+  status: number | string | undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -57,35 +56,32 @@ export interface ParsedApiError {
 export function parseApiError(
   err: unknown,
   fieldMap: Record<string, string> = {},
-  fallback = "Something went wrong. Please try again.",
+  fallback = 'Something went wrong. Please try again.',
 ): ParsedApiError {
-  const rtkErr = err as RtkErrorShape;
-  const envelope = rtkErr?.data;
-  const status = rtkErr?.status;
+  const rtkErr = err as RtkErrorShape
+  const envelope = rtkErr?.data
+  const status = rtkErr?.status
 
   // --- Field-level validation errors (array format) -----------------------
   if (Array.isArray(envelope?.errors) && envelope.errors.length > 0) {
-    const fieldErrors: Record<string, string> = {};
-    const unmappedMessages: string[] = [];
+    const fieldErrors: Record<string, string> = {}
+    const unmappedMessages: string[] = []
 
-    (envelope.errors as ApiFieldError[]).forEach(({ field, message }) => {
-      const formField = fieldMap[field] ?? field;
+    ;(envelope.errors as ApiFieldError[]).forEach(({ field, message }) => {
+      const formField = fieldMap[field] ?? field
       if (formField) {
         // Only keep the first message per field
-        if (!fieldErrors[formField]) fieldErrors[formField] = message;
+        if (!fieldErrors[formField]) fieldErrors[formField] = message
       } else {
-        unmappedMessages.push(message);
+        unmappedMessages.push(message)
       }
-    });
+    })
 
     return {
-      message:
-        envelope?.message ??
-        unmappedMessages[0] ??
-        "Please fix the errors below.",
+      message: envelope?.message ?? unmappedMessages[0] ?? 'Please fix the errors below.',
       fieldErrors,
       status,
-    };
+    }
   }
 
   // --- Generic HTTP or server error (errors: null) ------------------------
@@ -93,7 +89,7 @@ export function parseApiError(
     message: envelope?.message ?? fallback,
     fieldErrors: {},
     status,
-  };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -113,9 +109,9 @@ export function applyFieldErrors<T extends Record<string, string | undefined>>(
   fieldErrors: Record<string, string>,
   setErrors: React.Dispatch<React.SetStateAction<T>>,
 ): boolean {
-  if (Object.keys(fieldErrors).length === 0) return false;
-  setErrors((prev) => ({ ...prev, ...fieldErrors }));
-  return true;
+  if (Object.keys(fieldErrors).length === 0) return false
+  setErrors((prev) => ({ ...prev, ...fieldErrors }))
+  return true
 }
 
 // ---------------------------------------------------------------------------
@@ -123,6 +119,6 @@ export function applyFieldErrors<T extends Record<string, string | undefined>>(
 // ---------------------------------------------------------------------------
 
 export function isAuthError(err: unknown): boolean {
-  const status = (err as RtkErrorShape)?.status;
-  return status === 401 || status === 403;
+  const status = (err as RtkErrorShape)?.status
+  return status === 401 || status === 403
 }

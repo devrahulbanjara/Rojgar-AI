@@ -7,8 +7,8 @@
 //            __copy  __socials  __social-link
 // ============================================================
 
-@use "../variables" as *;
-@use "../mixins" as *;
+@use '../variables' as *;
+@use '../mixins' as *;
 
 // ── Block ───────────────────────────────────────────────────
 .footer {
@@ -33,6 +33,7 @@
   // ── Element: brand ──────────────────────────────────────
   &__brand {
     @include flex-column;
+
     gap: $space-3;
   }
 
@@ -71,6 +72,7 @@
   // ── Element: nav-col ────────────────────────────────────
   &__nav-col {
     @include flex-column;
+
     gap: $space-3;
   }
 
@@ -87,6 +89,7 @@
   // ── Element: nav-list ───────────────────────────────────
   &__nav-list {
     @include flex-column;
+
     gap: $space-2;
   }
 
@@ -115,6 +118,7 @@
   // ── Element: bottom-inner ───────────────────────────────
   &__bottom-inner {
     @include flex-between;
+
     flex-wrap: wrap;
     gap: $space-3;
   }

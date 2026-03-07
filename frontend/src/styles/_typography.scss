@@ -2,7 +2,7 @@
 // TYPOGRAPHY
 // ============================================================
 
-@use "variables" as *;
+@use 'variables' as *;
 
 body {
   font-family: $font-body;
@@ -26,18 +26,23 @@ h6 {
 h1 {
   font-size: $font-size-5xl;
 }
+
 h2 {
   font-size: $font-size-4xl;
 }
+
 h3 {
   font-size: $font-size-3xl;
 }
+
 h4 {
   font-size: $font-size-2xl;
 }
+
 h5 {
   font-size: $font-size-xl;
 }
+
 h6 {
   font-size: $font-size-lg;
 }

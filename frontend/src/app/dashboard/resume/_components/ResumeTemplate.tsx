@@ -1,15 +1,9 @@
-"use client";
+'use client'
 
-import type { Resume } from "@/lib/types/resume";
-import { fmtDate } from "./resumeUtils";
-import {
-  CallRegular,
-  MailRegular,
-  LinkEditRegular,
-  GlobeRegular,
-  LocationRegular,
-  CalendarRegular,
-} from "@fluentui/react-icons";
+import type { Resume } from '@/lib/types/resume'
+import { Calendar, Globe, Mail, MapPin, Phone } from 'lucide-react'
+
+import { fmtDate } from './resumeUtils'
 
 // ── Resume document template ───────────────────────────────────────────────
 // This renders the actual printable resume HTML. Used in viewer + print.
@@ -19,20 +13,18 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
     <div className="rv-doc">
       {/* Header */}
       <div className="rv-header">
-        <h1 className="rv-header__name">{resume.fullName || "Your Name"}</h1>
-        {resume.headline && (
-          <p className="rv-header__headline">{resume.headline}</p>
-        )}
+        <h1 className="rv-header__name">{resume.fullName || 'Your Name'}</h1>
+        {resume.headline && <p className="rv-header__headline">{resume.headline}</p>}
         <div className="rv-header__contacts">
           {resume.phone && (
             <span className="rv-header__contact">
-              <CallRegular width={12} height={12} aria-hidden="true" />
+              <Phone size={12} aria-hidden="true" />
               {resume.phone}
             </span>
           )}
           {resume.email && (
             <span className="rv-header__contact">
-              <MailRegular width={12} height={12} aria-hidden="true" />
+              <Mail size={12} aria-hidden="true" />
               <a href={`mailto:${resume.email}`} className="rv-link">
                 {resume.email}
               </a>
@@ -62,7 +54,7 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
           )}
           {resume.github_url && (
             <span className="rv-header__contact">
-              <GlobeRegular width={12} height={12} aria-hidden="true" />
+              <Globe size={12} aria-hidden="true" />
               <a
                 href={resume.github_url}
                 target="_blank"
@@ -77,12 +69,10 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
             resume.website !== resume.linkedin_url &&
             resume.website !== resume.github_url && (
               <span className="rv-header__contact">
-                <GlobeRegular width={12} height={12} aria-hidden="true" />
+                <Globe size={12} aria-hidden="true" />
                 <a
                   href={
-                    resume.website.startsWith("http")
-                      ? resume.website
-                      : `https://${resume.website}`
+                    resume.website.startsWith('http') ? resume.website : `https://${resume.website}`
                   }
                   target="_blank"
                   rel="noopener noreferrer"
@@ -94,7 +84,7 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
             )}
           {resume.location && (
             <span className="rv-header__contact">
-              <LocationRegular width={12} height={12} aria-hidden="true" />
+              <MapPin size={12} aria-hidden="true" />
               {resume.location}
             </span>
           )}
@@ -116,28 +106,18 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
           {resume.experience.map((exp) => (
             <div className="rv-exp" key={exp.id}>
               <div className="rv-exp__title">{exp.title}</div>
-              {exp.company && (
-                <div className="rv-exp__company">{exp.company}</div>
-              )}
+              {exp.company && <div className="rv-exp__company">{exp.company}</div>}
               <div className="rv-exp__meta">
                 {(exp.startDate || exp.endDate || exp.current) && (
                   <span className="rv-exp__meta-item">
-                    <CalendarRegular
-                      width={11}
-                      height={11}
-                      aria-hidden="true"
-                    />
-                    {fmtDate(exp.startDate)} &ndash;{" "}
-                    {exp.current ? "Present" : fmtDate(exp.endDate)}
+                    <Calendar size={11} aria-hidden="true" />
+                    {fmtDate(exp.startDate)} &ndash;{' '}
+                    {exp.current ? 'Present' : fmtDate(exp.endDate)}
                   </span>
                 )}
                 {exp.location && (
                   <span className="rv-exp__meta-item">
-                    <LocationRegular
-                      width={11}
-                      height={11}
-                      aria-hidden="true"
-                    />
+                    <MapPin size={11} aria-hidden="true" />
                     {exp.location}
                   </span>
                 )}
@@ -148,7 +128,7 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
                     .split(/\n|(?<=\.)\s+(?=[A-Z])/)
                     .filter(Boolean)
                     .map((line, i) => (
-                      <li key={i}>{line.replace(/^[•\-]\s*/, "").trim()}</li>
+                      <li key={i}>{line.replace(/^[•\-]\s*/, '').trim()}</li>
                     ))}
                 </ul>
               )}
@@ -164,33 +144,21 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
           {resume.education.map((edu) => (
             <div className="rv-edu" key={edu.id}>
               <div className="rv-edu__degree">{edu.degree}</div>
-              {edu.institution && (
-                <div className="rv-edu__institution">{edu.institution}</div>
-              )}
+              {edu.institution && <div className="rv-edu__institution">{edu.institution}</div>}
               <div className="rv-exp__meta">
                 {(edu.startDate || edu.endDate) && (
                   <span className="rv-exp__meta-item">
-                    <CalendarRegular
-                      width={11}
-                      height={11}
-                      aria-hidden="true"
-                    />
+                    <Calendar size={11} aria-hidden="true" />
                     {fmtDate(edu.startDate)} &ndash; {fmtDate(edu.endDate)}
                   </span>
                 )}
                 {edu.location && (
                   <span className="rv-exp__meta-item">
-                    <LocationRegular
-                      width={11}
-                      height={11}
-                      aria-hidden="true"
-                    />
+                    <MapPin size={11} aria-hidden="true" />
                     {edu.location}
                   </span>
                 )}
-                {edu.gpa && (
-                  <span className="rv-exp__meta-item">GPA {edu.gpa}</span>
-                )}
+                {edu.gpa && <span className="rv-exp__meta-item">GPA {edu.gpa}</span>}
               </div>
             </div>
           ))}
@@ -211,5 +179,5 @@ export default function ResumeTemplate({ resume }: { resume: Resume }) {
         </div>
       )}
     </div>
-  );
+  )
 }

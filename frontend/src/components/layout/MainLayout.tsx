@@ -1,25 +1,22 @@
-"use client";
+'use client'
 
-import { usePathname } from "next/navigation";
-import Header from "@/components/common/header";
-import Footer from "@/components/common/footer";
-import CookieBanner from "@/components/common/CookieBanner";
+import { usePathname } from 'next/navigation'
 
-const DASHBOARD_PREFIXES = ["/dashboard", "/company"];
+import CookieBanner from '@/components/common/CookieBanner'
+import Footer from '@/components/common/footer'
+import Header from '@/components/common/header'
+
+const DASHBOARD_PREFIXES = ['/dashboard', '/company']
 
 function isDashboardPath(pathname: string) {
-  return DASHBOARD_PREFIXES.some((p) => pathname.startsWith(p));
+  return DASHBOARD_PREFIXES.some((p) => pathname.startsWith(p))
 }
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
+export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
 
   if (isDashboardPath(pathname)) {
-    return <>{children}</>;
+    return <>{children}</>
   }
 
   return (
@@ -29,5 +26,5 @@ export default function MainLayout({
       <Footer />
       <CookieBanner />
     </>
-  );
+  )
 }

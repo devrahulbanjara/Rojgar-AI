@@ -1,44 +1,39 @@
-import { baseApi, type ApiResponse } from "./baseApi";
-import {
-  clearCredentials,
-  setCredentials,
-  updateUser,
-  type AuthUser,
-} from "../slices/authSlice";
+import { type AuthUser, clearCredentials, setCredentials, updateUser } from '../slices/authSlice'
+import { type ApiResponse, baseApi } from './baseApi'
 
 // ---------------------------------------------------------------------------
 // Request types
 // ---------------------------------------------------------------------------
 
 export interface SignupRequest {
-  full_name: string;
-  email: string;
-  password: string;
-  primary_role: "candidate" | "recruiter_admin" | "recruiter";
+  full_name: string
+  email: string
+  password: string
+  primary_role: 'candidate' | 'recruiter_admin' | 'recruiter'
 }
 
 export interface GoogleRegisterRequest {
-  signup_token: string;
-  primary_role: "candidate" | "recruiter_admin" | "recruiter";
+  signup_token: string
+  primary_role: 'candidate' | 'recruiter_admin' | 'recruiter'
 }
 
 export interface VerifyEmailRequest {
-  token: string;
+  token: string
 }
 
 export interface LoginRequest {
-  email: string;
-  password: string;
-  remember_me?: boolean;
+  email: string
+  password: string
+  remember_me?: boolean
 }
 
 export interface ForgotPasswordRequest {
-  email: string;
+  email: string
 }
 
 export interface ResetPasswordRequest {
-  token: string;
-  new_password: string;
+  token: string
+  new_password: string
 }
 
 // ---------------------------------------------------------------------------
@@ -47,25 +42,25 @@ export interface ResetPasswordRequest {
 
 export interface LoginData {
   tokens: {
-    access_token: string;
-    token_type: "bearer";
-  };
-  user: AuthUser;
+    access_token: string
+    token_type: 'bearer'
+  }
+  user: AuthUser
 }
 
 export interface RefreshData {
-  access_token: string;
-  token_type: "bearer";
+  access_token: string
+  token_type: 'bearer'
 }
 
 /** Returned by POST /auth/signup for company and recruiter roles. */
 export interface SignupData {
-  setup_token: string | null;
+  setup_token: string | null
 }
 
 // Convenience alias for endpoints that return data: null
-type EmptyResponse = ApiResponse<null>;
-type SignupResponse = ApiResponse<SignupData | null>;
+type EmptyResponse = ApiResponse<null>
+type SignupResponse = ApiResponse<SignupData | null>
 
 // ---------------------------------------------------------------------------
 // Auth API
@@ -77,7 +72,7 @@ export const authApi = baseApi.injectEndpoints({
     signup: builder.mutation<SignupResponse, SignupRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
     }),
@@ -86,7 +81,7 @@ export const authApi = baseApi.injectEndpoints({
     verifyEmail: builder.mutation<EmptyResponse, VerifyEmailRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify-email`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
     }),
@@ -97,12 +92,12 @@ export const authApi = baseApi.injectEndpoints({
     login: builder.mutation<ApiResponse<LoginData>, LoginRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled;
+          const { data } = await queryFulfilled
           if (data.success && data.data) {
             dispatch(
               setCredentials({
@@ -110,7 +105,7 @@ export const authApi = baseApi.injectEndpoints({
                 user: data.data.user,
                 rememberMe: args.remember_me ?? false,
               }),
-            );
+            )
           }
         } catch {
           // login failure — nothing to store
@@ -124,7 +119,7 @@ export const authApi = baseApi.injectEndpoints({
     refresh: builder.mutation<ApiResponse<RefreshData>, void>({
       query: () => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
-        method: "POST",
+        method: 'POST',
         body: {},
       }),
     }),
@@ -135,33 +130,26 @@ export const authApi = baseApi.injectEndpoints({
     logout: builder.mutation<EmptyResponse, void>({
       query: () => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`,
-        method: "POST",
+        method: 'POST',
         body: {},
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         // Optimistically clear local state before the request resolves
-        dispatch(clearCredentials());
+        dispatch(clearCredentials())
         try {
-          await queryFulfilled;
+          await queryFulfilled
         } catch {
           // Even if the network call fails, local session is already cleared
         }
       },
-      invalidatesTags: [
-        "User",
-        "Company",
-        "Jobs",
-        "Applications",
-        "Candidates",
-        "Interviews",
-      ],
+      invalidatesTags: ['User', 'Company', 'Jobs', 'Applications', 'Candidates', 'Interviews'],
     }),
 
     /** POST /auth/forgot-password — 200, data: null */
     forgotPassword: builder.mutation<EmptyResponse, ForgotPasswordRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forgot-password`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
     }),
@@ -170,7 +158,7 @@ export const authApi = baseApi.injectEndpoints({
     resetPassword: builder.mutation<EmptyResponse, ResetPasswordRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/reset-password`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
     }),
@@ -178,13 +166,13 @@ export const authApi = baseApi.injectEndpoints({
     /** GET /auth/me — 200, data: AuthUser */
     getMe: builder.query<ApiResponse<AuthUser>, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
-      providesTags: ["User"],
+      providesTags: ['User'],
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled;
+          const { data } = await queryFulfilled
           if (data.success && data.data) {
             // Keep Redux state and localStorage in sync with latest server data
-            dispatch(updateUser(data.data));
+            dispatch(updateUser(data.data))
           }
         } catch {
           // unauthenticated — handled by reauth wrapper
@@ -196,20 +184,20 @@ export const authApi = baseApi.injectEndpoints({
     googleRegister: builder.mutation<ApiResponse<LoginData | SignupData>, GoogleRegisterRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google/register`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled;
-          if (data.success && data.data && "tokens" in data.data) {
+          const { data } = await queryFulfilled
+          if (data.success && data.data && 'tokens' in data.data) {
             dispatch(
               setCredentials({
                 accessToken: data.data.tokens.access_token,
                 user: data.data.user,
                 rememberMe: true, // we assume true for oauth
               }),
-            );
+            )
           }
         } catch {
           // failure
@@ -218,7 +206,7 @@ export const authApi = baseApi.injectEndpoints({
     }),
   }),
   overrideExisting: true,
-});
+})
 
 export const {
   useSignupMutation,
@@ -231,7 +219,7 @@ export const {
   useGetMeQuery,
   useLazyGetMeQuery,
   useGoogleRegisterMutation,
-} = authApi;
+} = authApi
 
 // ---------------------------------------------------------------------------
 // Google OAuth — browser-redirect based (not an RTK mutation)
@@ -244,13 +232,13 @@ export const {
  * when Google redirects back to the backend's callback URL.
  */
 export function initiateGoogleOAuth(): void {
-  if (typeof window === "undefined") return;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (typeof window === 'undefined') return
+  const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '')
 
   if (!apiUrl) {
-    console.error("NEXT_PUBLIC_API_URL environment variable is not defined");
-    return;
+    console.error('NEXT_PUBLIC_BACKEND_URL environment variable is not defined')
+    return
   }
 
-  window.location.href = `${apiUrl}/auth/google`;
+  window.location.href = `${apiUrl}/auth/google`
 }

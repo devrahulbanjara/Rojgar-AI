@@ -1,6 +1,6 @@
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 // ── Block ────────────────────────────────────────────────────
 .header {
@@ -11,6 +11,7 @@
   z-index: $z-sticky;
   height: 68px;
   will-change: top, opacity, transform;
+
   // Hidden until GSAP entrance animation runs (prevents flash of unstyled header)
   opacity: 0;
 
@@ -36,6 +37,7 @@
       border-radius 0.45s ease,
       box-shadow 0.45s ease;
     @include flex-between;
+
     gap: $space-6;
   }
 
@@ -91,7 +93,7 @@
 
     // Underline indicator
     &::after {
-      content: "";
+      content: '';
       position: absolute;
       bottom: 4px;
       left: $space-3;
@@ -140,7 +142,7 @@
 
     // Modifier: login
     &--login {
-      
+      // no extra styles
     }
 
     // Modifier: signup
@@ -150,7 +152,7 @@
       z-index: 0;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-color: color.adjust($color-primary, $lightness: -12%);
@@ -208,10 +210,12 @@
       &:nth-child(1) {
         transform: translateY(7px) rotate(45deg);
       }
+
       &:nth-child(2) {
         opacity: 0;
         transform: scaleX(0);
       }
+
       &:nth-child(3) {
         transform: translateY(-7px) rotate(-45deg);
       }
@@ -225,7 +229,6 @@
     background: rgba($color-black, 0.45);
     z-index: $z-sticky - 1;
     backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
     cursor: pointer;
   }
 
@@ -288,6 +291,7 @@
       &:nth-child(1) {
         transform: translate(-50%, -50%) rotate(45deg);
       }
+
       &:nth-child(2) {
         transform: translate(-50%, -50%) rotate(-45deg);
       }

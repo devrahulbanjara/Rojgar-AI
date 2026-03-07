@@ -1,24 +1,20 @@
-"use client";
-import Image from "next/image";
-import ExploreCategories from "@/components/sections/ExploreCategories";
-import HeroAnimations from "@/components/sections/HeroAnimations";
-import WhyPreferUs from "@/components/sections/WhyPreferUs";
-import FAQ from "@/components/sections/FAQ";
-import Pricing from "@/components/sections/Pricing";
-import { SearchRegular, LocationRegular } from "@fluentui/react-icons";
+'use client'
+import Image from 'next/image'
+
+import { MapPin, Search } from 'lucide-react'
+
+import ExploreCategories from '@/components/sections/ExploreCategories'
+import FAQ from '@/components/sections/FAQ'
+import HeroAnimations from '@/components/sections/HeroAnimations'
+import Pricing from '@/components/sections/Pricing'
+import WhyPreferUs from '@/components/sections/WhyPreferUs'
 
 export default function Home() {
   return (
     <section className="homepage">
       <div className="heroSection">
         <HeroAnimations />
-        <Image
-          src="/bg/bg-ui.svg"
-          alt=""
-          fill
-          className="homepage__bg-top"
-          aria-hidden="true"
-        />
+        <Image src="/bg/bg-ui.svg" alt="" fill className="homepage__bg-top" aria-hidden="true" />
         <Image
           src="/bg/bg-ui-v2.svg"
           alt=""
@@ -30,23 +26,18 @@ export default function Home() {
         <div className="container homepage__inner">
           {/* Heading */}
           <h1 className="homepage__heading">
-            Track Every Application,{" "}
-            <span className="homepage__heading-primary">Land Faster</span> With
-            AI
+            Track Every Application, <span className="homepage__heading-primary">Land Faster</span>{' '}
+            With AI
           </h1>
           {/* Subtitle */}
           <p className="homepage__subtitle">
-            ConvexHire uses AI to organise your job search and keep every
-            application moving — so you spend less time tracking and more time
-            interviewing.
+            ConvexHire uses AI to organise your job search and keep every application moving — so
+            you spend less time tracking and more time interviewing.
           </p>
           {/* Search bar */}
           <div className="homepage__search">
             <div className="homepage__search-field">
-              <SearchRegular
-                className="homepage__search-icon"
-                aria-hidden="true"
-              />
+              <Search className="homepage__search-icon" aria-hidden="true" />
               <input
                 className="homepage__search-input"
                 type="text"
@@ -56,10 +47,7 @@ export default function Home() {
             </div>
             <div className="homepage__search-divider" aria-hidden="true" />
             <div className="homepage__search-field">
-              <LocationRegular
-                className="homepage__search-icon"
-                aria-hidden="true"
-              />
+              <MapPin className="homepage__search-icon" aria-hidden="true" />
               <input
                 className="homepage__search-input"
                 type="text"
@@ -67,11 +55,7 @@ export default function Home() {
                 aria-label="Location"
               />
             </div>
-            <button
-              className="homepage__search-btn"
-              type="button"
-              aria-label="Search jobs"
-            >
+            <button className="homepage__search-btn" type="button" aria-label="Search jobs">
               Search
             </button>
           </div>
@@ -85,8 +69,7 @@ export default function Home() {
               alt="Testimonials Image"
             />
             <p className="homepage__proof">
-              Trusted by <strong>12,000+</strong> job seekers &mdash; 3,400
-              hired last month
+              Trusted by <strong>12,000+</strong> job seekers &mdash; 3,400 hired last month
             </p>
           </div>
         </div>
@@ -96,7 +79,7 @@ export default function Home() {
             width={1200}
             height={600}
             alt="Promotion Img"
-            style={{ width: "100%", height: "auto" }}
+            style={{ width: '100%', height: 'auto' }}
           />
         </div>
       </div>
@@ -109,5 +92,5 @@ export default function Home() {
 
       <FAQ />
     </section>
-  );
+  )
 }

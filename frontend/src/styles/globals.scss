@@ -4,22 +4,22 @@
 // ============================================================
 
 // 1. Variables (must come first — used by other partials)
-@use "variables" as *;
+@use 'variables' as *;
 
 // 2. Mixins
-@use "mixins" as *;
+@use 'mixins' as *;
 
 // 3. Reset / Base
-@use "reset";
+@use 'reset';
 
 // 4. Typography
-@use "typography";
+@use 'typography';
 
 // 5. Layout
-@use "layout";
+@use 'layout';
 
 // 6. Components
-@use "buttons";
+@use 'buttons';
 
 // ============================================================
 // Global Styles
@@ -32,17 +32,14 @@
   --color-bg: #{$color-bg};
   --color-text: #{$color-text};
   --color-text-muted: #{$color-text-muted};
-
   --font-heading: #{$font-heading};
   --font-body: #{$font-body};
   --font-sans: #{$font-sans}; // alias for --font-body
   --font-mono: #{$font-mono};
-
   --radius-sm: #{$radius-sm};
   --radius-md: #{$radius-md};
   --radius-lg: #{$radius-lg};
   --radius-full: #{$radius-full};
-
   --shadow-sm: #{$shadow-sm};
   --shadow-md: #{$shadow-md};
   --shadow-lg: #{$shadow-lg};

@@ -1,87 +1,82 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import {
-  ClockRegular,
-  AlertRegular,
-  DataBarVerticalRegular,
-  TargetRegular,
-  BrainCircuitRegular,
-} from "@fluentui/react-icons";
+import Image from 'next/image'
+
+import { BarChart3, Bell, BrainCircuit, Clock, Target } from 'lucide-react'
 
 const BLOCKS = [
   {
-    id: "no-ghosting",
-    color: "secondary",
-    image: "/homepage/whyPreferUs/image1.svg",
-    imageAlt: "Candidate working at laptop",
-    title: "We Never Ghost Candidates",
+    id: 'no-ghosting',
+    color: 'secondary',
+    image: '/homepage/whyPreferUs/image1.svg',
+    imageAlt: 'Candidate working at laptop',
+    title: 'We Never Ghost Candidates',
     body: "Every application you submit is tracked, and every candidate receives a response. We believe in transparent, respectful communication throughout your entire hiring journey — not just when it's convenient for us.",
     features: [
       {
-        icon: "clock",
-        heading: "Hear back within 48 hours",
-        desc: "Prompt responses at every stage of your application.",
+        icon: 'clock',
+        heading: 'Hear back within 48 hours',
+        desc: 'Prompt responses at every stage of your application.',
       },
       {
-        icon: "bell",
-        heading: "Real-time status updates",
-        desc: "Know exactly where you stand — no more waiting in silence.",
+        icon: 'bell',
+        heading: 'Real-time status updates',
+        desc: 'Know exactly where you stand — no more waiting in silence.',
       },
     ],
     reverse: false,
   },
   {
-    id: "salary-range",
-    color: "warning",
-    image: "/homepage/whyPreferUs/image2.svg",
-    imageAlt: "Professional reviewing salary insights",
-    title: "Know Your Salary Range Before You Apply",
+    id: 'salary-range',
+    color: 'warning',
+    image: '/homepage/whyPreferUs/image2.svg',
+    imageAlt: 'Professional reviewing salary insights',
+    title: 'Know Your Salary Range Before You Apply',
     body: "Stop wasting time on roles that don't match your worth. ConvexHire surfaces verified salary data for every listing so you can negotiate from a position of strength — not guesswork.",
     features: [
       {
-        icon: "chart",
-        heading: "Verified salary bands",
-        desc: "Sourced directly from employers, not scraped estimates.",
+        icon: 'chart',
+        heading: 'Verified salary bands',
+        desc: 'Sourced directly from employers, not scraped estimates.',
       },
       {
-        icon: "target",
-        heading: "Personalised market insights",
-        desc: "Salary benchmarks tailored to your skills and location.",
+        icon: 'target',
+        heading: 'Personalised market insights',
+        desc: 'Salary benchmarks tailored to your skills and location.',
       },
     ],
     reverse: true,
   },
   {
-    id: "ai-tracking",
-    color: "accent",
-    image: "/homepage/whyPreferUs/image3.svg",
-    imageAlt: "HR team reviewing AI analytics dashboard",
-    title: "AI-Powered Tracking for HR Teams",
-    body: "Track every applicant through your pipeline with AI-driven analytics that highlight top candidates, flag bottlenecks, and help your team make faster, fairer hiring decisions at scale.",
+    id: 'ai-tracking',
+    color: 'accent',
+    image: '/homepage/whyPreferUs/image3.svg',
+    imageAlt: 'HR team reviewing AI analytics dashboard',
+    title: 'AI-Powered Tracking for HR Teams',
+    body: 'Track every applicant through your pipeline with AI-driven analytics that highlight top candidates, flag bottlenecks, and help your team make faster, fairer hiring decisions at scale.',
     features: [
       {
-        icon: "brain",
-        heading: "Intelligent candidate scoring",
-        desc: "Automated pipeline tracking with smart ranking built in.",
+        icon: 'brain',
+        heading: 'Intelligent candidate scoring',
+        desc: 'Automated pipeline tracking with smart ranking built in.',
       },
       {
-        icon: "chart",
-        heading: "Data-driven HR dashboards",
-        desc: "Real-time insights built for modern hiring teams.",
+        icon: 'chart',
+        heading: 'Data-driven HR dashboards',
+        desc: 'Real-time insights built for modern hiring teams.',
       },
     ],
     reverse: false,
   },
-];
+]
 
 const ICONS: Record<string, React.ReactNode> = {
-  clock: <ClockRegular aria-hidden="true" />,
-  bell: <AlertRegular aria-hidden="true" />,
-  chart: <DataBarVerticalRegular aria-hidden="true" />,
-  target: <TargetRegular aria-hidden="true" />,
-  brain: <BrainCircuitRegular aria-hidden="true" />,
-};
+  clock: <Clock aria-hidden="true" />,
+  bell: <Bell aria-hidden="true" />,
+  chart: <BarChart3 aria-hidden="true" />,
+  target: <Target aria-hidden="true" />,
+  brain: <BrainCircuit aria-hidden="true" />,
+}
 
 export default function WhyPreferUs() {
   return (
@@ -101,9 +96,7 @@ export default function WhyPreferUs() {
       <div className="why-prefer__blocks container">
         {BLOCKS.map((block) => {
           const imgEl = (
-            <div
-              className={`why-prefer__img-wrap why-prefer__img-wrap--${block.color}`}
-            >
+            <div className={`why-prefer__img-wrap why-prefer__img-wrap--${block.color}`}>
               <Image
                 src={block.image}
                 alt={block.imageAlt}
@@ -112,7 +105,7 @@ export default function WhyPreferUs() {
                 sizes="(max-width: 768px) 100vw, 475px"
               />
             </div>
-          );
+          )
 
           const textEl = (
             <div className="why-prefer__text">
@@ -121,26 +114,22 @@ export default function WhyPreferUs() {
               <ul className="why-prefer__features">
                 {block.features.map((f) => (
                   <li key={f.heading} className="why-prefer__feature">
-                    <span className="why-prefer__feature-icon">
-                      {ICONS[f.icon]}
-                    </span>
+                    <span className="why-prefer__feature-icon">{ICONS[f.icon]}</span>
                     <span className="why-prefer__feature-copy">
-                      <strong className="why-prefer__feature-heading">
-                        {f.heading}
-                      </strong>
+                      <strong className="why-prefer__feature-heading">{f.heading}</strong>
                       <span className="why-prefer__feature-desc">{f.desc}</span>
                     </span>
                   </li>
                 ))}
               </ul>
             </div>
-          );
+          )
 
           return (
             <div
               key={block.id}
               className={`why-prefer__block why-prefer__block--${block.color}${
-                block.reverse ? " why-prefer__block--reverse" : ""
+                block.reverse ? ' why-prefer__block--reverse' : ''
               }`}
             >
               {/* Reverse: text left, image right — swap DOM order to match grid columns */}
@@ -156,9 +145,9 @@ export default function WhyPreferUs() {
                 </>
               )}
             </div>
-          );
+          )
         })}
       </div>
     </section>
-  );
+  )
 }

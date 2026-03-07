@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 
 // ── Skills chip input ──────────────────────────────────────────────────────
 
@@ -9,16 +9,16 @@ export default function SkillsSection({
   onAdd,
   onRemove,
 }: {
-  skills: string[];
-  onAdd: (s: string) => void;
-  onRemove: (s: string) => void;
+  skills: string[]
+  onAdd: (s: string) => void
+  onRemove: (s: string) => void
 }) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('')
 
   function handleAdd() {
     if (input.trim()) {
-      onAdd(input.trim());
-      setInput("");
+      onAdd(input.trim())
+      setInput('')
     }
   }
 
@@ -32,9 +32,9 @@ export default function SkillsSection({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAdd();
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleAdd()
             }
           }}
         />
@@ -57,5 +57,5 @@ export default function SkillsSection({
         ))}
       </div>
     </div>
-  );
+  )
 }

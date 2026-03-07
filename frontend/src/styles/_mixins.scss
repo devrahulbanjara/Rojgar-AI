@@ -2,7 +2,7 @@
 // MIXINS
 // ============================================================
 
-@use "variables" as *;
+@use 'variables' as *;
 
 // --- Responsive Breakpoints ---
 @mixin sm {
@@ -89,7 +89,7 @@
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border-width: 0;
 }
@@ -117,6 +117,7 @@
 @mixin scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }

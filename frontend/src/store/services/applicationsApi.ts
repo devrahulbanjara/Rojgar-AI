@@ -1,43 +1,43 @@
-import { baseApi, type ApiResponse } from "./baseApi";
+import { type ApiResponse, baseApi } from './baseApi'
 
 // ---------------------------------------------------------------------------
 // Types — mirrors app/modules/applications/schemas.py
 // ---------------------------------------------------------------------------
 
 export type ApplicationStatus =
-  | "applied"
-  | "in_review"
-  | "shortlisted"
-  | "interview"
-  | "offer"
-  | "rejected";
+  | 'applied'
+  | 'in_review'
+  | 'shortlisted'
+  | 'interview'
+  | 'offer'
+  | 'rejected'
 
 export interface ApplicationResponse {
-  id: string;
-  job_id: string;
-  user_id: string;
-  resume_id: string;
-  status: ApplicationStatus;
-  created_at: string;
-  updated_at: string;
+  id: string
+  job_id: string
+  user_id: string
+  resume_id: string
+  status: ApplicationStatus
+  created_at: string
+  updated_at: string
 }
 
 export interface ApplicationListItem {
-  id: string;
-  job_id: string;
-  user_id: string;
-  status: ApplicationStatus;
-  created_at: string;
+  id: string
+  job_id: string
+  user_id: string
+  status: ApplicationStatus
+  created_at: string
   applicant: {
-    id: string;
-    full_name: string;
-    email: string;
-  };
+    id: string
+    full_name: string
+    email: string
+  }
 }
 
 export interface ApplyToJobPayload {
-  job_id: string;
-  resume_id: string;
+  job_id: string
+  resume_id: string
 }
 
 // ---------------------------------------------------------------------------
@@ -47,16 +47,13 @@ export interface ApplyToJobPayload {
 export const applicationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** POST /applications/ — candidate applies to a job */
-    applyToJob: builder.mutation<
-      ApiResponse<ApplicationResponse>,
-      ApplyToJobPayload
-    >({
+    applyToJob: builder.mutation<ApiResponse<ApplicationResponse>, ApplyToJobPayload>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/`,
-        method: "POST",
+        method: 'POST',
         body,
       }),
-      invalidatesTags: ["Applications"],
+      invalidatesTags: ['Applications'],
     }),
 
     /** GET /applications/me — list all applications for the current candidate */
@@ -68,10 +65,9 @@ export const applicationsApi = baseApi.injectEndpoints({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/me`,
         params: params ?? undefined,
       }),
-      providesTags: ["Applications"],
+      providesTags: ['Applications'],
     }),
   }),
-});
+})
 
-export const { useApplyToJobMutation, useGetMyApplicationsQuery } =
-  applicationsApi;
+export const { useApplyToJobMutation, useGetMyApplicationsQuery } = applicationsApi

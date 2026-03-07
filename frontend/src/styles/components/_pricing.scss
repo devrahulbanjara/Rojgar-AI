@@ -2,9 +2,9 @@
 // PRICING SECTION
 // ============================================================
 
-@use "sass:color";
-@use "../variables" as *;
-@use "../mixins" as *;
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
 
 .pricing {
   position: relative;
@@ -73,7 +73,7 @@
 
     @include md {
       grid-template-columns: repeat(2, 1fr);
-    padding-top: $space-10;
+      padding-top: $space-10;
     }
 
     @include lg {
@@ -263,7 +263,7 @@
       background-color: transparent;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-color: $color-primary;
@@ -291,7 +291,7 @@
       border-color: $color-primary;
 
       &::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-color: color.adjust($color-primary, $lightness: -10%);
