@@ -20,7 +20,9 @@ class EmailService:
         message.add_alternative(html_content, subtype="html")
 
         if not settings.send_emails:
-            logger.info(f"Email sending disabled — skipping email to {recipient} | Subject: {subject}")
+            logger.info(
+                f"Email sending disabled — skipping email to {recipient} | Subject: {subject}"
+            )
             return
 
         try:
