@@ -26,8 +26,6 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "pydantic[email]>=2.12.5",
     "pyjwt>=2.11.0",
-    "pytest>=9.0.2",
-    "pytest-asyncio>=1.3.0",
     "python-dotenv>=1.2.1",
     "redis>=7.2.1",
     "sqlalchemy[asyncio]>=2.0.47",
@@ -38,3 +36,9 @@ pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+]

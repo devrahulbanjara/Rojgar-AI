@@ -15,12 +15,14 @@ def disable_emails():
     yield
     settings.send_emails = True
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Explicitly manage the event loop lifecycle."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
 
 @pytest.fixture(scope="session")
 async def engine():
@@ -29,15 +31,16 @@ async def engine():
         settings.test_database_url,
         poolclass=NullPool,
     )
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
+
 
 @pytest.fixture
 async def db(engine):
@@ -48,13 +51,17 @@ async def db(engine):
         await session.rollback()
         await session.close()
 
+
 @pytest.fixture
 async def client(db):
     """API client with overridden DB dependency."""
+
     async def override_get_db():
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
     app.dependency_overrides.clear()

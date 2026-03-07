@@ -53,8 +53,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logfire.configure()
-logfire.instrument_fastapi(app)
+if settings.environment == "dev":
+    logfire.configure()
+    logfire.instrument_fastapi(app)
+
 register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
