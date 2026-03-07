@@ -49,11 +49,11 @@ jobs:
           [[ -z "$TEST_DB_HOST" ]]     && missing+=(TEST_DB_HOST)
           [[ -z "$TEST_DB_NAME" ]]     && missing+=(TEST_DB_NAME)
           if [[ ${#missing[@]} -gt 0 ]]; then
-            echo "❌ Missing required GitHub secrets: ${missing[*]}"
+            echo "Missing required GitHub secrets: ${missing[*]}"
             echo "Add them at: Settings → Secrets and variables → Actions"
             exit 1
           fi
-          echo "✅ All required secrets are present"
+          echo "All required secrets are present"
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
@@ -62,7 +62,7 @@ jobs:
           TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
 
       - name: Integration tests
-        run: uv run pytest
+        run: uv run pytest -v
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           ALGORITHM: HS256
