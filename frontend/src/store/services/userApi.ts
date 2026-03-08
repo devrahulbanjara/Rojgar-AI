@@ -76,7 +76,7 @@ export const userApi = baseApi.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: 'Applications', id }],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: process.env.NODE_ENV !== 'production',
 })
 
 export const {

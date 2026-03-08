@@ -3,6 +3,7 @@
 import { useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
 import { useLogoutMutation } from '@/store/services/authApi'
+import { Clock, ShieldOff } from 'lucide-react'
 
 import AuthGuard from '@/components/common/AuthGuard'
 import DashNavbar from '@/components/layout/DashNavbar'
@@ -33,7 +34,7 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
         >
           {ms === 'rejected' ? (
             <>
-              <div style={{ fontSize: '3rem' }}>🚫</div>
+              <ShieldOff size={48} strokeWidth={1.5} color="#ef4444" />
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Access Denied</h2>
               <p
                 style={{
@@ -48,7 +49,7 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
             </>
           ) : (
             <>
-              <div style={{ fontSize: '3rem' }}>⏳</div>
+              <Clock size={48} strokeWidth={1.5} color="#f59e0b" />
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Pending Approval</h2>
               <p
                 style={{

@@ -159,7 +159,7 @@ export const jobsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Jobs'],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: process.env.NODE_ENV !== 'production',
 })
 
 export const {

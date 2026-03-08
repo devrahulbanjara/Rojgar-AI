@@ -5,6 +5,32 @@ import Link from 'next/link'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCompanyRecruitersQuery } from '@/store/services/companyApi'
 import type { RecruiterMember } from '@/store/services/companyApi'
+import {
+  ArrowRight,
+  BrainCircuit,
+  Briefcase,
+  BriefcaseBusiness,
+  CalendarCheck,
+  Clock,
+  FileText,
+  Settings2,
+  UserCheck,
+  Users,
+} from 'lucide-react'
+
+type IconKey = 'briefcase' | 'file-text' | 'calendar-check' | 'user-check' | 'users' | 'clock'
+
+function StatIcon({ icon }: { icon: IconKey }) {
+  const icons: Record<IconKey, React.ReactNode> = {
+    briefcase: <Briefcase size={16} strokeWidth={1.75} />,
+    'file-text': <FileText size={16} strokeWidth={1.75} />,
+    'calendar-check': <CalendarCheck size={16} strokeWidth={1.75} />,
+    'user-check': <UserCheck size={16} strokeWidth={1.75} />,
+    users: <Users size={16} strokeWidth={1.75} />,
+    clock: <Clock size={16} strokeWidth={1.75} />,
+  }
+  return icons[icon] || null
+}
 
 const stats = [
   {
@@ -13,7 +39,7 @@ const stats = [
     trend: '+2',
     trendDir: 'up',
     variant: 'primary',
-    icon: '📋',
+    icon: 'briefcase' as IconKey,
   },
   {
     label: 'Total Applications',
@@ -21,7 +47,7 @@ const stats = [
     trend: '+48',
     trendDir: 'up',
     variant: 'secondary',
-    icon: '📩',
+    icon: 'file-text' as IconKey,
   },
   {
     label: 'Interviews Scheduled',
@@ -29,7 +55,7 @@ const stats = [
     trend: '+5',
     trendDir: 'up',
     variant: 'success',
-    icon: '📅',
+    icon: 'calendar-check' as IconKey,
   },
   {
     label: 'Hires This Month',
@@ -37,7 +63,7 @@ const stats = [
     trend: '+2',
     trendDir: 'up',
     variant: 'warning',
-    icon: '🎉',
+    icon: 'user-check' as IconKey,
   },
 ]
 
@@ -162,14 +188,13 @@ export default function CompanyDashboardPage() {
         <div className="dash-stats">
           {stats.map((s) => (
             <div key={s.label} className="stat-card">
-              <div className="stat-card__header">
-                <div className="stat-card__icon-emoji">{s.icon}</div>
-                <span className={`stat-card__trend stat-card__trend--${s.trendDir}`}>
-                  {s.trend}
-                </span>
-              </div>
               <div className="stat-card__value">{s.value}</div>
-              <div className="stat-card__label">{s.label}</div>
+              <div className="stat-card__footer">
+                <div className={`stat-card__icon-wrap stat-card__icon-wrap--${s.variant}`}>
+                  <StatIcon icon={s.icon} />
+                </div>
+                <div className="stat-card__label">{s.label}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -182,23 +207,15 @@ export default function CompanyDashboardPage() {
                 <div className="dash-card__title">Active Job Posts</div>
                 <div className="dash-card__subtitle">Currently open positions</div>
               </div>
-              <Link href="/company/jobs" className="btn btn--outline btn--sm">
-                Manage
+              <Link href="/company/jobs" className="btn btn--outline btn--sm btn--icon-right">
+                Manage <Settings2 size={14} strokeWidth={2} />
               </Link>
             </div>
             <div className="dash-card__body dash-card__body--no-top">
               {activeJobs.map((job) => (
                 <div key={job.title} className="item-row item-row--pad">
-                  <div
-                    className="item-row__logo"
-                    style={
-                      {
-                        '--logo-bg': job.color + '1A',
-                        '--logo-color': job.color,
-                      } as React.CSSProperties
-                    }
-                  >
-                    {job.logo}
+                  <div className="item-row__logo item-row__logo--icon">
+                    <BriefcaseBusiness size={15} strokeWidth={1.75} />
                   </div>
                   <div className="item-row__info">
                     <div className="item-row__title">{job.title}</div>
@@ -215,6 +232,7 @@ export default function CompanyDashboardPage() {
                         } as React.CSSProperties
                       }
                     >
+                      <Clock size={12} strokeWidth={2} />
                       {job.daysLeft}d left
                     </div>
                     <div className="progress-bar progress-bar--narrow-md">
@@ -236,8 +254,8 @@ export default function CompanyDashboardPage() {
                 <div className="dash-card__title">Top AI-Ranked Candidates</div>
                 <div className="dash-card__subtitle">Based on AI screening score</div>
               </div>
-              <Link href="/company/candidates" className="btn btn--outline btn--sm">
-                View All
+              <Link href="/company/candidates" className="btn btn--outline btn--sm btn--icon-right">
+                View All <ArrowRight size={14} strokeWidth={2} />
               </Link>
             </div>
             <div className="dash-card__body dash-card__body--no-top">
@@ -275,6 +293,7 @@ export default function CompanyDashboardPage() {
                       } as React.CSSProperties
                     }
                   >
+                    <BrainCircuit size={11} strokeWidth={2} />
                     {c.score}%
                   </div>
                 </div>
@@ -316,8 +335,8 @@ export default function CompanyDashboardPage() {
                   Team members posting jobs and screening candidates
                 </div>
               </div>
-              <Link href="/company/recruiters" className="btn btn--outline btn--sm">
-                Manage
+              <Link href="/company/recruiters" className="btn btn--outline btn--sm btn--icon-right">
+                Manage <Settings2 size={14} strokeWidth={2} />
               </Link>
             </div>
             <div className="dash-card__body dash-card__body--no-top">
@@ -326,26 +345,22 @@ export default function CompanyDashboardPage() {
                 style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}
               >
                 <div className="stat-card">
-                  <div className="stat-card__header">
-                    <div className="stat-card__icon-emoji">👥</div>
-                  </div>
                   <div className="stat-card__value">{activeRecruiters.length}</div>
-                  <div className="stat-card__label">Active Recruiters</div>
+                  <div className="stat-card__footer">
+                    <div className="stat-card__icon-wrap stat-card__icon-wrap--primary">
+                      <StatIcon icon="users" />
+                    </div>
+                    <div className="stat-card__label">Active Recruiters</div>
+                  </div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-card__header">
-                    <div className="stat-card__icon-emoji">⏳</div>
-                    {pendingRecruiters.length > 0 && (
-                      <span
-                        className="stat-card__trend stat-card__trend--up"
-                        style={{ background: '#f59e0b1A', color: '#f59e0b' }}
-                      >
-                        +{pendingRecruiters.length}
-                      </span>
-                    )}
-                  </div>
                   <div className="stat-card__value">{pendingRecruiters.length}</div>
-                  <div className="stat-card__label">Pending Requests</div>
+                  <div className="stat-card__footer">
+                    <div className="stat-card__icon-wrap stat-card__icon-wrap--warning">
+                      <StatIcon icon="clock" />
+                    </div>
+                    <div className="stat-card__label">Pending Requests</div>
+                  </div>
                 </div>
               </div>
               {pendingRecruiters.length > 0 && (
