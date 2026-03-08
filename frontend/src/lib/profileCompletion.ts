@@ -60,10 +60,14 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
 
 export const PROFILE_COMPLETION_LABEL = 'Profile Completion'
 
-export function calculateProfileCompletionPercentage(profile: ProfileCompletionSource | null): number {
+export function calculateProfileCompletionPercentage(
+  profile: ProfileCompletionSource | null,
+): number {
   if (!profile) return 0
 
-  const completedFields = PROFILE_COMPLETION_FIELDS.filter((field) => field.isComplete(profile)).length
+  const completedFields = PROFILE_COMPLETION_FIELDS.filter((field) =>
+    field.isComplete(profile),
+  ).length
 
   return Math.round((completedFields / PROFILE_COMPLETION_FIELDS.length) * 100)
 }

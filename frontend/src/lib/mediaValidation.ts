@@ -21,7 +21,7 @@ export function formatBytes(bytes: number): string {
 }
 
 export function validateImageFile(file: File): string | null {
-  const extension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? '' : ''
+  const extension = file.name.includes('.') ? (file.name.split('.').pop()?.toLowerCase() ?? '') : ''
 
   if (!file.type.startsWith('image/')) {
     return 'Please choose an image file.'
