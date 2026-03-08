@@ -1,32 +1,25 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 
 import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
-  type JobDetail,
   type JobListItem,
   type LocationType,
   type SearchJobsParams,
-  useGetJobByIdQuery,
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
 import { useGetMyResumesQuery } from '@/store/services/resumeApi'
-import {
-  ArrowRight,
-  Bookmark,
-  Briefcase,
-  ChevronDown,
-  Clock,
-  MapPin,
-  Search,
-  X,
-} from 'lucide-react'
+import { Bookmark, Briefcase, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
 
 import Loader from '@/components/common/Loader'
+
+import { JobCardsSkeleton, JobPreviewSkeleton } from './_components/JobsSkeletons'
+
+const LazyJobPreviewPanel = lazy(() => import('./_components/JobPreviewPanel'))
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -223,131 +216,21 @@ function ApplyModal({
 }
 
 // ---------------------------------------------------------------------------
-// Job preview right panel — short overview + CTA buttons
-// ---------------------------------------------------------------------------
-
-function JobPreviewPanel({
-  jobId,
-  allJobs,
-  onApply,
-}: {
-  jobId: string
-  allJobs: JobListItem[]
-  onApply: () => void
-}) {
-  const { data: resp, isLoading } = useGetJobByIdQuery(jobId)
-  const job: JobDetail | undefined = resp?.data
-
-  if (isLoading)
-    return (
-      <div className="job-preview">
-        <div className="job-preview__empty">
-          <Loader size="md" />
-        </div>
-      </div>
-    )
-
-  if (!job)
-    return (
-      <div className="job-preview">
-        <div className="job-preview__empty">
-          <p>Could not load job details.</p>
-        </div>
-      </div>
-    )
-
-  const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
-  const isOpen = job.status === 'open'
-  const openRolesCount = allJobs.filter((j) => j.company_id === job.company_id).length
-
-  return (
-    <div className="job-preview">
-      <div
-        className="job-preview__cover"
-        style={
-          {
-            '--jp-from': 'rgba(0,112,243,0.18)',
-            '--jp-to': 'rgba(121,40,202,0.1)',
-          } as React.CSSProperties
-        }
-      >
-        <div
-          className="job-preview__logo"
-          style={{ '--jp-logo': '#7928ca' } as React.CSSProperties}
-        >
-          {job.title[0]}
-        </div>
-      </div>
-
-      <div className="job-preview__header">
-        <div className="job-preview__date">Posted {formatDate(job.created_at)}</div>
-        <div className="job-preview__title">{job.title}</div>
-        <div className="job-preview__company">{job.company?.name}</div>
-        <div className="job-preview__location">
-          <MapPin size={12} aria-hidden="true" />
-          {job.location ?? 'Location not specified'} · {LOCATION_TYPE_LABELS[job.location_type]}
-        </div>
-      </div>
-
-      <div className="job-preview__company-meta">
-        {job.company?.industry && <span>{job.company.industry}</span>}
-        {job.company?.company_size && <span>· {job.company.company_size}</span>}
-        {openRolesCount > 1 && (
-          <span className="job-preview__chip job-preview__chip--success">
-            {openRolesCount} open roles
-          </span>
-        )}
-      </div>
-
-      <div className="job-preview__chips">
-        <span className="job-preview__chip">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-        {salary && <span className="job-preview__chip">{salary}</span>}
-        <span
-          className={`job-preview__chip${isOpen ? ' job-preview__chip--success' : ' job-preview__chip--gray'}`}
-        >
-          {isOpen ? 'Actively Hiring' : job.status}
-        </span>
-      </div>
-
-      {job.overview && (
-        <div className="job-preview__overview">
-          <div className="job-preview__overview-label">About the Role</div>
-          <p className="job-preview__overview-text">{job.overview}</p>
-        </div>
-      )}
-
-      <div className="job-preview__cta">
-        <Link href={`/dashboard/jobs/${job.id}`} className="job-preview__view-btn">
-          View Details
-          <ArrowRight size={14} aria-hidden="true" />
-        </Link>
-        <button className="job-preview__quick-btn" onClick={onApply} disabled={!isOpen}>
-          {isOpen ? 'Quick Apply' : `Applications ${job.status}`}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
 export default function UserJobsPage() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
   const [locationInput, setLocationInput] = useState('')
-  const [location, setLocation] = useState('')
-  const [locationTypeFilter, setLocationTypeFilter] = useState<LocationType | null>(null)
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [locationTypeDraft, setLocationTypeDraft] = useState<LocationType | null>(null)
+  const [categoryDraft, setCategoryDraft] = useState<string | null>(null)
   const [salaryMinInput, setSalaryMinInput] = useState('')
   const [salaryMaxInput, setSalaryMaxInput] = useState('')
-  const [salaryMin, setSalaryMin] = useState<number | undefined>(undefined)
-  const [salaryMax, setSalaryMax] = useState<number | undefined>(undefined)
   const [workTypeOpen, setWorkTypeOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [applyingToJob, setApplyingToJob] = useState<JobListItem | null>(null)
+  const [appliedParams, setAppliedParams] = useState<SearchJobsParams>({})
 
   const workTypeRef = useRef<HTMLDivElement>(null)
   const categoryRef = useRef<HTMLDivElement>(null)
@@ -363,24 +246,29 @@ export default function UserJobsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const queryParams: SearchJobsParams = {
-    q: search || undefined,
-    location: location || undefined,
-    location_type: locationTypeFilter ?? undefined,
-    category: categoryFilter ?? undefined,
-    salary_min: salaryMin,
-    salary_max: salaryMax,
-  }
-
-  const { data: jobsResp, isLoading, isError } = useSearchJobsQuery(queryParams)
+  const { data: jobsResp, isLoading, isError } = useSearchJobsQuery(appliedParams)
 
   const jobs: JobListItem[] = jobsResp?.data ?? []
   const resolvedId = selectedJobId ?? jobs[0]?.id ?? null
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    setSearch(searchInput)
-    setLocation(locationInput)
+  function handleSearch(e?: React.FormEvent) {
+    if (e) e.preventDefault()
+    setAppliedParams({
+      q: searchInput || undefined,
+      location: locationInput || undefined,
+      location_type: locationTypeDraft ?? undefined,
+      category: categoryDraft ?? undefined,
+      salary_min: salaryMinInput ? Number(salaryMinInput) : undefined,
+      salary_max: salaryMaxInput ? Number(salaryMaxInput) : undefined,
+    })
+    setSelectedJobId(null)
+  }
+
+  function handleClearSearch() {
+    setSearchInput('')
+    setAppliedParams((prev) => {
+      return { ...prev, q: undefined }
+    })
     setSelectedJobId(null)
   }
 
@@ -392,35 +280,17 @@ export default function UserJobsPage() {
           <div className="jobs-layout__sidebar">
             <div className="jobs-layout__sidebar-title">Filters</div>
 
-            {/* Pill search input */}
-            <form onSubmit={handleSearch}>
-              <div className="jobs-sidebar-search">
-                <span className="jobs-sidebar-search__icon">
-                  <Search size={16} aria-hidden="true" />
-                </span>
-                <input
-                  className="jobs-sidebar-search__input"
-                  placeholder="Search jobs…"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-                <button type="submit" className="jobs-sidebar-search__btn" aria-label="Search">
-                  <Search size={12} aria-hidden="true" />
-                </button>
-              </div>
-            </form>
-
             {/* Work Type dropdown */}
             <div className="jobs-layout__filter-group">
               <div className="jobs-layout__filter-group-label">Work Type</div>
               <div className="jobs-filter-dropdown" ref={workTypeRef}>
                 <button
                   type="button"
-                  className={`jobs-filter-dropdown__trigger${workTypeOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${locationTypeFilter !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
+                  className={`jobs-filter-dropdown__trigger${workTypeOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${locationTypeDraft !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
                   onClick={() => setWorkTypeOpen((v) => !v)}
                 >
                   <span>
-                    {locationTypeFilter ? LOCATION_TYPE_LABELS[locationTypeFilter] : 'All Types'}
+                    {locationTypeDraft ? LOCATION_TYPE_LABELS[locationTypeDraft] : 'All Types'}
                   </span>
                   <ChevronDown
                     className={`jobs-filter-dropdown__chevron${workTypeOpen ? ' jobs-filter-dropdown__chevron--open' : ''}`}
@@ -433,10 +303,9 @@ export default function UserJobsPage() {
                       <button
                         key={String(t)}
                         type="button"
-                        className={`jobs-filter-dropdown__option${locationTypeFilter === t ? ' jobs-filter-dropdown__option--active' : ''}`}
+                        className={`jobs-filter-dropdown__option${locationTypeDraft === t ? ' jobs-filter-dropdown__option--active' : ''}`}
                         onClick={() => {
-                          setLocationTypeFilter(t)
-                          setSelectedJobId(null)
+                          setLocationTypeDraft(t)
                           setWorkTypeOpen(false)
                         }}
                       >
@@ -461,23 +330,13 @@ export default function UserJobsPage() {
                   placeholder="e.g. Kathmandu…"
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setLocation(locationInput)
-                      setSelectedJobId(null)
-                    }
-                  }}
                 />
                 {locationInput && (
                   <button
                     type="button"
                     className="jobs-sidebar-search__btn"
                     aria-label="Clear location"
-                    onClick={() => {
-                      setLocationInput('')
-                      setLocation('')
-                      setSelectedJobId(null)
-                    }}
+                    onClick={() => setLocationInput('')}
                   >
                     <X size={11} aria-hidden="true" />
                   </button>
@@ -491,10 +350,10 @@ export default function UserJobsPage() {
               <div className="jobs-filter-dropdown" ref={categoryRef}>
                 <button
                   type="button"
-                  className={`jobs-filter-dropdown__trigger${categoryOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${categoryFilter !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
+                  className={`jobs-filter-dropdown__trigger${categoryOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${categoryDraft !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
                   onClick={() => setCategoryOpen((v) => !v)}
                 >
-                  <span>{categoryFilter ? CATEGORY_LABELS[categoryFilter] : 'All Categories'}</span>
+                  <span>{categoryDraft ? CATEGORY_LABELS[categoryDraft] : 'All Categories'}</span>
                   <ChevronDown
                     className={`jobs-filter-dropdown__chevron${categoryOpen ? ' jobs-filter-dropdown__chevron--open' : ''}`}
                     size={12}
@@ -504,10 +363,9 @@ export default function UserJobsPage() {
                   <div className="jobs-filter-dropdown__menu">
                     <button
                       type="button"
-                      className={`jobs-filter-dropdown__option${categoryFilter === null ? ' jobs-filter-dropdown__option--active' : ''}`}
+                      className={`jobs-filter-dropdown__option${categoryDraft === null ? ' jobs-filter-dropdown__option--active' : ''}`}
                       onClick={() => {
-                        setCategoryFilter(null)
-                        setSelectedJobId(null)
+                        setCategoryDraft(null)
                         setCategoryOpen(false)
                       }}
                     >
@@ -518,10 +376,9 @@ export default function UserJobsPage() {
                       <button
                         key={key}
                         type="button"
-                        className={`jobs-filter-dropdown__option${categoryFilter === key ? ' jobs-filter-dropdown__option--active' : ''}`}
+                        className={`jobs-filter-dropdown__option${categoryDraft === key ? ' jobs-filter-dropdown__option--active' : ''}`}
                         onClick={() => {
-                          setCategoryFilter(key)
-                          setSelectedJobId(null)
+                          setCategoryDraft(key)
                           setCategoryOpen(false)
                         }}
                       >
@@ -535,7 +392,7 @@ export default function UserJobsPage() {
             </div>
 
             {/* Salary range inputs */}
-            <div className="jobs-layout__filter-group jobs-layout__filter-group--last">
+            <div className="jobs-layout__filter-group">
               <div className="jobs-layout__filter-group-label">Salary (NPR)</div>
               <div className="jobs-salary-range">
                 <input
@@ -544,18 +401,6 @@ export default function UserJobsPage() {
                   placeholder="Min"
                   value={salaryMinInput}
                   onChange={(e) => setSalaryMinInput(e.target.value)}
-                  onBlur={() => {
-                    const v = salaryMinInput ? Number(salaryMinInput) : undefined
-                    setSalaryMin(v)
-                    setSelectedJobId(null)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const v = salaryMinInput ? Number(salaryMinInput) : undefined
-                      setSalaryMin(v)
-                      setSelectedJobId(null)
-                    }
-                  }}
                 />
                 <span className="jobs-salary-range__sep">···</span>
                 <input
@@ -564,51 +409,56 @@ export default function UserJobsPage() {
                   placeholder="Max"
                   value={salaryMaxInput}
                   onChange={(e) => setSalaryMaxInput(e.target.value)}
-                  onBlur={() => {
-                    const v = salaryMaxInput ? Number(salaryMaxInput) : undefined
-                    setSalaryMax(v)
-                    setSelectedJobId(null)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const v = salaryMaxInput ? Number(salaryMaxInput) : undefined
-                      setSalaryMax(v)
-                      setSelectedJobId(null)
-                    }
-                  }}
                 />
+              </div>
+            </div>
+
+            {/* Results count */}
+            <div className="jobs-layout__filter-group jobs-layout__filter-group--last">
+              <div className="jobs-sidebar-results-count">
+                {isLoading
+                  ? 'Searching…'
+                  : `${jobs.length} result${jobs.length !== 1 ? 's' : ''} found`}
               </div>
             </div>
           </div>
 
           {/* ── Job List ── */}
           <div>
-            <div className="job-list-header">
-              <div className="job-list-header__count">
-                {isLoading ? '' : `${jobs.length} job${jobs.length !== 1 ? 's' : ''} found`}
+            <form className="jobs-main-search" onSubmit={handleSearch}>
+              <div className="jobs-main-search__field">
+                <span className="jobs-main-search__icon">
+                  <Search size={18} aria-hidden="true" />
+                </span>
+                <input
+                  className="jobs-main-search__input"
+                  placeholder="Search jobs by title"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    className="jobs-main-search__clear"
+                    onClick={handleClearSearch}
+                    aria-label="Clear search"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
               </div>
-            </div>
+              <button type="submit" className="jobs-search-trigger-btn">
+                Search Jobs
+              </button>
+            </form>
 
-            {isLoading && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  minHeight: '320px',
-                }}
-              >
-                <Loader size="lg" />
-              </div>
-            )}
-
-            {isError && (
+            {isLoading ? (
+              <JobCardsSkeleton count={5} />
+            ) : isError ? (
               <div className="dash-card">
                 <div className="dash-card__body">Failed to load jobs.</div>
               </div>
-            )}
-
-            {!isLoading && !isError && jobs.length === 0 && (
+            ) : jobs.length === 0 ? (
               <div className="dash-card">
                 <div
                   className="dash-card__body"
@@ -631,101 +481,102 @@ export default function UserJobsPage() {
                   <p>No jobs match your search.</p>
                 </div>
               </div>
-            )}
-
-            <div className="job-list-stack">
-              {jobs.map((job) => (
-                <div
-                  key={job.id}
-                  className={`job-card${resolvedId === job.id ? ' job-card--active' : ''}`}
-                  onClick={() => setSelectedJobId(job.id)}
-                >
-                  <div className="job-card__header">
-                    <div
-                      className="job-card__logo"
-                      style={
-                        {
-                          '--logo-bg': '#7928CA1A',
-                          '--logo-color': '#7928CA',
-                        } as React.CSSProperties
-                      }
-                    >
-                      {job.title[0]}
-                    </div>
-                    <div className="job-card__title-wrap">
-                      <div className="job-card__title">{job.title}</div>
-                      <div className="job-card__company">{job.company?.name}</div>
-                      <div className="job-card__location">
-                        {job.location && (
-                          <>
-                            <MapPin size={11} aria-hidden="true" /> {job.location} ·{' '}
-                          </>
-                        )}
-                        {LOCATION_TYPE_LABELS[job.location_type]}
+            ) : (
+              <div className="job-list-stack content-stagger">
+                {jobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className={`job-card content-stagger-item${resolvedId === job.id ? ' job-card--active' : ''}`}
+                    style={{ '--stagger-index': jobs.indexOf(job) } as React.CSSProperties}
+                    onClick={() => setSelectedJobId(job.id)}
+                  >
+                    <div className="job-card__header">
+                      <div
+                        className="job-card__logo"
+                        style={
+                          {
+                            '--logo-bg': '#7928CA1A',
+                            '--logo-color': '#7928CA',
+                          } as React.CSSProperties
+                        }
+                      >
+                        {job.title[0]}
                       </div>
+                      <div className="job-card__title-wrap">
+                        <div className="job-card__title">{job.title}</div>
+                        <div className="job-card__company">{job.company?.name}</div>
+                        <div className="job-card__location">
+                          {job.location && (
+                            <>
+                              <MapPin size={11} aria-hidden="true" /> {job.location} ·{' '}
+                            </>
+                          )}
+                          {LOCATION_TYPE_LABELS[job.location_type]}
+                        </div>
+                      </div>
+                      <button
+                        className="job-card__bookmark"
+                        title="Save job"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Bookmark size={14} aria-hidden="true" />
+                      </button>
                     </div>
-                    <button
-                      className="job-card__bookmark"
-                      title="Save job"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Bookmark size={14} aria-hidden="true" />
-                    </button>
-                  </div>
 
-                  <div className="job-card__tags">
-                    <span className="job-card__tag">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-                    {job.category && (
+                    <div className="job-card__tags">
                       <span className="job-card__tag">
-                        {CATEGORY_LABELS[job.category] ?? job.category}
+                        {LOCATION_TYPE_LABELS[job.location_type]}
                       </span>
-                    )}
-                    {(job.salary_min || job.salary_max) && (
-                      <span className="job-card__tag">
-                        {formatSalary(job.salary_min, job.salary_max, job.currency)}
-                      </span>
-                    )}
-                  </div>
+                      {job.category && (
+                        <span className="job-card__tag">
+                          {CATEGORY_LABELS[job.category] ?? job.category}
+                        </span>
+                      )}
+                      {(job.salary_min || job.salary_max) && (
+                        <span className="job-card__tag">
+                          {formatSalary(job.salary_min, job.salary_max, job.currency)}
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="job-card__meta">
-                    <span>
-                      <Briefcase size={12} aria-hidden="true" />
-                      {LOCATION_TYPE_LABELS[job.location_type]}
-                    </span>
-                    {job.location && (
+                    <div className="job-card__meta">
                       <span>
-                        <MapPin size={12} aria-hidden="true" />
-                        {job.location}
+                        <Briefcase size={12} aria-hidden="true" />
+                        {LOCATION_TYPE_LABELS[job.location_type]}
                       </span>
-                    )}
-                    <span className="job-card__meta-time">
-                      <Clock size={12} aria-hidden="true" />
-                      {formatDate(job.created_at)}
-                    </span>
+                      {job.location && (
+                        <span>
+                          <MapPin size={12} aria-hidden="true" />
+                          {job.location}
+                        </span>
+                      )}
+                      <span className="job-card__meta-time">
+                        <Clock size={12} aria-hidden="true" />
+                        {formatDate(job.created_at)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ── Job Preview Panel ── */}
           {isLoading ? (
-            <div className="job-preview">
-              <div className="job-preview__empty">
-                <Loader size="lg" />
-              </div>
-            </div>
+            <JobPreviewSkeleton />
           ) : resolvedId ? (
-            <JobPreviewPanel
-              jobId={resolvedId}
-              allJobs={jobs}
-              onApply={() => {
-                const j = jobs.find((x) => x.id === resolvedId)
-                if (j) setApplyingToJob(j)
-              }}
-            />
+            <Suspense fallback={<JobPreviewSkeleton />}>
+              <LazyJobPreviewPanel
+                jobId={resolvedId}
+                allJobs={jobs}
+                onApply={() => {
+                  const j = jobs.find((x) => x.id === resolvedId)
+                  if (j) setApplyingToJob(j)
+                }}
+              />
+            </Suspense>
           ) : (
-            <div className="job-preview">
+            <div className="job-preview content-fade-in">
               <div className="job-preview__empty">
                 <Briefcase style={{ width: 40, height: 40, opacity: 0.3 }} />
                 <p>Select a job to preview details</p>

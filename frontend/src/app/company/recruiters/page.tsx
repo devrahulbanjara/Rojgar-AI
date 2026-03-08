@@ -3,9 +3,9 @@
 import { useEffect } from 'react'
 import { toast } from 'react-toastify'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
+import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import {
   useGetCompanyRecruitersQuery,
@@ -14,13 +14,7 @@ import {
 } from '@/store/services/companyApi'
 import type { RecruiterMember } from '@/store/services/companyApi'
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-}
+import MediaBadge from '@/components/common/MediaBadge'
 
 function StatusBadge({ status }: { status: RecruiterMember['status'] }) {
   const map = {
@@ -239,7 +233,7 @@ function RecruiterRow({
   recruiter: RecruiterMember
   children: React.ReactNode
 }) {
-  const initials = getInitials(recruiter.full_name)
+  const initials = getInitials(recruiter.full_name, 'R')
   const joinedDate = new Date(recruiter.joined_at).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -248,28 +242,19 @@ function RecruiterRow({
 
   return (
     <div className="item-row item-row--pad">
-      {recruiter.avatar_url ? (
-        <Image
-          src={recruiter.avatar_url}
-          alt={recruiter.full_name}
-          width={40}
-          height={40}
-          className="item-row__logo item-row__logo--circle"
-          style={{ objectFit: 'cover' }}
-        />
-      ) : (
-        <div
-          className="item-row__logo item-row__logo--circle"
-          style={
-            {
-              '--logo-bg': '#7928ca1A',
-              '--logo-color': '#7928ca',
-            } as React.CSSProperties
-          }
-        >
-          {initials}
-        </div>
-      )}
+      <MediaBadge
+        src={recruiter.avatar_url}
+        alt={recruiter.full_name}
+        fallback={initials}
+        className="item-row__logo item-row__logo--circle"
+        sizes="40px"
+        style={
+          {
+            '--logo-bg': '#7928ca1A',
+            '--logo-color': '#7928ca',
+          } as React.CSSProperties
+        }
+      />
 
       <div className="item-row__info">
         <div className="item-row__title">{recruiter.full_name}</div>

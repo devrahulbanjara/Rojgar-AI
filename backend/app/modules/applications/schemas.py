@@ -5,7 +5,7 @@ from pydantic import Field
 
 from app.core.schemas import BaseSchema
 from app.modules.resumes.schemas import ResumeResponse
-from app.shared.enums import ApplicationStatus
+from app.shared.enums import ApplicationStatus, LocationType
 
 
 # ---------------------------------------------------------------------------
@@ -62,3 +62,32 @@ class ApplicationListItem(BaseSchema):
     status: ApplicationStatus
     created_at: datetime
     applicant: ApplicantSummary
+
+
+class CandidateApplicationView(BaseSchema):
+    """Candidate-facing application row used by dashboard and applications page."""
+
+    id: UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    job_id: UUID
+    job_title: str
+    company_name: str
+    company_logo_url: str | None = None
+    location: str | None = None
+    location_type: LocationType
+
+
+class RecruiterApplicationView(BaseSchema):
+    """Recruiter-facing application row used for company inbox and job applicants."""
+
+    id: UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    applicant_name: str
+    applicant_email: str
+    applicant_avatar_url: str | None = None
+    job_title: str
+    job_id: UUID

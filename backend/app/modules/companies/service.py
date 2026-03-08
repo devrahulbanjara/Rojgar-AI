@@ -9,12 +9,38 @@ from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.companies.schemas import (
+    CompanyResponse,
     JoinCompanyRequest,
     RecruiterMemberResponse,
     RegisterCompanyRequest,
+    UpdateCompanyRequest,
     UpdateRecruiterStatusRequest,
 )
 from app.modules.companies.utils import get_admin_company
+
+
+def _company_to_response(company: Company) -> CompanyResponse:
+    return CompanyResponse.model_validate(company)
+
+
+async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
+    company = await get_admin_company(db, user)
+    return _company_to_response(company)
+
+
+async def update_my_company(
+    db: AsyncSession, user: User, payload: UpdateCompanyRequest
+) -> CompanyResponse:
+    company = await get_admin_company(db, user)
+    update_data = payload.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        setattr(company, field, value)
+
+    await db.commit()
+    await db.refresh(company)
+    logger.info("Company {} updated by {}", company.id, user.id)
+    return _company_to_response(company)
 
 
 async def register_company(

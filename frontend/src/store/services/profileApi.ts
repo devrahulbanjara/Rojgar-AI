@@ -35,6 +35,7 @@ export interface ProfileSkill {
 export interface CandidateProfileData {
   id: string
   user_id: string
+  avatar_url: string | null
   headline: string | null
   summary: string | null
   phone: string | null
@@ -78,6 +79,7 @@ export interface UpdateProfileRequest {
 }
 
 type ProfileApiResponse = ApiResponse<CandidateProfileData>
+type EmptyResponse = ApiResponse<null>
 
 // ---------------------------------------------------------------------------
 // Profile API — injected into the shared baseApi
@@ -101,6 +103,23 @@ export const profileApi = baseApi.injectEndpoints({
       invalidatesTags: ['Profile'],
     }),
 
+    updateMyAvatar: builder.mutation<ProfileApiResponse, FormData>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/avatar`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Profile', 'User'],
+    }),
+
+    removeMyAvatar: builder.mutation<EmptyResponse, void>({
+      query: () => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/avatar`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Profile', 'User'],
+    }),
+
     /** GET /profiles/{user_id} — public profile by user ID */
     getPublicProfile: builder.query<ProfileApiResponse, string>({
       query: (userId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/${userId}`,
@@ -109,5 +128,10 @@ export const profileApi = baseApi.injectEndpoints({
   }),
 })
 
-export const { useGetMyProfileQuery, useUpdateMyProfileMutation, useGetPublicProfileQuery } =
-  profileApi
+export const {
+  useGetMyProfileQuery,
+  useUpdateMyProfileMutation,
+  useUpdateMyAvatarMutation,
+  useRemoveMyAvatarMutation,
+  useGetPublicProfileQuery,
+} = profileApi

@@ -6,8 +6,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import { Bell, ChevronDown, FileText, LayoutGrid, LogOut, Search, User, X } from 'lucide-react'
+
+import MediaBadge from '@/components/common/MediaBadge'
 
 // DashRole uses the three canonical roles.
 export type DashRole = 'candidate' | 'recruiter_admin' | 'recruiter'
@@ -59,6 +62,17 @@ export default function DashNavbar({
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const displayName = user?.full_name ?? userName
+  const displayInitials = getInitials(displayName, userInitials)
+  const displayRole =
+    user?.primary_role === 'recruiter_admin'
+      ? 'Company Admin'
+      : user?.primary_role === 'recruiter'
+        ? 'Recruiter'
+        : user?.primary_role === 'candidate'
+          ? 'Candidate'
+          : userRole
 
   const searchRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -156,10 +170,16 @@ export default function DashNavbar({
               aria-label="Open profile menu"
               aria-expanded={dropdownOpen}
             >
-              <div className="dash-navbar__avatar">{userInitials}</div>
               <ChevronDown
                 className={`dash-navbar__avatar-chevron${dropdownOpen ? ' dash-navbar__avatar-chevron--open' : ''}`}
                 size={12}
+              />
+              <MediaBadge
+                src={user?.avatar_url}
+                alt={displayName}
+                fallback={displayInitials}
+                className="dash-navbar__avatar"
+                sizes="36px"
               />
             </button>
 
@@ -167,10 +187,16 @@ export default function DashNavbar({
               <div className="dash-navbar__dropdown">
                 {/* User info block */}
                 <div className="dash-navbar__dropdown-user">
-                  <div className="dash-navbar__dropdown-avatar">{userInitials}</div>
+                  <MediaBadge
+                    src={user?.avatar_url}
+                    alt={displayName}
+                    fallback={displayInitials}
+                    className="dash-navbar__dropdown-avatar"
+                    sizes="42px"
+                  />
                   <div className="dash-navbar__dropdown-info">
-                    <div className="dash-navbar__dropdown-name">{userName}</div>
-                    <div className="dash-navbar__dropdown-role">{userRole}</div>
+                    <div className="dash-navbar__dropdown-name">{displayName}</div>
+                    <div className="dash-navbar__dropdown-role">{displayRole}</div>
                   </div>
                 </div>
 
@@ -194,14 +220,25 @@ export default function DashNavbar({
                   Dashboard
                 </Link>
 
-                <Link
-                  href="/dashboard/resume"
-                  className="dash-navbar__dropdown-item"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  <FileText size={15} />
-                  My Resume
-                </Link>
+                {activeRole === 'candidate' ? (
+                  <Link
+                    href="/dashboard/resume"
+                    className="dash-navbar__dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <FileText size={15} />
+                    My Resume
+                  </Link>
+                ) : (
+                  <Link
+                    href="/company/settings"
+                    className="dash-navbar__dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <FileText size={15} />
+                    Company Settings
+                  </Link>
+                )}
 
                 <div className="dash-navbar__dropdown-divider" />
 

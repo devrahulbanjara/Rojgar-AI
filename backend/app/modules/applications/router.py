@@ -7,9 +7,10 @@ from app.modules.auth.dependencies import get_current_user, require_candidate
 from app.modules.auth.models import User
 from app.modules.applications import service
 from app.modules.applications.schemas import (
-    ApplicationListItem,
     ApplicationResponse,
     ApplyRequest,
+    CandidateApplicationView,
+    RecruiterApplicationView,
     UpdateApplicationStatusRequest,
 )
 
@@ -39,7 +40,7 @@ async def apply_to_job(
 
 @router.get(
     "/me",
-    response_model=UnifiedResponse[list[ApplicationListItem]],
+    response_model=UnifiedResponse[list[CandidateApplicationView]],
     summary="List all applications submitted by the authenticated candidate",
 )
 async def list_my_applications(
@@ -53,8 +54,24 @@ async def list_my_applications(
 
 
 @router.get(
+    "/company/me",
+    response_model=UnifiedResponse[list[RecruiterApplicationView]],
+    summary="List all applications for the authenticated recruiter's company, optionally filtered by job",
+)
+async def list_my_company_applications(
+    job_id: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.list_my_company_applications(db, user, job_id, page, size)
+    return ResponseBuilder.success(data=data, message="Applications fetched.")
+
+
+@router.get(
     "/job/{job_id}",
-    response_model=UnifiedResponse[list[ApplicationListItem]],
+    response_model=UnifiedResponse[list[RecruiterApplicationView]],
     summary="List all applications for a specific job (company/recruiter only)",
 )
 async def list_job_applications(

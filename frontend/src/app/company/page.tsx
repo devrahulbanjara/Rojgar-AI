@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 
+import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
-import { useGetCompanyRecruitersQuery } from '@/store/services/companyApi'
+import { useGetCompanyRecruitersQuery, useGetMyCompanyQuery } from '@/store/services/companyApi'
 import type { RecruiterMember } from '@/store/services/companyApi'
 import {
   ArrowRight,
@@ -17,6 +18,8 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react'
+
+import MediaBadge from '@/components/common/MediaBadge'
 
 type IconKey = 'briefcase' | 'file-text' | 'calendar-check' | 'user-check' | 'users' | 'clock'
 
@@ -163,11 +166,16 @@ const recentActivity = [
 export default function CompanyDashboardPage() {
   const { user } = useAppSelector((s) => s.auth)
   const isCompanyAdmin = user?.primary_role === 'recruiter_admin'
+  const { data: companyResp } = useGetMyCompanyQuery(undefined, {
+    skip: !isCompanyAdmin,
+  })
 
   const { data: recruitersResp } = useGetCompanyRecruitersQuery(undefined, {
     skip: !isCompanyAdmin,
   })
 
+  const company = companyResp?.data
+  const companyName = company?.name ?? 'Your Company'
   const recruiters: RecruiterMember[] = recruitersResp?.data ?? []
   const activeRecruiters = recruiters.filter((r) => r.status === 'active')
   const pendingRecruiters = recruiters.filter((r) => r.status === 'pending')
@@ -177,10 +185,21 @@ export default function CompanyDashboardPage() {
       <div className="dash-content container">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
-            <h2 className="dash-page-header__title">Welcome, Pickolab Studio 🏢</h2>
-            <p className="dash-page-header__subtitle">
-              Manage your hiring pipeline and track performance.
-            </p>
+            <div className="company-header-brand">
+              <MediaBadge
+                src={company?.logo_url}
+                alt={companyName}
+                fallback={getInitials(companyName, 'C').slice(0, 1)}
+                className="company-header-brand__logo"
+                sizes="52px"
+              />
+              <div>
+                <h2 className="dash-page-header__title">Welcome, {companyName} 🏢</h2>
+                <p className="dash-page-header__subtitle">
+                  Manage your hiring pipeline and track performance.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

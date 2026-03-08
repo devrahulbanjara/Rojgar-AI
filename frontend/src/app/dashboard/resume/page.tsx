@@ -14,10 +14,9 @@ import {
 import { apiResumeToUi, removeResume, setResumes, upsertResume } from '@/store/slices/resumeSlice'
 import { FileText, Plus } from 'lucide-react'
 
-import Loader from '@/components/common/Loader'
-
 import CreateResumeModal from './_components/CreateResumeModal'
 import ResumeCard from './_components/ResumeCard'
+import { ResumeGridSkeleton } from './_components/ResumeSkeletons'
 
 // ── Resume list page ───────────────────────────────────────────────────────
 // Clicking View or Edit routes to /dashboard/resume/[id] (view or edit mode).
@@ -112,15 +111,10 @@ export default function ResumePage() {
         </div>
       </div>
 
-      {/* Loading */}
-      {isLoadingResumes && (
-        <div className="resume-empty-state">
-          <Loader size="lg" />
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoadingResumes && resumes.length === 0 && (
+      {/* API-backed content */}
+      {isLoadingResumes ? (
+        <ResumeGridSkeleton count={5} />
+      ) : resumes.length === 0 ? (
         <div className="resume-empty-state">
           <FileText size={48} style={{ opacity: 0.4 }} />
           <p>No resumes yet. Create your first one.</p>
@@ -128,26 +122,24 @@ export default function ResumePage() {
             Create Resume
           </button>
         </div>
-      )}
-
-      {/* Resumes grid */}
-      {!isLoadingResumes && resumes.length > 0 && (
-        <div className="resume-grid">
-          {resumes.map((r) => (
-            <ResumeCard
+      ) : (
+        <div className="resume-grid content-stagger">
+          {resumes.map((r, index) => (
+            <div
               key={r.id}
-              resume={r}
-              onView={() => router.push(`/dashboard/resume/${r.id}`)}
-              onEdit={() => router.push(`/dashboard/resume/${r.id}?mode=edit`)}
-              onDelete={() => handleDelete(r.id)}
-              isDeleting={deletingId === r.id}
-              isViewing={false}
-            />
+              className="content-stagger-item"
+              style={{ '--stagger-index': index } as React.CSSProperties}
+            >
+              <ResumeCard
+                resume={r}
+                onView={() => router.push(`/dashboard/resume/${r.id}`)}
+                onEdit={() => router.push(`/dashboard/resume/${r.id}?mode=edit`)}
+                onDelete={() => handleDelete(r.id)}
+                isDeleting={deletingId === r.id}
+                isViewing={false}
+              />
+            </div>
           ))}
-          <button className="resume-add-card" onClick={() => setShowCreateModal(true)}>
-            <Plus size={28} style={{ opacity: 0.6 }} />
-            <span>Create New Resume</span>
-          </button>
         </div>
       )}
     </div>

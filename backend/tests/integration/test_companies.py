@@ -1,4 +1,7 @@
 import pytest
+from sqlalchemy import select
+
+from app.modules.companies.models import Company
 
 from tests.integration.helpers import (
     auth_headers,
@@ -201,3 +204,110 @@ class TestRecruiterManagement:
             headers=auth_headers(admin),
         )
         assert resp.status_code == 404
+
+
+class TestCompanyLogoCrud:
+    @pytest.mark.asyncio
+    async def test_admin_can_upload_company_logo(self, client, db, monkeypatch):
+        admin = await make_user(db, "logo_admin@test.com", role="recruiter_admin")
+        company = await make_company(db, "Logo Co", "logoco.com")
+        await make_membership(db, admin, company, role="admin", status="active")
+
+        async def fake_upload(_file, folder: str):
+            assert folder == "logos"
+            return "https://bucket.s3.us-east-1.amazonaws.com/logos/company-logo.png"
+
+        deleted_urls: list[str] = []
+
+        async def fake_delete(url: str | None):
+            if url:
+                deleted_urls.append(url)
+
+        monkeypatch.setattr(
+            "app.modules.companies.router.s3_service.upload_image",
+            fake_upload,
+        )
+        monkeypatch.setattr(
+            "app.modules.companies.router.s3_service.delete_image",
+            fake_delete,
+        )
+
+        resp = await client.patch(
+            "/companies/me/logo",
+            headers=auth_headers(admin),
+            files={"file": ("logo.png", b"fake-image", "image/png")},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["logo_url"].endswith("/logos/company-logo.png")
+        assert deleted_urls == []
+
+    @pytest.mark.asyncio
+    async def test_admin_can_delete_company_logo(self, client, db, monkeypatch):
+        admin = await make_user(
+            db, "logo_delete_admin@test.com", role="recruiter_admin"
+        )
+        company = await make_company(db, "Delete Logo Co", "deletelogoco.com")
+        company.logo_url = (
+            "https://bucket.s3.us-east-1.amazonaws.com/logos/old-logo.png"
+        )
+        await db.commit()
+        await make_membership(db, admin, company, role="admin", status="active")
+
+        deleted_urls: list[str] = []
+
+        async def fake_delete(url: str | None):
+            if url:
+                deleted_urls.append(url)
+
+        monkeypatch.setattr(
+            "app.modules.companies.router.s3_service.delete_image",
+            fake_delete,
+        )
+
+        resp = await client.delete(
+            "/companies/me/logo",
+            headers=auth_headers(admin),
+        )
+
+        assert resp.status_code == 200
+        assert deleted_urls == [
+            "https://bucket.s3.us-east-1.amazonaws.com/logos/old-logo.png"
+        ]
+
+
+class TestCompanyProfile:
+    @pytest.mark.asyncio
+    async def test_admin_can_get_company_profile(self, client, db):
+        admin = await make_user(db, "company_me@test.com", role="recruiter_admin")
+        company = await make_company(db, "Profile Co", "profileco.com")
+        await make_membership(db, admin, company, role="admin", status="active")
+
+        resp = await client.get("/companies/me", headers=auth_headers(admin))
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["name"] == "Profile Co"
+
+    @pytest.mark.asyncio
+    async def test_admin_can_update_company_profile(self, client, db):
+        admin = await make_user(db, "company_update@test.com", role="recruiter_admin")
+        company = await make_company(db, "Update Co", "updateco.com")
+        await make_membership(db, admin, company, role="admin", status="active")
+
+        resp = await client.patch(
+            "/companies/me",
+            headers=auth_headers(admin),
+            json={
+                "name": "Updated Co",
+                "industry": "Fintech",
+                "location": "Kathmandu",
+                "website_url": "https://updated.example",
+                "description": "Updated company profile",
+            },
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["name"] == "Updated Co"
+        db_company = await db.scalar(select(Company).where(Company.id == company.id))
+        assert db_company is not None
+        assert db_company.website_url == "https://updated.example"

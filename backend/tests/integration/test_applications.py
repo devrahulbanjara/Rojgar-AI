@@ -269,6 +269,67 @@ class TestApplicationRead:
         resp = await client.get("/applications/me", headers=auth_headers(cand))
         assert resp.status_code == 200
         assert len(resp.json()["data"]) >= 1
+        assert resp.json()["data"][0]["job_title"] == "List App Job"
+        assert resp.json()["data"][0]["company_name"] == "List App Co"
+
+    @pytest.mark.asyncio
+    async def test_recruiter_can_list_company_applications_across_jobs(self, client, db):
+        recruiter = await make_user(
+            db, "recruiter_company_apps@test.com", role="recruiter_admin"
+        )
+        cand = await make_user(db, "cand_company_apps@test.com")
+        cand.avatar_url = "https://example.com/avatar.png"
+        company = await make_company(db, "Company Inbox Co", "companyinboxco.com")
+        await make_membership(db, recruiter, company)
+
+        first_job_resp = await client.post(
+            "/jobs/",
+            json={
+                "title": "First Inbox Job",
+                "location_type": "remote",
+                "status": "open",
+            },
+            headers=auth_headers(recruiter),
+        )
+        second_job_resp = await client.post(
+            "/jobs/",
+            json={
+                "title": "Second Inbox Job",
+                "location_type": "remote",
+                "status": "open",
+            },
+            headers=auth_headers(recruiter),
+        )
+        first_job_id = first_job_resp.json()["data"]["id"]
+        second_job_id = second_job_resp.json()["data"]["id"]
+
+        resume_resp = await client.post(
+            "/resumes/",
+            json={"resume_name": "Company Inbox Resume"},
+            headers=auth_headers(cand),
+        )
+        resume_id = resume_resp.json()["data"]["id"]
+
+        await client.post(
+            "/applications/",
+            json={"job_id": first_job_id, "resume_id": resume_id},
+            headers=auth_headers(cand),
+        )
+        await client.post(
+            "/applications/",
+            json={"job_id": second_job_id, "resume_id": resume_id},
+            headers=auth_headers(cand),
+        )
+
+        resp = await client.get(
+            "/applications/company/me",
+            headers=auth_headers(recruiter),
+        )
+
+        assert resp.status_code == 200
+        assert len(resp.json()["data"]) == 2
+        assert resp.json()["data"][0]["applicant_name"] == cand.full_name
+        assert resp.json()["data"][0]["applicant_avatar_url"] == cand.avatar_url
 
     @pytest.mark.asyncio
     async def test_recruiter_can_list_applications_for_own_job(self, client, db):
@@ -306,6 +367,64 @@ class TestApplicationRead:
         )
         assert resp.status_code == 200
         assert len(resp.json()["data"]) >= 1
+        assert resp.json()["data"][0]["job_id"] == job_id
+
+    @pytest.mark.asyncio
+    async def test_recruiter_can_filter_company_applications_by_job_id(self, client, db):
+        recruiter = await make_user(
+            db, "recruiter_company_filter_job@test.com", role="recruiter_admin"
+        )
+        cand = await make_user(db, "cand_company_filter@test.com")
+        company = await make_company(db, "Filter Inbox Co", "filterinboxco.com")
+        await make_membership(db, recruiter, company)
+
+        first_job_resp = await client.post(
+            "/jobs/",
+            json={
+                "title": "Filter Inbox Job A",
+                "location_type": "remote",
+                "status": "open",
+            },
+            headers=auth_headers(recruiter),
+        )
+        second_job_resp = await client.post(
+            "/jobs/",
+            json={
+                "title": "Filter Inbox Job B",
+                "location_type": "remote",
+                "status": "open",
+            },
+            headers=auth_headers(recruiter),
+        )
+        first_job_id = first_job_resp.json()["data"]["id"]
+        second_job_id = second_job_resp.json()["data"]["id"]
+
+        resume_resp = await client.post(
+            "/resumes/",
+            json={"resume_name": "Filter Inbox Resume"},
+            headers=auth_headers(cand),
+        )
+        resume_id = resume_resp.json()["data"]["id"]
+
+        await client.post(
+            "/applications/",
+            json={"job_id": first_job_id, "resume_id": resume_id},
+            headers=auth_headers(cand),
+        )
+        await client.post(
+            "/applications/",
+            json={"job_id": second_job_id, "resume_id": resume_id},
+            headers=auth_headers(cand),
+        )
+
+        resp = await client.get(
+            f"/applications/company/me?job_id={first_job_id}",
+            headers=auth_headers(recruiter),
+        )
+
+        assert resp.status_code == 200
+        assert len(resp.json()["data"]) == 1
+        assert resp.json()["data"][0]["job_id"] == first_job_id
 
     @pytest.mark.asyncio
     async def test_candidate_cannot_list_applications_for_a_job(self, client, db):
