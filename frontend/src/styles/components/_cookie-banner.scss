@@ -1,0 +1,161 @@
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ── Block ────────────────────────────────────────────────────
+.cookie-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: $z-sticky + 2;
+  display: flex;
+  justify-content: center;
+  padding-inline: $space-4;
+  will-change: transform, opacity;
+
+  // ── Element: inner (floating pill) ───────────────────────
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: $space-5;
+    background: $color-white;
+    border-radius: 50px;
+    box-shadow:
+      0 8px 40px rgba($color-black, 0.12),
+      0 2px 8px rgba($color-black, 0.06);
+    padding: $space-3 $space-3 $space-3 $space-5;
+    max-width: 860px;
+    width: 100%;
+
+    @include md {
+      padding: $space-4 $space-4 $space-4 $space-8;
+    }
+
+    // Stack vertically on small screens
+    @media (width <= 639px) {
+      flex-direction: column;
+      align-items: flex-start;
+      border-radius: $radius-xl;
+      padding: $space-5;
+    }
+  }
+
+  // ── Element: icon ─────────────────────────────────────────
+  &__icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+
+    @media (width <= 639px) {
+      font-size: 1.75rem;
+    }
+  }
+
+  // ── Element: content ──────────────────────────────────────
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-family: var(--font-heading);
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    margin-bottom: $space-1;
+  }
+
+  &__desc {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    line-height: $line-height-normal;
+  }
+
+  &__link {
+    color: $color-primary;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    @include transition(opacity, $transition-fast);
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  // ── Element: actions ──────────────────────────────────────
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-shrink: 0;
+
+    @media (width <= 639px) {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+
+  // ── Element: btn ──────────────────────────────────────────
+  &__btn {
+    border-radius: $radius-full !important;
+    padding: $space-2 $space-5 !important;
+    font-size: $font-size-sm !important;
+    font-weight: $font-weight-semibold !important;
+    white-space: nowrap;
+
+    // Reject / Decline button
+    &--reject {
+      position: relative;
+      overflow: hidden;
+      background-color: transparent !important;
+      color: $color-gray-600 !important;
+      border: 1px solid $color-gray-300 !important;
+      z-index: 0;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: $color-gray-100;
+        transform: scaleY(0);
+        transform-origin: top;
+        transition: transform $transition-base;
+        z-index: -1;
+      }
+
+      &:hover {
+        color: $color-gray-900 !important;
+        border-color: $color-gray-400 !important;
+
+        &::before {
+          transform: scaleY(1);
+          transform-origin: bottom;
+        }
+      }
+    }
+
+    // Accept button — same fill animation as header signup
+    &--accept {
+      position: relative;
+      overflow: hidden;
+      z-index: 0;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: color.adjust($color-primary, $lightness: -12%);
+        transform: scaleY(0);
+        transform-origin: top;
+        transition: transform $transition-base;
+        z-index: -1;
+      }
+
+      &:hover::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
+    }
+  }
+}
