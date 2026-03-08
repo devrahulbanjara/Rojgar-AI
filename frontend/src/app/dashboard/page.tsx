@@ -165,10 +165,10 @@ function ApplicationStatusIcon({ variant }: { variant: string }) {
 
 function StatIcon({ icon }: { icon: string }) {
   const icons: Record<string, React.ReactNode> = {
-    applications: <FileText size={22} />,
-    calendar: <Calendar size={22} />,
-    eye: <Eye size={22} />,
-    bookmark: <Bookmark size={22} />,
+    applications: <FileText size={16} strokeWidth={1.75} />,
+    calendar: <Calendar size={16} strokeWidth={1.75} />,
+    eye: <Eye size={16} strokeWidth={1.75} />,
+    bookmark: <Bookmark size={16} strokeWidth={1.75} />,
   }
   return icons[icon] || null
 }
@@ -194,16 +194,13 @@ export default function UserDashboardPage() {
         <div className="dash-stats">
           {stats.map((s) => (
             <div key={s.label} className="stat-card">
-              <div className="stat-card__header">
+              <div className="stat-card__value">{s.value}</div>
+              <div className="stat-card__footer">
                 <div className={`stat-card__icon-wrap stat-card__icon-wrap--${s.variant}`}>
                   <StatIcon icon={s.icon} />
                 </div>
-                <span className={`stat-card__trend stat-card__trend--${s.trendDir}`}>
-                  {s.trend}
-                </span>
+                <div className="stat-card__label">{s.label}</div>
               </div>
-              <div className="stat-card__value">{s.value}</div>
-              <div className="stat-card__label">{s.label}</div>
             </div>
           ))}
         </div>

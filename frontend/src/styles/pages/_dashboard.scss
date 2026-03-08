@@ -286,26 +286,36 @@
   padding: $space-5 $space-6;
   display: flex;
   flex-direction: column;
-  gap: $space-3;
+  gap: $space-2;
   transition: box-shadow $transition-fast;
 
   &:hover {
     box-shadow: $shadow-md;
   }
 
-  &__header {
+  &__value {
+    font-family: $font-heading;
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+  }
+
+  &__footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: $space-2;
+    margin-top: $space-1;
   }
 
   &__icon-wrap {
-    width: 44px;
-    height: 44px;
-    border-radius: $radius-xl;
+    width: 28px;
+    height: 28px;
+    border-radius: $radius-lg;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 
     &--primary {
       background: rgba($color-primary, 0.1);
@@ -331,31 +341,6 @@
       background: rgba($color-accent, 0.1);
       color: $color-accent;
     }
-  }
-
-  &__trend {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    padding: 3px 8px;
-    border-radius: $radius-full;
-
-    &--up {
-      background: rgba($color-success, 0.1);
-      color: $color-success;
-    }
-
-    &--down {
-      background: rgba($color-accent, 0.1);
-      color: $color-accent;
-    }
-  }
-
-  &__value {
-    font-family: $font-heading;
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
-    color: $color-gray-900;
-    line-height: $line-height-tight;
   }
 
   &__label {
@@ -2065,6 +2050,9 @@
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     color: var(--expires-color, #{$color-gray-500});
+    display: flex;
+    align-items: center;
+    gap: 3px;
   }
 }
 
@@ -2088,6 +2076,9 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-bold;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .score-badge {
@@ -2295,6 +2286,13 @@
 // ── Item-row logo circle variant ───────────────────────────────
 .item-row__logo--circle {
   border-radius: $radius-full;
+}
+
+// ── Item-row logo icon variant (Lucide icon, no letter) ────────
+.item-row__logo--icon {
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+  font-family: inherit;
 }
 
 // ── Cell-actions top margin variant ───────────────────────────

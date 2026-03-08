@@ -150,7 +150,7 @@ export const recruiterApi = baseApi.injectEndpoints({
       invalidatesTags: ['Interviews'],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: process.env.NODE_ENV !== 'production',
 })
 
 export const {
