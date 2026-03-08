@@ -1,0 +1,366 @@
+// ============================================================
+// LEGAL PAGES — Privacy, Cookies, Terms, Copyright
+// Shared layout for all /privacy /cookies /terms /copyright
+// ============================================================
+
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ── Page wrapper ────────────────────────────────────────────
+.legal {
+  position: relative;
+  background: $color-white;
+  overflow: hidden;
+  min-height: 100vh;
+
+  // ── Background decorations ──────────────────────────────
+  &__bg-top {
+    position: absolute;
+    top: 0%;
+    right: -250px;
+    width: 700px;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &__bg-bottom {
+    position: absolute;
+    bottom: 100px;
+    left: -200px;
+    width: 700px;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    rotate: 210deg;
+  }
+
+  // ── Hero / page header ──────────────────────────────────
+  &__hero {
+    position: relative;
+    z-index: 1;
+    padding-top: calc(80px + $space-16); // clear fixed header
+    padding-bottom: $space-12;
+
+    @include md {
+      padding-top: calc(80px + $space-20);
+      padding-bottom: $space-16;
+    }
+  }
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba($color-primary, 0.08);
+    border-radius: $radius-full;
+    padding: $space-1 $space-4;
+    margin-bottom: $space-5;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: $radius-full;
+      background: $color-primary;
+      flex-shrink: 0;
+    }
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    line-height: $line-height-tight;
+    color: $color-gray-900;
+    letter-spacing: -0.02em;
+    margin-bottom: $space-4;
+
+    @include md {
+      font-size: $font-size-5xl;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-4;
+    align-items: center;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    margin-top: $space-3;
+  }
+
+  &__meta-item {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+
+    svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      color: $color-primary;
+    }
+  }
+
+  &__meta-sep {
+    width: 4px;
+    height: 4px;
+    border-radius: $radius-full;
+    background: $color-gray-300;
+  }
+
+  // ── Body layout ─────────────────────────────────────────
+  &__body {
+    position: relative;
+    z-index: 1;
+    padding-bottom: $space-20;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-10;
+
+    @include lg {
+      grid-template-columns: 240px 1fr;
+      gap: $space-16;
+      align-items: start;
+    }
+  }
+
+  // ── Sticky table of contents ─────────────────────────────
+  &__toc {
+    display: none;
+
+    @include lg {
+      display: block;
+      position: sticky;
+      top: calc(80px + $space-8);
+    }
+  }
+
+  &__toc-title {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $color-gray-400;
+    margin-bottom: $space-4;
+  }
+
+  &__toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    border-left: 2px solid $color-gray-100;
+  }
+
+  &__toc-link {
+    display: block;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    padding: $space-1 $space-4;
+    border-left: 2px solid transparent;
+    margin-left: -2px;
+    text-decoration: none;
+    @include transition(all, $transition-fast);
+
+    line-height: $line-height-loose;
+
+    &:hover {
+      color: $color-primary;
+      border-left-color: $color-primary;
+    }
+
+    &--active {
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+      border-left-color: $color-primary;
+    }
+  }
+
+  // ── Main content area ────────────────────────────────────
+  &__content {
+    max-width: 760px;
+    min-width: 0;
+  }
+
+  // ── Individual section ───────────────────────────────────
+  &__section {
+    margin-bottom: $space-12;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__section-title {
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    margin-bottom: $space-5;
+    padding-bottom: $space-3;
+    border-bottom: 1px solid $color-gray-100;
+    scroll-margin-top: calc(80px + $space-8);
+
+    @include md {
+      font-size: $font-size-2xl;
+    }
+  }
+
+  &__section-subtitle {
+    font-family: $font-heading;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-800;
+    margin-top: $space-6;
+    margin-bottom: $space-3;
+  }
+
+  &__text {
+    font-size: $font-size-base;
+    color: $color-gray-600;
+    line-height: $line-height-loose;
+    margin-bottom: $space-4;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 $space-4;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+
+    li {
+      display: flex;
+      gap: $space-3;
+      font-size: $font-size-base;
+      color: $color-gray-600;
+      line-height: $line-height-loose;
+
+      &::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: $radius-full;
+        background: $color-primary;
+        flex-shrink: 0;
+        margin-top: 0.6em;
+      }
+    }
+  }
+
+  // ── Highlight / callout box ──────────────────────────────
+  &__callout {
+    background: rgba($color-primary, 0.05);
+    border: 1px solid rgba($color-primary, 0.15);
+    border-left: 3px solid $color-primary;
+    border-radius: $radius-lg;
+    padding: $space-5 $space-6;
+    margin-bottom: $space-6;
+
+    p {
+      font-size: $font-size-sm;
+      color: $color-gray-700;
+      line-height: $line-height-loose;
+      margin: 0;
+    }
+
+    strong {
+      color: $color-primary;
+    }
+  }
+
+  // ── Contact / CTA box ────────────────────────────────────
+  &__contact-box {
+    background: $color-gray-100;
+    border-radius: $radius-2xl;
+    padding: $space-8;
+    margin-top: $space-12;
+    text-align: center;
+
+    @include md {
+      padding: $space-10 $space-12;
+    }
+  }
+
+  &__contact-title {
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    margin-bottom: $space-2;
+  }
+
+  &__contact-text {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    margin-bottom: $space-6;
+    line-height: $line-height-loose;
+  }
+
+  // ── Inline prose links ───────────────────────────────────
+  &__link {
+    color: $color-primary;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    @include transition(opacity, $transition-fast);
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  // ── Internal nav chips ───────────────────────────────────
+  &__related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-3;
+    padding-top: $space-6;
+    border-top: 1px solid $color-gray-100;
+    margin-top: $space-12;
+  }
+
+  &__related-link {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    background: $color-white;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-full;
+    padding: $space-2 $space-4;
+    text-decoration: none;
+    @include transition(all, $transition-fast);
+
+    svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      color: $color-primary;
+      border-color: $color-primary;
+      background: rgba($color-primary, 0.04);
+    }
+  }
+}
