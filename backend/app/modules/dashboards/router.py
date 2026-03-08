@@ -1,33 +1,27 @@
-from fastapi import APIRouter, Depends
-
-from app.core.responses import ResponseBuilder
+from app.core.database import get_db
+from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.auth.dependencies import (
     require_candidate,
     require_recruiter_privileges,
 )
 from app.modules.auth.models import User
+from app.modules.dashboards import service
+from app.modules.dashboards.schemas import CandidateDashboardResponse
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
 
 
-@router.get("/candidate")
+@router.get("/candidate", response_model=UnifiedResponse[CandidateDashboardResponse])
 async def get_candidate_dashboard(
     current_user: User = Depends(require_candidate),
+    db: AsyncSession = Depends(get_db),
 ):
-    # Accessing the user ID and other info
-    candidate_id = current_user.id
-
-    # Simulating a DB call for dashboard stats
-    dummy_stats = {
-        "user_id": str(candidate_id),
-        "full_name": current_user.full_name,
-        "applied_jobs": 12,
-        "interviews_scheduled": 2,
-        "profile_completion": "85%",
-    }
+    data = await service.get_candidate_dashboard(db, current_user)
 
     return ResponseBuilder.success(
-        data=dummy_stats, message="Candidate dashboard data retrieved"
+        data=data, message="Candidate dashboard data retrieved"
     )
 
 

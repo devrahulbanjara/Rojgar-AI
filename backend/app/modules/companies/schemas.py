@@ -39,10 +39,22 @@ class JoinCompanyRequest(BaseSchema):
 class CompanyResponse(BaseSchema):
     id: UUID
     name: str
+    logo_url: str | None = None
     industry: str | None = None
     company_size: str | None = None
     location: str | None = None
     website_url: str | None = None
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class UpdateCompanyRequest(BaseSchema):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    industry: str | None = Field(default=None, max_length=100)
+    company_size: str | None = Field(default=None, max_length=50)
+    location: str | None = Field(default=None, max_length=255)
+    website_url: str | None = Field(default=None, max_length=255)
     description: str | None = None
 
 

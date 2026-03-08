@@ -1,11 +1,18 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.security import create_tokens
+from app.modules.applications.models import Application
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
+from app.modules.profiles.models import (
+    Profile,
+    ProfileEducation,
+    ProfileExperience,
+    ProfileSkill,
+)
 from app.modules.resumes.models import Resume
-from app.shared.enums import LocationType
+from app.shared.enums import ApplicationStatus, LocationType
+from sqlalchemy.ext.asyncio import AsyncSession
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -90,6 +97,59 @@ async def make_resume(db: AsyncSession, user: User, name: str = "My Resume") -> 
     await db.commit()
     await db.refresh(resume)
     return resume
+
+
+async def make_application(
+    db: AsyncSession,
+    user: User,
+    job: Job,
+    resume: Resume,
+    status: ApplicationStatus = ApplicationStatus.submitted,
+) -> Application:
+    application = Application(
+        user_id=user.id,
+        job_id=job.id,
+        resume_id=resume.id,
+        status=status,
+    )
+    db.add(application)
+    await db.commit()
+    await db.refresh(application)
+    return application
+
+
+async def make_profile(
+    db: AsyncSession,
+    user: User,
+    *,
+    with_children: bool = False,
+) -> Profile:
+    profile = Profile(
+        user_id=user.id,
+        headline="Candidate Headline",
+        summary="Candidate summary",
+        phone="9800000000",
+        location="Kathmandu",
+        linkedin_url="https://linkedin.com/in/test-user",
+        github_url="https://github.com/test-user",
+        portfolio_url="https://portfolio.test",
+        years_of_experience=3,
+    )
+    db.add(profile)
+    await db.flush()
+
+    if with_children:
+        db.add(
+            ProfileExperience(
+                profile_id=profile.id, company_name="Acme", title="Engineer"
+            )
+        )
+        db.add(ProfileEducation(profile_id=profile.id, institution="Test University"))
+        db.add(ProfileSkill(profile_id=profile.id, skill_name="Python"))
+
+    await db.commit()
+    await db.refresh(profile)
+    return profile
 
 
 def auth_headers(user: User) -> dict:

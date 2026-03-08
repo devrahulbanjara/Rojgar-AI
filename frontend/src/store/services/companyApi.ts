@@ -1,9 +1,8 @@
-import type { CompanyProfile, RecruiterMember, UpdateCompanyProfileRequest } from '@/lib/types/user'
+import type { RecruiterMember } from '@/lib/types/user'
 
 import { type ApiResponse, baseApi } from './baseApi'
 
-// Re-export canonical types for components that import from this file
-export type { CompanyProfile, RecruiterMember }
+export type { RecruiterMember }
 
 // ---------------------------------------------------------------------------
 // Company registration & join-request types
@@ -25,7 +24,33 @@ export interface JoinCompanyRequest {
   message?: string
 }
 
+export interface CompanyMediaData {
+  id: string
+  name: string
+  logo_url: string | null
+  industry: string | null
+  company_size: string | null
+  location: string | null
+  website_url: string | null
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type CompanyProfileData = CompanyMediaData
+
+export interface UpdateCompanyRequest {
+  name?: string | null
+  industry?: string | null
+  company_size?: string | null
+  location?: string | null
+  website_url?: string | null
+  description?: string | null
+}
+
 type EmptyResponse = ApiResponse<null>
+type CompanyMediaResponse = ApiResponse<CompanyMediaData>
+type CompanyProfileResponse = ApiResponse<CompanyProfileData>
 
 // ---------------------------------------------------------------------------
 // Company API
@@ -34,17 +59,34 @@ type EmptyResponse = ApiResponse<null>
 export const companyApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** GET /companies/me */
-    getMyCompany: builder.query<CompanyProfile, void>({
+    getMyCompany: builder.query<CompanyProfileResponse, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me`,
       providesTags: ['Company'],
     }),
 
     /** PATCH /companies/me */
-    updateCompany: builder.mutation<CompanyProfile, UpdateCompanyProfileRequest>({
+    updateCompany: builder.mutation<CompanyProfileResponse, UpdateCompanyRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me`,
         method: 'PATCH',
         body,
+      }),
+      invalidatesTags: ['Company'],
+    }),
+
+    uploadCompanyLogo: builder.mutation<CompanyMediaResponse, FormData>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/logo`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Company'],
+    }),
+
+    removeCompanyLogo: builder.mutation<EmptyResponse, void>({
+      query: () => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/companies/me/logo`,
+        method: 'DELETE',
       }),
       invalidatesTags: ['Company'],
     }),
@@ -106,6 +148,8 @@ export const companyApi = baseApi.injectEndpoints({
 export const {
   useGetMyCompanyQuery,
   useUpdateCompanyMutation,
+  useUploadCompanyLogoMutation,
+  useRemoveCompanyLogoMutation,
   useRegisterCompanyMutation,
   useRequestJoinCompanyMutation,
   useGetCompanyRecruitersQuery,

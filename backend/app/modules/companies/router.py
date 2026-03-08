@@ -1,19 +1,24 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.integrations.s3.service import S3Service
 from app.modules.auth.dependencies import require_recruiter_admin
 from app.modules.auth.models import User
 from app.modules.companies import service
 from app.modules.companies.schemas import (
+    CompanyResponse,
     JoinCompanyRequest,
     RecruiterMemberResponse,
     RegisterCompanyRequest,
+    UpdateCompanyRequest,
     UpdateRecruiterStatusRequest,
 )
+from app.modules.companies.utils import get_admin_company
 
 router = APIRouter()
+s3_service = S3Service()
 
 db = Depends(get_db)
 
@@ -56,6 +61,33 @@ async def request_join_company(
 
 
 @router.get(
+    "/me",
+    response_model=UnifiedResponse[CompanyResponse],
+    summary="Get the authenticated company admin's company profile",
+)
+async def get_my_company(
+    user: User = Depends(require_recruiter_admin),
+    db: AsyncSession = db,
+):
+    data = await service.get_my_company(db, user)
+    return ResponseBuilder.success(data=data, message="Company fetched.")
+
+
+@router.patch(
+    "/me",
+    response_model=UnifiedResponse[CompanyResponse],
+    summary="Update the authenticated company admin's company profile",
+)
+async def update_my_company(
+    payload: UpdateCompanyRequest,
+    user: User = Depends(require_recruiter_admin),
+    db: AsyncSession = db,
+):
+    data = await service.update_my_company(db, user, payload)
+    return ResponseBuilder.success(data=data, message="Company updated.")
+
+
+@router.get(
     "/me/recruiters",
     response_model=UnifiedResponse[list[RecruiterMemberResponse]],
     summary="List all recruiter members of the authenticated company admin's company",
@@ -95,3 +127,49 @@ async def remove_recruiter(
 ):
     await service.remove_recruiter(db, user, membership_id)
     return ResponseBuilder.success(data=None, message="Recruiter removed.")
+
+
+@router.patch(
+    "/me/logo",
+    response_model=UnifiedResponse[CompanyResponse],
+    summary="Upload or replace the authenticated company admin's logo",
+)
+async def upload_company_logo(
+    file: UploadFile = File(...),
+    user: User = Depends(require_recruiter_admin),
+    db: AsyncSession = db,
+):
+    company = await get_admin_company(db, user)
+    previous_logo_url = company.logo_url
+    new_logo_url = await s3_service.upload_image(file, folder="logos")
+
+    company.logo_url = new_logo_url
+    await db.commit()
+    await db.refresh(company)
+
+    if previous_logo_url and previous_logo_url != new_logo_url:
+        await s3_service.delete_image(previous_logo_url)
+
+    data = CompanyResponse.model_validate(company)
+    return ResponseBuilder.success(data=data, message="Company logo updated.")
+
+
+@router.delete(
+    "/me/logo",
+    response_model=UnifiedResponse[None],
+    summary="Delete the authenticated company admin's logo",
+)
+async def delete_company_logo(
+    user: User = Depends(require_recruiter_admin),
+    db: AsyncSession = db,
+):
+    company = await get_admin_company(db, user)
+    previous_logo_url = company.logo_url
+    company.logo_url = None
+    await db.commit()
+    await db.refresh(company)
+
+    if previous_logo_url:
+        await s3_service.delete_image(previous_logo_url)
+
+    return ResponseBuilder.success(data=None, message="Company logo removed.")

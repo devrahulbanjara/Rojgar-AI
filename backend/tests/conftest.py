@@ -33,6 +33,7 @@ async def engine():
     )
 
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
@@ -44,12 +45,21 @@ async def engine():
 
 @pytest.fixture
 async def db(engine):
-    """Fresh session per test, ensuring explicit closure."""
-    session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
-    async with session_factory() as session:
-        yield session
-        await session.rollback()
-        await session.close()
+    """Fresh session per test, wrapped in a rollback-only outer transaction."""
+    async with engine.connect() as connection:
+        transaction = await connection.begin()
+        session_factory = async_sessionmaker(
+            bind=connection,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
+
+        async with session_factory() as session:
+            try:
+                yield session
+            finally:
+                await session.close()
+                await transaction.rollback()
 
 
 @pytest.fixture

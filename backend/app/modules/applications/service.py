@@ -13,8 +13,11 @@ from app.modules.applications.schemas import (
     ApplicationListItem,
     ApplicationResponse,
     ApplyRequest,
+    CandidateApplicationView,
+    RecruiterApplicationView,
     UpdateApplicationStatusRequest,
 )
+from app.modules.companies.models import Company
 from app.modules.companies.models import CompanyMembership
 from app.shared.enums import ApplicationStatus, JobStatus
 from app.modules.jobs.models import Job
@@ -116,28 +119,7 @@ def _app_to_list_item(app: Application) -> ApplicationListItem:
     )
 
 
-async def list_user_applications(
-    db: AsyncSession, user: User, page: int, size: int
-) -> list[ApplicationListItem]:
-    """List all applications by the authenticated candidate (paginated)."""
-    stmt = (
-        select(Application)
-        .where(Application.user_id == user.id)
-        .options(joinedload(Application.user))
-        .order_by(Application.created_at.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-    )
-    result = await db.execute(stmt)
-    apps = result.scalars().unique().all()
-    return [_app_to_list_item(a) for a in apps]
-
-
-async def list_job_applications(
-    db: AsyncSession, user: User, job_id: str, page: int, size: int
-) -> list[ApplicationListItem]:
-    """List all applications for a job (company/recruiter access check, paginated)."""
-    # Verify user holds an active company membership (covers recruiter + recruiter_admin)
+async def _get_active_company_id(db: AsyncSession, user: User) -> str:
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user.id,
@@ -148,8 +130,92 @@ async def list_job_applications(
     if not company_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only active company members can view job applications.",
+            detail="Only active company members can view applications.",
         )
+    return company_id
+
+
+async def list_candidate_applications(
+    db: AsyncSession, user_id, page: int = 1, size: int = 20
+) -> list[CandidateApplicationView]:
+    """Return candidate applications across all companies with job and company metadata."""
+    stmt = (
+        select(Application, Job, Company)
+        .join(Job, Job.id == Application.job_id)
+        .join(Company, Company.id == Job.company_id)
+        .where(Application.user_id == user_id)
+        .order_by(Application.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+    )
+    rows = (await db.execute(stmt)).all()
+
+    return [
+        CandidateApplicationView(
+            id=application.id,
+            status=application.status,
+            created_at=application.created_at,
+            updated_at=application.updated_at,
+            job_id=job.id,
+            job_title=job.title,
+            company_name=company.name,
+            company_logo_url=company.logo_url,
+            location=job.location,
+            location_type=job.location_type,
+        )
+        for application, job, company in rows
+    ]
+
+
+async def list_company_applications(
+    db: AsyncSession,
+    company_id,
+    job_id=None,
+    page: int = 1,
+    size: int = 20,
+) -> list[RecruiterApplicationView]:
+    """Return applications for a company inbox, optionally filtered to a single job."""
+    stmt = (
+        select(Application, User, Job)
+        .join(User, User.id == Application.user_id)
+        .join(Job, Job.id == Application.job_id)
+        .where(Job.company_id == company_id)
+    )
+
+    if job_id is not None:
+        stmt = stmt.where(Application.job_id == job_id)
+
+    stmt = stmt.order_by(Application.created_at.desc()).offset((page - 1) * size).limit(size)
+    rows = (await db.execute(stmt)).all()
+
+    return [
+        RecruiterApplicationView(
+            id=application.id,
+            status=application.status,
+            created_at=application.created_at,
+            updated_at=application.updated_at,
+            applicant_name=applicant.full_name,
+            applicant_email=applicant.email,
+            applicant_avatar_url=applicant.avatar_url,
+            job_title=job.title,
+            job_id=job.id,
+        )
+        for application, applicant, job in rows
+    ]
+
+
+async def list_user_applications(
+    db: AsyncSession, user: User, page: int, size: int
+) -> list[CandidateApplicationView]:
+    """List all applications by the authenticated candidate (paginated)."""
+    return await list_candidate_applications(db, user.id, page, size)
+
+
+async def list_job_applications(
+    db: AsyncSession, user: User, job_id: str, page: int, size: int
+) -> list[RecruiterApplicationView]:
+    """List all applications for a job (company/recruiter access check, paginated)."""
+    company_id = await _get_active_company_id(db, user)
 
     # Verify job belongs to the user's company
     result = await db.execute(
@@ -161,17 +227,26 @@ async def list_job_applications(
             detail="Job not found or does not belong to your company.",
         )
 
-    stmt = (
-        select(Application)
-        .where(Application.job_id == job_id)
-        .options(joinedload(Application.user))
-        .order_by(Application.created_at.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-    )
-    result = await db.execute(stmt)
-    apps = result.scalars().unique().all()
-    return [_app_to_list_item(a) for a in apps]
+    return await list_company_applications(db, company_id, job_id, page, size)
+
+
+async def list_my_company_applications(
+    db: AsyncSession, user: User, job_id: str | None, page: int, size: int
+) -> list[RecruiterApplicationView]:
+    """List applications for the authenticated recruiter's company, optionally by job."""
+    company_id = await _get_active_company_id(db, user)
+
+    if job_id is not None:
+        result = await db.execute(
+            select(Job).where(Job.id == job_id, Job.company_id == company_id)
+        )
+        if not result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found or does not belong to your company.",
+            )
+
+    return await list_company_applications(db, company_id, job_id, page, size)
 
 
 async def get_application(
@@ -196,13 +271,11 @@ async def get_application(
 
     # Active company members (recruiter / recruiter_admin) can see applications
     # for jobs belonging to their company — but only if their membership is active.
-    result = await db.execute(
-        select(CompanyMembership.company_id).where(
-            CompanyMembership.user_id == user.id,
-            CompanyMembership.status == MembershipStatus.active,
-        )
-    )
-    company_id = result.scalar_one_or_none()
+    company_id = None
+    try:
+        company_id = await _get_active_company_id(db, user)
+    except HTTPException:
+        company_id = None
     if company_id:
         result = await db.execute(
             select(Job).where(
@@ -225,18 +298,7 @@ async def update_application_status(
     payload: UpdateApplicationStatusRequest,
 ) -> ApplicationResponse:
     """Update application status (active company members only)."""
-    result = await db.execute(
-        select(CompanyMembership.company_id).where(
-            CompanyMembership.user_id == user.id,
-            CompanyMembership.status == MembershipStatus.active,
-        )
-    )
-    company_id = result.scalar_one_or_none()
-    if not company_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only active company members can update application status.",
-        )
+    company_id = await _get_active_company_id(db, user)
 
     result = await db.execute(
         select(Application)

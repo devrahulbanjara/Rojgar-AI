@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # Database
     db_user: str
     db_password: str
-    db_host: str = "localhost"
+    db_host: str
     db_port: int = 5432
     db_name: str
 
@@ -45,6 +45,21 @@ class Settings(BaseSettings):
     test_db_port: int = 5432
     test_db_name: str
 
+    # AWS S3
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_region: str = "us-east-1"
+    s3_bucket_name: str | None = None
+    s3_upload_acl: str | None = "public-read"
+    s3_max_upload_bytes: int = 5 * 1024 * 1024
+    s3_allowed_image_extensions: tuple[str, ...] = (
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "gif",
+    )
+
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
@@ -52,6 +67,12 @@ class Settings(BaseSettings):
     @property
     def test_database_url(self) -> str:
         return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
+
+    @property
+    def s3_base_url(self) -> str:
+        if not self.s3_bucket_name:
+            return ""
+        return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"

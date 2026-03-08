@@ -288,7 +288,7 @@ export default function ApplicationsPage() {
           </div>
 
           {/* Application cards */}
-          <div className="apps-list">
+          <div className="apps-list content-stagger">
             {filtered.length === 0 ? (
               <div className="apps-empty">
                 <Search size={40} aria-hidden="true" />
@@ -298,7 +298,8 @@ export default function ApplicationsPage() {
               filtered.map((app) => (
                 <div
                   key={app.id}
-                  className={`app-item${selectedApp?.id === app.id ? ' app-item--active' : ''}`}
+                  className={`app-item content-stagger-item${selectedApp?.id === app.id ? ' app-item--active' : ''}`}
+                  style={{ '--stagger-index': filtered.indexOf(app) } as React.CSSProperties}
                   onClick={() => setSelectedApp(app)}
                 >
                   <div
@@ -348,7 +349,7 @@ export default function ApplicationsPage() {
         {/* Detail / tracking panel */}
         <aside className="apps-layout__detail">
           {selectedApp ? (
-            <div className="app-detail">
+            <div className="app-detail content-fade-in">
               <div className="app-detail__header">
                 <div
                   className="app-detail__logo"
@@ -435,7 +436,7 @@ export default function ApplicationsPage() {
               </div>
             </div>
           ) : (
-            <div className="app-detail-empty">
+            <div className="app-detail-empty content-fade-in">
               <p>Select an application to view details</p>
             </div>
           )}
