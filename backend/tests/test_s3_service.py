@@ -43,7 +43,9 @@ async def test_upload_image_marks_objects_public(monkeypatch):
 
     monkeypatch.setattr("app.integrations.s3.service.settings.s3_bucket_name", "bucket")
     monkeypatch.setattr("app.integrations.s3.service.settings.aws_region", "us-east-1")
-    monkeypatch.setattr("app.integrations.s3.service.settings.s3_upload_acl", "public-read")
+    monkeypatch.setattr(
+        "app.integrations.s3.service.settings.s3_upload_acl", "public-read"
+    )
     monkeypatch.setattr(service, "_client", fake_client)
 
     upload = UploadFile(
@@ -66,7 +68,9 @@ async def test_upload_image_returns_generic_message_for_acl_failures(monkeypatch
 
     monkeypatch.setattr("app.integrations.s3.service.settings.s3_bucket_name", "bucket")
     monkeypatch.setattr("app.integrations.s3.service.settings.aws_region", "us-east-1")
-    monkeypatch.setattr("app.integrations.s3.service.settings.s3_upload_acl", "public-read")
+    monkeypatch.setattr(
+        "app.integrations.s3.service.settings.s3_upload_acl", "public-read"
+    )
     monkeypatch.setattr(service, "_client", FailingS3Client())
 
     upload = UploadFile(
