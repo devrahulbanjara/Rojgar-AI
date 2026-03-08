@@ -1,14 +1,21 @@
 import sys
-
 from loguru import logger
-
-logger.remove()
-logger.add(
-    sys.stdout,
-    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-    level="DEBUG",
-)
+from app.core.config import settings
 
 
-def get_logger():
-    return logger
+def setup_logging() -> None:
+    logger.remove()  # remove default handler
+    logger.add(
+        sys.stdout,
+        level="DEBUG" if settings.debug else "INFO",
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{name}</cyan>:<cyan>{line}</cyan> - {message}",
+        colorize=True,
+    )
+    if not settings.debug:
+        logger.add(
+            "logs/app.log",
+            rotation="10 MB",
+            retention="30 days",
+            level="INFO",
+            compression="zip",
+        )

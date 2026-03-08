@@ -1,171 +1,175 @@
-import hashlib
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, HTTPException, Request, status
-from jose import JWTError, jwt
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+import jwt
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 
-from app.db.models.user import User
-from app.db.session import get_db
+from app.core.config import settings
 
-from .config import settings
-from .current_datetime import get_datetime
+ph = PasswordHasher()
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(
-        f"{password}{settings.SECRET_KEY.get_secret_value()}".encode()
-    ).hexdigest()
+    return ph.hash(password)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return hash_password(plain_password) == hashed_password
+def verify_password(hashed: str | None, plain: str) -> bool:
+    if not hashed:
+        return False
+    try:
+        return ph.verify(hashed, plain)
+    except VerifyMismatchError:
+        return False
 
 
-def create_token(
-    entity_id: str, entity_type: str = "user", expires_minutes: int | None = None
-) -> str:
-    now = get_datetime()
-    if expires_minutes:
-        expire = now + timedelta(minutes=expires_minutes)
-    else:
-        expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    token_data = {"sub": entity_id, "entity_type": entity_type, "exp": expire}
-    token = jwt.encode(
-        token_data, settings.SECRET_KEY.get_secret_value(), algorithm=settings.ALGORITHM
+def create_tokens(user_id: str) -> tuple[dict, str, datetime]:
+    """
+    Returns (token_dict, jti, refresh_expires_at)
+    Caller is responsible for persisting jti to refresh_tokens table.
+    """
+    now = datetime.now(timezone.utc)
+    jti = str(uuid.uuid4())
+    refresh_expires_at = now + timedelta(days=settings.refresh_token_expire_days)
+
+    access = jwt.encode(
+        {
+            "sub": user_id,
+            "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
+            "type": "access",
+        },
+        settings.secret_key,
+        algorithm=settings.algorithm,
     )
-    return token
+    refresh = jwt.encode(
+        {
+            "sub": user_id,
+            "jti": jti,
+            "exp": refresh_expires_at,
+            "type": "refresh",
+        },
+        settings.secret_key,
+        algorithm=settings.algorithm,
+    )
+    tokens = {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
+    return tokens, jti, refresh_expires_at
 
 
-def verify_token(token: str) -> tuple[uuid.UUID, str]:
+def decode_access_token(token: str) -> str | None:
     try:
         payload = jwt.decode(
-            token,
-            settings.SECRET_KEY.get_secret_value(),
-            algorithms=[settings.ALGORITHM],
+            token, settings.secret_key, algorithms=[settings.algorithm]
         )
-        entity_id = payload.get("sub")
-        entity_type = payload.get("entity_type", "user")
-        if entity_id is None:
-            raise ValueError("Invalid token")
-        return (uuid.UUID(entity_id), entity_type)
-    except JWTError as e:
-        raise ValueError("Invalid or expired token") from e
-
-
-def get_current_user_id(request: Request) -> uuid.UUID:
-    token = request.cookies.get("auth_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required. Please log in to access this resource.",
-        )
-    try:
-        entity_id, entity_type = verify_token(token)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
-        ) from e
-    if entity_type != "user":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User authentication required for this endpoint.",
-        )
-    return entity_id
-
-
-def get_current_organization_id(request: Request) -> uuid.UUID:
-    token = request.cookies.get("auth_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required. Please log in to access this resource.",
-        )
-    try:
-        entity_id, entity_type = verify_token(token)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
-        ) from e
-    if entity_type != "organization":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Organization-level authentication required for this endpoint.",
-        )
-    return entity_id
-
-
-async def get_current_active_user(
-    db: AsyncSession = Depends(get_db),
-    user_id: uuid.UUID = Depends(get_current_user_id),
-) -> User:
-
-    result = await db.execute(
-        select(User)
-        .where(User.user_id == user_id)
-        .options(selectinload(User.google_account), selectinload(User.organization))
-    )
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return user
-
-
-def get_current_user_id_optional(request: Request) -> uuid.UUID | None:
-    token = request.cookies.get("auth_token")
-    if not token:
-        return None
-    try:
-        entity_id, entity_type = verify_token(token)
-        if entity_type != "user":
+        if payload.get("type") != "access":
             return None
-        return entity_id
-    except (HTTPException, ValueError):
+        return payload["sub"]
+    except (jwt.PyJWTError, KeyError):
         return None
 
 
-async def get_current_active_user_optional(
-    db: AsyncSession = Depends(get_db),
-    user_id: uuid.UUID | None = Depends(get_current_user_id_optional),
-) -> User | None:
-    if not user_id:
-        return None
-
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    return user
-
-
-async def get_current_recruiter_organization_id(
-    request: Request,
-) -> uuid.UUID:
-    token = request.cookies.get("auth_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required. Please log in to access this resource.",
-        )
-
+def decode_refresh_token(token: str) -> tuple[str, str] | None:
+    """Returns (user_id, jti) or None if invalid."""
     try:
-        entity_id, entity_type = verify_token(token)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired authentication token. Please log in again. ({e!s})",
-        ) from e
-
-    # Only accept organization tokens
-    if entity_type != "organization":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. This endpoint requires organization-level authentication. Please log in with an organization account to manage recruiters.",
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
         )
+        if payload.get("type") != "refresh":
+            return None
+        return payload["sub"], payload["jti"]
+    except (jwt.PyJWTError, KeyError):
+        return None
 
-    return entity_id
+
+def create_setup_token(user_id: str) -> str:
+    """Creates a 15-minute token used to authenticate company registration after signup."""
+    payload = {
+        "sub": user_id,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+        "type": "setup",
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_setup_token(token: str) -> str | None:
+    """Validates a setup token; returns user_id or None if invalid/expired."""
+    try:
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+        if payload.get("type") != "setup":
+            return None
+        return payload["sub"]
+    except (jwt.PyJWTError, KeyError):
+        return None
+
+
+def create_pending_signup_token(data: dict) -> str:
+    """
+    24-hour JWT holding everything needed to create a user (and optionally a
+    company or join-request) when the email-verification link is clicked.
+    The token IS the verification link — no extra DB row is written at signup time.
+
+    Recognised ``type`` values:
+      • ``"pending_candidate"`` – plain candidate signup
+      • ``"pending_company"``   – company-role signup; extra fields company_name, industry, etc.
+      • ``"pending_recruiter"`` – recruiter-role signup; extra field join_company_name
+    """
+    payload = {
+        **data,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24),
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_pending_signup_token(token: str) -> dict | None:
+    """
+    Validates a pending-signup JWT.
+    Returns the full payload dict if the ``type`` is one of the recognised
+    signup-flow values, else None.
+
+    Recognised types:
+      • ``"setup"``             – recruiter/admin after initial signup, before company step
+      • ``"pending_candidate"`` – candidate awaiting email verification
+      • ``"pending_company"``   – recruiter_admin; carries company details
+      • ``"pending_recruiter"`` – recruiter; carries join-company details
+    """
+    _VALID_TYPES = {
+        "setup",
+        "pending_candidate",
+        "pending_company",
+        "pending_recruiter",
+    }
+    try:
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+        if payload.get("type") not in _VALID_TYPES:
+            return None
+        return payload
+    except (jwt.PyJWTError, KeyError):
+        return None
+
+
+def create_signup_token(data: dict) -> str:
+    """Creates a 15-minute token containing Google profile info for Two-Phase Social Signup."""
+    payload = data.copy()
+    payload.update(
+        {
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+            "type": "signup",
+        }
+    )
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_signup_token(token: str) -> dict | None:
+    """Validates a signup token; returns the payload dict or None if invalid/expired."""
+    try:
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+        if payload.get("type") != "signup":
+            return None
+        return payload
+    except jwt.PyJWTError:
+        return None

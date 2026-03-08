@@ -1,1 +1,0 @@
-"""Candidate API routes."""
