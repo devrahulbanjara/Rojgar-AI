@@ -13,7 +13,9 @@ from loguru import logger
 from app.core.config import settings
 
 
-GENERIC_UPLOAD_ERROR = "Image upload is temporarily unavailable. Please try again later."
+GENERIC_UPLOAD_ERROR = (
+    "Image upload is temporarily unavailable. Please try again later."
+)
 GENERIC_DELETE_ERROR = "Image deletion failed in storage."
 
 
@@ -26,13 +28,17 @@ class S3Service:
     def client(self) -> BaseClient:
         if self._client is None:
             if not settings.aws_access_key_id or not settings.aws_secret_access_key:
-                logger.error("S3 client initialization failed: credentials are not configured")
+                logger.error(
+                    "S3 client initialization failed: credentials are not configured"
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=GENERIC_UPLOAD_ERROR,
                 )
             if not self.bucket:
-                logger.error("S3 client initialization failed: bucket is not configured")
+                logger.error(
+                    "S3 client initialization failed: bucket is not configured"
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=GENERIC_UPLOAD_ERROR,

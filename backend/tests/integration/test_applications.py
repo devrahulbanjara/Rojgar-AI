@@ -273,7 +273,9 @@ class TestApplicationRead:
         assert resp.json()["data"][0]["company_name"] == "List App Co"
 
     @pytest.mark.asyncio
-    async def test_recruiter_can_list_company_applications_across_jobs(self, client, db):
+    async def test_recruiter_can_list_company_applications_across_jobs(
+        self, client, db
+    ):
         recruiter = await make_user(
             db, "recruiter_company_apps@test.com", role="recruiter_admin"
         )
@@ -370,7 +372,9 @@ class TestApplicationRead:
         assert resp.json()["data"][0]["job_id"] == job_id
 
     @pytest.mark.asyncio
-    async def test_recruiter_can_filter_company_applications_by_job_id(self, client, db):
+    async def test_recruiter_can_filter_company_applications_by_job_id(
+        self, client, db
+    ):
         recruiter = await make_user(
             db, "recruiter_company_filter_job@test.com", role="recruiter_admin"
         )

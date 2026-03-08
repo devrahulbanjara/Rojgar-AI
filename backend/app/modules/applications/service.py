@@ -185,7 +185,11 @@ async def list_company_applications(
     if job_id is not None:
         stmt = stmt.where(Application.job_id == job_id)
 
-    stmt = stmt.order_by(Application.created_at.desc()).offset((page - 1) * size).limit(size)
+    stmt = (
+        stmt.order_by(Application.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+    )
     rows = (await db.execute(stmt)).all()
 
     return [
