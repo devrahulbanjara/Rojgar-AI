@@ -1,51 +1,82 @@
-from pydantic import SecretStr
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    TIMEZONE: str = "Asia/Kathmandu"
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    SECRET_KEY: SecretStr
-    ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
-    SECURE: bool = False
+    # App
+    app_name: str = "ConvexHire API"
+    debug: bool = False
+    environment: Literal["dev", "prod", "test"] = "dev"
+    allowed_origins: list[str] = ["http://localhost:3000"]
+    app_version: str = "1.0.0"
 
-    FRONTEND_URL: str = "http://localhost:3000"
-    BACKEND_URL: str = "http://localhost:8000"
-    ENVIRONMENT: str
-    APP_VERSION: str
-    DATABASE_URL: str
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str
+    smtp_password: str
+    mail_from: str
 
-    QDRANT_URL: str
-    QDRANT_COLLECTION_NAME: str = "ConvexHireJobs"
-    EMBEDDING_MODEL: str = "models/gemini-embedding-001"
-    EMBEDDING_DIM: int = 3072
-    SKILL_EXTRACTION_MODEL: str = "amjad-awad/skill-extractor"
-    FAST_LLM: str = "llama-3.1-8b-instant"
-    THINK_LLM: str = "openai/gpt-oss-120b"
-    BEDROCK_MODEL_ID: str = "anthropic.claude-3-5-sonnet-20240620-v1:0"
-    AWS_REGION: str = "us-east-1"
-    LLM_TEMPERATURE: float = 0.2
-    LLM_MAX_RETRIES: int = 3
+    # Auth
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
 
-    GROQ_API_KEY: str
-    GMAIL_USER: str
-    GMAIL_APP_PASSWORD: str
-    GOOGLE_API_KEY: str
-    TAVILY_API_KEY: str
-    BOOKING_LINK: str = "https://cal.com/convexhire/interview"
-    LOGO_URL: str = "https://heraldcollege.edu.np/images/homepage/about-herald.svg"
+    # Google OAuth
+    google_client_id: str
+    google_client_secret: str
+    google_redirect_uri: str = "http://localhost:8000/auth/google/callback"
+    frontend_url: str = "http://localhost:3000"
 
-    RATE_LIMIT_AUTH: str = "50/minute"
-    RATE_LIMIT_API: str = "100/minute"
-    RATE_LIMIT_WEBSOCKET: str = "30/minute"
-    RATE_LIMIT_SHORTLIST_TRIGGER: str = "10/minute"
-    RATE_LIMIT_SHORTLIST_SUMMARY: str = "100/minute"
+    # Email
+    send_emails: bool = True
+
+    # Database
+    db_user: str
+    db_password: str
+    db_host: str
+    db_port: int = 5432
+    db_name: str
+
+    test_db_user: str
+    test_db_password: str
+    test_db_host: str
+    test_db_port: int = 5432
+    test_db_name: str
+
+    # AWS S3
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_region: str = "us-east-1"
+    s3_bucket_name: str | None = None
+    s3_upload_acl: str | None = "public-read"
+    s3_max_upload_bytes: int = 5 * 1024 * 1024
+    s3_allowed_image_extensions: tuple[str, ...] = (
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "gif",
+    )
+
+    @property
+    def database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
+    @property
+    def test_database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
+
+    @property
+    def s3_base_url(self) -> str:
+        if not self.s3_bucket_name:
+            return ""
+        return f"https://{self.s3_bucket_name}.s3.{self.aws_region}.amazonaws.com"
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
 
-settings = Settings()  # type: ignore
+settings = Settings()

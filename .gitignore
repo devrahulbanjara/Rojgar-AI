@@ -36,6 +36,7 @@ instance/
 **/trial.ipynb
 
 .env
+.env.local
 .envrc
 .venv/
 env/
@@ -62,8 +63,6 @@ examples/
 outputs/
 output/
 **/output/
-**/resumes/
-**/job_descriptions/
 
 checkpoints/
 model_outputs/
@@ -89,7 +88,6 @@ tmp/
 temp/
 
 .DS_Store
-.vscode/*
 !.vscode/extensions.json
 .idea/
 *.swp
@@ -102,9 +100,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-backend/tests/test_resumes/
 .shared
-.cursor
 qdrant_data/
-.vscode
 postgres_data/
