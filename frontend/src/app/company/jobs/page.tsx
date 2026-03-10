@@ -3,60 +3,47 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 
+import Link from 'next/link'
+
 import {
   type CreateJobPayload,
   type JobDetail,
   type JobListItem,
   type JobStatus,
   type LocationType,
+  getJobStatusLabel,
   useCreateJobMutation,
   useDeleteJobMutation,
   useGetCompanyJobsQuery,
   useGetJobByIdQuery,
   useUpdateJobMutation,
 } from '@/store/services/jobsApi'
-import { Briefcase, LayoutGrid, List, MapPin, Pencil, Plus, Trash2, X } from 'lucide-react'
+import {
+  Briefcase,
+  Calendar,
+  ChevronDown,
+  DollarSign,
+  LayoutGrid,
+  List,
+  MapPin,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react'
+
+import { CompanyJobsCardsSkeleton } from './_components/CompanyJobsSkeletons'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_COLORS: Record<JobStatus, { bg: string; color: string }> = {
-  draft: { bg: '#9ca3af1a', color: '#6b7280' },
-  open: { bg: '#0cce6b1a', color: '#0cce6b' },
-  closed: { bg: '#ef44441a', color: '#ef4444' },
-  archived: { bg: '#f59e0b1a', color: '#f59e0b' },
-}
-
-const STATUS_LABELS: Record<JobStatus, string> = {
-  draft: 'Draft',
-  open: 'Open',
-  closed: 'Closed',
-  archived: 'Archived',
-}
-
 const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   onsite: 'On-site',
   remote: 'Remote',
   hybrid: 'Hybrid',
-}
-
-function StatusBadge({ status }: { status: JobStatus }) {
-  const { bg, color } = STATUS_COLORS[status] ?? STATUS_COLORS.draft
-  return (
-    <span
-      className="skill-pill"
-      style={
-        {
-          background: bg,
-          color,
-          border: `1px solid ${color}33`,
-        } as React.CSSProperties
-      }
-    >
-      {STATUS_LABELS[status]}
-    </span>
-  )
 }
 
 function formatDate(iso: string) {
@@ -65,6 +52,116 @@ function formatDate(iso: string) {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function formatSalary(min?: number | null, max?: number | null, currency = 'NPR') {
+  if (!min && !max) return 'Salary not specified'
+  if (min && max) return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}`
+  if (min) return `From ${currency} ${min.toLocaleString()}`
+  return `Up to ${currency} ${max!.toLocaleString()}`
+}
+
+function formatCategory(category: string | null) {
+  if (!category) return 'General'
+  return category
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function RecruiterJobCard({
+  job,
+  view,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  isUpdatingStatus,
+}: {
+  job: JobListItem
+  view: 'grid' | 'list'
+  onEdit: () => void
+  onDelete: () => void
+  onStatusChange: (status: JobStatus) => void
+  isUpdatingStatus: boolean
+}) {
+  return (
+    <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
+      <div className="company-job-card__top-row">
+        <span className="company-job-card__category">{formatCategory(job.category)}</span>
+        <label className={`company-job-card__status company-job-card__status--${job.status}`}>
+          <select
+            value={job.status}
+            onChange={(e) => onStatusChange(e.target.value as JobStatus)}
+            className="company-job-card__status-select"
+            aria-label={`Change status for ${job.title}`}
+            disabled={isUpdatingStatus}
+          >
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="expired">Expired</option>
+          </select>
+          <ChevronDown size={13} aria-hidden="true" className="company-job-card__status-chevron" />
+        </label>
+      </div>
+
+      <div className="company-job-card__title">{job.title}</div>
+
+      <div className="company-job-card__location">
+        <MapPin size={13} aria-hidden="true" />
+        <span>
+          {job.location ? `${job.location} · ` : ''}
+          {LOCATION_TYPE_LABELS[job.location_type]}
+        </span>
+      </div>
+
+      <div className="company-job-card__salary">
+        <DollarSign size={13} aria-hidden="true" />
+        <span>{formatSalary(job.salary_min, job.salary_max, job.currency)}</span>
+      </div>
+
+      <div className="company-job-card__divider" />
+
+      <div className="company-job-card__footer">
+        <div className="company-job-card__footer-meta">
+          <Link
+            href={`/company/applications?job_id=${job.id}`}
+            className="company-job-card__applicants-link"
+          >
+            <Users size={13} aria-hidden="true" />
+            <span>
+              {job.applications_count} Applicant{job.applications_count === 1 ? '' : 's'}
+            </span>
+          </Link>
+          <span className="company-job-card__posted-date">
+            <Calendar size={13} aria-hidden="true" />
+            <span>Posted {formatDate(job.created_at)}</span>
+          </span>
+        </div>
+
+        <div className="company-job-card__actions">
+          <button
+            type="button"
+            className="company-job-card__icon-btn"
+            onClick={onEdit}
+            aria-label={`Edit ${job.title}`}
+            title="Edit job"
+          >
+            <Pencil size={15} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="company-job-card__icon-btn company-job-card__icon-btn--danger"
+            onClick={onDelete}
+            aria-label={`Delete ${job.title}`}
+            title="Delete job"
+          >
+            <Trash2 size={15} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -380,9 +477,8 @@ function JobFormModal({
                 className="auth__input auth__input--select"
               >
                 <option value="draft">Draft</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-                <option value="archived">Archived</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
               </select>
             </div>
 
@@ -560,10 +656,9 @@ function EditJobModal({ jobId, onClose }: { jobId: string; onClose: () => void }
 
 const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
-  { label: 'Open', value: 'open' },
+  { label: 'Active', value: 'active' },
   { label: 'Draft', value: 'draft' },
-  { label: 'Closed', value: 'closed' },
-  { label: 'Archived', value: 'archived' },
+  { label: 'Expired', value: 'expired' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -571,14 +666,16 @@ const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
 // ---------------------------------------------------------------------------
 
 export default function CompanyJobsPage() {
-  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [view, setView] = useState<'grid' | 'list'>('list')
   const [activeFilter, setActiveFilter] = useState<JobStatus | 'all'>('all')
   const [showCreate, setShowCreate] = useState(false)
   const [editingJobId, setEditingJobId] = useState<string | null>(null)
   const [deletingJob, setDeletingJob] = useState<JobListItem | null>(null)
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
   const { data: resp, isLoading, isError, refetch } = useGetCompanyJobsQuery()
   const [createJob, { isLoading: isCreating }] = useCreateJobMutation()
+  const [updateJob] = useUpdateJobMutation()
   const [deleteJob, { isLoading: isDeleting }] = useDeleteJobMutation()
 
   const allJobs: JobListItem[] = resp?.data ?? []
@@ -587,10 +684,9 @@ export default function CompanyJobsPage() {
 
   const counts: Record<JobStatus | 'all', number> = {
     all: allJobs.length,
-    open: allJobs.filter((j) => j.status === 'open').length,
+    active: allJobs.filter((j) => j.status === 'active').length,
     draft: allJobs.filter((j) => j.status === 'draft').length,
-    closed: allJobs.filter((j) => j.status === 'closed').length,
-    archived: allJobs.filter((j) => j.status === 'archived').length,
+    expired: allJobs.filter((j) => j.status === 'expired').length,
   }
 
   async function handleCreate(payload: CreateJobPayload) {
@@ -614,6 +710,19 @@ export default function CompanyJobsPage() {
     }
   }
 
+  async function handleStatusChange(job: JobListItem, nextStatus: JobStatus) {
+    if (job.status === nextStatus) return
+    try {
+      setUpdatingStatusId(job.id)
+      await updateJob({ id: job.id, status: nextStatus }).unwrap()
+      toast.success(`${job.title} marked as ${getJobStatusLabel(nextStatus).toLowerCase()}.`)
+    } catch {
+      toast.error('Failed to update job status.')
+    } finally {
+      setUpdatingStatusId(null)
+    }
+  }
+
   return (
     <>
       <div className="dash-content container">
@@ -622,7 +731,7 @@ export default function CompanyJobsPage() {
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Job Listings</h2>
             <p className="dash-page-header__subtitle">
-              Manage your open, draft, and closed positions
+              Manage your active, draft, and expired positions
             </p>
           </div>
           <div className="dash-page-header__actions">
@@ -657,22 +766,7 @@ export default function CompanyJobsPage() {
             >
               {f.label}
               {counts[f.value] > 0 && (
-                <span
-                  style={{
-                    marginLeft: '0.375rem',
-                    background:
-                      activeFilter === f.value
-                        ? 'rgba(255,255,255,0.25)'
-                        : 'var(--color-gray-100,#f3f4f6)',
-                    color: activeFilter === f.value ? 'inherit' : 'var(--color-gray-600,#4b5563)',
-                    borderRadius: '999px',
-                    padding: '0 0.4rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {counts[f.value]}
-                </span>
+                <span className="company-jobs-filter-count">{counts[f.value]}</span>
               )}
             </button>
           ))}
@@ -681,16 +775,13 @@ export default function CompanyJobsPage() {
             onClick={() => refetch()}
             style={{ marginLeft: 'auto' }}
           >
+            <RefreshCw size={14} aria-hidden="true" />
             Refresh
           </button>
         </div>
 
         {/* Loading */}
-        {isLoading && (
-          <div className="dash-card">
-            <div className="dash-card__body">Loading jobs…</div>
-          </div>
-        )}
+        {isLoading && <CompanyJobsCardsSkeleton view={view} count={view === 'grid' ? 4 : 5} />}
 
         {/* Error */}
         {isError && (
@@ -727,7 +818,9 @@ export default function CompanyJobsPage() {
               />
               <div>
                 <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                  {activeFilter === 'all' ? 'No jobs yet' : `No ${activeFilter} jobs`}
+                  {activeFilter === 'all'
+                    ? 'No jobs yet'
+                    : `No ${getJobStatusLabel(activeFilter)} jobs`}
                 </p>
                 <p
                   style={{
@@ -737,7 +830,7 @@ export default function CompanyJobsPage() {
                 >
                   {activeFilter === 'all'
                     ? 'Post your first job to start attracting candidates.'
-                    : `You have no ${activeFilter} job postings.`}
+                    : `You have no ${getJobStatusLabel(activeFilter).toLowerCase()} job postings.`}
                 </p>
               </div>
               {activeFilter === 'all' && (
@@ -749,133 +842,19 @@ export default function CompanyJobsPage() {
           </div>
         )}
 
-        {/* Grid view */}
-        {!isLoading && !isError && filteredJobs.length > 0 && view === 'grid' && (
-          <div className="dash-grid dash-grid--2col">
+        {!isLoading && !isError && filteredJobs.length > 0 && (
+          <div className={`company-jobs-cards company-jobs-cards--${view}`}>
             {filteredJobs.map((job) => (
-              <div key={job.id} className="dash-card">
-                <div className="dash-card__header">
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="job-card__title-row">
-                      <div className="dash-card__title" style={{ fontSize: '1rem' }}>
-                        {job.title}
-                      </div>
-                      <StatusBadge status={job.status} />
-                    </div>
-                    <div
-                      className="dash-card__subtitle"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.375rem',
-                        marginTop: '0.25rem',
-                      }}
-                    >
-                      {job.location && (
-                        <>
-                          <MapPin style={{ width: 13, height: 13 }} />
-                          {job.location} ·{' '}
-                        </>
-                      )}
-                      {LOCATION_TYPE_LABELS[job.location_type]}
-                    </div>
-                  </div>
-                  <div className="cell-actions" style={{ flexShrink: 0 }}>
-                    <button
-                      className="btn btn--outline btn--sm"
-                      onClick={() => setEditingJobId(job.id)}
-                    >
-                      <Pencil size={13} /> Edit
-                    </button>
-                    <button
-                      className="btn btn--outline btn--error btn--sm"
-                      onClick={() => setDeletingJob(job)}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-                <div className="dash-card__body">
-                  <div
-                    className="job-card-footer"
-                    style={{
-                      paddingTop: '0.75rem',
-                      borderTop: '1px solid var(--color-gray-100,#f3f4f6)',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '0.8125rem',
-                        color: 'var(--color-muted,#6b7280)',
-                      }}
-                    >
-                      Posted {formatDate(job.created_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <RecruiterJobCard
+                key={job.id}
+                job={job}
+                view={view}
+                onEdit={() => setEditingJobId(job.id)}
+                onDelete={() => setDeletingJob(job)}
+                onStatusChange={(status) => handleStatusChange(job, status)}
+                isUpdatingStatus={updatingStatusId === job.id}
+              />
             ))}
-          </div>
-        )}
-
-        {/* List view */}
-        {!isLoading && !isError && filteredJobs.length > 0 && view === 'list' && (
-          <div className="dash-card">
-            <div className="table-scroll">
-              <table className="dash-table">
-                <thead>
-                  <tr>
-                    <th>Job Title</th>
-                    <th>Location</th>
-                    <th>Work Type</th>
-                    <th>Status</th>
-                    <th>Posted</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredJobs.map((job) => (
-                    <tr key={job.id}>
-                      <td style={{ fontWeight: 500 }}>{job.title}</td>
-                      <td style={{ color: 'var(--color-muted,#6b7280)' }}>{job.location ?? '—'}</td>
-                      <td>
-                        <span className="badge badge--gray">
-                          {LOCATION_TYPE_LABELS[job.location_type]}
-                        </span>
-                      </td>
-                      <td>
-                        <StatusBadge status={job.status} />
-                      </td>
-                      <td
-                        style={{
-                          fontSize: '0.8125rem',
-                          color: 'var(--color-muted,#6b7280)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {formatDate(job.created_at)}
-                      </td>
-                      <td>
-                        <div className="cell-actions">
-                          <button
-                            className="btn btn--primary btn--sm"
-                            onClick={() => setEditingJobId(job.id)}
-                          >
-                            <Pencil size={13} /> Edit
-                          </button>
-                          <button
-                            className="btn btn--outline btn--error btn--sm"
-                            onClick={() => setDeletingJob(job)}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         )}
       </div>

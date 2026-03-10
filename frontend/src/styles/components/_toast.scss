@@ -35,9 +35,7 @@
   cursor: default;
 
   // Type-specific left accent stripe
-  border-left-width: 4px;
-  border-left-style: solid;
-  border-left-color: $color-gray-300; // default / fallback
+  border-left: 4px solid $color-gray-300; // default / fallback
 }
 
 // ── Type Variants ────────────────────────────────────────────

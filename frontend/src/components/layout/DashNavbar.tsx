@@ -52,6 +52,10 @@ function formatRelativeDate(iso: string): string {
   })
 }
 
+function formatNotificationTime(value: string): string {
+  return Number.isNaN(new Date(value).getTime()) ? value : formatRelativeDate(value)
+}
+
 function NotificationsSkeleton({ count }: { count: number }) {
   return Array.from({ length: count }).map((_, index) => (
     <div key={index} className="activity-item activity-item--panel activity-item--skeleton">
@@ -64,6 +68,34 @@ function NotificationsSkeleton({ count }: { count: number }) {
     </div>
   ))
 }
+
+const COMPANY_NOTIFICATIONS = [
+  {
+    id: 'company-1',
+    text: 'Alex Chen applied for Product Designer.',
+    time: '1 h ago',
+  },
+  {
+    id: 'company-2',
+    text: 'AI Screening ranked 12 new candidates.',
+    time: '2 h ago',
+  },
+  {
+    id: 'company-3',
+    text: 'Interview scheduled with Maria Santos.',
+    time: '3 h ago',
+  },
+  {
+    id: 'company-4',
+    text: 'Visual Designer post expires in 3 days.',
+    time: 'Today',
+  },
+  {
+    id: 'company-5',
+    text: 'James Park accepted the offer.',
+    time: 'Yesterday',
+  },
+] as const
 
 function buildNavItems(role: DashRole): NavItem[] {
   if (role === 'candidate') {
@@ -110,8 +142,12 @@ export default function DashNavbar({
     useGetCandidateDashboardQuery(undefined, {
       skip: !isCandidate,
     })
-  const notifications = dashboardResponse?.data.recent_activity ?? []
+  const notifications = isCandidate
+    ? (dashboardResponse?.data.recent_activity ?? [])
+    : COMPANY_NOTIFICATIONS
   const notificationsCount = notifications.length
+  const notificationsLoading = isCandidate ? isNotificationsLoading : false
+  const notificationsLink = isCandidate ? '/dashboard/applications' : '/company/applications'
 
   const displayName = user?.full_name ?? userName
   const displayInitials = getInitials(displayName, userInitials)
@@ -147,9 +183,13 @@ export default function DashNavbar({
   }, [])
 
   useEffect(() => {
-    setSearchOpen(false)
-    setDropdownOpen(false)
-    setNotificationsOpen(false)
+    const resetUiState = window.setTimeout(() => {
+      setSearchOpen(false)
+      setDropdownOpen(false)
+      setNotificationsOpen(false)
+    }, 0)
+
+    return () => window.clearTimeout(resetUiState)
   }, [pathname])
 
   // Focus input when search opens
@@ -225,18 +265,13 @@ export default function DashNavbar({
               aria-label="Open notifications"
               aria-expanded={notificationsOpen}
               aria-haspopup="dialog"
-              onClick={() => {
-                if (!isCandidate) return
-                setNotificationsOpen((value) => !value)
-              }}
+              onClick={() => setNotificationsOpen((value) => !value)}
             >
-              {isCandidate && notificationsCount > 0 ? (
-                <div className="dash-navbar__notif-dot" />
-              ) : null}
+              {notificationsCount > 0 ? <div className="dash-navbar__notif-dot" /> : null}
               <Bell size={18} />
             </button>
 
-            {isCandidate && notificationsOpen ? (
+            {notificationsOpen ? (
               <div
                 className="dash-navbar__notifications-panel"
                 role="dialog"
@@ -246,7 +281,7 @@ export default function DashNavbar({
                   <div>
                     <div className="dash-navbar__notifications-title">Notifications</div>
                     <div className="dash-navbar__notifications-subtitle">
-                      {isNotificationsLoading
+                      {notificationsLoading
                         ? 'Loading recent updates...'
                         : notificationsCount > 0
                           ? `${notificationsCount} recent update${notificationsCount === 1 ? '' : 's'}`
@@ -264,7 +299,7 @@ export default function DashNavbar({
                 </div>
 
                 <div className="dash-navbar__notifications-body">
-                  {isNotificationsLoading ? (
+                  {notificationsLoading ? (
                     <div className="activity-list activity-list--panel" aria-hidden="true">
                       <NotificationsSkeleton count={4} />
                     </div>
@@ -280,7 +315,7 @@ export default function DashNavbar({
                           <div className="activity-item__body">
                             <p className="activity-item__text">{activity.text}</p>
                             <div className="activity-item__time">
-                              {formatRelativeDate(activity.time)}
+                              {formatNotificationTime(activity.time)}
                             </div>
                           </div>
                         </div>
@@ -290,8 +325,8 @@ export default function DashNavbar({
                 </div>
 
                 <div className="dash-navbar__notifications-footer">
-                  <Link href="/dashboard/applications" onClick={() => setNotificationsOpen(false)}>
-                    View applications
+                  <Link href={notificationsLink} onClick={() => setNotificationsOpen(false)}>
+                    {isCandidate ? 'View applications' : 'View inbox'}
                   </Link>
                 </div>
               </div>

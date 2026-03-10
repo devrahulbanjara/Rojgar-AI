@@ -1,7 +1,7 @@
 from typing import Any, Generic, TypeVar
 from datetime import datetime, timezone
 
-from fastapi import status
+from fastapi import Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -61,6 +61,7 @@ class ResponseBuilder:
         data: Any = None,
         message: str = "Operation successful",
         status_code: int = status.HTTP_200_OK,
+        response: Response | None = None,
     ) -> JSONResponse:
         content = {
             "success": True,
@@ -69,13 +70,19 @@ class ResponseBuilder:
             "errors": None,
             "meta": ResponseBuilder._meta(),
         }
-        return JSONResponse(status_code=status_code, content=content)
+        json_response = JSONResponse(status_code=status_code, content=content)
+
+        if response is not None:
+            json_response.raw_headers.extend(response.raw_headers)
+
+        return json_response
 
     @staticmethod
     def error(
         errors: Any = None,
         message: str = "An error occurred",
         status_code: int = status.HTTP_400_BAD_REQUEST,
+        response: Response | None = None,
     ) -> JSONResponse:
         content = {
             "success": False,
@@ -84,4 +91,9 @@ class ResponseBuilder:
             "errors": jsonable_encoder(errors),
             "meta": ResponseBuilder._meta(),
         }
-        return JSONResponse(status_code=status_code, content=content)
+        json_response = JSONResponse(status_code=status_code, content=content)
+
+        if response is not None:
+            json_response.raw_headers.extend(response.raw_headers)
+
+        return json_response

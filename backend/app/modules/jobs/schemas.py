@@ -7,15 +7,7 @@ from app.core.schemas import BaseSchema
 from app.shared.enums import JobStatus, LocationType
 
 
-# ---------------------------------------------------------------------------
-# Base class — shared fields + salary-range invariant
-# ---------------------------------------------------------------------------
-
-
 class JobBase(BaseSchema):
-    """Shared fields for JobCreate and JobUpdate. All fields optional here;
-    sub-classes tighten constraints where needed."""
-
     title: str | None = Field(default=None, max_length=255)
     category: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
@@ -41,11 +33,6 @@ class JobBase(BaseSchema):
         return self
 
 
-# ---------------------------------------------------------------------------
-# Write schemas
-# ---------------------------------------------------------------------------
-
-
 class JobCreate(JobBase):
     """All required fields must be provided on creation."""
 
@@ -63,11 +50,6 @@ class JobUpdate(JobBase):
     """All fields are optional — only provided fields are applied."""
 
     pass
-
-
-# ---------------------------------------------------------------------------
-# Read schemas
-# ---------------------------------------------------------------------------
 
 
 class CompanySnippet(BaseSchema):
@@ -96,6 +78,7 @@ class JobListItem(BaseSchema):
     salary_max: int | None = None
     currency: str = "NPR"
     status: JobStatus
+    applications_count: int = 0
     created_at: datetime
 
 
