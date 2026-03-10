@@ -1,9 +1,10 @@
 from fastapi import HTTPException, status
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
@@ -15,6 +16,13 @@ from app.modules.jobs.schemas import (
     JobUpdate,
 )
 from app.shared.enums import JobStatus, LocationType
+
+
+def _job_list_item_from_row(
+    job: Job, applications_count: int | None = None
+) -> JobListItem:
+    setattr(job, "applications_count", int(applications_count or 0))
+    return JobListItem.model_validate(job)
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
@@ -84,11 +92,13 @@ async def search_jobs(
     page: int,
     size: int,
 ) -> list[JobListItem]:
-    """Search open jobs with optional keyword / location / salary filters."""
+    """Search active jobs with optional keyword / location / salary filters."""
     stmt = (
-        select(Job)
+        select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
-        .where(Job.status == JobStatus.open)
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(Job.status == JobStatus.active)
+        .group_by(Job.id)
     )
 
     if q:
@@ -110,21 +120,29 @@ async def search_jobs(
     stmt = stmt.offset((page - 1) * size).limit(size)
 
     result = await db.execute(stmt)
-    jobs = result.scalars().all()
-    return [JobListItem.model_validate(j) for j in jobs]
+    rows = result.all()
+    return [
+        _job_list_item_from_row(job, applications_count)
+        for job, applications_count in rows
+    ]
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     """List all jobs belonging to the user's company."""
     company_id = await _get_user_company_id(db, user)
     result = await db.execute(
-        select(Job)
+        select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
+        .outerjoin(Application, Application.job_id == Job.id)
         .where(Job.company_id == company_id)
+        .group_by(Job.id)
         .order_by(Job.created_at.desc())
     )
-    jobs = result.scalars().all()
-    return [JobListItem.model_validate(j) for j in jobs]
+    rows = result.all()
+    return [
+        _job_list_item_from_row(job, applications_count)
+        for job, applications_count in rows
+    ]
 
 
 async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:

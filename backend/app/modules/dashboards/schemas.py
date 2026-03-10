@@ -41,3 +41,8 @@ class CandidateDashboardResponse(BaseSchema):
     recent_applications: list[CandidateApplicationView]
     recent_activity: list[CandidateDashboardActivityItem]
     recommended_jobs: list[JobListItem]
+
+
+class RecruiterDashboardResponse(BaseSchema):
+    company_name: str
+    top_jobs: list[JobListItem]

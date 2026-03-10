@@ -227,7 +227,7 @@ export interface JobListing {
   description: string
   requirements: string[]
   skills_required: string[]
-  status: 'draft' | 'active' | 'paused' | 'closed'
+  status: 'draft' | 'active' | 'expired'
   applications_count: number
   views_count: number
   posted_at: string

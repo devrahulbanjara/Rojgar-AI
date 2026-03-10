@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -231,7 +231,7 @@ export default function ApplicationsPage() {
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null)
 
   const { data, isLoading, isFetching, isError } = useGetMyApplicationsQuery({ page: 1, size: 100 })
-  const applications = data?.data ?? []
+  const applications = useMemo(() => data?.data ?? [], [data?.data])
 
   const statusCounts = useMemo(() => {
     return applications.reduce<Record<ApplicationStatus, number>>(
@@ -266,26 +266,14 @@ export default function ApplicationsPage() {
     })
   }, [activeStage, applications, searchQuery, selectedMode])
 
-  useEffect(() => {
-    if (filteredApplications.length === 0) {
-      setSelectedApplicationId(null)
-      return
-    }
+  const selectedApplication = useMemo(() => {
+    if (filteredApplications.length === 0) return null
 
-    const hasSelectedApplication = filteredApplications.some(
-      (application) => application.id === selectedApplicationId,
+    return (
+      filteredApplications.find((application) => application.id === selectedApplicationId) ??
+      filteredApplications[0]
     )
-
-    if (!hasSelectedApplication) {
-      setSelectedApplicationId(filteredApplications[0].id)
-    }
   }, [filteredApplications, selectedApplicationId])
-
-  const selectedApplication = useMemo(
-    () =>
-      filteredApplications.find((application) => application.id === selectedApplicationId) ?? null,
-    [filteredApplications, selectedApplicationId],
-  )
 
   function handleSearch(event?: React.FormEvent) {
     if (event) event.preventDefault()

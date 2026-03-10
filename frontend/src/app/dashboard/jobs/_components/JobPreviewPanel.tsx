@@ -6,6 +6,7 @@ import {
   type JobDetail,
   type JobListItem,
   type LocationType,
+  getJobStatusLabel,
   useGetJobByIdQuery,
 } from '@/store/services/jobsApi'
 import { ArrowRight, MapPin } from 'lucide-react'
@@ -59,7 +60,7 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
     )
 
   const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
-  const isOpen = job.status === 'open'
+  const isActive = job.status === 'active'
   const openRolesCount = allJobs.filter((j) => j.company_id === job.company_id).length
 
   return (
@@ -96,7 +97,7 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
         {job.company?.company_size && <span>· {job.company.company_size}</span>}
         {openRolesCount > 1 && (
           <span className="job-preview__chip job-preview__chip--success">
-            {openRolesCount} open roles
+            {openRolesCount} active roles
           </span>
         )}
       </div>
@@ -105,9 +106,9 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
         <span className="job-preview__chip">{LOCATION_TYPE_LABELS[job.location_type]}</span>
         {salary && <span className="job-preview__chip">{salary}</span>}
         <span
-          className={`job-preview__chip${isOpen ? ' job-preview__chip--success' : ' job-preview__chip--gray'}`}
+          className={`job-preview__chip${isActive ? ' job-preview__chip--success' : ' job-preview__chip--gray'}`}
         >
-          {isOpen ? 'Actively Hiring' : job.status}
+          {getJobStatusLabel(job.status)}
         </span>
       </div>
 
@@ -123,8 +124,8 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
           View Details
           <ArrowRight size={14} aria-hidden="true" />
         </Link>
-        <button className="job-preview__quick-btn" onClick={onApply} disabled={!isOpen}>
-          {isOpen ? 'Quick Apply' : `Applications ${job.status}`}
+        <button className="job-preview__quick-btn" onClick={onApply} disabled={!isActive}>
+          {isActive ? 'Quick Apply' : getJobStatusLabel(job.status)}
         </button>
       </div>
     </div>

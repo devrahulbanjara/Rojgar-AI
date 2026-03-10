@@ -103,6 +103,31 @@ class TestSignup:
 
 class TestLogin:
     @pytest.mark.asyncio
+    async def test_login_sets_refresh_cookie(self, client, db):
+        from app.core.security import hash_password
+
+        user = User(
+            full_name="Cookie Login",
+            email="cookie_login@test.com",
+            primary_role="candidate",
+            is_email_verified=True,
+            password_hash=hash_password("Password@123"),
+        )
+        db.add(user)
+        await db.commit()
+
+        resp = await client.post(
+            "/auth/login",
+            json={
+                "email": "cookie_login@test.com",
+                "password": "Password@123",
+            },
+        )
+
+        assert resp.status_code == 200
+        assert "refresh_token=" in resp.headers.get("set-cookie", "")
+
+    @pytest.mark.asyncio
     async def test_login_unverified_user_blocked(self, client, db):
         from app.core.security import hash_password
 
@@ -198,6 +223,34 @@ class TestGetMe:
 
 class TestTokenRefresh:
     @pytest.mark.asyncio
+    async def test_refresh_with_cookie_rotates_token(self, client, db):
+        from app.core.security import hash_password
+
+        user = User(
+            full_name="Refresh User",
+            email="refresh_user@test.com",
+            primary_role="candidate",
+            is_email_verified=True,
+            password_hash=hash_password("Password@123"),
+        )
+        db.add(user)
+        await db.commit()
+
+        login_resp = await client.post(
+            "/auth/login",
+            json={
+                "email": "refresh_user@test.com",
+                "password": "Password@123",
+            },
+        )
+        assert login_resp.status_code == 200
+
+        refresh_resp = await client.post("/auth/refresh")
+        assert refresh_resp.status_code == 200
+        assert refresh_resp.json()["data"]["access_token"]
+        assert "refresh_token=" in refresh_resp.headers.get("set-cookie", "")
+
+    @pytest.mark.asyncio
     async def test_refresh_without_cookie_fails(self, client):
         resp = await client.post("/auth/refresh")
         assert resp.status_code == 401
@@ -206,6 +259,7 @@ class TestTokenRefresh:
     async def test_logout_succeeds(self, client):
         resp = await client.post("/auth/logout")
         assert resp.status_code == 200
+        assert "refresh_token=" in resp.headers.get("set-cookie", "")
 
 
 class TestForgotPassword:

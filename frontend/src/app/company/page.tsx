@@ -1,11 +1,13 @@
 'use client'
 
+import { type CSSProperties } from 'react'
+
 import Link from 'next/link'
 
-import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCompanyRecruitersQuery, useGetMyCompanyQuery } from '@/store/services/companyApi'
 import type { RecruiterMember } from '@/store/services/companyApi'
+import { type RecruiterDashboardJob, dashboardApi } from '@/store/services/dashboardApi'
 import {
   ArrowRight,
   BrainCircuit,
@@ -18,8 +20,6 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react'
-
-import MediaBadge from '@/components/common/MediaBadge'
 
 type IconKey = 'briefcase' | 'file-text' | 'calendar-check' | 'user-check' | 'users' | 'clock'
 
@@ -70,41 +70,6 @@ const stats = [
   },
 ]
 
-const activeJobs = [
-  {
-    title: 'Product Designer',
-    applications: 50,
-    new: 12,
-    daysLeft: 5,
-    logo: 'P',
-    color: '#7928ca',
-  },
-  {
-    title: 'Visual Designer',
-    applications: 74,
-    new: 8,
-    daysLeft: 3,
-    logo: 'P',
-    color: '#7928ca',
-  },
-  {
-    title: 'Senior UX Designer',
-    applications: 31,
-    new: 5,
-    daysLeft: 10,
-    logo: 'P',
-    color: '#7928ca',
-  },
-  {
-    title: 'Interaction Designer',
-    applications: 27,
-    new: 3,
-    daysLeft: 15,
-    logo: 'P',
-    color: '#7928ca',
-  },
-]
-
 const topCandidates = [
   {
     name: 'Alex Chen',
@@ -140,28 +105,43 @@ const topCandidates = [
   },
 ]
 
-const recentActivity = [
-  {
-    text: '<strong>Alex Chen</strong> applied for Product Designer.',
-    time: '1 h ago',
-  },
-  {
-    text: '<strong>AI Screening</strong> ranked 12 new candidates.',
-    time: '2 h ago',
-  },
-  {
-    text: 'Interview scheduled with <strong>Maria Santos</strong>.',
-    time: '3 h ago',
-  },
-  {
-    text: '<strong>Visual Designer</strong> post expires in 3 days.',
-    time: 'Today',
-  },
-  {
-    text: '<strong>James Park</strong> accepted the offer.',
-    time: 'Yesterday',
-  },
-]
+function formatRelativeDate(value: string): string {
+  const timestamp = new Date(value).getTime()
+  const diffMs = Date.now() - timestamp
+  const hour = 60 * 60 * 1000
+  const day = 24 * hour
+
+  if (diffMs < day) {
+    const hours = Math.max(1, Math.floor(diffMs / hour))
+    return `${hours}h ago`
+  }
+
+  const days = Math.floor(diffMs / day)
+  if (days < 7) return `${days}d ago`
+
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function RecruiterTopJobsSkeletonRows({ count }: { count: number }) {
+  return Array.from({ length: count }).map((_, index) => (
+    <div key={index} className="item-row item-row--pad item-row--skeleton" aria-hidden="true">
+      <div className="item-row__logo item-row__logo--icon">
+        <div className="skeleton-block recruiter-jobs-skeleton__logo" />
+      </div>
+      <div className="item-row__info recruiter-jobs-skeleton__info">
+        <div className="skeleton-block recruiter-jobs-skeleton__title" />
+        <div className="skeleton-block recruiter-jobs-skeleton__sub" />
+      </div>
+      <div className="item-row__right recruiter-jobs-skeleton__right">
+        <div className="skeleton-block recruiter-jobs-skeleton__status" />
+        <div className="skeleton-block recruiter-jobs-skeleton__bar" />
+      </div>
+    </div>
+  ))
+}
 
 export default function CompanyDashboardPage() {
   const { user } = useAppSelector((s) => s.auth)
@@ -173,33 +153,25 @@ export default function CompanyDashboardPage() {
   const { data: recruitersResp } = useGetCompanyRecruitersQuery(undefined, {
     skip: !isCompanyAdmin,
   })
+  const { data: recruiterDashboardResp, isLoading: isRecruiterDashboardLoading } =
+    dashboardApi.useGetRecruiterDashboardQuery()
 
   const company = companyResp?.data
-  const companyName = company?.name ?? 'Your Company'
+  const companyName = company?.name ?? recruiterDashboardResp?.data.company_name ?? 'Your Company'
   const recruiters: RecruiterMember[] = recruitersResp?.data ?? []
   const activeRecruiters = recruiters.filter((r) => r.status === 'active')
   const pendingRecruiters = recruiters.filter((r) => r.status === 'pending')
+  const topJobs: RecruiterDashboardJob[] = recruiterDashboardResp?.data.top_jobs ?? []
 
   return (
     <>
       <div className="dash-content container">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
-            <div className="company-header-brand">
-              <MediaBadge
-                src={company?.logo_url}
-                alt={companyName}
-                fallback={getInitials(companyName, 'C').slice(0, 1)}
-                className="company-header-brand__logo"
-                sizes="52px"
-              />
-              <div>
-                <h2 className="dash-page-header__title">Welcome, {companyName} 🏢</h2>
-                <p className="dash-page-header__subtitle">
-                  Manage your hiring pipeline and track performance.
-                </p>
-              </div>
-            </div>
+            <h2 className="dash-page-header__title">Welcome, {companyName} 🏢</h2>
+            <p className="dash-page-header__subtitle">
+              Manage your hiring pipeline and track performance.
+            </p>
           </div>
         </div>
 
@@ -224,45 +196,52 @@ export default function CompanyDashboardPage() {
             <div className="dash-card__header">
               <div>
                 <div className="dash-card__title">Active Job Posts</div>
-                <div className="dash-card__subtitle">Currently open positions</div>
+                <div className="dash-card__subtitle">Top 7 active roles by applicant count</div>
               </div>
               <Link href="/company/jobs" className="btn btn--outline btn--sm btn--icon-right">
                 Manage <Settings2 size={14} strokeWidth={2} />
               </Link>
             </div>
             <div className="dash-card__body dash-card__body--no-top">
-              {activeJobs.map((job) => (
-                <div key={job.title} className="item-row item-row--pad">
-                  <div className="item-row__logo item-row__logo--icon">
-                    <BriefcaseBusiness size={15} strokeWidth={1.75} />
-                  </div>
-                  <div className="item-row__info">
-                    <div className="item-row__title">{job.title}</div>
-                    <div className="item-row__sub">
-                      {job.applications} total · {job.new} new
+              {isRecruiterDashboardLoading ? (
+                RecruiterTopJobsSkeletonRows({ count: 4 })
+              ) : topJobs.length === 0 ? (
+                <div className="profile-empty">No active job posts available yet.</div>
+              ) : (
+                topJobs.map((job) => (
+                  <div key={job.id} className="item-row item-row--pad">
+                    <div className="item-row__logo item-row__logo--icon">
+                      <BriefcaseBusiness size={15} strokeWidth={1.75} />
                     </div>
-                  </div>
-                  <div className="item-row__right">
-                    <div
-                      className="item-row__expires"
-                      style={
-                        {
-                          '--expires-color': job.daysLeft <= 5 ? '#ff4d4d' : '#6b7280',
-                        } as React.CSSProperties
-                      }
-                    >
-                      <Clock size={12} strokeWidth={2} />
-                      {job.daysLeft}d left
+                    <div className="item-row__info">
+                      <div className="item-row__title">{job.title}</div>
+                      <div className="item-row__sub">
+                        {job.applications_count} applicant{job.applications_count === 1 ? '' : 's'}
+                        {job.location ? ` · ${job.location}` : ''}
+                      </div>
                     </div>
-                    <div className="progress-bar progress-bar--narrow-md">
+                    <div className="item-row__right">
                       <div
-                        className="progress-bar__fill"
-                        style={{ width: `${Math.min(job.applications, 100)}%` }}
-                      />
+                        className="item-row__expires"
+                        style={
+                          {
+                            '--expires-color': job.applications_count > 0 ? '#0070f3' : '#6b7280',
+                          } as CSSProperties
+                        }
+                      >
+                        <Clock size={12} strokeWidth={2} />
+                        Posted {formatRelativeDate(job.created_at)}
+                      </div>
+                      <div className="progress-bar progress-bar--narrow-md">
+                        <div
+                          className="progress-bar__fill"
+                          style={{ width: `${Math.min(job.applications_count, 100)}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -321,29 +300,6 @@ export default function CompanyDashboardPage() {
           </div>
         </div>
 
-        {/* Recent activity */}
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div className="dash-card__title">Recent Activity</div>
-          </div>
-          <div className="dash-card__body dash-card__body--activity">
-            <div className="activity-list">
-              {recentActivity.map((a, i) => (
-                <div key={i} className="activity-item">
-                  <div className="activity-item__dot" />
-                  <div className="activity-item__body">
-                    <p
-                      className="activity-item__text"
-                      dangerouslySetInnerHTML={{ __html: a.text }}
-                    />
-                    <div className="activity-item__time">{a.time}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Recruiters summary — company admin only */}
         {isCompanyAdmin && (
           <div className="dash-card">
@@ -358,12 +314,9 @@ export default function CompanyDashboardPage() {
                 Manage <Settings2 size={14} strokeWidth={2} />
               </Link>
             </div>
-            <div className="dash-card__body dash-card__body--no-top">
-              <div
-                className="dash-stats"
-                style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}
-              >
-                <div className="stat-card">
+            <div className="dash-card__body recruiter-summary__body">
+              <div className="recruiter-summary__grid">
+                <div className="stat-card stat-card--compact">
                   <div className="stat-card__value">{activeRecruiters.length}</div>
                   <div className="stat-card__footer">
                     <div className="stat-card__icon-wrap stat-card__icon-wrap--primary">
@@ -372,7 +325,7 @@ export default function CompanyDashboardPage() {
                     <div className="stat-card__label">Active Recruiters</div>
                   </div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card stat-card--compact">
                   <div className="stat-card__value">{pendingRecruiters.length}</div>
                   <div className="stat-card__footer">
                     <div className="stat-card__icon-wrap stat-card__icon-wrap--warning">
@@ -385,8 +338,7 @@ export default function CompanyDashboardPage() {
               {pendingRecruiters.length > 0 && (
                 <Link
                   href="/company/recruiters"
-                  className="btn btn--warning btn--sm"
-                  style={{ marginTop: '1rem', display: 'inline-flex' }}
+                  className="btn btn--warning btn--sm recruiter-summary__cta"
                 >
                   Review {pendingRecruiters.length} pending request
                   {pendingRecruiters.length > 1 ? 's' : ''}

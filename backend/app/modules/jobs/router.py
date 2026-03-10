@@ -43,7 +43,7 @@ async def create_job(
 @router.get(
     "/",
     response_model=UnifiedResponse[list[JobListItem]],
-    summary="Search and list open jobs with optional filters",
+    summary="Search and list active jobs with optional filters",
 )
 async def search_jobs(
     q: str | None = Query(default=None, description="Search keyword for title"),

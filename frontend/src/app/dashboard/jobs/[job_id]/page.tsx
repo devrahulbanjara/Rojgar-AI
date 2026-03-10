@@ -11,6 +11,7 @@ import {
   type JobDetail,
   type JobListItem,
   type LocationType,
+  getJobStatusLabel,
   useGetJobByIdQuery,
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
@@ -296,7 +297,7 @@ export default function JobDetailPage() {
   }
 
   const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
-  const isOpen = job.status === 'open'
+  const isActive = job.status === 'active'
 
   return (
     <>
@@ -347,10 +348,16 @@ export default function JobDetailPage() {
                 <button
                   className="jd-hero__apply-btn"
                   onClick={() => setApplying(true)}
-                  disabled={!isOpen}
-                  title={isOpen ? undefined : `Applications are ${job.status}`}
+                  disabled={!isActive}
+                  title={
+                    isActive
+                      ? undefined
+                      : job.status === 'draft'
+                        ? 'This job is still in draft.'
+                        : 'This job has expired.'
+                  }
                 >
-                  <span>{isOpen ? 'Apply Now' : `Applications ${job.status}`}</span>
+                  <span>{isActive ? 'Apply Now' : getJobStatusLabel(job.status)}</span>
                 </button>
                 <button
                   style={{
@@ -384,8 +391,8 @@ export default function JobDetailPage() {
                 {LOCATION_TYPE_LABELS[job.location_type]}
               </span>
               {salary && <span className="jd-hero__chip jd-hero__chip--secondary">{salary}</span>}
-              <span className={`jd-hero__chip${isOpen ? ' jd-hero__chip--success' : ''}`}>
-                {isOpen ? 'Actively Hiring' : job.status}
+              <span className={`jd-hero__chip${isActive ? ' jd-hero__chip--success' : ''}`}>
+                {getJobStatusLabel(job.status)}
               </span>
               <span className="jd-hero__chip">
                 <Clock size={12} aria-hidden="true" />

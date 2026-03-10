@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Cropper, { type Area } from 'react-easy-crop'
 import { toast } from 'react-toastify'
 
 import { parseApiError } from '@/lib/apiError'
+import { createCroppedImageFile } from '@/lib/cropImage'
 import { formatBytes, getInitials, validateImageFile } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import {
@@ -12,7 +14,7 @@ import {
   useUpdateCompanyMutation,
   useUploadCompanyLogoMutation,
 } from '@/store/services/companyApi'
-import { Building2, Camera, Globe, MapPin, Save, Trash2 } from 'lucide-react'
+import { Building2, Camera, Globe, MapPin, Save, Trash2, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -32,6 +34,30 @@ const EMPTY_FORM: CompanyForm = {
   location: '',
   website_url: '',
   description: '',
+}
+
+type LogoCropDraft = {
+  sourceUrl: string
+  fileName: string
+  mimeType: string
+  naturalWidth: number
+  naturalHeight: number
+}
+
+function readImageDimensions(
+  src: string,
+): Promise<{ naturalWidth: number; naturalHeight: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image()
+    image.onload = () => {
+      resolve({
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
+      })
+    }
+    image.onerror = () => reject(new Error('Failed to load image preview.'))
+    image.src = src
+  })
 }
 
 export default function CompanySettingsPage() {
@@ -56,7 +82,14 @@ export default function CompanySettingsPage() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
   const [logoError, setLogoError] = useState<string | null>(null)
+  const [logoCropDraft, setLogoCropDraft] = useState<LogoCropDraft | null>(null)
+  const [logoCrop, setLogoCrop] = useState({ x: 0, y: 0 })
+  const [logoZoom, setLogoZoom] = useState(1)
+  const [logoCroppedAreaPixels, setLogoCroppedAreaPixels] = useState<Area | null>(null)
+  const [isSubmittingCroppedLogo, setIsSubmittingCroppedLogo] = useState(false)
+  const [isLogoCropModalClosing, setIsLogoCropModalClosing] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
+  const logoCropModalTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (companyResp?.data) {
@@ -79,6 +112,17 @@ export default function CompanySettingsPage() {
       }
     }
   }, [logoPreviewUrl])
+
+  useEffect(() => {
+    return () => {
+      if (logoCropModalTimeoutRef.current) {
+        window.clearTimeout(logoCropModalTimeoutRef.current)
+      }
+      if (logoCropDraft?.sourceUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(logoCropDraft.sourceUrl)
+      }
+    }
+  }, [logoCropDraft])
 
   async function handleSave() {
     setSaveError(null)
@@ -105,34 +149,104 @@ export default function CompanySettingsPage() {
     }
   }
 
+  function finalizeLogoCropModalClose() {
+    setLogoCropDraft(null)
+    setLogoCrop({ x: 0, y: 0 })
+    setLogoZoom(1)
+    setLogoCroppedAreaPixels(null)
+    setIsSubmittingCroppedLogo(false)
+    setIsLogoCropModalClosing(false)
+    logoCropModalTimeoutRef.current = null
+  }
+
+  function closeLogoCropModal() {
+    if (isLogoCropModalClosing) return
+    setIsLogoCropModalClosing(true)
+    if (logoCropModalTimeoutRef.current) {
+      window.clearTimeout(logoCropModalTimeoutRef.current)
+    }
+    logoCropModalTimeoutRef.current = window.setTimeout(() => {
+      finalizeLogoCropModalClose()
+    }, 200)
+  }
+
   async function handleLogoSelection(file: File) {
     const validationError = validateImageFile(file)
     if (validationError) {
       setLogoError(validationError)
+      toast.error(validationError)
       return
     }
 
     setLogoError(null)
-    const previewUrl = URL.createObjectURL(file)
-    setLogoPreviewUrl((current) => {
-      if (current?.startsWith('blob:')) {
-        URL.revokeObjectURL(current)
-      }
-      return previewUrl
-    })
+    const sourceUrl = URL.createObjectURL(file)
 
     try {
+      const { naturalWidth, naturalHeight } = await readImageDimensions(sourceUrl)
+
+      if (logoCropModalTimeoutRef.current) {
+        window.clearTimeout(logoCropModalTimeoutRef.current)
+        logoCropModalTimeoutRef.current = null
+      }
+
+      setIsLogoCropModalClosing(false)
+      setLogoCropDraft((current) => {
+        if (current?.sourceUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(current.sourceUrl)
+        }
+
+        return {
+          sourceUrl,
+          fileName: file.name,
+          mimeType: file.type,
+          naturalWidth,
+          naturalHeight,
+        }
+      })
+      setLogoCrop({ x: 0, y: 0 })
+      setLogoZoom(1)
+      setLogoCroppedAreaPixels(null)
+    } catch {
+      URL.revokeObjectURL(sourceUrl)
+      const message = 'We could not open that image for cropping. Please try another file.'
+      setLogoError(message)
+      toast.error(message)
+    }
+  }
+
+  async function handleLogoCropConfirm() {
+    if (!logoCropDraft || !logoCroppedAreaPixels) {
+      setLogoError('Select the visible area you want to save first.')
+      return
+    }
+
+    setLogoError(null)
+    setIsSubmittingCroppedLogo(true)
+
+    try {
+      const croppedFile = await createCroppedImageFile({
+        src: logoCropDraft.sourceUrl,
+        crop: logoCroppedAreaPixels,
+        fileName: logoCropDraft.fileName,
+        mimeType: logoCropDraft.mimeType,
+      })
+
       const formData = new FormData()
-      formData.append('file', file)
-      await uploadLogo(formData).unwrap()
-      toast.success('Company logo updated.')
-    } catch (error: unknown) {
+      formData.append('file', croppedFile)
+
+      const response = await uploadLogo(formData).unwrap()
+      const updatedLogoUrl = response.data.logo_url
+
       setLogoPreviewUrl((current) => {
         if (current?.startsWith('blob:')) {
           URL.revokeObjectURL(current)
         }
-        return null
+        return updatedLogoUrl
       })
+
+      closeLogoCropModal()
+      toast.success('Company logo updated.')
+    } catch (error: unknown) {
       const parsed = parseApiError(
         error,
         {},
@@ -144,6 +258,7 @@ export default function CompanySettingsPage() {
           : parsed.message
       setLogoError(message)
       toast.error(message)
+      setIsSubmittingCroppedLogo(false)
     }
   }
 
@@ -224,7 +339,7 @@ export default function CompanySettingsPage() {
   const company = companyResp.data
   const companyName = form.name || company.name || 'Your Company'
   const logoSrc = logoPreviewUrl ?? company.logo_url ?? null
-  const isWorking = isSaving || isUploadingLogo || isRemovingLogo
+  const isWorking = isSaving || isUploadingLogo || isRemovingLogo || isSubmittingCroppedLogo
 
   return (
     <div className="dash-content container">
@@ -430,6 +545,100 @@ export default function CompanySettingsPage() {
           </div>
         </section>
       </div>
+
+      {logoCropDraft ? (
+        <div
+          className={`modal-backdrop modal-backdrop--animated${isLogoCropModalClosing ? ' modal-backdrop--closing' : ''}`}
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !isSubmittingCroppedLogo) {
+              closeLogoCropModal()
+            }
+          }}
+        >
+          <div
+            className="modal modal--cropper"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logo-crop-title"
+          >
+            <div className="modal__header">
+              <div className="modal__title" id="logo-crop-title">
+                Crop Logo
+              </div>
+              <button
+                className="modal__close"
+                disabled={isSubmittingCroppedLogo}
+                onClick={closeLogoCropModal}
+                type="button"
+                aria-label="Close crop dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal__body">
+              <div className="avatar-cropper">
+                <div
+                  className="avatar-cropper__viewport"
+                  style={
+                    {
+                      aspectRatio: `${logoCropDraft.naturalWidth} / ${logoCropDraft.naturalHeight}`,
+                      '--cropper-ratio': logoCropDraft.naturalWidth / logoCropDraft.naturalHeight,
+                    } as React.CSSProperties
+                  }
+                >
+                  <Cropper
+                    image={logoCropDraft.sourceUrl}
+                    crop={logoCrop}
+                    zoom={logoZoom}
+                    aspect={1}
+                    cropShape="rect"
+                    showGrid={false}
+                    onCropChange={setLogoCrop}
+                    onZoomChange={setLogoZoom}
+                    onCropComplete={(_, croppedAreaPixels) => {
+                      setLogoCroppedAreaPixels(croppedAreaPixels)
+                    }}
+                  />
+                </div>
+                <div className="avatar-cropper__controls">
+                  <label className="avatar-cropper__zoom-label" htmlFor="logo-crop-zoom">
+                    Zoom
+                  </label>
+                  <input
+                    id="logo-crop-zoom"
+                    className="avatar-cropper__zoom-input"
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={logoZoom}
+                    onChange={(event) => setLogoZoom(Number(event.target.value))}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal__footer">
+              <button
+                className="btn btn--outline btn--primary"
+                disabled={isSubmittingCroppedLogo}
+                onClick={closeLogoCropModal}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn--primary"
+                disabled={!logoCroppedAreaPixels || isSubmittingCroppedLogo}
+                onClick={() => void handleLogoCropConfirm()}
+                type="button"
+              >
+                {isSubmittingCroppedLogo ? 'Saving...' : 'Done'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

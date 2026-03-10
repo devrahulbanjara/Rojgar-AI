@@ -279,7 +279,7 @@ export default function UserJobsPage() {
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Find Jobs</h2>
             <p className="dash-page-header__subtitle">
-              Discover open roles, refine the search, and preview details before you apply.
+              Discover active roles, refine the search, and preview details before you apply.
             </p>
           </div>
           <div className="dash-page-header__actions">
@@ -506,12 +506,15 @@ export default function UserJobsPage() {
                         <div className="job-card__title">{job.title}</div>
                         <div className="job-card__company">{job.company?.name}</div>
                         <div className="job-card__location">
-                          {job.location && (
-                            <>
-                              <MapPin size={11} aria-hidden="true" /> {job.location} ·{' '}
-                            </>
+                          {job.location ? (
+                            <MapPin size={11} aria-hidden="true" />
+                          ) : (
+                            <Briefcase size={11} aria-hidden="true" />
                           )}
-                          {LOCATION_TYPE_LABELS[job.location_type]}
+                          <span>
+                            {job.location ? `${job.location} · ` : ''}
+                            {LOCATION_TYPE_LABELS[job.location_type]}
+                          </span>
                         </div>
                       </div>
                       <button
@@ -533,23 +536,13 @@ export default function UserJobsPage() {
                         </span>
                       )}
                       {(job.salary_min || job.salary_max) && (
-                        <span className="job-card__tag">
+                        <span className="job-card__tag job-card__tag--salary">
                           {formatSalary(job.salary_min, job.salary_max, job.currency)}
                         </span>
                       )}
                     </div>
 
                     <div className="job-card__meta">
-                      <span>
-                        <Briefcase size={12} aria-hidden="true" />
-                        {LOCATION_TYPE_LABELS[job.location_type]}
-                      </span>
-                      {job.location && (
-                        <span>
-                          <MapPin size={12} aria-hidden="true" />
-                          {job.location}
-                        </span>
-                      )}
                       <span className="job-card__meta-time">
                         <Clock size={12} aria-hidden="true" />
                         {formatDate(job.created_at)}

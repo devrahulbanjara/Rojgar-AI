@@ -5,15 +5,17 @@ import uuid
 from app.modules.applications import service as applications_service
 from app.modules.applications.models import Application
 from app.modules.auth.models import User
+from app.modules.companies.models import Company, CompanyMembership
 from app.modules.dashboards.schemas import (
     CandidateDashboardActivityItem,
     CandidateDashboardResponse,
     CandidateStats,
+    RecruiterDashboardResponse,
 )
 from app.modules.jobs import service as jobs_service
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
-from app.shared.enums import ApplicationStatus
+from app.shared.enums import ApplicationStatus, JobStatus
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -128,4 +130,31 @@ async def get_candidate_dashboard(
         recent_applications=recent_applications,
         recent_activity=recent_activity,
         recommended_jobs=recommended_jobs,
+    )
+
+
+async def _get_recruiter_company_name(db: AsyncSession, user_id: uuid.UUID) -> str:
+    company_name_stmt = (
+        select(Company.name)
+        .join(CompanyMembership, CompanyMembership.company_id == Company.id)
+        .where(CompanyMembership.user_id == user_id)
+        .limit(1)
+    )
+    return await db.scalar(company_name_stmt)
+
+
+async def get_recruiter_dashboard(
+    db: AsyncSession, current_user: User
+) -> RecruiterDashboardResponse:
+    company_name = await _get_recruiter_company_name(db, current_user.id)
+    company_jobs = await jobs_service.list_company_jobs(db=db, user=current_user)
+    top_jobs = sorted(
+        (job for job in company_jobs if job.status == JobStatus.active),
+        key=lambda job: (job.applications_count, job.created_at),
+        reverse=True,
+    )[:7]
+
+    return RecruiterDashboardResponse(
+        company_name=company_name,
+        top_jobs=top_jobs,
     )

@@ -488,8 +488,8 @@ export default function UserDashboardPage() {
               Browse All Jobs
             </Link>
           </div>
-          <div className="dash-card__body">
-            <div className="dash-grid dash-grid--3col">
+          <div className="dash-card__body dash-card__body--recommended-jobs">
+            <div className="recommended-jobs-grid">
               {isStatsLoading ? (
                 RecommendedJobsSkeletonCards({ count: 3 })
               ) : recommendedJobs.length === 0 ? (
@@ -502,7 +502,7 @@ export default function UserDashboardPage() {
                   return (
                     <div
                       key={job.id}
-                      className="job-card content-stagger-item"
+                      className="job-card job-card--recommended content-stagger-item"
                       style={{ '--stagger-index': index } as CSSProperties}
                     >
                       <div className="job-card__header">
@@ -520,9 +520,10 @@ export default function UserDashboardPage() {
                         <div className="job-card__title-wrap">
                           <div className="job-card__title">{job.title}</div>
                           <div className="job-card__company">
-                            {job.company.name}
-                            <span className="job-card__location">
-                              · {job.location ?? job.location_type}
+                            <span className="job-card__company-name">{job.company.name}</span>
+                            <span className="job-card__location job-card__location--inline">
+                              <span className="job-card__location-sep">·</span>
+                              <span>{job.location ?? job.location_type}</span>
                             </span>
                           </div>
                         </div>
