@@ -97,7 +97,7 @@ export function ApplicationsPageSkeleton() {
         </aside>
 
         <div className="apps-layout__list">
-          <div className="apps-search-row" aria-hidden="true">
+          <div className="dash-page-toolbar" aria-hidden="true">
             <div className="skeleton-block applications-page-skeleton__search" />
             <div className="skeleton-block applications-page-skeleton__results" />
           </div>
