@@ -19,8 +19,6 @@ export default function Toaster() {
       pauseOnFocusLoss
       draggable
       pauseOnHover
-      theme="light"
-      toastStyle={{ backgroundColor: '#ffffff', color: '#111827' }}
     />
   )
 }

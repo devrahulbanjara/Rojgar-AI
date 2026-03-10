@@ -1634,6 +1634,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+
+  &--panel {
+    padding: $space-1 $space-4;
+  }
 }
 
 .activity-item {
@@ -1645,6 +1649,10 @@
 
   &:last-child {
     border-bottom: none;
+  }
+
+  &--panel {
+    padding: $space-4 0;
   }
 
   &__dot {
@@ -2085,6 +2093,13 @@
       border-color: $color-primary;
       color: $color-primary;
     }
+
+    &--active {
+      border-color: $color-primary;
+      color: $color-primary;
+      background: rgba($color-primary, 0.06);
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+    }
   }
 
   &__notif-dot {
@@ -2097,6 +2112,98 @@
     background: $color-accent;
     border: 2px solid $color-white;
     pointer-events: none;
+  }
+
+  &__notifications {
+    position: relative;
+  }
+
+  &__notifications-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(24rem, calc(100vw - 2rem));
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-xl;
+    overflow: hidden;
+    z-index: $z-dropdown;
+    animation: dash-dropdown-in $transition-fast forwards;
+  }
+
+  &__notifications-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-3;
+    padding: $space-4 $space-4 $space-3;
+    background: rgba($color-primary, 0.03);
+    border-bottom: 1px solid rgba($color-primary, 0.08);
+  }
+
+  &__notifications-title {
+    font-family: $font-heading;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-base;
+    color: $color-gray-900;
+  }
+
+  &__notifications-subtitle {
+    margin-top: 2px;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__notifications-close {
+    width: 32px;
+    height: 32px;
+    border-radius: $radius-lg;
+    border: 1px solid transparent;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-gray-400;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      color: $color-primary;
+      border-color: rgba($color-primary, 0.14);
+      background: rgba($color-primary, 0.05);
+    }
+  }
+
+  &__notifications-body {
+    max-height: min(26rem, calc(100vh - 8rem));
+    overflow-y: auto;
+  }
+
+  &__notifications-empty {
+    padding: $space-6 $space-4;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    text-align: center;
+  }
+
+  &__notifications-footer {
+    padding: $space-3 $space-4;
+    border-top: 1px solid $color-gray-200;
+    background: rgba($color-gray-100, 0.6);
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: $color-primary;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 
   // ── Profile ─────────────────────────────────────────────────
@@ -2851,7 +2958,7 @@
 
 .apps-layout {
   display: grid;
-  grid-template-columns: 220px 1fr 320px;
+  grid-template-columns: 240px 1fr 360px;
   gap: $space-5;
   align-items: start;
 
@@ -2983,54 +3090,128 @@
   }
 }
 
-// ── Search row ────────────────────────────────────────────────
-.apps-search-row {
+// ── Shared page toolbar ───────────────────────────────────────
+.dash-page-toolbar {
   display: flex;
   align-items: center;
   gap: $space-3;
-}
+  margin-bottom: $space-5;
+  width: 100%;
 
-.apps-search {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-  background: $color-white;
-  border: 1px solid $color-gray-200;
-  border-radius: $radius-lg;
-  padding: $space-2 $space-3;
-  transition: border-color $transition-fast;
-
-  svg {
-    color: $color-gray-400;
-    flex-shrink: 0;
+  &__search {
+    position: relative;
+    flex: 1;
+    min-width: 0;
   }
 
-  &:focus-within {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 3px rgba($color-primary, 0.08);
+  &__icon {
+    position: absolute;
+    left: $space-4;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $color-gray-400;
+    display: flex;
+    pointer-events: none;
   }
 
   &__input {
-    flex: 1;
-    border: none;
-    outline: none;
+    width: 100%;
+    min-height: 52px;
+    border: 1.5px solid $color-gray-200;
+    border-radius: $radius-xl;
+    padding: $space-3 calc(#{$space-8} + #{$space-5}) $space-3 calc(#{$space-8} + #{$space-3});
     font-size: $font-size-sm;
     font-family: $font-body;
     color: $color-gray-800;
-    background: none;
+    background: $color-white;
+    transition:
+      border-color $transition-fast,
+      box-shadow $transition-fast;
+    outline: none;
+    box-sizing: border-box;
 
     &::placeholder {
       color: $color-gray-400;
     }
-  }
-}
 
-.apps-results-count {
-  font-size: $font-size-xs;
-  color: $color-gray-400;
-  white-space: nowrap;
-  flex-shrink: 0;
+    &:focus {
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+    }
+  }
+
+  &__clear {
+    position: absolute;
+    right: $space-3;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: $radius-full;
+    background: transparent;
+    color: $color-gray-400;
+    cursor: pointer;
+    transition:
+      background $transition-fast,
+      color $transition-fast;
+
+    &:hover {
+      background: $color-gray-100;
+      color: $color-gray-700;
+    }
+  }
+
+  &__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: $space-3 $space-6;
+    min-height: 52px;
+    background: $color-primary;
+    color: $color-white;
+    border: none;
+    border-radius: $radius-xl;
+    white-space: nowrap;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    font-family: $font-body;
+    cursor: pointer;
+    transition:
+      background $transition-fast,
+      box-shadow $transition-fast;
+
+    &:hover {
+      background: color.adjust($color-primary, $lightness: -8%);
+      box-shadow: 0 2px 8px rgba($color-primary, 0.3);
+    }
+
+    &:active {
+      background: color.adjust($color-primary, $lightness: -14%);
+    }
+  }
+
+  &__meta {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  &__skeleton-field {
+    flex: 1;
+    min-height: 52px;
+    border-radius: $radius-xl;
+  }
+
+  &__skeleton-button {
+    width: 148px;
+    min-height: 52px;
+    border-radius: $radius-xl;
+  }
 }
 
 // ── Application list ──────────────────────────────────────────
@@ -3052,6 +3233,21 @@
 
   svg {
     color: $color-gray-300;
+  }
+}
+
+.dash-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-8;
+  text-align: center;
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    color: $color-gray-400;
   }
 }
 
@@ -6279,122 +6475,6 @@
   }
 }
 
-// ── Job list header search trigger ────────────────────────────
-.jobs-main-search {
-  display: flex;
-  align-items: center;
-  gap: $space-4;
-  margin-bottom: $space-5;
-  width: 100%;
-
-  &__field {
-    position: relative;
-    flex: 1;
-  }
-
-  &__icon {
-    position: absolute;
-    left: $space-4;
-    top: 50%;
-    transform: translateY(-50%);
-    color: $color-gray-400;
-    display: flex;
-    pointer-events: none;
-  }
-
-  &__input {
-    width: 100%;
-    min-height: 52px;
-    border: 1.5px solid $color-gray-200;
-    border-radius: $radius-xl;
-    padding: $space-3 calc(#{$space-8} + #{$space-5}) $space-3 calc(#{$space-8} + #{$space-3});
-    font-size: $font-size-sm;
-    font-family: $font-body;
-    color: $color-gray-800;
-    background: $color-white;
-    transition:
-      border-color $transition-fast,
-      box-shadow $transition-fast;
-    outline: none;
-    box-sizing: border-box;
-
-    &::placeholder {
-      color: $color-gray-400;
-    }
-
-    &:focus {
-      border-color: $color-primary;
-      box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
-    }
-  }
-
-  &__skeleton-field {
-    flex: 1;
-    min-height: 52px;
-    border-radius: $radius-xl;
-  }
-
-  &__skeleton-button {
-    width: 148px;
-    min-height: 52px;
-    border-radius: $radius-xl;
-  }
-
-  &__clear {
-    position: absolute;
-    right: $space-3;
-    top: 50%;
-    transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: $radius-full;
-    background: transparent;
-    color: $color-gray-400;
-    cursor: pointer;
-    transition:
-      background $transition-fast,
-      color $transition-fast;
-
-    &:hover {
-      background: $color-gray-100;
-      color: $color-gray-700;
-    }
-  }
-}
-
-.jobs-search-trigger-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: $space-3 $space-6;
-  min-height: 52px;
-  background: $color-primary;
-  color: $color-white;
-  border: none;
-  border-radius: $radius-xl;
-  white-space: nowrap;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  font-family: $font-body;
-  cursor: pointer;
-  transition:
-    background $transition-fast,
-    box-shadow $transition-fast;
-
-  &:hover {
-    background: color.adjust($color-primary, $lightness: -8%);
-    box-shadow: 0 2px 8px rgba($color-primary, 0.3);
-  }
-
-  &:active {
-    background: color.adjust($color-primary, $lightness: -14%);
-  }
-}
-
 // ── Sidebar results count ─────────────────────────────────────
 .jobs-sidebar-results-count {
   font-size: $font-size-sm;
@@ -6416,16 +6496,16 @@
     grid-template-columns: 1fr;
   }
 
-  .jobs-main-search {
+  .dash-page-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .jobs-main-search__skeleton-button {
+  .dash-page-toolbar__skeleton-button {
     width: 100%;
   }
 
-  .jobs-search-trigger-btn {
+  .dash-page-toolbar__submit {
     width: 100%;
   }
 }

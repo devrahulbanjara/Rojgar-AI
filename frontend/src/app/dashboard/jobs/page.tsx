@@ -274,7 +274,23 @@ export default function UserJobsPage() {
 
   return (
     <>
-      <div className="dash-content container dash-content--pad-top">
+      <div className="dash-content container">
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">Find Jobs</h2>
+            <p className="dash-page-header__subtitle">
+              Discover open roles, refine the search, and preview details before you apply.
+            </p>
+          </div>
+          <div className="dash-page-header__actions">
+            <span className="page-header-hint">
+              {isLoading
+                ? 'Loading jobs...'
+                : `${jobs.length} job${jobs.length === 1 ? '' : 's'} available`}
+            </span>
+          </div>
+        </div>
+
         <div className="jobs-layout">
           {/* ── Filter Sidebar ── */}
           <div className="jobs-layout__sidebar">
@@ -425,13 +441,13 @@ export default function UserJobsPage() {
 
           {/* ── Job List ── */}
           <div>
-            <form className="jobs-main-search" onSubmit={handleSearch}>
-              <div className="jobs-main-search__field">
-                <span className="jobs-main-search__icon">
-                  <Search size={18} aria-hidden="true" />
+            <form className="dash-page-toolbar" onSubmit={handleSearch}>
+              <div className="dash-page-toolbar__search">
+                <span className="dash-page-toolbar__icon">
+                  <Search size={16} aria-hidden="true" />
                 </span>
                 <input
-                  className="jobs-main-search__input"
+                  className="dash-page-toolbar__input"
                   placeholder="Search jobs by title"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
@@ -439,7 +455,7 @@ export default function UserJobsPage() {
                 {searchInput && (
                   <button
                     type="button"
-                    className="jobs-main-search__clear"
+                    className="dash-page-toolbar__clear"
                     onClick={handleClearSearch}
                     aria-label="Clear search"
                   >
@@ -447,8 +463,8 @@ export default function UserJobsPage() {
                   </button>
                 )}
               </div>
-              <button type="submit" className="jobs-search-trigger-btn">
-                Search Jobs
+              <button type="submit" className="dash-page-toolbar__submit">
+                Search
               </button>
             </form>
 
@@ -460,24 +476,8 @@ export default function UserJobsPage() {
               </div>
             ) : jobs.length === 0 ? (
               <div className="dash-card">
-                <div
-                  className="dash-card__body"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: '2rem',
-                    gap: '0.75rem',
-                    textAlign: 'center',
-                  }}
-                >
-                  <Briefcase
-                    style={{
-                      width: 32,
-                      height: 32,
-                      color: 'var(--color-muted,#9ca3af)',
-                    }}
-                  />
+                <div className="dash-card__body dash-empty-state">
+                  <Briefcase className="dash-empty-state__icon" />
                   <p>No jobs match your search.</p>
                 </div>
               </div>

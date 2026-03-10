@@ -64,7 +64,17 @@ export function JobPreviewSkeleton() {
 
 export function JobsPageSkeleton() {
   return (
-    <div className="dash-content container dash-content--pad-top" aria-hidden="true">
+    <div className="dash-content container" aria-hidden="true">
+      <div className="dash-page-header applications-page-skeleton__header">
+        <div className="dash-page-header__left applications-page-skeleton__header-left">
+          <div className="skeleton-block applications-page-skeleton__title" />
+          <div className="skeleton-block applications-page-skeleton__subtitle" />
+        </div>
+        <div className="dash-page-header__actions">
+          <div className="skeleton-block applications-page-skeleton__hint" />
+        </div>
+      </div>
+
       <div className="jobs-layout jobs-layout--skeleton">
         <div className="jobs-layout__sidebar jobs-skeleton__sidebar">
           <div className="skeleton-block jobs-skeleton__sidebar-title" />
@@ -94,9 +104,9 @@ export function JobsPageSkeleton() {
         </div>
 
         <div>
-          <div className="jobs-main-search jobs-main-search--loading">
-            <div className="skeleton-block jobs-main-search__skeleton-field" />
-            <div className="skeleton-block jobs-main-search__skeleton-button" />
+          <div className="dash-page-toolbar" aria-hidden="true">
+            <div className="skeleton-block dash-page-toolbar__skeleton-field" />
+            <div className="skeleton-block dash-page-toolbar__skeleton-button" />
           </div>
           <JobCardsSkeleton count={5} />
         </div>

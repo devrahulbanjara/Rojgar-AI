@@ -1,201 +1,68 @@
 'use client'
 
-import { useState } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 
-import { Search } from 'lucide-react'
+import Link from 'next/link'
 
-const STATUS_STAGES = [
-  { key: 'all', label: 'All Applications', count: 24 },
-  { key: 'applied', label: 'Applied', count: 8 },
-  { key: 'in_review', label: 'In Review', count: 5 },
-  { key: 'shortlisted', label: 'Shortlisted', count: 4 },
-  { key: 'interview', label: 'Interview', count: 4 },
-  { key: 'offer', label: 'Offer', count: 1 },
-  { key: 'rejected', label: 'Rejected', count: 2 },
+import {
+  type ApplicationStatus,
+  type CandidateApplicationView,
+  useGetMyApplicationsQuery,
+} from '@/store/services/applicationsApi'
+import { Search, X } from 'lucide-react'
+
+import MediaBadge from '@/components/common/MediaBadge'
+
+import {
+  ApplicationsDetailSkeleton,
+  ApplicationsListSkeleton,
+} from './_components/ApplicationsSkeletons'
+
+type StatusFilterKey = 'all' | ApplicationStatus
+type WorkModeFilter = 'all' | CandidateApplicationView['location_type']
+
+type StageFilter = {
+  key: StatusFilterKey
+  label: string
+}
+
+type TimelineStep = {
+  stage: string
+  date: string
+  done: boolean
+  current?: boolean
+}
+
+const STATUS_FILTERS: StageFilter[] = [
+  { key: 'all', label: 'All Applications' },
+  { key: 'submitted', label: 'Applied' },
+  { key: 'screening', label: 'In Review' },
+  { key: 'interview', label: 'Interview' },
+  { key: 'offered', label: 'Offer' },
+  { key: 'hired', label: 'Hired' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'withdrawn', label: 'Withdrawn' },
 ]
 
-const APPLICATIONS = [
-  {
-    id: 1,
-    company: 'Stripe',
-    role: 'Product Designer',
-    location: 'Remote',
-    type: 'Full Time',
-    status: 'interview',
-    statusLabel: 'Interview',
-    statusVariant: 'success',
-    applied: 'Feb 28, 2026',
-    logo: 'S',
-    logoColor: '#635BFF',
-    salary: '$120k–$150k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 28', done: true },
-      { stage: 'In Review', date: 'Mar 1', done: true },
-      { stage: 'Shortlisted', date: 'Mar 1', done: true },
-      { stage: 'Interview', date: 'Mar 4', done: false, current: true },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: 'Interview scheduled for Mar 4',
-  },
-  {
-    id: 2,
-    company: 'Figma',
-    role: 'UX Designer',
-    location: 'San Francisco, CA',
-    type: 'Full Time',
-    status: 'in_review',
-    statusLabel: 'In Review',
-    statusVariant: 'warning',
-    applied: 'Feb 27, 2026',
-    logo: 'F',
-    logoColor: '#F24E1E',
-    salary: '$110k–$140k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 27', done: true },
-      { stage: 'In Review', date: 'Mar 1', done: false, current: true },
-      { stage: 'Shortlisted', date: '—', done: false },
-      { stage: 'Interview', date: '—', done: false },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: 'Application under review',
-  },
-  {
-    id: 3,
-    company: 'Linear',
-    role: 'UI Engineer',
-    location: 'New York, NY',
-    type: 'Full Time',
-    status: 'shortlisted',
-    statusLabel: 'Shortlisted',
-    statusVariant: 'primary',
-    applied: 'Feb 25, 2026',
-    logo: 'L',
-    logoColor: '#5E6AD2',
-    salary: '$130k–$160k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 25', done: true },
-      { stage: 'In Review', date: 'Feb 27', done: true },
-      { stage: 'Shortlisted', date: 'Mar 1', done: false, current: true },
-      { stage: 'Interview', date: '—', done: false },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: 'You have been shortlisted',
-  },
-  {
-    id: 4,
-    company: 'Vercel',
-    role: 'Design Engineer',
-    location: 'Remote',
-    type: 'Full Time',
-    status: 'applied',
-    statusLabel: 'Applied',
-    statusVariant: 'gray',
-    applied: 'Feb 24, 2026',
-    logo: 'V',
-    logoColor: '#000000',
-    salary: '$115k–$145k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 24', done: false, current: true },
-      { stage: 'In Review', date: '—', done: false },
-      { stage: 'Shortlisted', date: '—', done: false },
-      { stage: 'Interview', date: '—', done: false },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: 'Application submitted',
-  },
-  {
-    id: 5,
-    company: 'Notion',
-    role: 'Product Designer',
-    location: 'New York, NY',
-    type: 'Full Time',
-    status: 'rejected',
-    statusLabel: 'Rejected',
-    statusVariant: 'danger',
-    applied: 'Feb 20, 2026',
-    logo: 'N',
-    logoColor: '#000000',
-    salary: '$100k–$130k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 20', done: true },
-      { stage: 'In Review', date: 'Feb 22', done: true },
-      { stage: 'Shortlisted', date: '—', done: false },
-      { stage: 'Interview', date: '—', done: false },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: 'Application was not selected to proceed',
-  },
-  {
-    id: 6,
-    company: 'Loom',
-    role: 'Senior Product Designer',
-    location: 'San Francisco, CA',
-    type: 'Full Time',
-    status: 'offer',
-    statusLabel: 'Offer',
-    statusVariant: 'success',
-    applied: 'Feb 10, 2026',
-    logo: 'L',
-    logoColor: '#625DF5',
-    salary: '$140k–$170k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 10', done: true },
-      { stage: 'In Review', date: 'Feb 12', done: true },
-      { stage: 'Shortlisted', date: 'Feb 14', done: true },
-      { stage: 'Interview', date: 'Feb 19', done: true },
-      { stage: 'Offer', date: 'Feb 28', done: false, current: true },
-    ],
-    lastActivity: 'Offer letter received',
-  },
-  {
-    id: 7,
-    company: 'Dropbox',
-    role: 'Senior UI Designer',
-    location: 'Remote',
-    type: 'Full Time',
-    status: 'applied',
-    statusLabel: 'Applied',
-    statusVariant: 'gray',
-    applied: 'Mar 1, 2026',
-    logo: 'D',
-    logoColor: '#0061FF',
-    salary: '$120k–$150k',
-    timeline: [
-      { stage: 'Applied', date: 'Mar 1', done: false, current: true },
-      { stage: 'In Review', date: '—', done: false },
-      { stage: 'Shortlisted', date: '—', done: false },
-      { stage: 'Interview', date: '—', done: false },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: 'Application submitted',
-  },
-  {
-    id: 8,
-    company: 'Retool',
-    role: 'UX Engineer',
-    location: 'New York, NY',
-    type: 'Full Time',
-    status: 'interview',
-    statusLabel: 'Interview',
-    statusVariant: 'success',
-    applied: 'Feb 15, 2026',
-    logo: 'R',
-    logoColor: '#EF4B4C',
-    salary: '$110k–$140k',
-    timeline: [
-      { stage: 'Applied', date: 'Feb 15', done: true },
-      { stage: 'In Review', date: 'Feb 17', done: true },
-      { stage: 'Shortlisted', date: 'Feb 20', done: true },
-      { stage: 'Interview', date: 'Mar 5', done: false, current: true },
-      { stage: 'Offer', date: '—', done: false },
-    ],
-    lastActivity: '2nd round interview on Mar 5',
-  },
+const WORK_MODE_FILTERS: Array<{ key: WorkModeFilter; label: string }> = [
+  { key: 'all', label: 'All Modes' },
+  { key: 'remote', label: 'Remote' },
+  { key: 'hybrid', label: 'Hybrid' },
+  { key: 'onsite', label: 'Onsite' },
 ]
 
-const TYPE_FILTERS = ['All Types', 'Full Time', 'Part Time', 'Contract', 'Remote']
+const ACTIVE_TIMELINE: Array<{
+  key: Exclude<ApplicationStatus, 'rejected' | 'withdrawn'>
+  label: string
+}> = [
+  { key: 'submitted', label: 'Applied' },
+  { key: 'screening', label: 'In Review' },
+  { key: 'interview', label: 'Interview' },
+  { key: 'offered', label: 'Offer' },
+  { key: 'hired', label: 'Hired' },
+]
 
-const statusVariantMap: Record<string, string> = {
+const statusColorMap: Record<string, string> = {
   success: '#0cce6b',
   warning: '#f59e0b',
   primary: '#0070f3',
@@ -203,25 +70,254 @@ const statusVariantMap: Record<string, string> = {
   danger: '#ff4d4d',
 }
 
-export default function ApplicationsPage() {
-  const [activeStage, setActiveStage] = useState('all')
-  const [selectedType, setSelectedType] = useState('All Types')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedApp, setSelectedApp] = useState<(typeof APPLICATIONS)[0] | null>(APPLICATIONS[0])
+function getCompanyAccent(name: string): { logo: string; color: string } {
+  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
 
-  const filtered = APPLICATIONS.filter((app) => {
-    const matchStage = activeStage === 'all' || app.status === activeStage
-    const matchType = selectedType === 'All Types' || app.type === selectedType
-    const matchSearch =
-      searchQuery === '' ||
-      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.role.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchStage && matchType && matchSearch
+  return {
+    logo: name.trim().charAt(0).toUpperCase() || 'C',
+    color: palette[seed % palette.length],
+  }
+}
+
+function getLocationTypeLabel(locationType: CandidateApplicationView['location_type']): string {
+  switch (locationType) {
+    case 'remote':
+      return 'Remote'
+    case 'hybrid':
+      return 'Hybrid'
+    case 'onsite':
+      return 'Onsite'
+  }
+}
+
+function formatLocation(application: CandidateApplicationView): string {
+  return application.location ?? getLocationTypeLabel(application.location_type)
+}
+
+function formatDisplayDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   })
+}
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatRelativeDate(iso: string): string {
+  const timestamp = new Date(iso).getTime()
+  const diffMs = Date.now() - timestamp
+  const hour = 60 * 60 * 1000
+  const day = 24 * hour
+
+  if (diffMs < hour) {
+    const minutes = Math.max(1, Math.floor(diffMs / (60 * 1000)))
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  }
+
+  if (diffMs < day) {
+    const hours = Math.max(1, Math.floor(diffMs / hour))
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  }
+
+  const days = Math.floor(diffMs / day)
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+
+  return formatDisplayDate(iso)
+}
+
+function getStatusLabel(status: ApplicationStatus): string {
+  switch (status) {
+    case 'submitted':
+      return 'Applied'
+    case 'screening':
+      return 'In Review'
+    case 'interview':
+      return 'Interview'
+    case 'offered':
+      return 'Offer'
+    case 'hired':
+      return 'Hired'
+    case 'rejected':
+      return 'Rejected'
+    case 'withdrawn':
+      return 'Withdrawn'
+  }
+}
+
+function getStatusVariant(status: ApplicationStatus): string {
+  switch (status) {
+    case 'interview':
+    case 'offered':
+    case 'hired':
+      return 'success'
+    case 'screening':
+      return 'warning'
+    case 'rejected':
+      return 'danger'
+    case 'withdrawn':
+    case 'submitted':
+      return 'gray'
+  }
+}
+
+function getStatusUpdateCopy(application: CandidateApplicationView): string {
+  const statusLabel = getStatusLabel(application.status)
+
+  switch (application.status) {
+    case 'submitted':
+      return `Application submitted ${formatRelativeDate(application.created_at)}.`
+    case 'screening':
+      return `Your application is in review as of ${formatDisplayDate(application.updated_at)}.`
+    case 'interview':
+      return `Interview stage reached ${formatDisplayDate(application.updated_at)}.`
+    case 'offered':
+      return `An offer was recorded on ${formatDisplayDate(application.updated_at)}.`
+    case 'hired':
+      return `This application was marked hired on ${formatDisplayDate(application.updated_at)}.`
+    case 'rejected':
+      return `This application was closed as rejected on ${formatDisplayDate(application.updated_at)}.`
+    case 'withdrawn':
+      return `This application was withdrawn on ${formatDisplayDate(application.updated_at)}.`
+    default:
+      return `${statusLabel} ${formatRelativeDate(application.updated_at)}.`
+  }
+}
+
+function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
+  if (application.status === 'rejected' || application.status === 'withdrawn') {
+    return [
+      {
+        stage: 'Applied',
+        date: formatShortDate(application.created_at),
+        done: true,
+      },
+      {
+        stage: getStatusLabel(application.status),
+        date: formatShortDate(application.updated_at),
+        done: false,
+        current: true,
+      },
+    ]
+  }
+
+  const currentIndex = ACTIVE_TIMELINE.findIndex((step) => step.key === application.status)
+
+  return ACTIVE_TIMELINE.map((step, index) => ({
+    stage: step.label,
+    date:
+      index === 0
+        ? formatShortDate(application.created_at)
+        : index === currentIndex
+          ? formatShortDate(application.updated_at)
+          : '—',
+    done: index < currentIndex,
+    current: index === currentIndex,
+  }))
+}
+
+export default function ApplicationsPage() {
+  const [activeStage, setActiveStage] = useState<StatusFilterKey>('all')
+  const [selectedMode, setSelectedMode] = useState<WorkModeFilter>('all')
+  const [searchInput, setSearchInput] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null)
+
+  const { data, isLoading, isFetching, isError } = useGetMyApplicationsQuery({ page: 1, size: 100 })
+  const applications = data?.data ?? []
+
+  const statusCounts = useMemo(() => {
+    return applications.reduce<Record<ApplicationStatus, number>>(
+      (accumulator, application) => {
+        accumulator[application.status] += 1
+        return accumulator
+      },
+      {
+        submitted: 0,
+        screening: 0,
+        interview: 0,
+        offered: 0,
+        hired: 0,
+        rejected: 0,
+        withdrawn: 0,
+      },
+    )
+  }, [applications])
+
+  const filteredApplications = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+
+    return applications.filter((application) => {
+      const matchesStage = activeStage === 'all' || application.status === activeStage
+      const matchesMode = selectedMode === 'all' || application.location_type === selectedMode
+      const matchesSearch =
+        normalizedQuery === '' ||
+        application.company_name.toLowerCase().includes(normalizedQuery) ||
+        application.job_title.toLowerCase().includes(normalizedQuery)
+
+      return matchesStage && matchesMode && matchesSearch
+    })
+  }, [activeStage, applications, searchQuery, selectedMode])
+
+  useEffect(() => {
+    if (filteredApplications.length === 0) {
+      setSelectedApplicationId(null)
+      return
+    }
+
+    const hasSelectedApplication = filteredApplications.some(
+      (application) => application.id === selectedApplicationId,
+    )
+
+    if (!hasSelectedApplication) {
+      setSelectedApplicationId(filteredApplications[0].id)
+    }
+  }, [filteredApplications, selectedApplicationId])
+
+  const selectedApplication = useMemo(
+    () =>
+      filteredApplications.find((application) => application.id === selectedApplicationId) ?? null,
+    [filteredApplications, selectedApplicationId],
+  )
+
+  function handleSearch(event?: React.FormEvent) {
+    if (event) event.preventDefault()
+    setSearchQuery(searchInput.trim())
+  }
+
+  function handleClearSearch() {
+    setSearchInput('')
+    setSearchQuery('')
+  }
+
+  if (isError) {
+    return (
+      <div className="dash-content container">
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">My Applications</h2>
+            <p className="dash-page-header__subtitle">
+              Track and manage all your job applications in one place.
+            </p>
+          </div>
+        </div>
+
+        <div className="app-detail-empty content-fade-in">
+          <p>Applications are unavailable right now. Please refresh and try again.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="dash-content container">
-      {/* Page Header */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">My Applications</h2>
@@ -230,173 +326,210 @@ export default function ApplicationsPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <span className="page-header-hint">{APPLICATIONS.length} total applications</span>
+          <span className="page-header-hint">
+            {isLoading
+              ? 'Loading applications...'
+              : isFetching
+                ? 'Refreshing applications...'
+                : `${applications.length} total application${applications.length === 1 ? '' : 's'}`}
+          </span>
         </div>
       </div>
 
-      {/* Main layout: sidebar + list + detail */}
       <div className="apps-layout">
-        {/* Left sidebar: stage filter */}
         <aside className="apps-layout__sidebar">
           <div className="apps-sidebar">
             <div className="apps-sidebar__title">Status</div>
             <div className="apps-sidebar__stages">
-              {STATUS_STAGES.map((stage) => (
+              {STATUS_FILTERS.map((stage) => (
                 <button
                   key={stage.key}
+                  type="button"
                   className={`apps-sidebar__stage${activeStage === stage.key ? ' apps-sidebar__stage--active' : ''}`}
                   onClick={() => setActiveStage(stage.key)}
                 >
                   <span className="apps-sidebar__stage-label">{stage.label}</span>
-                  <span className="apps-sidebar__stage-count">{stage.count}</span>
+                  <span className="apps-sidebar__stage-count">
+                    {stage.key === 'all' ? applications.length : statusCounts[stage.key]}
+                  </span>
                 </button>
               ))}
             </div>
 
             <div className="apps-sidebar__divider" />
 
-            <div className="apps-sidebar__title">Job Type</div>
+            <div className="apps-sidebar__title">Work Mode</div>
             <div className="apps-sidebar__types">
-              {TYPE_FILTERS.map((t) => (
+              {WORK_MODE_FILTERS.map((mode) => (
                 <button
-                  key={t}
-                  className={`apps-sidebar__type-btn${selectedType === t ? ' apps-sidebar__type-btn--active' : ''}`}
-                  onClick={() => setSelectedType(t)}
+                  key={mode.key}
+                  type="button"
+                  className={`apps-sidebar__type-btn${selectedMode === mode.key ? ' apps-sidebar__type-btn--active' : ''}`}
+                  onClick={() => setSelectedMode(mode.key)}
                 >
-                  {t}
+                  {mode.label}
                 </button>
               ))}
             </div>
           </div>
         </aside>
 
-        {/* Application list */}
         <div className="apps-layout__list">
-          {/* Search bar */}
-          <div className="apps-search-row">
-            <div className="apps-search">
-              <Search size={15} aria-hidden="true" />
+          <form className="dash-page-toolbar" onSubmit={handleSearch}>
+            <div className="dash-page-toolbar__search">
+              <span className="dash-page-toolbar__icon">
+                <Search size={16} aria-hidden="true" />
+              </span>
               <input
-                className="apps-search__input"
+                className="dash-page-toolbar__input"
                 type="text"
                 placeholder="Search company or role..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
               />
-            </div>
-            <span className="apps-results-count">{filtered.length} results</span>
-          </div>
-
-          {/* Application cards */}
-          <div className="apps-list content-stagger">
-            {filtered.length === 0 ? (
-              <div className="apps-empty">
-                <Search size={40} aria-hidden="true" />
-                <p>No applications match your filters.</p>
-              </div>
-            ) : (
-              filtered.map((app) => (
-                <div
-                  key={app.id}
-                  className={`app-item content-stagger-item${selectedApp?.id === app.id ? ' app-item--active' : ''}`}
-                  style={{ '--stagger-index': filtered.indexOf(app) } as React.CSSProperties}
-                  onClick={() => setSelectedApp(app)}
+              {searchInput ? (
+                <button
+                  type="button"
+                  className="dash-page-toolbar__clear"
+                  onClick={handleClearSearch}
+                  aria-label="Clear search"
                 >
-                  <div
-                    className="app-item__logo"
-                    style={
-                      {
-                        '--app-logo-bg': app.logoColor + '1A',
-                        '--app-logo-color': app.logoColor,
-                      } as React.CSSProperties
-                    }
-                  >
-                    {app.logo}
-                  </div>
-                  <div className="app-item__body">
-                    <div className="app-item__top">
-                      <div className="app-item__role">{app.role}</div>
-                      <span className={`badge badge--${app.statusVariant}`}>
-                        <span
-                          className="app-status-dot"
-                          style={
-                            {
-                              '--dot-color':
-                                statusVariantMap[app.statusVariant] || statusVariantMap.gray,
-                            } as React.CSSProperties
-                          }
-                        />
-                        {app.statusLabel}
-                      </span>
-                    </div>
-                    <div className="app-item__company">
-                      {app.company}
-                      <span className="app-item__sep">·</span>
-                      {app.location}
-                    </div>
-                    <div className="app-item__meta">
-                      <span>{app.salary}</span>
-                      <span className="app-item__sep">·</span>
-                      <span>Applied {app.applied}</span>
-                    </div>
-                  </div>
+                  <X size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+            <button type="submit" className="dash-page-toolbar__submit">
+              Search
+            </button>
+          </form>
+
+          {isLoading ? (
+            <ApplicationsListSkeleton count={5} />
+          ) : (
+            <div className="apps-list content-stagger">
+              {filteredApplications.length === 0 ? (
+                <div className="apps-empty">
+                  <Search size={40} aria-hidden="true" />
+                  <p>No applications match your filters.</p>
                 </div>
-              ))
-            )}
-          </div>
+              ) : (
+                filteredApplications.map((application, index) => {
+                  const accent = getCompanyAccent(application.company_name)
+                  const statusVariant = getStatusVariant(application.status)
+
+                  return (
+                    <button
+                      key={application.id}
+                      type="button"
+                      className={`app-item content-stagger-item${selectedApplication?.id === application.id ? ' app-item--active' : ''}`}
+                      style={{ '--stagger-index': index } as CSSProperties}
+                      onClick={() => setSelectedApplicationId(application.id)}
+                    >
+                      <MediaBadge
+                        src={application.company_logo_url}
+                        alt={application.company_name}
+                        fallback={accent.logo}
+                        className="app-item__logo"
+                        sizes="48px"
+                        style={
+                          {
+                            '--app-logo-bg': accent.color + '1A',
+                            '--app-logo-color': accent.color,
+                          } as CSSProperties
+                        }
+                      />
+                      <div className="app-item__body">
+                        <div className="app-item__top">
+                          <div className="app-item__role">{application.job_title}</div>
+                          <span className={`badge badge--${statusVariant}`}>
+                            <span
+                              className="app-status-dot"
+                              style={
+                                {
+                                  '--dot-color':
+                                    statusColorMap[statusVariant] || statusColorMap.gray,
+                                } as CSSProperties
+                              }
+                            />
+                            {getStatusLabel(application.status)}
+                          </span>
+                        </div>
+                        <div className="app-item__company">
+                          {application.company_name}
+                          <span className="app-item__sep">·</span>
+                          {formatLocation(application)}
+                        </div>
+                        <div className="app-item__meta">
+                          <span>{getLocationTypeLabel(application.location_type)}</span>
+                          <span className="app-item__sep">·</span>
+                          <span>Applied {formatRelativeDate(application.created_at)}</span>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Detail / tracking panel */}
         <aside className="apps-layout__detail">
-          {selectedApp ? (
+          {isLoading ? (
+            <ApplicationsDetailSkeleton />
+          ) : isFetching && !selectedApplication ? (
+            <ApplicationsDetailSkeleton />
+          ) : selectedApplication ? (
             <div className="app-detail content-fade-in">
               <div className="app-detail__header">
-                <div
+                <MediaBadge
+                  src={selectedApplication.company_logo_url}
+                  alt={selectedApplication.company_name}
+                  fallback={getCompanyAccent(selectedApplication.company_name).logo}
                   className="app-detail__logo"
+                  sizes="72px"
                   style={
                     {
-                      '--app-logo-bg': selectedApp.logoColor + '1A',
-                      '--app-logo-color': selectedApp.logoColor,
-                    } as React.CSSProperties
+                      '--app-logo-bg':
+                        getCompanyAccent(selectedApplication.company_name).color + '1A',
+                      '--app-logo-color': getCompanyAccent(selectedApplication.company_name).color,
+                    } as CSSProperties
                   }
-                >
-                  {selectedApp.logo}
-                </div>
+                />
                 <div className="app-detail__info">
-                  <div className="app-detail__role">{selectedApp.role}</div>
-                  <div className="app-detail__company">{selectedApp.company}</div>
-                  <div className="app-detail__location">{selectedApp.location}</div>
+                  <div className="app-detail__role">{selectedApplication.job_title}</div>
+                  <div className="app-detail__company">{selectedApplication.company_name}</div>
+                  <div className="app-detail__location">{formatLocation(selectedApplication)}</div>
                 </div>
               </div>
 
               <div className="app-detail__section">
                 <div className="app-detail__section-title">Application Status</div>
-                <span className={`badge badge--${selectedApp.statusVariant}`}>
+                <span className={`badge badge--${getStatusVariant(selectedApplication.status)}`}>
                   <span
                     className="app-status-dot"
                     style={
                       {
-                        '--dot-color': statusVariantMap[selectedApp.statusVariant],
-                      } as React.CSSProperties
+                        '--dot-color':
+                          statusColorMap[getStatusVariant(selectedApplication.status)] ||
+                          statusColorMap.gray,
+                      } as CSSProperties
                     }
                   />
-                  {selectedApp.statusLabel}
+                  {getStatusLabel(selectedApplication.status)}
                 </span>
               </div>
 
               <div className="app-detail__section">
                 <div className="app-detail__section-title">Timeline</div>
                 <div className="app-timeline">
-                  {selectedApp.timeline.map((step, i) => (
+                  {buildTimeline(selectedApplication).map((step, index, steps) => (
                     <div
-                      key={i}
+                      key={`${step.stage}-${index}`}
                       className={`app-timeline__step${step.done ? ' app-timeline__step--done' : ''}${step.current ? ' app-timeline__step--current' : ''}`}
                     >
                       <div className="app-timeline__marker">
                         <div className="app-timeline__dot" />
-                        {i < selectedApp.timeline.length - 1 && (
-                          <div className="app-timeline__line" />
-                        )}
+                        {index < steps.length - 1 ? <div className="app-timeline__line" /> : null}
                       </div>
                       <div className="app-timeline__content">
                         <div className="app-timeline__stage">{step.stage}</div>
@@ -408,8 +541,8 @@ export default function ApplicationsPage() {
               </div>
 
               <div className="app-detail__section">
-                <div className="app-detail__section-title">Latest Activity</div>
-                <p className="app-detail__activity">{selectedApp.lastActivity}</p>
+                <div className="app-detail__section-title">Latest Update</div>
+                <p className="app-detail__activity">{getStatusUpdateCopy(selectedApplication)}</p>
               </div>
 
               <div className="app-detail__section">
@@ -417,22 +550,32 @@ export default function ApplicationsPage() {
                 <div className="app-detail__facts">
                   <div className="app-detail__fact">
                     <span className="app-detail__fact-label">Applied</span>
-                    <span className="app-detail__fact-value">{selectedApp.applied}</span>
+                    <span className="app-detail__fact-value">
+                      {formatDisplayDate(selectedApplication.created_at)}
+                    </span>
                   </div>
                   <div className="app-detail__fact">
-                    <span className="app-detail__fact-label">Job Type</span>
-                    <span className="app-detail__fact-value">{selectedApp.type}</span>
+                    <span className="app-detail__fact-label">Last Updated</span>
+                    <span className="app-detail__fact-value">
+                      {formatDisplayDate(selectedApplication.updated_at)}
+                    </span>
                   </div>
                   <div className="app-detail__fact">
-                    <span className="app-detail__fact-label">Salary</span>
-                    <span className="app-detail__fact-value">{selectedApp.salary}</span>
+                    <span className="app-detail__fact-label">Work Mode</span>
+                    <span className="app-detail__fact-value">
+                      {getLocationTypeLabel(selectedApplication.location_type)}
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="app-detail__actions">
-                <button className="btn btn--ghost btn--sm">Withdraw</button>
-                <button className="btn btn--primary btn--sm">View Job</button>
+                <Link
+                  href={`/dashboard/jobs/${selectedApplication.job_id}`}
+                  className="btn btn--primary btn--sm"
+                >
+                  View Job
+                </Link>
               </div>
             </div>
           ) : (

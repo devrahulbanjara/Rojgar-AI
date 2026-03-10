@@ -214,23 +214,6 @@ function RecentApplicationsSkeletonRows({ count }: { count: number }) {
   ))
 }
 
-function RecentActivitySkeleton({ count }: { count: number }) {
-  return (
-    <div className="activity-list" aria-hidden="true">
-      {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="activity-item activity-item--skeleton">
-          <div className="skeleton-block activity-item__dot activity-item__dot--skeleton" />
-          <div className="activity-item__body">
-            <div className="skeleton-block dashboard-activity-skeleton__line" />
-            <div className="skeleton-block dashboard-activity-skeleton__line dashboard-activity-skeleton__line--short" />
-            <div className="skeleton-block dashboard-activity-skeleton__time" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function RecommendedJobsSkeletonCards({ count }: { count: number }) {
   return Array.from({ length: count }).map((_, index) => (
     <div key={index} className="job-card job-card--skeleton" aria-hidden="true">
@@ -427,101 +410,70 @@ export default function UserDashboardPage() {
             isLoading={isStatsLoading}
           />
 
-          <div className="dash-grid dash-grid--sidebar-right">
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Recent Applications</div>
-                  <div className="dash-card__subtitle">Your latest job applications</div>
-                </div>
-                <Link href="/dashboard/applications" className="btn btn--outline btn--sm">
-                  View All
-                </Link>
+          <div className="dash-card">
+            <div className="dash-card__header">
+              <div>
+                <div className="dash-card__title">Recent Applications</div>
+                <div className="dash-card__subtitle">Your latest job applications</div>
               </div>
-              <div className="table-scroll">
-                <table className="dash-table">
-                  <thead>
-                    <tr>
-                      <th>Company</th>
-                      <th>Role</th>
-                      <th>Location</th>
-                      <th>Status</th>
-                      <th>Applied</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isStatsLoading
-                      ? RecentApplicationsSkeletonRows({ count: 5 })
-                      : (dashboardData?.recent_applications ?? []).map((app, index) => {
-                          const accent = getCompanyAccent(app.company_name)
-                          const variant = getStatusVariant(app.status)
-
-                          return (
-                            <tr
-                              key={app.id}
-                              className="content-stagger-item"
-                              style={{ '--stagger-index': index } as CSSProperties}
-                            >
-                              <td>
-                                <div className="cell-user">
-                                  <div
-                                    className="cell-user__avatar cell-user__avatar--sm cell-user__avatar--rect"
-                                    style={
-                                      {
-                                        '--avatar-bg': accent.color + '1A',
-                                        '--avatar-color': accent.color,
-                                      } as CSSProperties
-                                    }
-                                  >
-                                    {accent.logo}
-                                  </div>
-                                  {app.company_name}
-                                </div>
-                              </td>
-                              <td className="cell-meta">{app.job_title}</td>
-                              <td className="cell-muted">{app.location ?? app.location_type}</td>
-                              <td>
-                                <span className={`badge badge--${variant}`}>
-                                  <ApplicationStatusIcon variant={variant} />
-                                  {getStatusLabel(app.status)}
-                                </span>
-                              </td>
-                              <td className="cell-muted">{formatRelativeDate(app.created_at)}</td>
-                            </tr>
-                          )
-                        })}
-                  </tbody>
-                </table>
-              </div>
+              <Link href="/dashboard/applications" className="btn btn--outline btn--sm">
+                View All
+              </Link>
             </div>
+            <div className="table-scroll">
+              <table className="dash-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Applied</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isStatsLoading
+                    ? RecentApplicationsSkeletonRows({ count: 5 })
+                    : (dashboardData?.recent_applications ?? []).map((app, index) => {
+                        const accent = getCompanyAccent(app.company_name)
+                        const variant = getStatusVariant(app.status)
 
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div className="dash-card__title">Recent Activity</div>
-              </div>
-              <div className="dash-card__body dash-card__body--activity">
-                {isStatsLoading ? (
-                  <RecentActivitySkeleton count={4} />
-                ) : (
-                  <div className="activity-list">
-                    {(dashboardData?.recent_activity ?? []).map((activity, index) => (
-                      <div
-                        key={activity.id}
-                        className="activity-item content-stagger-item"
-                        style={{ '--stagger-index': index } as CSSProperties}
-                      >
-                        <div className="activity-item__dot" />
-                        <div className="activity-item__body">
-                          <p className="activity-item__text">{activity.text}</p>
-                          <div className="activity-item__time">
-                            {formatRelativeDate(activity.time)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                        return (
+                          <tr
+                            key={app.id}
+                            className="content-stagger-item"
+                            style={{ '--stagger-index': index } as CSSProperties}
+                          >
+                            <td>
+                              <div className="cell-user">
+                                <div
+                                  className="cell-user__avatar cell-user__avatar--sm cell-user__avatar--rect"
+                                  style={
+                                    {
+                                      '--avatar-bg': accent.color + '1A',
+                                      '--avatar-color': accent.color,
+                                    } as CSSProperties
+                                  }
+                                >
+                                  {accent.logo}
+                                </div>
+                                {app.company_name}
+                              </div>
+                            </td>
+                            <td className="cell-meta">{app.job_title}</td>
+                            <td className="cell-muted">{app.location ?? app.location_type}</td>
+                            <td>
+                              <span className={`badge badge--${variant}`}>
+                                <ApplicationStatusIcon variant={variant} />
+                                {getStatusLabel(app.status)}
+                              </span>
+                            </td>
+                            <td className="cell-muted">{formatRelativeDate(app.created_at)}</td>
+                          </tr>
+                        )
+                      })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
