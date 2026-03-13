@@ -559,7 +559,7 @@ export default function ApplicationsPage() {
 
               <div className="app-detail__actions">
                 <Link
-                  href={`/dashboard/jobs/${selectedApplication.job_id}`}
+                  href={`/candidate/jobs/${selectedApplication.job_id}`}
                   className="btn btn--primary btn--sm"
                 >
                   View Job

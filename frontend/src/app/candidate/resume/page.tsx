@@ -19,7 +19,7 @@ import ResumeCard from './_components/ResumeCard'
 import { ResumeGridSkeleton } from './_components/ResumeSkeletons'
 
 // ── Resume list page ───────────────────────────────────────────────────────
-// Clicking View or Edit routes to /dashboard/resume/[id] (view or edit mode).
+// Clicking View or Edit routes to /candidate/resume/[id] (view or edit mode).
 
 export default function ResumePage() {
   const router = useRouter()
@@ -57,7 +57,7 @@ export default function ResumePage() {
         dispatch(upsertResume(uiResume))
         setShowCreateModal(false)
         // Open in edit mode immediately
-        router.push(`/dashboard/resume/${uiResume.id}?mode=edit`)
+        router.push(`/candidate/resume/${uiResume.id}?mode=edit`)
       } else {
         setCreateError(result.message ?? 'Failed to create resume.')
       }
@@ -132,8 +132,8 @@ export default function ResumePage() {
             >
               <ResumeCard
                 resume={r}
-                onView={() => router.push(`/dashboard/resume/${r.id}`)}
-                onEdit={() => router.push(`/dashboard/resume/${r.id}?mode=edit`)}
+                onView={() => router.push(`/candidate/resume/${r.id}`)}
+                onEdit={() => router.push(`/candidate/resume/${r.id}?mode=edit`)}
                 onDelete={() => handleDelete(r.id)}
                 isDeleting={deletingId === r.id}
                 isViewing={false}

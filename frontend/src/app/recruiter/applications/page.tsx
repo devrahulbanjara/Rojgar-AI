@@ -63,7 +63,7 @@ export default function CompanyApplicationsPage() {
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <Link
-            href="/company/jobs"
+            href="/recruiter/jobs"
             className="auth__inline-link"
             style={{ display: 'inline-flex', gap: '0.375rem', alignItems: 'center' }}
           >

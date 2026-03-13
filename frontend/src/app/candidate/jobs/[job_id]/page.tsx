@@ -101,7 +101,7 @@ function ApplyModal({
           ) : resumes.length === 0 ? (
             <p style={{ color: 'var(--color-muted,#6b7280)' }}>
               You need to{' '}
-              <Link href="/dashboard/resume" className="auth__inline-link">
+              <Link href="/candidate/resume" className="auth__inline-link">
                 create a resume
               </Link>{' '}
               before applying.
@@ -190,7 +190,7 @@ function ApplyModal({
 function RecommendedCard({ job }: { job: JobListItem }) {
   return (
     <Link
-      href={`/dashboard/jobs/${job.id}`}
+      href={`/candidate/jobs/${job.id}`}
       className="job-card"
       style={{ textDecoration: 'none', display: 'block' }}
     >
@@ -282,7 +282,7 @@ export default function JobDetailPage() {
   if (isError || !job) {
     return (
       <div className="dash-content container dash-content--pad-top">
-        <Link href="/dashboard/jobs" className="jd-back">
+        <Link href="/candidate/jobs" className="jd-back">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>
@@ -302,7 +302,7 @@ export default function JobDetailPage() {
   return (
     <>
       <div className="dash-content container dash-content--pad-top">
-        <Link href="/dashboard/jobs" className="jd-back">
+        <Link href="/candidate/jobs" className="jd-back">
           <ArrowLeft size={16} aria-hidden="true" />
           Back to Jobs
         </Link>

@@ -179,7 +179,7 @@ export default function ResumeDetailPage({
         const ui = apiResumeToUi(result.data, user?.full_name ?? '', user?.email ?? '')
         dispatch(upsertResume(ui))
         // Go back to view mode after saving
-        router.replace(`/dashboard/resume/${id}`)
+        router.replace(`/candidate/resume/${id}`)
       } else {
         setSaveError('Failed to save. Please try again.')
       }
@@ -211,7 +211,7 @@ export default function ResumeDetailPage({
           <p>Resume not found.</p>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => router.push('/dashboard/resume')}
+            onClick={() => router.push('/candidate/resume')}
           >
             Back to Resumes
           </button>
@@ -227,7 +227,7 @@ export default function ResumeDetailPage({
           <p>Failed to load resume.</p>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => router.push('/dashboard/resume')}
+            onClick={() => router.push('/candidate/resume')}
           >
             Back to Resumes
           </button>
@@ -242,8 +242,8 @@ export default function ResumeDetailPage({
         {saveError && <p className="resume-field__error">{saveError}</p>}
         <ResumeEditor
           resume={resume}
-          onClose={() => router.push('/dashboard/resume')}
-          onPreview={() => router.replace(`/dashboard/resume/${id}`)}
+          onClose={() => router.push('/candidate/resume')}
+          onPreview={() => router.replace(`/candidate/resume/${id}`)}
           onSave={handleSave}
           onChange={handleResumeChange}
           isSaving={isSaving}
@@ -255,8 +255,8 @@ export default function ResumeDetailPage({
   return (
     <ResumeViewer
       resume={resume}
-      onBack={() => router.push('/dashboard/resume')}
-      onEdit={() => router.push(`/dashboard/resume/${id}?mode=edit`)}
+      onBack={() => router.push('/candidate/resume')}
+      onEdit={() => router.push(`/candidate/resume/${id}?mode=edit`)}
     />
   )
 }

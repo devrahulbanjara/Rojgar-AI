@@ -111,6 +111,7 @@ class TestLogin:
             email="cookie_login@test.com",
             primary_role="candidate",
             is_email_verified=True,
+            is_onboarded=True,
             password_hash=hash_password("Password@123"),
         )
         db.add(user)
@@ -159,6 +160,7 @@ class TestLogin:
             email="wrongpass@test.com",
             primary_role="candidate",
             is_email_verified=True,
+            is_onboarded=True,
             password_hash=hash_password("correctpassword"),
         )
         db.add(user)
@@ -231,6 +233,7 @@ class TestTokenRefresh:
             email="refresh_user@test.com",
             primary_role="candidate",
             is_email_verified=True,
+            is_onboarded=True,
             password_hash=hash_password("Password@123"),
         )
         db.add(user)
@@ -279,6 +282,7 @@ class TestForgotPassword:
             email="forgot@test.com",
             primary_role="candidate",
             is_email_verified=True,
+            is_onboarded=True,
             password_hash=hash_password("oldpass"),
         )
         db.add(user)

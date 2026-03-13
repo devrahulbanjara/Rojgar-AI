@@ -6,7 +6,7 @@ import CookieBanner from '@/components/common/CookieBanner'
 import Footer from '@/components/common/footer'
 import Header from '@/components/common/header'
 
-const DASHBOARD_PREFIXES = ['/dashboard', '/company']
+const DASHBOARD_PREFIXES = ['/candidate', '/recruiter']
 
 function isDashboardPath(pathname: string) {
   return DASHBOARD_PREFIXES.some((p) => pathname.startsWith(p))

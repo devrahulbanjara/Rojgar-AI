@@ -132,7 +132,7 @@ function ApplyModal({
           ) : resumes.length === 0 ? (
             <p style={{ color: 'var(--color-muted,#6b7280)' }}>
               You need to{' '}
-              <Link href="/dashboard/resume" className="auth__inline-link">
+              <Link href="/candidate/resume" className="auth__inline-link">
                 create a resume
               </Link>{' '}
               before applying.

@@ -13,7 +13,7 @@ import { Bell, ChevronDown, FileText, LayoutGrid, LogOut, Search, User, X } from
 
 import MediaBadge from '@/components/common/MediaBadge'
 
-// DashRole uses the three canonical roles.
+// DashRole uses the canonical roles.
 export type DashRole = 'candidate' | 'recruiter_admin' | 'recruiter'
 
 type NavItem = { label: string; href: string }
@@ -100,22 +100,22 @@ const COMPANY_NOTIFICATIONS = [
 function buildNavItems(role: DashRole): NavItem[] {
   if (role === 'candidate') {
     return [
-      { label: 'Dashboard', href: '/dashboard' },
-      { label: 'Jobs', href: '/dashboard/jobs' },
-      { label: 'Applications', href: '/dashboard/applications' },
-      { label: 'Resumes', href: '/dashboard/resume' },
-      { label: 'Profile', href: '/dashboard/profile' },
+      { label: 'Dashboard', href: '/candidate' },
+      { label: 'Jobs', href: '/candidate/jobs' },
+      { label: 'Applications', href: '/candidate/applications' },
+      { label: 'Resumes', href: '/candidate/resume' },
+      { label: 'Profile', href: '/candidate/profile' },
     ]
   }
-  // "recruiter" or "recruiter_admin" — both share the company layout
+  // "recruiter" or "recruiter_admin"
   const items: NavItem[] = [
-    { label: 'Dashboard', href: '/company' },
-    { label: 'My Jobs', href: '/company/jobs' },
-    { label: 'Applications', href: '/company/applications' },
-    { label: 'Candidates', href: '/company/candidates' },
+    { label: 'Dashboard', href: '/recruiter' },
+    { label: 'My Jobs', href: '/recruiter/jobs' },
+    { label: 'Applications', href: '/recruiter/applications' },
+    { label: 'Candidates', href: '/recruiter/candidates' },
   ]
   if (role === 'recruiter_admin') {
-    items.push({ label: 'Recruiters', href: '/company/recruiters' })
+    items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })
   }
   return items
 }
@@ -147,7 +147,7 @@ export default function DashNavbar({
     : COMPANY_NOTIFICATIONS
   const notificationsCount = notifications.length
   const notificationsLoading = isCandidate ? isNotificationsLoading : false
-  const notificationsLink = isCandidate ? '/dashboard/applications' : '/company/applications'
+  const notificationsLink = isCandidate ? '/candidate/applications' : '/recruiter/applications'
 
   const displayName = user?.full_name ?? userName
   const displayInitials = getInitials(displayName, userInitials)
@@ -199,8 +199,8 @@ export default function DashNavbar({
 
   function isActive(href: string) {
     if (href === '/') return pathname === href
-    // match exact for dashboard root
-    const isRoot = href === '/dashboard' || href === '/company'
+    // exact match only for root dashboard pages
+    const isRoot = href === '/candidate' || href === '/recruiter'
     if (isRoot) return pathname === href
     return pathname.startsWith(href)
   }
@@ -375,7 +375,7 @@ export default function DashNavbar({
                 <div className="dash-navbar__dropdown-divider" />
 
                 <Link
-                  href={role === 'candidate' ? '/dashboard/profile' : '/company/settings'}
+                  href={role === 'candidate' ? '/candidate/profile' : '/recruiter/settings'}
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
@@ -384,7 +384,7 @@ export default function DashNavbar({
                 </Link>
 
                 <Link
-                  href={role === 'candidate' ? '/dashboard' : '/company'}
+                  href={role === 'candidate' ? '/candidate' : '/recruiter'}
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
@@ -394,7 +394,7 @@ export default function DashNavbar({
 
                 {activeRole === 'candidate' ? (
                   <Link
-                    href="/dashboard/resume"
+                    href="/candidate/resume"
                     className="dash-navbar__dropdown-item"
                     onClick={() => setDropdownOpen(false)}
                   >
@@ -403,7 +403,7 @@ export default function DashNavbar({
                   </Link>
                 ) : (
                   <Link
-                    href="/company/settings"
+                    href="/recruiter/settings"
                     className="dash-navbar__dropdown-item"
                     onClick={() => setDropdownOpen(false)}
                   >

@@ -198,7 +198,7 @@ export default function CompanyDashboardPage() {
                 <div className="dash-card__title">Active Job Posts</div>
                 <div className="dash-card__subtitle">Top 7 active roles by applicant count</div>
               </div>
-              <Link href="/company/jobs" className="btn btn--outline btn--sm btn--icon-right">
+              <Link href="/recruiter/jobs" className="btn btn--outline btn--sm btn--icon-right">
                 Manage <Settings2 size={14} strokeWidth={2} />
               </Link>
             </div>
@@ -252,7 +252,10 @@ export default function CompanyDashboardPage() {
                 <div className="dash-card__title">Top AI-Ranked Candidates</div>
                 <div className="dash-card__subtitle">Based on AI screening score</div>
               </div>
-              <Link href="/company/candidates" className="btn btn--outline btn--sm btn--icon-right">
+              <Link
+                href="/recruiter/candidates"
+                className="btn btn--outline btn--sm btn--icon-right"
+              >
                 View All <ArrowRight size={14} strokeWidth={2} />
               </Link>
             </div>
@@ -310,7 +313,10 @@ export default function CompanyDashboardPage() {
                   Team members posting jobs and screening candidates
                 </div>
               </div>
-              <Link href="/company/recruiters" className="btn btn--outline btn--sm btn--icon-right">
+              <Link
+                href="/recruiter/recruiters"
+                className="btn btn--outline btn--sm btn--icon-right"
+              >
                 Manage <Settings2 size={14} strokeWidth={2} />
               </Link>
             </div>
@@ -337,7 +343,7 @@ export default function CompanyDashboardPage() {
               </div>
               {pendingRecruiters.length > 0 && (
                 <Link
-                  href="/company/recruiters"
+                  href="/recruiter/recruiters"
                   className="btn btn--warning btn--sm recruiter-summary__cta"
                 >
                   Review {pendingRecruiters.length} pending request

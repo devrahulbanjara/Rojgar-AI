@@ -323,7 +323,7 @@ function ProfileStrengthBanner({
             {completionPercentage}%
           </div>
         )}
-        <Link href="/dashboard/profile" className="profile-strength-banner__link">
+        <Link href="/candidate/profile" className="profile-strength-banner__link">
           Complete your profile →
         </Link>
       </div>
@@ -416,7 +416,7 @@ export default function UserDashboardPage() {
                 <div className="dash-card__title">Recent Applications</div>
                 <div className="dash-card__subtitle">Your latest job applications</div>
               </div>
-              <Link href="/dashboard/applications" className="btn btn--outline btn--sm">
+              <Link href="/candidate/applications" className="btn btn--outline btn--sm">
                 View All
               </Link>
             </div>
@@ -484,7 +484,7 @@ export default function UserDashboardPage() {
               <div className="dash-card__title">Recommended for You</div>
               <div className="dash-card__subtitle">Based on your profile and skills</div>
             </div>
-            <Link href="/dashboard/jobs" className="btn btn--outline btn--sm">
+            <Link href="/candidate/jobs" className="btn btn--outline btn--sm">
               Browse All Jobs
             </Link>
           </div>
@@ -541,7 +541,7 @@ export default function UserDashboardPage() {
                           {formatSalaryRange(job)}
                         </span>
                         <Link
-                          href={`/dashboard/jobs/${job.id}`}
+                          href={`/candidate/jobs/${job.id}`}
                           className="btn btn--primary btn--sm job-card__meta-time"
                         >
                           View
