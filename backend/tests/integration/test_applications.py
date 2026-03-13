@@ -22,10 +22,11 @@ class TestApplicationSubmit:
             json={
                 "title": "Apply Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -58,15 +59,16 @@ class TestApplicationSubmit:
             json={
                 "title": "Closed Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         # Close the job
         await client.patch(
             f"/jobs/{job_id}",
-            json={"status": "closed"},
+            json={"status": "expired"},
             headers=auth_headers(recruiter),
         )
         resume_resp = await client.post(
@@ -103,6 +105,7 @@ class TestApplicationSubmit:
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -134,10 +137,11 @@ class TestApplicationSubmit:
             json={
                 "title": "Dup Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/", json={"resume_name": "Dup Resume"}, headers=auth_headers(cand)
@@ -165,10 +169,11 @@ class TestApplicationSubmit:
             json={
                 "title": "IDOR Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         # cand_b creates a resume
         resume_resp = await client.post(
@@ -199,10 +204,11 @@ class TestApplicationSubmit:
             json={
                 "title": "Self Apply Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
 
         resp = await client.post(
@@ -250,10 +256,11 @@ class TestApplicationRead:
             json={
                 "title": "List App Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/", json={"resume_name": "List Resume"}, headers=auth_headers(cand)
@@ -289,7 +296,7 @@ class TestApplicationRead:
             json={
                 "title": "First Inbox Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
@@ -298,7 +305,7 @@ class TestApplicationRead:
             json={
                 "title": "Second Inbox Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
@@ -346,10 +353,11 @@ class TestApplicationRead:
             json={
                 "title": "Job Apps Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -387,7 +395,7 @@ class TestApplicationRead:
             json={
                 "title": "Filter Inbox Job A",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
@@ -396,7 +404,7 @@ class TestApplicationRead:
             json={
                 "title": "Filter Inbox Job B",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
@@ -443,10 +451,11 @@ class TestApplicationRead:
             json={
                 "title": "No List Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
 
         resp = await client.get(
@@ -467,10 +476,11 @@ class TestApplicationRead:
             json={
                 "title": "Detail Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -503,10 +513,11 @@ class TestApplicationRead:
             json={
                 "title": "Spy Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -540,10 +551,11 @@ class TestApplicationStatusUpdate:
             json={
                 "title": "Status Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -580,10 +592,11 @@ class TestApplicationStatusUpdate:
             json={
                 "title": "No Status Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",
@@ -627,10 +640,11 @@ class TestApplicationStatusUpdate:
             json={
                 "title": "Cross Co Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(owner_recruiter),
         )
+        assert create_resp.status_code == 201, create_resp.json()
         job_id = create_resp.json()["data"]["id"]
         resume_resp = await client.post(
             "/resumes/",

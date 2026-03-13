@@ -48,7 +48,7 @@ export default function RecruitersPage() {
   useEffect(() => {
     if (user && user.primary_role !== 'recruiter_admin') {
       toast.error('Only company admins can manage recruiters.')
-      router.replace('/company')
+      router.replace('/recruiter')
     }
   }, [user, router])
 

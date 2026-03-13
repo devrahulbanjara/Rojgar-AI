@@ -120,7 +120,7 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
       )}
 
       <div className="job-preview__cta">
-        <Link href={`/dashboard/jobs/${job.id}`} className="job-preview__view-btn">
+        <Link href={`/candidate/jobs/${job.id}`} className="job-preview__view-btn">
           View Details
           <ArrowRight size={14} aria-hidden="true" />
         </Link>

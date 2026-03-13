@@ -21,7 +21,7 @@ class TestJobCreate:
                 "title": "Python Dev",
                 "location_type": "remote",
                 "currency": "NPR",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -101,7 +101,7 @@ class TestJobRead:
             json={
                 "title": "Public Open Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -140,7 +140,7 @@ class TestJobRead:
             json={
                 "title": "Detailed Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -165,7 +165,7 @@ class TestJobRead:
             json={
                 "title": "Blockchain Wizard",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -185,7 +185,7 @@ class TestJobRead:
             json={
                 "title": "Cat Backend Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
                 "category": "cat_backend_unique",
             },
             headers=auth_headers(user),
@@ -289,7 +289,7 @@ class TestJobUpdate:
         job_id = create_resp.json()["data"]["id"]
 
         await client.patch(
-            f"/jobs/{job_id}", json={"status": "open"}, headers=auth_headers(user)
+            f"/jobs/{job_id}", json={"status": "active"}, headers=auth_headers(user)
         )
 
         resp = await client.get("/jobs/?q=Soon+Open+Job")

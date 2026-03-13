@@ -59,6 +59,20 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
       // Logged in but wrong role — send to their own dashboard
       toast.error("You don't have permission to access that page.")
       router.replace(getRoleDashboard(user.primary_role))
+      return
+    }
+
+    // Check onboarding status for candidates
+    if (user.primary_role === 'candidate') {
+      if (!user.is_onboarded && !pathname.startsWith('/onboarding')) {
+        toast.info('Please complete your onboarding profile first.')
+        router.replace('/onboarding')
+        return
+      }
+      if (user.is_onboarded && pathname.startsWith('/onboarding')) {
+        router.replace('/candidate')
+        return
+      }
     }
   }, [isAuthenticated, user, requiredRole, pathname, router])
 

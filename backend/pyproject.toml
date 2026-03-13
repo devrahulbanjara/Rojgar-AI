@@ -19,7 +19,6 @@ dependencies = [
     "langchain-groq>=1.1.2",
     "langchain-qdrant>=1.1.0",
     "langchain-tavily>=0.2.17",
-    "llm-guard>=0.3.16",
     "logfire[fastapi]>=4.25.0",
     "loguru>=0.7.3",
     "psycopg2-binary>=2.9.11",

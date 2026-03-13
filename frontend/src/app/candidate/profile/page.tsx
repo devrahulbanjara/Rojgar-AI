@@ -28,6 +28,110 @@ import MediaBadge from '@/components/common/MediaBadge'
 
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
 
+export const AVAILABLE_ROLES = [
+  // Software Engineering & Web Development
+  'Software Engineer',
+  'Frontend Engineer',
+  'Backend Engineer',
+  'Fullstack Engineer',
+  'Web Developer',
+  'Mobile Developer',
+  'iOS Developer',
+  'Android Developer',
+  'Game Developer',
+  'Embedded Systems Engineer',
+  'Firmware Engineer',
+  'API Developer',
+  'Salesforce Developer',
+  'CMS Developer (WordPress, Shopify, etc.)',
+
+  // Cloud, Infrastructure & DevOps
+  'DevOps Engineer',
+  'Cloud Architect',
+  'Cloud Engineer',
+  'Site Reliability Engineer (SRE)',
+  'Platform Engineer',
+  'Network Engineer',
+  'Network Administrator',
+  'Systems Administrator',
+  'Database Administrator (DBA)',
+  'Infrastructure Engineer',
+  'Release Manager',
+
+  // Data, AI & Machine Learning
+  'Data Scientist',
+  'Data Engineer',
+  'Machine Learning Engineer',
+  'AI Engineer',
+  'Data Analyst',
+  'Business Intelligence (BI) Developer',
+  'Big Data Engineer',
+  'Deep Learning Engineer',
+  'NLP Engineer',
+  'Computer Vision Engineer',
+  'Prompt Engineer',
+  'Data Architect',
+
+  // Cybersecurity
+  'Security Engineer',
+  'Cybersecurity Analyst',
+  'Penetration Tester (Ethical Hacker)',
+  'Security Architect',
+  'DevSecOps Engineer',
+  'Information Security Manager',
+  'Incident Responder',
+  'Cryptographer',
+
+  // Quality Assurance & Testing
+  'QA Tester',
+  'QA Engineer',
+  'QA Automation Engineer',
+  'Software Development Engineer in Test (SDET)',
+  'Performance Tester',
+  'Manual Tester',
+
+  // Design & User Experience
+  'UI/UX Designer',
+  'Product Designer',
+  'UX Researcher',
+  'Interaction Designer',
+  'Visual Designer',
+  'Web Designer',
+
+  // Product, Project & Agile Management
+  'Product Manager',
+  'Project Manager',
+  'Scrum Master',
+  'Product Owner',
+  'Technical Program Manager (TPM)',
+  'Engineering Manager',
+  'Business Analyst',
+
+  // Emerging Tech & Specialized
+  'Blockchain Developer',
+  'Smart Contract Engineer',
+  'Web3 Developer',
+  'AR/VR Developer',
+  'IoT Engineer',
+  'Robotics Engineer',
+  'RPA Developer (Robotic Process Automation)',
+
+  // Developer Relations & Client-Facing Tech
+  'Developer Advocate / Evangelist',
+  'Sales Engineer',
+  'Solutions Architect',
+  'Technical Writer',
+  'Implementation Consultant',
+
+  // IT Support & Leadership
+  'IT Support Specialist',
+  'Helpdesk Technician',
+  'IT Manager / Director',
+  'Chief Technology Officer (CTO)',
+  'Chief Information Officer (CIO)',
+  'Chief Information Security Officer (CISO)',
+]
+
 // ── Local form types ───────────────────────────────────────────
 
 type FormExperience = {
@@ -61,11 +165,11 @@ type FormProfile = {
   linkedin_url: string
   github_url: string
   portfolio_url: string
-  /** Stored as string so the number input works without parse errors. */
   years_of_experience: string
   experiences: FormExperience[]
   educations: FormEducation[]
   skills: string[]
+  target_roles: string[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -145,6 +249,7 @@ function apiToForm(data: CandidateProfileData): FormProfile {
       endDate: parseApiDate(e.end_date),
     })),
     skills: data.skills.map((s) => s.skill_name),
+    target_roles: data.target_roles || [],
   }
 }
 
@@ -174,6 +279,7 @@ function formToApiUpdate(form: FormProfile): UpdateProfileRequest {
       end_date: toApiDate(e.endDate),
     })),
     skills: form.skills.map((s) => ({ skill_name: s })),
+    target_roles: form.target_roles,
   }
 }
 
@@ -189,6 +295,7 @@ const EMPTY_FORM: FormProfile = {
   experiences: [],
   educations: [],
   skills: [],
+  target_roles: [],
 }
 
 // ── Section tabs definition ────────────────────────────────────
@@ -241,6 +348,9 @@ export default function ProfilePage() {
   const [activeSection, setActiveSection] = useState<Section>('Overview')
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [skillInput, setSkillInput] = useState('')
+  const [targetRoleInput, setTargetRoleInput] = useState('')
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
+  const roleDropdownRef = useRef<HTMLDivElement>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
@@ -392,6 +502,43 @@ export default function ProfilePage() {
     setForm(nextForm)
     saveProfile(nextForm)
   }
+
+  // ── Target Roles helpers ──────────────────────────────────────────────────
+
+  const filteredTargetRoles = AVAILABLE_ROLES.filter(
+    (role) =>
+      role.toLowerCase().includes(targetRoleInput.toLowerCase()) &&
+      !form.target_roles.includes(role),
+  )
+
+  function addTargetRole(role: string) {
+    const r = role.trim()
+    if (!r || form.target_roles.includes(r)) return
+    const next = [...form.target_roles, r]
+    setTargetRoleInput('')
+    setIsRoleDropdownOpen(false)
+    const nextForm = { ...form, target_roles: next }
+    setForm(nextForm)
+    saveProfile(nextForm)
+  }
+
+  function removeTargetRole(role: string) {
+    const next = form.target_roles.filter((r) => r !== role)
+    const nextForm = { ...form, target_roles: next }
+    setForm(nextForm)
+    saveProfile(nextForm)
+  }
+
+  // Handle clicking outside to close role dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setIsRoleDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   function finalizeAvatarCropModalClose() {
     setAvatarCropDraft(null)
@@ -667,6 +814,144 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="profile-aside-card__divider" />
+              <div className="profile-target-roles" style={{ padding: '0.5rem 0' }}>
+                <div className="profile-block__header" style={{ marginBottom: '0.75rem' }}>
+                  <div
+                    className="profile-block__title"
+                    style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-color)' }}
+                  >
+                    Target Roles
+                  </div>
+                </div>
+
+                <div className="resume-skills-wrap" style={{ marginBottom: '1rem', gap: '6px' }}>
+                  {form.target_roles.map((role) => (
+                    <div
+                      className="resume-skill-chip"
+                      key={role}
+                      style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+                    >
+                      {role}
+                      <button
+                        className="resume-skill-chip__remove"
+                        disabled={isSaving}
+                        onClick={() => removeTargetRole(role)}
+                        aria-label={`Remove ${role}`}
+                        style={{ marginLeft: '4px' }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {form.target_roles.length === 0 && (
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-light)',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      No target roles set
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ position: 'relative' }} ref={roleDropdownRef}>
+                  <input
+                    className="resume-field__input"
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', height: 'auto' }}
+                    placeholder="Add target role..."
+                    value={targetRoleInput}
+                    onFocus={() => setIsRoleDropdownOpen(true)}
+                    onChange={(e) => {
+                      setTargetRoleInput(e.target.value)
+                      setIsRoleDropdownOpen(true)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (targetRoleInput.trim()) addTargetRole(targetRoleInput)
+                      }
+                    }}
+                  />
+                  {isRoleDropdownOpen &&
+                    (targetRoleInput.length > 0 || filteredTargetRoles.length > 0) && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          zIndex: 100,
+                          backgroundColor: '#fff',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          maxHeight: '160px',
+                          overflowY: 'auto',
+                          marginTop: '4px',
+                        }}
+                      >
+                        {filteredTargetRoles.map((role) => (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => addTargetRole(role)}
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              padding: '8px 12px',
+                              background: 'transparent',
+                              border: 'none',
+                              borderBottom: '1px solid var(--border-color)',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              color: 'var(--text-color)',
+                              transition: 'background-color 0.2s',
+                            }}
+                            onMouseOver={(e) =>
+                              (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')
+                            }
+                            onMouseOut={(e) =>
+                              (e.currentTarget.style.backgroundColor = 'transparent')
+                            }
+                          >
+                            {role}
+                          </button>
+                        ))}
+                        {targetRoleInput.trim() &&
+                          !filteredTargetRoles.some(
+                            (r) => r.toLowerCase() === targetRoleInput.trim().toLowerCase(),
+                          ) && (
+                            <button
+                              type="button"
+                              onClick={() => addTargetRole(targetRoleInput)}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: '8px 12px',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '0.75rem',
+                                color: 'var(--primary-color)',
+                                fontWeight: 600,
+                                transition: 'background-color 0.2s',
+                              }}
+                              onMouseOver={(e) =>
+                                (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')
+                              }
+                              onMouseOut={(e) =>
+                                (e.currentTarget.style.backgroundColor = 'transparent')
+                              }
+                            >
+                              + Add &quot;{targetRoleInput.trim()}&quot;
+                            </button>
+                          )}
+                      </div>
+                    )}
+                </div>
+              </div>
               <div className="profile-completion">
                 <div className="profile-completion__header">
                   <span className="profile-completion__label">{PROFILE_COMPLETION_LABEL}</span>

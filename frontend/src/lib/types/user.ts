@@ -44,6 +44,7 @@ export interface BaseUser {
   email: string
   primary_role: PrimaryRole
   is_email_verified: boolean
+  is_onboarded: boolean
   avatar_url: string | null
   created_at: string
   updated_at: string

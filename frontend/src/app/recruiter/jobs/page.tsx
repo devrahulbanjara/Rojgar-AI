@@ -125,7 +125,7 @@ function RecruiterJobCard({
       <div className="company-job-card__footer">
         <div className="company-job-card__footer-meta">
           <Link
-            href={`/company/applications?job_id=${job.id}`}
+            href={`/recruiter/applications?job_id=${job.id}`}
             className="company-job-card__applicants-link"
           >
             <Users size={13} aria-hidden="true" />

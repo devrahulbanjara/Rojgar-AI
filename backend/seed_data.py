@@ -40,6 +40,7 @@ async def seed():
             password_hash=COMMON_PW,
             primary_role=UserRole.recruiter_admin,
             is_email_verified=True,
+            is_onboarded=True,
         )
         db.add(admin)
         await db.flush()
@@ -85,6 +86,7 @@ async def seed():
                 password_hash=COMMON_PW,
                 primary_role=UserRole.recruiter,
                 is_email_verified=True,
+                is_onboarded=True,
             )
             db.add(u)
             await db.flush()
@@ -194,6 +196,7 @@ async def seed():
                 "summary": "Fullstack developer with 7 years of experience in high-scale systems.",
                 "phone": "9841234567",
                 "location": "Koteshwor, Kathmandu",
+                "target_roles": ["Backend Developer", "Fullstack Engineer"],
                 "skills": ["Python", "FastAPI", "React", "AWS", "PostgreSQL"],
                 "exp": [
                     {
@@ -234,6 +237,7 @@ async def seed():
                 "summary": "Specialist in building secure cloud environments and automated pipelines.",
                 "phone": "9801234567",
                 "location": "Dhobighat, Lalitpur",
+                "target_roles": ["DevOps Engineer", "Cloud Architect"],
                 "skills": [
                     "Docker",
                     "Kubernetes",
@@ -285,6 +289,7 @@ async def seed():
                 password_hash=COMMON_PW,
                 primary_role=UserRole.candidate,
                 is_email_verified=True,
+                is_onboarded=True,
             )
             db.add(c)
             await db.flush()
@@ -297,6 +302,7 @@ async def seed():
                 phone=data["phone"],
                 location=data["location"],
                 years_of_experience=7,
+                target_roles=data["target_roles"],
             )
             db.add(p)
             await db.flush()
