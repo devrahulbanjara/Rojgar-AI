@@ -9,6 +9,8 @@ from app.modules.auth.models import User
 from app.modules.auth.enums import UserRole, MembershipRole, MembershipStatus
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.jobs.models import Job
+from app.modules.jobs.enums import SyncAction
+from app.modules.jobs.models import JobSyncEvent
 from app.modules.profiles.models import (
     Profile,
     ProfileExperience,
@@ -184,6 +186,14 @@ async def seed():
             ),
         ]
         db.add_all(jobs)
+        await db.flush()  # Generate IDs without committing yet
+
+        print("📝 Queuing jobs for vectorization via outbox...")
+        for job in jobs:
+            db.add(JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT))
+
+        await db.commit()
+        print("✅ Jobs committed. The background daemon will vectorize them within 60 s.")
 
         # ---------------------------------------------------------------------------
         # 4. CANDIDATES DATA

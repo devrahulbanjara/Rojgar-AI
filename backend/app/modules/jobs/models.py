@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.companies.models import Company
+from app.modules.jobs.enums import SyncAction, SyncStatus
 from app.shared.enums import JobStatus, LocationType
 
 
@@ -46,3 +47,20 @@ class Job(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     company: Mapped[Company] = relationship("Company", lazy="raise")
+
+
+class JobSyncEvent(Base):
+    __tablename__ = "job_sync_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    job_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, index=True)
+    action: Mapped[SyncAction] = mapped_column(nullable=False)
+    status: Mapped[SyncStatus] = mapped_column(nullable=False, server_default="PENDING")
+    error_message: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

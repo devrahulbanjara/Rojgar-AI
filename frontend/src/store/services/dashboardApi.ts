@@ -50,6 +50,7 @@ export interface CandidateDashboardRecommendedJob {
   currency: string
   status: JobStatus
   created_at: string
+  match_score: number | null
 }
 
 export interface CandidateDashboardData {

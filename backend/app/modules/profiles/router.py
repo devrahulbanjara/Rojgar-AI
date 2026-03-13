@@ -7,7 +7,11 @@ from app.integrations.s3.service import S3Service
 from app.modules.auth.dependencies import require_candidate, get_current_user
 from app.modules.auth.models import User
 from app.modules.profiles import service
-from app.modules.profiles.schemas import CandidateOnboardingRequest, ProfileResponse, ProfileUpdate
+from app.modules.profiles.schemas import (
+    CandidateOnboardingRequest,
+    ProfileResponse,
+    ProfileUpdate,
+)
 
 router = APIRouter()
 s3_service = S3Service()
@@ -97,7 +101,9 @@ async def complete_onboarding(
     db: AsyncSession = db,
 ):
     data = await service.complete_onboarding(db, user, payload)
-    return ResponseBuilder.success(data=data, message="Onboarding completed successfully.")
+    return ResponseBuilder.success(
+        data=data, message="Onboarding completed successfully."
+    )
 
 
 @router.get(

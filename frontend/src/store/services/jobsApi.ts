@@ -1,3 +1,4 @@
+import type { Paginated } from '@/lib/types/user'
 import { type ApiResponse, baseApi } from './baseApi'
 
 // ---------------------------------------------------------------------------
@@ -75,6 +76,8 @@ export interface JobListItem {
   status: JobStatus
   applications_count: number
   created_at: string
+  match_score: number | null
+  is_fallback: boolean
 }
 
 /** Full job detail including description fields */
@@ -146,7 +149,7 @@ function normalizeJobDetail(job: RawJobDetail): JobDetail {
 export const jobsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** GET /jobs/ — public: search & list active jobs */
-    searchJobs: builder.query<ApiResponse<JobListItem[]>, SearchJobsParams>({
+    searchJobs: builder.query<ApiResponse<Paginated<JobListItem>>, SearchJobsParams>({
       query: ({
         q,
         location,
@@ -169,9 +172,12 @@ export const jobsApi = baseApi.injectEndpoints({
           size,
         },
       }),
-      transformResponse: (response: ApiResponse<RawJobListItem[]>) => ({
+      transformResponse: (response: ApiResponse<Paginated<RawJobListItem>>) => ({
         ...response,
-        data: (response.data ?? []).map(normalizeJobListItem),
+        data: {
+          ...response.data,
+          items: (response.data?.items ?? []).map(normalizeJobListItem),
+        },
       }),
       providesTags: ['Jobs'],
     }),

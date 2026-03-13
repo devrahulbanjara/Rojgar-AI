@@ -527,6 +527,11 @@ export default function UserDashboardPage() {
                             </span>
                           </div>
                         </div>
+                        {job.match_score !== null && (
+                          <div className="job-match-badge job-match-badge--sm" title="AI Match Score">
+                            {Math.round(job.match_score * 100)}%
+                          </div>
+                        )}
                       </div>
                       <div className="job-card__tags">
                         {tags.map((tag) => (

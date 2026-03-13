@@ -113,6 +113,7 @@ export interface CandidateProfile extends BaseUser {
   headline: string | null // e.g. "Frontend Engineer @ Convex"
   bio: string | null
   skills: string[] // ["React", "TypeScript", ...]
+  target_roles: string[] // ["Frontend Developer", "Backend Developer"]
   experience_level: ExperienceLevel | null
   expected_salary: string | null
   preferred_job_types: JobType[]
@@ -309,10 +310,16 @@ export interface ScheduleInterviewRequest {
 // Pagination wrapper
 // ---------------------------------------------------------------------------
 
-export interface Paginated<T> {
-  data: T[]
+export interface PaginationMeta {
   total: number
   page: number
-  limit: number
-  total_pages: number
+  size: number
+  pages: number
+  has_next: boolean
+  has_prev: boolean
+}
+
+export interface Paginated<T> {
+  items: T[]
+  pagination: PaginationMeta
 }

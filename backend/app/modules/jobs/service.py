@@ -1,21 +1,28 @@
-from fastapi import HTTPException, status
+import uuid
+
+from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
+from qdrant_client import models as qdrant_models
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.integrations.qdrant.service import qdrant_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
-from app.modules.jobs.models import Job
+from app.modules.jobs.enums import SyncAction
+from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.jobs.schemas import (
     JobCreate,
     JobDetailResponse,
     JobListItem,
     JobUpdate,
 )
-from app.shared.enums import JobStatus, LocationType
+from app.modules.jobs.sync import process_sync_event
+from app.modules.profiles.models import Profile
+from app.shared.enums import LocationType
 
 
 def _job_list_item_from_row(
@@ -26,13 +33,6 @@ def _job_list_item_from_row(
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
-    """Resolve the company_id for any user with an active company membership.
-
-    The role gate is intentionally removed here — the membership query itself
-    is sufficient.  Both ``recruiter`` and ``recruiter_admin`` (and any future
-    company-level roles) will be authorised as long as they hold an
-    ``active`` :class:`CompanyMembership`.
-    """
     result = await db.execute(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user.id,
@@ -49,7 +49,7 @@ async def _get_user_company_id(db: AsyncSession, user: User):
 
 
 async def create_job(
-    db: AsyncSession, user: User, payload: JobCreate
+    db: AsyncSession, user: User, payload: JobCreate, bg_tasks: BackgroundTasks
 ) -> JobDetailResponse:
     """Create a new job posting under the user's company."""
     company_id = await _get_user_company_id(db, user)
@@ -72,7 +72,16 @@ async def create_job(
         benefits=payload.benefits,
     )
     db.add(job)
+    await db.flush()  # Generates job.id without committing yet
+
+    # 1. Transactionally write the outbox event alongside the job
+    event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
+    db.add(event)
     await db.commit()
+
+    # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
+    bg_tasks.add_task(process_sync_event, event.id)
+
     result = await db.execute(
         select(Job).options(selectinload(Job.company)).where(Job.id == job.id)
     )
@@ -81,50 +90,148 @@ async def create_job(
     return JobDetailResponse.model_validate(job)
 
 
+async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
+    """
+    Build a semantically rich query string from the candidate's profile.
+    Target role is repeated at the top for highest embedding weight.
+    """
+    result = await db.execute(
+        select(Profile)
+        .where(Profile.user_id == user.id)
+        .options(
+            selectinload(Profile.experiences),
+            selectinload(Profile.skills),
+        )
+    )
+    profile = result.scalar_one_or_none()
+
+    if not profile:
+        return "Software engineering technology jobs"
+
+    target_roles: list[str] = profile.target_roles or []
+    top_target = target_roles[0] if target_roles else "Technology Professional"
+    experience_titles = (
+        ", ".join(exp.title for exp in profile.experiences)
+        if profile.experiences
+        else ""
+    )
+    skill_names = (
+        ", ".join(s.skill_name for s in profile.skills) if profile.skills else ""
+    )
+
+    parts = [
+        f"TARGET ROLE (highest priority):\n{top_target}",
+        f"PREFERRED ROLE KEYWORDS:\n{', '.join(target_roles)}",
+    ]
+    if profile.summary:
+        parts.append(f"PROFESSIONAL SUMMARY:\n{profile.summary}")
+    if experience_titles:
+        parts.append(f"WORK EXPERIENCE:\n{experience_titles}")
+    if skill_names:
+        parts.append(f"SKILLS:\n{skill_names}")
+
+    return "\n\n".join(parts)
+
+
 async def search_jobs(
     db: AsyncSession,
+    user: "User | None",
     q: str | None,
-    location: str | None,
     location_type: LocationType | None,
     category: str | None,
     salary_min: int | None,
     salary_max: int | None,
     page: int,
     size: int,
-) -> list[JobListItem]:
-    """Search active jobs with optional keyword / location / salary filters."""
+) -> tuple[list[JobListItem], int]:
+    """
+    Vector-powered job search with AI recommendations.
+
+    - When ``q`` is provided: embeds the search string and queries Qdrant.
+    - When no ``q`` and user is a candidate: builds a profile-based
+      recommendation query so the most relevant jobs surface first.
+    - Metadata filters (location_type, category, salary) are applied inside
+      Qdrant, with smart fallback padding for under-filled pages.
+    """
+    from app.modules.auth.enums import UserRole  # local import avoids circular
+
+    # 1. Determine the semantic query string
+    if q and q.strip():
+        search_query = q.strip()
+    elif user and user.primary_role == UserRole.candidate:
+        search_query = await _build_recommendation_query(db, user)
+    else:
+        search_query = "Software technology engineering jobs"
+
+    # 2. Build Qdrant metadata filter conditions
+    filters: list[qdrant_models.Condition] = []
+    if location_type:
+        filters.append(
+            qdrant_models.FieldCondition(
+                key="location_type",
+                match=qdrant_models.MatchValue(value=location_type.value),
+            )
+        )
+    if category:
+        filters.append(
+            qdrant_models.FieldCondition(
+                key="category",
+                match=qdrant_models.MatchValue(value=category),
+            )
+        )
+    if salary_min is not None:
+        # Job's salary_max must reach at least the candidate's desired minimum
+        filters.append(
+            qdrant_models.FieldCondition(
+                key="salary_max",
+                range=qdrant_models.Range(gte=salary_min),
+            )
+        )
+    if salary_max is not None:
+        # Job's salary_min must be within the candidate's budget ceiling
+        filters.append(
+            qdrant_models.FieldCondition(
+                key="salary_min",
+                range=qdrant_models.Range(lte=salary_max),
+            )
+        )
+
+    # 3. Run the semantic search (returns results ordered highest→lowest score)
+    qdrant_results, total_count = await qdrant_service.search_jobs(
+        query=search_query,
+        filters=filters,
+        page=page,
+        size=size,
+    )
+
+    if not qdrant_results:
+        return [], 0
+
+    # 4. Batch-fetch the real job rows from Postgres (preserves no ordering)
+    job_ids = [res["job_id"] for res in qdrant_results]
     stmt = (
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
         .outerjoin(Application, Application.job_id == Job.id)
-        .where(Job.status == JobStatus.active)
+        .where(Job.id.in_(job_ids))
         .group_by(Job.id)
     )
+    db_result = await db.execute(stmt)
+    job_map = {job.id: (job, app_count) for job, app_count in db_result.all()}
 
-    if q:
-        stmt = stmt.where(Job.title.ilike(f"%{q}%"))
-    if location:
-        stmt = stmt.where(Job.location.ilike(f"%{location}%"))
-    if location_type:
-        stmt = stmt.where(Job.location_type == location_type)
-    if category:
-        stmt = stmt.where(Job.category == category)
-    if salary_min is not None:
-        # Show jobs whose upper bound reaches at least the desired minimum
-        stmt = stmt.where(Job.salary_max >= salary_min)
-    if salary_max is not None:
-        # Show jobs whose lower bound is within the budget
-        stmt = stmt.where(Job.salary_min <= salary_max)
+    # 5. Reconstruct the list in Qdrant's exact semantic score order
+    final_jobs: list[JobListItem] = []
+    for res in qdrant_results:
+        row = job_map.get(res["job_id"])
+        if row is None:
+            continue  # ghost vector (job deleted from Postgres but not yet from Qdrant)
+        job, app_count = row
+        setattr(job, "applications_count", int(app_count or 0))
+        setattr(job, "match_score", round(res["score"], 4))
+        setattr(job, "is_fallback", res["is_fallback"])
+        final_jobs.append(JobListItem.model_validate(job))
 
-    stmt = stmt.order_by(Job.created_at.desc())
-    stmt = stmt.offset((page - 1) * size).limit(size)
-
-    result = await db.execute(stmt)
-    rows = result.all()
-    return [
-        _job_list_item_from_row(job, applications_count)
-        for job, applications_count in rows
-    ]
+    return final_jobs, total_count
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
@@ -160,7 +267,11 @@ async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
 
 
 async def update_job(
-    db: AsyncSession, user: User, job_id: str, payload: JobUpdate
+    db: AsyncSession,
+    user: User,
+    job_id: str,
+    payload: JobUpdate,
+    bg_tasks: BackgroundTasks,
 ) -> JobDetailResponse:
     """Update a job posting (must belong to user's company)."""
     company_id = await _get_user_company_id(db, user)
@@ -193,7 +304,14 @@ async def update_job(
         if value is not None:
             setattr(job, field, value)
 
+    # 1. Transactionally write the outbox event alongside the update
+    event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
+    db.add(event)
     await db.commit()
+
+    # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
+    bg_tasks.add_task(process_sync_event, event.id)
+
     result = await db.execute(
         select(Job).options(selectinload(Job.company)).where(Job.id == job.id)
     )
@@ -202,7 +320,9 @@ async def update_job(
     return JobDetailResponse.model_validate(job)
 
 
-async def delete_job(db: AsyncSession, user: User, job_id: str) -> None:
+async def delete_job(
+    db: AsyncSession, user: User, job_id: str, bg_tasks: BackgroundTasks
+) -> None:
     """Delete a job posting (must belong to user's company)."""
     company_id = await _get_user_company_id(db, user)
 
@@ -216,6 +336,15 @@ async def delete_job(db: AsyncSession, user: User, job_id: str) -> None:
             detail="Job not found or you do not have permission.",
         )
 
+    job_title = job.title  # capture before deletion
     await db.delete(job)
+
+    # 1. Transactionally write the hard-delete outbox event
+    event = JobSyncEvent(job_id=uuid.UUID(str(job_id)), action=SyncAction.DELETE)
+    db.add(event)
     await db.commit()
-    logger.info(f"Job '{job.title}' deleted by user {user.id}")
+
+    # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
+    bg_tasks.add_task(process_sync_event, event.id)
+
+    logger.info(f"Job '{job_title}' deleted by user {user.id}")

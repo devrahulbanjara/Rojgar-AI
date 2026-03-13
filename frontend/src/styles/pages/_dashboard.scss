@@ -3,6 +3,7 @@
 // ============================================================
 
 @use 'sass:color';
+@use 'sass:math';
 @use '../variables' as *;
 @use '../mixins' as *;
 
@@ -7091,4 +7092,67 @@
   .dash-page-toolbar__submit {
     width: 100%;
   }
+}
+
+// --- AI Job Recommendations & Enhancements ---
+.job-list-fallback-divider {
+  display: flex;
+  align-items: center;
+  gap: $space-6;
+  margin: $space-8 0 $space-4;
+  padding: 0 $space-2;
+
+  &__line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, $color-gray-200 50%, transparent);
+  }
+
+  &__text {
+    font-size: 0.8125rem;
+    font-weight: $font-weight-semibold;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+}
+
+.job-match-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: $space-1 $space-3;
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+  border: 1px solid rgba($color-primary, 0.2);
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+
+  &--sm {
+    padding: math.div($space-1, 2) $space-2;
+    font-size: 0.7rem;
+  }
+}
+
+.jobs-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  margin-top: $space-8;
+  padding-bottom: $space-8;
+
+  &__info {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+  }
+}
+
+.job-card__actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  margin-left: auto;
 }

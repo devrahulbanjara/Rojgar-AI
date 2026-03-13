@@ -224,31 +224,26 @@ export default function UserJobsPage() {
   const [searchInput, setSearchInput] = useState('')
   const [locationInput, setLocationInput] = useState('')
   const [locationTypeDraft, setLocationTypeDraft] = useState<LocationType | null>(null)
-  const [categoryDraft, setCategoryDraft] = useState<string | null>(null)
   const [salaryMinInput, setSalaryMinInput] = useState('')
   const [salaryMaxInput, setSalaryMaxInput] = useState('')
   const [workTypeOpen, setWorkTypeOpen] = useState(false)
-  const [categoryOpen, setCategoryOpen] = useState(false)
   const [applyingToJob, setApplyingToJob] = useState<JobListItem | null>(null)
   const [appliedParams, setAppliedParams] = useState<SearchJobsParams>({})
 
   const workTypeRef = useRef<HTMLDivElement>(null)
-  const categoryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (workTypeRef.current && !workTypeRef.current.contains(e.target as Node))
         setWorkTypeOpen(false)
-      if (categoryRef.current && !categoryRef.current.contains(e.target as Node))
-        setCategoryOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const { data: jobsResp, isLoading, isError } = useSearchJobsQuery(appliedParams)
+  const { items: jobs = [], pagination } = jobsResp?.data ?? {}
 
-  const jobs: JobListItem[] = jobsResp?.data ?? []
   const resolvedId = selectedJobId ?? jobs[0]?.id ?? null
 
   function handleSearch(e?: React.FormEvent) {
@@ -257,7 +252,6 @@ export default function UserJobsPage() {
       q: searchInput || undefined,
       location: locationInput || undefined,
       location_type: locationTypeDraft ?? undefined,
-      category: categoryDraft ?? undefined,
       salary_min: salaryMinInput ? Number(salaryMinInput) : undefined,
       salary_max: salaryMaxInput ? Number(salaryMaxInput) : undefined,
     })
@@ -286,7 +280,7 @@ export default function UserJobsPage() {
             <span className="page-header-hint">
               {isLoading
                 ? 'Loading jobs...'
-                : `${jobs.length} job${jobs.length === 1 ? '' : 's'} available`}
+                : `${pagination?.total ?? 0} job${pagination?.total === 1 ? '' : 's'} available`}
             </span>
           </div>
         </div>
@@ -360,52 +354,6 @@ export default function UserJobsPage() {
               </div>
             </div>
 
-            {/* Category dropdown */}
-            <div className="jobs-layout__filter-group">
-              <div className="jobs-layout__filter-group-label">Category</div>
-              <div className="jobs-filter-dropdown" ref={categoryRef}>
-                <button
-                  type="button"
-                  className={`jobs-filter-dropdown__trigger${categoryOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${categoryDraft !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
-                  onClick={() => setCategoryOpen((v) => !v)}
-                >
-                  <span>{categoryDraft ? CATEGORY_LABELS[categoryDraft] : 'All Categories'}</span>
-                  <ChevronDown
-                    className={`jobs-filter-dropdown__chevron${categoryOpen ? ' jobs-filter-dropdown__chevron--open' : ''}`}
-                    size={12}
-                  />
-                </button>
-                {categoryOpen && (
-                  <div className="jobs-filter-dropdown__menu">
-                    <button
-                      type="button"
-                      className={`jobs-filter-dropdown__option${categoryDraft === null ? ' jobs-filter-dropdown__option--active' : ''}`}
-                      onClick={() => {
-                        setCategoryDraft(null)
-                        setCategoryOpen(false)
-                      }}
-                    >
-                      <span className="jobs-filter-dropdown__option-dot" />
-                      All Categories
-                    </button>
-                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        className={`jobs-filter-dropdown__option${categoryDraft === key ? ' jobs-filter-dropdown__option--active' : ''}`}
-                        onClick={() => {
-                          setCategoryDraft(key)
-                          setCategoryOpen(false)
-                        }}
-                      >
-                        <span className="jobs-filter-dropdown__option-dot" />
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Salary range inputs */}
             <div className="jobs-layout__filter-group">
@@ -434,7 +382,7 @@ export default function UserJobsPage() {
               <div className="jobs-sidebar-results-count">
                 {isLoading
                   ? 'Searching…'
-                  : `${jobs.length} result${jobs.length !== 1 ? 's' : ''} found`}
+                  : `${pagination?.total ?? 0} result${pagination?.total !== 1 ? 's' : ''} found`}
               </div>
             </div>
           </div>
@@ -483,73 +431,116 @@ export default function UserJobsPage() {
               </div>
             ) : (
               <div className="job-list-stack content-stagger">
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className={`job-card content-stagger-item${resolvedId === job.id ? ' job-card--active' : ''}`}
-                    style={{ '--stagger-index': jobs.indexOf(job) } as React.CSSProperties}
-                    onClick={() => setSelectedJobId(job.id)}
-                  >
-                    <div className="job-card__header">
+                {jobs.map((job, index) => {
+                  const showFallbackDivider = job.is_fallback && (index === 0 || !jobs[index - 1].is_fallback);
+                  
+                  return (
+                    <div key={job.id} style={{ display: 'contents' }}>
+                      {showFallbackDivider && (
+                        <div className="job-list-fallback-divider">
+                          <span className="job-list-fallback-divider__line" />
+                          <span className="job-list-fallback-divider__text">
+                            Recommended jobs outside your filters
+                          </span>
+                          <span className="job-list-fallback-divider__line" />
+                        </div>
+                      )}
                       <div
-                        className="job-card__logo"
-                        style={
-                          {
-                            '--logo-bg': '#7928CA1A',
-                            '--logo-color': '#7928CA',
-                          } as React.CSSProperties
-                        }
+                        className={`job-card content-stagger-item${resolvedId === job.id ? ' job-card--active' : ''}`}
+                        style={{ '--stagger-index': index } as React.CSSProperties}
+                        onClick={() => setSelectedJobId(job.id)}
                       >
-                        {job.title[0]}
-                      </div>
-                      <div className="job-card__title-wrap">
-                        <div className="job-card__title">{job.title}</div>
-                        <div className="job-card__company">{job.company?.name}</div>
-                        <div className="job-card__location">
-                          {job.location ? (
-                            <MapPin size={11} aria-hidden="true" />
-                          ) : (
-                            <Briefcase size={11} aria-hidden="true" />
-                          )}
-                          <span>
-                            {job.location ? `${job.location} · ` : ''}
+                        <div className="job-card__header">
+                          <div
+                            className="job-card__logo"
+                            style={
+                              {
+                                '--logo-bg': '#7928CA1A',
+                                '--logo-color': '#7928CA',
+                              } as React.CSSProperties
+                            }
+                          >
+                            {job.title[0]}
+                          </div>
+                          <div className="job-card__title-wrap">
+                            <div className="job-card__title">{job.title}</div>
+                            <div className="job-card__company">{job.company?.name}</div>
+                            <div className="job-card__location">
+                              {job.location ? (
+                                <MapPin size={11} aria-hidden="true" />
+                              ) : (
+                                <Briefcase size={11} aria-hidden="true" />
+                              )}
+                              <span>
+                                {job.location ? `${job.location} · ` : ''}
+                                {LOCATION_TYPE_LABELS[job.location_type]}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="job-card__actions-wrap">
+                            {job.match_score !== null && (
+                              <div className="job-match-badge" title="AI Match Score">
+                                {Math.round(job.match_score * 100)}% Match
+                              </div>
+                            )}
+                            <button
+                              className="job-card__bookmark"
+                              title="Save job"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Bookmark size={14} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="job-card__tags">
+                          <span className="job-card__tag">
                             {LOCATION_TYPE_LABELS[job.location_type]}
+                          </span>
+                          {job.category && (
+                            <span className="job-card__tag">
+                              {CATEGORY_LABELS[job.category] ?? job.category}
+                            </span>
+                          )}
+                          {(job.salary_min || job.salary_max) && (
+                            <span className="job-card__tag job-card__tag--salary">
+                              {formatSalary(job.salary_min, job.salary_max, job.currency)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="job-card__meta">
+                          <span className="job-card__meta-time">
+                            <Clock size={12} aria-hidden="true" />
+                            {formatDate(job.created_at)}
                           </span>
                         </div>
                       </div>
-                      <button
-                        className="job-card__bookmark"
-                        title="Save job"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Bookmark size={14} aria-hidden="true" />
-                      </button>
                     </div>
-
-                    <div className="job-card__tags">
-                      <span className="job-card__tag">
-                        {LOCATION_TYPE_LABELS[job.location_type]}
-                      </span>
-                      {job.category && (
-                        <span className="job-card__tag">
-                          {CATEGORY_LABELS[job.category] ?? job.category}
-                        </span>
-                      )}
-                      {(job.salary_min || job.salary_max) && (
-                        <span className="job-card__tag job-card__tag--salary">
-                          {formatSalary(job.salary_min, job.salary_max, job.currency)}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="job-card__meta">
-                      <span className="job-card__meta-time">
-                        <Clock size={12} aria-hidden="true" />
-                        {formatDate(job.created_at)}
-                      </span>
-                    </div>
+                  );
+                })}
+                
+                {pagination && pagination.pages > 1 && (
+                  <div className="jobs-pagination">
+                    <button 
+                      className="btn btn--ghost btn--sm"
+                      disabled={!pagination.has_prev}
+                      onClick={() => setAppliedParams(prev => ({ ...prev, page: (prev.page || 1) - 1 }))}
+                    >
+                      Previous
+                    </button>
+                    <span className="jobs-pagination__info">
+                      Page {pagination.page} of {pagination.pages}
+                    </span>
+                    <button 
+                      className="btn btn--ghost btn--sm"
+                      disabled={!pagination.has_next}
+                      onClick={() => setAppliedParams(prev => ({ ...prev, page: (prev.page || 1) + 1 }))}
+                    >
+                      Next
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>

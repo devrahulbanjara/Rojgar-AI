@@ -112,10 +112,10 @@ async def get_candidate_dashboard(
         size=5,
     )
     recent_activity = await get_recent_activity(recent_applications)
-    recommended_jobs = await jobs_service.search_jobs(
+    recommended_jobs, _ = await jobs_service.search_jobs(
         db=db,
+        user=current_user,
         q=None,
-        location=None,
         location_type=None,
         category=None,
         salary_min=None,

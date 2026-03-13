@@ -1,4 +1,5 @@
-from typing import Any, Generic, TypeVar
+import math
+from typing import Any, Generic, TypeVar, List
 from datetime import datetime, timezone
 
 from fastapi import Response, status
@@ -7,6 +8,22 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
+
+
+class PaginationMeta(BaseModel):
+    """Metadata for paginated responses."""
+
+    total: int
+    page: int
+    size: int
+    total_pages: int
+
+
+class PaginatedData(BaseModel, Generic[T]):
+    """Wrapper for paginated collection and its metadata."""
+
+    items: List[T]
+    pagination: PaginationMeta
 
 
 class ResponseMeta(BaseModel):
@@ -34,7 +51,7 @@ class UnifiedResponse(BaseModel, Generic[T]):
 
     success: bool
     message: str
-    data: T | None = None
+    data: T | PaginatedData[T] | None = None
     errors: Any | None = None
     meta: ResponseMeta = ResponseMeta()
 
@@ -97,3 +114,30 @@ class ResponseBuilder:
             json_response.raw_headers.extend(response.raw_headers)
 
         return json_response
+
+    @staticmethod
+    def paginated(
+        items: list[Any],
+        total: int,
+        page: int,
+        size: int,
+        message: str = "Data fetched successfully",
+        status_code: int = status.HTTP_200_OK,
+    ) -> JSONResponse:
+        total_pages = math.ceil(total / size) if size > 0 else 0
+        content = {
+            "success": True,
+            "message": message,
+            "data": {
+                "items": jsonable_encoder(items),
+                "pagination": {
+                    "total": total,
+                    "page": page,
+                    "size": size,
+                    "total_pages": total_pages,
+                },
+            },
+            "errors": None,
+            "meta": ResponseBuilder._meta(),
+        }
+        return JSONResponse(status_code=status_code, content=content)

@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     # Email
     send_emails: bool = True
 
+    embedding_output_dimensionality: int = 3072
+    embedding_model: str = "models/gemini-embedding-001"
+    qdrant_url: str
+    qdrant_api_key: str
+    qdrant_collection_name: str
+    google_api_key: str
+
     # Database
     db_user: str
     db_password: str
