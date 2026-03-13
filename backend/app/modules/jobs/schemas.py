@@ -38,7 +38,7 @@ class JobCreate(JobBase):
 
     title: str = Field(min_length=1, max_length=255)
     location_type: LocationType = LocationType.onsite
-    currency: str = Field(default="USD", max_length=10)
+    currency: str = Field(default="NPR", max_length=10)
     status: JobStatus = JobStatus.draft
     responsibilities: list[str] = []
     requirements: list[str] = []
@@ -80,6 +80,15 @@ class JobListItem(BaseSchema):
     status: JobStatus
     applications_count: int = 0
     created_at: datetime
+
+    # AI search fields — populated only when results come from the vector search path
+    match_score: float | None = Field(
+        default=None, description="Semantic similarity score (0–1)"
+    )
+    is_fallback: bool = Field(
+        default=False,
+        description="True when job is shown outside the user's applied filters",
+    )
 
 
 class JobDetailResponse(BaseSchema):

@@ -193,5 +193,7 @@ async def complete_onboarding(
 
     await db.commit()
     profile = await _load_full_profile(db, profile.id)
-    logger.info(f"Candidate {user.id} completed onboarding with roles: {payload.target_roles}")
+    logger.info(
+        f"Candidate {user.id} completed onboarding with roles: {payload.target_roles}"
+    )
     return _profile_to_response(profile, user.avatar_url)

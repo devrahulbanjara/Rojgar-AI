@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 import logfire
@@ -7,8 +8,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.tasks import sync_daemon_loop
 from app.core.database import engine, get_db
 from app.core.exception_handlers import register_exception_handlers
+from app.integrations.qdrant.service import qdrant_service
 
 from app.modules.companies.router import router as companies_router
 from app.modules.profiles.router import router as profiles_router
@@ -25,9 +28,18 @@ setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # startup
+    await qdrant_service.initialize()
+
+    daemon_task = asyncio.create_task(sync_daemon_loop())
+
     yield
-    # shutdown
+
+    daemon_task.cancel()
+    try:
+        await daemon_task
+    except asyncio.CancelledError:
+        pass
+
     await engine.dispose()
 
 

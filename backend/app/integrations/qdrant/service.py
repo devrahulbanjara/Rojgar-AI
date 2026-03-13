@@ -1,0 +1,203 @@
+import uuid
+
+from loguru import logger
+from qdrant_client import AsyncQdrantClient, models
+from qdrant_client.http.exceptions import UnexpectedResponse
+
+from app.core.config import settings
+from app.integrations.ai.service import ai_service
+
+
+class QdrantService:
+    def __init__(self) -> None:
+        self.collection_name = settings.qdrant_collection_name
+        self.client = AsyncQdrantClient(
+            url=settings.qdrant_url,
+            api_key=settings.qdrant_api_key,
+        )
+        # Embedding is now handled by the dedicated AIService — no Langchain
+        # dependency is instantiated here.
+
+    async def initialize(self) -> None:
+        """Robust initialization: create the collection and payload indexes."""
+        try:
+            exists = await self.client.collection_exists(self.collection_name)
+            if not exists:
+                await self.client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config=models.VectorParams(
+                        size=settings.embedding_output_dimensionality,
+                        distance=models.Distance.COSINE,
+                    ),
+                )
+                logger.info(f"Qdrant collection '{self.collection_name}' created.")
+            await self._ensure_indexes()
+        except Exception as exc:
+            logger.error(f"Qdrant robust init failed: {exc}")
+
+    async def _ensure_indexes(self) -> None:
+        """Creates payload indexes. Wrapped in try/except for concurrency robustness."""
+        keywords = ["status", "category", "location_type", "company_id"]
+        integers = ["salary_min", "salary_max"]
+
+        for field in keywords:
+            try:
+                await self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=field,
+                    field_schema=models.PayloadSchemaType.KEYWORD,
+                )
+            except UnexpectedResponse as e:
+                if "already exists" not in str(e).lower():
+                    logger.warning(f"Could not create keyword index on {field}: {e}")
+
+        for field in integers:
+            try:
+                await self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=field,
+                    field_schema=models.PayloadSchemaType.INTEGER,
+                )
+            except UnexpectedResponse as e:
+                if "already exists" not in str(e).lower():
+                    logger.warning(f"Could not create integer index on {field}: {e}")
+
+        logger.info("Qdrant payload indexes verified.")
+
+    def _build_job_document(self, job) -> str:
+        """Concatenate all relevant job text for optimal semantic matching."""
+        parts = [
+            f"TITLE: {job.title}",
+            f"CATEGORY: {job.category or 'General'}",
+            f"OVERVIEW: {job.overview or ''}",
+            f"RESPONSIBILITIES: {', '.join(job.responsibilities or [])}",
+            f"REQUIREMENTS: {', '.join(job.requirements or [])}",
+            f"PREFERRED QUALIFICATIONS: {', '.join(job.preferred_qualifications or [])}",
+            f"BENEFITS: {', '.join(job.benefits or [])}",
+        ]
+        return "\n\n".join(parts)
+
+    async def upsert_job(self, job) -> None:
+        """Embed a job and store it in Qdrant with filterable metadata."""
+        try:
+            text_content = self._build_job_document(job)
+            # Delegate embedding to the AI provider abstraction
+            vector = await ai_service.get_embeddings(text_content)
+            await self.client.upsert(
+                collection_name=self.collection_name,
+                points=[
+                    models.PointStruct(
+                        id=str(job.id),
+                        vector=vector,
+                        payload={
+                            "company_id": str(job.company_id),
+                            "status": job.status.value,
+                            "location_type": job.location_type.value
+                            if job.location_type
+                            else None,
+                            "category": job.category,
+                            "salary_min": job.salary_min,
+                            "salary_max": job.salary_max,
+                        },
+                    )
+                ],
+            )
+            logger.info(f"Job {job.id} upserted to Qdrant.")
+        except Exception as exc:
+            logger.error(f"Qdrant upsert failed for job {job.id}: {exc}")
+            raise  # Re-raise so the outbox processor can mark the event FAILED
+
+    async def delete_job(self, job_id: uuid.UUID) -> None:
+        """Remove a job vector from Qdrant."""
+        try:
+            await self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=models.PointIdsList(points=[str(job_id)]),
+            )
+            logger.info(f"Job {job_id} deleted from Qdrant.")
+        except Exception as exc:
+            logger.error(f"Qdrant delete failed for job {job_id}: {exc}")
+            raise  # Re-raise so the outbox processor can mark the event FAILED
+
+    async def search_jobs(
+        self,
+        query: str,
+        filters: list[models.Condition],
+        page: int,
+        size: int,
+    ) -> tuple[list[dict], int]:
+        """Perform semantic search using the modern query_points API."""
+        # Delegate embedding to the AI provider abstraction
+        vector = await ai_service.get_embeddings(query)
+
+        # Base rule: only surface ACTIVE jobs
+        active_condition = models.FieldCondition(
+            key="status", match=models.MatchValue(value="active")
+        )
+        base_must = [active_condition]
+
+        # Strict filter: all requested metadata filters must match
+        strict_filter = (
+            models.Filter(must=base_must + filters)
+            if filters
+            else models.Filter(must=base_must)
+        )
+
+        # 1. Fetch strict matches (v1.10.0+ query_points API)
+        strict_response = await self.client.query_points(
+            collection_name=self.collection_name,
+            query=vector,
+            query_filter=strict_filter,
+            limit=size,
+            offset=(page - 1) * size,
+            with_payload=False,
+        )
+
+        results = [
+            {"job_id": uuid.UUID(hit.id), "score": hit.score, "is_fallback": False}
+            for hit in strict_response.points
+        ]
+
+        # 2. Count strict matches for pagination
+        count_res = await self.client.count(
+            collection_name=self.collection_name,
+            count_filter=strict_filter,
+        )
+        strict_count = count_res.count
+
+        # 3. Smart fallback padding — fills the page with broader results
+        if filters and len(results) < size:
+            shortfall = size - len(results)
+            fallback_offset = max(0, ((page - 1) * size) - strict_count)
+
+            fallback_filter = models.Filter(
+                must=base_must,
+                must_not=filters,  # Mutually exclusive with the strict set
+            )
+
+            fallback_response = await self.client.query_points(
+                collection_name=self.collection_name,
+                query=vector,
+                query_filter=fallback_filter,
+                limit=shortfall,
+                offset=fallback_offset,
+                with_payload=False,
+            )
+
+            results.extend(
+                {"job_id": uuid.UUID(hit.id), "score": hit.score, "is_fallback": True}
+                for hit in fallback_response.points
+            )
+
+            fallback_count_res = await self.client.count(
+                collection_name=self.collection_name,
+                count_filter=fallback_filter,
+            )
+            total = strict_count + fallback_count_res.count
+        else:
+            total = strict_count
+
+        return results, total
+
+
+qdrant_service = QdrantService()
