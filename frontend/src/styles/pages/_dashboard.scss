@@ -238,6 +238,9 @@
   display: flex;
   flex-direction: column;
   gap: $space-6;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .dashboard-overview-stack {
@@ -1969,8 +1972,8 @@
 // ── Jobs Layout ──────────────────────────────────────────────
 .jobs-layout {
   display: grid;
-  grid-template-columns: 240px 1fr 360px;
-  gap: $space-5;
+  grid-template-columns: 240px 1fr 380px;
+  gap: $space-6;
   align-items: start;
 
   &__sidebar {
@@ -2048,6 +2051,24 @@
 }
 
 // ── Responsive ───────────────────────────────────────────────
+@media (max-width: $bp-xl) {
+  .jobs-layout {
+    grid-template-columns: 220px 1fr 320px;
+  }
+
+  .apps-layout {
+    grid-template-columns: 220px 1fr 320px !important;
+  }
+
+  .hr-layout {
+    grid-template-columns: 240px 1fr 320px;
+  }
+
+  .profile-layout {
+    grid-template-columns: 240px 1fr;
+  }
+}
+
 @media (max-width: $bp-lg) {
   .dash-sidebar {
     width: 72px;
@@ -2076,8 +2097,40 @@
     }
   }
 
-  .jobs-layout {
+  .jobs-layout, .apps-layout, .hr-layout {
     grid-template-columns: 1fr 1fr;
+
+    &__sidebar {
+      display: none; // Stack/collapse as requested
+    }
+  }
+  
+  .profile-layout {
+    grid-template-columns: 1fr 1fr;
+
+    &__aside {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: $bp-md) {
+  .jobs-layout, .apps-layout, .hr-layout {
+    grid-template-columns: 1fr;
+    
+    &__detail {
+      grid-column: 1 / -1;
+      grid-row: 2; // Stack details below list
+    }
+  }
+
+  .profile-layout {
+    grid-template-columns: 1fr;
+    
+    &__aside {
+      grid-column: 1 / -1;
+      display: block; // Show it again stacked on mobile
+    }
   }
 }
 
@@ -3458,8 +3511,8 @@
 // ── HR dashboard 3-col layout ─────────────────────────────────
 .hr-layout {
   display: grid;
-  grid-template-columns: 260px 1fr 340px;
-  gap: $space-4;
+  grid-template-columns: 260px 1fr 360px;
+  gap: $space-6;
   align-items: start;
 }
 
@@ -3540,8 +3593,8 @@
 
 .apps-layout {
   display: grid;
-  grid-template-columns: 240px 1fr 360px;
-  gap: $space-5;
+  grid-template-columns: 240px 1fr 380px;
+  gap: $space-6;
   align-items: start;
 
   &__sidebar {
@@ -4975,8 +5028,8 @@
 // ── Profile layout ─────────────────────────────────────────────
 .profile-layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: $space-5;
+  grid-template-columns: 280px 1fr;
+  gap: $space-6;
   align-items: start;
 
   &__aside {
