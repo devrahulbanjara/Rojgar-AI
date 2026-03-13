@@ -42,7 +42,6 @@ export interface CandidateDashboardRecommendedJob {
     description: string | null
   }
   title: string
-  category: string | null
   location: string | null
   location_type: 'remote' | 'onsite' | 'hybrid'
   salary_min: number | null
@@ -65,7 +64,6 @@ export interface RecruiterDashboardJob {
   id: string
   company_id: string
   title: string
-  category: string | null
   location: string | null
   location_type: 'remote' | 'onsite' | 'hybrid'
   salary_min: number | null

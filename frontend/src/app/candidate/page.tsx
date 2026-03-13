@@ -184,7 +184,7 @@ function formatSalaryRange(job: CandidateDashboardRecommendedJob): string {
 }
 
 function getRecommendedJobTags(job: CandidateDashboardRecommendedJob): string[] {
-  return [job.category, job.location_type, job.company.industry]
+  return [job.location_type, job.company.industry]
     .filter((value): value is string => Boolean(value))
     .slice(0, 3)
 }
@@ -528,7 +528,10 @@ export default function UserDashboardPage() {
                           </div>
                         </div>
                         {job.match_score !== null && (
-                          <div className="job-match-badge job-match-badge--sm" title="AI Match Score">
+                          <div
+                            className="job-match-badge job-match-badge--sm"
+                            title="AI Match Score"
+                          >
                             {Math.round(job.match_score * 100)}%
                           </div>
                         )}

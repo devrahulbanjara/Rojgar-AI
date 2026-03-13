@@ -15,8 +15,6 @@ class QdrantService:
             url=settings.qdrant_url,
             api_key=settings.qdrant_api_key,
         )
-        # Embedding is now handled by the dedicated AIService — no Langchain
-        # dependency is instantiated here.
 
     async def initialize(self) -> None:
         """Robust initialization: create the collection and payload indexes."""
@@ -36,8 +34,7 @@ class QdrantService:
             logger.error(f"Qdrant robust init failed: {exc}")
 
     async def _ensure_indexes(self) -> None:
-        """Creates payload indexes. Wrapped in try/except for concurrency robustness."""
-        keywords = ["status", "category", "location_type", "company_id"]
+        keywords = ["status", "location_type", "company_id"]
         integers = ["salary_min", "salary_max"]
 
         for field in keywords:
@@ -68,7 +65,6 @@ class QdrantService:
         """Concatenate all relevant job text for optimal semantic matching."""
         parts = [
             f"TITLE: {job.title}",
-            f"CATEGORY: {job.category or 'General'}",
             f"OVERVIEW: {job.overview or ''}",
             f"RESPONSIBILITIES: {', '.join(job.responsibilities or [])}",
             f"REQUIREMENTS: {', '.join(job.requirements or [])}",
@@ -95,7 +91,6 @@ class QdrantService:
                             "location_type": job.location_type.value
                             if job.location_type
                             else None,
-                            "category": job.category,
                             "salary_min": job.salary_min,
                             "salary_max": job.salary_max,
                         },
@@ -143,7 +138,6 @@ class QdrantService:
             else models.Filter(must=base_must)
         )
 
-        # 1. Fetch strict matches (v1.10.0+ query_points API)
         strict_response = await self.client.query_points(
             collection_name=self.collection_name,
             query=vector,
@@ -158,14 +152,12 @@ class QdrantService:
             for hit in strict_response.points
         ]
 
-        # 2. Count strict matches for pagination
         count_res = await self.client.count(
             collection_name=self.collection_name,
             count_filter=strict_filter,
         )
         strict_count = count_res.count
 
-        # 3. Smart fallback padding — fills the page with broader results
         if filters and len(results) < size:
             shortfall = size - len(results)
             fallback_offset = max(0, ((page - 1) * size) - strict_count)

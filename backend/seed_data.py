@@ -111,7 +111,6 @@ async def seed():
                 company_id=company.id,
                 posted_by=admin.id,
                 title="Senior Backend Engineer (FastAPI/Python)",
-                category="Backend",
                 location="Hattisar, Kathmandu",
                 location_type=LocationType.onsite,
                 salary_min=180000,
@@ -140,7 +139,6 @@ async def seed():
                 company_id=company.id,
                 posted_by=recruiters[0].id,
                 title="Lead Frontend Engineer (React/Next.js)",
-                category="Frontend",
                 location="Jawalakhel, Lalitpur",
                 location_type=LocationType.hybrid,
                 salary_min=150000,
@@ -164,7 +162,6 @@ async def seed():
                 company_id=company.id,
                 posted_by=recruiters[1].id,
                 title="DevOps & Security Specialist",
-                category="Infrastructure",
                 location="Kathmandu/Remote",
                 location_type=LocationType.remote,
                 salary_min=140000,
@@ -193,7 +190,9 @@ async def seed():
             db.add(JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT))
 
         await db.commit()
-        print("✅ Jobs committed. The background daemon will vectorize them within 60 s.")
+        print(
+            "✅ Jobs committed. The background daemon will vectorize them within 60 s."
+        )
 
         # ---------------------------------------------------------------------------
         # 4. CANDIDATES DATA

@@ -58,7 +58,6 @@ async def create_job(
         company_id=company_id,
         posted_by=user.id,
         title=payload.title,
-        category=payload.category,
         location=payload.location,
         location_type=payload.location_type,
         salary_min=payload.salary_min,
@@ -138,7 +137,6 @@ async def search_jobs(
     user: "User | None",
     q: str | None,
     location_type: LocationType | None,
-    category: str | None,
     salary_min: int | None,
     salary_max: int | None,
     page: int,
@@ -150,7 +148,7 @@ async def search_jobs(
     - When ``q`` is provided: embeds the search string and queries Qdrant.
     - When no ``q`` and user is a candidate: builds a profile-based
       recommendation query so the most relevant jobs surface first.
-    - Metadata filters (location_type, category, salary) are applied inside
+    - Metadata filters (location_type, salary) are applied inside
       Qdrant, with smart fallback padding for under-filled pages.
     """
     from app.modules.auth.enums import UserRole  # local import avoids circular
@@ -170,13 +168,6 @@ async def search_jobs(
             qdrant_models.FieldCondition(
                 key="location_type",
                 match=qdrant_models.MatchValue(value=location_type.value),
-            )
-        )
-    if category:
-        filters.append(
-            qdrant_models.FieldCondition(
-                key="category",
-                match=qdrant_models.MatchValue(value=category),
             )
         )
     if salary_min is not None:

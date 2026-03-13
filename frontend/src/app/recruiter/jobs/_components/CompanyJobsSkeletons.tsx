@@ -13,7 +13,6 @@ export function CompanyJobsCardsSkeleton({
           className={`company-job-card company-job-card--skeleton${view === 'grid' ? ' company-job-card--grid' : ''}`}
         >
           <div className="company-job-card__top-row company-job-skeleton__top-row">
-            <div className="skeleton-block company-job-skeleton__category" />
             <div className="skeleton-block company-job-skeleton__status" />
           </div>
 

@@ -117,7 +117,6 @@ async def get_candidate_dashboard(
         user=current_user,
         q=None,
         location_type=None,
-        category=None,
         salary_min=None,
         salary_max=None,
         page=1,

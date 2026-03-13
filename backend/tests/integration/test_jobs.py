@@ -175,27 +175,6 @@ class TestJobRead:
         assert "Blockchain Wizard" in titles
 
     @pytest.mark.asyncio
-    async def test_search_jobs_by_category(self, client, db):
-        user = await make_user(db, "recruiter_cat@test.com", role="recruiter_admin")
-        company = await make_company(db, "Cat Co", "catco.com")
-        await make_membership(db, user, company)
-        # Create via API so the app session sees the committed data
-        await client.post(
-            "/jobs/",
-            json={
-                "title": "Cat Backend Job",
-                "location_type": "remote",
-                "status": "active",
-                "category": "cat_backend_unique",
-            },
-            headers=auth_headers(user),
-        )
-
-        resp = await client.get("/jobs/?category=cat_backend_unique")
-        titles = [j["title"] for j in resp.json()["data"]]
-        assert "Cat Backend Job" in titles
-
-    @pytest.mark.asyncio
     async def test_list_company_jobs_as_recruiter(self, client, db):
         user = await make_user(
             db, "recruiter_company_jobs@test.com", role="recruiter_admin"

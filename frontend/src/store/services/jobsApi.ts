@@ -1,4 +1,5 @@
 import type { Paginated } from '@/lib/types/user'
+
 import { type ApiResponse, baseApi } from './baseApi'
 
 // ---------------------------------------------------------------------------
@@ -67,7 +68,6 @@ export interface JobListItem {
   company_id: string
   company?: CompanySnippet
   title: string
-  category: string | null
   location: string | null
   location_type: LocationType
   salary_min: number | null
@@ -87,7 +87,6 @@ export interface JobDetail {
   company?: CompanySnippet
   posted_by: string | null
   title: string
-  category: string | null
   location: string | null
   location_type: LocationType
   salary_min: number | null
@@ -124,7 +123,6 @@ export interface SearchJobsParams {
   q?: string
   location?: string
   location_type?: LocationType
-  category?: string
   salary_min?: number
   salary_max?: number
   page?: number
@@ -154,7 +152,6 @@ export const jobsApi = baseApi.injectEndpoints({
         q,
         location,
         location_type,
-        category,
         salary_min,
         salary_max,
         page = 1,
@@ -165,7 +162,6 @@ export const jobsApi = baseApi.injectEndpoints({
           ...(q && { q }),
           ...(location && { location }),
           ...(location_type && { location_type }),
-          ...(category && { category }),
           ...(salary_min != null && { salary_min }),
           ...(salary_max != null && { salary_max }),
           page,

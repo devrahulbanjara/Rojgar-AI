@@ -67,7 +67,6 @@ async def make_job(
     posted_by: User,
     title: str = "Test Job",
     status: str = "active",
-    category: str = "backend",
 ) -> Job:
     job = Job(
         company_id=company.id,
@@ -76,7 +75,6 @@ async def make_job(
         location_type=LocationType.remote,
         currency="NPR",
         status=status,
-        category=category,
         responsibilities=[],
         requirements=[],
         preferred_qualifications=[],

@@ -259,7 +259,9 @@ export default function JobDetailPage() {
     { location_type: job?.location_type, size: 7 },
     { skip: !job },
   )
-  const recommended = (recResp?.data ?? []).filter((j) => j.id !== jobId).slice(0, 6)
+  const recommended = (recResp?.data?.items ?? [])
+    .filter((j: JobListItem) => j.id !== jobId)
+    .slice(0, 6)
 
   if (isLoading) {
     return (
@@ -550,7 +552,7 @@ export default function JobDetailPage() {
             <div className="jd-recommended">
               <h2 className="jd-recommended__title">Similar Jobs You Might Like</h2>
               <div className="jd-recommended__grid">
-                {recommended.map((j) => (
+                {recommended.map((j: JobListItem) => (
                   <RecommendedCard key={j.id} job={j} />
                 ))}
               </div>

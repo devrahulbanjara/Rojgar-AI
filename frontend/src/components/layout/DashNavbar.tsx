@@ -207,7 +207,7 @@ export default function DashNavbar({
 
   return (
     <nav className="dash-navbar">
-      <div className="dash-navbar__inner container">
+      <div className="dash-navbar__inner container container--dashboard">
         {/* Logo — links to the role's dashboard root */}
         <Link href={navItems[0].href} className="dash-navbar__logo">
           <Image
