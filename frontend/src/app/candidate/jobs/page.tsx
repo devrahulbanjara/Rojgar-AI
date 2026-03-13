@@ -32,24 +32,8 @@ const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
 }
 
 // ---------------------------------------------------------------------------
-// Category and salary band constants
+// Helpers
 // ---------------------------------------------------------------------------
-
-const CATEGORY_LABELS: Record<string, string> = {
-  frontend: 'Frontend',
-  backend: 'Backend',
-  full_stack: 'Full Stack',
-  mobile: 'Mobile',
-  data: 'Data',
-  ml_ai: 'ML / AI',
-  devops: 'DevOps',
-  design: 'Design',
-  product: 'Product',
-  management: 'Management',
-  security: 'Security',
-  qa: 'QA',
-  other: 'Other',
-}
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'): string | null {
   if (!min && !max) return null
@@ -285,7 +269,7 @@ export default function UserJobsPage() {
           </div>
         </div>
 
-        <div className="jobs-layout">
+        <form className="jobs-layout" onSubmit={handleSearch}>
           {/* ── Filter Sidebar ── */}
           <div className="jobs-layout__sidebar">
             <div className="jobs-layout__sidebar-title">Filters</div>
@@ -336,10 +320,17 @@ export default function UserJobsPage() {
                   <MapPin size={15} aria-hidden="true" />
                 </span>
                 <input
+                  type="text"
                   className="jobs-sidebar-search__input"
                   placeholder="e.g. Kathmandu…"
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
                 />
                 {locationInput && (
                   <button
@@ -354,7 +345,6 @@ export default function UserJobsPage() {
               </div>
             </div>
 
-
             {/* Salary range inputs */}
             <div className="jobs-layout__filter-group">
               <div className="jobs-layout__filter-group-label">Salary (NPR)</div>
@@ -365,6 +355,12 @@ export default function UserJobsPage() {
                   placeholder="Min"
                   value={salaryMinInput}
                   onChange={(e) => setSalaryMinInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
                 />
                 <span className="jobs-salary-range__sep">···</span>
                 <input
@@ -373,32 +369,36 @@ export default function UserJobsPage() {
                   placeholder="Max"
                   value={salaryMaxInput}
                   onChange={(e) => setSalaryMaxInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
                 />
-              </div>
-            </div>
-
-            {/* Results count */}
-            <div className="jobs-layout__filter-group jobs-layout__filter-group--last">
-              <div className="jobs-sidebar-results-count">
-                {isLoading
-                  ? 'Searching…'
-                  : `${pagination?.total ?? 0} result${pagination?.total !== 1 ? 's' : ''} found`}
               </div>
             </div>
           </div>
 
           {/* ── Job List ── */}
-          <div>
-            <form className="dash-page-toolbar" onSubmit={handleSearch}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="dash-page-toolbar">
               <div className="dash-page-toolbar__search">
                 <span className="dash-page-toolbar__icon">
                   <Search size={16} aria-hidden="true" />
                 </span>
                 <input
+                  type="text"
                   className="dash-page-toolbar__input"
                   placeholder="Search jobs by title"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
                 />
                 {searchInput && (
                   <button
@@ -411,10 +411,10 @@ export default function UserJobsPage() {
                   </button>
                 )}
               </div>
-              <button type="submit" className="dash-page-toolbar__submit">
+              <button type="submit" className="btn btn--primary" style={{ minHeight: '52px' }}>
                 Search
               </button>
-            </form>
+            </div>
 
             {isLoading ? (
               <JobCardsSkeleton count={5} />
@@ -432,8 +432,9 @@ export default function UserJobsPage() {
             ) : (
               <div className="job-list-stack content-stagger">
                 {jobs.map((job, index) => {
-                  const showFallbackDivider = job.is_fallback && (index === 0 || !jobs[index - 1].is_fallback);
-                  
+                  const showFallbackDivider =
+                    job.is_fallback && (index === 0 || !jobs[index - 1].is_fallback)
+
                   return (
                     <div key={job.id} style={{ display: 'contents' }}>
                       {showFallbackDivider && (
@@ -497,11 +498,6 @@ export default function UserJobsPage() {
                           <span className="job-card__tag">
                             {LOCATION_TYPE_LABELS[job.location_type]}
                           </span>
-                          {job.category && (
-                            <span className="job-card__tag">
-                              {CATEGORY_LABELS[job.category] ?? job.category}
-                            </span>
-                          )}
                           {(job.salary_min || job.salary_max) && (
                             <span className="job-card__tag job-card__tag--salary">
                               {formatSalary(job.salary_min, job.salary_max, job.currency)}
@@ -517,25 +513,29 @@ export default function UserJobsPage() {
                         </div>
                       </div>
                     </div>
-                  );
+                  )
                 })}
-                
+
                 {pagination && pagination.pages > 1 && (
                   <div className="jobs-pagination">
-                    <button 
+                    <button
                       className="btn btn--ghost btn--sm"
                       disabled={!pagination.has_prev}
-                      onClick={() => setAppliedParams(prev => ({ ...prev, page: (prev.page || 1) - 1 }))}
+                      onClick={() =>
+                        setAppliedParams((prev) => ({ ...prev, page: (prev.page || 1) - 1 }))
+                      }
                     >
                       Previous
                     </button>
                     <span className="jobs-pagination__info">
                       Page {pagination.page} of {pagination.pages}
                     </span>
-                    <button 
+                    <button
                       className="btn btn--ghost btn--sm"
                       disabled={!pagination.has_next}
-                      onClick={() => setAppliedParams(prev => ({ ...prev, page: (prev.page || 1) + 1 }))}
+                      onClick={() =>
+                        setAppliedParams((prev) => ({ ...prev, page: (prev.page || 1) + 1 }))
+                      }
                     >
                       Next
                     </button>
@@ -567,7 +567,7 @@ export default function UserJobsPage() {
               </div>
             </div>
           )}
-        </div>
+        </form>
       </div>
 
       {/* Apply modal */}

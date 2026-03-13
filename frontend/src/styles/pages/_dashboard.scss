@@ -235,12 +235,21 @@
 .dash-content {
   flex: 1;
   padding-block: $space-6;
+  padding-inline: $space-4;
   display: flex;
   flex-direction: column;
   gap: $space-6;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+
+  @include md {
+    padding-inline: $space-6;
+  }
+
+  @include lg {
+    padding-inline: $space-8;
+  }
 }
 
 .dashboard-overview-stack {
@@ -2097,14 +2106,16 @@
     }
   }
 
-  .jobs-layout, .apps-layout, .hr-layout {
+  .jobs-layout,
+  .apps-layout,
+  .hr-layout {
     grid-template-columns: 1fr 1fr;
 
     &__sidebar {
       display: none; // Stack/collapse as requested
     }
   }
-  
+
   .profile-layout {
     grid-template-columns: 1fr 1fr;
 
@@ -2115,9 +2126,11 @@
 }
 
 @media (max-width: $bp-md) {
-  .jobs-layout, .apps-layout, .hr-layout {
+  .jobs-layout,
+  .apps-layout,
+  .hr-layout {
     grid-template-columns: 1fr;
-    
+
     &__detail {
       grid-column: 1 / -1;
       grid-row: 2; // Stack details below list
@@ -2126,7 +2139,7 @@
 
   .profile-layout {
     grid-template-columns: 1fr;
-    
+
     &__aside {
       grid-column: 1 / -1;
       display: block; // Show it again stacked on mobile
@@ -3021,7 +3034,7 @@
 .job-list-stack {
   display: flex;
   flex-direction: column;
-  gap: $space-4;
+  gap: $dash-card-gap;
 }
 
 .job-card__meta-time {
@@ -3195,21 +3208,6 @@
     align-items: center;
     justify-content: space-between;
     gap: $space-3;
-  }
-
-  &__category {
-    display: inline-flex;
-    align-items: center;
-    max-width: 100%;
-    padding: 5px 10px;
-    border-radius: $radius-full;
-    background: rgba($color-primary, 0.08);
-    color: $color-primary;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   &__status {
@@ -3387,12 +3385,6 @@
 
 .company-job-skeleton__top-row {
   align-items: center;
-}
-
-.company-job-skeleton__category {
-  width: 6.5rem;
-  height: 1.75rem;
-  border-radius: $radius-full;
 }
 
 .company-job-skeleton__status {
@@ -3605,7 +3597,6 @@
   &__list {
     display: flex;
     flex-direction: column;
-    gap: $space-4;
     min-width: 0;
   }
 
@@ -3730,7 +3721,7 @@
   display: flex;
   align-items: center;
   gap: $space-3;
-  margin-bottom: $space-5;
+  margin-bottom: $dash-toolbar-spacing;
   width: 100%;
 
   &__search {
@@ -3853,7 +3844,7 @@
 .apps-list {
   display: flex;
   flex-direction: column;
-  gap: $space-3;
+  gap: $dash-card-gap;
 }
 
 .apps-empty {
@@ -6651,57 +6642,9 @@
   &__cta {
     padding: $space-5;
     display: flex;
-    flex-direction: column;
-    gap: $space-3;
-  }
-
-  &__view-btn {
-    width: 100%;
-    padding: $space-3;
-    border-radius: $radius-full;
-    background: $color-primary;
-    color: $color-white;
-    border: none;
-    font-family: $font-heading;
-    font-weight: $font-weight-semibold;
-    font-size: $font-size-sm;
-    cursor: pointer;
-    text-align: center;
-    text-decoration: none;
-    display: flex;
     align-items: center;
     justify-content: center;
-    gap: $space-2;
-    transition: background $transition-fast;
-
-    &:hover {
-      background: color.adjust($color-primary, $lightness: -10%);
-      color: $color-white;
-    }
-  }
-
-  &__quick-btn {
-    width: 100%;
-    padding: $space-3;
-    border-radius: $radius-full;
-    background: rgba($color-primary, 0.08);
-    color: $color-primary;
-    border: 1.5px solid rgba($color-primary, 0.2);
-    font-family: $font-heading;
-    font-weight: $font-weight-semibold;
-    font-size: $font-size-sm;
-    cursor: pointer;
-    transition: all $transition-fast;
-
-    &:hover {
-      background: rgba($color-primary, 0.15);
-      border-color: rgba($color-primary, 0.35);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    gap: $space-3;
   }
 
   &__empty {
@@ -7125,7 +7068,7 @@
 .job-list-stack {
   display: flex;
   flex-direction: column;
-  gap: $space-4;
+  gap: $dash-card-gap;
 }
 
 @media (max-width: $bp-md) {

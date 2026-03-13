@@ -53,6 +53,11 @@
     max-width: $bp-2xl; // 1536px
   }
 
+  // Dashboard shell — wider canvas with the same horizontal gutters
+  &--dashboard {
+    max-width: 1400px;
+  }
+
   // Fluid — full width, only keeps padding
   &--fluid {
     max-width: 100%;

@@ -374,6 +374,12 @@ export default function ApplicationsPage() {
                 placeholder="Search company or role..."
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    handleSearch()
+                  }
+                }}
               />
               {searchInput ? (
                 <button
@@ -386,7 +392,7 @@ export default function ApplicationsPage() {
                 </button>
               ) : null}
             </div>
-            <button type="submit" className="dash-page-toolbar__submit">
+            <button type="submit" className="btn btn--primary" style={{ minHeight: '52px' }}>
               Search
             </button>
           </form>

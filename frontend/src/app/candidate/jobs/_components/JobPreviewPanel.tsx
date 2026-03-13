@@ -120,11 +120,11 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
       )}
 
       <div className="job-preview__cta">
-        <Link href={`/candidate/jobs/${job.id}`} className="job-preview__view-btn">
+        <Link href={`/candidate/jobs/${job.id}`} className="btn btn--outline btn--primary btn--sm">
           View Details
           <ArrowRight size={14} aria-hidden="true" />
         </Link>
-        <button className="job-preview__quick-btn" onClick={onApply} disabled={!isActive}>
+        <button className="btn btn--primary btn--sm" onClick={onApply} disabled={!isActive}>
           {isActive ? 'Quick Apply' : getJobStatusLabel(job.status)}
         </button>
       </div>

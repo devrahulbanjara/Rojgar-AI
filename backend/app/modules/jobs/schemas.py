@@ -9,7 +9,6 @@ from app.shared.enums import JobStatus, LocationType
 
 class JobBase(BaseSchema):
     title: str | None = Field(default=None, max_length=255)
-    category: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
     location_type: LocationType | None = None
     salary_min: int | None = None
@@ -71,7 +70,6 @@ class JobListItem(BaseSchema):
     company_id: UUID
     company: CompanySnippet
     title: str
-    category: str | None = None
     location: str | None = None
     location_type: LocationType
     salary_min: int | None = None
@@ -99,7 +97,6 @@ class JobDetailResponse(BaseSchema):
     company: CompanySnippet
     posted_by: UUID | None = None
     title: str
-    category: str | None = None
     location: str | None = None
     location_type: LocationType
     salary_min: int | None = None

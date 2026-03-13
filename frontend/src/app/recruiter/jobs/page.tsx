@@ -61,15 +61,6 @@ function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'
   return `Up to ${currency} ${max!.toLocaleString()}`
 }
 
-function formatCategory(category: string | null) {
-  if (!category) return 'General'
-  return category
-    .split(/[_\s-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
-
 function RecruiterJobCard({
   job,
   view,
@@ -88,7 +79,6 @@ function RecruiterJobCard({
   return (
     <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
       <div className="company-job-card__top-row">
-        <span className="company-job-card__category">{formatCategory(job.category)}</span>
         <label className={`company-job-card__status company-job-card__status--${job.status}`}>
           <select
             value={job.status}

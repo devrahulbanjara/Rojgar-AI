@@ -22,7 +22,6 @@ class Job(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    category: Mapped[str | None] = mapped_column(String(50), index=True)
     location: Mapped[str | None] = mapped_column(String(255))
     location_type: Mapped[LocationType] = mapped_column(
         nullable=False, server_default="onsite"

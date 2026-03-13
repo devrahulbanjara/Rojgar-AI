@@ -53,7 +53,6 @@ async def search_jobs(
         description="Free-text search query (embedded and matched semantically)",
     ),
     location_type: LocationType | None = Query(default=None),
-    category: str | None = Query(default=None),
     salary_min: int | None = Query(default=None, ge=0),
     salary_max: int | None = Query(default=None, ge=0),
     page: int = Query(default=1, ge=1),
@@ -62,7 +61,7 @@ async def search_jobs(
     db: AsyncSession = db,
 ):
     jobs, total = await service.search_jobs(
-        db, user, q, location_type, category, salary_min, salary_max, page, size
+        db, user, q, location_type, salary_min, salary_max, page, size
     )
     return ResponseBuilder.paginated(
         items=jobs,
