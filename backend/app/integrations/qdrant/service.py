@@ -85,31 +85,31 @@ class QdrantService:
     async def upsert_job(self, job) -> None:
         """
         Embed a job and store it in Qdrant with filterable metadata.
-        
+
         Only upserts jobs that are:
         1. Status is 'active' (not expired or draft)
         2. expires_at is either None or in the future
-        
+
         This ensures the vector DB only contains truly searchable jobs.
         """
         from app.shared.enums import JobStatus
-        
+
         try:
             # Guard: Only upsert if job is active and not expired
             now = datetime.now(timezone.utc)
-            
+
             if job.status != JobStatus.active:
                 logger.info(
                     f"Skipping Qdrant upsert for job {job.id}: status is {job.status.value}, not active"
                 )
                 return
-            
+
             if job.expires_at is not None and job.expires_at <= now:
                 logger.info(
                     f"Skipping Qdrant upsert for job {job.id}: expired at {job.expires_at}"
                 )
                 return
-            
+
             # Job is valid for search - proceed with upsert
             text_content = self._build_job_document(job)
             vector = await ai_service.get_embeddings(text_content)

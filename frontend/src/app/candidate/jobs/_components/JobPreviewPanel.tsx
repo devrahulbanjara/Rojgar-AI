@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 
 import {
@@ -9,7 +10,7 @@ import {
   getJobStatusLabel,
   useGetJobByIdQuery,
 } from '@/store/services/jobsApi'
-import { ArrowRight, MapPin } from 'lucide-react'
+import { ArrowRight, Calendar, MapPin } from 'lucide-react'
 
 import { JobPreviewSkeleton } from './JobsSkeletons'
 
@@ -36,6 +37,35 @@ function formatDate(iso: string): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function formatExpiryDate(iso: string | null): { text: string; color: string } | null {
+  if (!iso) return null
+
+  const expiryDate = new Date(iso)
+  const now = new Date()
+  const daysUntilExpiry = Math.floor((expiryDate.getTime() - now.getTime()) / 86400000)
+
+  if (daysUntilExpiry < 0) {
+    return { text: 'Expired', color: '#ff4d4d' }
+  }
+
+  if (daysUntilExpiry === 0) {
+    return { text: 'Expires today', color: '#f59e0b' }
+  }
+
+  if (daysUntilExpiry === 1) {
+    return { text: 'Expires tomorrow', color: '#f59e0b' }
+  }
+
+  if (daysUntilExpiry <= 7) {
+    return { text: `Expires in ${daysUntilExpiry} days`, color: '#f59e0b' }
+  }
+
+  return {
+    text: `Expires ${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    color: '#6b7280',
+  }
 }
 
 type JobPreviewPanelProps = {
@@ -65,28 +95,23 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
 
   return (
     <div className="job-preview content-fade-in">
-      <div
-        className="job-preview__cover"
-        style={
-          {
-            '--jp-from': 'rgba(0,112,243,0.18)',
-            '--jp-to': 'rgba(121,40,202,0.1)',
-          } as React.CSSProperties
-        }
-      >
+      <div className="job-preview__header">
         <div
           className="job-preview__logo"
           style={{ '--jp-logo': '#7928ca' } as React.CSSProperties}
         >
           {job.company?.logo_url ? (
-            <img src={job.company.logo_url} alt={job.company.name} />
+            <Image
+              src={job.company.logo_url}
+              alt={job.company.name}
+              fill
+              sizes="56px"
+              style={{ objectFit: 'cover' }}
+            />
           ) : (
             job.title[0]
           )}
         </div>
-      </div>
-
-      <div className="job-preview__header">
         <div className="job-preview__date">Posted {formatDate(job.created_at)}</div>
         <div className="job-preview__title">{job.title}</div>
         <div className="job-preview__company">{job.company?.name}</div>
@@ -114,6 +139,23 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
         >
           {getJobStatusLabel(job.status)}
         </span>
+        {job.expires_at &&
+          (() => {
+            const expiry = formatExpiryDate(job.expires_at)
+            if (!expiry) return null
+            const chipClass =
+              expiry.color === '#ff4d4d'
+                ? 'job-preview__chip--danger'
+                : expiry.color === '#f59e0b'
+                  ? 'job-preview__chip--warning'
+                  : 'job-preview__chip--gray'
+            return (
+              <span className={`job-preview__chip ${chipClass}`}>
+                <Calendar size={11} aria-hidden="true" />
+                {expiry.text}
+              </span>
+            )
+          })()}
       </div>
 
       {job.overview && (

@@ -3,7 +3,7 @@
 import { type FormEvent, useState } from 'react'
 
 import type { CreateJobPayload, JobDetail, JobStatus, LocationType } from '@/store/services/jobsApi'
-import { X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 
 type RecruiterJobEditorProps = {
   initial?: RecruiterJobFormState
@@ -112,38 +112,30 @@ function ListInput({
   }
 
   return (
-    <div className="auth__field">
-      <label className="auth__label">{label}</label>
-      <div className="job-editor-list__composer">
-        <input
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              add()
-            }
-          }}
-          placeholder={placeholder}
-          className="auth__input"
-          disabled={disabled}
-        />
-        <button
-          type="button"
-          className="btn btn--primary btn--sm"
-          onClick={add}
-          disabled={disabled}
-        >
-          Add
-        </button>
+    <div className="job-ai-field job-ai-field--manual">
+      <div className="job-ai-field__header">
+        <div className="job-ai-field__title-row">
+          <label className="job-ai-label">{label}</label>
+        </div>
       </div>
 
       {items.length > 0 ? (
         <ul className="job-editor-list">
           {items.map((item, index) => (
             <li key={`${label}-${index}`} className="job-editor-list__item">
-              <span>{item}</span>
+              <input
+                type="text"
+                value={item}
+                onChange={(event) =>
+                  onChange(
+                    items.map((existingItem, itemIndex) =>
+                      itemIndex === index ? event.target.value : existingItem,
+                    ),
+                  )
+                }
+                className="job-ai-input job-editor-list__input"
+                disabled={disabled}
+              />
               <button
                 type="button"
                 className="job-editor-list__remove"
@@ -157,6 +149,27 @@ function ListInput({
           ))}
         </ul>
       ) : null}
+
+      <div className="job-editor-list__composer">
+        <input
+          type="text"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              add()
+            }
+          }}
+          placeholder={placeholder}
+          className="job-ai-input job-editor-list__composer-input"
+          disabled={disabled}
+        />
+        <button type="button" className="job-editor-list__add" onClick={add} disabled={disabled}>
+          <Plus size={14} aria-hidden="true" />
+          Add
+        </button>
+      </div>
     </div>
   )
 }
@@ -196,43 +209,44 @@ export default function RecruiterJobEditor({
   return (
     <form className="job-editor-form" onSubmit={handleSubmit} noValidate>
       <div className="job-editor-form__sections">
-        <div className="auth__field">
-          <label className="auth__label">
-            Job Title <span className="auth__required">*</span>
-          </label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={(event) => set('title', event.target.value)}
-            placeholder="e.g. Senior Frontend Engineer"
-            className={`auth__input${errors.title ? ' auth__input--error' : ''}`}
-            disabled={isLoading}
-          />
-          {errors.title ? (
-            <span className="auth__error-msg" role="alert">
-              {errors.title}
-            </span>
-          ) : null}
-        </div>
+        <div className="job-ai-form__grid">
+          <div className="job-ai-field job-ai-field--manual">
+            <label className="job-ai-label">
+              Job Title <span className="auth__required">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(event) => set('title', event.target.value)}
+              placeholder="e.g. Senior Frontend Engineer"
+              className={`job-ai-input${errors.title ? ' auth__input--error' : ''}`}
+              disabled={isLoading}
+            />
+            {errors.title ? (
+              <span className="auth__error-msg" role="alert">
+                {errors.title}
+              </span>
+            ) : null}
+          </div>
 
-        <div className="job-editor-form__grid">
-          <div className="auth__field">
-            <label className="auth__label">Location</label>
+          <div className="job-ai-field job-ai-field--manual">
+            <label className="job-ai-label">Location</label>
             <input
               type="text"
               value={form.location}
               onChange={(event) => set('location', event.target.value)}
               placeholder="e.g. Kathmandu, Nepal"
-              className="auth__input"
+              className="job-ai-input"
               disabled={isLoading}
             />
           </div>
-          <div className="auth__field">
-            <label className="auth__label">Work Type</label>
+
+          <div className="job-ai-field job-ai-field--manual">
+            <label className="job-ai-label">Work Type</label>
             <select
               value={form.location_type}
               onChange={(event) => set('location_type', event.target.value as LocationType)}
-              className="auth__input auth__input--select"
+              className="job-ai-input"
               disabled={isLoading}
             >
               <option value="onsite">On-site</option>
@@ -240,114 +254,110 @@ export default function RecruiterJobEditor({
               <option value="hybrid">Hybrid</option>
             </select>
           </div>
-        </div>
 
-        <div className="job-editor-form__grid job-editor-form__grid--salary">
-          <div className="auth__field">
-            <label className="auth__label">Min Salary</label>
-            <input
-              type="number"
-              value={form.salary_min}
-              onChange={(event) => set('salary_min', event.target.value)}
-              placeholder="e.g. 60000"
-              min={0}
-              className={`auth__input${errors.salary_min ? ' auth__input--error' : ''}`}
+          <div className="job-ai-field job-ai-field--manual">
+            <label className="job-ai-label">Status</label>
+            <select
+              value={form.status}
+              onChange={(event) => set('status', event.target.value as JobStatus)}
+              className="job-ai-input"
               disabled={isLoading}
-            />
+            >
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          <div className="job-ai-field job-ai-field--manual job-editor-form__salary-field">
+            <label className="job-ai-label">Salary Range</label>
+            <div className="job-ai-form__salary-grid">
+              <input
+                type="number"
+                value={form.salary_min}
+                onChange={(event) => set('salary_min', event.target.value)}
+                placeholder="Min salary"
+                min={0}
+                className={`job-ai-input${errors.salary_min ? ' auth__input--error' : ''}`}
+                disabled={isLoading}
+              />
+              <input
+                type="number"
+                value={form.salary_max}
+                onChange={(event) => set('salary_max', event.target.value)}
+                placeholder="Max salary"
+                min={0}
+                className="job-ai-input"
+                disabled={isLoading}
+              />
+              <select
+                value={form.currency}
+                onChange={(event) => set('currency', event.target.value)}
+                className="job-ai-input"
+                disabled={isLoading}
+              >
+                <option value="NPR">NPR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="INR">INR</option>
+              </select>
+            </div>
             {errors.salary_min ? (
               <span className="auth__error-msg" role="alert">
                 {errors.salary_min}
               </span>
             ) : null}
           </div>
-          <div className="auth__field">
-            <label className="auth__label">Max Salary</label>
-            <input
-              type="number"
-              value={form.salary_max}
-              onChange={(event) => set('salary_max', event.target.value)}
-              placeholder="e.g. 90000"
-              min={0}
-              className="auth__input"
-              disabled={isLoading}
-            />
-          </div>
-          <div className="auth__field">
-            <label className="auth__label">Currency</label>
-            <select
-              value={form.currency}
-              onChange={(event) => set('currency', event.target.value)}
-              className="auth__input auth__input--select"
-              disabled={isLoading}
-            >
-              <option value="NPR">NPR</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="INR">INR</option>
-            </select>
-          </div>
         </div>
 
-        <div className="auth__field">
-          <label className="auth__label">Status</label>
-          <select
-            value={form.status}
-            onChange={(event) => set('status', event.target.value as JobStatus)}
-            className="auth__input auth__input--select"
-            disabled={isLoading}
-          >
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="expired">Expired</option>
-          </select>
-        </div>
-
-        <div className="auth__field">
-          <label className="auth__label">
+        <div className="job-ai-field job-ai-field--manual">
+          <label className="job-ai-label">
             Job Overview <span className="auth__optional">(optional)</span>
           </label>
           <textarea
             value={form.overview}
             onChange={(event) => set('overview', event.target.value)}
             placeholder="Brief summary of the role and team..."
-            rows={4}
-            className="auth__textarea"
+            rows={6}
+            className="job-ai-textarea"
             disabled={isLoading}
           />
         </div>
 
-        <ListInput
-          label="Responsibilities"
-          placeholder="Add a responsibility and press Enter..."
-          items={form.responsibilities}
-          disabled={isLoading}
-          onChange={(value) => set('responsibilities', value)}
-        />
-        <ListInput
-          label="Requirements"
-          placeholder="Add a requirement and press Enter..."
-          items={form.requirements}
-          disabled={isLoading}
-          onChange={(value) => set('requirements', value)}
-        />
-        <ListInput
-          label="Preferred Qualifications"
-          placeholder="Add a preferred qualification and press Enter..."
-          items={form.preferred_qualifications}
-          disabled={isLoading}
-          onChange={(value) => set('preferred_qualifications', value)}
-        />
-        <ListInput
-          label="Benefits"
-          placeholder="Add a benefit and press Enter..."
-          items={form.benefits}
-          disabled={isLoading}
-          onChange={(value) => set('benefits', value)}
-        />
+        <div className="job-ai-form__stack">
+          <ListInput
+            label="Responsibilities"
+            placeholder="Add a new responsibility item"
+            items={form.responsibilities}
+            disabled={isLoading}
+            onChange={(value) => set('responsibilities', value)}
+          />
+          <ListInput
+            label="Requirements"
+            placeholder="Add a new requirement item"
+            items={form.requirements}
+            disabled={isLoading}
+            onChange={(value) => set('requirements', value)}
+          />
+          <ListInput
+            label="Preferred Qualifications"
+            placeholder="Add a new preferred qualification item"
+            items={form.preferred_qualifications}
+            disabled={isLoading}
+            onChange={(value) => set('preferred_qualifications', value)}
+          />
+          <ListInput
+            label="Benefits"
+            placeholder="Add a new benefit item"
+            items={form.benefits}
+            disabled={isLoading}
+            onChange={(value) => set('benefits', value)}
+          />
+        </div>
       </div>
 
-      <div className="job-editor-form__footer">
+      <div className="job-ai-toolbar__actions job-ai-footer-actions job-editor-form__footer">
         {onCancel ? (
           <button
             type="button"
@@ -357,9 +367,7 @@ export default function RecruiterJobEditor({
           >
             Cancel
           </button>
-        ) : (
-          <span />
-        )}
+        ) : null}
         <button
           type="submit"
           className="btn btn--primary"

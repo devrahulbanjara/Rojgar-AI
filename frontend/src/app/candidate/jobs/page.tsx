@@ -13,9 +13,10 @@ import {
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
 import { useGetMyResumesQuery } from '@/store/services/resumeApi'
-import { Bookmark, Briefcase, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
+import { Bookmark, Briefcase, Calendar, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
 
 import Loader from '@/components/common/Loader'
+import MediaBadge from '@/components/common/MediaBadge'
 
 import { JobCardsSkeleton, JobPreviewSkeleton } from './_components/JobsSkeletons'
 
@@ -35,6 +36,16 @@ const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
+function getCompanyAccent(name: string): { logo: string; color: string } {
+  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+
+  return {
+    logo: name.trim().charAt(0).toUpperCase() || 'C',
+    color: palette[seed % palette.length],
+  }
+}
+
 function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'): string | null {
   if (!min && !max) return null
   if (min && max) return `${currency} ${min.toLocaleString()} – ${max.toLocaleString()}`
@@ -52,6 +63,35 @@ function formatDate(iso: string): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function formatExpiryDate(iso: string | null): { text: string; color: string } | null {
+  if (!iso) return null
+
+  const expiryDate = new Date(iso)
+  const now = new Date()
+  const daysUntilExpiry = Math.floor((expiryDate.getTime() - now.getTime()) / 86400000)
+
+  if (daysUntilExpiry < 0) {
+    return { text: 'Expired', color: '#ff4d4d' }
+  }
+
+  if (daysUntilExpiry === 0) {
+    return { text: 'Expires today', color: '#f59e0b' }
+  }
+
+  if (daysUntilExpiry === 1) {
+    return { text: 'Expires tomorrow', color: '#f59e0b' }
+  }
+
+  if (daysUntilExpiry <= 7) {
+    return { text: `Expires in ${daysUntilExpiry} days`, color: '#f59e0b' }
+  }
+
+  return {
+    text: `Expires ${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    color: '#6b7280',
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -434,6 +474,7 @@ export default function UserJobsPage() {
                 {jobs.map((job, index) => {
                   const showFallbackDivider =
                     job.is_fallback && (index === 0 || !jobs[index - 1].is_fallback)
+                  const accent = getCompanyAccent(job.company?.name ?? job.title)
 
                   return (
                     <div key={job.id} style={{ display: 'contents' }}>
@@ -452,17 +493,19 @@ export default function UserJobsPage() {
                         onClick={() => setSelectedJobId(job.id)}
                       >
                         <div className="job-card__header">
-                          <div
+                          <MediaBadge
+                            src={job.company?.logo_url}
+                            alt={job.company?.name ?? job.title}
+                            fallback={accent.logo}
                             className="job-card__logo"
+                            sizes="48px"
                             style={
                               {
-                                '--logo-bg': '#7928CA1A',
-                                '--logo-color': '#7928CA',
+                                '--logo-bg': accent.color + '1A',
+                                '--logo-color': accent.color,
                               } as React.CSSProperties
                             }
-                          >
-                            {job.title[0]}
-                          </div>
+                          />
                           <div className="job-card__title-wrap">
                             <div className="job-card__title">{job.title}</div>
                             <div className="job-card__company">{job.company?.name}</div>
@@ -503,13 +546,23 @@ export default function UserJobsPage() {
                               {formatSalary(job.salary_min, job.salary_max, job.currency)}
                             </span>
                           )}
-                        </div>
-
-                        <div className="job-card__meta">
                           <span className="job-card__meta-time">
                             <Clock size={12} aria-hidden="true" />
                             {formatDate(job.created_at)}
                           </span>
+                          {job.expires_at &&
+                            (() => {
+                              const expiry = formatExpiryDate(job.expires_at)
+                              return expiry ? (
+                                <span
+                                  className="job-card__meta-expiry"
+                                  style={{ color: expiry.color }}
+                                >
+                                  <Calendar size={12} aria-hidden="true" />
+                                  {expiry.text}
+                                </span>
+                              ) : null
+                            })()}
                         </div>
                       </div>
                     </div>

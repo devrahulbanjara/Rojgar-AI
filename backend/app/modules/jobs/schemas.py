@@ -34,13 +34,10 @@ class JobBase(BaseSchema):
             if self.expires_at.tzinfo is None:
                 raise ValueError("expires_at must be timezone-aware")
 
-            if (
-                self.status == JobStatus.active
-                and self.expires_at <= datetime.now(timezone.utc)
+            if self.status == JobStatus.active and self.expires_at <= datetime.now(
+                timezone.utc
             ):
-                raise ValueError(
-                    "expires_at must be in the future for active jobs"
-                )
+                raise ValueError("expires_at must be in the future for active jobs")
 
         return self
 

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from tests.integration.helpers import (
@@ -27,6 +29,13 @@ class TestJobCreate:
         )
         assert resp.status_code == 201
         assert resp.json()["data"]["title"] == "Python Dev"
+        expires_at = datetime.fromisoformat(resp.json()["data"]["expires_at"])
+        now = datetime.now(timezone.utc)
+        assert (
+            now + timedelta(days=6, hours=23)
+            <= expires_at
+            <= now + timedelta(days=7, hours=1)
+        )
 
     @pytest.mark.asyncio
     async def test_candidate_cannot_create_job(self, client, db):

@@ -717,7 +717,7 @@ export default function ProfilePage() {
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">My Profile</h2>
           <p className="dash-page-header__subtitle">
-            Build your professional profile — this data powers your resumes and applications.
+            Build your professional profile to power your resumes and applications.
           </p>
         </div>
         <div className="dash-page-header__actions">
