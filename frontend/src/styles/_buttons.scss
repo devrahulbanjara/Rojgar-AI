@@ -1,0 +1,423 @@
+// ============================================================
+// BUTTONS
+// Usage:
+//   <button class="btn">Default</button>
+//   <button class="btn btn--lg">Large</button>
+//   <button class="btn btn--sm">Small</button>
+//   <button class="btn btn--primary">Primary</button>
+//   <button class="btn btn--danger">Danger</button>
+//   <button class="btn btn--secondary">Secondary</button>
+//   <button class="btn btn--accent">Accent</button>
+//   <button class="btn btn--outline btn--primary">Outline</button>
+//   <button class="btn btn--ghost btn--primary">Ghost</button>
+//   <button class="btn btn--pill btn--primary">Pill</button>
+//   <button class="btn btn--primary" disabled>Disabled</button>
+//   <button class="btn btn--primary btn--loading">Loading</button>
+//   <button class="btn btn--primary btn--icon-left">
+//     <svg>...</svg> Label
+//   </button>
+// ============================================================
+
+@use 'sass:color';
+@use 'sass:list';
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ============================================================
+// Base Button
+// ============================================================
+.btn {
+  // Layout
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+
+  // Sizing (default / medium)
+  padding: $space-2 $space-5;
+  min-height: 2.5rem; // 40px
+
+  // Typography
+  font-family: $font-sans;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+
+  // Appearance
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  border: 2px solid transparent;
+  border-radius: $radius-full;
+  background-color: $color-gray-200;
+  color: $color-gray-800;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+
+  // Transition
+  @include transition(color border-color background-color, $transition-fast);
+
+  // Focus ring
+  @include focus-ring($color-primary);
+
+  // Fill layer — sweeps up from bottom on hover, retreats on mouse-out
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: $color-gray-300;
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform $transition-base;
+    z-index: -1;
+  }
+
+  // Default hover (neutral) — trigger fill
+  &:hover:not(:disabled) {
+    border: 2px solid $color-gray-300;
+    background-color: $color-gray-200;
+
+    &::before {
+      transform: scaleY(1);
+      transform-origin: bottom;
+    }
+  }
+
+  // Ensure icon + text sit above the fill layer
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+    opacity: 0.9;
+  }
+
+  // Disabled state
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // --- SVG / Icon inside button ---
+  svg {
+    flex-shrink: 0;
+    width: 1em;
+    height: 1em;
+    fill: currentcolor;
+  }
+}
+
+// ============================================================
+// Sizes
+// ============================================================
+
+// Extra Small
+.btn--xs {
+  padding: $space-1 $space-3;
+  min-height: 1.75rem; // 28px
+  font-size: $font-size-xs;
+  gap: $space-1;
+}
+
+// Small
+.btn--sm {
+  padding: $space-2 $space-4;
+  min-height: 2.25rem; // 36px
+  font-size: $font-size-sm;
+}
+
+// Large
+.btn--lg {
+  padding: $space-3 $space-8;
+  min-height: 3rem; // 48px
+  font-size: $font-size-lg;
+  gap: $space-3;
+}
+
+// Extra Large
+.btn--xl {
+  padding: $space-4 $space-10;
+  min-height: 3.5rem; // 56px
+  font-size: $font-size-xl;
+  gap: $space-3;
+}
+
+// Full Width
+.btn--full {
+  width: 100%;
+}
+
+// Pill (fully rounded) — kept for explicit use, already default
+.btn--pill {
+  border-radius: $radius-full;
+}
+
+// ============================================================
+// Color Variant Generator
+// Generates: .btn--{name} (solid), .btn--outline.btn--{name},
+//            .btn--ghost.btn--{name}
+// ============================================================
+
+// Map: name -> (bg, text, hover-bg, border)
+$btn-variants: (
+  'primary': (
+    $color-primary,
+    $color-white,
+    color.adjust($color-primary, $lightness: -10%),
+    $color-primary,
+  ),
+  'outline': (
+    $color-primary,
+    $color-white,
+    $color-primary,
+    $color-primary,
+  ),
+  'secondary': (
+    $color-secondary,
+    $color-white,
+    color.adjust($color-secondary, $lightness: -10%),
+    $color-secondary,
+  ),
+  'accent': (
+    $color-accent,
+    $color-white,
+    color.adjust($color-accent, $lightness: -10%),
+    $color-accent,
+  ),
+  'success': (
+    $color-success,
+    $color-white,
+    color.adjust($color-success, $lightness: -10%),
+    $color-success,
+  ),
+  'warning': (
+    $color-warning,
+    $color-gray-900,
+    color.adjust($color-warning, $lightness: -10%),
+    $color-warning,
+  ),
+  'error': (
+    $color-error,
+    $color-white,
+    color.adjust($color-error, $lightness: -10%),
+    $color-error,
+  ),
+  'danger': (
+    $color-error,
+    $color-white,
+    color.adjust($color-error, $lightness: -10%),
+    $color-error,
+  ),
+  'dark': (
+    $color-gray-900,
+    $color-white,
+    $color-gray-700,
+    $color-gray-900,
+  ),
+);
+
+@each $name, $values in $btn-variants {
+  $bg: list.nth($values, 1);
+  $text: list.nth($values, 2);
+  $hover-bg: list.nth($values, 3);
+  $border: list.nth($values, 4);
+
+  // --- Solid ---
+  .btn--#{$name} {
+    background-color: $bg;
+    color: $text;
+    border-color: $bg;
+
+    &::before {
+      background-color: $hover-bg;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: $bg;
+      border-color: $hover-bg;
+      color: $text;
+
+      &::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
+    }
+
+    &:active:not(:disabled) {
+      background-color: color.adjust($bg, $lightness: -15%);
+      border-color: color.adjust($bg, $lightness: -15%);
+    }
+  }
+
+  // --- Outline ---
+  .btn--outline.btn--#{$name} {
+    background-color: transparent;
+    color: $bg;
+    border-color: $border;
+
+    &::before {
+      background-color: $bg;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: transparent;
+      color: $text;
+      border-color: $bg;
+
+      &::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
+    }
+
+    &:active:not(:disabled) {
+      background-color: transparent;
+      border-color: $hover-bg;
+
+      &::before {
+        background-color: $hover-bg;
+      }
+    }
+  }
+
+  // --- Ghost ---
+  .btn--ghost.btn--#{$name} {
+    $ghost-text: $bg;
+    $ghost-fill: rgba($bg, 0.12);
+    $ghost-border: rgba($bg, 0.2);
+
+    @if $name == 'warning' {
+      $ghost-text: color.adjust($bg, $lightness: -30%);
+    }
+
+    background-color: transparent;
+    color: $ghost-text;
+    border-color: transparent;
+
+    &::before {
+      background-color: $ghost-fill;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: transparent;
+      border-color: $ghost-border;
+      color: $ghost-text;
+
+      &::before {
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
+    }
+
+    &:active:not(:disabled) {
+      background-color: transparent;
+
+      &::before {
+        background-color: rgba($bg, 0.18);
+        transform: scaleY(1);
+        transform-origin: bottom;
+      }
+    }
+  }
+}
+
+// ============================================================
+// Loading State
+// Spinning spinner via ::after pseudo-element
+// ============================================================
+.btn--loading {
+  position: relative;
+  cursor: wait;
+  pointer-events: none;
+
+  // Fade label
+  > *:not(.btn__spinner) {
+    opacity: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 1.1em;
+    height: 1.1em;
+    border: 2px solid currentcolor;
+    border-top-color: transparent;
+    border-radius: $radius-full;
+    animation: btn-spin 0.65s linear infinite;
+  }
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================================
+// Icon-only Button
+// ============================================================
+.btn--icon {
+  padding: $space-2;
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  aspect-ratio: 1;
+
+  &.btn--sm {
+    min-height: 2.25rem;
+    min-width: 2.25rem;
+  }
+
+  &.btn--lg {
+    min-height: 3rem;
+    min-width: 3rem;
+    padding: $space-3;
+  }
+}
+
+// ============================================================
+// Button Group
+// Usage: <div class="btn-group"> <button class="btn">...</button> ... </div>
+// ============================================================
+.btn-group {
+  display: inline-flex;
+  gap: 0;
+
+  .btn {
+    border-radius: 0;
+
+    &:first-child {
+      border-radius: $radius-full 0 0 $radius-full;
+    }
+
+    &:last-child {
+      border-radius: 0 $radius-full $radius-full 0;
+    }
+
+    &:not(:first-child) {
+      border-left-width: 1px;
+    }
+  }
+
+  // Pill group
+  &.btn-group--pill {
+    .btn {
+      &:first-child {
+        border-radius: $radius-full 0 0 $radius-full;
+      }
+
+      &:last-child {
+        border-radius: 0 $radius-full $radius-full 0;
+      }
+    }
+  }
+}
