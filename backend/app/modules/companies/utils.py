@@ -32,3 +32,30 @@ async def get_admin_company(db: AsyncSession, user: User) -> Company:
             detail="Company not found.",
         )
     return company
+
+
+async def get_member_company(db: AsyncSession, user: User) -> Company:
+    """Get the company for any active recruiter-side membership."""
+    result = await db.execute(
+        select(CompanyMembership).where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    membership = result.scalar_one_or_none()
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active company found for this account.",
+        )
+
+    company_result = await db.execute(
+        select(Company).where(Company.id == membership.company_id)
+    )
+    company = company_result.scalar_one_or_none()
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found.",
+        )
+    return company

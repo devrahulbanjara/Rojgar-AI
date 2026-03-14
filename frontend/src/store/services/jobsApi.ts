@@ -1,11 +1,25 @@
+import type { Paginated } from '@/lib/types/user'
+
 import { type ApiResponse, baseApi } from './baseApi'
 
 // ---------------------------------------------------------------------------
 // Types — match the actual backend schema (app/modules/jobs/schemas.py)
 // ---------------------------------------------------------------------------
 
-export type JobStatus = 'draft' | 'open' | 'closed' | 'archived'
+export type JobStatus = 'draft' | 'active' | 'expired'
 export type LocationType = 'onsite' | 'remote' | 'hybrid'
+
+export function getJobStatusLabel(status: JobStatus): string {
+  switch (status) {
+    case 'active':
+      return 'Active'
+    case 'expired':
+      return 'Expired'
+    case 'draft':
+    default:
+      return 'Draft'
+  }
+}
 
 /** Minimal company info embedded in job responses */
 export interface CompanySnippet {
@@ -24,14 +38,16 @@ export interface JobListItem {
   company_id: string
   company?: CompanySnippet
   title: string
-  category: string | null
   location: string | null
   location_type: LocationType
   salary_min: number | null
   salary_max: number | null
   currency: string
   status: JobStatus
+  applications_count: number
   created_at: string
+  match_score: number | null
+  is_fallback: boolean
 }
 
 /** Full job detail including description fields */
@@ -41,7 +57,6 @@ export interface JobDetail {
   company?: CompanySnippet
   posted_by: string | null
   title: string
-  category: string | null
   location: string | null
   location_type: LocationType
   salary_min: number | null
@@ -78,7 +93,6 @@ export interface SearchJobsParams {
   q?: string
   location?: string
   location_type?: LocationType
-  category?: string
   salary_min?: number
   salary_max?: number
   page?: number
@@ -91,13 +105,12 @@ export interface SearchJobsParams {
 
 export const jobsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    /** GET /jobs/ — public: search & list open jobs */
-    searchJobs: builder.query<ApiResponse<JobListItem[]>, SearchJobsParams>({
+    /** GET /jobs/ — public: search & list active jobs */
+    searchJobs: builder.query<ApiResponse<Paginated<JobListItem>>, SearchJobsParams>({
       query: ({
         q,
         location,
         location_type,
-        category,
         salary_min,
         salary_max,
         page = 1,
@@ -108,7 +121,6 @@ export const jobsApi = baseApi.injectEndpoints({
           ...(q && { q }),
           ...(location && { location }),
           ...(location_type && { location_type }),
-          ...(category && { category }),
           ...(salary_min != null && { salary_min }),
           ...(salary_max != null && { salary_max }),
           page,

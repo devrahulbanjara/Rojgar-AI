@@ -21,7 +21,7 @@ class TestJobCreate:
                 "title": "Python Dev",
                 "location_type": "remote",
                 "currency": "NPR",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -101,7 +101,7 @@ class TestJobRead:
             json={
                 "title": "Public Open Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -140,7 +140,7 @@ class TestJobRead:
             json={
                 "title": "Detailed Job",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -165,7 +165,7 @@ class TestJobRead:
             json={
                 "title": "Blockchain Wizard",
                 "location_type": "remote",
-                "status": "open",
+                "status": "active",
             },
             headers=auth_headers(user),
         )
@@ -173,27 +173,6 @@ class TestJobRead:
         resp = await client.get("/jobs/?q=Blockchain")
         titles = [j["title"] for j in resp.json()["data"]]
         assert "Blockchain Wizard" in titles
-
-    @pytest.mark.asyncio
-    async def test_search_jobs_by_category(self, client, db):
-        user = await make_user(db, "recruiter_cat@test.com", role="recruiter_admin")
-        company = await make_company(db, "Cat Co", "catco.com")
-        await make_membership(db, user, company)
-        # Create via API so the app session sees the committed data
-        await client.post(
-            "/jobs/",
-            json={
-                "title": "Cat Backend Job",
-                "location_type": "remote",
-                "status": "open",
-                "category": "cat_backend_unique",
-            },
-            headers=auth_headers(user),
-        )
-
-        resp = await client.get("/jobs/?category=cat_backend_unique")
-        titles = [j["title"] for j in resp.json()["data"]]
-        assert "Cat Backend Job" in titles
 
     @pytest.mark.asyncio
     async def test_list_company_jobs_as_recruiter(self, client, db):
@@ -289,7 +268,7 @@ class TestJobUpdate:
         job_id = create_resp.json()["data"]["id"]
 
         await client.patch(
-            f"/jobs/{job_id}", json={"status": "open"}, headers=auth_headers(user)
+            f"/jobs/{job_id}", json={"status": "active"}, headers=auth_headers(user)
         )
 
         resp = await client.get("/jobs/?q=Soon+Open+Job")

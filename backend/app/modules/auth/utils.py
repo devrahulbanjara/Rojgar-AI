@@ -31,6 +31,7 @@ async def build_user_dict(db: AsyncSession, user: User) -> dict:
         "email": user.email,
         "primary_role": user.primary_role,
         "is_email_verified": user.is_email_verified,
+        "is_onboarded": user.is_onboarded,
         "avatar_url": user.avatar_url,
         "membership_status": ms,
     }

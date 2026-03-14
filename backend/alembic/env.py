@@ -8,6 +8,7 @@ import app.modules.profiles.models  # noqa: F401
 import app.modules.resumes.models  # noqa: F401
 import app.modules.jobs.models  # noqa: F401
 import app.modules.applications.models  # noqa: F401
+import app.modules.job_ai.models  # noqa: F401
 from alembic import context
 from app.core.config import settings
 from app.core.database import Base

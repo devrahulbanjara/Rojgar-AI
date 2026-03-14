@@ -5,6 +5,7 @@
 //   <button class="btn btn--lg">Large</button>
 //   <button class="btn btn--sm">Small</button>
 //   <button class="btn btn--primary">Primary</button>
+//   <button class="btn btn--danger">Danger</button>
 //   <button class="btn btn--secondary">Secondary</button>
 //   <button class="btn btn--accent">Accent</button>
 //   <button class="btn btn--outline btn--primary">Outline</button>
@@ -209,6 +210,12 @@ $btn-variants: (
     color.adjust($color-error, $lightness: -10%),
     $color-error,
   ),
+  'danger': (
+    $color-error,
+    $color-white,
+    color.adjust($color-error, $lightness: -10%),
+    $color-error,
+  ),
   'dark': (
     $color-gray-900,
     $color-white,
@@ -283,18 +290,26 @@ $btn-variants: (
 
   // --- Ghost ---
   .btn--ghost.btn--#{$name} {
+    $ghost-text: $bg;
+    $ghost-fill: rgba($bg, 0.12);
+    $ghost-border: rgba($bg, 0.2);
+
+    @if $name == 'warning' {
+      $ghost-text: color.adjust($bg, $lightness: -30%);
+    }
+
     background-color: transparent;
-    color: $color-gray-700;
+    color: $ghost-text;
     border-color: transparent;
 
     &::before {
-      background-color: $color-gray-200;
+      background-color: $ghost-fill;
     }
 
     &:hover:not(:disabled) {
       background-color: transparent;
-      border-color: $color-gray-200;
-      color: $color-gray-900;
+      border-color: $ghost-border;
+      color: $ghost-text;
 
       &::before {
         transform: scaleY(1);
@@ -306,7 +321,7 @@ $btn-variants: (
       background-color: transparent;
 
       &::before {
-        background-color: $color-gray-200;
+        background-color: rgba($bg, 0.18);
         transform: scaleY(1);
         transform-origin: bottom;
       }
