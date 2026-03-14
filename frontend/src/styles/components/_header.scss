@@ -1,0 +1,362 @@
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ── Block ────────────────────────────────────────────────────
+.header {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  right: 0;
+  z-index: $z-sticky;
+  height: 68px;
+  will-change: top, opacity, transform;
+
+  // Hidden until GSAP entrance animation runs (prevents flash of unstyled header)
+  opacity: 0;
+
+  // ── Modifier: scrolled (applied via GSAP) ──────────────────
+  &--scrolled {
+    background: $color-white;
+    box-shadow: 0 2px 16px rgba($color-black, 0.1);
+    border-bottom: 1px solid rgba($color-black, 0.06);
+
+    .header__inner {
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  // ── Element: inner ─────────────────────────────────────────
+  &__inner {
+    height: 100%;
+    background: $color-white;
+    border-radius: 50px;
+    box-shadow: 0 4px 32px rgba($color-black, 0.08);
+    transition:
+      border-radius 0.45s ease,
+      box-shadow 0.45s ease;
+    @include flex-between;
+
+    gap: $space-6;
+  }
+
+  // ── Element: logo ──────────────────────────────────────────
+  &__logo {
+    max-width: 300px;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    @include transition(opacity, $transition-fast);
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  // ── Element: logo-accent ───────────────────────────────────
+  &__logo-accent {
+    color: $color-primary;
+  }
+
+  // ── Element: nav ───────────────────────────────────────────
+  &__nav {
+    display: none;
+    align-items: center;
+
+    @include lg {
+      display: flex;
+    }
+  }
+
+  // ── Element: nav-list ──────────────────────────────────────
+  &__nav-list {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+  }
+
+  // ── Element: nav-item ──────────────────────────────────────
+  &__nav-item {
+    display: flex;
+  }
+
+  // ── Element: nav-link ──────────────────────────────────────
+  &__nav-link {
+    position: relative;
+    padding: $space-2 $space-3;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: rgba($color-black, 0.7);
+    border-radius: $radius-md;
+    @include transition(color background-color, $transition-fast);
+
+    // Underline indicator
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: $space-3;
+      right: $space-3;
+      height: 2px;
+      background-color: $color-primary;
+      border-radius: $radius-full;
+      transform: scaleX(0);
+      transform-origin: left;
+      @include transition(transform, $transition-fast);
+    }
+
+    &:hover {
+      &::after {
+        transform: scaleX(1);
+      }
+    }
+
+    // Modifier: active state
+    &--active {
+      color: $color-primary;
+
+      &::after {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  // ── Element: actions ───────────────────────────────────────
+  &__actions {
+    display: none;
+    align-items: center;
+    gap: $space-2;
+    flex-shrink: 0;
+
+    @include lg {
+      display: flex;
+    }
+  }
+
+  // ── Element: action-btn ────────────────────────────────────
+  &__action-btn {
+    font-size: $font-size-sm;
+    border-radius: $radius-full !important;
+    padding: $space-1 $space-6 !important;
+
+    // Modifier: login
+    &--login {
+      // no extra styles
+    }
+
+    // Modifier: signup
+    &--signup {
+      position: relative;
+      overflow: hidden;
+      z-index: 0;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: color.adjust($color-primary, $lightness: -12%);
+        transform: scaleY(0);
+        transform-origin: top; // un-hover: empties from bottom → top
+        transition: transform $transition-base;
+        z-index: -1;
+      }
+
+      &:hover::before {
+        transform: scaleY(1);
+        transform-origin: bottom; // hover: fills from bottom → top
+      }
+    }
+  }
+
+  // ── Element: hamburger ─────────────────────────────────────
+  &__hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: $space-2;
+    border-radius: $radius-md;
+    @include transition(background-color, $transition-fast);
+
+    @include lg {
+      display: none;
+    }
+
+    &:hover {
+      background-color: rgba($color-black, 0.06);
+
+      .header__hamburger-line {
+        background-color: $color-black;
+      }
+    }
+  }
+
+  // ── Element: hamburger-line ────────────────────────────────
+  &__hamburger-line {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: rgba($color-black, 0.6);
+    border-radius: $radius-full;
+    @include transition(all, $transition-fast);
+  }
+
+  // ── Modifier: hamburger open → X ───────────────────────────
+  &__hamburger--open {
+    .header__hamburger-line {
+      &:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+
+      &:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+
+      &:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+    }
+  }
+
+  // ── Element: overlay ───────────────────────────────────────
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba($color-black, 0.45);
+    z-index: $z-sticky - 1;
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+  }
+
+  // ── Element: drawer ────────────────────────────────────────
+  &__drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100dvh;
+    background: $color-white;
+    z-index: $z-sticky + 1;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 32px rgba($color-black, 0.12);
+    will-change: transform;
+
+    @include lg {
+      display: none;
+    }
+  }
+
+  // ── Element: drawer-top ────────────────────────────────────
+  &__drawer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-4 $space-5;
+    border-bottom: 1px solid $color-gray-200;
+    flex-shrink: 0;
+  }
+
+  &__drawer-logo {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // ── Element: drawer-close ──────────────────────────────────
+  &__drawer-close {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    border-radius: $radius-md;
+    flex-shrink: 0;
+    @include transition(background-color, $transition-fast);
+
+    &:hover {
+      background-color: $color-gray-100;
+    }
+
+    span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 2px;
+      background: $color-gray-600;
+      border-radius: $radius-full;
+
+      &:nth-child(1) {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+
+      &:nth-child(2) {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+    }
+  }
+
+  // ── Element: drawer-nav ────────────────────────────────────
+  &__drawer-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: $space-4 $space-3;
+  }
+
+  &__drawer-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__drawer-nav-item {
+    display: flex;
+  }
+
+  &__drawer-nav-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: $space-3 $space-4;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-700;
+    border-radius: $radius-lg;
+    @include transition(background-color color, $transition-fast);
+
+    &:hover {
+      background-color: $color-gray-100;
+      color: $color-primary;
+    }
+  }
+
+  // ── Element: drawer-actions ────────────────────────────────
+  &__drawer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    padding: $space-5;
+    border-top: 1px solid $color-gray-200;
+    flex-shrink: 0;
+  }
+
+  &__drawer-btn {
+    width: 100%;
+    justify-content: center;
+    border-radius: $radius-full !important;
+    font-size: $font-size-sm;
+
+    &--login {
+      border-color: rgba($color-primary, 0.4) !important;
+      color: $color-black !important;
+
+      &:hover {
+        background-color: $color-primary !important;
+        color: $color-white !important;
+        border-color: $color-primary !important;
+      }
+    }
+  }
+}
