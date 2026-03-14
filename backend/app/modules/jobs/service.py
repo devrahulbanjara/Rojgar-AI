@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -22,7 +23,38 @@ from app.modules.jobs.schemas import (
 )
 from app.modules.jobs.sync import process_sync_event
 from app.modules.profiles.models import Profile
-from app.shared.enums import LocationType
+from app.shared.enums import JobStatus, LocationType
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _effective_job_status(job: Job) -> JobStatus:
+    if (
+        job.status == JobStatus.active
+        and job.expires_at is not None
+        and job.expires_at <= _utcnow()
+    ):
+        return JobStatus.expired
+    return job.status
+
+
+def _validate_expires_at_for_write(expires_at: datetime | None) -> datetime | None:
+    if expires_at is None:
+        return None
+    if expires_at.tzinfo is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="expires_at must be timezone-aware.",
+        )
+    return expires_at
+
+
+def _should_be_searchable(job: Job) -> bool:
+    return _effective_job_status(job) == JobStatus.active and (
+        job.expires_at is None or job.expires_at > _utcnow()
+    )
 
 
 def _job_list_item_from_row(
@@ -44,7 +76,8 @@ def _job_list_item_from_row(
             "salary_min": job.salary_min,
             "salary_max": job.salary_max,
             "currency": job.currency,
-            "status": job.status,
+            "status": _effective_job_status(job),
+            "expires_at": job.expires_at,
             "applications_count": int(applications_count or 0),
             "created_at": job.created_at,
             "match_score": match_score,
@@ -69,7 +102,8 @@ def _job_detail_response_from_row(
             "salary_min": job.salary_min,
             "salary_max": job.salary_max,
             "currency": job.currency,
-            "status": job.status,
+            "status": _effective_job_status(job),
+            "expires_at": job.expires_at,
             "overview": job.overview,
             "responsibilities": job.responsibilities,
             "requirements": job.requirements,
@@ -104,6 +138,8 @@ async def create_job(
     """Create a new job posting under the user's company."""
     company_id = await _get_user_company_id(db, user)
 
+    expires_at = _validate_expires_at_for_write(payload.expires_at)
+
     job = Job(
         company_id=company_id,
         posted_by=user.id,
@@ -114,12 +150,21 @@ async def create_job(
         salary_max=payload.salary_max,
         currency=payload.currency,
         status=payload.status,
+        expires_at=expires_at,
         overview=payload.overview,
-        responsibilities=payload.responsibilities,
-        requirements=payload.requirements,
-        preferred_qualifications=payload.preferred_qualifications,
-        benefits=payload.benefits,
+        responsibilities=payload.responsibilities or [],
+        requirements=payload.requirements or [],
+        preferred_qualifications=payload.preferred_qualifications or [],
+        benefits=payload.benefits or [],
     )
+
+    # guard against active jobs already expired
+    if job.status == JobStatus.active and job.expires_at and job.expires_at <= _utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Active jobs must have an expires_at in the future.",
+        )
+
     db.add(job)
     await db.flush()  # Generates job.id without committing yet
 
@@ -247,6 +292,10 @@ async def search_jobs(
         if row is None:
             continue  # ghost vector (job deleted from Postgres but not yet from Qdrant)
         job, app_count = row
+
+        if not _should_be_searchable(job):
+            continue
+
         final_jobs.append(
             _job_list_item_from_row(
                 job,
@@ -256,7 +305,7 @@ async def search_jobs(
             )
         )
 
-    return final_jobs, total_count
+    return final_jobs, len(final_jobs) if page == 1 else total_count
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
@@ -316,23 +365,18 @@ async def update_job(
             detail="Job not found or you do not have permission.",
         )
 
-    for field in (
-        "title",
-        "location",
-        "location_type",
-        "salary_min",
-        "salary_max",
-        "currency",
-        "status",
-        "overview",
-        "responsibilities",
-        "requirements",
-        "preferred_qualifications",
-        "benefits",
-    ):
-        value = getattr(payload, field, None)
-        if value is not None:
-            setattr(job, field, value)
+    update_data = payload.model_dump(exclude_unset=True)
+
+    if "expires_at" in update_data:
+        update_data["expires_at"] = _validate_expires_at_for_write(
+            update_data["expires_at"]
+        )
+
+    for field, value in update_data.items():
+        setattr(job, field, value)
+
+    if job.status == JobStatus.active and job.expires_at and job.expires_at <= _utcnow():
+        job.status = JobStatus.expired
 
     # 1. Transactionally write the outbox event alongside the update
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)

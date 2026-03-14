@@ -1,0 +1,113 @@
+'use client'
+
+import { toast } from 'react-toastify'
+
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+
+import RecruiterJobEditor, {
+  formFromDetail,
+} from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
+import { parseApiError } from '@/lib/apiError'
+import {
+  type CreateJobPayload,
+  useGetJobByIdQuery,
+  useUpdateJobMutation,
+} from '@/store/services/jobsApi'
+import { ArrowLeft } from 'lucide-react'
+
+export default function RecruiterEditJobPage() {
+  const params = useParams()
+  const router = useRouter()
+  const jobId = params.id as string
+
+  const { data: response, isLoading: isLoadingDetail } = useGetJobByIdQuery(jobId)
+  const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation()
+
+  const detail = response?.data
+
+  async function handleUpdate(payload: CreateJobPayload) {
+    try {
+      await updateJob({ id: jobId, ...payload }).unwrap()
+      toast.success('Job updated successfully.')
+      router.push('/recruiter/jobs')
+    } catch (error) {
+      const parsed = parseApiError(error, {}, 'Failed to update job. Please try again.')
+      toast.error(parsed.message)
+    }
+  }
+
+  if (isLoadingDetail) {
+    return (
+      <div className="dash-content container container--app-shell">
+        <div className="job-editor-page">
+          <div className="dash-card">
+            <div className="dash-card__body" style={{ alignItems: 'center', padding: '2rem' }}>
+              <p style={{ color: 'var(--color-muted,#6b7280)' }}>Loading job details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!detail) {
+    return (
+      <div className="dash-content container container--app-shell">
+        <div className="job-editor-page">
+          <div className="dash-card">
+            <div className="dash-card__body" style={{ alignItems: 'center', padding: '2rem' }}>
+              <p style={{ color: 'var(--color-muted,#6b7280)' }}>Job not found.</p>
+              <Link href="/recruiter/jobs" className="btn btn--primary btn--sm">
+                Back to Jobs
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="dash-content container container--app-shell">
+      <div className="job-editor-page">
+        <div className="job-editor-page__header">
+          <Link href="/recruiter/jobs" className="job-editor-page__back">
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back to Jobs</span>
+          </Link>
+        </div>
+
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">Edit Job</h2>
+            <p className="dash-page-header__subtitle">
+              Update job details and save changes to your posting.
+            </p>
+          </div>
+        </div>
+
+        <section className="dash-card">
+          <div className="dash-card__header">
+            <div>
+              <h3 className="dash-card__title">Job Details</h3>
+              <p className="dash-card__subtitle">
+                Review and update the job information. Changes will be reflected immediately.
+              </p>
+            </div>
+          </div>
+          <div className="dash-card__body">
+            <RecruiterJobEditor
+              key={`edit:${jobId}:${detail.updated_at}`}
+              initial={formFromDetail(detail)}
+              onSubmit={handleUpdate}
+              onCancel={() => router.push('/recruiter/jobs')}
+              isLoading={isUpdating}
+              submitLabel="Update Job"
+            />
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}

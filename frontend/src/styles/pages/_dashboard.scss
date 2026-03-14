@@ -4071,6 +4071,7 @@
   }
 
   &__logo {
+    position: relative;
     width: 44px;
     height: 44px;
     border-radius: $radius-lg;
@@ -4084,6 +4085,7 @@
     font-size: $font-size-base;
     flex-shrink: 0;
     border: 1px solid rgb(0 0 0 / 6%);
+    overflow: hidden;
   }
 
   &__body {
@@ -4150,6 +4152,7 @@
   }
 
   &__logo {
+    position: relative;
     width: 48px;
     height: 48px;
     border-radius: $radius-lg;
@@ -4163,6 +4166,7 @@
     font-size: $font-size-lg;
     flex-shrink: 0;
     border: 1px solid rgb(0 0 0 / 6%);
+    overflow: hidden;
   }
 
   &__info {

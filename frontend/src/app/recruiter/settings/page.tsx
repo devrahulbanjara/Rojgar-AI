@@ -14,7 +14,7 @@ import {
   useUpdateCompanyMutation,
   useUploadCompanyLogoMutation,
 } from '@/store/services/companyApi'
-import { Building2, Camera, Globe, MapPin, Save, Trash2, X } from 'lucide-react'
+import { Building2, Camera, Globe, MapPin, Trash2, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -351,21 +351,32 @@ export default function CompanySettingsPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <button
-            className="btn btn--primary btn--icon-right"
-            disabled={isWorking}
-            onClick={() => void handleSave()}
-            type="button"
+          <span
+            className={`page-header-hint${
+              saveError
+                ? ' page-header-hint--error'
+                : saveSuccess
+                  ? ' page-header-hint--success'
+                  : ''
+            }`}
           >
-            Save Changes
-            <Save size={16} />
-          </button>
+            {isSaving
+              ? 'Saving…'
+              : saveError
+                ? saveError
+                : saveSuccess
+                  ? 'Saved ✓'
+                  : 'Changes saved automatically'}
+          </span>
         </div>
       </div>
 
-      <div className="profile-layout">
+      <div className="profile-layout content-fade-in">
         <aside className="profile-layout__aside">
-          <div className="profile-aside-card">
+          <div
+            className="profile-aside-card content-stagger-item"
+            style={{ '--stagger-index': 0 } as React.CSSProperties}
+          >
             <div className="profile-media-control profile-media-control--rounded">
               <MediaBadge
                 src={logoSrc}
@@ -411,37 +422,39 @@ export default function CompanySettingsPage() {
             />
             {logoError ? <div className="resume-field__error">{logoError}</div> : null}
             <div className="profile-aside-card__name">{companyName}</div>
-            <div className="profile-aside-card__title">{company.industry || 'Company profile'}</div>
-            <div className="profile-meta-list">
-              <div className="profile-meta-row">
-                <Building2 size={14} />
-                <span>{company.company_size || 'Size not specified'}</span>
-              </div>
-              <div className="profile-meta-row">
-                <MapPin size={14} />
-                <span>{company.location || 'Location not specified'}</span>
-              </div>
-              <div className="profile-meta-row">
-                <Globe size={14} />
-                <span>{company.website_url || 'Website not specified'}</span>
-              </div>
+            <div className="profile-aside-card__headline">{company.industry || 'Company profile'}</div>
+            <div className="profile-media-hint">
+              PNG, JPG, WEBP, GIF up to {formatBytes(5 * 1024 * 1024)}
             </div>
+            {company.location && (
+              <div className="profile-aside-card__location">
+                <MapPin size={13} aria-hidden="true" />
+                {company.location}
+              </div>
+            )}
+            <div className="profile-aside-card__divider" />
           </div>
         </aside>
 
-        <section className="profile-layout__main">
-          <div className="dash-card">
-            <div className="dash-card__header">
-              <div>
-                <div className="dash-card__title">Company Profile</div>
-                <div className="dash-card__subtitle">
-                  These details appear across company-facing candidate experiences.
-                </div>
+        <div className="profile-layout__main">
+          <div className="profile-section">
+            <div
+              className="profile-block content-stagger-item"
+              style={{ '--stagger-index': 1 } as React.CSSProperties}
+            >
+              <div className="profile-block__header">
+                <div className="profile-block__title">Company Information</div>
+                <button
+                  className="btn btn--primary btn--sm"
+                  disabled={isWorking}
+                  onClick={() => void handleSave()}
+                  type="button"
+                >
+                  Save
+                </button>
               </div>
-            </div>
 
-            <div className="dash-card__body">
-              <div className="resume-form-grid">
+                <div className="resume-form-grid">
                 <div className="resume-field">
                   <label className="resume-field__label" htmlFor="company-name">
                     Company Name
@@ -503,47 +516,43 @@ export default function CompanySettingsPage() {
                     type="text"
                   />
                 </div>
-
-                <div className="resume-field resume-field--full">
-                  <label className="resume-field__label" htmlFor="company-website">
-                    Website
-                  </label>
-                  <input
-                    id="company-website"
-                    className="resume-field__input"
-                    value={form.website_url}
-                    onChange={(event) =>
-                      setForm((prev) => ({ ...prev, website_url: event.target.value }))
-                    }
-                    placeholder="https://example.com"
-                    type="url"
-                  />
-                </div>
-
-                <div className="resume-field resume-field--full">
-                  <label className="resume-field__label" htmlFor="company-description">
-                    Description
-                  </label>
-                  <textarea
-                    id="company-description"
-                    className="resume-field__input resume-field__textarea"
-                    value={form.description}
-                    onChange={(event) =>
-                      setForm((prev) => ({ ...prev, description: event.target.value }))
-                    }
-                    placeholder="Tell candidates what your company does, how it hires, and why they should care."
-                    rows={6}
-                  />
-                </div>
               </div>
 
+              <div className="resume-field">
+                <label className="resume-field__label" htmlFor="company-description">
+                  Description
+                </label>
+                <textarea
+                  id="company-description"
+                  className="resume-field__textarea"
+                  value={form.description}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, description: event.target.value }))
+                  }
+                  placeholder="Tell candidates what your company does, how it hires, and why they should care."
+                  rows={6}
+                />
+              </div>
+
+              <div className="resume-field">
+                <label className="resume-field__label" htmlFor="company-website">
+                  Website
+                </label>
+                <input
+                  id="company-website"
+                  className="resume-field__input"
+                  value={form.website_url}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, website_url: event.target.value }))
+                  }
+                  placeholder="https://example.com"
+                  type="url"
+                />
+              </div>
               {saveError ? <div className="resume-field__error">{saveError}</div> : null}
-              {saveSuccess ? (
-                <div className="resume-field__hint">Changes saved successfully.</div>
-              ) : null}
             </div>
           </div>
-        </section>
+        </div>
       </div>
 
       {logoCropDraft ? (

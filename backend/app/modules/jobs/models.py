@@ -30,6 +30,9 @@ class Job(Base):
     salary_max: Mapped[int | None] = mapped_column(Integer)
     currency: Mapped[str] = mapped_column(String(10), server_default="USD")
     status: Mapped[JobStatus] = mapped_column(nullable=False, server_default="draft")
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     overview: Mapped[str | None] = mapped_column(Text)
     responsibilities: Mapped[list[str]] = mapped_column(
         ARRAY(String), server_default="{}"
