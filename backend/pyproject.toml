@@ -19,6 +19,7 @@ dependencies = [
     "langchain-groq>=1.1.2",
     "langchain-qdrant>=1.1.0",
     "langchain-tavily>=0.2.17",
+    "langgraph-checkpoint-postgres>=3.0.0",
     "logfire[fastapi]>=4.25.0",
     "qdrant-client>=1.13.0",
     "loguru>=0.7.3",
@@ -29,6 +30,9 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "redis>=7.2.1",
     "sqlalchemy[asyncio]>=2.0.47",
+    "langgraph>=1.0.9",
+    "groq>=0.37.1",
+    "psycopg[binary]>=3.3.3",
 ]
 
 [tool.pytest.ini_options]
