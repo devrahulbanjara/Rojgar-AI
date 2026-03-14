@@ -26,7 +26,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li className="footer__nav-item">
-                <Link href="/dashboard" className="footer__nav-link">
+                <Link href="/candidate" className="footer__nav-link">
                   Dashboard
                 </Link>
               </li>

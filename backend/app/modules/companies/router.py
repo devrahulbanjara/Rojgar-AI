@@ -3,8 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.integrations.s3.service import S3Service
-from app.modules.auth.dependencies import require_recruiter_admin
+from app.integrations.storage.service import storage_service
+from app.modules.auth.dependencies import (
+    require_active_membership,
+    require_recruiter_admin,
+)
 from app.modules.auth.models import User
 from app.modules.companies import service
 from app.modules.companies.schemas import (
@@ -18,7 +21,6 @@ from app.modules.companies.schemas import (
 from app.modules.companies.utils import get_admin_company
 
 router = APIRouter()
-s3_service = S3Service()
 
 db = Depends(get_db)
 
@@ -63,10 +65,10 @@ async def request_join_company(
 @router.get(
     "/me",
     response_model=UnifiedResponse[CompanyResponse],
-    summary="Get the authenticated company admin's company profile",
+    summary="Get the authenticated recruiter or company admin's company profile",
 )
 async def get_my_company(
-    user: User = Depends(require_recruiter_admin),
+    user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
     data = await service.get_my_company(db, user)
@@ -141,14 +143,14 @@ async def upload_company_logo(
 ):
     company = await get_admin_company(db, user)
     previous_logo_url = company.logo_url
-    new_logo_url = await s3_service.upload_image(file, folder="logos")
+    new_logo_url = await storage_service.upload_image(file, folder="logos")
 
     company.logo_url = new_logo_url
     await db.commit()
     await db.refresh(company)
 
     if previous_logo_url and previous_logo_url != new_logo_url:
-        await s3_service.delete_image(previous_logo_url)
+        await storage_service.delete_image(previous_logo_url)
 
     data = CompanyResponse.model_validate(company)
     return ResponseBuilder.success(data=data, message="Company logo updated.")
@@ -170,6 +172,6 @@ async def delete_company_logo(
     await db.refresh(company)
 
     if previous_logo_url:
-        await s3_service.delete_image(previous_logo_url)
+        await storage_service.delete_image(previous_logo_url)
 
     return ResponseBuilder.success(data=None, message="Company logo removed.")

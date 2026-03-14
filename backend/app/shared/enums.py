@@ -9,9 +9,8 @@ class LocationType(str, Enum):
 
 class JobStatus(str, Enum):
     draft = "draft"
-    open = "open"
-    closed = "closed"
-    archived = "archived"
+    active = "active"
+    expired = "expired"
 
 
 class ApplicationStatus(str, Enum):

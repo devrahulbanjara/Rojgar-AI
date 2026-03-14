@@ -1,23 +1,13 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field, model_validator
-
 from app.core.schemas import BaseSchema
 from app.shared.enums import JobStatus, LocationType
-
-
-# ---------------------------------------------------------------------------
-# Base class — shared fields + salary-range invariant
-# ---------------------------------------------------------------------------
+from pydantic import Field, model_validator
 
 
 class JobBase(BaseSchema):
-    """Shared fields for JobCreate and JobUpdate. All fields optional here;
-    sub-classes tighten constraints where needed."""
-
     title: str | None = Field(default=None, max_length=255)
-    category: str | None = Field(default=None, max_length=50)
     location: str | None = Field(default=None, max_length=255)
     location_type: LocationType | None = None
     salary_min: int | None = None
@@ -41,17 +31,12 @@ class JobBase(BaseSchema):
         return self
 
 
-# ---------------------------------------------------------------------------
-# Write schemas
-# ---------------------------------------------------------------------------
-
-
 class JobCreate(JobBase):
     """All required fields must be provided on creation."""
 
     title: str = Field(min_length=1, max_length=255)
     location_type: LocationType = LocationType.onsite
-    currency: str = Field(default="USD", max_length=10)
+    currency: str = Field(default="NPR", max_length=10)
     status: JobStatus = JobStatus.draft
     responsibilities: list[str] = []
     requirements: list[str] = []
@@ -63,11 +48,6 @@ class JobUpdate(JobBase):
     """All fields are optional — only provided fields are applied."""
 
     pass
-
-
-# ---------------------------------------------------------------------------
-# Read schemas
-# ---------------------------------------------------------------------------
 
 
 class CompanySnippet(BaseSchema):
@@ -89,14 +69,22 @@ class JobListItem(BaseSchema):
     company_id: UUID
     company: CompanySnippet
     title: str
-    category: str | None = None
     location: str | None = None
     location_type: LocationType
     salary_min: int | None = None
     salary_max: int | None = None
     currency: str = "NPR"
     status: JobStatus
+    applications_count: int = 0
     created_at: datetime
+
+    match_score: float | None = Field(
+        default=None, description="Semantic similarity score (0–1)"
+    )
+    is_fallback: bool = Field(
+        default=False,
+        description="True when job is shown outside the user's applied filters",
+    )
 
 
 class JobDetailResponse(BaseSchema):
@@ -107,7 +95,6 @@ class JobDetailResponse(BaseSchema):
     company: CompanySnippet
     posted_by: UUID | None = None
     title: str
-    category: str | None = None
     location: str | None = None
     location_type: LocationType
     salary_min: int | None = None
@@ -119,5 +106,6 @@ class JobDetailResponse(BaseSchema):
     requirements: list[str] = []
     preferred_qualifications: list[str] = []
     benefits: list[str] = []
+    applications_count: int = 0
     created_at: datetime
     updated_at: datetime
