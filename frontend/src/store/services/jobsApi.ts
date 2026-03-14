@@ -25,6 +25,7 @@ export function getJobStatusLabel(status: JobStatus): string {
 export interface CompanySnippet {
   id: string
   name: string
+  logo_url: string | null
   industry: string | null
   company_size: string | null
   location: string | null
@@ -44,6 +45,7 @@ export interface JobListItem {
   salary_max: number | null
   currency: string
   status: JobStatus
+  expires_at: string | null
   applications_count: number
   created_at: string
   match_score: number | null
@@ -63,6 +65,7 @@ export interface JobDetail {
   salary_max: number | null
   currency: string
   status: JobStatus
+  expires_at: string | null
   overview: string | null
   responsibilities: string[]
   requirements: string[]
@@ -80,6 +83,7 @@ export interface CreateJobPayload {
   salary_max?: number
   currency?: string
   status?: JobStatus
+  expires_at?: string
   overview?: string
   responsibilities?: string[]
   requirements?: string[]

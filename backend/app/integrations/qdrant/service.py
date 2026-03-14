@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from loguru import logger
 from qdrant_client import AsyncQdrantClient, models
@@ -6,6 +7,14 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.core.config import settings
 from app.integrations.ai.service import ai_service
+
+QDRANT_NO_EXPIRY_TS = 32503680000  # year 3000, good enough for human nonsense
+
+
+def _expires_at_to_ts(value: datetime | None) -> int:
+    if value is None:
+        return QDRANT_NO_EXPIRY_TS
+    return int(value.timestamp())
 
 
 class QdrantService:
@@ -35,7 +44,7 @@ class QdrantService:
 
     async def _ensure_indexes(self) -> None:
         keywords = ["status", "location_type", "company_id"]
-        integers = ["salary_min", "salary_max"]
+        integers = ["salary_min", "salary_max", "expires_at_ts"]
 
         for field in keywords:
             try:
@@ -74,8 +83,34 @@ class QdrantService:
         return "\n\n".join(parts)
 
     async def upsert_job(self, job) -> None:
-        """Embed a job and store it in Qdrant with filterable metadata."""
+        """
+        Embed a job and store it in Qdrant with filterable metadata.
+        
+        Only upserts jobs that are:
+        1. Status is 'active' (not expired or draft)
+        2. expires_at is either None or in the future
+        
+        This ensures the vector DB only contains truly searchable jobs.
+        """
+        from app.shared.enums import JobStatus
+        
         try:
+            # Guard: Only upsert if job is active and not expired
+            now = datetime.now(timezone.utc)
+            
+            if job.status != JobStatus.active:
+                logger.info(
+                    f"Skipping Qdrant upsert for job {job.id}: status is {job.status.value}, not active"
+                )
+                return
+            
+            if job.expires_at is not None and job.expires_at <= now:
+                logger.info(
+                    f"Skipping Qdrant upsert for job {job.id}: expired at {job.expires_at}"
+                )
+                return
+            
+            # Job is valid for search - proceed with upsert
             text_content = self._build_job_document(job)
             vector = await ai_service.get_embeddings(text_content)
             await self.client.upsert(
@@ -92,11 +127,12 @@ class QdrantService:
                             else None,
                             "salary_min": job.salary_min,
                             "salary_max": job.salary_max,
+                            "expires_at_ts": _expires_at_to_ts(job.expires_at),
                         },
                     )
                 ],
             )
-            logger.info(f"Job {job.id} upserted to Qdrant.")
+            logger.info(f"Job {job.id} ({job.title}) upserted to Qdrant successfully")
         except Exception as exc:
             logger.error(f"Qdrant upsert failed for job {job.id}: {exc}")
             raise  # Re-raise so the outbox processor can mark the event FAILED
@@ -140,11 +176,16 @@ class QdrantService:
             Tuple of (results list, total count)
         """
         vector = await ai_service.get_embeddings(query)
+        now_ts = int(datetime.now(timezone.utc).timestamp())
 
         active_condition = models.FieldCondition(
             key="status", match=models.MatchValue(value="active")
         )
-        base_must = [active_condition]
+        expires_condition = models.FieldCondition(
+            key="expires_at_ts",
+            range=models.Range(gt=now_ts),
+        )
+        base_must = [active_condition, expires_condition]
 
         filters: list[models.Condition] = []
         if location_type:

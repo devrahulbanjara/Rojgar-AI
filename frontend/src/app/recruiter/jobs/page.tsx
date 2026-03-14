@@ -4,21 +4,16 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-import RecruiterJobEditor, {
-  formFromDetail,
-} from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
 import { type JobAIDraftRecord, useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
 import {
-  type CreateJobPayload,
   type JobListItem,
   type JobStatus,
   type LocationType,
   getJobStatusLabel,
   useDeleteJobMutation,
   useGetCompanyJobsQuery,
-  useGetJobByIdQuery,
   useUpdateJobMutation,
 } from '@/store/services/jobsApi'
 import {
@@ -312,63 +307,8 @@ function DeleteConfirmModal({
   )
 }
 
-function EditJobModal({ jobId, onClose }: { jobId: string; onClose: () => void }) {
-  const { data: response, isLoading: isLoadingDetail } = useGetJobByIdQuery(jobId)
-  const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation()
-
-  if (isLoadingDetail) {
-    return (
-      <div className="modal-backdrop">
-        <div className="modal" style={{ maxWidth: 760 }}>
-          <div className="modal__body" style={{ alignItems: 'center', padding: '2rem' }}>
-            <p style={{ color: 'var(--color-muted,#6b7280)' }}>Loading job details...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const detail = response?.data
-  if (!detail) return null
-
-  async function handleUpdate(payload: CreateJobPayload) {
-    try {
-      await updateJob({ id: jobId, ...payload }).unwrap()
-      toast.success('Job updated successfully.')
-      onClose()
-    } catch {
-      toast.error('Failed to update job. Please try again.')
-    }
-  }
-
-  return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div
-        className="modal recruiter-job-editor-modal"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="modal__header">
-          <span className="modal__title">Edit Job</span>
-          <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
-            <X />
-          </button>
-        </div>
-        <div className="modal__body modal__body--scroll" data-lenis-prevent>
-          <RecruiterJobEditor
-            key={`edit:${jobId}:${detail.updated_at}`}
-            initial={formFromDetail(detail)}
-            onSubmit={handleUpdate}
-            onCancel={onClose}
-            isLoading={isUpdating}
-            submitLabel="Update Job"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function CompanyJobsPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const filterFromUrl = searchParams.get('filter')
   const [view, setView] = useState<'grid' | 'list'>(() => {
@@ -381,7 +321,6 @@ export default function CompanyJobsPage() {
       ? filterFromUrl
       : 'all',
   )
-  const [editingJobId, setEditingJobId] = useState<string | null>(null)
   const [deletingJob, setDeletingJob] = useState<JobListItem | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
@@ -551,7 +490,7 @@ export default function CompanyJobsPage() {
                 key={job.id}
                 job={job}
                 view={view}
-                onEdit={() => setEditingJobId(job.id)}
+                onEdit={() => router.push(`/recruiter/jobs/${job.id}/edit`)}
                 onDelete={() => setDeletingJob(job)}
                 onStatusChange={(status) => handleStatusChange(job, status)}
                 isUpdatingStatus={updatingStatusId === job.id}
@@ -560,10 +499,6 @@ export default function CompanyJobsPage() {
           </div>
         ) : null}
       </div>
-
-      {editingJobId ? (
-        <EditJobModal jobId={editingJobId} onClose={() => setEditingJobId(null)} />
-      ) : null}
 
       {deletingJob ? (
         <DeleteConfirmModal

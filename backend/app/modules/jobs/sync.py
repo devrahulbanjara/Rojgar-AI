@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from loguru import logger
 from sqlalchemy import select
@@ -26,9 +27,15 @@ async def process_sync_event(event_id: uuid.UUID) -> None:
                     .where(Job.id == event.job_id)
                 )
 
-                # Only active jobs belong in the vector store.
-                # If the job was changed to draft/expired, strip it from Qdrant.
-                if job and job.status == JobStatus.active:
+                now = datetime.now(timezone.utc)
+
+                # Only active jobs that haven't expired belong in the vector store.
+                # If the job was changed to draft/expired or has expired by date, strip it from Qdrant.
+                if (
+                    job
+                    and job.status == JobStatus.active
+                    and (job.expires_at is None or job.expires_at > now)
+                ):
                     await qdrant_service.upsert_job(job)
                 else:
                     await qdrant_service.delete_job(event.job_id)

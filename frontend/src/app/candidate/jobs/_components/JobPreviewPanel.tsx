@@ -78,7 +78,11 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
           className="job-preview__logo"
           style={{ '--jp-logo': '#7928ca' } as React.CSSProperties}
         >
-          {job.title[0]}
+          {job.company?.logo_url ? (
+            <img src={job.company.logo_url} alt={job.company.name} />
+          ) : (
+            job.title[0]
+          )}
         </div>
       </div>
 
