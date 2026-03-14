@@ -739,9 +739,13 @@ export default function CompanyJobsPage() {
             >
               <List size={14} aria-hidden="true" />
             </button>
+            <Link href="/recruiter/jobs/new" className="btn btn--outline btn--sm">
+              <Plus size={14} aria-hidden="true" />
+              AI Draft Job
+            </Link>
             <button className="btn btn--primary btn--sm" onClick={() => setShowCreate(true)}>
               <Plus size={14} aria-hidden="true" />
-              Post New Job
+              Post Manually
             </button>
           </div>
         </div>
