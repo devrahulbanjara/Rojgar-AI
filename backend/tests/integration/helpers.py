@@ -13,10 +13,6 @@ from app.modules.resumes.models import Resume
 from app.shared.enums import ApplicationStatus, LocationType
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 
 async def make_user(
     db: AsyncSession,
@@ -29,6 +25,7 @@ async def make_user(
         email=email,
         primary_role=role,
         is_email_verified=verified,
+        is_onboarded=True,
         password_hash=None,
     )
     db.add(user)
@@ -69,8 +66,7 @@ async def make_job(
     company: Company,
     posted_by: User,
     title: str = "Test Job",
-    status: str = "open",
-    category: str = "backend",
+    status: str = "active",
 ) -> Job:
     job = Job(
         company_id=company.id,
@@ -79,7 +75,6 @@ async def make_job(
         location_type=LocationType.remote,
         currency="NPR",
         status=status,
-        category=category,
         responsibilities=[],
         requirements=[],
         preferred_qualifications=[],

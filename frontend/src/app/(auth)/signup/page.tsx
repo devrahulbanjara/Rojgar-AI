@@ -431,7 +431,7 @@ function SignupContent() {
         } else {
           // If they already exist and were logged in by googleRegister,
           // they won't have a setup_token (they're done).
-          router.push('/company')
+          router.push('/recruiter')
           return
         }
       } else {

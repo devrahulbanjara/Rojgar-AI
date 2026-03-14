@@ -6,17 +6,11 @@ from app.core.schemas import BaseSchema
 from app.modules.auth.enums import MembershipStatus, UserRole
 
 
-# --- Requests ---
-
-
 class SignupRequest(BaseSchema):
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     primary_role: UserRole
-
-
-# --- Signup response data (only present for company/recruiter flows) ---
 
 
 class SignupData(BaseSchema):
@@ -42,9 +36,6 @@ class VerifyEmailRequest(BaseSchema):
     token: str
 
 
-# --- Responses ---
-
-
 class TokenResponse(BaseSchema):
     access_token: str
     token_type: str = "bearer"
@@ -61,6 +52,7 @@ class AuthUserResponse(BaseSchema):
     email: EmailStr
     primary_role: UserRole
     is_email_verified: bool
+    is_onboarded: bool
     avatar_url: str | None = None
     membership_status: MembershipStatus | None = None
 
@@ -76,6 +68,7 @@ class UserResponse(BaseSchema):
     email: EmailStr
     primary_role: UserRole
     is_email_verified: bool
+    is_onboarded: bool
     avatar_url: str | None = None
     created_at: datetime
     membership_status: MembershipStatus | None = None

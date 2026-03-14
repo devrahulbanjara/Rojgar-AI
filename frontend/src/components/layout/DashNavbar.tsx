@@ -8,11 +8,12 @@ import { usePathname } from 'next/navigation'
 
 import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
+import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
 import { Bell, ChevronDown, FileText, LayoutGrid, LogOut, Search, User, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
-// DashRole uses the three canonical roles.
+// DashRole uses the canonical roles.
 export type DashRole = 'candidate' | 'recruiter_admin' | 'recruiter'
 
 type NavItem = { label: string; href: string }
@@ -24,25 +25,97 @@ type DashNavbarProps = {
   userInitials?: string
 }
 
+function formatRelativeDate(iso: string): string {
+  const timestamp = new Date(iso).getTime()
+  const diffMs = Date.now() - timestamp
+  const hour = 60 * 60 * 1000
+  const day = 24 * hour
+
+  if (diffMs < hour) {
+    const minutes = Math.max(1, Math.floor(diffMs / (60 * 1000)))
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  }
+
+  if (diffMs < day) {
+    const hours = Math.max(1, Math.floor(diffMs / hour))
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  }
+
+  const days = Math.floor(diffMs / day)
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function formatNotificationTime(value: string): string {
+  return Number.isNaN(new Date(value).getTime()) ? value : formatRelativeDate(value)
+}
+
+function NotificationsSkeleton({ count }: { count: number }) {
+  return Array.from({ length: count }).map((_, index) => (
+    <div key={index} className="activity-item activity-item--panel activity-item--skeleton">
+      <div className="skeleton-block activity-item__dot activity-item__dot--skeleton" />
+      <div className="activity-item__body">
+        <div className="skeleton-block dashboard-activity-skeleton__line" />
+        <div className="skeleton-block dashboard-activity-skeleton__line dashboard-activity-skeleton__line--short" />
+        <div className="skeleton-block dashboard-activity-skeleton__time" />
+      </div>
+    </div>
+  ))
+}
+
+const COMPANY_NOTIFICATIONS = [
+  {
+    id: 'company-1',
+    text: 'Alex Chen applied for Product Designer.',
+    time: '1 h ago',
+  },
+  {
+    id: 'company-2',
+    text: 'AI Screening ranked 12 new candidates.',
+    time: '2 h ago',
+  },
+  {
+    id: 'company-3',
+    text: 'Interview scheduled with Maria Santos.',
+    time: '3 h ago',
+  },
+  {
+    id: 'company-4',
+    text: 'Visual Designer post expires in 3 days.',
+    time: 'Today',
+  },
+  {
+    id: 'company-5',
+    text: 'James Park accepted the offer.',
+    time: 'Yesterday',
+  },
+] as const
+
 function buildNavItems(role: DashRole): NavItem[] {
   if (role === 'candidate') {
     return [
-      { label: 'Dashboard', href: '/dashboard' },
-      { label: 'Jobs', href: '/dashboard/jobs' },
-      { label: 'Applications', href: '/dashboard/applications' },
-      { label: 'Resumes', href: '/dashboard/resume' },
-      { label: 'Profile', href: '/dashboard/profile' },
+      { label: 'Dashboard', href: '/candidate' },
+      { label: 'Jobs', href: '/candidate/jobs' },
+      { label: 'Applications', href: '/candidate/applications' },
+      { label: 'Resumes', href: '/candidate/resume' },
+      { label: 'Profile', href: '/candidate/profile' },
     ]
   }
-  // "recruiter" or "recruiter_admin" — both share the company layout
+  // "recruiter" or "recruiter_admin"
   const items: NavItem[] = [
-    { label: 'Dashboard', href: '/company' },
-    { label: 'My Jobs', href: '/company/jobs' },
-    { label: 'Applications', href: '/company/applications' },
-    { label: 'Candidates', href: '/company/candidates' },
+    { label: 'Dashboard', href: '/recruiter' },
+    { label: 'My Jobs', href: '/recruiter/jobs' },
+    { label: 'Applications', href: '/recruiter/applications' },
+    { label: 'Candidates', href: '/recruiter/candidates' },
   ]
   if (role === 'recruiter_admin') {
-    items.push({ label: 'Recruiters', href: '/company/recruiters' })
+    items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })
   }
   return items
 }
@@ -58,10 +131,23 @@ export default function DashNavbar({
   // Optional: override `role` prop with the actual authenticated primary_role if available
   const activeRole = user?.primary_role || role
   const navItems = buildNavItems(activeRole as DashRole)
+  const isCandidate = activeRole === 'candidate'
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+
+  const { data: dashboardResponse, isFetching: isNotificationsLoading } =
+    useGetCandidateDashboardQuery(undefined, {
+      skip: !isCandidate,
+    })
+  const notifications = isCandidate
+    ? (dashboardResponse?.data.recent_activity ?? [])
+    : COMPANY_NOTIFICATIONS
+  const notificationsCount = notifications.length
+  const notificationsLoading = isCandidate ? isNotificationsLoading : false
+  const notificationsLink = isCandidate ? '/candidate/applications' : '/recruiter/applications'
 
   const displayName = user?.full_name ?? userName
   const displayInitials = getInitials(displayName, userInitials)
@@ -76,6 +162,7 @@ export default function DashNavbar({
 
   const searchRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const notificationsRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Close on outside click
@@ -87,10 +174,23 @@ export default function DashNavbar({
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false)
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  useEffect(() => {
+    const resetUiState = window.setTimeout(() => {
+      setSearchOpen(false)
+      setDropdownOpen(false)
+      setNotificationsOpen(false)
+    }, 0)
+
+    return () => window.clearTimeout(resetUiState)
+  }, [pathname])
 
   // Focus input when search opens
   useEffect(() => {
@@ -99,15 +199,15 @@ export default function DashNavbar({
 
   function isActive(href: string) {
     if (href === '/') return pathname === href
-    // match exact for dashboard root
-    const isRoot = href === '/dashboard' || href === '/company'
+    // exact match only for root dashboard pages
+    const isRoot = href === '/candidate' || href === '/recruiter'
     if (isRoot) return pathname === href
     return pathname.startsWith(href)
   }
 
   return (
     <nav className="dash-navbar">
-      <div className="dash-navbar__inner container">
+      <div className="dash-navbar__inner container container--app-shell">
         {/* Logo — links to the role's dashboard root */}
         <Link href={navItems[0].href} className="dash-navbar__logo">
           <Image
@@ -157,14 +257,86 @@ export default function DashNavbar({
           </div>
 
           {/* Notifications */}
-          <button className="dash-navbar__icon-btn" title="Notifications">
-            <div className="dash-navbar__notif-dot" />
-            <Bell size={18} />
-          </button>
+          <div ref={notificationsRef} className="dash-navbar__notifications">
+            <button
+              type="button"
+              className={`dash-navbar__icon-btn${notificationsOpen ? ' dash-navbar__icon-btn--active' : ''}`}
+              title="Notifications"
+              aria-label="Open notifications"
+              aria-expanded={notificationsOpen}
+              aria-haspopup="dialog"
+              onClick={() => setNotificationsOpen((value) => !value)}
+            >
+              {notificationsCount > 0 ? <div className="dash-navbar__notif-dot" /> : null}
+              <Bell size={18} />
+            </button>
+
+            {notificationsOpen ? (
+              <div
+                className="dash-navbar__notifications-panel"
+                role="dialog"
+                aria-label="Notifications"
+              >
+                <div className="dash-navbar__notifications-header">
+                  <div>
+                    <div className="dash-navbar__notifications-title">Notifications</div>
+                    <div className="dash-navbar__notifications-subtitle">
+                      {notificationsLoading
+                        ? 'Loading recent updates...'
+                        : notificationsCount > 0
+                          ? `${notificationsCount} recent update${notificationsCount === 1 ? '' : 's'}`
+                          : 'No new updates right now'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="dash-navbar__notifications-close"
+                    aria-label="Close notifications"
+                    onClick={() => setNotificationsOpen(false)}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="dash-navbar__notifications-body">
+                  {notificationsLoading ? (
+                    <div className="activity-list activity-list--panel" aria-hidden="true">
+                      <NotificationsSkeleton count={4} />
+                    </div>
+                  ) : notificationsCount === 0 ? (
+                    <div className="dash-navbar__notifications-empty">
+                      Application updates will show up here when there is something new.
+                    </div>
+                  ) : (
+                    <div className="activity-list activity-list--panel">
+                      {notifications.map((activity) => (
+                        <div key={activity.id} className="activity-item activity-item--panel">
+                          <div className="activity-item__dot" />
+                          <div className="activity-item__body">
+                            <p className="activity-item__text">{activity.text}</p>
+                            <div className="activity-item__time">
+                              {formatNotificationTime(activity.time)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="dash-navbar__notifications-footer">
+                  <Link href={notificationsLink} onClick={() => setNotificationsOpen(false)}>
+                    {isCandidate ? 'View applications' : 'View inbox'}
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+          </div>
 
           {/* Profile dropdown */}
           <div ref={dropdownRef} className="dash-navbar__profile">
             <button
+              type="button"
               className="dash-navbar__avatar-btn"
               onClick={() => setDropdownOpen((v) => !v)}
               aria-label="Open profile menu"
@@ -203,7 +375,7 @@ export default function DashNavbar({
                 <div className="dash-navbar__dropdown-divider" />
 
                 <Link
-                  href={role === 'candidate' ? '/dashboard/profile' : '/company/settings'}
+                  href={role === 'candidate' ? '/candidate/profile' : '/recruiter/settings'}
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
@@ -212,7 +384,7 @@ export default function DashNavbar({
                 </Link>
 
                 <Link
-                  href={role === 'candidate' ? '/dashboard' : '/company'}
+                  href={role === 'candidate' ? '/candidate' : '/recruiter'}
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
@@ -222,7 +394,7 @@ export default function DashNavbar({
 
                 {activeRole === 'candidate' ? (
                   <Link
-                    href="/dashboard/resume"
+                    href="/candidate/resume"
                     className="dash-navbar__dropdown-item"
                     onClick={() => setDropdownOpen(false)}
                   >
@@ -231,7 +403,7 @@ export default function DashNavbar({
                   </Link>
                 ) : (
                   <Link
-                    href="/company/settings"
+                    href="/recruiter/settings"
                     className="dash-navbar__dropdown-item"
                     onClick={() => setDropdownOpen(false)}
                   >

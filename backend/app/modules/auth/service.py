@@ -47,6 +47,7 @@ async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
         email=user.email,
         primary_role=user.primary_role,
         is_email_verified=user.is_email_verified,
+        is_onboarded=user.is_onboarded,
         avatar_url=user.avatar_url,
         created_at=user.created_at,
         membership_status=ms,
@@ -106,13 +107,18 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
         logger.info(f"Duplicate verify-email click ignored for {email}")
         return
 
+    is_recruiter = UserRole(data["primary_role"]) in (
+        UserRole.recruiter,
+        UserRole.recruiter_admin,
+    )
     user = User(
         full_name=data["full_name"],
         email=email,
-        password_hash=data.get("password_hash"),  # None for social users
+        password_hash=data.get("password_hash"),
         primary_role=UserRole(data["primary_role"]),
         avatar_url=data.get("avatar_url"),
         is_email_verified=True,
+        is_onboarded=is_recruiter,  # recruiters are onboarded on company setup
     )
     db.add(user)
     await db.flush()  # generate user.id before creating related rows
@@ -253,12 +259,13 @@ async def google_register(
         )
         return {"action": "requires_setup", "setup_token": setup_token}
 
-    # ---- Candidate: create user immediately (as before) ----
+    # ---- Candidate: create user immediately (is_onboarded=False until onboarding step) ----
     user = User(
         full_name=data["full_name"],
         email=data["email"],
         avatar_url=data.get("avatar_url"),
         is_email_verified=True,
+        is_onboarded=False,
         primary_role=payload.primary_role,
     )
     db.add(user)
