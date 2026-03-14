@@ -4,15 +4,18 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
+import RecruiterJobEditor, {
+  formFromDetail,
+} from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
+import { type JobAIDraftRecord, useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
 import {
   type CreateJobPayload,
-  type JobDetail,
   type JobListItem,
   type JobStatus,
   type LocationType,
   getJobStatusLabel,
-  useCreateJobMutation,
   useDeleteJobMutation,
   useGetCompanyJobsQuery,
   useGetJobByIdQuery,
@@ -28,23 +31,30 @@ import {
   MapPin,
   Pencil,
   Plus,
-  RefreshCw,
+  Sparkles,
   Trash2,
   Users,
   X,
 } from 'lucide-react'
 
-import { CompanyJobsCardsSkeleton } from './_components/CompanyJobsSkeletons'
+import DashboardTabs from '@/components/common/DashboardTabs'
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+import { CompanyJobsCardsSkeleton } from './_components/CompanyJobsSkeletons'
 
 const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   onsite: 'On-site',
   remote: 'Remote',
   hybrid: 'Hybrid',
 }
+
+const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Expired', value: 'expired' },
+]
+
+const RECRUITER_JOBS_VIEW_KEY = 'recruiter-jobs-view'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -59,6 +69,38 @@ function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'
   if (min && max) return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}`
   if (min) return `From ${currency} ${min.toLocaleString()}`
   return `Up to ${currency} ${max!.toLocaleString()}`
+}
+
+function getAIDraftStatusTone(status: string): JobStatus {
+  if (status === 'approved') return 'active'
+  if (status === 'rejected') return 'expired'
+  return 'draft'
+}
+
+function getAIDraftStatusLabel(status: string) {
+  switch (status) {
+    case 'approved':
+      return 'Approved'
+    case 'review_required':
+      return 'Needs Review'
+    case 'ready':
+      return 'Ready'
+    case 'saved':
+      return 'Saved'
+    case 'rejected':
+      return 'Rejected'
+    case 'drafting':
+    default:
+      return 'Drafting'
+  }
+}
+
+function getAIDraftTitle(draft: JobAIDraftRecord) {
+  return draft.latest_draft?.title?.trim() || draft.source_prompt?.trim() || 'Untitled AI draft'
+}
+
+function isVisibleAIDraft(draft: JobAIDraftRecord) {
+  return draft.status !== 'committed'
 }
 
 function RecruiterJobCard({
@@ -82,7 +124,7 @@ function RecruiterJobCard({
         <label className={`company-job-card__status company-job-card__status--${job.status}`}>
           <select
             value={job.status}
-            onChange={(e) => onStatusChange(e.target.value as JobStatus)}
+            onChange={(event) => onStatusChange(event.target.value as JobStatus)}
             className="company-job-card__status-select"
             aria-label={`Change status for ${job.title}`}
             disabled={isUpdatingStatus}
@@ -154,391 +196,65 @@ function RecruiterJobCard({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Dynamic list input (responsibilities, requirements, etc.)
-// ---------------------------------------------------------------------------
-
-function ListInput({
-  label,
-  placeholder,
-  items,
-  onChange,
-}: {
-  label: string
-  placeholder: string
-  items: string[]
-  onChange: (items: string[]) => void
-}) {
-  const [draft, setDraft] = useState('')
-
-  function add() {
-    const t = draft.trim()
-    if (!t) return
-    onChange([...items, t])
-    setDraft('')
-  }
+function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 'grid' | 'list' }) {
+  const jobDraft = draft.latest_draft
+  const draftTitle = getAIDraftTitle(draft)
+  const locationLabel = jobDraft?.location
+    ? `${jobDraft.location} · ${LOCATION_TYPE_LABELS[jobDraft.location_type]}`
+    : LOCATION_TYPE_LABELS[jobDraft?.location_type ?? 'remote']
 
   return (
-    <div className="auth__field">
-      <label className="auth__label">{label}</label>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              add()
-            }
-          }}
-          placeholder={placeholder}
-          className="auth__input"
-          style={{ flex: 1 }}
-        />
-        <button type="button" className="btn btn--primary btn--sm" onClick={add}>
-          Add
-        </button>
-      </div>
-      {items.length > 0 && (
-        <ul
-          style={{
-            margin: '0.5rem 0 0',
-            paddingLeft: 0,
-            listStyle: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem',
-          }}
+    <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
+      <div className="company-job-card__top-row">
+        <span
+          className={`company-job-card__status company-job-card__status--${getAIDraftStatusTone(draft.status)}`}
         >
-          {items.map((item, idx) => (
-            <li
-              key={idx}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                color: 'var(--color-gray-700,#374151)',
-                background: 'var(--color-gray-50,#f9fafb)',
-                border: '1px solid var(--color-gray-200,#e5e7eb)',
-                borderRadius: '0.375rem',
-                padding: '0.375rem 0.625rem',
-              }}
-            >
-              <span style={{ flex: 1 }}>{item}</span>
-              <button
-                type="button"
-                onClick={() => onChange(items.filter((_, i) => i !== idx))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#ef4444',
-                  padding: 0,
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
-                aria-label={`Remove "${item}"`}
-              >
-                <X style={{ width: 14, height: 14 }} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
+          <span className="company-job-card__status-label">
+            {getAIDraftStatusLabel(draft.status)}
+          </span>
+        </span>
+      </div>
 
-// ---------------------------------------------------------------------------
-// Job form
-// ---------------------------------------------------------------------------
+      <div className="company-job-card__title">{draftTitle}</div>
 
-interface JobFormState {
-  title: string
-  location: string
-  location_type: LocationType
-  salary_min: string
-  salary_max: string
-  currency: string
-  status: JobStatus
-  overview: string
-  responsibilities: string[]
-  requirements: string[]
-  preferred_qualifications: string[]
-  benefits: string[]
-}
+      <div className="company-job-card__location">
+        <MapPin size={13} aria-hidden="true" />
+        <span>{locationLabel}</span>
+      </div>
 
-const EMPTY_FORM: JobFormState = {
-  title: '',
-  location: '',
-  location_type: 'onsite',
-  salary_min: '',
-  salary_max: '',
-  currency: 'USD',
-  status: 'draft',
-  overview: '',
-  responsibilities: [],
-  requirements: [],
-  preferred_qualifications: [],
-  benefits: [],
-}
+      <div className="company-job-card__salary">
+        <DollarSign size={13} aria-hidden="true" />
+        <span>
+          {formatSalary(jobDraft?.salary_min, jobDraft?.salary_max, jobDraft?.currency ?? 'NPR')}
+        </span>
+      </div>
 
-function formFromDetail(d: JobDetail): JobFormState {
-  return {
-    title: d.title,
-    location: d.location ?? '',
-    location_type: d.location_type,
-    salary_min: d.salary_min != null ? String(d.salary_min) : '',
-    salary_max: d.salary_max != null ? String(d.salary_max) : '',
-    currency: d.currency,
-    status: d.status,
-    overview: d.overview ?? '',
-    responsibilities: d.responsibilities ?? [],
-    requirements: d.requirements ?? [],
-    preferred_qualifications: d.preferred_qualifications ?? [],
-    benefits: d.benefits ?? [],
-  }
-}
+      <div className="company-job-card__divider" />
 
-function formToPayload(f: JobFormState): CreateJobPayload {
-  return {
-    title: f.title,
-    ...(f.location && { location: f.location }),
-    location_type: f.location_type,
-    ...(f.salary_min && { salary_min: Number(f.salary_min) }),
-    ...(f.salary_max && { salary_max: Number(f.salary_max) }),
-    currency: f.currency || 'USD',
-    status: f.status,
-    ...(f.overview && { overview: f.overview }),
-    responsibilities: f.responsibilities,
-    requirements: f.requirements,
-    preferred_qualifications: f.preferred_qualifications,
-    benefits: f.benefits,
-  }
-}
-
-function JobFormModal({
-  initial = EMPTY_FORM,
-  onSubmit,
-  onCancel,
-  isLoading,
-  submitLabel,
-}: {
-  initial?: JobFormState
-  onSubmit: (payload: CreateJobPayload) => Promise<void>
-  onCancel: () => void
-  isLoading: boolean
-  submitLabel: string
-}) {
-  const [form, setForm] = useState<JobFormState>(initial)
-  const [errors, setErrors] = useState<Partial<Record<keyof JobFormState, string>>>({})
-
-  function set<K extends keyof JobFormState>(key: K, value: JobFormState[K]) {
-    setForm((p) => ({ ...p, [key]: value }))
-    if (errors[key]) setErrors((p) => ({ ...p, [key]: undefined }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const errs: Partial<Record<keyof JobFormState, string>> = {}
-    if (!form.title.trim()) errs.title = 'Title is required.'
-    if (form.salary_min && form.salary_max && Number(form.salary_min) > Number(form.salary_max))
-      errs.salary_min = 'Min salary cannot exceed max.'
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
-      return
-    }
-    await onSubmit(formToPayload(form))
-  }
-
-  return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div
-        className="modal"
-        style={{ maxWidth: 680, width: '100%' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal__header">
-          <span className="modal__title">{submitLabel}</span>
-          <button type="button" className="modal__close" onClick={onCancel} aria-label="Close">
-            <X />
-          </button>
+      <div className="company-job-card__footer">
+        <div className="company-job-card__footer-meta">
+          <span className="company-job-card__posted-date">
+            <Calendar size={13} aria-hidden="true" />
+            <span>Updated {formatDate(draft.updated_at)}</span>
+          </span>
+          <span className="company-job-card__posted-date">
+            <Sparkles size={13} aria-hidden="true" />
+            <span>{draft.mode === 'clone' ? 'Cloned with AI' : 'Drafted with AI'}</span>
+          </span>
         </div>
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="modal__body" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-            {/* Title */}
-            <div className="auth__field">
-              <label className="auth__label">
-                Job Title <span className="auth__required">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => set('title', e.target.value)}
-                placeholder="e.g. Senior Frontend Engineer"
-                className={`auth__input${errors.title ? ' auth__input--error' : ''}`}
-              />
-              {errors.title && (
-                <span className="auth__error-msg" role="alert">
-                  {errors.title}
-                </span>
-              )}
-            </div>
 
-            {/* Location + Work type */}
-            <div className="auth__field-grid">
-              <div className="auth__field">
-                <label className="auth__label">Location</label>
-                <input
-                  type="text"
-                  value={form.location}
-                  onChange={(e) => set('location', e.target.value)}
-                  placeholder="e.g. Kathmandu, Nepal"
-                  className="auth__input"
-                />
-              </div>
-              <div className="auth__field">
-                <label className="auth__label">Work Type</label>
-                <select
-                  value={form.location_type}
-                  onChange={(e) => set('location_type', e.target.value as LocationType)}
-                  className="auth__input auth__input--select"
-                >
-                  <option value="onsite">On-site</option>
-                  <option value="remote">Remote</option>
-                  <option value="hybrid">Hybrid</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Salary */}
-            <div className="auth__field-grid" style={{ gridTemplateColumns: '1fr 1fr 0.6fr' }}>
-              <div className="auth__field">
-                <label className="auth__label">Min Salary</label>
-                <input
-                  type="number"
-                  value={form.salary_min}
-                  onChange={(e) => set('salary_min', e.target.value)}
-                  placeholder="e.g. 60000"
-                  min={0}
-                  className={`auth__input${errors.salary_min ? ' auth__input--error' : ''}`}
-                />
-                {errors.salary_min && (
-                  <span className="auth__error-msg" role="alert">
-                    {errors.salary_min}
-                  </span>
-                )}
-              </div>
-              <div className="auth__field">
-                <label className="auth__label">Max Salary</label>
-                <input
-                  type="number"
-                  value={form.salary_max}
-                  onChange={(e) => set('salary_max', e.target.value)}
-                  placeholder="e.g. 90000"
-                  min={0}
-                  className="auth__input"
-                />
-              </div>
-              <div className="auth__field">
-                <label className="auth__label">Currency</label>
-                <select
-                  value={form.currency}
-                  onChange={(e) => set('currency', e.target.value)}
-                  className="auth__input auth__input--select"
-                >
-                  <option value="USD">USD</option>
-                  <option value="NPR">NPR</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="INR">INR</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="auth__field">
-              <label className="auth__label">Status</label>
-              <select
-                value={form.status}
-                onChange={(e) => set('status', e.target.value as JobStatus)}
-                className="auth__input auth__input--select"
-              >
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="expired">Expired</option>
-              </select>
-            </div>
-
-            {/* Overview */}
-            <div className="auth__field">
-              <label className="auth__label">
-                Job Overview <span className="auth__optional">(optional)</span>
-              </label>
-              <textarea
-                value={form.overview}
-                onChange={(e) => set('overview', e.target.value)}
-                placeholder="Brief summary of the role and team…"
-                rows={3}
-                className="auth__textarea"
-              />
-            </div>
-
-            <ListInput
-              label="Responsibilities"
-              placeholder="Add a responsibility and press Enter…"
-              items={form.responsibilities}
-              onChange={(v) => set('responsibilities', v)}
-            />
-            <ListInput
-              label="Requirements"
-              placeholder="Add a requirement and press Enter…"
-              items={form.requirements}
-              onChange={(v) => set('requirements', v)}
-            />
-            <ListInput
-              label="Preferred Qualifications"
-              placeholder="Add preferred qualification and press Enter…"
-              items={form.preferred_qualifications}
-              onChange={(v) => set('preferred_qualifications', v)}
-            />
-            <ListInput
-              label="Benefits"
-              placeholder="Add a benefit and press Enter…"
-              items={form.benefits}
-              onChange={(v) => set('benefits', v)}
-            />
-          </div>
-
-          <div className="modal__footer">
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={onCancel}
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn--primary btn--sm"
-              disabled={isLoading}
-              aria-busy={isLoading}
-            >
-              {isLoading ? 'Saving…' : submitLabel}
-            </button>
-          </div>
-        </form>
+        <div className="company-job-card__actions">
+          <Link
+            href={`/recruiter/jobs/new?draftId=${draft.id}`}
+            className="btn btn--outline btn--sm"
+          >
+            Open Draft
+          </Link>
+        </div>
       </div>
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Delete confirmation
-// ---------------------------------------------------------------------------
 
 function DeleteConfirmModal({
   jobTitle,
@@ -553,7 +269,7 @@ function DeleteConfirmModal({
 }) {
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal" style={{ maxWidth: 420 }} onClick={(event) => event.stopPropagation()}>
         <div className="modal__header">
           <span className="modal__title">Delete Job</span>
           <button type="button" className="modal__close" onClick={onCancel} aria-label="Close">
@@ -583,12 +299,12 @@ function DeleteConfirmModal({
           </button>
           <button
             type="button"
-            className="btn btn--error btn--sm"
+            className="btn btn--danger btn--sm"
             onClick={onConfirm}
             disabled={isLoading}
             aria-busy={isLoading}
           >
-            {isLoading ? 'Deleting…' : 'Delete'}
+            {isLoading ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>
@@ -596,27 +312,23 @@ function DeleteConfirmModal({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Edit modal — fetches full job detail then renders the form
-// ---------------------------------------------------------------------------
-
 function EditJobModal({ jobId, onClose }: { jobId: string; onClose: () => void }) {
-  const { data: resp, isLoading: isLoadingDetail } = useGetJobByIdQuery(jobId)
+  const { data: response, isLoading: isLoadingDetail } = useGetJobByIdQuery(jobId)
   const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation()
 
   if (isLoadingDetail) {
     return (
       <div className="modal-backdrop">
-        <div className="modal" style={{ maxWidth: 680 }}>
+        <div className="modal" style={{ maxWidth: 760 }}>
           <div className="modal__body" style={{ alignItems: 'center', padding: '2rem' }}>
-            <p style={{ color: 'var(--color-muted,#6b7280)' }}>Loading job details…</p>
+            <p style={{ color: 'var(--color-muted,#6b7280)' }}>Loading job details...</p>
           </div>
         </div>
       </div>
     )
   }
 
-  const detail = resp?.data
+  const detail = response?.data
   if (!detail) return null
 
   async function handleUpdate(payload: CreateJobPayload) {
@@ -630,63 +342,85 @@ function EditJobModal({ jobId, onClose }: { jobId: string; onClose: () => void }
   }
 
   return (
-    <JobFormModal
-      initial={formFromDetail(detail)}
-      onSubmit={handleUpdate}
-      onCancel={onClose}
-      isLoading={isUpdating}
-      submitLabel="Update Job"
-    />
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
+      <div
+        className="modal recruiter-job-editor-modal"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="modal__header">
+          <span className="modal__title">Edit Job</span>
+          <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
+            <X />
+          </button>
+        </div>
+        <div className="modal__body modal__body--scroll" data-lenis-prevent>
+          <RecruiterJobEditor
+            key={`edit:${jobId}:${detail.updated_at}`}
+            initial={formFromDetail(detail)}
+            onSubmit={handleUpdate}
+            onCancel={onClose}
+            isLoading={isUpdating}
+            submitLabel="Update Job"
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Filter options
-// ---------------------------------------------------------------------------
-
-const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Active', value: 'active' },
-  { label: 'Draft', value: 'draft' },
-  { label: 'Expired', value: 'expired' },
-]
-
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
-
 export default function CompanyJobsPage() {
-  const [view, setView] = useState<'grid' | 'list'>('list')
-  const [activeFilter, setActiveFilter] = useState<JobStatus | 'all'>('all')
-  const [showCreate, setShowCreate] = useState(false)
+  const searchParams = useSearchParams()
+  const filterFromUrl = searchParams.get('filter')
+  const [view, setView] = useState<'grid' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'list'
+    const savedView = window.localStorage.getItem(RECRUITER_JOBS_VIEW_KEY)
+    return savedView === 'grid' || savedView === 'list' ? savedView : 'list'
+  })
+  const [activeFilter, setActiveFilter] = useState<JobStatus | 'all'>(
+    filterFromUrl === 'active' || filterFromUrl === 'draft' || filterFromUrl === 'expired'
+      ? filterFromUrl
+      : 'all',
+  )
   const [editingJobId, setEditingJobId] = useState<string | null>(null)
   const [deletingJob, setDeletingJob] = useState<JobListItem | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
-  const { data: resp, isLoading, isError, refetch } = useGetCompanyJobsQuery()
-  const [createJob, { isLoading: isCreating }] = useCreateJobMutation()
+  const {
+    data: jobsResp,
+    isLoading: isLoadingJobs,
+    isError: isJobsError,
+    refetch: refetchJobs,
+  } = useGetCompanyJobsQuery()
+  const {
+    data: draftsResp,
+    isLoading: isLoadingDrafts,
+    isError: isDraftsError,
+    refetch: refetchDrafts,
+  } = useGetJobAIDraftsQuery()
   const [updateJob] = useUpdateJobMutation()
   const [deleteJob, { isLoading: isDeleting }] = useDeleteJobMutation()
 
-  const allJobs: JobListItem[] = resp?.data ?? []
+  const allJobs: JobListItem[] = jobsResp?.data ?? []
+  const allAIDrafts = (draftsResp?.data ?? []).filter(isVisibleAIDraft)
+  const visibleAIDrafts = activeFilter === 'draft' || activeFilter === 'all' ? allAIDrafts : []
   const filteredJobs =
-    activeFilter === 'all' ? allJobs : allJobs.filter((j) => j.status === activeFilter)
+    activeFilter === 'all' ? allJobs : allJobs.filter((job) => job.status === activeFilter)
+  const isLoading = isLoadingJobs || isLoadingDrafts
+  const isError = isJobsError || isDraftsError
+  const hasVisibleItems = filteredJobs.length > 0 || visibleAIDrafts.length > 0
 
-  const counts: Record<JobStatus | 'all', number> = {
-    all: allJobs.length,
-    active: allJobs.filter((j) => j.status === 'active').length,
-    draft: allJobs.filter((j) => j.status === 'draft').length,
-    expired: allJobs.filter((j) => j.status === 'expired').length,
+  function handleViewChange(nextView: 'grid' | 'list') {
+    setView(nextView)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(RECRUITER_JOBS_VIEW_KEY, nextView)
+    }
   }
 
-  async function handleCreate(payload: CreateJobPayload) {
-    try {
-      await createJob(payload).unwrap()
-      toast.success('Job posted successfully.')
-      setShowCreate(false)
-    } catch {
-      toast.error('Failed to create job. Please try again.')
-    }
+  const counts: Record<JobStatus | 'all', number> = {
+    all: allJobs.length + allAIDrafts.length,
+    active: allJobs.filter((job) => job.status === 'active').length,
+    draft: allJobs.filter((job) => job.status === 'draft').length + allAIDrafts.length,
+    expired: allJobs.filter((job) => job.status === 'expired').length,
   }
 
   async function handleDeleteConfirm() {
@@ -702,6 +436,7 @@ export default function CompanyJobsPage() {
 
   async function handleStatusChange(job: JobListItem, nextStatus: JobStatus) {
     if (job.status === nextStatus) return
+
     try {
       setUpdatingStatusId(job.id)
       await updateJob({ id: job.id, status: nextStatus }).unwrap()
@@ -713,10 +448,14 @@ export default function CompanyJobsPage() {
     }
   }
 
+  function handleRefresh() {
+    void refetchJobs()
+    void refetchDrafts()
+  }
+
   return (
     <>
-      <div className="dash-content container">
-        {/* Header */}
+      <div className="dash-content container container--app-shell">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Job Listings</h2>
@@ -727,14 +466,14 @@ export default function CompanyJobsPage() {
           <div className="dash-page-header__actions">
             <button
               className={`btn btn--sm ${view === 'grid' ? 'btn--primary' : 'btn--ghost'}`}
-              onClick={() => setView('grid')}
+              onClick={() => handleViewChange('grid')}
               aria-label="Grid view"
             >
               <LayoutGrid size={14} aria-hidden="true" />
             </button>
             <button
               className={`btn btn--sm ${view === 'list' ? 'btn--primary' : 'btn--ghost'}`}
-              onClick={() => setView('list')}
+              onClick={() => handleViewChange('list')}
               aria-label="List view"
             >
               <List size={14} aria-hidden="true" />
@@ -743,101 +482,70 @@ export default function CompanyJobsPage() {
               <Plus size={14} aria-hidden="true" />
               AI Draft Job
             </Link>
-            <button className="btn btn--primary btn--sm" onClick={() => setShowCreate(true)}>
+            <Link href="/recruiter/jobs/manual" className="btn btn--primary btn--sm">
               <Plus size={14} aria-hidden="true" />
               Post Manually
-            </button>
+            </Link>
           </div>
         </div>
 
-        {/* Filter bar */}
         <div className="dash-filter-bar">
-          {FILTER_OPTIONS.map((f) => (
-            <button
-              key={f.value}
-              className={`btn btn--sm ${activeFilter === f.value ? 'btn--primary' : 'btn--outline'}`}
-              onClick={() => setActiveFilter(f.value)}
-            >
-              {f.label}
-              {counts[f.value] > 0 && (
-                <span className="company-jobs-filter-count">{counts[f.value]}</span>
-              )}
-            </button>
-          ))}
-          <button
-            className="btn btn--ghost btn--sm"
-            onClick={() => refetch()}
-            style={{ marginLeft: 'auto' }}
-          >
-            <RefreshCw size={14} aria-hidden="true" />
-            Refresh
-          </button>
+          <DashboardTabs
+            options={FILTER_OPTIONS.map((option) => ({
+              label: option.label,
+              value: option.value,
+              count: counts[option.value],
+            }))}
+            activeValue={activeFilter}
+            onChange={setActiveFilter}
+          />
         </div>
 
-        {/* Loading */}
-        {isLoading && <CompanyJobsCardsSkeleton view={view} count={view === 'grid' ? 4 : 5} />}
+        {isLoading ? (
+          <CompanyJobsCardsSkeleton view={view} count={view === 'grid' ? 4 : 5} />
+        ) : null}
 
-        {/* Error */}
-        {isError && (
+        {isError ? (
           <div className="dash-card">
             <div className="dash-card__body">
               Failed to load jobs.{' '}
-              <button className="auth__inline-link" onClick={() => refetch()}>
+              <button className="auth__inline-link" onClick={handleRefresh}>
                 Try again
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Empty state */}
-        {!isLoading && !isError && filteredJobs.length === 0 && (
+        {!isLoading && !isError && !hasVisibleItems ? (
           <div className="dash-card">
-            <div
-              className="dash-card__body"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '1rem',
-                padding: '3rem 2rem',
-                textAlign: 'center',
-              }}
-            >
-              <Briefcase
-                style={{
-                  width: 40,
-                  height: 40,
-                  color: 'var(--color-muted,#9ca3af)',
-                }}
-              />
+            <div className="company-jobs-empty">
+              <Briefcase className="company-jobs-empty__icon" aria-hidden="true" />
               <div>
-                <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                <p className="company-jobs-empty__title">
                   {activeFilter === 'all'
                     ? 'No jobs yet'
                     : `No ${getJobStatusLabel(activeFilter)} jobs`}
                 </p>
-                <p
-                  style={{
-                    fontSize: '0.875rem',
-                    color: 'var(--color-muted,#9ca3af)',
-                  }}
-                >
+                <p className="company-jobs-empty__copy">
                   {activeFilter === 'all'
                     ? 'Post your first job to start attracting candidates.'
                     : `You have no ${getJobStatusLabel(activeFilter).toLowerCase()} job postings.`}
                 </p>
               </div>
-              {activeFilter === 'all' && (
-                <button className="btn btn--primary btn--sm" onClick={() => setShowCreate(true)}>
+              {activeFilter === 'all' ? (
+                <Link href="/recruiter/jobs/manual" className="btn btn--primary btn--sm">
                   Post New Job
-                </button>
-              )}
+                </Link>
+              ) : null}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {!isLoading && !isError && filteredJobs.length > 0 && (
+        {!isLoading && !isError && hasVisibleItems ? (
           <div className={`company-jobs-cards company-jobs-cards--${view}`}>
+            {visibleAIDrafts.map((draft) => (
+              <RecruiterAIDraftCard key={`ai-${draft.id}`} draft={draft} view={view} />
+            ))}
             {filteredJobs.map((job) => (
               <RecruiterJobCard
                 key={job.id}
@@ -850,31 +558,21 @@ export default function CompanyJobsPage() {
               />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Create modal */}
-      {showCreate && (
-        <JobFormModal
-          onSubmit={handleCreate}
-          onCancel={() => setShowCreate(false)}
-          isLoading={isCreating}
-          submitLabel="Post Job"
-        />
-      )}
+      {editingJobId ? (
+        <EditJobModal jobId={editingJobId} onClose={() => setEditingJobId(null)} />
+      ) : null}
 
-      {/* Edit modal */}
-      {editingJobId && <EditJobModal jobId={editingJobId} onClose={() => setEditingJobId(null)} />}
-
-      {/* Delete confirm */}
-      {deletingJob && (
+      {deletingJob ? (
         <DeleteConfirmModal
           jobTitle={deletingJob.title}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeletingJob(null)}
           isLoading={isDeleting}
         />
-      )}
+      ) : null}
     </>
   )
 }

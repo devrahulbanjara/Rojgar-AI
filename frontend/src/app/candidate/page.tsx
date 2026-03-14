@@ -373,7 +373,7 @@ export default function UserDashboardPage() {
 
   return (
     <>
-      <div className="dash-content container">
+      <div className="dash-content container container--app-shell">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Welcome back, {firstName} 👋</h2>

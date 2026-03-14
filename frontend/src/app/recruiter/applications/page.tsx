@@ -1,10 +1,8 @@
 'use client'
-
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 import { useGetMyCompanyApplicationsQuery } from '@/store/services/applicationsApi'
-import { ArrowLeft, Briefcase, Mail, UserRound } from 'lucide-react'
+import { Briefcase, Mail, UserRound } from 'lucide-react'
 
 const STATUS_LABELS: Record<string, string> = {
   submitted: 'Submitted',
@@ -59,17 +57,9 @@ export default function CompanyApplicationsPage() {
     : 'Review applications across all active and past job postings.'
 
   return (
-    <div className="dash-content container">
+    <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
         <div className="dash-page-header__left">
-          <Link
-            href="/recruiter/jobs"
-            className="auth__inline-link"
-            style={{ display: 'inline-flex', gap: '0.375rem', alignItems: 'center' }}
-          >
-            <ArrowLeft size={14} aria-hidden="true" />
-            Back to jobs
-          </Link>
           <h2 className="dash-page-header__title">{heading}</h2>
           <p className="dash-page-header__subtitle">{subtitle}</p>
         </div>

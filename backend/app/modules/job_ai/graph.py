@@ -3,7 +3,7 @@ from typing import Any, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from app.modules.job_ai.llm import groq_structured_client
+from app.integrations.ai.service import ai_service
 from app.modules.job_ai.prompts import (
     JOB_DRAFT_SYSTEM_PROMPT,
     REFINE_DRAFT_SYSTEM_PROMPT,
@@ -45,7 +45,7 @@ def build_job_ai_graph():
         if not state["research_salary"] or not state["salary_research_input"]:
             return {"salary_research": None}
 
-        salary_research = await groq_structured_client.generate_strict_json(
+        salary_research = await ai_service.generate_structured(
             system_prompt=SALARY_SYNTHESIS_SYSTEM_PROMPT,
             user_payload=state["salary_research_input"],
             schema_model=SalaryResearch,
@@ -60,6 +60,11 @@ def build_job_ai_graph():
             "source_text": state["source_text"],
             "source_job": state["source_job"],
             "company_context": state["company_context"],
+            "company_default_location": (
+                state["company_context"]["company"].get("location")
+                if state["company_context"]
+                else None
+            ),
             "salary_research": state["salary_research"],
             "locked_fields": state["locked_fields"],
             "allowed_location_types": state["company_context"][
@@ -68,7 +73,7 @@ def build_job_ai_graph():
             "default_status": state["company_context"]["default_status"],
         }
 
-        draft = await groq_structured_client.generate_strict_json(
+        draft = await ai_service.generate_structured(
             system_prompt=JOB_DRAFT_SYSTEM_PROMPT,
             user_payload=payload,
             schema_model=JobDraft,
@@ -110,7 +115,7 @@ def build_job_ai_graph():
         regenerate_fields = set(decision.get("regenerate_fields") or [])
         feedback = decision.get("feedback")
 
-        locked_fields = set(state["locked_fields"])
+        locked_fields = set(decision.get("locked_fields") or state["locked_fields"])
         merged = {**current_draft, **edited_fields}
 
         fields_allowed_to_change = sorted(list(regenerate_fields - locked_fields))
@@ -124,7 +129,7 @@ def build_job_ai_graph():
             "salary_research": state["salary_research"],
         }
 
-        refined = await groq_structured_client.generate_strict_json(
+        refined = await ai_service.generate_structured(
             system_prompt=REFINE_DRAFT_SYSTEM_PROMPT,
             user_payload=payload,
             schema_model=JobDraft,
@@ -137,6 +142,7 @@ def build_job_ai_graph():
             "missing_fields": refined.missing_fields,
             "validation_errors": [],
             "human_decision": None,
+            "locked_fields": sorted(list(locked_fields)),
         }
 
     def route_after_review(state: JobAgentState) -> str:

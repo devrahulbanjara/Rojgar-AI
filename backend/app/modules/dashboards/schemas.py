@@ -43,6 +43,12 @@ class CandidateDashboardResponse(BaseSchema):
     recommended_jobs: list[JobListItem]
 
 
+class RecruiterStats(BaseSchema):
+    active_job_posts: int
+    total_applications: int
+
+
 class RecruiterDashboardResponse(BaseSchema):
     company_name: str
+    stats: RecruiterStats
     top_jobs: list[JobListItem]

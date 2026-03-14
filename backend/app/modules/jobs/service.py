@@ -2,7 +2,6 @@ import uuid
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from qdrant_client import models as qdrant_models
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -15,6 +14,7 @@ from app.modules.companies.models import CompanyMembership
 from app.modules.jobs.enums import SyncAction
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.jobs.schemas import (
+    CompanySnippet,
     JobCreate,
     JobDetailResponse,
     JobListItem,
@@ -26,10 +26,60 @@ from app.shared.enums import LocationType
 
 
 def _job_list_item_from_row(
-    job: Job, applications_count: int | None = None
+    job: Job,
+    applications_count: int | None = None,
+    *,
+    match_score: float | None = None,
+    is_fallback: bool = False,
 ) -> JobListItem:
-    setattr(job, "applications_count", int(applications_count or 0))
-    return JobListItem.model_validate(job)
+    company = CompanySnippet.model_validate(job.company)
+    return JobListItem.model_validate(
+        {
+            "id": job.id,
+            "company_id": job.company_id,
+            "company": company,
+            "title": job.title,
+            "location": job.location,
+            "location_type": job.location_type,
+            "salary_min": job.salary_min,
+            "salary_max": job.salary_max,
+            "currency": job.currency,
+            "status": job.status,
+            "applications_count": int(applications_count or 0),
+            "created_at": job.created_at,
+            "match_score": match_score,
+            "is_fallback": is_fallback,
+        }
+    )
+
+
+def _job_detail_response_from_row(
+    job: Job, applications_count: int | None = None
+) -> JobDetailResponse:
+    company = CompanySnippet.model_validate(job.company)
+    return JobDetailResponse.model_validate(
+        {
+            "id": job.id,
+            "company_id": job.company_id,
+            "company": company,
+            "posted_by": job.posted_by,
+            "title": job.title,
+            "location": job.location,
+            "location_type": job.location_type,
+            "salary_min": job.salary_min,
+            "salary_max": job.salary_max,
+            "currency": job.currency,
+            "status": job.status,
+            "overview": job.overview,
+            "responsibilities": job.responsibilities,
+            "requirements": job.requirements,
+            "preferred_qualifications": job.preferred_qualifications,
+            "benefits": job.benefits,
+            "applications_count": int(applications_count or 0),
+            "created_at": job.created_at,
+            "updated_at": job.updated_at,
+        }
+    )
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
@@ -82,11 +132,15 @@ async def create_job(
     bg_tasks.add_task(process_sync_event, event.id)
 
     result = await db.execute(
-        select(Job).options(selectinload(Job.company)).where(Job.id == job.id)
+        select(Job, func.count(Application.id).label("applications_count"))
+        .options(selectinload(Job.company))
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(Job.id == job.id)
+        .group_by(Job.id)
     )
-    job = result.scalar_one()
+    job, applications_count = result.one()
     logger.info(f"Job '{job.title}' created by user {user.id}")
-    return JobDetailResponse.model_validate(job)
+    return _job_detail_response_from_row(job, applications_count)
 
 
 async def _build_recommendation_query(db: AsyncSession, user: User) -> str:
@@ -161,36 +215,12 @@ async def search_jobs(
     else:
         search_query = "Software technology engineering jobs"
 
-    # 2. Build Qdrant metadata filter conditions
-    filters: list[qdrant_models.Condition] = []
-    if location_type:
-        filters.append(
-            qdrant_models.FieldCondition(
-                key="location_type",
-                match=qdrant_models.MatchValue(value=location_type.value),
-            )
-        )
-    if salary_min is not None:
-        # Job's salary_max must reach at least the candidate's desired minimum
-        filters.append(
-            qdrant_models.FieldCondition(
-                key="salary_max",
-                range=qdrant_models.Range(gte=salary_min),
-            )
-        )
-    if salary_max is not None:
-        # Job's salary_min must be within the candidate's budget ceiling
-        filters.append(
-            qdrant_models.FieldCondition(
-                key="salary_min",
-                range=qdrant_models.Range(lte=salary_max),
-            )
-        )
-
-    # 3. Run the semantic search (returns results ordered highest→lowest score)
+    # 2. Run the semantic search with simple filter parameters
     qdrant_results, total_count = await qdrant_service.search_jobs(
         query=search_query,
-        filters=filters,
+        location_type=location_type.value if location_type else None,
+        salary_min=salary_min,
+        salary_max=salary_max,
         page=page,
         size=size,
     )
@@ -198,7 +228,7 @@ async def search_jobs(
     if not qdrant_results:
         return [], 0
 
-    # 4. Batch-fetch the real job rows from Postgres (preserves no ordering)
+    # 3. Batch-fetch the real job rows from Postgres (preserves no ordering)
     job_ids = [res["job_id"] for res in qdrant_results]
     stmt = (
         select(Job, func.count(Application.id).label("applications_count"))
@@ -210,17 +240,21 @@ async def search_jobs(
     db_result = await db.execute(stmt)
     job_map = {job.id: (job, app_count) for job, app_count in db_result.all()}
 
-    # 5. Reconstruct the list in Qdrant's exact semantic score order
+    # 4. Reconstruct the list in Qdrant's exact semantic score order
     final_jobs: list[JobListItem] = []
     for res in qdrant_results:
         row = job_map.get(res["job_id"])
         if row is None:
             continue  # ghost vector (job deleted from Postgres but not yet from Qdrant)
         job, app_count = row
-        setattr(job, "applications_count", int(app_count or 0))
-        setattr(job, "match_score", round(res["score"], 4))
-        setattr(job, "is_fallback", res["is_fallback"])
-        final_jobs.append(JobListItem.model_validate(job))
+        final_jobs.append(
+            _job_list_item_from_row(
+                job,
+                app_count,
+                match_score=round(res["score"], 4),
+                is_fallback=res["is_fallback"],
+            )
+        )
 
     return final_jobs, total_count
 
@@ -246,15 +280,20 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
 async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
     """Get full job details including description."""
     result = await db.execute(
-        select(Job).options(selectinload(Job.company)).where(Job.id == job_id)
+        select(Job, func.count(Application.id).label("applications_count"))
+        .options(selectinload(Job.company))
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(Job.id == job_id)
+        .group_by(Job.id)
     )
-    job = result.scalar_one_or_none()
-    if not job:
+    row = result.one_or_none()
+    if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found.",
         )
-    return JobDetailResponse.model_validate(job)
+    job, applications_count = row
+    return _job_detail_response_from_row(job, applications_count)
 
 
 async def update_job(
@@ -304,11 +343,15 @@ async def update_job(
     bg_tasks.add_task(process_sync_event, event.id)
 
     result = await db.execute(
-        select(Job).options(selectinload(Job.company)).where(Job.id == job.id)
+        select(Job, func.count(Application.id).label("applications_count"))
+        .options(selectinload(Job.company))
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(Job.id == job.id)
+        .group_by(Job.id)
     )
-    job = result.scalar_one()
+    job, applications_count = result.one()
     logger.info(f"Job '{job.title}' updated by user {user.id}")
-    return JobDetailResponse.model_validate(job)
+    return _job_detail_response_from_row(job, applications_count)
 
 
 async def delete_job(

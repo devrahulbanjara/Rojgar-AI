@@ -1,5 +1,5 @@
 import { type ApiResponse, baseApi } from './baseApi'
-import { type JobStatus, normalizeJobStatus } from './jobsApi'
+import { type JobStatus } from './jobsApi'
 
 export interface CandidateDashboardStats {
   total_applications: number
@@ -74,8 +74,14 @@ export interface RecruiterDashboardJob {
   created_at: string
 }
 
+export interface RecruiterDashboardStats {
+  active_job_posts: number
+  total_applications: number
+}
+
 export interface RecruiterDashboardData {
   company_name: string
+  stats: RecruiterDashboardStats
   top_jobs: RecruiterDashboardJob[]
 }
 
@@ -83,30 +89,10 @@ export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCandidateDashboard: builder.query<ApiResponse<CandidateDashboardData>, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/dashboards/candidate`,
-      transformResponse: (response: ApiResponse<CandidateDashboardData>) => ({
-        ...response,
-        data: {
-          ...response.data,
-          recommended_jobs: (response.data.recommended_jobs ?? []).map((job) => ({
-            ...job,
-            status: normalizeJobStatus(job.status),
-          })),
-        },
-      }),
       providesTags: ['Applications', 'Profile', 'Resumes'],
     }),
     getRecruiterDashboard: builder.query<ApiResponse<RecruiterDashboardData>, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/dashboards/recruiter`,
-      transformResponse: (response: ApiResponse<RecruiterDashboardData>) => ({
-        ...response,
-        data: {
-          ...response.data,
-          top_jobs: (response.data.top_jobs ?? []).map((job) => ({
-            ...job,
-            status: normalizeJobStatus(job.status),
-          })),
-        },
-      }),
       providesTags: ['Jobs'],
     }),
   }),

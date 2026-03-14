@@ -77,7 +77,6 @@ class QdrantService:
         """Embed a job and store it in Qdrant with filterable metadata."""
         try:
             text_content = self._build_job_document(job)
-            # Delegate embedding to the AI provider abstraction
             vector = await ai_service.get_embeddings(text_content)
             await self.client.upsert(
                 collection_name=self.collection_name,
@@ -117,21 +116,59 @@ class QdrantService:
     async def search_jobs(
         self,
         query: str,
-        filters: list[models.Condition],
-        page: int,
-        size: int,
+        location_type: str | None = None,
+        salary_min: int | None = None,
+        salary_max: int | None = None,
+        page: int = 1,
+        size: int = 10,
     ) -> tuple[list[dict], int]:
-        """Perform semantic search using the modern query_points API."""
-        # Delegate embedding to the AI provider abstraction
+        """
+        Perform semantic search with simple filter parameters.
+
+        This method accepts standard Python types instead of Qdrant-specific models,
+        making it easy to swap vector DB providers without changing business logic.
+
+        Args:
+            query: Semantic search query string
+            location_type: Filter by location type (e.g., "remote", "onsite", "hybrid")
+            salary_min: Minimum salary filter (job's max salary must be >= this)
+            salary_max: Maximum salary filter (job's min salary must be <= this)
+            page: Page number (1-indexed)
+            size: Results per page
+
+        Returns:
+            Tuple of (results list, total count)
+        """
         vector = await ai_service.get_embeddings(query)
 
-        # Base rule: only surface ACTIVE jobs
         active_condition = models.FieldCondition(
             key="status", match=models.MatchValue(value="active")
         )
         base_must = [active_condition]
 
-        # Strict filter: all requested metadata filters must match
+        filters: list[models.Condition] = []
+        if location_type:
+            filters.append(
+                models.FieldCondition(
+                    key="location_type",
+                    match=models.MatchValue(value=location_type),
+                )
+            )
+        if salary_min is not None:
+            filters.append(
+                models.FieldCondition(
+                    key="salary_max",
+                    range=models.Range(gte=salary_min),
+                )
+            )
+        if salary_max is not None:
+            filters.append(
+                models.FieldCondition(
+                    key="salary_min",
+                    range=models.Range(lte=salary_max),
+                )
+            )
+
         strict_filter = (
             models.Filter(must=base_must + filters)
             if filters
@@ -164,7 +201,7 @@ class QdrantService:
 
             fallback_filter = models.Filter(
                 must=base_must,
-                must_not=filters,  # Mutually exclusive with the strict set
+                must_not=filters,
             )
 
             fallback_response = await self.client.query_points(

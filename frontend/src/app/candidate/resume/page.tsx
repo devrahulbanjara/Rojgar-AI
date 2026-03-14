@@ -81,7 +81,7 @@ export default function ResumePage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="dash-content container">
+    <div className="dash-content container container--app-shell">
       {/* Create Modal */}
       {showCreateModal && (
         <CreateResumeModal

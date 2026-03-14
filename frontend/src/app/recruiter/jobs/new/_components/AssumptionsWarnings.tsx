@@ -18,20 +18,22 @@ function InfoList({
   if (items.length === 0) return null
 
   return (
-    <section className={`job-ai-card assumptions-panel assumptions-panel--${tone}`}>
-      <div className="job-ai-card__header">
+    <section className={`job-ai-card assumptions-panel assumptions-panel--${tone} dash-card`}>
+      <div className="job-ai-card__header dash-card__header">
         <div>
-          <h2 className="job-ai-card__title">{title}</h2>
+          <h2 className="job-ai-card__title dash-card__title">{title}</h2>
         </div>
       </div>
 
-      <ul className="assumptions-panel__list">
-        {items.map((item) => (
-          <li key={item} className="assumptions-panel__item">
-            {item}
-          </li>
-        ))}
-      </ul>
+      <div className="job-ai-card__body dash-card__body">
+        <ul className="assumptions-panel__list">
+          {items.map((item) => (
+            <li key={item} className="assumptions-panel__item">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   )
 }

@@ -284,7 +284,7 @@ export default function CompanySettingsPage() {
 
   if (!isCompanyAdmin) {
     return (
-      <div className="dash-content container">
+      <div className="dash-content container container--app-shell">
         <div className="dash-card">
           <div className="dash-card__body">
             <div className="empty-state">
@@ -304,7 +304,7 @@ export default function CompanySettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="dash-content container">
+      <div className="dash-content container container--app-shell">
         <div className="dash-card dash-card--loading">
           <div className="dash-card__body">Loading company settings...</div>
         </div>
@@ -314,7 +314,7 @@ export default function CompanySettingsPage() {
 
   if (isError || !companyResp?.data) {
     return (
-      <div className="dash-content container">
+      <div className="dash-content container container--app-shell">
         <div className="dash-card">
           <div className="dash-card__body">
             <div className="empty-state">
@@ -342,7 +342,7 @@ export default function CompanySettingsPage() {
   const isWorking = isSaving || isUploadingLogo || isRemovingLogo || isSubmittingCroppedLogo
 
   return (
-    <div className="dash-content container">
+    <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Company Settings</h2>

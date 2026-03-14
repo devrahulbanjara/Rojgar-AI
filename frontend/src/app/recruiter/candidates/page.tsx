@@ -110,7 +110,7 @@ const stageOrder: Record<string, number> = {
 export default function CompanyCandidatesPage() {
   return (
     <>
-      <div className="dash-content container">
+      <div className="dash-content container container--app-shell">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Candidate Pipeline</h2>

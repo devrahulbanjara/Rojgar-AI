@@ -1,5 +1,5 @@
 import math
-from typing import Any, Generic, TypeVar, List
+from typing import Any, Generic, TypeVar
 from datetime import datetime, timezone
 
 from fastapi import Response, status
@@ -22,7 +22,7 @@ class PaginationMeta(BaseModel):
 class PaginatedData(BaseModel, Generic[T]):
     """Wrapper for paginated collection and its metadata."""
 
-    items: List[T]
+    items: list[T]
     pagination: PaginationMeta
 
 
