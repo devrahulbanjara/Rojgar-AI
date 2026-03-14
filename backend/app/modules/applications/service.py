@@ -37,7 +37,7 @@ async def apply_to_job(
     db: AsyncSession, user: User, payload: ApplyRequest
 ) -> ApplicationResponse:
     """Submit an application. A resume_id belonging to the user is required."""
-    # 1. Verify the job exists and is open
+    # 1. Verify the job exists and is active
     result = await db.execute(select(Job).where(Job.id == payload.job_id))
     job = result.scalar_one_or_none()
     if not job:
@@ -45,7 +45,7 @@ async def apply_to_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found.",
         )
-    if job.status != JobStatus.open:
+    if job.status != JobStatus.active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This job is not currently accepting applications.",

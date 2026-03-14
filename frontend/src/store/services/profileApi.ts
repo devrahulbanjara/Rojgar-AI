@@ -44,6 +44,7 @@ export interface CandidateProfileData {
   github_url: string | null
   portfolio_url: string | null
   years_of_experience: number | null
+  target_roles: string[]
   experiences: ProfileExperience[]
   educations: ProfileEducation[]
   skills: ProfileSkill[]
@@ -61,6 +62,7 @@ export interface UpdateProfileRequest {
   github_url?: string | null
   portfolio_url?: string | null
   years_of_experience?: number | null
+  target_roles?: string[]
   experiences?: Array<{
     company_name: string
     title: string
@@ -112,6 +114,16 @@ export const profileApi = baseApi.injectEndpoints({
       invalidatesTags: ['Profile', 'User'],
     }),
 
+    /** POST /profiles/onboard — Set is_onboarded=True and save target roles */
+    completeOnboarding: builder.mutation<ProfileApiResponse, { target_roles: string[] }>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/onboard`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Profile', 'User'],
+    }),
+
     removeMyAvatar: builder.mutation<EmptyResponse, void>({
       query: () => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/avatar`,
@@ -132,6 +144,7 @@ export const {
   useGetMyProfileQuery,
   useUpdateMyProfileMutation,
   useUpdateMyAvatarMutation,
+  useCompleteOnboardingMutation,
   useRemoveMyAvatarMutation,
   useGetPublicProfileQuery,
 } = profileApi

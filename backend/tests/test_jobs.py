@@ -38,7 +38,6 @@ async def test_recruiter_can_post_job(client, recruiter_headers):
         "location_type": "remote",
         "salary_min": 100000,
         "salary_max": 150000,
-        "category": "backend",
     }
 
     response = await client.post("/jobs/", json=payload, headers=recruiter_headers)

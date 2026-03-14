@@ -11,6 +11,23 @@ from app.modules.auth.models import User
 
 # tokenUrl must match the path of the swagger login route we will create
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login-swagger")
+_optional_oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login-swagger", auto_error=False
+)
+
+
+async def get_optional_user(
+    token: str | None = Depends(_optional_oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Returns the authenticated user if a valid token is supplied, otherwise None."""
+    if not token:
+        return None
+    user_id = decode_access_token(token)
+    if not user_id:
+        return None
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
 
 
 async def get_current_user(

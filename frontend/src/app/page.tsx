@@ -1,6 +1,11 @@
 'use client'
-import Image from 'next/image'
+import { useEffect } from 'react'
 
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+
+import { ROLE_DASHBOARDS } from '@/lib/roleRoutes'
+import { useAppSelector } from '@/store/hooks'
 import { MapPin, Search } from 'lucide-react'
 
 import ExploreCategories from '@/components/sections/ExploreCategories'
@@ -10,6 +15,21 @@ import Pricing from '@/components/sections/Pricing'
 import WhyPreferUs from '@/components/sections/WhyPreferUs'
 
 export default function Home() {
+  const { user, isAuthenticated } = useAppSelector((s) => s.auth)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const dest = ROLE_DASHBOARDS[user.primary_role]
+      if (dest) {
+        router.replace(dest)
+      }
+    }
+  }, [isAuthenticated, user, router])
+
+  // While redirecting, show nothing to avoid flash of landing page
+  if (isAuthenticated) return null
+
   return (
     <section className="homepage">
       <div className="heroSection">

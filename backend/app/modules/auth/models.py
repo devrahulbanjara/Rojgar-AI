@@ -35,6 +35,9 @@ class User(Base):
     is_email_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
+    is_onboarded: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     primary_role: Mapped[UserRole] = mapped_column(nullable=False)
     email_verify_token: Mapped[str | None] = mapped_column(String(255), index=True)
     password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)

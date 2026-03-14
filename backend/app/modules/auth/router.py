@@ -75,7 +75,11 @@ async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = db):
 )
 async def login(payload: LoginRequest, response: Response, db: AsyncSession = db):
     result = await service.login(db, payload, response)
-    return ResponseBuilder.success(data=result, message="Login successful")
+    return ResponseBuilder.success(
+        data=result,
+        message="Login successful",
+        response=response,
+    )
 
 
 @router.post(
@@ -89,7 +93,11 @@ async def refresh(
     db: AsyncSession = db,
 ):
     result = await service.refresh_tokens(db, refresh_token, response)
-    return ResponseBuilder.success(data=result, message="Tokens refreshed")
+    return ResponseBuilder.success(
+        data=result,
+        message="Tokens refreshed",
+        response=response,
+    )
 
 
 @router.post(
@@ -103,7 +111,7 @@ async def logout(
     db: AsyncSession = db,
 ):
     await service.logout(db, refresh_token, response)
-    return ResponseBuilder.success(message="Logged out successfully")
+    return ResponseBuilder.success(message="Logged out successfully", response=response)
 
 
 @router.post(
@@ -250,4 +258,5 @@ async def google_register(
         data=result,
         message="Account created successfully",
         status_code=status.HTTP_201_CREATED,
+        response=response,
     )

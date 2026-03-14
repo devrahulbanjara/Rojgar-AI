@@ -53,6 +53,12 @@
     max-width: $bp-2xl; // 1536px
   }
 
+  // App shell — shared dashboard/navbar canvas for candidate + recruiter
+  &--app-shell,
+  &--dashboard {
+    max-width: 1400px;
+  }
+
   // Fluid — full width, only keeps padding
   &--fluid {
     max-width: 100%;

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.core.responses import PaginatedData, ResponseBuilder, UnifiedResponse
 from app.modules.auth.dependencies import (
     get_current_user,
+    get_optional_user,
 )
 from app.modules.auth.models import User
 from app.modules.jobs import service
@@ -29,10 +30,11 @@ db = Depends(get_db)
 )
 async def create_job(
     payload: JobCreate,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
-    data = await service.create_job(db, user, payload)
+    data = await service.create_job(db, user, payload, bg_tasks)
     return ResponseBuilder.success(
         data=data,
         message="Job created.",
@@ -42,24 +44,32 @@ async def create_job(
 
 @router.get(
     "/",
-    response_model=UnifiedResponse[list[JobListItem]],
-    summary="Search and list open jobs with optional filters",
+    response_model=UnifiedResponse[PaginatedData[JobListItem]],
+    summary="Search jobs or get AI-powered recommendations (semantic, highest→lowest score)",
 )
 async def search_jobs(
-    q: str | None = Query(default=None, description="Search keyword for title"),
-    location: str | None = Query(default=None),
+    q: str | None = Query(
+        default=None,
+        description="Free-text search query (embedded and matched semantically)",
+    ),
     location_type: LocationType | None = Query(default=None),
-    category: str | None = Query(default=None),
     salary_min: int | None = Query(default=None, ge=0),
     salary_max: int | None = Query(default=None, ge=0),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
+    user: User | None = Depends(get_optional_user),
     db: AsyncSession = db,
 ):
-    data = await service.search_jobs(
-        db, q, location, location_type, category, salary_min, salary_max, page, size
+    jobs, total = await service.search_jobs(
+        db, user, q, location_type, salary_min, salary_max, page, size
     )
-    return ResponseBuilder.success(data=data, message="Jobs fetched.")
+    return ResponseBuilder.paginated(
+        items=jobs,
+        total=total,
+        page=page,
+        size=size,
+        message="Jobs fetched successfully.",
+    )
 
 
 @router.get(
@@ -96,10 +106,11 @@ async def get_job(
 async def update_job(
     job_id: str,
     payload: JobUpdate,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
-    data = await service.update_job(db, user, job_id, payload)
+    data = await service.update_job(db, user, job_id, payload, bg_tasks)
     return ResponseBuilder.success(data=data, message="Job updated.")
 
 
@@ -110,8 +121,9 @@ async def update_job(
 )
 async def delete_job(
     job_id: str,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
-    await service.delete_job(db, user, job_id)
+    await service.delete_job(db, user, job_id, bg_tasks)
     return ResponseBuilder.success(data=None, message="Job deleted.")

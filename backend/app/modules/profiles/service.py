@@ -12,7 +12,11 @@ from app.modules.profiles.models import (
     ProfileExperience,
     ProfileSkill,
 )
-from app.modules.profiles.schemas import ProfileResponse, ProfileUpdate
+from app.modules.profiles.schemas import (
+    CandidateOnboardingRequest,
+    ProfileResponse,
+    ProfileUpdate,
+)
 
 
 async def _load_full_profile(db: AsyncSession, profile_id) -> Profile:
@@ -45,6 +49,7 @@ def _profile_to_response(
         github_url=profile.github_url,
         portfolio_url=profile.portfolio_url,
         years_of_experience=profile.years_of_experience,
+        target_roles=profile.target_roles or [],
         experiences=profile.experiences,
         educations=profile.educations,
         skills=profile.skills,
@@ -151,4 +156,44 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileRespo
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Profile not found.",
         )
+    return _profile_to_response(profile, user.avatar_url)
+
+
+async def complete_onboarding(
+    db: AsyncSession, user: User, payload: CandidateOnboardingRequest
+) -> ProfileResponse:
+    """Set is_onboarded=True and persist the candidate's target roles."""
+    if user.is_onboarded:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already onboarded.",
+        )
+
+    # 1. Mark user as onboarded
+    user.is_onboarded = True
+
+    # 2. Get or create profile
+    result = await db.execute(
+        select(Profile)
+        .where(Profile.user_id == user.id)
+        .options(
+            selectinload(Profile.experiences),
+            selectinload(Profile.educations),
+            selectinload(Profile.skills),
+        )
+    )
+    profile = result.scalar_one_or_none()
+    if not profile:
+        profile = Profile(user_id=user.id)
+        db.add(profile)
+        await db.flush()
+
+    # 3. Persist target roles
+    profile.target_roles = payload.target_roles
+
+    await db.commit()
+    profile = await _load_full_profile(db, profile.id)
+    logger.info(
+        f"Candidate {user.id} completed onboarding with roles: {payload.target_roles}"
+    )
     return _profile_to_response(profile, user.avatar_url)

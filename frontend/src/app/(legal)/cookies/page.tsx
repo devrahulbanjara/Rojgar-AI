@@ -156,8 +156,8 @@ export default function CookiePolicyPage() {
             </p>
             <ul className="legal__list">
               <li>
-                <strong>ch_prefs</strong> — Stores your job search preferences (category, location,
-                salary range). Expires after 90 days.
+                <strong>ch_prefs</strong> — Stores your job search preferences (location, salary
+                range). Expires after 90 days.
               </li>
               <li>
                 <strong>ch_locale</strong> — Remembers your language preference. Expires after 1
