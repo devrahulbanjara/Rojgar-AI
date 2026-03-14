@@ -1,0 +1,145 @@
+// ============================================================
+// TOAST — react-toastify v11 overrides
+// Matches the existing ConvexHire UI design system.
+// ============================================================
+
+@use '../variables' as *;
+
+// ── Container ────────────────────────────────────────────────
+.Toastify__toast-container {
+  width: 360px;
+  padding: 0;
+
+  @media (max-width: $bp-sm) {
+    width: 100%;
+    left: 0;
+    right: 0;
+    padding: 0 $space-3;
+  }
+}
+
+// ── Base Toast ───────────────────────────────────────────────
+.Toastify__toast {
+  font-family: $font-body;
+  font-size: $font-size-sm;
+  color: $color-gray-900;
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-lg;
+  padding: $space-4;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  cursor: default;
+
+  // Type-specific left accent stripe
+  border-left: 4px solid $color-gray-300; // default / fallback
+}
+
+// ── Type Variants ────────────────────────────────────────────
+.Toastify__toast--success {
+  border-left-color: $color-success;
+}
+
+.Toastify__toast--error {
+  border-left-color: $color-error;
+}
+
+.Toastify__toast--warning {
+  border-left-color: $color-warning;
+}
+
+.Toastify__toast--info {
+  border-left-color: $color-primary;
+}
+
+// ── Body ─────────────────────────────────────────────────────
+.Toastify__toast-body {
+  font-family: $font-body;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-regular;
+  color: $color-gray-900;
+  line-height: $line-height-normal;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+// ── Icon ─────────────────────────────────────────────────────
+.Toastify__toast-icon {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: $color-success;
+}
+
+.Toastify__toast--error .Toastify__toast-icon svg {
+  fill: $color-error;
+}
+
+.Toastify__toast--warning .Toastify__toast-icon svg {
+  fill: $color-warning;
+}
+
+.Toastify__toast--info .Toastify__toast-icon svg {
+  fill: $color-primary;
+}
+
+// ── Close Button ─────────────────────────────────────────────
+.Toastify__close-button {
+  color: $color-gray-400;
+  opacity: 1;
+  align-self: center;
+  flex-shrink: 0;
+  transition: color $transition-fast;
+
+  &:hover,
+  &:focus {
+    color: $color-gray-700;
+  }
+
+  > svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// ── Progress Bar ─────────────────────────────────────────────
+.Toastify__progress-bar {
+  height: 3px;
+  border-radius: 0 0 $radius-xl $radius-xl;
+  background: $color-gray-200; // fallback
+  opacity: 1;
+}
+
+.Toastify__progress-bar--success {
+  background: $color-success;
+}
+
+.Toastify__progress-bar--error {
+  background: $color-error;
+}
+
+.Toastify__progress-bar--warning {
+  background: $color-warning;
+}
+
+.Toastify__progress-bar--info {
+  background: $color-primary;
+}
+
+// ── Animations ───────────────────────────────────────────────
+// Keep react-toastify's slide-in but add a subtle fade
+.Toastify__toast--animate-enter {
+  animation-duration: 250ms;
+}
+
+.Toastify__toast--animate-exit {
+  animation-duration: 200ms;
+}

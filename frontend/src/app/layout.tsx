@@ -1,68 +1,58 @@
+import 'react-toastify/dist/ReactToastify.css'
+
 import type { Metadata } from 'next'
-import { Inter, Manrope, JetBrains_Mono } from 'next/font/google'
-import React from 'react'
-import './globals.css'
-import { Providers } from '../components/Providers'
-import { Provider as ChakraProvider } from '../components/ui/provider'
+import { Geist_Mono, Lato, Poppins } from 'next/font/google'
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
+import '@/app/globals.css'
+import LenisProvider from '@/providers/LenisProvider'
+import StoreProvider from '@/providers/StoreProvider'
 
-const manrope = Manrope({
-  variable: '--font-manrope',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-})
+// ToasterNoSSR is a Client Component that uses dynamic(ssr:false) internally,
+// which is the correct pattern for Server Component layouts.
+import ToasterNoSSR from '@/components/common/ToasterNoSSR'
+import MainLayout from '@/components/layout/MainLayout'
 
-const jetbrainsMono = JetBrains_Mono({
+import '@/styles/main.scss'
+
+const poppins = Poppins({
+  variable: '--font-heading',
   subsets: ['latin'],
-  variable: '--font-mono',
   weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const lato = Lato({
+  variable: '--font-body',
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  display: 'swap',
+})
+
+const geistMono = Geist_Mono({
+  variable: '--font-mono',
+  subsets: ['latin'],
   display: 'swap',
 })
 
 export const metadata: Metadata = {
   title: 'ConvexHire',
-  description:
-    'Make hiring understandable, efficient, and fair with ConvexHire. AI-powered recruitment platform that treats hiring as a reasoning problem, not keyword filtering.',
-  icons: {
-    icon: [
-      { url: '/favicon-light.svg', media: '(prefers-color-scheme: light)' },
-      { url: '/favicon-dark.svg', media: '(prefers-color-scheme: dark)' },
-    ],
-  },
+  description: 'ConvexHire is a job board for software engineers built with Next.js and Convex.',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const theme = localStorage.getItem('convexhire-theme');
-                if (theme === 'dark') {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-              } catch (e) {}
-            `,
-          }}
-        />
-      </head>
-      <body
-        className={`${inter.variable} ${manrope.variable} ${jetbrainsMono.variable} font-sans antialiased`}
-        suppressHydrationWarning
-      >
-        <ChakraProvider>
-          <Providers>{children}</Providers>
-        </ChakraProvider>
+    <html lang="en">
+      <body className={`${poppins.variable} ${lato.variable} ${geistMono.variable}`}>
+        <StoreProvider>
+          <LenisProvider>
+            <MainLayout>{children}</MainLayout>
+          </LenisProvider>
+          <ToasterNoSSR />
+        </StoreProvider>
       </body>
     </html>
   )

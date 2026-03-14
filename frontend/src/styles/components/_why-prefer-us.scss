@@ -1,0 +1,240 @@
+// ============================================================
+// WHY PREFER US SECTION
+// ============================================================
+
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ── Accent bg map (image-side background per color variant) ──
+$block-colors: (
+  'secondary': $color-secondary,
+  'warning': $color-warning,
+  'accent': $color-accent,
+);
+
+// ── Section wrapper ──────────────────────────────────────────
+.why-prefer {
+  background: $color-white;
+
+  // ── Section header ───────────────────────────────────────
+  &__header {
+    text-align: center;
+    padding-block: $space-16 $space-12;
+  }
+
+  &__label {
+    display: inline-block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $color-primary;
+    margin-bottom: $space-3;
+  }
+
+  &__heading {
+    font-family: $font-heading;
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+    letter-spacing: -0.02em;
+    margin-bottom: $space-4;
+
+    @include md {
+      font-size: $font-size-4xl;
+    }
+  }
+
+  &__subheading {
+    font-size: $font-size-lg;
+    color: $color-gray-500;
+    max-width: 480px;
+    margin-inline: auto;
+    line-height: $line-height-normal;
+  }
+
+  // ── Blocks container ─────────────────────────────────────
+  &__blocks {
+    display: flex;
+    flex-direction: column;
+    gap: $space-8;
+    padding-block: $space-8 $space-16;
+  }
+
+  // ── Single block row ─────────────────────────────────────
+  &__block {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    // Mobile: text always on top, image always below — regardless of DOM order
+    .why-prefer__text {
+      order: 1;
+    }
+
+    .why-prefer__img-wrap {
+      order: 2;
+    }
+
+    @include lg {
+      // Reset order — let grid source order handle layout
+      .why-prefer__text {
+        order: unset;
+      }
+
+      .why-prefer__img-wrap {
+        order: unset;
+      }
+
+      // Default: image left (max 475px) | text right
+      grid-template-columns: minmax(0, 475px) 1fr;
+      align-items: stretch;
+    }
+
+    // Reverse: text left | image right (max 475px)
+    &--reverse {
+      @include lg {
+        grid-template-columns: 1fr minmax(0, 475px);
+      }
+    }
+
+    // Per-block icon colors
+    &--secondary .why-prefer__feature-icon {
+      color: $color-secondary;
+    }
+
+    &--warning .why-prefer__feature-icon {
+      color: $color-warning;
+    }
+
+    &--accent .why-prefer__feature-icon {
+      color: $color-accent;
+    }
+  }
+
+  // ── Image half ───────────────────────────────────────────
+  &__img-wrap {
+    position: relative;
+    min-height: 280px;
+    overflow: hidden;
+    border-radius: $radius-2xl;
+
+    @include md {
+      min-height: 380px;
+      height: 100%;
+    }
+
+    // Colored backgrounds per variant
+    @each $key, $val in $block-colors {
+      &--#{$key} {
+        background-color: $val;
+      }
+    }
+  }
+
+  &__img {
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  // ── Text half ────────────────────────────────────────────
+  &__text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: $space-8 $space-6;
+    background: $color-white;
+
+    @include md {
+      padding: $space-10 $space-8;
+    }
+
+    @include lg {
+      padding: $space-12 $space-10;
+    }
+  }
+
+  &__title {
+    font-family: $font-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-gray-900;
+    line-height: $line-height-tight;
+    letter-spacing: -0.02em;
+    margin-bottom: $space-4;
+
+    @include md {
+      font-size: $font-size-3xl;
+    }
+  }
+
+  &__body {
+    font-size: $font-size-base;
+    color: $color-gray-500;
+    line-height: $line-height-loose;
+    margin-bottom: $space-8;
+    max-width: 460px;
+  }
+
+  // ── Feature list ────────────────────────────────────────
+  &__features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: $space-5;
+
+    @include sm {
+      flex-direction: row;
+      gap: $space-6;
+    }
+
+    @include md {
+      flex-direction: column;
+    }
+
+    @include lg {
+      flex-direction: row;
+    }
+  }
+
+  &__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: $space-3;
+  }
+
+  &__feature-icon {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-primary; // fallback, overridden per block above
+
+    svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 1.75;
+    }
+  }
+
+  &__feature-copy {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__feature-heading {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    line-height: $line-height-normal;
+  }
+
+  &__feature-desc {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    line-height: $line-height-normal;
+  }
+}

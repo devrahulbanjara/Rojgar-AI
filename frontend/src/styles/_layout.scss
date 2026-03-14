@@ -1,0 +1,100 @@
+// ============================================================
+// LAYOUT
+// ============================================================
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ============================================================
+// Container
+// Usage:
+//   <div class="container">...</div>
+//   <div class="container container--sm">...</div>
+//   <div class="container container--lg">...</div>
+//   <div class="container container--fluid">...</div>
+//   <div class="container container--narrow">...</div>
+// ============================================================
+
+.container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: $space-4;
+
+  // Default max-width (matches $bp-xl — 1280px)
+  max-width: $bp-xl;
+
+  @include md {
+    padding-inline: $space-6;
+  }
+
+  @include lg {
+    padding-inline: $space-8;
+  }
+
+  // --- Size Modifiers ---
+
+  // Narrow — prose / reading width
+  &--narrow {
+    max-width: 680px;
+  }
+
+  // Small — forms, cards
+  &--sm {
+    max-width: $bp-md; // 768px
+  }
+
+  // Medium (default alias)
+  &--md {
+    max-width: $bp-lg; // 1024px
+  }
+
+  // Large
+  &--lg {
+    max-width: $bp-2xl; // 1536px
+  }
+
+  // App shell — shared dashboard/navbar canvas for candidate + recruiter
+  &--app-shell,
+  &--dashboard {
+    max-width: 1400px;
+  }
+
+  // Fluid — full width, only keeps padding
+  &--fluid {
+    max-width: 100%;
+  }
+}
+
+// ============================================================
+// Section
+// Vertical rhythm wrapper — use around major page sections
+// Usage: <section class="section">...</section>
+// ============================================================
+
+.section {
+  padding-block: $space-16;
+
+  @include md {
+    padding-block: $space-20;
+  }
+
+  @include lg {
+    padding-block: $space-24;
+  }
+
+  &--sm {
+    padding-block: $space-8;
+
+    @include md {
+      padding-block: $space-12;
+    }
+  }
+
+  &--lg {
+    padding-block: $space-20;
+
+    @include md {
+      padding-block: $space-24;
+    }
+  }
+}

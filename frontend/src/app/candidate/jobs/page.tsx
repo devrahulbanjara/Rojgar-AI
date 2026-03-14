@@ -1,614 +1,583 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { toast } from 'react-toastify'
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import Link from 'next/link'
+
+import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
-  usePersonalizedRecommendations,
-  useCreateApplication,
-  useJobSearch,
-  useApplicationsByCandidate,
-} from '../../../hooks/queries/useJobs'
-import { useAuth } from '../../../hooks/useAuth'
-import { JobCard, FilterChips, type FilterType } from '../../../components/jobs'
-import { JobDetailsModal } from '../../../components/jobs/JobDetailsModal'
-import { AppShell } from '../../../components/layout/AppShell'
-import { Button, Card, Badge, Tabs, TabsList, TabsTrigger } from '../../../components/ui'
-import { AnimatedContainer, SkeletonJobCard, SkeletonLoader } from '../../../components/common'
-import { RefreshCw, AlertCircle, Search, Briefcase, Bookmark, Clock } from 'lucide-react'
-import { cn } from '../../../lib/utils'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import type { Job } from '../../../types/job'
-import type { Application } from '../../../types/application'
+  type JobListItem,
+  type LocationType,
+  type SearchJobsParams,
+  useSearchJobsQuery,
+} from '@/store/services/jobsApi'
+import { useGetMyResumesQuery } from '@/store/services/resumeApi'
+import { Bookmark, Briefcase, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
 
-function CandidateJobsPageSkeleton() {
+import Loader from '@/components/common/Loader'
+
+import { JobCardsSkeleton, JobPreviewSkeleton } from './_components/JobsSkeletons'
+
+const LazyJobPreviewPanel = lazy(() => import('./_components/JobPreviewPanel'))
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
+  onsite: 'On-site',
+  remote: 'Remote',
+  hybrid: 'Hybrid',
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'): string | null {
+  if (!min && !max) return null
+  if (min && max) return `${currency} ${min.toLocaleString()} – ${max.toLocaleString()}`
+  if (min) return `From ${currency} ${min.toLocaleString()}`
+  return `Up to ${currency} ${max!.toLocaleString()}`
+}
+
+function formatDate(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+  if (diff === 0) return 'Today'
+  if (diff === 1) return 'Yesterday'
+  if (diff < 7) return `${diff} days ago`
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Apply modal — shows resume picker then submits application
+// ---------------------------------------------------------------------------
+
+function ApplyModal({
+  jobId,
+  jobTitle,
+  onClose,
+}: {
+  jobId: string
+  jobTitle: string
+  onClose: () => void
+}) {
+  const { data: resumesResp, isLoading: loadingResumes } = useGetMyResumesQuery()
+  const [applyToJob, { isLoading: applying }] = useApplyToJobMutation()
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
+
+  const resumes = resumesResp?.data ?? []
+
+  async function handleSubmit() {
+    if (!selectedResumeId) return
+    try {
+      await applyToJob({ job_id: jobId, resume_id: selectedResumeId }).unwrap()
+      toast.success('Application submitted successfully!')
+      onClose()
+    } catch (err: unknown) {
+      const msg = (err as { data?: { message?: string } })?.data?.message
+      toast.error(msg ?? 'Failed to submit application.')
+    }
+  }
+
   return (
-    <AppShell>
-      <div className="min-h-screen bg-background-subtle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3 w-full md:max-w-xl">
-              <SkeletonLoader variant="text" height={38} width="55%" />
-              <SkeletonLoader variant="text" height={18} width="90%" />
-            </div>
-            <SkeletonLoader variant="rectangular" width={132} height={44} className="rounded-xl" />
+    <div className="modal-backdrop" onClick={onClose}>
+      <div
+        className="modal modal--md"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="apply-modal-title"
+      >
+        <div className="modal__header">
+          <div className="modal__title" id="apply-modal-title">
+            Apply to {jobTitle}
           </div>
-
-          <Card className="p-4 shadow-sm border-border-default bg-background-surface">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <SkeletonLoader variant="rectangular" height={44} className="rounded-lg flex-1" />
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <SkeletonLoader
-                    key={index}
-                    variant="rectangular"
-                    width={92}
-                    height={34}
-                    className="rounded-full"
-                  />
+          <button className="btn btn--ghost btn--sm" onClick={onClose} aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="modal__body">
+          {loadingResumes ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '1.5rem 0',
+              }}
+            >
+              <Loader size="sm" />
+            </div>
+          ) : resumes.length === 0 ? (
+            <p style={{ color: 'var(--color-muted,#6b7280)' }}>
+              You need to{' '}
+              <Link href="/candidate/resume" className="auth__inline-link">
+                create a resume
+              </Link>{' '}
+              before applying.
+            </p>
+          ) : (
+            <>
+              <p
+                style={{
+                  marginBottom: '0.75rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--color-muted,#6b7280)',
+                }}
+              >
+                Select a resume to submit with your application:
+              </p>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}
+              >
+                {resumes.map((r) => (
+                  <label
+                    key={r.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem',
+                      borderRadius: '0.5rem',
+                      border: `1.5px solid ${selectedResumeId === r.id ? 'var(--color-primary,#7c3aed)' : 'var(--color-gray-200,#e5e7eb)'}`,
+                      cursor: 'pointer',
+                      background:
+                        selectedResumeId === r.id ? 'var(--color-primary-50,#ede9fe)' : '',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="resume"
+                      value={r.id}
+                      checked={selectedResumeId === r.id}
+                      onChange={() => setSelectedResumeId(r.id)}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{r.resume_name}</div>
+                      {r.headline && (
+                        <div
+                          style={{
+                            fontSize: '0.8125rem',
+                            color: 'var(--color-muted,#6b7280)',
+                          }}
+                        >
+                          {r.headline}
+                        </div>
+                      )}
+                    </div>
+                  </label>
                 ))}
               </div>
-            </div>
-          </Card>
-
-          <div className="space-y-8">
-            <Tabs value="recommended" className="w-full">
-              <TabsList className="bg-transparent border-b border-border-subtle rounded-none w-full justify-start h-auto p-0 gap-8">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <TabsTrigger
-                    key={index}
-                    value={`skeleton-tab-${index}`}
-                    className="rounded-none px-0 pb-3 pointer-events-none"
-                  >
-                    <SkeletonLoader
-                      variant="rectangular"
-                      width={90}
-                      height={14}
-                      className="rounded-sm"
-                    />
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-
-            <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <SkeletonJobCard key={index} className="h-full" />
-              ))}
-            </div>
-          </div>
+            </>
+          )}
+        </div>
+        <div className="modal__footer">
+          <button className="btn btn--ghost" onClick={onClose}>
+            Cancel
+          </button>
+          {resumes.length > 0 && (
+            <button
+              className="btn btn--primary"
+              onClick={handleSubmit}
+              disabled={!selectedResumeId || applying}
+            >
+              {applying ? 'Submitting…' : 'Submit Application'}
+            </button>
+          )}
         </div>
       </div>
-    </AppShell>
+    </div>
   )
 }
 
-export default function Jobs() {
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-  const [activeFilters, setActiveFilters] = useState<FilterType[]>([])
-  const [activeTab, setActiveTab] = useState<'recommended' | 'applied' | 'saved'>('recommended')
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const queryClient = useQueryClient()
+export default function UserJobsPage() {
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+  const [searchInput, setSearchInput] = useState('')
+  const [locationInput, setLocationInput] = useState('')
+  const [locationTypeDraft, setLocationTypeDraft] = useState<LocationType | null>(null)
+  const [salaryMinInput, setSalaryMinInput] = useState('')
+  const [salaryMaxInput, setSalaryMaxInput] = useState('')
+  const [workTypeOpen, setWorkTypeOpen] = useState(false)
+  const [applyingToJob, setApplyingToJob] = useState<JobListItem | null>(null)
+  const [appliedParams, setAppliedParams] = useState<SearchJobsParams>({})
 
-  const isSearchMode = debouncedSearchQuery.trim().length > 0
-
-  const backendFilters = useMemo(() => {
-    const filters: { employmentType?: string; locationType?: string } = {}
-
-    activeFilters.forEach(filter => {
-      switch (filter) {
-        case 'remote':
-          filters.locationType = 'Remote'
-          break
-        case 'hybrid':
-          filters.locationType = 'Hybrid'
-          break
-        case 'full-time':
-          filters.employmentType = 'Full-time'
-          break
-        case 'part-time':
-          filters.employmentType = 'Part-time'
-          break
-        case 'contract':
-          filters.employmentType = 'Contract'
-          break
-      }
-    })
-
-    return filters
-  }, [activeFilters])
-
-  const {
-    data: recommendationsData,
-    isLoading: isLoadingRecommendations,
-    error: recommendationsError,
-    refetch: refetchRecommendations,
-  } = usePersonalizedRecommendations(user?.id || '', currentPage, 9, backendFilters)
-
-  const shouldFetchSearch = isSearchMode && debouncedSearchQuery.trim().length > 0
-  const {
-    data: searchData,
-    isLoading: isLoadingSearch,
-    error: searchError,
-    refetch: refetchSearch,
-  } = useJobSearch(
-    shouldFetchSearch
-      ? {
-          search: debouncedSearchQuery.trim(),
-          page: currentPage,
-          limit: 9,
-          ...backendFilters,
-        }
-      : undefined
-  )
-
-  const {
-    data: applicationsData,
-    isLoading: isLoadingApplications,
-    error: applicationsError,
-  } = useApplicationsByCandidate(user?.id || '', {
-    page: currentPage,
-    limit: 9,
-  })
-
-  // Unified Data Handling
-  const jobsData = isSearchMode
-    ? searchData
-    : activeTab === 'recommended'
-      ? recommendationsData
-      : undefined
-  const applications = Array.isArray(applicationsData) ? applicationsData : []
-
-  const isLoading = isSearchMode
-    ? shouldFetchSearch && isLoadingSearch
-    : activeTab === 'recommended'
-      ? isAuthLoading || isLoadingRecommendations || isRefreshing
-      : activeTab === 'applied'
-        ? isLoadingApplications
-        : false
-
-  const error = isSearchMode
-    ? searchError
-    : activeTab === 'recommended'
-      ? recommendationsError
-      : activeTab === 'applied'
-        ? applicationsError
-        : null
-
-  const jobs = jobsData?.jobs || []
-  const totalJobs = jobsData?.total || 0
-  const totalPages = jobsData?.total_pages || 0
+  const workTypeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (
-      user?.id &&
-      !isSearchMode &&
-      isAuthenticated &&
-      !isAuthLoading &&
-      !isLoadingRecommendations &&
-      !recommendationsData &&
-      activeTab === 'recommended'
-    ) {
-      refetchRecommendations()
+    function handleClickOutside(e: MouseEvent) {
+      if (workTypeRef.current && !workTypeRef.current.contains(e.target as Node))
+        setWorkTypeOpen(false)
     }
-  }, [
-    user?.id,
-    isSearchMode,
-    isAuthenticated,
-    isAuthLoading,
-    isLoadingRecommendations,
-    recommendationsData,
-    refetchRecommendations,
-    activeTab,
-  ])
-
-  const createApplicationMutation = useCreateApplication()
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true)
-    try {
-      if (isSearchMode) {
-        await queryClient.invalidateQueries({
-          queryKey: ['jobs', 'search'],
-          refetchType: 'active',
-        })
-        await refetchSearch()
-      } else if (activeTab === 'recommended') {
-        await queryClient.invalidateQueries({
-          queryKey: ['jobs', 'personalized'],
-          refetchType: 'active',
-        })
-        await refetchRecommendations()
-      }
-
-      toast.success(isSearchMode ? 'Search results refreshed' : 'Job list refreshed')
-    } catch (error) {
-      console.error('Failed to refresh:', error)
-      toast.error('Failed to refresh')
-    } finally {
-      setIsRefreshing(false)
-    }
-  }, [queryClient, isSearchMode, refetchSearch, refetchRecommendations, activeTab])
-
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery)
-      setCurrentPage(1)
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  const { data: jobsResp, isLoading, isError } = useSearchJobsQuery(appliedParams)
+  const { items: jobs = [], pagination } = jobsResp?.data ?? {}
 
-  const handleFilterToggle = useCallback((filter: FilterType) => {
-    setActiveFilters(prev => {
-      if (prev.includes(filter)) {
-        return prev.filter(f => f !== filter)
-      }
-      return [...prev, filter]
+  const resolvedId = selectedJobId ?? jobs[0]?.id ?? null
+
+  function handleSearch(e?: React.FormEvent) {
+    if (e) e.preventDefault()
+    setAppliedParams({
+      q: searchInput || undefined,
+      location: locationInput || undefined,
+      location_type: locationTypeDraft ?? undefined,
+      salary_min: salaryMinInput ? Number(salaryMinInput) : undefined,
+      salary_max: salaryMaxInput ? Number(salaryMaxInput) : undefined,
     })
-    setCurrentPage(1)
-  }, [])
-
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters([])
-    setSearchQuery('')
-    setDebouncedSearchQuery('')
-    setCurrentPage(1)
-  }, [])
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [])
-
-  const handleJobSelect = useCallback((job: Job) => {
-    setSelectedJob(job)
-    setIsDetailModalOpen(true)
-  }, [])
-
-  const handleCloseModal = useCallback(() => {
-    setIsDetailModalOpen(false)
-    setTimeout(() => setSelectedJob(null), 300)
-  }, [])
-
-  const handleJobApply = useCallback(
-    async (job: Job) => {
-      try {
-        await createApplicationMutation.mutateAsync({
-          job_id: job.id.toString(),
-          resume_id: 'default',
-        })
-      } catch {
-        // Ignore application errors
-      }
-    },
-    [createApplicationMutation]
-  )
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as 'recommended' | 'applied' | 'saved')
-    setCurrentPage(1)
+    setSelectedJobId(null)
   }
 
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = '/signin'
-    }
-  }, [isAuthenticated, isAuthLoading])
-
-  if (isAuthLoading) {
-    return <CandidateJobsPageSkeleton />
-  }
-
-  if (!isAuthenticated) {
-    return null
+  function handleClearSearch() {
+    setSearchInput('')
+    setAppliedParams((prev) => {
+      return { ...prev, q: undefined }
+    })
+    setSelectedJobId(null)
   }
 
   return (
-    <AppShell>
-      <div className="min-h-screen bg-background-subtle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-10">
-          {/* Header */}
-          <AnimatedContainer direction="up" delay={0.1}>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="space-y-2.5">
-                <h1 className="text-4xl font-extrabold text-text-primary tracking-tight">
-                  {isSearchMode ? 'Search Results' : 'Find Your Next Role'}
-                </h1>
-                <p className="text-text-secondary text-lg">
-                  {isSearchMode
-                    ? debouncedSearchQuery
-                      ? `Found ${totalJobs} matches for "${debouncedSearchQuery}"`
-                      : 'Search results based on your criteria'
-                    : 'Discover opportunities matched to your skills and experience'}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={handleRefresh}
-                disabled={isRefreshing || isLoading}
-                className="h-11 px-5 text-primary-600 border-primary-200 hover:bg-primary-50 dark:hover:bg-primary-950/30 shadow-sm transition-all whitespace-nowrap"
-              >
-                <RefreshCw className={cn('w-4 h-4 mr-2', isRefreshing && 'animate-spin')} />
-                Refresh Jobs
-              </Button>
-            </div>
-          </AnimatedContainer>
+    <>
+      <div className="dash-content container container--app-shell">
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">Find Jobs</h2>
+            <p className="dash-page-header__subtitle">
+              Discover active roles, refine the search, and preview details before you apply.
+            </p>
+          </div>
+          <div className="dash-page-header__actions">
+            <span className="page-header-hint">
+              {isLoading
+                ? 'Loading jobs...'
+                : `${pagination?.total ?? 0} job${pagination?.total === 1 ? '' : 's'} available`}
+            </span>
+          </div>
+        </div>
 
-          {/* Search & Filter */}
-          <AnimatedContainer direction="up" delay={0.15}>
-            <Card className="p-4 shadow-sm border-border-default bg-background-surface">
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted w-4.5 h-4.5" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => handleSearchChange(e.target.value)}
-                    placeholder="Search by job title, company, or skills..."
-                    className="w-full pl-11 pr-4 py-2.5 bg-background-subtle border-none rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-text-muted text-sm font-medium text-text-primary"
+        <form className="jobs-layout" onSubmit={handleSearch}>
+          {/* ── Filter Sidebar ── */}
+          <div className="jobs-layout__sidebar">
+            <div className="jobs-layout__sidebar-title">Filters</div>
+
+            {/* Work Type dropdown */}
+            <div className="jobs-layout__filter-group">
+              <div className="jobs-layout__filter-group-label">Work Type</div>
+              <div className="jobs-filter-dropdown" ref={workTypeRef}>
+                <button
+                  type="button"
+                  className={`jobs-filter-dropdown__trigger${workTypeOpen ? ' jobs-filter-dropdown__trigger--open' : ''}${locationTypeDraft !== null ? ' jobs-filter-dropdown__trigger--active' : ''}`}
+                  onClick={() => setWorkTypeOpen((v) => !v)}
+                >
+                  <span>
+                    {locationTypeDraft ? LOCATION_TYPE_LABELS[locationTypeDraft] : 'All Types'}
+                  </span>
+                  <ChevronDown
+                    className={`jobs-filter-dropdown__chevron${workTypeOpen ? ' jobs-filter-dropdown__chevron--open' : ''}`}
+                    size={12}
                   />
-                </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
-                  <FilterChips
-                    activeFilters={activeFilters}
-                    onFilterToggle={handleFilterToggle}
-                    onClearAll={handleClearFilters}
-                    showAvailable
-                  />
-                </div>
-              </div>
-            </Card>
-          </AnimatedContainer>
-
-          {/* Tabs & Grid */}
-          <AnimatedContainer direction="up" delay={0.3}>
-            <div className="w-full space-y-8">
-              <Tabs
-                value={isSearchMode ? 'recommended' : activeTab}
-                onValueChange={handleTabChange}
-                className="w-full"
-              >
-                <TabsList className="bg-transparent border-b border-border-subtle rounded-none w-full justify-start h-auto p-0 gap-8">
-                  <TabsTrigger
-                    value="recommended"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
-                  >
-                    {isSearchMode ? 'Search Results' : 'Recommended'}
-                    {recommendationsData?.total !== undefined && !isSearchMode && (
-                      <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
-                        {recommendationsData.total}
-                      </span>
-                    )}
-                    {isSearchMode && totalJobs !== undefined && (
-                      <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
-                        {totalJobs}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="applied"
-                    disabled={isSearchMode}
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
-                  >
-                    Applied
-                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
-                      {applications.length}
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="saved"
-                    disabled={isSearchMode}
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary-600 data-[state=active]:bg-transparent px-0 pb-3 text-text-tertiary data-[state=active]:text-text-primary font-bold text-sm transition-all shadow-none"
-                  >
-                    Saved
-                    <span className="ml-2 text-[10px] bg-background-subtle px-1.5 py-0.5 rounded-full text-text-tertiary">
-                      0
-                    </span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                {isLoading ? (
-                  <>
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <SkeletonJobCard
-                        key={index}
-                        className="h-full group hover:shadow-lg transition-all duration-300"
-                      />
+                </button>
+                {workTypeOpen && (
+                  <div className="jobs-filter-dropdown__menu">
+                    {([null, 'onsite', 'remote', 'hybrid'] as (LocationType | null)[]).map((t) => (
+                      <button
+                        key={String(t)}
+                        type="button"
+                        className={`jobs-filter-dropdown__option${locationTypeDraft === t ? ' jobs-filter-dropdown__option--active' : ''}`}
+                        onClick={() => {
+                          setLocationTypeDraft(t)
+                          setWorkTypeOpen(false)
+                        }}
+                      >
+                        <span className="jobs-filter-dropdown__option-dot" />
+                        {t === null ? 'All Types' : LOCATION_TYPE_LABELS[t]}
+                      </button>
                     ))}
-                  </>
-                ) : error ? (
-                  <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-3xl bg-error-50 dark:bg-error-900/30 flex items-center justify-center border border-error-100 dark:border-error-800/30 mb-8">
-                      <AlertCircle className="w-8 h-8 text-error-500" />
-                    </div>
-                    <h3 className="text-xl font-bold text-text-primary tracking-tight">
-                      Unable to load content
-                    </h3>
-                    <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
-                      There was an issue fetching the current data. This might be due to a temporary
-                      network problem.
-                    </p>
-                    <Button
-                      onClick={handleRefresh}
-                      className="mt-10 h-12 px-10 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-primary-600/20 transition-all active:scale-95"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Retry Fetch
-                    </Button>
-                  </div>
-                ) : isSearchMode || activeTab === 'recommended' ? (
-                  jobs.length === 0 ? (
-                    <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                      <div className="w-16 h-16 rounded-3xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-100 dark:border-primary-800/30 mb-8">
-                        <Search className="w-8 h-8 text-primary-500" />
-                      </div>
-                      <h3 className="text-xl font-bold text-text-primary tracking-tight">
-                        No results found
-                      </h3>
-                      <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
-                        We couldn't find any jobs matching your current search or filters. Try
-                        broadening your keywords.
-                      </p>
-                      <Button
-                        variant="ghost"
-                        onClick={handleClearFilters}
-                        className="mt-8 h-11 px-8 rounded-xl text-primary-600 font-bold uppercase tracking-wider text-[11px] hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all"
-                      >
-                        Clear All Filters
-                      </Button>
-                    </div>
-                  ) : (
-                    jobs.map(job => (
-                      <JobCard
-                        key={job.id}
-                        job={job}
-                        isSelected={selectedJob?.id === job.id}
-                        onSelect={handleJobSelect}
-                        className="h-full hover:shadow-xl transition-all duration-300"
-                      />
-                    ))
-                  )
-                ) : activeTab === 'applied' ? (
-                  applications.length === 0 ? (
-                    <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                      <div className="w-16 h-16 rounded-3xl bg-success-50 dark:bg-success-900/30 flex items-center justify-center border border-success-100 dark:border-success-800/30 mb-8">
-                        <Briefcase className="w-8 h-8 text-success-500" />
-                      </div>
-                      <h3 className="text-xl font-bold text-text-primary tracking-tight">
-                        No applications yet
-                      </h3>
-                      <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
-                        Your journey starts here. Explore our personalized recommendations and apply
-                        to roles that fit your skills.
-                      </p>
-                      <Button
-                        onClick={() => setActiveTab('recommended')}
-                        className="mt-10 h-12 px-10 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold uppercase tracking-wider text-[11px] shadow-lg shadow-primary-600/20 transition-all active:scale-95"
-                      >
-                        Browse Recommended Jobs
-                      </Button>
-                    </div>
-                  ) : (
-                    applications.map((app: Application) => (
-                      <Card
-                        key={app.id}
-                        className="p-6 border-border-default hover:border-primary-200 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md overflow-hidden rounded-[32px] bg-background-surface"
-                      >
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-start">
-                            <div className="w-12 h-12 rounded-2xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center font-bold text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-800 shadow-sm transition-transform group-hover:scale-110 duration-300">
-                              {app.company_name?.substring(0, 2).toUpperCase() || 'JB'}
-                            </div>
-                            <Badge
-                              variant="subtle"
-                              className={cn(
-                                'font-bold uppercase tracking-wider text-[10px] px-3 py-1.5 rounded-full border-none',
-                                app.status === 'applied'
-                                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                                  : app.status === 'interviewing'
-                                    ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
-                                    : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
-                              )}
-                            >
-                              {app.status}
-                            </Badge>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-lg text-text-primary line-clamp-1 group-hover:text-primary-600 transition-colors tracking-tight">
-                              {app.job_title}
-                            </h3>
-                            <p className="text-sm text-text-tertiary font-medium mt-1 uppercase tracking-wider text-[10px] opacity-70 italic">
-                              {app.company_name}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="pt-6 mt-8 border-t border-border-subtle flex items-center justify-between text-[11px] text-text-tertiary font-medium">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
-                            Applied{' '}
-                            {new Date(app.applied_date).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </div>
-                          <div className="px-4 py-2 bg-background-subtle rounded-xl border border-border-subtle group-hover:bg-primary-600 group-hover:text-white group-hover:border-primary-600 font-bold uppercase tracking-wider text-[10px] transition-all cursor-pointer shadow-sm">
-                            Details
-                          </div>
-                        </div>
-                      </Card>
-                    ))
-                  )
-                ) : (
-                  <div className="col-span-full py-24 flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-3xl bg-warning-50 dark:bg-warning-900/30 flex items-center justify-center border border-warning-100 dark:border-warning-800/30 mb-8">
-                      <Bookmark className="w-8 h-8 text-warning-500" />
-                    </div>
-                    <h3 className="text-xl font-bold text-text-primary tracking-tight">
-                      Saved jobs coming soon
-                    </h3>
-                    <p className="text-[15px] text-text-tertiary font-medium mt-3 max-w-sm text-center leading-relaxed">
-                      We're building a simpler way for you to bookmark and organize roles you're
-                      interested in. Stay tuned!
-                    </p>
                   </div>
                 )}
               </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && totalJobs > 0 && (activeTab === 'recommended' || isSearchMode) && (
-                <div className="mt-16 flex justify-center">
-                  <div className="flex items-center gap-2 bg-background-surface rounded-2xl p-2 shadow-sm border border-border-subtle">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-30 transition-colors"
-                    >
-                      <Clock className="w-5 h-5 -rotate-90" />
-                    </Button>
-                    <span className="text-sm font-bold text-text-secondary px-4">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage >= totalPages}
-                      className="h-10 w-10 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-30 transition-colors"
-                    >
-                      <Clock className="w-5 h-5 rotate-90" />
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
-          </AnimatedContainer>
 
-          <JobDetailsModal
-            job={selectedJob}
-            isOpen={isDetailModalOpen}
-            onClose={handleCloseModal}
-            onApply={handleJobApply}
-            showApplyButton
-          />
-        </div>
+            {/* Location text filter */}
+            <div className="jobs-layout__filter-group">
+              <div className="jobs-layout__filter-group-label">Location</div>
+              <div className="jobs-sidebar-search">
+                <span className="jobs-sidebar-search__icon">
+                  <MapPin size={15} aria-hidden="true" />
+                </span>
+                <input
+                  type="text"
+                  className="jobs-sidebar-search__input"
+                  placeholder="e.g. Kathmandu…"
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
+                />
+                {locationInput && (
+                  <button
+                    type="button"
+                    className="jobs-sidebar-search__btn"
+                    aria-label="Clear location"
+                    onClick={() => setLocationInput('')}
+                  >
+                    <X size={11} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Salary range inputs */}
+            <div className="jobs-layout__filter-group">
+              <div className="jobs-layout__filter-group-label">Salary (NPR)</div>
+              <div className="jobs-salary-range">
+                <input
+                  type="number"
+                  className="jobs-salary-range__input"
+                  placeholder="Min"
+                  value={salaryMinInput}
+                  onChange={(e) => setSalaryMinInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
+                />
+                <span className="jobs-salary-range__sep">···</span>
+                <input
+                  type="number"
+                  className="jobs-salary-range__input"
+                  placeholder="Max"
+                  value={salaryMaxInput}
+                  onChange={(e) => setSalaryMaxInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Job List ── */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="dash-page-toolbar">
+              <div className="dash-page-toolbar__search">
+                <span className="dash-page-toolbar__icon">
+                  <Search size={16} aria-hidden="true" />
+                </span>
+                <input
+                  type="text"
+                  className="dash-page-toolbar__input"
+                  placeholder="Search jobs by title"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSearch()
+                    }
+                  }}
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    className="dash-page-toolbar__clear"
+                    onClick={handleClearSearch}
+                    aria-label="Clear search"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <button type="submit" className="btn btn--primary" style={{ minHeight: '52px' }}>
+                Search
+              </button>
+            </div>
+
+            {isLoading ? (
+              <JobCardsSkeleton count={5} />
+            ) : isError ? (
+              <div className="dash-card">
+                <div className="dash-card__body">Failed to load jobs.</div>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="dash-card">
+                <div className="dash-card__body dash-empty-state">
+                  <Briefcase className="dash-empty-state__icon" />
+                  <p>No jobs match your search.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="job-list-stack content-stagger">
+                {jobs.map((job, index) => {
+                  const showFallbackDivider =
+                    job.is_fallback && (index === 0 || !jobs[index - 1].is_fallback)
+
+                  return (
+                    <div key={job.id} style={{ display: 'contents' }}>
+                      {showFallbackDivider && (
+                        <div className="job-list-fallback-divider">
+                          <span className="job-list-fallback-divider__line" />
+                          <span className="job-list-fallback-divider__text">
+                            Recommended jobs outside your filters
+                          </span>
+                          <span className="job-list-fallback-divider__line" />
+                        </div>
+                      )}
+                      <div
+                        className={`job-card content-stagger-item${resolvedId === job.id ? ' job-card--active' : ''}`}
+                        style={{ '--stagger-index': index } as React.CSSProperties}
+                        onClick={() => setSelectedJobId(job.id)}
+                      >
+                        <div className="job-card__header">
+                          <div
+                            className="job-card__logo"
+                            style={
+                              {
+                                '--logo-bg': '#7928CA1A',
+                                '--logo-color': '#7928CA',
+                              } as React.CSSProperties
+                            }
+                          >
+                            {job.title[0]}
+                          </div>
+                          <div className="job-card__title-wrap">
+                            <div className="job-card__title">{job.title}</div>
+                            <div className="job-card__company">{job.company?.name}</div>
+                            <div className="job-card__location">
+                              {job.location ? (
+                                <MapPin size={11} aria-hidden="true" />
+                              ) : (
+                                <Briefcase size={11} aria-hidden="true" />
+                              )}
+                              <span>
+                                {job.location ? `${job.location} · ` : ''}
+                                {LOCATION_TYPE_LABELS[job.location_type]}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="job-card__actions-wrap">
+                            {job.match_score !== null && (
+                              <div className="job-match-badge" title="AI Match Score">
+                                {Math.round(job.match_score * 100)}% Match
+                              </div>
+                            )}
+                            <button
+                              className="job-card__bookmark"
+                              title="Save job"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Bookmark size={14} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="job-card__tags">
+                          <span className="job-card__tag">
+                            {LOCATION_TYPE_LABELS[job.location_type]}
+                          </span>
+                          {(job.salary_min || job.salary_max) && (
+                            <span className="job-card__tag job-card__tag--salary">
+                              {formatSalary(job.salary_min, job.salary_max, job.currency)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="job-card__meta">
+                          <span className="job-card__meta-time">
+                            <Clock size={12} aria-hidden="true" />
+                            {formatDate(job.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {pagination && pagination.pages > 1 && (
+                  <div className="jobs-pagination">
+                    <button
+                      className="btn btn--ghost btn--sm"
+                      disabled={!pagination.has_prev}
+                      onClick={() =>
+                        setAppliedParams((prev) => ({ ...prev, page: (prev.page || 1) - 1 }))
+                      }
+                    >
+                      Previous
+                    </button>
+                    <span className="jobs-pagination__info">
+                      Page {pagination.page} of {pagination.pages}
+                    </span>
+                    <button
+                      className="btn btn--ghost btn--sm"
+                      disabled={!pagination.has_next}
+                      onClick={() =>
+                        setAppliedParams((prev) => ({ ...prev, page: (prev.page || 1) + 1 }))
+                      }
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Job Preview Panel ── */}
+          {isLoading ? (
+            <JobPreviewSkeleton />
+          ) : resolvedId ? (
+            <Suspense fallback={<JobPreviewSkeleton />}>
+              <LazyJobPreviewPanel
+                jobId={resolvedId}
+                allJobs={jobs}
+                onApply={() => {
+                  const j = jobs.find((x) => x.id === resolvedId)
+                  if (j) setApplyingToJob(j)
+                }}
+              />
+            </Suspense>
+          ) : (
+            <div className="job-preview content-fade-in">
+              <div className="job-preview__empty">
+                <Briefcase style={{ width: 40, height: 40, opacity: 0.3 }} />
+                <p>Select a job to preview details</p>
+              </div>
+            </div>
+          )}
+        </form>
       </div>
-    </AppShell>
+
+      {/* Apply modal */}
+      {applyingToJob && (
+        <ApplyModal
+          jobId={applyingToJob.id}
+          jobTitle={applyingToJob.title}
+          onClose={() => setApplyingToJob(null)}
+        />
+      )}
+    </>
   )
 }

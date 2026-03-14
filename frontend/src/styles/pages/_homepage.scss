@@ -1,0 +1,235 @@
+// ============================================================
+// HOMEPAGE
+// ============================================================
+
+@use 'sass:color';
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.homepage {
+  overflow: hidden;
+
+  .heroSection {
+    height: 100vh;
+    padding-block: $space-16;
+    text-align: center;
+    position: relative;
+  }
+
+  @include xl {
+    padding-block: $space-20;
+  }
+
+  &__bg-top {
+    position: absolute;
+    max-width: 500px;
+    width: 80vw;
+    height: fit-content !important;
+    top: 0%;
+    left: 0%;
+    z-index: 0;
+    opacity: 0; // GSAP entrance will reveal
+  }
+
+  &__bg-bottom {
+    position: absolute;
+    max-width: 400px;
+    width: 80vw;
+    height: fit-content !important;
+    bottom: 0%;
+    right: 0%;
+    z-index: 0;
+    opacity: 0; // GSAP entrance will reveal
+  }
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    padding-top: clamp($space-8, 15vw, $space-12);
+    @include flex-center;
+
+    flex-direction: column;
+    gap: $space-6;
+  }
+
+  // ── Heading ────────────────────────────────────────────────
+  &__heading {
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    line-height: $line-height-tight;
+    color: $color-gray-900;
+    max-width: 780px;
+    letter-spacing: -0.02em;
+
+    @include md {
+      font-size: $font-size-5xl;
+    }
+
+    @include lg {
+      font-size: 3.5rem;
+    }
+  }
+
+  &__heading-primary {
+    color: $color-primary;
+  }
+
+  // ── Subtitle ───────────────────────────────────────────────
+  &__subtitle {
+    font-size: $font-size-base;
+    color: $color-text-muted;
+    max-width: 560px;
+    line-height: $line-height-loose;
+    margin-bottom: 0;
+  }
+
+  // ── Search bar ─────────────────────────────────────────────
+  &__search {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 680px;
+    background-color: $color-white;
+    border-radius: $radius-full;
+    box-shadow:
+      $shadow-lg,
+      0 0 0 1px $color-gray-200;
+    padding: $space-2;
+    gap: 0;
+
+    @include md {
+      padding: $space-2 $space-2 $space-2 $space-4;
+    }
+  }
+
+  &__search-field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding-inline: $space-3;
+
+    @include md {
+      padding-inline: $space-2;
+    }
+  }
+
+  &__search-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: $color-gray-400;
+    flex-shrink: 0;
+  }
+
+  &__search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: $font-body;
+    font-size: $font-size-sm;
+    color: $color-gray-900;
+    padding-block: $space-2;
+
+    &::placeholder {
+      color: $color-gray-400;
+    }
+
+    @include md {
+      font-size: $font-size-base;
+    }
+  }
+
+  &__search-divider {
+    width: 1px;
+    height: 1.5rem;
+    background-color: $color-gray-200;
+    flex-shrink: 0;
+  }
+
+  &__search-btn {
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+    flex-shrink: 0;
+    padding: $space-3 $space-6;
+    border-radius: $radius-full;
+    background: $color-primary;
+    color: $color-white;
+    font-family: $font-body;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    border: none;
+    @include focus-ring($color-primary);
+
+    // Fill layer — darker gradient, slides up on hover
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: color.adjust($color-primary, $lightness: -12%);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform $transition-base;
+      z-index: -1;
+      border-radius: inherit;
+    }
+
+    &:hover::before {
+      transform: scaleY(1);
+      transform-origin: bottom;
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+
+    @include md {
+      padding: $space-3 $space-8;
+      font-size: $font-size-base;
+    }
+  }
+
+  &__proof-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 14px;
+    align-items: center;
+    gap: clamp(10px, 1.5vw, 20px);
+  }
+
+  &__proofImg {
+    max-width: 150px;
+    width: 100%;
+  }
+
+  // ── Social proof ───────────────────────────────────────────
+  &__proof {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    margin-bottom: 0;
+
+    strong {
+      color: $color-gray-800;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  &__bottomImg {
+    position: absolute;
+    pointer-events: none;
+    bottom: 0;
+    z-index: 1;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60vw;
+
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+}
