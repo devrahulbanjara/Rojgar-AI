@@ -17,6 +17,7 @@ export interface CandidateDashboardRecentApplication {
   updated_at: string
   job_title: string
   company_name: string
+  company_logo_url: string | null
   location: string | null
   location_type: 'remote' | 'onsite' | 'hybrid'
 }
@@ -35,6 +36,7 @@ export interface CandidateDashboardRecommendedJob {
   company: {
     id: string
     name: string
+    logo_url?: string | null
     industry: string | null
     company_size: string | null
     location: string | null

@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from 'react'
 
 import type { JobAIDraftPayload } from '@/store/services/jobAiApi'
+import { Lock, LockOpen, Plus, X } from 'lucide-react'
 
 type DraftField =
   | 'title'
@@ -16,6 +17,8 @@ type DraftField =
   | 'requirements'
   | 'preferred_qualifications'
   | 'benefits'
+
+const CURRENCY_OPTIONS = ['NPR', 'INR', 'USD', 'EUR', 'GBP'] as const
 
 type JobDraftFormProps = {
   draft: JobAIDraftPayload | null
@@ -35,6 +38,7 @@ function hasAny(targets: string[], keys: string[]) {
 function FieldChrome({
   label,
   helper,
+  showHelper = true,
   fieldKeys,
   lockedFields,
   dirtyFields,
@@ -46,6 +50,7 @@ function FieldChrome({
 }: {
   label: string
   helper: string
+  showHelper?: boolean
   fieldKeys: DraftField[]
   lockedFields: string[]
   dirtyFields: string[]
@@ -56,6 +61,7 @@ function FieldChrome({
   children: ReactNode
 }) {
   const [instruction, setInstruction] = useState('')
+  const [showInstruction, setShowInstruction] = useState(false)
   const isLocked = hasAny(lockedFields, fieldKeys)
   const isDirty = hasAny(dirtyFields, fieldKeys)
   const isMissing = hasAny(missingFields, fieldKeys)
@@ -65,58 +71,78 @@ function FieldChrome({
       <div className="job-ai-field__header">
         <div className="job-ai-field__title-row">
           <label className="job-ai-label">{label}</label>
+          <button
+            type="button"
+            className={`job-ai-field__lock-btn${isLocked ? ' job-ai-field__lock-btn--active' : ''}`}
+            disabled={disabled}
+            onClick={() => onToggleLock(fieldKeys[0])}
+            aria-label={isLocked ? `Unlock ${label}` : `Lock ${label}`}
+            title={isLocked ? `Unlock ${label}` : `Lock ${label}`}
+          >
+            {isLocked ? (
+              <Lock size={15} aria-hidden="true" />
+            ) : (
+              <LockOpen size={15} aria-hidden="true" />
+            )}
+          </button>
           <div className="job-ai-field__badges">
             {isLocked ? <span className="job-ai-badge job-ai-badge--locked">Locked</span> : null}
-            {isDirty ? (
-              <span className="job-ai-badge job-ai-badge--edited">Edited</span>
-            ) : (
-              <span className="job-ai-badge job-ai-badge--ai">AI Suggested</span>
-            )}
+            {isDirty ? <span className="job-ai-badge job-ai-badge--edited">Edited</span> : null}
             {isMissing ? <span className="job-ai-badge job-ai-badge--missing">Missing</span> : null}
           </div>
         </div>
-
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={disabled}
-          onClick={() => onToggleLock(fieldKeys[0])}
-        >
-          {isLocked ? 'Unlock' : 'Lock'}
-        </button>
       </div>
 
-      <p className="job-ai-field__helper">{helper}</p>
+      {showHelper ? <p className="job-ai-field__helper">{helper}</p> : null}
 
       {children}
 
-      <div className="job-ai-instruction">
-        <label className="job-ai-label" htmlFor={`field-feedback-${fieldKeys[0]}`}>
-          Tell AI what to change in this field
+      <div className="job-ai-assistant__toggle job-ai-field__toggle">
+        <label className="job-ai-checkbox" htmlFor={`field-feedback-toggle-${fieldKeys[0]}`}>
+          <input
+            id={`field-feedback-toggle-${fieldKeys[0]}`}
+            type="checkbox"
+            checked={showInstruction}
+            onChange={(event) => setShowInstruction(event.target.checked)}
+            disabled={disabled || isLocked}
+          />
+          <span>Any feedback for AI to modify this field?</span>
         </label>
-        <textarea
-          id={`field-feedback-${fieldKeys[0]}`}
-          className="job-ai-textarea"
-          rows={3}
-          value={instruction}
-          onChange={(event) => setInstruction(event.target.value)}
-          placeholder={`Example: ${helper}`}
-          disabled={disabled || isLocked}
-        />
-        <div className="job-ai-field__actions">
-          <button
-            type="button"
-            className="btn btn--outline btn--sm"
-            disabled={disabled || isLocked || !instruction.trim()}
-            onClick={() => {
-              onRequestUpdate(fieldKeys, instruction.trim())
-              setInstruction('')
-            }}
-          >
-            Send to AI
-          </button>
-        </div>
       </div>
+
+      {showInstruction ? (
+        <div
+          className="job-ai-instruction"
+          style={{ animation: 'content-fade-up 280ms ease both' }}
+        >
+          <label className="job-ai-label" htmlFor={`field-feedback-${fieldKeys[0]}`}>
+            Tell AI what to change in this field
+          </label>
+          <textarea
+            id={`field-feedback-${fieldKeys[0]}`}
+            className="job-ai-textarea"
+            rows={3}
+            value={instruction}
+            onChange={(event) => setInstruction(event.target.value)}
+            placeholder={`Example: ${helper}`}
+            disabled={disabled || isLocked}
+          />
+          <div className="job-ai-field__actions">
+            <button
+              type="button"
+              className="btn btn--outline btn--sm"
+              disabled={disabled || isLocked || !instruction.trim()}
+              onClick={() => {
+                onRequestUpdate(fieldKeys, instruction.trim())
+                setInstruction('')
+                setShowInstruction(false)
+              }}
+            >
+              Send to AI
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -124,13 +150,11 @@ function FieldChrome({
 function ListEditor({
   label,
   items,
-  emptyLabel,
   disabled,
   onChange,
 }: {
   label: string
   items: string[]
-  emptyLabel: string
   disabled: boolean
   onChange: (items: string[]) => void
 }) {
@@ -155,30 +179,24 @@ function ListEditor({
 
   return (
     <div className="job-ai-list-editor">
-      <div className="job-ai-list-editor__header">
-        <span className="job-ai-label">{label}</span>
-        <span className="job-ai-list-editor__count">{items.length} item(s)</span>
-      </div>
-
-      {items.length === 0 ? (
-        <div className="job-ai-list-editor__empty">{emptyLabel}</div>
-      ) : (
+      {items.length === 0 ? null : (
         <div className="job-ai-list-editor__items">
           {items.map((item, index) => (
-            <div className="job-ai-list-editor__row" key={`${label}-${index}`}>
+            <div className="job-ai-list-editor__row" key={`item-${index}`}>
               <input
-                className="job-ai-input"
+                className="job-ai-input job-ai-list-editor__input"
                 value={item}
                 onChange={(event) => updateItem(index, event.target.value)}
                 disabled={disabled}
               />
               <button
                 type="button"
-                className="btn btn--ghost btn--sm"
+                className="job-ai-list-editor__remove"
                 onClick={() => removeItem(index)}
                 disabled={disabled}
+                aria-label={`Remove item ${index + 1}`}
               >
-                Remove
+                <X size={14} aria-hidden="true" />
               </button>
             </div>
           ))}
@@ -187,7 +205,7 @@ function ListEditor({
 
       <div className="job-ai-list-editor__composer">
         <input
-          className="job-ai-input"
+          className="job-ai-input job-ai-list-editor__composer-input"
           value={newItem}
           onChange={(event) => setNewItem(event.target.value)}
           placeholder={`Add a new ${label.toLowerCase()} item`}
@@ -195,10 +213,11 @@ function ListEditor({
         />
         <button
           type="button"
-          className="btn btn--outline btn--sm"
+          className="job-ai-list-editor__add"
           onClick={addItem}
           disabled={disabled}
         >
+          <Plus size={14} aria-hidden="true" />
           Add
         </button>
       </div>
@@ -219,11 +238,11 @@ export default function JobDraftForm({
   if (!draft) {
     return (
       <section className="job-ai-card job-ai-card--placeholder dash-card">
-        <div className="job-ai-card__body dash-card__body">
+        <div className="job-ai-card__body dash-card__body" style={{ alignItems: 'center' }}>
           <div className="job-ai-empty">
             <h2 className="job-ai-empty__title">No draft yet</h2>
             <p className="job-ai-empty__copy">
-              Generate a draft from the left panel and the editable job form will appear here.
+              Generate a draft above and the editable job form will appear here.
             </p>
           </div>
         </div>
@@ -309,49 +328,60 @@ export default function JobDraftForm({
               <option value="hybrid">Hybrid</option>
             </select>
           </FieldChrome>
-        </div>
 
-        <FieldChrome
-          label="Salary Range"
-          helper="Adjust the salary range and currency using realistic recruiter-friendly language."
-          fieldKeys={['salary_min', 'salary_max', 'currency']}
-          lockedFields={lockedFields}
-          dirtyFields={dirtyFields}
-          missingFields={missingFields}
-          disabled={disabled}
-          onToggleLock={onToggleLock}
-          onRequestUpdate={onRequestUpdate}
-        >
-          <div className="job-ai-form__salary-grid">
-            <input
-              className="job-ai-input"
-              type="number"
-              value={draft.salary_min ?? ''}
-              onChange={(event) =>
-                onFieldChange('salary_min', event.target.value ? Number(event.target.value) : null)
-              }
-              placeholder="Min salary"
-              disabled={disabled}
-            />
-            <input
-              className="job-ai-input"
-              type="number"
-              value={draft.salary_max ?? ''}
-              onChange={(event) =>
-                onFieldChange('salary_max', event.target.value ? Number(event.target.value) : null)
-              }
-              placeholder="Max salary"
-              disabled={disabled}
-            />
-            <input
-              className="job-ai-input"
-              value={draft.currency ?? ''}
-              onChange={(event) => onFieldChange('currency', event.target.value || null)}
-              placeholder="Currency"
-              disabled={disabled}
-            />
-          </div>
-        </FieldChrome>
+          <FieldChrome
+            label="Salary Range"
+            helper="Adjust the salary range and currency using realistic recruiter-friendly language."
+            fieldKeys={['salary_min', 'salary_max', 'currency']}
+            lockedFields={lockedFields}
+            dirtyFields={dirtyFields}
+            missingFields={missingFields}
+            disabled={disabled}
+            onToggleLock={onToggleLock}
+            onRequestUpdate={onRequestUpdate}
+          >
+            <div className="job-ai-form__salary-grid">
+              <input
+                className="job-ai-input"
+                type="number"
+                value={draft.salary_min ?? ''}
+                onChange={(event) =>
+                  onFieldChange(
+                    'salary_min',
+                    event.target.value ? Number(event.target.value) : null,
+                  )
+                }
+                placeholder="Min salary"
+                disabled={disabled}
+              />
+              <input
+                className="job-ai-input"
+                type="number"
+                value={draft.salary_max ?? ''}
+                onChange={(event) =>
+                  onFieldChange(
+                    'salary_max',
+                    event.target.value ? Number(event.target.value) : null,
+                  )
+                }
+                placeholder="Max salary"
+                disabled={disabled}
+              />
+              <select
+                className="job-ai-input"
+                value={draft.currency ?? 'NPR'}
+                onChange={(event) => onFieldChange('currency', event.target.value)}
+                disabled={disabled}
+              >
+                {CURRENCY_OPTIONS.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </FieldChrome>
+        </div>
 
         <FieldChrome
           label="Overview"
@@ -377,6 +407,7 @@ export default function JobDraftForm({
           <FieldChrome
             label="Responsibilities"
             helper="Make these responsibilities clearer, more senior, or more execution-focused."
+            showHelper={false}
             fieldKeys={['responsibilities']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
@@ -388,7 +419,6 @@ export default function JobDraftForm({
             <ListEditor
               label="Responsibilities"
               items={draft.responsibilities}
-              emptyLabel="No responsibilities yet."
               disabled={disabled}
               onChange={(items) => onFieldChange('responsibilities', items)}
             />
@@ -397,6 +427,7 @@ export default function JobDraftForm({
           <FieldChrome
             label="Requirements"
             helper="Tighten these requirements, remove unrealistic asks, or better reflect the role."
+            showHelper={false}
             fieldKeys={['requirements']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
@@ -408,7 +439,6 @@ export default function JobDraftForm({
             <ListEditor
               label="Requirements"
               items={draft.requirements}
-              emptyLabel="No requirements yet."
               disabled={disabled}
               onChange={(items) => onFieldChange('requirements', items)}
             />
@@ -417,6 +447,7 @@ export default function JobDraftForm({
           <FieldChrome
             label="Preferred Qualifications"
             helper="Refine the preferred qualifications so they add signal without becoming mandatory."
+            showHelper={false}
             fieldKeys={['preferred_qualifications']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
@@ -428,7 +459,6 @@ export default function JobDraftForm({
             <ListEditor
               label="Preferred qualifications"
               items={draft.preferred_qualifications}
-              emptyLabel="No preferred qualifications yet."
               disabled={disabled}
               onChange={(items) => onFieldChange('preferred_qualifications', items)}
             />
@@ -437,6 +467,7 @@ export default function JobDraftForm({
           <FieldChrome
             label="Benefits"
             helper="Rewrite the benefits to be clearer, more realistic, or more appealing."
+            showHelper={false}
             fieldKeys={['benefits']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
@@ -448,7 +479,6 @@ export default function JobDraftForm({
             <ListEditor
               label="Benefits"
               items={draft.benefits}
-              emptyLabel="No benefits yet."
               disabled={disabled}
               onChange={(items) => onFieldChange('benefits', items)}
             />

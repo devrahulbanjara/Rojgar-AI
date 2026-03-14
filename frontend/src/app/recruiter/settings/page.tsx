@@ -14,7 +14,7 @@ import {
   useUpdateCompanyMutation,
   useUploadCompanyLogoMutation,
 } from '@/store/services/companyApi'
-import { Building2, Camera, Globe, MapPin, Trash2, X } from 'lucide-react'
+import { Building2, Camera, MapPin, Trash2, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -422,7 +422,9 @@ export default function CompanySettingsPage() {
             />
             {logoError ? <div className="resume-field__error">{logoError}</div> : null}
             <div className="profile-aside-card__name">{companyName}</div>
-            <div className="profile-aside-card__headline">{company.industry || 'Company profile'}</div>
+            <div className="profile-aside-card__headline">
+              {company.industry || 'Company profile'}
+            </div>
             <div className="profile-media-hint">
               PNG, JPG, WEBP, GIF up to {formatBytes(5 * 1024 * 1024)}
             </div>
@@ -454,7 +456,7 @@ export default function CompanySettingsPage() {
                 </button>
               </div>
 
-                <div className="resume-form-grid">
+              <div className="resume-form-grid">
                 <div className="resume-field">
                   <label className="resume-field__label" htmlFor="company-name">
                     Company Name

@@ -31,46 +31,25 @@ export default function RecruiterManualJobPage() {
 
   return (
     <div className="dash-content container container--app-shell">
-      <div className="job-editor-page">
-        <div className="job-editor-page__header">
-          <Link href="/recruiter/jobs" className="job-editor-page__back">
-            <ArrowLeft size={16} aria-hidden="true" />
-            <span>Back to Jobs</span>
-          </Link>
-        </div>
-
-        <div className="dash-page-header">
-          <div className="dash-page-header__left">
-            <h2 className="dash-page-header__title">Post Job Manually</h2>
-            <p className="dash-page-header__subtitle">
-              Create a structured job post with the same recruiter workflow and layout as the rest
-              of your dashboard.
-            </p>
-          </div>
-        </div>
-
-        <section className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <h3 className="dash-card__title">Job Details</h3>
-              <p className="dash-card__subtitle">
-                Company location is prefilled when available. Review the status carefully before
-                saving.
-              </p>
-            </div>
-          </div>
-          <div className="dash-card__body">
-            <RecruiterJobEditor
-              key={`manual-create:${companyResp?.data?.location ?? ''}`}
-              initial={getCreateJobInitialForm(companyResp?.data?.location)}
-              onSubmit={handleCreate}
-              onCancel={() => router.push('/recruiter/jobs')}
-              isLoading={isCreating}
-              submitLabel="Post Job"
-            />
-          </div>
-        </section>
+      <div className="job-ai-page__header">
+        <Link href="/recruiter/jobs" className="job-ai-page__back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          <span>Back to Jobs</span>
+        </Link>
       </div>
+
+      <section className="job-ai-card job-ai-form dash-card">
+        <div className="job-ai-card__body dash-card__body">
+          <RecruiterJobEditor
+            key={`manual-create:${companyResp?.data?.location ?? ''}`}
+            initial={getCreateJobInitialForm(companyResp?.data?.location)}
+            onSubmit={handleCreate}
+            onCancel={() => router.push('/recruiter/jobs')}
+            isLoading={isCreating}
+            submitLabel="Post Job"
+          />
+        </div>
+      </section>
     </div>
   )
 }

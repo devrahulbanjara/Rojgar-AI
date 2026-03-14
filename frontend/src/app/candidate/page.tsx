@@ -16,6 +16,8 @@ import {
 } from '@/store/services/dashboardApi'
 import { Banknote, BriefcaseBusiness, Calendar, FileStack, FileText } from 'lucide-react'
 
+import MediaBadge from '@/components/common/MediaBadge'
+
 type StatVariant = 'primary' | 'success' | 'secondary' | 'warning'
 type StatIconName = 'applications' | 'calendar' | 'offers' | 'resumes'
 
@@ -242,10 +244,12 @@ function RecommendedJobsSkeletonCards({ count }: { count: number }) {
 function ProfileStrengthBanner({
   completionPercentage,
   initials,
+  profilePicture,
   isLoading = false,
 }: {
   completionPercentage: number
   initials: string
+  profilePicture?: string | null
   isLoading?: boolean
 }) {
   const [animatedPercentage, setAnimatedPercentage] = useState(0)
@@ -276,8 +280,16 @@ function ProfileStrengthBanner({
   return (
     <div className="stat-card profile-strength-banner">
       <div className="profile-strength-banner__identity">
-        <div className="profile-strength-banner__avatar" aria-hidden="true">
-          {initials}
+        <div
+          className="profile-strength-banner__avatar"
+          style={{
+            backgroundImage: profilePicture ? `url(${profilePicture})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+          aria-hidden="true"
+        >
+          {!profilePicture && initials}
         </div>
         <div className="profile-strength-banner__copy">
           <div className="profile-strength-banner__label">{PROFILE_COMPLETION_LABEL}</div>
@@ -407,6 +419,7 @@ export default function UserDashboardPage() {
           <ProfileStrengthBanner
             completionPercentage={completionPercentage}
             initials={userInitials}
+            profilePicture={user?.avatar_url}
             isLoading={isStatsLoading}
           />
 
@@ -452,10 +465,15 @@ export default function UserDashboardPage() {
                                     {
                                       '--avatar-bg': accent.color + '1A',
                                       '--avatar-color': accent.color,
+                                      backgroundImage: app.company_logo_url
+                                        ? `url(${app.company_logo_url})`
+                                        : undefined,
+                                      backgroundSize: 'cover',
+                                      backgroundPosition: 'center',
                                     } as CSSProperties
                                   }
                                 >
-                                  {accent.logo}
+                                  {!app.company_logo_url && accent.logo}
                                 </div>
                                 {app.company_name}
                               </div>
@@ -506,17 +524,19 @@ export default function UserDashboardPage() {
                       style={{ '--stagger-index': index } as CSSProperties}
                     >
                       <div className="job-card__header">
-                        <div
+                        <MediaBadge
+                          src={job.company.logo_url}
+                          alt={`${job.company.name} logo`}
+                          fallback={accent.logo}
                           className="job-card__logo"
+                          sizes="40px"
                           style={
                             {
                               '--logo-bg': accent.color + '1A',
                               '--logo-color': accent.color,
                             } as CSSProperties
                           }
-                        >
-                          {accent.logo}
-                        </div>
+                        />
                         <div className="job-card__title-wrap">
                           <div className="job-card__title">{job.title}</div>
                           <div className="job-card__company">

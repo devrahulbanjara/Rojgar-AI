@@ -35,7 +35,7 @@ type TimelineStep = {
 
 const STATUS_FILTERS: StageFilter[] = [
   { key: 'all', label: 'All Applications' },
-  { key: 'submitted', label: 'Applied' },
+  { key: 'submitted', label: 'Submitted' },
   { key: 'screening', label: 'In Review' },
   { key: 'interview', label: 'Interview' },
   { key: 'offered', label: 'Offer' },
@@ -55,7 +55,7 @@ const ACTIVE_TIMELINE: Array<{
   key: Exclude<ApplicationStatus, 'rejected' | 'withdrawn'>
   label: string
 }> = [
-  { key: 'submitted', label: 'Applied' },
+  { key: 'submitted', label: 'Submitted' },
   { key: 'screening', label: 'In Review' },
   { key: 'interview', label: 'Interview' },
   { key: 'offered', label: 'Offer' },
@@ -136,7 +136,7 @@ function formatRelativeDate(iso: string): string {
 function getStatusLabel(status: ApplicationStatus): string {
   switch (status) {
     case 'submitted':
-      return 'Applied'
+      return 'Submitted'
     case 'screening':
       return 'In Review'
     case 'interview':
@@ -195,7 +195,7 @@ function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
   if (application.status === 'rejected' || application.status === 'withdrawn') {
     return [
       {
-        stage: 'Applied',
+        stage: 'Submitted',
         date: formatShortDate(application.created_at),
         done: true,
       },
@@ -456,7 +456,15 @@ export default function ApplicationsPage() {
                         <div className="app-item__meta">
                           <span>{getLocationTypeLabel(application.location_type)}</span>
                           <span className="app-item__sep">·</span>
-                          <span>Applied {formatRelativeDate(application.created_at)}</span>
+                          <span>Submitted {formatRelativeDate(application.created_at)}</span>
+                          <Link
+                            href={`/candidate/jobs/${application.job_id}`}
+                            className="btn btn--outline btn--primary btn--sm"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ marginLeft: 'auto' }}
+                          >
+                            View Job
+                          </Link>
                         </div>
                       </div>
                     </button>

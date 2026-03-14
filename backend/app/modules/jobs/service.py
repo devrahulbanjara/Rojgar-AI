@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -28,6 +28,10 @@ from app.shared.enums import JobStatus, LocationType
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _default_expires_at() -> datetime:
+    return _utcnow() + timedelta(weeks=1)
 
 
 def _effective_job_status(job: Job) -> JobStatus:
@@ -139,6 +143,8 @@ async def create_job(
     company_id = await _get_user_company_id(db, user)
 
     expires_at = _validate_expires_at_for_write(payload.expires_at)
+    if expires_at is None:
+        expires_at = _default_expires_at()
 
     job = Job(
         company_id=company_id,
@@ -159,7 +165,11 @@ async def create_job(
     )
 
     # guard against active jobs already expired
-    if job.status == JobStatus.active and job.expires_at and job.expires_at <= _utcnow():
+    if (
+        job.status == JobStatus.active
+        and job.expires_at
+        and job.expires_at <= _utcnow()
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Active jobs must have an expires_at in the future.",
@@ -375,7 +385,11 @@ async def update_job(
     for field, value in update_data.items():
         setattr(job, field, value)
 
-    if job.status == JobStatus.active and job.expires_at and job.expires_at <= _utcnow():
+    if (
+        job.status == JobStatus.active
+        and job.expires_at
+        and job.expires_at <= _utcnow()
+    ):
         job.status = JobStatus.expired
 
     # 1. Transactionally write the outbox event alongside the update
