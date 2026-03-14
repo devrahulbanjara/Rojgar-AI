@@ -1,388 +1,313 @@
-'use client'
+import { Search, Users } from 'lucide-react'
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
-import { AppShell } from '../../../components/layout/AppShell'
-import { PageTransition, AnimatedContainer, SkeletonLoader } from '../../../components/common'
-import { useAuth } from '../../../hooks/useAuth'
-import { useCandidates, useCandidateSearch } from '../../../hooks/queries/useCandidates'
-import {
-  CandidateFilters,
-  CandidateDetailModal,
-  CandidatesTable,
-  SkeletonTableRow,
-  EmptyTableState,
-} from '../../../components/candidates'
-import { CandidateApplication } from '../../../types/candidate'
-import { Search, FolderOpen } from 'lucide-react'
+const candidates = [
+  {
+    name: 'Alex Chen',
+    role: 'UI/UX Designer',
+    job: 'Product Designer',
+    score: 94,
+    status: 'Shortlisted',
+    stage: 'Interview',
+    initials: 'AC',
+    color: '#0070f3',
+    skills: ['Figma', 'Prototyping', 'UI Design'],
+    applied: '2 days ago',
+  },
+  {
+    name: 'Maria Santos',
+    role: 'Product Designer',
+    job: 'Visual Designer',
+    score: 91,
+    status: 'Shortlisted',
+    stage: 'Technical',
+    initials: 'MS',
+    color: '#7928ca',
+    skills: ['Design Thinking', 'Research', 'Figma'],
+    applied: '3 days ago',
+  },
+  {
+    name: 'James Park',
+    role: 'UX Researcher',
+    job: 'Senior Interaction',
+    score: 88,
+    status: 'In Review',
+    stage: 'Screening',
+    initials: 'JP',
+    color: '#0cce6b',
+    skills: ['User Testing', 'Miro', 'Analytics'],
+    applied: '1 day ago',
+  },
+  {
+    name: 'Lily Wang',
+    role: 'Visual Designer',
+    job: 'Visual Designer',
+    score: 85,
+    status: 'Applied',
+    stage: 'Applied',
+    initials: 'LW',
+    color: '#f59e0b',
+    skills: ['Illustration', 'After Effects', 'Blender'],
+    applied: '4 hours ago',
+  },
+  {
+    name: 'Carlos Rivera',
+    role: 'Motion Designer',
+    job: 'Visual Designer',
+    score: 82,
+    status: 'Applied',
+    stage: 'Applied',
+    initials: 'CR',
+    color: '#ff4d4d',
+    skills: ['After Effects', 'Cinema 4D', 'Lottie'],
+    applied: '6 hours ago',
+  },
+  {
+    name: 'Emma Larsson',
+    role: 'UX Designer',
+    job: 'Product Designer',
+    score: 79,
+    status: 'In Review',
+    stage: 'Screening',
+    initials: 'EL',
+    color: '#5E6AD2',
+    skills: ['Figma', 'Wireframing', 'UX Research'],
+    applied: '1 day ago',
+  },
+  {
+    name: 'David Kim',
+    role: 'UI Designer',
+    job: 'Visual Designer',
+    score: 76,
+    status: 'Rejected',
+    stage: 'Rejected',
+    initials: 'DK',
+    color: '#9ca3af',
+    skills: ['Sketch', 'InVision'],
+    applied: '5 days ago',
+  },
+  {
+    name: 'Sofia Greco',
+    role: 'Product Designer',
+    job: 'Senior Interaction',
+    score: 88,
+    status: 'Shortlisted',
+    stage: 'Interview',
+    initials: 'SG',
+    color: '#0cce6b',
+    skills: ['UX Design', 'Figma', 'Prototyping'],
+    applied: '2 days ago',
+  },
+]
 
-function CandidatesTableSkeleton() {
+const stageOrder: Record<string, number> = {
+  Applied: 1,
+  Screening: 2,
+  Technical: 3,
+  Interview: 4,
+  Offer: 5,
+}
+
+export default function CompanyCandidatesPage() {
   return (
-    <div
-      className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"
-      style={{
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)',
-      }}
-    >
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gradient-to-r from-background-subtle to-background-subtle/50 border-b border-border-default">
-            <th className="py-4 px-6 text-left" style={{ width: '40%' }}>
-              <SkeletonLoader variant="rectangular" width={84} height={12} className="rounded-sm" />
-            </th>
-            <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-              <SkeletonLoader variant="rectangular" width={90} height={12} className="rounded-sm" />
-            </th>
-            <th className="py-4 px-6 text-left" style={{ width: '25%' }}>
-              <SkeletonLoader variant="rectangular" width={64} height={12} className="rounded-sm" />
-            </th>
-            <th className="py-4 px-6 text-left" style={{ width: '15%' }}>
-              <SkeletonLoader variant="rectangular" width={58} height={12} className="rounded-sm" />
-            </th>
-            <th className="py-4 px-6 text-center" style={{ width: '8%' }}>
-              <SkeletonLoader
-                variant="rectangular"
-                width={52}
-                height={12}
-                className="rounded-sm mx-auto"
-              />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 6 }).map((_, index) => (
-            <SkeletonTableRow key={index} />
+    <>
+      <div className="dash-content container container--app-shell">
+        <div className="dash-page-header">
+          <div className="dash-page-header__left">
+            <h2 className="dash-page-header__title">Candidate Pipeline</h2>
+            <p className="dash-page-header__subtitle">
+              Track and manage all applicants across your job postings
+            </p>
+          </div>
+        </div>
+
+        {/* Pipeline summary */}
+        <div className="dash-stats dash-stats--5col">
+          {[
+            { label: 'Applied', value: 74, color: '#9ca3af', bg: '#f4f4f5' },
+            {
+              label: 'Screening',
+              value: 28,
+              color: '#0070f3',
+              bg: 'rgba(0,112,243,0.08)',
+            },
+            {
+              label: 'Technical',
+              value: 12,
+              color: '#7928ca',
+              bg: 'rgba(121,40,202,0.08)',
+            },
+            {
+              label: 'Interview',
+              value: 8,
+              color: '#f59e0b',
+              bg: 'rgba(245,158,11,0.1)',
+            },
+            {
+              label: 'Offer',
+              value: 3,
+              color: '#0cce6b',
+              bg: 'rgba(12,206,107,0.1)',
+            },
+          ].map((s) => (
+            <div key={s.label} className="stat-card stat-card--centered">
+              <div
+                className="pipeline-icon"
+                style={{ '--pipeline-bg': s.bg } as React.CSSProperties}
+              >
+                <Users size={18} stroke={s.color} aria-hidden="true" />
+              </div>
+              <div
+                className="stat-card__value stat-card__value--colored"
+                style={{ '--stat-value-color': s.color } as React.CSSProperties}
+              >
+                {s.value}
+              </div>
+              <div className="stat-card__label">{s.label}</div>
+            </div>
           ))}
-        </tbody>
-      </table>
-      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-background-subtle to-background-subtle/50 border-t border-border-default">
-        <SkeletonLoader variant="rectangular" width={180} height={14} className="rounded-sm" />
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <SkeletonLoader
-              key={index}
-              variant="rectangular"
-              width={36}
-              height={36}
-              className="rounded-lg"
-            />
+        </div>
+
+        {/* Filters */}
+        <div className="dash-filter-bar">
+          <div className="dash-topbar__search dash-topbar__search--md">
+            <Search size={16} aria-hidden="true" />
+            <input placeholder="Search candidates..." />
+          </div>
+          <select className="dash-select">
+            <option>All Jobs</option>
+            <option>Product Designer</option>
+            <option>Visual Designer</option>
+            <option>Senior Interaction Designer</option>
+          </select>
+          {['All', 'Shortlisted', 'In Review', 'Applied'].map((f) => (
+            <button
+              key={f}
+              className={`btn btn--sm ${f === 'All' ? 'btn--primary' : 'btn--ghost'}`}
+            >
+              {f}
+            </button>
           ))}
+        </div>
+
+        {/* Table */}
+        <div className="dash-card">
+          <div className="table-scroll">
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Applied For</th>
+                  <th>Skills</th>
+                  <th>AI Score</th>
+                  <th>Stage</th>
+                  <th>Status</th>
+                  <th>Applied</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {candidates.map((c) => (
+                  <tr key={c.name}>
+                    <td>
+                      <div className="cell-user">
+                        <div
+                          className="cell-user__avatar"
+                          style={
+                            {
+                              '--avatar-bg': c.color + '1A',
+                              '--avatar-color': c.color,
+                            } as React.CSSProperties
+                          }
+                        >
+                          {c.initials}
+                        </div>
+                        <div className="cell-user__info">
+                          <div className="cell-user__name">{c.name}</div>
+                          <div className="cell-user__sub">{c.role}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="cell-meta">{c.job}</td>
+                    <td>
+                      <div className="cell-actions">
+                        {c.skills.slice(0, 2).map((s) => (
+                          <span key={s} className="skill-tag">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        className="score-badge"
+                        style={
+                          {
+                            '--score-color':
+                              c.score >= 90 ? '#0cce6b' : c.score >= 80 ? '#0070f3' : '#f59e0b',
+                          } as React.CSSProperties
+                        }
+                      >
+                        {c.score}%
+                      </span>
+                    </td>
+                    <td>
+                      {/* Stage progress */}
+                      <div className="stage-progress">
+                        {['S', 'T', 'I', 'O'].map((step, idx) => (
+                          <div
+                            key={step}
+                            className="stage-progress__bar"
+                            style={
+                              {
+                                '--bar-color':
+                                  (stageOrder[c.stage] || 0) > idx + 1
+                                    ? '#0070f3'
+                                    : stageOrder[c.stage] === idx + 2
+                                      ? 'rgba(0,112,243,0.4)'
+                                      : '#e4e4e7',
+                              } as React.CSSProperties
+                            }
+                          />
+                        ))}
+                        <span className="stage-progress__label">{c.stage}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        className={`badge badge--${c.status === 'Shortlisted' ? 'success' : c.status === 'In Review' ? 'warning' : c.status === 'Rejected' ? 'danger' : 'gray'}`}
+                      >
+                        {c.status}
+                      </span>
+                    </td>
+                    <td className="cell-muted">{c.applied}</td>
+                    <td>
+                      <div className="cell-actions">
+                        <button className="btn btn--outline btn--sm">Review</button>
+                        <button className="btn btn--ghost btn--sm">Schedule</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="dash-card__footer">
+            <span className="cell-muted">Showing 8 of 125 candidates</span>
+            <div className="cell-actions">
+              <button className="btn btn--ghost btn--sm">← Prev</button>
+              {[1, 2, 3].map((n) => (
+                <button
+                  key={n}
+                  className={`btn btn--sm ${n === 1 ? 'btn--primary' : 'btn--ghost'}`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button className="btn btn--ghost btn--sm">Next →</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function RecruiterCandidatesPageSkeleton() {
-  return (
-    <AppShell>
-      <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div className="space-y-2">
-              <SkeletonLoader variant="text" width="34%" height={34} />
-              <SkeletonLoader variant="text" width="58%" height={18} />
-            </div>
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-background-surface rounded-lg border border-border-default shadow-sm min-w-[124px]">
-              <SkeletonLoader variant="rectangular" width={36} height={36} className="rounded-lg" />
-              <div className="space-y-2">
-                <SkeletonLoader variant="text" width={36} height={20} />
-                <SkeletonLoader variant="text" width={44} height={10} />
-              </div>
-            </div>
-          </div>
-          <div className="border-b border-border-default/60" />
-
-          <div className="space-y-8">
-            <div className="mb-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
-                <SkeletonLoader
-                  variant="rectangular"
-                  height={48}
-                  className="rounded-xl w-full lg:w-[420px]"
-                />
-                <div className="flex flex-wrap items-center gap-3">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <SkeletonLoader
-                      key={index}
-                      variant="rectangular"
-                      width={90}
-                      height={34}
-                      className="rounded-full"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <CandidatesTableSkeleton />
-          </div>
-        </div>
-      </PageTransition>
-    </AppShell>
-  )
-}
-
-export default function RecruiterCandidatesPage() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
-  const pathname = usePathname()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-  const [activeFilters, setActiveFilters] = useState<string[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedCandidate, setSelectedCandidate] = useState<CandidateApplication | null>(null)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const pageSize = 20
-
-  const isSearchMode = debouncedSearchQuery.trim().length > 0
-
-  const {
-    data: candidatesData,
-    isLoading: isLoadingCandidates,
-    error: candidatesError,
-    refetch: refetchCandidates,
-  } = useCandidates(
-    currentPage,
-    pageSize,
-    { status: activeFilters.length > 0 ? activeFilters[0] : undefined },
-    !isSearchMode && isAuthenticated && !isAuthLoading
-  )
-
-  const {
-    data: searchData,
-    isLoading: isLoadingSearch,
-    error: searchError,
-    refetch: refetchSearch,
-  } = useCandidateSearch(
-    debouncedSearchQuery,
-    currentPage,
-    pageSize,
-    isSearchMode && isAuthenticated && !isAuthLoading
-  )
-
-  const data = isSearchMode ? searchData : candidatesData
-  const isLoading = isSearchMode ? isLoadingSearch : isLoadingCandidates
-  const error = isSearchMode ? searchError : candidatesError
-
-  const candidates = useMemo(() => data?.candidates || [], [data?.candidates])
-  const totalCandidates = data?.total || 0
-
-  const statusCounts = useMemo(() => {
-    const counts = {
-      applied: 0,
-      interviewing: 0,
-      shortlisted: 0,
-      rejected: 0,
-      outcome: 0,
-    }
-    candidates.forEach(candidate => {
-      const status = candidate.current_status.toLowerCase()
-      if (status === 'applied') counts.applied++
-      else if (status === 'interviewing') counts.interviewing++
-      else if (status === 'shortlisted') counts.shortlisted++
-      else if (status === 'rejected') counts.rejected++
-      else if (status === 'outcome') counts.outcome++
-    })
-    return counts
-  }, [candidates])
-
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      window.location.href = '/signin'
-    }
-  }, [isAuthenticated, isAuthLoading])
-
-  useEffect(() => {
-    if (isAuthenticated && !isAuthLoading && pathname === '/recruiter/candidates') {
-      if (isSearchMode) {
-        refetchSearch()
-      } else {
-        refetchCandidates()
-      }
-    }
-  }, [isAuthenticated, isAuthLoading, pathname, isSearchMode, refetchCandidates, refetchSearch])
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && pathname === '/recruiter/candidates') {
-        if (isSearchMode) {
-          refetchSearch()
-        } else {
-          refetchCandidates()
-        }
-      }
-    }
-
-    const handleFocus = () => {
-      if (pathname === '/recruiter/candidates') {
-        if (isSearchMode) {
-          refetchSearch()
-        } else {
-          refetchCandidates()
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [pathname, isSearchMode, refetchCandidates, refetchSearch])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery)
-      setCurrentPage(1)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
-
-  const handleFilterToggle = useCallback((filterId: string) => {
-    setActiveFilters(prev => {
-      const newFilters = prev.includes(filterId) ? prev.filter(f => f !== filterId) : [filterId]
-
-      setCurrentPage(1)
-
-      return newFilters
-    })
-  }, [])
-
-  const handleClearFilters = useCallback(() => {
-    setActiveFilters([])
-    setCurrentPage(1)
-  }, [])
-
-  const handleCandidateClick = useCallback((candidate: CandidateApplication) => {
-    setSelectedCandidate(candidate)
-    setIsDetailModalOpen(true)
-  }, [])
-
-  const handleCloseDetailModal = useCallback(() => {
-    setIsDetailModalOpen(false)
-    setTimeout(() => setSelectedCandidate(null), 300)
-  }, [])
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
-  }, [])
-
-  if (isAuthLoading) {
-    return <RecruiterCandidatesPageSkeleton />
-  }
-
-  if (!isAuthenticated) {
-    return null
-  }
-
-  return (
-    <AppShell>
-      <PageTransition className="min-h-screen bg-background-subtle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8">
-          {/* Minimalist Page Header */}
-          <AnimatedContainer direction="up" delay={0.1}>
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-[32px] max-lg:text-[28px] font-bold text-text-primary leading-tight tracking-tight">
-                  Candidates ({totalCandidates})
-                </h1>
-                <p className="text-base text-text-secondary">
-                  Review and manage candidate applications for your job postings
-                </p>
-              </div>
-            </div>
-            <div className="mt-6 border-b border-border-default/60" />
-          </AnimatedContainer>
-
-          {/* Content */}
-          <div className="space-y-8">
-            <AnimatedContainer direction="up" delay={0.15}>
-              <div className="mb-8">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-background-surface border border-border-default rounded-2xl shadow-sm">
-                  <div className="relative w-full lg:w-[420px]">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      placeholder="Search by name, email, skills, or job title..."
-                      className="w-full pl-12 pr-4 py-3 text-sm bg-background-subtle border border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-text-muted font-medium"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <CandidateFilters
-                      activeFilters={activeFilters}
-                      onFilterToggle={handleFilterToggle}
-                      onClearAll={handleClearFilters}
-                      statusCounts={statusCounts}
-                    />
-                  </div>
-                </div>
-              </div>
-            </AnimatedContainer>
-
-            <AnimatedContainer direction="up" delay={0.2}>
-              <div className="w-full">
-                {isLoading ? (
-                  <CandidatesTableSkeleton />
-                ) : error ? (
-                  <div
-                    className="bg-background-surface border border-border-default rounded-2xl overflow-hidden"
-                    style={{
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02)',
-                    }}
-                  >
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="w-16 h-16 bg-error-50 dark:bg-error-950/30 border border-error-100 dark:border-error-800 rounded-2xl flex items-center justify-center mb-6">
-                        <FolderOpen className="w-8 h-8 text-error-400 dark:text-error-300" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-text-primary mb-2">
-                        Error loading candidates
-                      </h3>
-                      <p className="text-sm text-text-tertiary max-w-md mb-6 leading-relaxed">
-                        There was an error loading the candidates. Please try again.
-                      </p>
-                      <button
-                        onClick={() => {
-                          if (isSearchMode) {
-                            refetchSearch()
-                          } else {
-                            refetchCandidates()
-                          }
-                        }}
-                        className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
-                      >
-                        Try Again
-                      </button>
-                    </div>
-                  </div>
-                ) : candidates.length === 0 ? (
-                  <EmptyTableState isSearchMode={isSearchMode} searchQuery={debouncedSearchQuery} />
-                ) : (
-                  <CandidatesTable
-                    candidates={candidates}
-                    onCandidateClick={handleCandidateClick}
-                    currentPage={currentPage}
-                    totalCandidates={totalCandidates}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                  />
-                )}
-              </div>
-            </AnimatedContainer>
-          </div>
-        </div>
-      </PageTransition>
-
-      {}
-      <CandidateDetailModal
-        candidate={selectedCandidate}
-        isOpen={isDetailModalOpen}
-        onClose={handleCloseDetailModal}
-      />
-    </AppShell>
+    </>
   )
 }

@@ -1,0 +1,69 @@
+// ============================================================
+// MAIN — Single entry point
+// Import order matters: variables → mixins → base → layout → components → pages
+// ============================================================
+
+// ── 1. Abstracts ─────────────────────────────────────────────
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ── 2. Base ──────────────────────────────────────────────────
+@use 'reset';
+@use 'typography';
+
+// ── 3. Layout ────────────────────────────────────────────────
+@use 'layout';
+
+// ── 4. Components ────────────────────────────────────────────
+@use 'buttons';
+@use 'components/header';
+@use 'components/footer';
+@use 'components/explore-categories';
+@use 'components/cookie-banner';
+@use 'components/why-prefer-us';
+@use 'components/loader';
+@use 'components/faq';
+@use 'components/pricing';
+@use 'components/toast';
+
+// ── 5. Pages ─────────────────────────────────────────────────
+@use 'pages/homepage';
+@use 'pages/legal';
+@use 'pages/auth';
+@use 'pages/dashboard';
+
+// ── 6. Global tokens (CSS custom properties + body defaults) ─
+:root {
+  --color-primary: #{$color-primary};
+  --color-secondary: #{$color-secondary};
+  --color-accent: #{$color-accent};
+  --color-bg: #{$color-bg};
+  --color-text: #{$color-text};
+  --color-text-muted: #{$color-text-muted};
+  --font-heading: #{$font-heading};
+  --font-body: #{$font-body};
+  --font-sans: #{$font-sans};
+  --font-mono: #{$font-mono};
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-full: #{$radius-full};
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+}
+
+body {
+  background-color: $color-white;
+  color: $color-text;
+}
+
+.page {
+  min-height: 100vh;
+}
+
+// Selection
+::selection {
+  background-color: $color-primary;
+  color: $color-white;
+}

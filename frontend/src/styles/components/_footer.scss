@@ -1,0 +1,159 @@
+// ============================================================
+// FOOTER  (BEM: Block__Element--Modifier)
+// Block:     .footer
+// Elements:  __inner  __brand  __logo  __logo-accent  __tagline
+//            __nav  __nav-col  __nav-heading  __nav-list
+//            __nav-item  __nav-link  __bottom  __bottom-inner
+//            __copy  __socials  __social-link
+// ============================================================
+
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ── Block ───────────────────────────────────────────────────
+.footer {
+  background-color: $color-white;
+  color: $color-gray-500;
+  border-top: 1px solid $color-gray-200;
+  box-shadow: 0 -4px 24px rgba($color-black, 0.06);
+
+  // ── Element: inner ──────────────────────────────────────
+  &__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-10;
+    padding-block: $space-12;
+
+    @include md {
+      grid-template-columns: 1.5fr 2fr;
+      gap: $space-16;
+    }
+  }
+
+  // ── Element: brand ──────────────────────────────────────
+  &__brand {
+    @include flex-column;
+
+    gap: $space-3;
+  }
+
+  // ── Element: logo ───────────────────────────────────────
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    @include transition(opacity, $transition-fast);
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  // ── Element: tagline ────────────────────────────────────
+  &__tagline {
+    font-size: $font-size-sm;
+    line-height: $line-height-loose;
+    max-width: 280px;
+    color: $color-gray-500;
+    margin-bottom: 0;
+  }
+
+  // ── Element: nav ────────────────────────────────────────
+  &__nav {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-8;
+
+    @include sm {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  // ── Element: nav-col ────────────────────────────────────
+  &__nav-col {
+    @include flex-column;
+
+    gap: $space-3;
+  }
+
+  // ── Element: nav-heading ────────────────────────────────
+  &__nav-heading {
+    font-family: $font-heading;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $color-gray-900;
+  }
+
+  // ── Element: nav-list ───────────────────────────────────
+  &__nav-list {
+    @include flex-column;
+
+    gap: $space-2;
+  }
+
+  // ── Element: nav-item ───────────────────────────────────
+  &__nav-item {
+    display: flex;
+  }
+
+  // ── Element: nav-link ───────────────────────────────────
+  &__nav-link {
+    font-size: $font-size-sm;
+    color: $color-gray-500;
+    @include transition(color, $transition-fast);
+
+    &:hover {
+      color: $color-primary;
+    }
+  }
+
+  // ── Element: bottom ─────────────────────────────────────
+  &__bottom {
+    border-top: 1px solid $color-gray-200;
+    padding-block: $space-4;
+  }
+
+  // ── Element: bottom-inner ───────────────────────────────
+  &__bottom-inner {
+    @include flex-between;
+
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+
+  // ── Element: copy ───────────────────────────────────────
+  &__copy {
+    font-size: $font-size-xs;
+    color: $color-gray-400;
+    margin-bottom: 0;
+  }
+
+  // ── Element: socials ────────────────────────────────────
+  &__socials {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  // ── Element: social-link ────────────────────────────────
+  &__social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: $color-gray-400;
+    @include transition(color, $transition-fast);
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    &:hover {
+      color: $color-primary;
+    }
+  }
+}
