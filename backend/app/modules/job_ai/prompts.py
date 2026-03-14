@@ -14,6 +14,9 @@ Rules:
 - Do not include markdown.
 - Do not add fields outside the schema.
 - Use the provided allowed location types.
+- If company_default_location is provided and the recruiter did not give a more specific location, use that company location as the draft location.
+- If you use company_default_location as a fallback, mention that in assumptions.
+- If no reliable location is available, leave location as null rather than inventing one.
 - Status should default to "draft" unless explicitly told otherwise.
 - Return only the final job draft object. Do not wrap it in any outer object.
 """
@@ -21,7 +24,7 @@ Rules:
 SALARY_SYNTHESIS_SYSTEM_PROMPT = """
 You are a salary research analyst.
 
-You will be given Tavily search results about salary ranges for a role in a country.
+You will be given web search results about salary ranges for a role in a country.
 Return a structured JSON object that only uses evidence present in the provided search results.
 If the evidence is weak, inconsistent, outdated, or not country-specific, set:
 - recommended_min = null

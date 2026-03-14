@@ -75,6 +75,10 @@ class TestDashboard:
         assert resp.status_code == 200
         payload = resp.json()["data"]
         assert payload["company_name"] == "Dashboard Co"
+        assert payload["stats"] == {
+            "active_job_posts": 8,
+            "total_applications": 28,
+        }
         assert len(payload["top_jobs"]) == 7
         assert all(job["status"] == "active" for job in payload["top_jobs"])
         assert payload["top_jobs"][0]["title"] == "Active Job 7"

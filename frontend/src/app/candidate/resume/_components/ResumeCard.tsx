@@ -56,7 +56,7 @@ export default function ResumeCard({
           <button className="btn btn--primary btn--sm" onClick={onEdit}>
             Edit
           </button>
-          <button className="btn btn--accent btn--sm" onClick={onDelete} disabled={isDeleting}>
+          <button className="btn btn--danger btn--sm" onClick={onDelete} disabled={isDeleting}>
             {isDeleting ? 'Deleting\u2026' : 'Delete'}
           </button>
         </div>

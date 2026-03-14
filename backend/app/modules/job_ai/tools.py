@@ -6,6 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.search.service import search_service
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.job_ai.helpers import (
+    MAX_SALARY_CONTENT_CHARS,
+    MAX_SALARY_SEARCH_RESULTS,
+    MAX_SALARY_TITLE_CHARS,
+    truncate_text,
+)
 from app.modules.jobs.models import Job
 from app.modules.auth.enums import MembershipStatus
 from app.shared.enums import JobStatus
@@ -93,16 +99,17 @@ async def get_source_job_context(
     }
 
 
-async def tavily_salary_search(role: str, country: str) -> dict[str, Any]:
+async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
     """
-    Search for salary information using the abstracted search service.
-    This function no longer depends on Tavily directly.
+    Research salary and compensation data for a given role and location.
+
+    Uses web search to gather market intelligence about salary ranges,
+    compensation packages, and job market trends.
     """
     queries = [
         f"{role} salary range in {country} 2026",
         f"{role} compensation in {country} 2026",
         f"{role} salary {country}",
-        f"job market report {role} {country}",
     ]
 
     aggregated: list[dict[str, Any]] = []
@@ -119,16 +126,21 @@ async def tavily_salary_search(role: str, country: str) -> dict[str, Any]:
             seen_urls.add(url)
             aggregated.append(
                 {
-                    "title": res.get("title"),
+                    "title": truncate_text(res.get("title"), MAX_SALARY_TITLE_CHARS),
                     "url": url,
-                    "content": res.get("content"),
-                    "raw_content": res.get("raw_content"),
+                    "content": truncate_text(
+                        res.get("content"), MAX_SALARY_CONTENT_CHARS
+                    ),
                     "score": res.get("relevance_score"),
                 }
             )
+            if len(aggregated) >= MAX_SALARY_SEARCH_RESULTS:
+                break
+        if len(aggregated) >= MAX_SALARY_SEARCH_RESULTS:
+            break
 
     return {
         "role": role,
         "country": country,
-        "results": aggregated[:10],
+        "results": aggregated,
     }

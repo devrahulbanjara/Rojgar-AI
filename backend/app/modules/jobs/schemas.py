@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field, model_validator
-
 from app.core.schemas import BaseSchema
 from app.shared.enums import JobStatus, LocationType
+from pydantic import Field, model_validator
 
 
 class JobBase(BaseSchema):
@@ -79,7 +78,6 @@ class JobListItem(BaseSchema):
     applications_count: int = 0
     created_at: datetime
 
-    # AI search fields — populated only when results come from the vector search path
     match_score: float | None = Field(
         default=None, description="Semantic similarity score (0–1)"
     )
@@ -108,5 +106,6 @@ class JobDetailResponse(BaseSchema):
     requirements: list[str] = []
     preferred_qualifications: list[str] = []
     benefits: list[str] = []
+    applications_count: int = 0
     created_at: datetime
     updated_at: datetime

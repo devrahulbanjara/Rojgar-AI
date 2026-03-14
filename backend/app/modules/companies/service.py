@@ -16,7 +16,7 @@ from app.modules.companies.schemas import (
     UpdateCompanyRequest,
     UpdateRecruiterStatusRequest,
 )
-from app.modules.companies.utils import get_admin_company
+from app.modules.companies.utils import get_admin_company, get_member_company
 
 
 def _company_to_response(company: Company) -> CompanyResponse:
@@ -24,7 +24,7 @@ def _company_to_response(company: Company) -> CompanyResponse:
 
 
 async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
-    company = await get_admin_company(db, user)
+    company = await get_member_company(db, user)
     return _company_to_response(company)
 
 

@@ -99,7 +99,7 @@ export default function RecruitersPage() {
   }
 
   return (
-    <div className="dash-content container">
+    <div className="dash-content container container--app-shell">
       {/* Header */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">

@@ -6,38 +6,8 @@ import { type ApiResponse, baseApi } from './baseApi'
 // Types — match the actual backend schema (app/modules/jobs/schemas.py)
 // ---------------------------------------------------------------------------
 
-type RawJobStatus = 'draft' | 'active' | 'expired' | 'open' | 'closed' | 'archived' | 'paused'
-
 export type JobStatus = 'draft' | 'active' | 'expired'
 export type LocationType = 'onsite' | 'remote' | 'hybrid'
-
-export function normalizeJobStatus(status: string | null | undefined): JobStatus {
-  switch (status) {
-    case 'active':
-    case 'open':
-      return 'active'
-    case 'expired':
-    case 'closed':
-    case 'archived':
-    case 'paused':
-      return 'expired'
-    case 'draft':
-    default:
-      return 'draft'
-  }
-}
-
-export function serializeJobStatus(status: JobStatus): RawJobStatus {
-  switch (status) {
-    case 'active':
-      return 'open'
-    case 'expired':
-      return 'closed'
-    case 'draft':
-    default:
-      return 'draft'
-  }
-}
 
 export function getJobStatusLabel(status: JobStatus): string {
   switch (status) {
@@ -129,17 +99,6 @@ export interface SearchJobsParams {
   size?: number
 }
 
-type RawJobListItem = Omit<JobListItem, 'status'> & { status: string }
-type RawJobDetail = Omit<JobDetail, 'status'> & { status: string }
-
-function normalizeJobListItem(job: RawJobListItem): JobListItem {
-  return { ...job, status: normalizeJobStatus(job.status) }
-}
-
-function normalizeJobDetail(job: RawJobDetail): JobDetail {
-  return { ...job, status: normalizeJobStatus(job.status) }
-}
-
 // ---------------------------------------------------------------------------
 // API endpoints
 // ---------------------------------------------------------------------------
@@ -168,13 +127,6 @@ export const jobsApi = baseApi.injectEndpoints({
           size,
         },
       }),
-      transformResponse: (response: ApiResponse<Paginated<RawJobListItem>>) => ({
-        ...response,
-        data: {
-          ...response.data,
-          items: (response.data?.items ?? []).map(normalizeJobListItem),
-        },
-      }),
       providesTags: ['Jobs'],
     }),
 
@@ -183,11 +135,7 @@ export const jobsApi = baseApi.injectEndpoints({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/`,
         method: 'POST',
-        body: body.status ? { ...body, status: serializeJobStatus(body.status) } : body,
-      }),
-      transformResponse: (response: ApiResponse<RawJobDetail>) => ({
-        ...response,
-        data: normalizeJobDetail(response.data),
+        body,
       }),
       invalidatesTags: ['Jobs'],
     }),
@@ -195,20 +143,12 @@ export const jobsApi = baseApi.injectEndpoints({
     /** GET /jobs/company/me — list all jobs posted by the current user's company */
     getCompanyJobs: builder.query<ApiResponse<JobListItem[]>, void>({
       query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/company/me`,
-      transformResponse: (response: ApiResponse<RawJobListItem[]>) => ({
-        ...response,
-        data: (response.data ?? []).map(normalizeJobListItem),
-      }),
       providesTags: ['Jobs'],
     }),
 
     /** GET /jobs/{job_id} — get full job details including description */
     getJobById: builder.query<ApiResponse<JobDetail>, string>({
       query: (id) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}`,
-      transformResponse: (response: ApiResponse<RawJobDetail>) => ({
-        ...response,
-        data: normalizeJobDetail(response.data),
-      }),
       providesTags: (_result, _error, id) => [{ type: 'Jobs', id }],
     }),
 
@@ -217,11 +157,7 @@ export const jobsApi = baseApi.injectEndpoints({
       query: ({ id, ...body }) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}`,
         method: 'PATCH',
-        body: body.status ? { ...body, status: serializeJobStatus(body.status) } : body,
-      }),
-      transformResponse: (response: ApiResponse<RawJobDetail>) => ({
-        ...response,
-        data: normalizeJobDetail(response.data),
+        body,
       }),
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs'],
     }),

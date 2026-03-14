@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.integrations.s3.service import S3Service
+from app.integrations.storage.service import storage_service
 from app.modules.auth.dependencies import require_candidate, get_current_user
 from app.modules.auth.models import User
 from app.modules.profiles import service
@@ -14,7 +14,6 @@ from app.modules.profiles.schemas import (
 )
 
 router = APIRouter()
-s3_service = S3Service()
 
 db = Depends(get_db)
 
@@ -57,14 +56,14 @@ async def upload_my_avatar(
     db: AsyncSession = db,
 ):
     previous_avatar_url = user.avatar_url
-    new_avatar_url = await s3_service.upload_image(file, folder="avatars")
+    new_avatar_url = await storage_service.upload_image(file, folder="avatars")
 
     user.avatar_url = new_avatar_url
     await db.commit()
     await db.refresh(user)
 
     if previous_avatar_url and previous_avatar_url != new_avatar_url:
-        await s3_service.delete_image(previous_avatar_url)
+        await storage_service.delete_image(previous_avatar_url)
 
     data = await service.get_or_create_profile(db, user)
     return ResponseBuilder.success(data=data, message="Avatar updated.")
@@ -85,7 +84,7 @@ async def delete_my_avatar(
     await db.refresh(user)
 
     if previous_avatar_url:
-        await s3_service.delete_image(previous_avatar_url)
+        await storage_service.delete_image(previous_avatar_url)
 
     return ResponseBuilder.success(data=None, message="Avatar removed.")
 

@@ -22,6 +22,14 @@ import {
 } from 'lucide-react'
 
 type IconKey = 'briefcase' | 'file-text' | 'calendar-check' | 'user-check' | 'users' | 'clock'
+type DashboardStat = {
+  label: string
+  value: string | null
+  trend: string
+  trendDir: 'up' | 'down'
+  variant: 'primary' | 'secondary' | 'success' | 'warning'
+  icon: IconKey
+}
 
 function StatIcon({ icon }: { icon: IconKey }) {
   const icons: Record<IconKey, React.ReactNode> = {
@@ -35,10 +43,9 @@ function StatIcon({ icon }: { icon: IconKey }) {
   return icons[icon] || null
 }
 
-const stats = [
+const STAT_CONFIG: Omit<DashboardStat, 'value'>[] = [
   {
     label: 'Active Job Posts',
-    value: '12',
     trend: '+2',
     trendDir: 'up',
     variant: 'primary',
@@ -46,7 +53,6 @@ const stats = [
   },
   {
     label: 'Total Applications',
-    value: '342',
     trend: '+48',
     trendDir: 'up',
     variant: 'secondary',
@@ -54,7 +60,6 @@ const stats = [
   },
   {
     label: 'Interviews Scheduled',
-    value: '18',
     trend: '+5',
     trendDir: 'up',
     variant: 'success',
@@ -62,7 +67,6 @@ const stats = [
   },
   {
     label: 'Hires This Month',
-    value: '6',
     trend: '+2',
     trendDir: 'up',
     variant: 'warning',
@@ -162,10 +166,24 @@ export default function CompanyDashboardPage() {
   const activeRecruiters = recruiters.filter((r) => r.status === 'active')
   const pendingRecruiters = recruiters.filter((r) => r.status === 'pending')
   const topJobs: RecruiterDashboardJob[] = recruiterDashboardResp?.data.top_jobs ?? []
+  const recruiterStats = recruiterDashboardResp?.data.stats
+  const stats: DashboardStat[] = STAT_CONFIG.map((stat) => ({
+    ...stat,
+    value:
+      recruiterStats == null
+        ? null
+        : stat.icon === 'briefcase'
+          ? String(recruiterStats.active_job_posts)
+          : stat.icon === 'file-text'
+            ? String(recruiterStats.total_applications)
+            : stat.label === 'Interviews Scheduled'
+              ? '18'
+              : '6',
+  }))
 
   return (
     <>
-      <div className="dash-content container">
+      <div className="dash-content container container--app-shell">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
             <h2 className="dash-page-header__title">Welcome, {companyName} 🏢</h2>
@@ -179,7 +197,11 @@ export default function CompanyDashboardPage() {
         <div className="dash-stats">
           {stats.map((s) => (
             <div key={s.label} className="stat-card">
-              <div className="stat-card__value">{s.value}</div>
+              {isRecruiterDashboardLoading ? (
+                <div className="skeleton-block stat-card__value-skeleton" aria-hidden="true" />
+              ) : (
+                <div className="stat-card__value content-fade-in">{s.value ?? '0'}</div>
+              )}
               <div className="stat-card__footer">
                 <div className={`stat-card__icon-wrap stat-card__icon-wrap--${s.variant}`}>
                   <StatIcon icon={s.icon} />

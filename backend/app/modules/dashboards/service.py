@@ -4,6 +4,7 @@ import uuid
 
 from app.modules.applications import service as applications_service
 from app.modules.applications.models import Application
+from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.dashboards.schemas import (
@@ -11,8 +12,10 @@ from app.modules.dashboards.schemas import (
     CandidateDashboardResponse,
     CandidateStats,
     RecruiterDashboardResponse,
+    RecruiterStats,
 )
 from app.modules.jobs import service as jobs_service
+from app.modules.jobs.models import Job
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
 from app.shared.enums import ApplicationStatus, JobStatus
@@ -136,16 +139,52 @@ async def _get_recruiter_company_name(db: AsyncSession, user_id: uuid.UUID) -> s
     company_name_stmt = (
         select(Company.name)
         .join(CompanyMembership, CompanyMembership.company_id == Company.id)
-        .where(CompanyMembership.user_id == user_id)
+        .where(
+            CompanyMembership.user_id == user_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
         .limit(1)
     )
-    return await db.scalar(company_name_stmt)
+    return await db.scalar(company_name_stmt) or ""
+
+
+async def get_recruiter_dashboard_stats(
+    db: AsyncSession, user_id: uuid.UUID
+) -> RecruiterStats:
+    company_id_stmt = select(CompanyMembership.company_id).where(
+        CompanyMembership.user_id == user_id,
+        CompanyMembership.status == MembershipStatus.active,
+    )
+    company_id = await db.scalar(company_id_stmt)
+
+    if company_id is None:
+        return RecruiterStats(active_job_posts=0, total_applications=0)
+
+    active_job_posts_stmt = select(func.count(Job.id)).where(
+        Job.company_id == company_id,
+        Job.status == JobStatus.active,
+    )
+    total_applications_stmt = (
+        select(func.count(Application.id))
+        .select_from(Job)
+        .outerjoin(Application, Application.job_id == Job.id)
+        .where(Job.company_id == company_id)
+    )
+
+    active_job_posts = await db.scalar(active_job_posts_stmt) or 0
+    total_applications = await db.scalar(total_applications_stmt) or 0
+
+    return RecruiterStats(
+        active_job_posts=active_job_posts,
+        total_applications=total_applications,
+    )
 
 
 async def get_recruiter_dashboard(
     db: AsyncSession, current_user: User
 ) -> RecruiterDashboardResponse:
     company_name = await _get_recruiter_company_name(db, current_user.id)
+    stats = await get_recruiter_dashboard_stats(db, current_user.id)
     company_jobs = await jobs_service.list_company_jobs(db=db, user=current_user)
     top_jobs = sorted(
         (job for job in company_jobs if job.status == JobStatus.active),
@@ -155,5 +194,6 @@ async def get_recruiter_dashboard(
 
     return RecruiterDashboardResponse(
         company_name=company_name,
+        stats=stats,
         top_jobs=top_jobs,
     )

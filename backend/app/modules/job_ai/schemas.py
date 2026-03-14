@@ -100,6 +100,7 @@ class HumanDecision(BaseModel):
     edited_fields: dict[str, Any] | None = None
     regenerate_fields: list[str] | None = None
     feedback: str | None = None
+    locked_fields: list[str] | None = None
 
 
 class RespondToDraftRequest(BaseModel):

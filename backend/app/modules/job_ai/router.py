@@ -39,6 +39,19 @@ async def create_ai_job_draft(
 
 
 @router.get(
+    "/drafts",
+    response_model=UnifiedResponse[list[JobAIDraftResponse]],
+    summary="List AI job drafts for the current recruiter",
+)
+async def list_ai_job_drafts(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db_dep,
+):
+    data = await service.list_drafts(db, user)
+    return ResponseBuilder.success(data=data, message="AI drafts fetched.")
+
+
+@router.get(
     "/drafts/{draft_id}",
     response_model=UnifiedResponse[JobAIDraftResponse],
     summary="Get one AI job draft",

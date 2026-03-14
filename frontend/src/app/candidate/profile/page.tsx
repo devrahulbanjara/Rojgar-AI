@@ -24,6 +24,7 @@ import {
 import { updateUser } from '@/store/slices/authSlice'
 import { Camera, MapPin, Trash2, X } from 'lucide-react'
 
+import DashboardTabs from '@/components/common/DashboardTabs'
 import MediaBadge from '@/components/common/MediaBadge'
 
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
@@ -710,7 +711,7 @@ export default function ProfilePage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="dash-content container">
+    <div className="dash-content container container--app-shell">
       {/* ── Page header ── */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
@@ -970,20 +971,13 @@ export default function ProfilePage() {
           {/* ── Main: tabs + sections ── */}
           <div className="profile-layout__main">
             {/* Tabs */}
-            <div
-              className="profile-tabs content-stagger-item"
+            <DashboardTabs
+              options={SECTIONS.map((section) => ({ label: section, value: section }))}
+              activeValue={activeSection}
+              onChange={setActiveSection}
+              className="content-stagger-item"
               style={{ '--stagger-index': 1 } as React.CSSProperties}
-            >
-              {SECTIONS.map((s) => (
-                <button
-                  key={s}
-                  className={`profile-tabs__tab${activeSection === s ? ' profile-tabs__tab--active' : ''}`}
-                  onClick={() => setActiveSection(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            />
 
             {/* ── Overview ──────────────────────────────────────────────── */}
             {activeSection === 'Overview' && (
@@ -1141,7 +1135,7 @@ export default function ProfilePage() {
                           {editingSection === exp._key ? 'Save' : 'Edit'}
                         </button>
                         <button
-                          className="btn btn--accent btn--sm"
+                          className="btn btn--danger btn--sm"
                           disabled={isSaving}
                           onClick={() => removeExp(exp._key)}
                         >
@@ -1290,7 +1284,7 @@ export default function ProfilePage() {
                           {editingSection === edu._key ? 'Save' : 'Edit'}
                         </button>
                         <button
-                          className="btn btn--accent btn--sm"
+                          className="btn btn--danger btn--sm"
                           disabled={isSaving}
                           onClick={() => removeEdu(edu._key)}
                         >

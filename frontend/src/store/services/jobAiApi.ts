@@ -60,6 +60,7 @@ export interface JobAIDecision {
   edited_fields?: Record<string, unknown>
   regenerate_fields?: string[]
   feedback?: string
+  locked_fields?: string[]
 }
 
 export interface JobAIDraftRecord {
@@ -96,6 +97,11 @@ export interface CommitJobAIDraftResponse {
 
 export const jobAiApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getJobAIDrafts: builder.query<ApiResponse<JobAIDraftRecord[]>, void>({
+      query: () => `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/ai/drafts`,
+      providesTags: ['JobAIDrafts'],
+    }),
+
     createJobAIDraft: builder.mutation<ApiResponse<JobAIDraftRecord>, GenerateJobAIDraftRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/ai/draft`,
@@ -140,6 +146,7 @@ export const jobAiApi = baseApi.injectEndpoints({
 export const {
   useCommitJobAIDraftMutation,
   useCreateJobAIDraftMutation,
+  useGetJobAIDraftsQuery,
   useGetJobAIDraftQuery,
   useLazyGetJobAIDraftQuery,
   useRespondToJobAIDraftMutation,

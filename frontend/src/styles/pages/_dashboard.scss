@@ -3188,6 +3188,35 @@
   }
 }
 
+.company-jobs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-12 $space-8;
+  text-align: center;
+
+  &__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: $color-gray-400;
+  }
+
+  &__title {
+    margin: 0 0 $space-1;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__copy {
+    margin: 0;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    line-height: $line-height-normal;
+  }
+}
+
 .company-job-card {
   background: $color-white;
   border: 1px solid $color-gray-200;
@@ -3257,6 +3286,15 @@
       cursor: wait;
       opacity: 0.7;
     }
+  }
+
+  &__status-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px $space-3;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    line-height: 1.2;
   }
 
   &__status-chevron {
@@ -3383,6 +3421,124 @@
   }
 }
 
+.job-editor-page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+.job-editor-page__header {
+  display: flex;
+  align-items: center;
+}
+
+.job-editor-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  color: $color-gray-600;
+  text-decoration: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.job-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+.job-editor-form__sections {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.job-editor-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-4;
+
+  &--salary {
+    grid-template-columns: 1fr 1fr 0.7fr;
+  }
+}
+
+.job-editor-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding-top: $space-5;
+  border-top: 1px solid $color-gray-200;
+}
+
+.job-editor-list {
+  list-style: none;
+  padding: 0;
+  margin: $space-3 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.job-editor-list__composer {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+
+  .auth__input {
+    flex: 1;
+  }
+}
+
+.job-editor-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-lg;
+  background: $color-gray-100;
+  font-size: $font-size-sm;
+  color: $color-gray-700;
+
+  span {
+    flex: 1;
+  }
+}
+
+.job-editor-list__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $color-error;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: color.adjust($color-error, $lightness: -8%);
+  }
+
+  &:disabled {
+    color: $color-gray-400;
+    cursor: not-allowed;
+  }
+}
+
+.recruiter-job-editor-modal {
+  max-width: 760px;
+  width: 100%;
+}
+
 .company-job-skeleton__top-row {
   align-items: center;
 }
@@ -3471,6 +3627,21 @@
       width: 100%;
       gap: $space-2;
     }
+  }
+
+  .company-jobs-empty {
+    padding-inline: $space-5;
+  }
+
+  .job-editor-form__grid,
+  .job-editor-form__grid--salary {
+    grid-template-columns: 1fr;
+  }
+
+  .job-editor-form__footer,
+  .job-editor-list__composer {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -5457,6 +5628,20 @@
       box-shadow: $shadow-sm;
     }
   }
+
+  &__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    margin-left: $space-2;
+    padding: 0 $space-2;
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    background: rgba($color-primary, 0.12);
+    color: $color-primary;
+  }
 }
 
 // ── Profile section ────────────────────────────────────────────
@@ -6012,6 +6197,7 @@
   align-items: center;
   justify-content: center;
   padding: $space-4;
+  overflow: auto;
 }
 
 .modal-backdrop--animated {
@@ -6038,6 +6224,9 @@
   width: 100%;
   max-width: 440px;
   overflow: hidden;
+  max-height: calc(100vh - #{$space-8});
+  display: flex;
+  flex-direction: column;
 
   &__header {
     display: flex;
@@ -6074,6 +6263,15 @@
     display: flex;
     flex-direction: column;
     gap: $space-4;
+  }
+
+  &__body--scroll {
+    max-height: 65vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    min-height: 0;
   }
 
   &__footer {
@@ -7160,8 +7358,27 @@
 .job-ai-page {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
-  gap: $space-6;
+  gap: $space-5;
   align-items: start;
+}
+
+.job-ai-page__header {
+  display: flex;
+  align-items: center;
+}
+
+.job-ai-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  color: $color-gray-600;
+  text-decoration: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:hover {
+    color: $color-primary;
+  }
 }
 
 .job-ai-page__sidebar,
@@ -7174,40 +7391,27 @@
 }
 
 .job-ai-card {
-  background: linear-gradient(180deg, rgba($color-white, 0.98), $color-white);
-  border: 1px solid rgba($color-gray-200, 0.95);
-  border-radius: $radius-2xl;
-  box-shadow: 0 18px 48px rgba($color-black, 0.05);
-  padding: $space-6;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 
   &--placeholder {
     min-height: 420px;
-    display: flex;
-    align-items: center;
     justify-content: center;
-  }
-
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: $space-4;
-    margin-bottom: $space-5;
   }
 
   &__title {
     margin: 0;
-    font-family: $font-heading;
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: $color-gray-900;
   }
 
   &__subtitle {
-    margin: $space-2 0 0;
-    color: $color-gray-500;
-    line-height: $line-height-loose;
-    font-size: $font-size-sm;
+    margin: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: $space-5;
   }
 }
 
@@ -7215,13 +7419,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: $space-5;
-  padding: $space-6;
-  border-radius: $radius-2xl;
-  background:
-    radial-gradient(circle at top left, rgba($color-primary, 0.14), transparent 36%),
-    linear-gradient(180deg, rgba($color-white, 0.98), $color-white);
-  border: 1px solid rgba($color-gray-200, 0.95);
+  gap: $space-4;
 }
 
 .job-ai-toolbar__eyebrow {
@@ -7234,15 +7432,16 @@
 
 .job-ai-toolbar__title {
   margin: $space-2 0 0;
-  font-family: $font-heading;
-  font-size: $font-size-3xl;
-  line-height: $line-height-tight;
-  color: $color-gray-900;
 }
 
 .job-ai-toolbar__subtitle {
-  margin: $space-2 0 0;
-  color: $color-gray-500;
+  margin: 0;
+}
+
+.job-ai-toolbar__meta {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
 }
 
 .job-ai-toolbar__actions {
@@ -7259,9 +7458,17 @@
   gap: $space-2;
 }
 
+.job-ai-assistant__helper,
+.job-ai-field__helper {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+  line-height: $line-height-normal;
+}
+
 .job-ai-assistant__toggle {
-  padding: $space-4;
-  border-radius: $radius-xl;
+  padding: $space-3 $space-4;
+  border-radius: $radius-lg;
   background: $color-gray-100;
   border: 1px solid $color-gray-200;
 }
@@ -7300,11 +7507,12 @@
   width: 100%;
   border: 1px solid $color-gray-200;
   background: $color-white;
-  border-radius: $radius-xl;
+  border-radius: $radius-lg;
   padding: $space-3 $space-4;
   color: $color-gray-900;
   font-family: $font-body;
   font-size: $font-size-sm;
+  line-height: $line-height-normal;
   transition:
     border-color $transition-fast,
     box-shadow $transition-fast;
@@ -7329,9 +7537,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem 0.7rem;
+  gap: $space-1;
+  padding: 0.25rem 0.65rem;
   border-radius: $radius-full;
-  font-size: 0.75rem;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   background: $color-gray-100;
   color: $color-gray-700;
@@ -7373,12 +7582,13 @@
 }
 
 .job-ai-callout {
-  border-radius: $radius-xl;
-  padding: $space-4 $space-5;
+  border-radius: $radius-lg;
+  padding: $space-4;
   border: 1px solid rgba($color-warning, 0.28);
   background: rgba($color-warning, 0.08);
-  color: $color-gray-800;
-  line-height: $line-height-loose;
+  color: $color-gray-700;
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
 
   &--warning {
     border-color: rgba($color-warning, 0.28);
@@ -7398,11 +7608,17 @@
   gap: $space-3;
 }
 
+.job-ai-next-steps__badges {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
 .job-ai-field {
   padding: $space-4;
-  border-radius: $radius-xl;
-  border: 1px solid rgba($color-gray-200, 0.95);
-  background: rgba($color-gray-100, 0.45);
+  border-radius: $radius-lg;
+  border: 1px solid $color-gray-200;
+  background: $color-gray-100;
 
   &--missing {
     border-color: rgba($color-warning, 0.45);
@@ -7434,6 +7650,14 @@
   justify-content: flex-end;
 }
 
+.job-ai-instruction {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding-top: $space-3;
+  border-top: 1px solid $color-gray-200;
+}
+
 .job-ai-empty {
   max-width: 28rem;
   text-align: center;
@@ -7442,13 +7666,16 @@
 .job-ai-empty__title {
   margin: 0;
   font-family: $font-heading;
-  font-size: $font-size-2xl;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-gray-900;
 }
 
 .job-ai-empty__copy {
   margin: $space-3 0 0;
-  color: $color-gray-500;
-  line-height: $line-height-loose;
+  color: $color-text-muted;
+  line-height: $line-height-normal;
+  font-size: $font-size-sm;
 }
 
 .salary-research-card__range {
@@ -7462,11 +7689,12 @@
   flex-direction: column;
   gap: $space-1;
   padding: $space-4;
-  border-radius: $radius-xl;
-  background: rgba($color-primary, 0.06);
+  border-radius: $radius-lg;
+  background: $color-gray-100;
+  border: 1px solid $color-gray-200;
 
   strong {
-    font-size: $font-size-xl;
+    font-size: $font-size-lg;
     color: $color-gray-900;
   }
 }
@@ -7480,7 +7708,8 @@
 .salary-research-card__rationale {
   margin: 0;
   color: $color-gray-700;
-  line-height: $line-height-loose;
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
 }
 
 .salary-research-card__sources {
@@ -7526,8 +7755,46 @@
   border-color: rgba($color-error, 0.24);
 }
 
-.job-ai-commit__actions {
+.job-ai-list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.job-ai-list-editor__header,
+.job-ai-list-editor__row,
+.job-ai-list-editor__composer {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.job-ai-list-editor__header {
   justify-content: space-between;
+}
+
+.job-ai-list-editor__count,
+.job-ai-list-editor__empty {
+  font-size: $font-size-xs;
+  color: $color-gray-500;
+}
+
+.job-ai-list-editor__empty {
+  padding: $space-3 $space-4;
+  border: 1px dashed $color-gray-200;
+  border-radius: $radius-lg;
+  background: $color-white;
+}
+
+.job-ai-list-editor__items {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.job-ai-list-editor__row .job-ai-input,
+.job-ai-list-editor__composer .job-ai-input {
+  flex: 1;
 }
 
 @include xl {
@@ -7554,7 +7821,8 @@
   .job-ai-toolbar,
   .job-ai-card__header,
   .job-ai-field__header,
-  .job-ai-commit__actions {
+  .job-ai-list-editor__row,
+  .job-ai-list-editor__composer {
     flex-direction: column;
     align-items: stretch;
   }
