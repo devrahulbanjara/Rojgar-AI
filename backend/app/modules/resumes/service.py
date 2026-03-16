@@ -182,6 +182,59 @@ async def update_resume(
     return _resume_to_response(resume)
 
 
+async def create_resume_from_import(
+    db: AsyncSession,
+    user: User,
+    resume_name: str,
+    payload: ResumeUpdate,
+) -> ResumeResponse:
+    """Create a new resume directly from a structured payload."""
+    resume = Resume(
+        user_id=user.id,
+        resume_name=resume_name,
+        headline=payload.headline,
+        summary=payload.summary,
+        phone=payload.phone,
+        location=payload.location,
+        linkedin_url=payload.linkedin_url,
+        github_url=payload.github_url,
+        portfolio_url=payload.portfolio_url,
+        years_of_experience=payload.years_of_experience,
+    )
+    db.add(resume)
+    await db.flush()
+
+    if payload.experiences is not None:
+        resume.experiences = [
+            ResumeExperience(**experience.model_dump())
+            for experience in payload.experiences
+        ]
+
+    if payload.educations is not None:
+        resume.educations = [
+            ResumeEducation(**education.model_dump())
+            for education in payload.educations
+        ]
+
+    if payload.skills is not None:
+        resume.skills = [ResumeSkill(**skill.model_dump()) for skill in payload.skills]
+
+    await db.commit()
+    resume = await _load_full_resume(db, resume.id)
+    logger.info("Created AI-imported resume '{}' for user {}", resume_name, user.id)
+    return _resume_to_response(resume)
+
+
+async def create_resume_from_payload(
+    db: AsyncSession,
+    user: User,
+    resume_name: str,
+    payload: ResumeUpdate,
+) -> ResumeResponse:
+    """Backward-compatible alias for create_resume_from_import."""
+    return await create_resume_from_import(db, user, resume_name, payload)
+
+
 async def delete_resume(db: AsyncSession, user: User, resume_id: str) -> None:
     """Delete a resume owned by the user."""
     result = await db.execute(

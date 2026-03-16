@@ -7,6 +7,15 @@ from app.integrations.storage.service import storage_service
 from app.modules.auth.dependencies import require_candidate, get_current_user
 from app.modules.auth.models import User
 from app.modules.profiles import service
+from app.modules.profiles.ai_import_schemas import (
+    AiImportCommitRequest,
+    AiImportCommitResponse,
+    AiImportPreviewResponse,
+)
+from app.modules.profiles.ai_import_service import (
+    commit_profile_from_ai_import,
+    preview_profile_from_resume_upload,
+)
 from app.modules.profiles.schemas import (
     CandidateOnboardingRequest,
     ProfileResponse,
@@ -43,6 +52,37 @@ async def update_my_profile(
 ):
     data = await service.update_profile(db, user, payload)
     return ResponseBuilder.success(data=data, message="Profile updated.")
+
+
+@router.post(
+    "/me/ai-import/preview",
+    response_model=UnifiedResponse[AiImportPreviewResponse],
+    summary="Extract profile data from uploaded resume PDF",
+)
+async def preview_ai_resume_import(
+    file: UploadFile = File(...),
+    user: User = Depends(require_candidate),
+    db: AsyncSession = db,
+):
+    data = await preview_profile_from_resume_upload(db, user, file)
+    return ResponseBuilder.success(data=data, message="Resume parsed successfully.")
+
+
+@router.post(
+    "/me/ai-import/commit",
+    response_model=UnifiedResponse[AiImportCommitResponse],
+    summary="Commit edited AI-imported data to profile or resume",
+)
+async def commit_ai_resume_import(
+    payload: AiImportCommitRequest,
+    user: User = Depends(require_candidate),
+    db: AsyncSession = db,
+):
+    data = await commit_profile_from_ai_import(db, user, payload)
+    return ResponseBuilder.success(
+        data=data,
+        message="Imported resume data applied successfully.",
+    )
 
 
 @router.patch(

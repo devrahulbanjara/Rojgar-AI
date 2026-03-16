@@ -22,12 +22,13 @@ import {
   useUpdateMyProfileMutation,
 } from '@/store/services/profileApi'
 import { updateUser } from '@/store/slices/authSlice'
-import { Camera, MapPin, Trash2, X } from 'lucide-react'
+import { Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
 import DashboardTabs from '@/components/common/DashboardTabs'
 import MediaBadge from '@/components/common/MediaBadge'
 
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
+import ResumeImportModal from './_components/ResumeImportModal'
 
 export const AVAILABLE_ROLES = [
   // Software Engineering & Web Development
@@ -354,6 +355,7 @@ export default function ProfilePage() {
   const roleDropdownRef = useRef<HTMLDivElement>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [showResumeImportModal, setShowResumeImportModal] = useState(false)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarCropDraft, setAvatarCropDraft] = useState<AvatarCropDraft | null>(null)
@@ -721,6 +723,14 @@ export default function ProfilePage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
+          <button
+            type="button"
+            className="btn btn--outline btn--sm"
+            onClick={() => setShowResumeImportModal(true)}
+          >
+            <FileUp size={14} aria-hidden="true" />
+            Import Resume
+          </button>
           <span className={statusClass}>{statusHint}</span>
         </div>
       </div>
@@ -1418,6 +1428,13 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {showResumeImportModal ? (
+        <ResumeImportModal
+          currentProfile={profileResp?.data ?? null}
+          onClose={() => setShowResumeImportModal(false)}
+        />
+      ) : null}
 
       {avatarCropDraft ? (
         <div

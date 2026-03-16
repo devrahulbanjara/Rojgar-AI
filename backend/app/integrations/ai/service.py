@@ -71,6 +71,7 @@ class AIService:
         system_prompt: str,
         user_payload: dict[str, Any],
         schema_model: Type[SchemaT],
+        model: str | None = None,
     ) -> SchemaT:
         """
         Generate structured JSON output conforming to a Pydantic schema.
@@ -91,7 +92,7 @@ class AIService:
         # Groq-specific implementation (swap this block for OpenAI/Anthropic)
         try:
             response = await self._llm_client.chat.completions.create(
-                model=self._llm_model,
+                model=model or self._llm_model,
                 messages=[
                     {
                         "role": "system",
