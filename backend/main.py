@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.core.tasks import sync_daemon_loop
 from app.core.database import engine, get_db
 from app.core.exception_handlers import register_exception_handlers
-from app.integrations.qdrant.service import qdrant_service
+from app.infrastructures.qdrant.service import qdrant_service
 
 from app.modules.companies.router import router as companies_router
 from app.modules.profiles.router import router as profiles_router

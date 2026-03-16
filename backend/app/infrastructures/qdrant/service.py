@@ -6,7 +6,7 @@ from qdrant_client import AsyncQdrantClient, models
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.core.config import settings
-from app.integrations.ai.service import ai_service
+from app.infrastructures.ai.service import ai_service
 
 QDRANT_NO_EXPIRY_TS = 32503680000  # year 3000, good enough for human nonsense
 

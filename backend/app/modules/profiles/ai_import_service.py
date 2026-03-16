@@ -1,21 +1,30 @@
 from __future__ import annotations
 
+import tempfile
+import uuid
 from collections.abc import Iterable
 from copy import deepcopy
+from pathlib import Path
+from uuid import UUID
 
-from fastapi import HTTPException, UploadFile, status
+from fastapi import BackgroundTasks, HTTPException, UploadFile, status
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.integrations.resume_extraction.service import resume_extraction_service
+from app.core.database import AsyncSessionLocal
+from app.infrastructures.resume_extraction.service import resume_extraction_service
 from app.modules.auth.models import User
 from app.modules.profiles import service as profiles_service
 from app.modules.profiles.ai_import_schemas import (
     AiImportCommitRequest,
     AiImportCommitResponse,
     AiImportPreviewResponse,
+    AiImportTaskStartResponse,
+    AiImportTaskStatusResponse,
     ImportedCandidateDocument,
     ResumeTargetOption,
 )
+from app.modules.profiles.models import ResumeImportTask
 from app.modules.profiles.schemas import ProfileUpdate
 from app.modules.resumes import service as resumes_service
 from app.modules.resumes.schemas import ResumeUpdate
@@ -94,6 +103,30 @@ def _augment_warnings(data: ImportedCandidateDocument) -> ImportedCandidateDocum
     return data.model_copy(update={"warnings": _dedupe_texts(warnings)})
 
 
+async def _list_resume_target_options(
+    db: AsyncSession,
+    user_id: UUID,
+) -> list[ResumeTargetOption]:
+    resume_items = await resumes_service.list_resumes_by_user_id(db, user_id)
+    return [
+        ResumeTargetOption(id=item.id, resume_name=item.resume_name)
+        for item in resume_items
+    ]
+
+
+async def _build_preview_response(
+    db: AsyncSession,
+    user_id: UUID,
+    source_file_name: str,
+    extracted: ImportedCandidateDocument,
+) -> AiImportPreviewResponse:
+    return AiImportPreviewResponse(
+        source_file_name=source_file_name,
+        extracted_profile=_augment_warnings(extracted),
+        available_resume_targets=await _list_resume_target_options(db, user_id),
+    )
+
+
 def _to_profile_update(data: ImportedCandidateDocument) -> ProfileUpdate:
     return ProfileUpdate(
         headline=data.headline,
@@ -141,17 +174,141 @@ async def preview_profile_from_resume_upload(
         data_schema=_build_data_schema(),
         output_model=ImportedCandidateDocument,
     )
-    extracted = _augment_warnings(extracted)
-
-    resumes = await resumes_service.list_resumes(db, user)
-    return AiImportPreviewResponse(
+    return await _build_preview_response(
+        db=db,
+        user_id=user.id,
         source_file_name=file.filename or "resume.pdf",
-        extracted_profile=extracted,
-        available_resume_targets=[
-            ResumeTargetOption(id=item.id, resume_name=item.resume_name)
-            for item in resumes
-        ],
+        extracted=extracted,
     )
+
+
+async def start_resume_import_task(
+    db: AsyncSession,
+    user: User,
+    file: UploadFile,
+    background_tasks: BackgroundTasks,
+) -> AiImportTaskStartResponse:
+    resume_extraction_service.validate_upload(file)
+
+    task = ResumeImportTask(
+        id=uuid.uuid4(),
+        user_id=user.id,
+        status="pending",
+        source_file_name=file.filename or "resume.pdf",
+    )
+    db.add(task)
+    await db.commit()
+
+    suffix = Path(task.source_file_name or "resume.pdf").suffix or ".pdf"
+    temp_file = tempfile.NamedTemporaryFile(
+        delete=False,
+        prefix=f"resume-import-{task.id}-",
+        suffix=suffix,
+    )
+
+    try:
+        content = await file.read()
+        with temp_file:
+            temp_file.write(content)
+    finally:
+        await file.seek(0)
+
+    file_path = Path(temp_file.name)
+    background_tasks.add_task(
+        _run_resume_import_task,
+        task.id,
+        user.id,
+        file_path,
+        task.source_file_name or "resume.pdf",
+    )
+
+    logger.info("Queued resume import task '{}' for user '{}'", task.id, user.id)
+    return AiImportTaskStartResponse(task_id=task.id, status="pending")
+
+
+async def get_resume_import_task_status(
+    db: AsyncSession,
+    user: User,
+    task_id: UUID,
+) -> AiImportTaskStatusResponse:
+    task = await db.get(ResumeImportTask, task_id)
+    if task is None or task.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume import task not found.",
+        )
+
+    result = (
+        AiImportPreviewResponse.model_validate(task.result_data)
+        if task.result_data is not None
+        else None
+    )
+    return AiImportTaskStatusResponse(
+        task_id=task.id,
+        status=task.status,
+        source_file_name=task.source_file_name,
+        result=result,
+        error=task.error_message,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+    )
+
+
+async def _run_resume_import_task(
+    task_id: UUID,
+    user_id: UUID,
+    file_path: Path,
+    source_file_name: str,
+) -> None:
+    try:
+        async with AsyncSessionLocal() as db:
+            task = await db.get(ResumeImportTask, task_id)
+            if task is None:
+                return
+
+            task.status = "processing"
+            task.error_message = None
+            await db.commit()
+
+            try:
+                extracted = await resume_extraction_service.extract_structured_from_path(
+                    file_path=file_path,
+                    source_file_name=source_file_name,
+                    data_schema=_build_data_schema(),
+                    output_model=ImportedCandidateDocument,
+                )
+                preview = await _build_preview_response(
+                    db=db,
+                    user_id=user_id,
+                    source_file_name=source_file_name,
+                    extracted=extracted,
+                )
+                task.status = "completed"
+                task.result_data = preview.model_dump(mode="json")
+                task.error_message = None
+                logger.info("Completed resume import task '{}'", task_id)
+            except HTTPException as exc:
+                task.status = "failed"
+                task.result_data = None
+                task.error_message = str(exc.detail)
+                logger.warning(
+                    "Resume import task '{}' failed with handled error: {}",
+                    task_id,
+                    exc.detail,
+                )
+            except Exception as exc:  # pragma: no cover - defensive guard
+                task.status = "failed"
+                task.result_data = None
+                task.error_message = "We could not parse that resume right now."
+                logger.exception(
+                    "Resume import task '{}' failed unexpectedly: {}",
+                    task_id,
+                    str(exc),
+                )
+
+            await db.commit()
+    finally:
+        file_path.unlink(missing_ok=True)
 
 
 async def commit_profile_from_ai_import(

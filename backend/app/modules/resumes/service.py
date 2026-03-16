@@ -30,18 +30,48 @@ async def _load_full_resume(db: AsyncSession, resume_id) -> Resume:
 
 def _resume_to_response(resume: Resume) -> ResumeResponse:
     """Convert a Resume ORM instance to a response schema."""
-    return ResumeResponse.model_validate(resume)
+    return ResumeResponse(
+        id=resume.id,
+        user_id=resume.user_id,
+        resume_name=resume.resume_name,
+        headline=resume.headline,
+        summary=resume.summary,
+        phone=resume.phone,
+        location=resume.location,
+        linkedin_url=resume.linkedin_url,
+        github_url=resume.github_url,
+        portfolio_url=resume.portfolio_url,
+        years_of_experience=resume.years_of_experience,
+        experiences=resume.experiences,
+        educations=resume.educations,
+        skills=resume.skills,
+        created_at=resume.created_at,
+        updated_at=resume.updated_at,
+    )
 
 
 async def list_resumes(db: AsyncSession, user: User) -> list[ResumeListItem]:
     """List all resumes for a user (lightweight, no child collections)."""
+    return await list_resumes_by_user_id(db, user.id)
+
+
+async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListItem]:
+    """List all resumes for a user ID (lightweight, no child collections)."""
     result = await db.execute(
         select(Resume)
-        .where(Resume.user_id == user.id)
+        .where(Resume.user_id == user_id)
         .order_by(Resume.updated_at.desc())
     )
     resumes = result.scalars().all()
-    return [ResumeListItem.model_validate(r) for r in resumes]
+    return [
+        ResumeListItem(
+            id=resume.id,
+            resume_name=resume.resume_name,
+            created_at=resume.created_at,
+            updated_at=resume.updated_at,
+        )
+        for resume in resumes
+    ]
 
 
 async def fork_resume_from_profile(
@@ -205,19 +235,16 @@ async def create_resume_from_import(
     await db.flush()
 
     if payload.experiences is not None:
-        resume.experiences = [
-            ResumeExperience(**experience.model_dump())
-            for experience in payload.experiences
-        ]
+        for experience in payload.experiences:
+            db.add(ResumeExperience(resume_id=resume.id, **experience.model_dump()))
 
     if payload.educations is not None:
-        resume.educations = [
-            ResumeEducation(**education.model_dump())
-            for education in payload.educations
-        ]
+        for education in payload.educations:
+            db.add(ResumeEducation(resume_id=resume.id, **education.model_dump()))
 
     if payload.skills is not None:
-        resume.skills = [ResumeSkill(**skill.model_dump()) for skill in payload.skills]
+        for skill in payload.skills:
+            db.add(ResumeSkill(resume_id=resume.id, **skill.model_dump()))
 
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
