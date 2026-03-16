@@ -1,4 +1,5 @@
 from datetime import date
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -89,6 +90,21 @@ class AiImportPreviewResponse(BaseSchema):
     source_file_name: str
     extracted_profile: ImportedCandidateDocument
     available_resume_targets: list[ResumeTargetOption] = Field(default_factory=list)
+
+
+class AiImportTaskStartResponse(BaseSchema):
+    task_id: UUID
+    status: Literal["pending", "processing"]
+
+
+class AiImportTaskStatusResponse(BaseSchema):
+    task_id: UUID
+    status: Literal["pending", "processing", "completed", "failed"]
+    source_file_name: str | None = None
+    result: AiImportPreviewResponse | None = None
+    error: str | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class AiImportCommitRequest(BaseSchema):

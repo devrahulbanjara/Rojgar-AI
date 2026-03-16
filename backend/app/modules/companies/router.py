@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.integrations.storage.service import storage_service
+from app.infrastructures.storage.service import storage_service
 from app.modules.auth.dependencies import (
     require_active_membership,
     require_recruiter_admin,

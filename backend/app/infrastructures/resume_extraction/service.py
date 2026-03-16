@@ -151,5 +151,42 @@ class ResumeExtractionService:
                 temp_path.unlink(missing_ok=True)
             await file.seek(0)
 
+    async def extract_structured_from_path(
+        self,
+        file_path: Path,
+        source_file_name: str,
+        data_schema: dict,
+        output_model: type[SchemaT],
+    ) -> SchemaT:
+        client = self._get_client()
+        config = self._build_extract_config()
+
+        try:
+            logger.info(
+                "Starting LlamaExtract structured resume extraction for file='{}' mode='{}'",
+                source_file_name,
+                settings.llama_extract_mode.upper(),
+            )
+            result = client.extract(data_schema, config, str(file_path))
+            raw = result.data if hasattr(result, "data") else result
+            parsed = output_model.model_validate(raw)
+            logger.info(
+                "LlamaExtract structured resume extraction succeeded for file='{}'",
+                source_file_name,
+            )
+            return parsed
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.exception(
+                "LlamaExtract resume extraction failed for file='{}': {}'",
+                source_file_name,
+                str(exc),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not extract structured data from the uploaded resume.",
+            ) from exc
+
 
 resume_extraction_service = ResumeExtractionService()

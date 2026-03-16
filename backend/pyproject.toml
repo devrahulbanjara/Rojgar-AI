@@ -33,6 +33,7 @@ dependencies = [
     "groq>=0.37.1",
     "psycopg[binary]>=3.3.3",
     "llama-cloud-services",
+    "llama-cloud>=0.1.46",
 ]
 
 [tool.pytest.ini_options]

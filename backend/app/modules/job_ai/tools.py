@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.integrations.search.service import search_service
+from app.infrastructures.search.service import search_service
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.job_ai.helpers import (
     MAX_SALARY_CONTENT_CHARS,

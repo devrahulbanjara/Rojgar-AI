@@ -45,7 +45,7 @@ def _is_groq_rate_limit(exc: Exception) -> bool:
 
 class AIService:
     """
-    Encapsulates all AI/LLM/embedding third-party integrations.
+    Encapsulates all AI/LLM/embedding third-party infrastructures.
 
     This is the ONLY place where vendor-specific SDKs (Groq, OpenAI, Gemini, etc.)
     should be imported. Swap providers here without touching business logic.
@@ -139,5 +139,4 @@ class AIService:
         return schema_model.model_validate(data)
 
 
-# Module-level singleton — import this everywhere instead of instantiating
 ai_service = AIService()

@@ -8,7 +8,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.integrations.email.service import EmailService
+from app.infrastructures.email.service import EmailService
 from app.core.security import (
     create_tokens,
     create_pending_signup_token,

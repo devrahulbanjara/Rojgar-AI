@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, File, UploadFile
+from uuid import UUID
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.integrations.storage.service import storage_service
+from app.infrastructures.storage.service import storage_service
 from app.modules.auth.dependencies import require_candidate, get_current_user
 from app.modules.auth.models import User
 from app.modules.profiles import service
@@ -11,10 +13,14 @@ from app.modules.profiles.ai_import_schemas import (
     AiImportCommitRequest,
     AiImportCommitResponse,
     AiImportPreviewResponse,
+    AiImportTaskStartResponse,
+    AiImportTaskStatusResponse,
 )
 from app.modules.profiles.ai_import_service import (
     commit_profile_from_ai_import,
+    get_resume_import_task_status,
     preview_profile_from_resume_upload,
+    start_resume_import_task,
 )
 from app.modules.profiles.schemas import (
     CandidateOnboardingRequest,
@@ -52,6 +58,38 @@ async def update_my_profile(
 ):
     data = await service.update_profile(db, user, payload)
     return ResponseBuilder.success(data=data, message="Profile updated.")
+
+
+@router.post(
+    "/me/ai-import/upload",
+    response_model=UnifiedResponse[AiImportTaskStartResponse],
+    summary="Upload a resume PDF and start background extraction",
+)
+async def start_ai_resume_import(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    user: User = Depends(require_candidate),
+    db: AsyncSession = db,
+):
+    data = await start_resume_import_task(db, user, file, background_tasks)
+    return ResponseBuilder.success(
+        data=data,
+        message="Resume import started. Poll the task status for results.",
+    )
+
+
+@router.get(
+    "/me/ai-import/tasks/{task_id}",
+    response_model=UnifiedResponse[AiImportTaskStatusResponse],
+    summary="Check the status of a background resume import task",
+)
+async def get_ai_resume_import_task(
+    task_id: UUID,
+    user: User = Depends(require_candidate),
+    db: AsyncSession = db,
+):
+    data = await get_resume_import_task_status(db, user, task_id)
+    return ResponseBuilder.success(data=data, message="Resume import task fetched.")
 
 
 @router.post(
