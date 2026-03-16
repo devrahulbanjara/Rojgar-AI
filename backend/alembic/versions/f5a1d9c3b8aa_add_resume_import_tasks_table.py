@@ -28,7 +28,9 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("source_file_name", sa.String(length=255), nullable=True),
-        sa.Column("result_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "result_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
@@ -55,5 +57,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_index(op.f("ix_resume_import_tasks_user_id"), table_name="resume_import_tasks")
+    op.drop_index(
+        op.f("ix_resume_import_tasks_user_id"), table_name="resume_import_tasks"
+    )
     op.drop_table("resume_import_tasks")

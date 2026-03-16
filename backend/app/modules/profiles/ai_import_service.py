@@ -271,11 +271,13 @@ async def _run_resume_import_task(
             await db.commit()
 
             try:
-                extracted = await resume_extraction_service.extract_structured_from_path(
-                    file_path=file_path,
-                    source_file_name=source_file_name,
-                    data_schema=_build_data_schema(),
-                    output_model=ImportedCandidateDocument,
+                extracted = (
+                    await resume_extraction_service.extract_structured_from_path(
+                        file_path=file_path,
+                        source_file_name=source_file_name,
+                        data_schema=_build_data_schema(),
+                        output_model=ImportedCandidateDocument,
+                    )
                 )
                 preview = await _build_preview_response(
                     db=db,

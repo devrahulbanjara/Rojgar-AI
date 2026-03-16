@@ -128,6 +128,21 @@ export interface ResumeImportPreviewData {
   available_resume_targets: ResumeImportTargetOption[]
 }
 
+export interface ResumeImportTaskStartData {
+  task_id: string
+  status: 'pending' | 'processing'
+}
+
+export interface ResumeImportTaskStatusData {
+  task_id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  source_file_name: string | null
+  result: ResumeImportPreviewData | null
+  error: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type ResumeImportAction = 'update_profile' | 'create_resume' | 'update_resume'
 
 export interface ResumeImportCommitRequest {
@@ -147,6 +162,8 @@ export interface ResumeImportCommitData {
 type ProfileApiResponse = ApiResponse<CandidateProfileData>
 type EmptyResponse = ApiResponse<null>
 type ResumeImportPreviewResponse = ApiResponse<ResumeImportPreviewData>
+type ResumeImportTaskStartResponse = ApiResponse<ResumeImportTaskStartData>
+type ResumeImportTaskStatusResponse = ApiResponse<ResumeImportTaskStatusData>
 type ResumeImportCommitResponse = ApiResponse<ResumeImportCommitData>
 
 // ---------------------------------------------------------------------------
@@ -212,6 +229,19 @@ export const profileApi = baseApi.injectEndpoints({
       }),
     }),
 
+    startResumeImport: builder.mutation<ResumeImportTaskStartResponse, FormData>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/upload`,
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    getResumeImportTaskStatus: builder.query<ResumeImportTaskStatusResponse, string>({
+      query: (taskId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/tasks/${taskId}`,
+    }),
+
     commitResumeImport: builder.mutation<ResumeImportCommitResponse, ResumeImportCommitRequest>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/commit`,
@@ -231,5 +261,8 @@ export const {
   useRemoveMyAvatarMutation,
   useGetPublicProfileQuery,
   usePreviewResumeImportMutation,
+  useStartResumeImportMutation,
+  useGetResumeImportTaskStatusQuery,
+  useLazyGetResumeImportTaskStatusQuery,
   useCommitResumeImportMutation,
 } = profileApi
