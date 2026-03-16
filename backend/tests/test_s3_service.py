@@ -41,8 +41,12 @@ async def test_upload_image_marks_objects_public(monkeypatch):
     service = S3Service()
     fake_client = DummyS3Client()
 
-    monkeypatch.setattr("app.infrastructures.s3.service.settings.s3_bucket_name", "bucket")
-    monkeypatch.setattr("app.infrastructures.s3.service.settings.aws_region", "us-east-1")
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.s3_bucket_name", "bucket"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.aws_region", "us-east-1"
+    )
     monkeypatch.setattr(
         "app.infrastructures.s3.service.settings.s3_upload_acl", "public-read"
     )
@@ -66,8 +70,12 @@ async def test_upload_image_marks_objects_public(monkeypatch):
 async def test_upload_image_returns_generic_message_for_acl_failures(monkeypatch):
     service = S3Service()
 
-    monkeypatch.setattr("app.infrastructures.s3.service.settings.s3_bucket_name", "bucket")
-    monkeypatch.setattr("app.infrastructures.s3.service.settings.aws_region", "us-east-1")
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.s3_bucket_name", "bucket"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.aws_region", "us-east-1"
+    )
     monkeypatch.setattr(
         "app.infrastructures.s3.service.settings.s3_upload_acl", "public-read"
     )

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import tempfile
 from pathlib import Path
 from typing import TypeVar
@@ -126,7 +127,12 @@ class ResumeExtractionService:
                 file.filename or "resume.pdf",
                 settings.llama_extract_mode.upper(),
             )
-            result = client.extract(data_schema, config, str(temp_path))
+            result = await asyncio.to_thread(
+                client.extract,
+                data_schema,
+                config,
+                str(temp_path),
+            )
             raw = result.data if hasattr(result, "data") else result
             parsed = output_model.model_validate(raw)
             logger.info(
@@ -167,7 +173,12 @@ class ResumeExtractionService:
                 source_file_name,
                 settings.llama_extract_mode.upper(),
             )
-            result = client.extract(data_schema, config, str(file_path))
+            result = await asyncio.to_thread(
+                client.extract,
+                data_schema,
+                config,
+                str(file_path),
+            )
             raw = result.data if hasattr(result, "data") else result
             parsed = output_model.model_validate(raw)
             logger.info(
@@ -179,7 +190,7 @@ class ResumeExtractionService:
             raise
         except Exception as exc:
             logger.exception(
-                "LlamaExtract resume extraction failed for file='{}': {}'",
+                "LlamaExtract resume extraction failed for file='{}': {}",
                 source_file_name,
                 str(exc),
             )

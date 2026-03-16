@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { parseApiError } from '@/lib/apiError'
@@ -11,7 +11,8 @@ import {
   type ResumeImportExperience,
   type ResumeImportProfileData,
   useCommitResumeImportMutation,
-  usePreviewResumeImportMutation,
+  useLazyGetResumeImportTaskStatusQuery,
+  useStartResumeImportMutation,
 } from '@/store/services/profileApi'
 import { ArrowRight, FileUp, GitCompare, LoaderCircle, RefreshCw, X } from 'lucide-react'
 
@@ -67,18 +68,31 @@ function diffEntries(current: string[], next: string[]) {
 
 export default function ResumeImportModal({ currentProfile, onClose }: ResumeImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [previewFileName, setPreviewFileName] = useState<string>('')
+  const pollSequenceRef = useRef(0)
+  const [previewFileName, setPreviewFileName] = useState('')
   const [draft, setDraft] = useState<ResumeImportProfileData | null>(null)
   const [targets, setTargets] = useState<Array<{ id: string; resume_name: string }>>([])
   const [action, setAction] = useState<ResumeImportAction>('update_profile')
   const [resumeName, setResumeName] = useState('')
   const [selectedResumeId, setSelectedResumeId] = useState('')
   const [tagInput, setTagInput] = useState({ skills: '', roles: '' })
+  const [taskId, setTaskId] = useState<string | null>(null)
+  const [processingFileName, setProcessingFileName] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const [previewResumeImport, { isLoading: isParsing }] = usePreviewResumeImportMutation()
+  const [startResumeImport, { isLoading: isStartingImport }] = useStartResumeImportMutation()
   const [commitResumeImport, { isLoading: isCommitting }] = useCommitResumeImportMutation()
+  const [fetchResumeImportTaskStatus, { isFetching: isPollingTask }] =
+    useLazyGetResumeImportTaskStatusQuery()
+
+  const isParsing = isStartingImport || isPollingTask || Boolean(taskId)
   const isBusy = isParsing || isCommitting
+
+  useEffect(() => {
+    return () => {
+      pollSequenceRef.current += 1
+    }
+  }, [])
 
   const scalarDiffs = useMemo(() => {
     if (!currentProfile || !draft || action !== 'update_profile') return []
@@ -140,22 +154,74 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
     setDraft((current) => (current ? { ...current, [key]: value } : current))
   }
 
+  function handleClose() {
+    pollSequenceRef.current += 1
+    onClose()
+  }
+
+  async function pollImportTask(nextTaskId: string, fallbackResumeName: string, pollId: number) {
+    while (pollSequenceRef.current === pollId) {
+      const response = await fetchResumeImportTaskStatus(nextTaskId, false).unwrap()
+      const payload = response.data
+      if (!payload) {
+        throw new Error('Resume import task returned no data.')
+      }
+
+      if (payload.status === 'completed' && payload.result) {
+        if (pollSequenceRef.current !== pollId) return
+        setPreviewFileName(payload.result.source_file_name)
+        setDraft(payload.result.extracted_profile)
+        setTargets(payload.result.available_resume_targets)
+        setSelectedResumeId(payload.result.available_resume_targets[0]?.id ?? '')
+        setResumeName((current) => current.trim() || fallbackResumeName)
+        setTaskId(null)
+        setProcessingFileName('')
+        return
+      }
+
+      if (payload.status === 'failed') {
+        throw new Error(payload.error || 'We could not parse that resume right now.')
+      }
+
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, 3000)
+      })
+    }
+  }
+
   async function handleFile(file: File) {
     setError(null)
+    setDraft(null)
+    setTargets([])
+    setAction('update_profile')
+    setSelectedResumeId('')
+    setTaskId(null)
+    setPreviewFileName('')
+    setProcessingFileName(file.name)
+
     const body = new FormData()
     body.append('file', file)
 
     try {
-      const response = await previewResumeImport(body).unwrap()
+      const response = await startResumeImport(body).unwrap()
       if (!response.data) return
 
-      setPreviewFileName(response.data.source_file_name)
-      setDraft(response.data.extracted_profile)
-      setTargets(response.data.available_resume_targets)
-      setSelectedResumeId(response.data.available_resume_targets[0]?.id ?? '')
-      setResumeName(`${file.name.replace(/\.pdf$/i, '').trim() || 'Imported Resume'}`)
+      const nextResumeName = file.name.replace(/\.pdf$/i, '').trim() || 'Imported Resume'
+      const nextTaskId = response.data.task_id
+      const pollId = pollSequenceRef.current + 1
+
+      pollSequenceRef.current = pollId
+      setResumeName(nextResumeName)
+      setTaskId(nextTaskId)
+      await pollImportTask(nextTaskId, nextResumeName, pollId)
     } catch (uploadError) {
-      const parsed = parseApiError(uploadError, {}, 'We could not parse that resume right now.')
+      const parsed =
+        uploadError instanceof Error
+          ? { message: uploadError.message }
+          : parseApiError(uploadError, {}, 'We could not parse that resume right now.')
+      pollSequenceRef.current += 1
+      setProcessingFileName('')
+      setTaskId(null)
       setError(parsed.message)
       toast.error(parsed.message)
     }
@@ -187,7 +253,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
           ? 'Your profile was updated from the imported resume.'
           : 'Resume import applied successfully.',
       )
-      onClose()
+      handleClose()
     } catch (commitError) {
       const parsed = parseApiError(commitError, {}, 'We could not apply that import right now.')
       setError(parsed.message)
@@ -208,7 +274,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
           <button
             className="modal__close"
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close"
             disabled={isBusy}
           >
@@ -219,9 +285,15 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
         <div className="modal__body">
           {!draft ? (
             <div className="resume-import__empty">
-              {isParsing ? <LoaderCircle className="spin" size={28} /> : <FileUp size={28} />}
+              {isParsing ? (
+                <LoaderCircle className="resume-import__spinner" size={28} />
+              ) : (
+                <FileUp size={28} />
+              )}
               <h4>Upload a PDF resume</h4>
-              <p>We’ll extract an editable draft and won’t save anything until you confirm.</p>
+              <p>
+                We&apos;ll extract an editable draft and won&apos;t save anything until you confirm.
+              </p>
               <button
                 type="button"
                 className="btn btn--primary"
@@ -232,8 +304,10 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
               </button>
               {isParsing ? (
                 <div className="resume-import__processing">
-                  <LoaderCircle className="spin" size={16} aria-hidden="true" />
-                  Processing your resume...
+                  <LoaderCircle className="resume-import__spinner" size={16} aria-hidden="true" />
+                  {taskId
+                    ? `Processing ${processingFileName || 'your resume'}...`
+                    : 'Uploading your resume...'}
                 </div>
               ) : null}
               {error ? <div className="resume-field__error">{error}</div> : null}
@@ -838,7 +912,7 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
             <button
               type="button"
               className="btn btn--ghost btn--danger btn--sm"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isBusy}
             >
               Cancel
@@ -850,7 +924,14 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                 disabled={isCommitting}
                 onClick={() => void handleCommit()}
               >
-                {isCommitting ? 'Applying...' : 'Apply Import'}
+                {isCommitting ? (
+                  <>
+                    <LoaderCircle className="resume-import__spinner" size={14} aria-hidden="true" />
+                    Applying...
+                  </>
+                ) : (
+                  'Apply Import'
+                )}
               </button>
             ) : null}
           </div>

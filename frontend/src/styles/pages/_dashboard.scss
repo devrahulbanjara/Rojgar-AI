@@ -6439,6 +6439,11 @@
   font-weight: $font-weight-medium;
 }
 
+.resume-import__spinner {
+  flex-shrink: 0;
+  animation: resume-import-spin 0.9s linear infinite;
+}
+
 .resume-import {
   gap: $space-5;
 }
@@ -6590,6 +6595,16 @@
   .resume-import__diff-values {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@keyframes resume-import-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 
