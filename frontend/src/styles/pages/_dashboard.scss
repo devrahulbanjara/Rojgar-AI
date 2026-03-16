@@ -6380,6 +6380,219 @@
   }
 }
 
+.modal--resume-import {
+  width: min(100%, 56rem);
+  max-width: 56rem;
+
+  .modal__body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .resume-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resume-import__subtitle {
+  margin: $space-1 0 0;
+  color: $color-gray-500;
+  font-size: $font-size-sm;
+}
+
+.resume-import,
+.resume-import__empty,
+.resume-import__main,
+.resume-import__stack,
+.resume-import__section,
+.resume-import__sidecard,
+.resume-import__diff,
+.resume-import__chips-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-import__empty {
+  align-items: center;
+  justify-content: center;
+  gap: $space-4;
+  min-height: 22rem;
+  text-align: center;
+
+  h4,
+  p {
+    margin: 0;
+  }
+
+  p {
+    max-width: 28rem;
+    color: $color-gray-500;
+  }
+}
+
+.resume-import__processing {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  color: $color-gray-600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.resume-import {
+  gap: $space-5;
+}
+
+.resume-import__main,
+.resume-import__stack,
+.resume-import__diff,
+.resume-import__chips-editor {
+  gap: $space-4;
+}
+
+.resume-import__section,
+.resume-import__sidecard {
+  gap: $space-3;
+  padding: $space-4;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  background: $color-gray-100;
+}
+
+.resume-import__sidecard {
+  background: rgba($color-primary, 0.04);
+}
+
+.resume-import__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+
+  h4 {
+    margin: 0;
+    font-size: $font-size-base;
+  }
+}
+
+.resume-import__file {
+  padding: 0.35rem 0.7rem;
+  border-radius: $radius-full;
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.resume-import__chips-composer,
+.resume-import__footer-actions,
+.resume-import__diff-values {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.resume-import__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.resume-import__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: 0.45rem 0.75rem;
+  border-radius: $radius-full;
+  background: rgba($color-primary, 0.08);
+  color: $color-gray-800;
+  font-size: $font-size-sm;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  &--muted {
+    background: rgba($color-gray-400, 0.14);
+    color: $color-gray-600;
+  }
+}
+
+.resume-import__card {
+  padding: $space-4;
+  border-radius: $radius-lg;
+  background: $color-white;
+  border: 1px solid $color-gray-200;
+}
+
+.resume-import__card-head,
+.resume-import__diff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.resume-import__card-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: $radius-full;
+  background: rgba($color-error, 0.08);
+  color: $color-error;
+  cursor: pointer;
+}
+
+.resume-import__warnings {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: $color-gray-700;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.resume-import__diff-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-gray-700;
+}
+
+.resume-import__diff-values {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  color: $color-gray-600;
+  font-size: $font-size-sm;
+}
+
+.resume-import__diff-group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+@media (width <= 767px) {
+  .resume-import__section-head,
+  .resume-import__chips-composer,
+  .resume-import__footer-actions,
+  .resume-import__diff-row,
+  .resume-import__diff-values {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 @keyframes modal-backdrop-enter {
   from {
     opacity: 0;
