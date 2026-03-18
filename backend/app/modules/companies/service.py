@@ -2,6 +2,7 @@ from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.infrastructures.redis.service import redis_service
 
 from app.core.security import create_pending_signup_token, decode_pending_signup_token
 from app.infrastructures.email.service import EmailService
@@ -24,8 +25,20 @@ def _company_to_response(company: Company) -> CompanyResponse:
 
 
 async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
+    cache_key = f"company:detail:{user.id}"
+
+    # 1. Try Cache
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return CompanyResponse.model_validate_json(cached_data)
+
     company = await get_member_company(db, user)
-    return _company_to_response(company)
+    response = _company_to_response(company)
+
+    # 3. Save to Cache (TTL 1 hour)
+    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
+
+    return response
 
 
 async def update_my_company(
@@ -39,8 +52,13 @@ async def update_my_company(
 
     await db.commit()
     await db.refresh(company)
+    response = _company_to_response(company)
+
+    # INVALIDATE CACHE
+    await redis_service.delete(f"company:detail:{user.id}")
+
     logger.info("Company {} updated by {}", company.id, user.id)
-    return _company_to_response(company)
+    return response
 
 
 async def register_company(

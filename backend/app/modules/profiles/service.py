@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.infrastructures.redis.service import redis_service
+
 from app.modules.auth.models import User
 from app.modules.profiles.models import (
     Profile,
@@ -129,11 +131,24 @@ async def update_profile(
 
     await db.commit()
     profile = await _load_full_profile(db, profile.id)
+    response = _profile_to_response(profile, user.avatar_url)
+
+    # INVALIDATE CACHE
+    await redis_service.delete(f"profile:detail:{user.id}")
+    await redis_service.delete(f"dashboard:candidate:{user.id}")
+
     logger.info(f"Updated profile for user {user.id}")
-    return _profile_to_response(profile, user.avatar_url)
+    return response
 
 
 async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileResponse:
+    cache_key = f"profile:detail:{user_id}"
+
+    # 1. Try Cache
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return ProfileResponse.model_validate_json(cached_data)
+
     user = await db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(
@@ -156,7 +171,13 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> ProfileRespo
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Profile not found.",
         )
-    return _profile_to_response(profile, user.avatar_url)
+
+    response = _profile_to_response(profile, user.avatar_url)
+
+    # 3. Save to Cache (TTL 1 hour)
+    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
+
+    return response
 
 
 async def complete_onboarding(
@@ -193,7 +214,13 @@ async def complete_onboarding(
 
     await db.commit()
     profile = await _load_full_profile(db, profile.id)
+    response = _profile_to_response(profile, user.avatar_url)
+
+    # INVALIDATE CACHE
+    await redis_service.delete(f"profile:detail:{user.id}")
+    await redis_service.delete(f"dashboard:candidate:{user.id}")
+
     logger.info(
         f"Candidate {user.id} completed onboarding with roles: {payload.target_roles}"
     )
-    return _profile_to_response(profile, user.avatar_url)
+    return response

@@ -16,12 +16,15 @@ from app.modules.dashboards.schemas import (
 )
 from app.modules.jobs import service as jobs_service
 from app.modules.jobs.models import Job
+from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
-from app.shared.enums import ApplicationStatus, JobStatus
+from app.shared.enums import ApplicationStatus, JobStatus, ShortlistStatus
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
+from app.infrastructures.redis.service import redis_service
 
 
 def _has_text(value: str | None) -> bool:
@@ -107,6 +110,12 @@ async def get_recent_activity(
 async def get_candidate_dashboard(
     db: AsyncSession, current_user: User
 ) -> CandidateDashboardResponse:
+    cache_key = f"dashboard:candidate:{current_user.id}"
+
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return CandidateDashboardResponse.model_validate_json(cached_data)
+
     stats = await get_candidate_dashboard_stats(db, current_user.id)
     recent_applications = await applications_service.list_candidate_applications(
         db=db,
@@ -126,13 +135,18 @@ async def get_candidate_dashboard(
         size=3,
     )
 
-    return CandidateDashboardResponse(
+    response = CandidateDashboardResponse(
         user_name=current_user.full_name,
         stats=stats,
         recent_applications=recent_applications,
         recent_activity=recent_activity,
         recommended_jobs=recommended_jobs,
     )
+
+    # 3. Save to Cache
+    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
+
+    return response
 
 
 async def _get_recruiter_company_name(db: AsyncSession, user_id: uuid.UUID) -> str:
@@ -158,7 +172,12 @@ async def get_recruiter_dashboard_stats(
     company_id = await db.scalar(company_id_stmt)
 
     if company_id is None:
-        return RecruiterStats(active_job_posts=0, total_applications=0)
+        return RecruiterStats(
+            active_job_posts=0,
+            total_applications=0,
+            pending_ai_reviews=0,
+            pending_email_drafts=0,
+        )
 
     active_job_posts_stmt = select(func.count(Job.id)).where(
         Job.company_id == company_id,
@@ -173,16 +192,49 @@ async def get_recruiter_dashboard_stats(
 
     active_job_posts = await db.scalar(active_job_posts_stmt) or 0
     total_applications = await db.scalar(total_applications_stmt) or 0
+    pending_ai_reviews_stmt = (
+        select(func.count(Application.id))
+        .select_from(Application)
+        .join(Job, Job.id == Application.job_id)
+        .where(
+            Job.company_id == company_id,
+            Job.shortlist_status == ShortlistStatus.completed,
+            Job.final_shortlist_completed.is_(False),
+            Application.status == ApplicationStatus.submitted,
+        )
+    )
+    pending_email_drafts_stmt = (
+        select(func.count(EmailDraft.id))
+        .select_from(EmailDraft)
+        .join(Application, Application.id == EmailDraft.application_id)
+        .join(Job, Job.id == Application.job_id)
+        .where(
+            Job.company_id == company_id,
+            EmailDraft.is_sent.is_(False),
+            EmailDraft.is_discarded.is_(False),
+        )
+    )
+
+    pending_ai_reviews = await db.scalar(pending_ai_reviews_stmt) or 0
+    pending_email_drafts = await db.scalar(pending_email_drafts_stmt) or 0
 
     return RecruiterStats(
         active_job_posts=active_job_posts,
         total_applications=total_applications,
+        pending_ai_reviews=pending_ai_reviews,
+        pending_email_drafts=pending_email_drafts,
     )
 
 
 async def get_recruiter_dashboard(
     db: AsyncSession, current_user: User
 ) -> RecruiterDashboardResponse:
+    cache_key = f"dashboard:recruiter:{current_user.id}"
+
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return RecruiterDashboardResponse.model_validate_json(cached_data)
+
     company_name = await _get_recruiter_company_name(db, current_user.id)
     stats = await get_recruiter_dashboard_stats(db, current_user.id)
     company_jobs = await jobs_service.list_company_jobs(db=db, user=current_user)
@@ -192,8 +244,11 @@ async def get_recruiter_dashboard(
         reverse=True,
     )[:7]
 
-    return RecruiterDashboardResponse(
+    response = RecruiterDashboardResponse(
         company_name=company_name,
         stats=stats,
         top_jobs=top_jobs,
     )
+
+    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
+    return response

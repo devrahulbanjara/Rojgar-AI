@@ -79,6 +79,8 @@ export interface RecruiterDashboardJob {
 export interface RecruiterDashboardStats {
   active_job_posts: number
   total_applications: number
+  pending_ai_reviews: number
+  pending_email_drafts: number
 }
 
 export interface RecruiterDashboardData {

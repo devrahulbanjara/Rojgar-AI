@@ -191,6 +191,12 @@ function getStatusUpdateCopy(application: CandidateApplicationView): string {
   }
 }
 
+function getScoreSummary(score: number | null, feedback: string | null): string {
+  if (score == null) return 'Awaiting review'
+  if (feedback) return feedback
+  return `Application review score: ${score}/100`
+}
+
 function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
   if (application.status === 'rejected' || application.status === 'withdrawn') {
     return [
@@ -466,6 +472,14 @@ export default function ApplicationsPage() {
                             View Job
                           </Link>
                         </div>
+                        {application.score !== null ? (
+                          <div className="cell-actions" style={{ marginTop: '0.5rem' }}>
+                            <span className="badge badge--primary">AI reviewed</span>
+                            <span className="cell-muted">
+                              {getScoreSummary(application.score, application.feedback)}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
                     </button>
                   )
@@ -546,6 +560,23 @@ export default function ApplicationsPage() {
                 <div className="app-detail__section-title">Latest Update</div>
                 <p className="app-detail__activity">{getStatusUpdateCopy(selectedApplication)}</p>
               </div>
+
+              {selectedApplication.score !== null ? (
+                <div className="app-detail__section">
+                  <div className="app-detail__section-title">Application Review</div>
+                  <div className="cell-actions">
+                    <span className="badge badge--primary">
+                      {selectedApplication.score}/100
+                    </span>
+                    <span className="cell-muted">
+                      {getScoreSummary(
+                        selectedApplication.score,
+                        selectedApplication.feedback,
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="app-detail__section">
                 <div className="app-detail__section-title">Details</div>

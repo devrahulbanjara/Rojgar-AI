@@ -22,6 +22,7 @@ from app.modules.companies.models import CompanyMembership
 from app.shared.enums import ApplicationStatus, JobStatus
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
+from app.infrastructures.redis.service import redis_service
 
 
 def _application_response_options():
@@ -97,6 +98,15 @@ async def apply_to_job(
     )
     application = result.scalar_one()
 
+    # INVALIDATE CACHES asynchronously
+    # 1. Candidate's own dashboard & applications list
+    await redis_service.delete(f"dashboard:candidate:{user.id}")
+    await redis_service.invalidate_pattern(f"applications:candidate:{user.id}:*")
+    # 2. Recruiter dashboards (easiest is to wipe all recruiter dashboards, or you could target specific ones)
+    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    # 3. Invalidate the job detail cache because the applicant count went up
+    await redis_service.delete(f"job:detail:{payload.job_id}")
+
     logger.info(
         "User {user_id} applied to job {job_id}", user_id=user.id, job_id=payload.job_id
     )
@@ -139,6 +149,16 @@ async def list_candidate_applications(
     db: AsyncSession, user_id, page: int = 1, size: int = 20
 ) -> list[CandidateApplicationView]:
     """Return candidate applications across all companies with job and company metadata."""
+    cache_key = f"applications:candidate:{user_id}:p{page}:s{size}"
+
+    # 1. Try Cache
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        import json
+
+        data = json.loads(cached_data)
+        return [CandidateApplicationView.model_validate(item) for item in data]
+
     stmt = (
         select(Application, Job, Company)
         .join(Job, Job.id == Application.job_id)
@@ -150,7 +170,7 @@ async def list_candidate_applications(
     )
     rows = (await db.execute(stmt)).all()
 
-    return [
+    response = [
         CandidateApplicationView(
             id=application.id,
             status=application.status,
@@ -162,9 +182,22 @@ async def list_candidate_applications(
             company_logo_url=company.logo_url,
             location=job.location,
             location_type=job.location_type,
+            score=application.score,
+            feedback=application.feedback,
         )
         for application, job, company in rows
     ]
+
+    # 3. Save to Cache (TTL 5 minutes - applications status can change)
+    import json
+
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=300,
+    )
+
+    return response
 
 
 async def list_company_applications(
@@ -203,6 +236,8 @@ async def list_company_applications(
             applicant_avatar_url=applicant.avatar_url,
             job_title=job.title,
             job_id=job.id,
+            score=application.score,
+            feedback=application.feedback,
         )
         for application, applicant, job in rows
     ]
@@ -329,6 +364,15 @@ async def update_application_status(
     application.status = payload.status
     await db.commit()
     await db.refresh(application)
+
+    # INVALIDATE CACHES
+    # 1. Candidate's own dashboard & applications list
+    await redis_service.delete(f"dashboard:candidate:{application.user_id}")
+    await redis_service.invalidate_pattern(
+        f"applications:candidate:{application.user_id}:*"
+    )
+    # 2. Recruiter dashboards (since counts of interviews/offers might have changed)
+    await redis_service.invalidate_pattern("dashboard:recruiter:*")
 
     logger.info(
         "Application {app_id} status updated to {new_status} by user {user_id}",

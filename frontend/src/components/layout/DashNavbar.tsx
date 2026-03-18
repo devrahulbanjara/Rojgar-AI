@@ -112,7 +112,8 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'Dashboard', href: '/recruiter' },
     { label: 'My Jobs', href: '/recruiter/jobs' },
     { label: 'Applications', href: '/recruiter/applications' },
-    { label: 'Candidates', href: '/recruiter/candidates' },
+    { label: 'Screening', href: '/recruiter/screening' },
+    { label: 'Outreach', href: '/recruiter/outreach' },
   ]
   if (role === 'recruiter_admin') {
     items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })

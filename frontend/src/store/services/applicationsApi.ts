@@ -34,6 +34,8 @@ export interface CandidateApplicationView {
   company_logo_url: string | null
   location: string | null
   location_type: 'remote' | 'onsite' | 'hybrid'
+  score: number | null
+  feedback: string | null
 }
 
 export interface RecruiterApplicationView {
@@ -46,6 +48,8 @@ export interface RecruiterApplicationView {
   applicant_avatar_url: string | null
   job_title: string
   job_id: string
+  score: number | null
+  feedback: string | null
 }
 
 export interface ApplicationApplicantSummary {
@@ -66,6 +70,10 @@ export interface LegacyApplicationListItem {
 export interface ApplyToJobPayload {
   job_id: string
   resume_id: string
+}
+
+export interface UpdateApplicationStatusPayload {
+  status: ApplicationStatus
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +115,29 @@ export const applicationsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Applications'],
     }),
+
+    getJobApplications: builder.query<
+      ApiResponse<RecruiterApplicationView[]>,
+      { job_id: string; page?: number; size?: number }
+    >({
+      query: ({ job_id, ...params }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/job/${job_id}`,
+        params,
+      }),
+      providesTags: ['Applications'],
+    }),
+
+    updateApplicationStatus: builder.mutation<
+      ApiResponse<ApplicationResponse>,
+      { application_id: string; body: UpdateApplicationStatusPayload }
+    >({
+      query: ({ application_id, body }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${application_id}/status`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Applications'],
+    }),
   }),
 })
 
@@ -114,4 +145,6 @@ export const {
   useApplyToJobMutation,
   useGetMyApplicationsQuery,
   useGetMyCompanyApplicationsQuery,
+  useGetJobApplicationsQuery,
+  useUpdateApplicationStatusMutation,
 } = applicationsApi

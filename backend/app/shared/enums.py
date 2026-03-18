@@ -21,3 +21,10 @@ class ApplicationStatus(str, Enum):
     hired = "hired"
     rejected = "rejected"
     withdrawn = "withdrawn"
+
+
+class ShortlistStatus(str, Enum):
+    not_started = "not_started"
+    in_progress = "in_progress"
+    completed = "completed"
+    failed = "failed"

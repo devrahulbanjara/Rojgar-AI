@@ -8317,3 +8317,297 @@
     grid-template-columns: 1fr;
   }
 }
+
+// Page-header level
+.screening-skeleton__page-title {
+  width: 7rem;
+  height: 1.375rem;
+}
+
+.screening-skeleton__page-subtitle {
+  width: 22rem;
+  height: 0.875rem;
+  margin-top: $space-2;
+
+  @media (max-width: $bp-sm) {
+    width: 90%;
+  }
+}
+
+// Job select dropdown placeholder (shown while jobs API loads)
+.screening-skeleton__select {
+  width: 12rem;
+  height: 2.625rem;
+  border-radius: $radius-xl;
+}
+
+// ── Status card ──────────────────────────────────────────────────────────────
+.screening-skeleton__card-title {
+  width: 9rem;
+  height: 1rem;
+  margin-bottom: $space-3;
+}
+
+.screening-skeleton__badge {
+  width: 5.5rem;
+  height: 1.625rem;
+  border-radius: $radius-full;
+}
+
+.screening-skeleton__badge-meta {
+  width: 6rem;
+  height: 0.875rem;
+  border-radius: $radius-full;
+}
+
+.screening-skeleton__run-btn {
+  width: 8.5rem;
+  height: 2rem;
+  border-radius: $radius-full;
+}
+
+// ── Applications table — header cells ────────────────────────────────────────
+.screening-skeleton__th {
+  width: 5.5rem;
+  height: 0.75rem;
+  border-radius: $radius-full;
+
+  &--short {
+    width: 3.5rem;
+  }
+
+  &--email {
+    width: 7rem;
+  }
+
+  &--long {
+    width: 9rem;
+  }
+}
+
+// ── Applications table — body cells ──────────────────────────────────────────
+.screening-skeleton__td-name {
+  width: 8rem;
+  height: 0.875rem;
+  border-radius: $radius-full;
+}
+
+.screening-skeleton__td-email {
+  width: 10rem;
+  height: 0.8125rem;
+  border-radius: $radius-full;
+}
+
+.screening-skeleton__td-badge {
+  width: 4.5rem;
+  height: 1.5rem;
+  border-radius: $radius-full;
+}
+
+.screening-skeleton__td-feedback {
+  width: 100%;
+  height: 0.75rem;
+  border-radius: $radius-full;
+
+  &--short {
+    width: 65%;
+  }
+}
+
+.screening-skeleton__td-status {
+  width: 5rem;
+  height: 1.5rem;
+  border-radius: $radius-full;
+}
+
+.screening-skeleton__td-action {
+  width: 4.5rem;
+  height: 1.875rem;
+  border-radius: $radius-lg;
+}
+
+// ── Recruiter Applications Page Skeletons ───────────────────────────────────
+
+.rec-apps-skeleton__page-title {
+  width: 12rem;
+  height: 1.375rem;
+}
+
+.rec-apps-skeleton__page-subtitle {
+  width: 20rem;
+  height: 0.875rem;
+  margin-top: $space-2;
+
+  @media (max-width: $bp-sm) {
+    width: 90%;
+  }
+}
+
+// Table header cells
+.rec-apps-skeleton__th {
+  width: 5.5rem;
+  height: 0.75rem;
+  border-radius: $radius-full;
+
+  &--email {
+    width: 7.5rem;
+  }
+
+  &--mid {
+    width: 6rem;
+  }
+
+  &--short {
+    width: 3.5rem;
+  }
+}
+
+// Table body cells
+.rec-apps-skeleton__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-lg;
+  flex-shrink: 0;
+}
+
+.rec-apps-skeleton__name {
+  width: 9rem;
+  height: 0.875rem;
+  border-radius: $radius-full;
+}
+
+.rec-apps-skeleton__email {
+  width: 11rem;
+  height: 0.8125rem;
+  border-radius: $radius-full;
+}
+
+.rec-apps-skeleton__job {
+  width: 8rem;
+  height: 0.8125rem;
+  border-radius: $radius-full;
+}
+
+.rec-apps-skeleton__badge {
+  width: 5rem;
+  height: 1.5rem;
+  border-radius: $radius-full;
+}
+
+.rec-apps-skeleton__date {
+  width: 5.5rem;
+  height: 0.75rem;
+  border-radius: $radius-full;
+}
+
+// ── Recruiter Outreach Page Skeletons ────────────────────────────────────────
+
+// Page header
+.outreach-skeleton__page-title {
+  width: 6rem;
+  height: 1.375rem;
+}
+
+.outreach-skeleton__page-subtitle {
+  width: 20rem;
+  height: 0.875rem;
+  margin-top: $space-2;
+
+  @media (max-width: $bp-sm) {
+    width: 90%;
+  }
+}
+
+.outreach-skeleton__select {
+  width: 12rem;
+  height: 2.625rem;
+  border-radius: $radius-xl;
+}
+
+.outreach-skeleton__header-btn {
+  width: 7.5rem;
+  height: 2.25rem;
+  border-radius: $radius-full;
+}
+
+// Draft list items (left panel)
+.outreach-skeleton__item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-2;
+}
+
+.outreach-skeleton__item-name {
+  width: 8rem;
+  height: 0.9375rem;
+  border-radius: $radius-full;
+}
+
+.outreach-skeleton__item-badge {
+  width: 4rem;
+  height: 1.375rem;
+  border-radius: $radius-full;
+}
+
+.outreach-skeleton__item-subject {
+  width: 80%;
+  height: 0.75rem;
+  border-radius: $radius-full;
+  margin-bottom: $space-2;
+}
+
+.outreach-skeleton__item-meta {
+  display: flex;
+  gap: $space-3;
+  align-items: center;
+}
+
+.outreach-skeleton__item-email {
+  width: 8rem;
+  height: 0.6875rem;
+  border-radius: $radius-full;
+}
+
+.outreach-skeleton__item-score {
+  width: 4rem;
+  height: 0.6875rem;
+  border-radius: $radius-full;
+}
+
+// Draft detail panel (right panel)
+.outreach-skeleton__detail-name {
+  width: 10rem;
+  height: 1.125rem;
+  border-radius: $radius-full;
+}
+
+.outreach-skeleton__detail-email {
+  width: 12rem;
+  height: 0.875rem;
+  border-radius: $radius-full;
+}
+
+.outreach-skeleton__detail-label {
+  width: 4rem;
+  height: 0.75rem;
+  border-radius: $radius-full;
+}
+
+.outreach-skeleton__detail-input {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: $radius-xl;
+}
+
+.outreach-skeleton__detail-textarea {
+  width: 100%;
+  height: 18rem;
+  border-radius: $radius-xl;
+}
+
+.outreach-skeleton__detail-action {
+  width: 5rem;
+  height: 2rem;
+  border-radius: $radius-full;
+}
