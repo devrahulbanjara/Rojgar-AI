@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation'
 import { useGetMyCompanyApplicationsQuery } from '@/store/services/applicationsApi'
 import { Briefcase, Mail } from 'lucide-react'
 
+import { RecruiterApplicationsTableSkeleton } from './_components/ApplicationsSkeletons'
+
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2)
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'U'
@@ -79,6 +81,7 @@ export default function CompanyApplicationsPage() {
 
   return (
     <div className="dash-content container container--app-shell">
+      {/* Static header — renders immediately */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">{heading}</h2>
@@ -86,13 +89,10 @@ export default function CompanyApplicationsPage() {
         </div>
       </div>
 
-      {isLoading && (
-        <div className="dash-card">
-          <div className="dash-card__body">Loading applications...</div>
-        </div>
-      )}
-
-      {isError && (
+      {/* Dynamic content */}
+      {isLoading ? (
+        <RecruiterApplicationsTableSkeleton rows={7} />
+      ) : isError ? (
         <div className="dash-card">
           <div className="dash-card__body">
             Failed to load applications.{' '}
@@ -101,9 +101,7 @@ export default function CompanyApplicationsPage() {
             </button>
           </div>
         </div>
-      )}
-
-      {!isLoading && !isError && applications.length === 0 && (
+      ) : applications.length === 0 ? (
         <div className="dash-card">
           <div
             className="dash-card__body"
@@ -130,9 +128,7 @@ export default function CompanyApplicationsPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {!isLoading && !isError && applications.length > 0 && (
+      ) : (
         <div className="dash-card">
           <div className="table-scroll">
             <table className="dash-table">

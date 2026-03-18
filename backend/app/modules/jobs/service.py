@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.infrastructures.qdrant.service import qdrant_service
+from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
@@ -195,6 +196,10 @@ async def create_job(
     )
     job, applications_count = result.one()
     logger.info(f"Job '{job.title}' created by user {user.id}")
+
+    await redis_service.delete(f"jobs:company:{company_id}")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter:*")
+
     return _job_detail_response_from_row(job, applications_count)
 
 
@@ -321,6 +326,15 @@ async def search_jobs(
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     """List all jobs belonging to the user's company."""
     company_id = await _get_user_company_id(db, user)
+    cache_key = f"jobs:company:{company_id}"
+
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        import json
+
+        data = json.loads(cached_data)
+        return [JobListItem.model_validate(item) for item in data]
+
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -330,14 +344,28 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
         .order_by(Job.created_at.desc())
     )
     rows = result.all()
-    return [
+    response = [
         _job_list_item_from_row(job, applications_count)
         for job, applications_count in rows
     ]
 
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=3600,
+    )
+
+    return response
+
 
 async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
     """Get full job details including description."""
+    cache_key = f"job:detail:{job_id}"
+
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return JobDetailResponse.model_validate_json(cached_data)
+
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -352,7 +380,11 @@ async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
             detail="Job not found.",
         )
     job, applications_count = row
-    return _job_detail_response_from_row(job, applications_count)
+    response = _job_detail_response_from_row(job, applications_count)
+
+    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
+
+    return response
 
 
 async def update_job(
@@ -409,7 +441,14 @@ async def update_job(
     )
     job, applications_count = result.one()
     logger.info(f"Job '{job.title}' updated by user {user.id}")
-    return _job_detail_response_from_row(job, applications_count)
+
+    response = _job_detail_response_from_row(job, applications_count)
+
+    await redis_service.delete(f"job:detail:{job_id}")
+    await redis_service.delete(f"jobs:company:{company_id}")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter:*")
+
+    return response
 
 
 async def delete_job(
@@ -438,5 +477,9 @@ async def delete_job(
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
     bg_tasks.add_task(process_sync_event, event.id)
+
+    await redis_service.delete(f"job:detail:{job_id}")
+    await redis_service.delete(f"jobs:company:{company_id}")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter:*")
 
     logger.info(f"Job '{job_title}' deleted by user {user.id}")

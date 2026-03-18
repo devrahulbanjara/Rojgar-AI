@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     resume_import_max_upload_bytes: int = 10 * 1024 * 1024
     resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
 
+    # Redis
+    redis_url: str | None = None
+    redis_enabled: bool = True
+
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"

@@ -12,6 +12,7 @@ from app.core.tasks import sync_daemon_loop
 from app.core.database import engine, get_db
 from app.core.exception_handlers import register_exception_handlers
 from app.infrastructures.qdrant.service import qdrant_service
+from app.infrastructures.redis.service import redis_service
 
 from app.modules.companies.router import router as companies_router
 from app.modules.profiles.router import router as profiles_router
@@ -24,6 +25,9 @@ from app.modules.auth.router import router as auth_router
 from app.modules.dashboards.router import router as dash_router
 from app.modules.job_ai.runtime import job_ai_runtime
 from app.modules.job_ai.router import router as job_ai_router
+from app.modules.outreach.router import router as outreach_router
+from app.modules.outreach.runtime import outreach_runtime
+from app.modules.shortlisting.router import router as shortlisting_router
 
 setup_logging()
 
@@ -32,6 +36,8 @@ setup_logging()
 async def lifespan(app: FastAPI):
     await qdrant_service.initialize()
     await job_ai_runtime.start()
+    await outreach_runtime.start()
+    await redis_service.connect()
 
     daemon_task = asyncio.create_task(sync_daemon_loop())
 
@@ -43,6 +49,8 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
 
+    await redis_service.disconnect()
+    await outreach_runtime.stop()
     await job_ai_runtime.stop()
     await engine.dispose()
 
@@ -83,6 +91,8 @@ app.include_router(resumes_router, prefix="/resumes", tags=["Resumes"])
 app.include_router(job_ai_router, prefix="/jobs/ai", tags=["jobs-ai"])
 app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
+app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])
+app.include_router(outreach_router, prefix="/outreach", tags=["Outreach"])
 
 
 @app.get("/", tags=["System"], response_model=UnifiedResponse[dict])

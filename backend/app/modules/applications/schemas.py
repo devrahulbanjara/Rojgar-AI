@@ -8,11 +8,6 @@ from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, LocationType
 
 
-# ---------------------------------------------------------------------------
-# Requests
-# ---------------------------------------------------------------------------
-
-
 class ApplyRequest(BaseSchema):
     """Candidate applies to a job. MUST attach an existing resume."""
 
@@ -27,11 +22,6 @@ class UpdateApplicationStatusRequest(BaseSchema):
         ...,
         description="New status for the application",
     )
-
-
-# ---------------------------------------------------------------------------
-# Responses
-# ---------------------------------------------------------------------------
 
 
 class ApplicationResponse(BaseSchema):
@@ -77,6 +67,8 @@ class CandidateApplicationView(BaseSchema):
     company_logo_url: str | None = None
     location: str | None = None
     location_type: LocationType
+    score: int | None = None
+    feedback: str | None = None
 
 
 class RecruiterApplicationView(BaseSchema):
@@ -91,3 +83,5 @@ class RecruiterApplicationView(BaseSchema):
     applicant_avatar_url: str | None = None
     job_title: str
     job_id: UUID
+    score: int | None = None
+    feedback: str | None = None

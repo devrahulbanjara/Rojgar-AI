@@ -3,6 +3,10 @@ from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
+import re
+
+from app.infrastructures.redis.service import redis_service
 
 from app.infrastructures.search.service import search_service
 from app.modules.companies.models import Company, CompanyMembership
@@ -102,10 +106,21 @@ async def get_source_job_context(
 async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
     """
     Research salary and compensation data for a given role and location.
-
-    Uses web search to gather market intelligence about salary ranges,
-    compensation packages, and job market trends.
+    Cached for 24 hours since salary data doesn't change rapidly.
     """
+    # 1. Standardize inputs to create a stable cache key
+    norm_role = re.sub(r"[^a-zA-Z0-9]+", "_", role.lower()).strip("_")
+    norm_country = re.sub(r"[^a-zA-Z0-9]+", "_", country.lower()).strip("_")
+    cache_key = f"ai:salary_research:{norm_role}:{norm_country}"
+
+    # 2. Check Cache
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        try:
+            return json.loads(cached_data)
+        except Exception:
+            pass
+
     queries = [
         f"{role} salary range in {country} 2026",
         f"{role} compensation in {country} 2026",
@@ -116,7 +131,6 @@ async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
     seen_urls: set[str] = set()
 
     for query in queries:
-        # Use the generic search service
         results = await search_service.query(query, country=country.lower())
 
         for res in results:
@@ -139,8 +153,13 @@ async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
         if len(aggregated) >= MAX_SALARY_SEARCH_RESULTS:
             break
 
-    return {
+    response = {
         "role": role,
         "country": country,
         "results": aggregated,
     }
+
+    # 4. Save to Cache (TTL 24 hours - 86400 seconds)
+    await redis_service.set(cache_key, json.dumps(response), ttl_seconds=86400)
+
+    return response

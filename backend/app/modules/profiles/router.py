@@ -27,6 +27,7 @@ from app.modules.profiles.schemas import (
     ProfileResponse,
     ProfileUpdate,
 )
+from app.infrastructures.redis.service import redis_service
 
 router = APIRouter()
 
@@ -143,6 +144,8 @@ async def upload_my_avatar(
     if previous_avatar_url and previous_avatar_url != new_avatar_url:
         await storage_service.delete_image(previous_avatar_url)
 
+    await redis_service.delete(f"profile:detail:{user.id}")
+
     data = await service.get_or_create_profile(db, user)
     return ResponseBuilder.success(data=data, message="Avatar updated.")
 
@@ -163,6 +166,9 @@ async def delete_my_avatar(
 
     if previous_avatar_url:
         await storage_service.delete_image(previous_avatar_url)
+
+    # INVALIDATE CACHE
+    await redis_service.delete(f"profile:detail:{user.id}")
 
     return ResponseBuilder.success(data=None, message="Avatar removed.")
 

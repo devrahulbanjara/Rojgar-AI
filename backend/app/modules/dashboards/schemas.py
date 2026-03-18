@@ -46,6 +46,8 @@ class CandidateDashboardResponse(BaseSchema):
 class RecruiterStats(BaseSchema):
     active_job_posts: int
     total_applications: int
+    pending_ai_reviews: int
+    pending_email_drafts: int
 
 
 class RecruiterDashboardResponse(BaseSchema):

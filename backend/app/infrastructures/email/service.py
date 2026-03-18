@@ -81,3 +81,9 @@ class EmailService:
         </div>
         """
         await cls._send("Reset your ConvexHire Password", email, html)
+
+    @classmethod
+    async def send_generic_email(
+        cls, to_email: str, subject: str, html_body: str
+    ) -> None:
+        await cls._send(subject, to_email, html_body)
