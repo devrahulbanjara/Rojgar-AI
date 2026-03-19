@@ -231,12 +231,12 @@ function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 
           <span className="company-job-card__posted-date">
             <Calendar size={13} aria-hidden="true" />
             <span>Updated {formatDate(draft.updated_at)}</span>
-            </span>
-            <span className="company-job-card__posted-date">
-              <FileText size={13} aria-hidden="true" />
-              <span>{draft.mode === 'clone' ? 'Cloned with AI' : 'Drafted with AI'}</span>
-            </span>
-          </div>
+          </span>
+          <span className="company-job-card__posted-date">
+            <FileText size={13} aria-hidden="true" />
+            <span>{draft.mode === 'clone' ? 'Cloned with AI' : 'Drafted with AI'}</span>
+          </span>
+        </div>
 
         <div className="company-job-card__actions">
           <Link

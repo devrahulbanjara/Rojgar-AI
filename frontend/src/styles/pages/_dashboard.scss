@@ -5964,17 +5964,24 @@
   overflow: hidden; // clip the bar; scroll handled by __scroll child
 
   &__bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: $space-4;
-    padding: $space-3 $space-6;
+    padding: $space-4 $space-6;
     background: $color-white;
     border-bottom: 1px solid $color-gray-200;
     flex-shrink: 0;
     position: sticky;
     top: 0;
     z-index: 10;
+
+    @media (max-width: $bp-md) {
+      grid-template-columns: 1fr;
+      justify-items: stretch;
+      gap: $space-3;
+      padding: $space-4;
+    }
   }
 
   &__bar-title {
@@ -5992,8 +5999,43 @@
   &__bar-right {
     display: flex;
     align-items: center;
-    gap: $space-2;
+    gap: $space-3;
     flex-shrink: 0;
+    min-width: 0;
+  }
+
+  &__bar-left {
+    justify-content: flex-start;
+  }
+
+  &__bar-right {
+    justify-content: flex-end;
+  }
+
+  &__actions {
+    gap: $space-3;
+
+    .btn {
+      flex-shrink: 0;
+    }
+  }
+
+  &__bar .jd-back {
+    margin-bottom: 0;
+    min-height: 2.25rem;
+    color: $color-gray-600;
+  }
+
+  @media (max-width: $bp-md) {
+    &__bar-title {
+      order: -1;
+      text-align: left;
+    }
+
+    &__bar-right {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
   }
 
   &__scroll {
@@ -6011,215 +6053,241 @@
 .rv-page-shadow {
   background: $color-white;
   width: 100%;
-  max-width: 820px;
-  box-shadow: $shadow-lg;
-  border-radius: $radius-sm;
+  max-width: 8.5in;
   overflow: hidden;
 }
 
 .rv-doc {
-  padding: $space-10 $space-12;
-  font-family: $font-body;
-  font-size: $font-size-sm;
-  color: $color-gray-800;
-  line-height: 1.6;
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.5in;
+  background: $color-white;
+  font-family: var(--font-resume), 'EB Garamond', Garamond, 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 1.45;
+  font-optical-sizing: auto;
+  font-kerning: normal;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: $color-black;
 
   @media (max-width: $bp-md) {
-    padding: $space-6 $space-4;
+    padding: $space-6;
   }
 }
 
 // ── Resume header ──────────────────────────────────────────────
 .rv-header {
-  margin-bottom: $space-6;
+  margin-bottom: $space-4;
   text-align: center;
 
   &__name {
-    font-family: $font-heading;
-    font-size: 2rem;
-    font-weight: $font-weight-bold;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: $color-gray-900;
-    line-height: 1.15;
-    margin-bottom: $space-1;
+    margin: 0;
+    font-family: var(--font-resume), 'EB Garamond', Garamond, 'Times New Roman', serif;
+    font-size: 1.8rem;
+    font-weight: $font-weight-regular;
+    font-variation-settings: 'wght' 400;
+    font-synthesis-weight: none;
+    letter-spacing: 0.015em;
+    color: $color-black;
+    line-height: 1.05;
   }
 
   &__headline {
+    margin: 4px 0 0;
     font-style: italic;
-    font-size: $font-size-base;
-    color: $color-gray-600;
-    margin-bottom: $space-4;
+    font-size: 11pt;
+    color: $color-black;
   }
 
   &__contacts {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: $space-2 $space-5;
-    font-size: $font-size-xs;
-    color: $color-gray-600;
+    gap: 10px 16px;
+    margin-top: $space-2;
+    font-size: 9.5pt;
+    color: $color-black;
   }
 
   &__contact {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: $space-1;
+    gap: 4px;
+    white-space: nowrap;
+  }
 
-    svg {
-      flex-shrink: 0;
-      color: $color-gray-500;
-    }
+  &__icon {
+    flex-shrink: 0;
+    color: $color-black;
   }
 }
 
 .rv-link {
-  color: $color-gray-800;
+  color: inherit;
   text-decoration: none;
 
   &:hover {
-    color: $color-primary;
     text-decoration: underline;
   }
 }
 
 // ── Resume sections ────────────────────────────────────────────
 .rv-section {
-  margin-bottom: $space-6;
+  margin-top: $space-4;
 
   &__heading {
-    font-family: $font-heading;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-bold;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: $color-gray-900;
-    border-bottom: 2px solid $color-gray-900;
-    padding-bottom: $space-1;
-    margin-bottom: $space-4;
+    margin: 0 0 4px;
+    padding-bottom: 1px;
+    border-bottom: 1px solid $color-black;
+    font-variant: small-caps;
+    font-size: 13pt;
+    font-weight: $font-weight-regular;
+    letter-spacing: 0.03em;
+    color: $color-black;
   }
 
   &__body {
-    font-size: $font-size-sm;
-    color: $color-gray-700;
-    line-height: 1.7;
+    margin: 0;
+    color: $color-black;
   }
 }
 
 // ── Experience entries ─────────────────────────────────────────
+.rv-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-4;
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__main {
+    min-width: 0;
+  }
+
+  &__aside {
+    flex-shrink: 0;
+    min-width: 160px;
+    text-align: right;
+    font-family: $font-body;
+    font-size: 0.78rem;
+    color: $color-gray-600;
+
+    @media (max-width: $bp-sm) {
+      min-width: 0;
+      text-align: left;
+    }
+  }
+}
+
 .rv-exp {
-  margin-bottom: $space-5;
+  margin-bottom: 10px;
 
   &:last-child {
     margin-bottom: 0;
   }
 
-  &__header {
+  &__topline,
+  &__titleline {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: $space-1;
-    margin-bottom: $space-1;
+    align-items: baseline;
+    gap: $space-4;
+
+    @media (max-width: $bp-sm) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+    }
+  }
+
+  &__topline {
+    margin-bottom: 1px;
   }
 
   &__title {
-    font-weight: $font-weight-semibold;
-    color: $color-gray-900;
-    font-size: $font-size-base;
+    font-size: 10.5pt;
+    font-style: italic;
+    color: $color-black;
   }
 
   &__company {
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    font-size: $font-size-sm;
-    margin-bottom: $space-1;
+    font-size: 11pt;
+    font-weight: $font-weight-semibold;
+    color: $color-black;
   }
 
-  &__meta {
-    display: flex;
-    align-items: center;
-    gap: $space-4;
-    font-size: $font-size-xs;
-    color: $color-gray-500;
-    margin-bottom: $space-2;
+  &__dates {
+    flex-shrink: 0;
+    font-size: 10pt;
+    font-style: italic;
+    color: $color-black;
+    text-align: right;
+  }
+
+  &__location {
+    flex-shrink: 0;
+    font-size: 10pt;
+    color: $color-black;
+    text-align: right;
   }
 
   &__meta-item {
-    display: flex;
-    align-items: center;
-    gap: $space-1;
+    & + .rv-exp__meta-item {
+      margin-top: 2px;
+    }
   }
 }
 
 .rv-bullets {
-  margin: 0;
-  padding-left: $space-5;
-  font-size: $font-size-sm;
-  color: $color-gray-700;
-  line-height: 1.7;
+  margin: 4px 0 0;
+  padding-left: 1em;
+  color: $color-black;
+  line-height: 1.4;
+  list-style: disc;
 
   li {
-    margin-bottom: $space-1;
+    margin-bottom: 3px;
   }
 }
 
 // ── Education entries ──────────────────────────────────────────
 .rv-edu {
-  margin-bottom: $space-4;
+  margin-bottom: 10px;
 
   &:last-child {
     margin-bottom: 0;
   }
 
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: $space-1;
-    margin-bottom: $space-1;
-  }
-
   &__degree {
-    font-weight: $font-weight-semibold;
-    color: $color-gray-900;
-    font-size: $font-size-base;
+    font-size: 10.5pt;
+    font-style: italic;
+    color: $color-black;
   }
 
   &__institution {
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    font-size: $font-size-sm;
-  }
-
-  &__meta {
-    display: flex;
-    align-items: center;
-    gap: $space-1;
-    font-size: $font-size-xs;
-    color: $color-gray-500;
-    margin-top: $space-1;
+    font-size: 11pt;
+    font-weight: $font-weight-semibold;
+    color: $color-black;
   }
 }
 
-// ── Skills chips ───────────────────────────────────────────────
-.rv-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-2;
+.rv-skills-block {
+  font-size: 11pt;
+}
 
-  &__chip {
-    display: inline-block;
-    padding: $space-1 $space-3;
-    border: 1px solid $color-gray-300;
-    border-radius: $radius-full;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    color: $color-gray-700;
-    background: $color-gray-100;
-    white-space: nowrap;
-  }
+.rv-skills-line {
+  margin: 0;
+  color: $color-black;
+}
+
+.rv-skills-label {
+  font-weight: $font-weight-semibold;
 }
 
 // ── Print styles ───────────────────────────────────────────────

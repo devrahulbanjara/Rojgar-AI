@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
@@ -12,52 +12,67 @@ import {
   useUpdateDraftMutation,
 } from '@/store/services/outreachApi'
 
-import { OutreachDraftDetailSkeleton, OutreachDraftListSkeleton } from './_components/OutreachSkeletons'
+import {
+  OutreachDraftDetailSkeleton,
+  OutreachDraftListSkeleton,
+} from './_components/OutreachSkeletons'
 
 export default function RecruiterOutreachPage() {
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
-  const jobs = jobsResp?.data ?? []
+  const jobs = useMemo(() => jobsResp?.data ?? [], [jobsResp?.data])
   const [selectedJobId, setSelectedJobId] = useState('')
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null)
-  const [draftSubject, setDraftSubject] = useState('')
-  const [draftBody, setDraftBody] = useState('')
+  const [draftEdits, setDraftEdits] = useState<Record<string, { subject: string; body: string }>>(
+    {},
+  )
 
-  useEffect(() => {
-    if (!selectedJobId && jobs[0]) setSelectedJobId(jobs[0].id)
-  }, [jobs, selectedJobId])
+  const activeJobId = selectedJobId || jobs[0]?.id || ''
 
   const {
     data: draftsResp,
     refetch,
     isLoading: isLoadingDrafts,
     isFetching: isFetchingDrafts,
-  } = useGetDraftsQuery(selectedJobId, {
-    skip: !selectedJobId,
-    pollingInterval: selectedJobId ? 10000 : 0,
+  } = useGetDraftsQuery(activeJobId, {
+    skip: !activeJobId,
+    pollingInterval: activeJobId ? 10000 : 0,
   })
-  const drafts = draftsResp?.data ?? []
-  const selectedDraft = useMemo(
-    () => drafts.find((draft) => draft.draft_id === selectedDraftId) ?? drafts[0] ?? null,
-    [drafts, selectedDraftId],
-  )
 
-  useEffect(() => {
-    if (selectedDraft) {
-      setSelectedDraftId(selectedDraft.draft_id)
-      setDraftSubject(selectedDraft.subject ?? '')
-      setDraftBody(selectedDraft.body ?? '')
-    }
-  }, [selectedDraft])
+  const drafts = useMemo(() => draftsResp?.data ?? [], [draftsResp?.data])
+  const activeDraftId =
+    selectedDraftId && drafts.some((draft) => draft.draft_id === selectedDraftId)
+      ? selectedDraftId
+      : (drafts[0]?.draft_id ?? null)
+  const selectedDraft = useMemo(
+    () => drafts.find((draft) => draft.draft_id === activeDraftId) ?? null,
+    [drafts, activeDraftId],
+  )
+  const selectedDraftEdit = selectedDraft ? draftEdits[selectedDraft.draft_id] : undefined
+  const draftSubject = selectedDraftEdit?.subject ?? selectedDraft?.subject ?? ''
+  const draftBody = selectedDraftEdit?.body ?? selectedDraft?.body ?? ''
 
   const [prepareDrafts, { isLoading: isPreparing }] = usePrepareDraftsMutation()
   const [updateDraft, { isLoading: isSaving }] = useUpdateDraftMutation()
   const [approveDraft, { isLoading: isApproving }] = useApproveDraftMutation()
   const [sendAllDrafts, { isLoading: isSendingAll }] = useSendAllDraftsMutation()
 
+  function updateSelectedDraftEdit(patch: Partial<{ subject: string; body: string }>) {
+    if (!selectedDraft) return
+
+    setDraftEdits((current) => ({
+      ...current,
+      [selectedDraft.draft_id]: {
+        subject: current[selectedDraft.draft_id]?.subject ?? selectedDraft.subject ?? '',
+        body: current[selectedDraft.draft_id]?.body ?? selectedDraft.body ?? '',
+        ...patch,
+      },
+    }))
+  }
+
   async function handlePrepare() {
-    if (!selectedJobId) return
+    if (!activeJobId) return
     try {
-      const response = await prepareDrafts({ jobId: selectedJobId }).unwrap()
+      const response = await prepareDrafts({ jobId: activeJobId }).unwrap()
       toast.success(response.message)
       void refetch()
     } catch {
@@ -92,9 +107,9 @@ export default function RecruiterOutreachPage() {
   }
 
   async function handleSendAll() {
-    if (!selectedJobId) return
+    if (!activeJobId) return
     try {
-      const response = await sendAllDrafts(selectedJobId).unwrap()
+      const response = await sendAllDrafts(activeJobId).unwrap()
       toast.success(response.message)
       void refetch()
     } catch {
@@ -102,15 +117,10 @@ export default function RecruiterOutreachPage() {
     }
   }
 
-  // Show skeleton for the content panels when:
-  //  • jobs are still fetching (selectedJobId not yet auto-set)
-  //  • selectedJobId is still '' (useEffect tick hasn't fired yet)
-  //  • drafts query is in-flight after a job is selected
-  const isLoadingContent = isLoadingJobs || !selectedJobId || isLoadingDrafts || isFetchingDrafts
+  const isLoadingContent = isLoadingJobs || !activeJobId || isLoadingDrafts || isFetchingDrafts
 
   return (
     <div className="dash-content container container--app-shell">
-      {/* Static header — renders immediately */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Outreach</h2>
@@ -119,14 +129,16 @@ export default function RecruiterOutreachPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          {/* Job select: skeleton while jobs load */}
           {isLoadingJobs ? (
             <div className="skeleton-block outreach-skeleton__select" aria-hidden="true" />
           ) : (
             <select
               className="dash-select"
-              value={selectedJobId}
-              onChange={(event) => setSelectedJobId(event.target.value)}
+              value={activeJobId}
+              onChange={(event) => {
+                setSelectedJobId(event.target.value)
+                setSelectedDraftId(null)
+              }}
             >
               <option value="">Select a job</option>
               {jobs.map((job) => (
@@ -154,7 +166,6 @@ export default function RecruiterOutreachPage() {
       </div>
 
       <div className="dash-grid dash-grid--2col">
-        {/* Left panel — draft list */}
         {isLoadingContent ? (
           <OutreachDraftListSkeleton rows={5} />
         ) : (
@@ -167,7 +178,7 @@ export default function RecruiterOutreachPage() {
                   <button
                     key={draft.draft_id}
                     type="button"
-                    className={`app-item${selectedDraft?.draft_id === draft.draft_id ? ' app-item--active' : ''}`}
+                    className={`app-item${activeDraftId === draft.draft_id ? ' app-item--active' : ''}`}
                     onClick={() => setSelectedDraftId(draft.draft_id)}
                   >
                     <div className="app-item__body">
@@ -199,7 +210,6 @@ export default function RecruiterOutreachPage() {
           </div>
         )}
 
-        {/* Right panel — draft detail editor */}
         {isLoadingContent ? (
           <OutreachDraftDetailSkeleton />
         ) : (
@@ -216,7 +226,7 @@ export default function RecruiterOutreachPage() {
                     <input
                       className="resume-field__input"
                       value={draftSubject}
-                      onChange={(event) => setDraftSubject(event.target.value)}
+                      onChange={(event) => updateSelectedDraftEdit({ subject: event.target.value })}
                     />
                   </div>
                   <div className="resume-field" style={{ marginTop: '1rem' }}>
@@ -225,7 +235,7 @@ export default function RecruiterOutreachPage() {
                       className="resume-field__textarea"
                       rows={14}
                       value={draftBody}
-                      onChange={(event) => setDraftBody(event.target.value)}
+                      onChange={(event) => updateSelectedDraftEdit({ body: event.target.value })}
                     />
                   </div>
                   <div className="cell-actions" style={{ marginTop: '1rem' }}>

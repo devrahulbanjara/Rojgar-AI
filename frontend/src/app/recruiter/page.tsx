@@ -170,9 +170,7 @@ export default function CompanyDashboardPage() {
             <Link href="/recruiter/outreach" className="dash-card">
               <div className="dash-card__body">
                 <div className="dash-card__title">Drafts To Send</div>
-                <div className="stat-card__value">
-                  {recruiterStats?.pending_email_drafts ?? 0}
-                </div>
+                <div className="stat-card__value">{recruiterStats?.pending_email_drafts ?? 0}</div>
                 <div className="dash-card__subtitle">
                   Candidate emails waiting for approval or send
                 </div>
@@ -223,7 +221,8 @@ export default function CompanyDashboardPage() {
                       <div className="item-row__info">
                         <div className="item-row__title">{job.title}</div>
                         <div className="item-row__sub">
-                          {job.applications_count} applicant{job.applications_count === 1 ? '' : 's'}
+                          {job.applications_count} applicant
+                          {job.applications_count === 1 ? '' : 's'}
                           {job.location ? ` Â· ${job.location}` : ''}
                         </div>
                       </div>

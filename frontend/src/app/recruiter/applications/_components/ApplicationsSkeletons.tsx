@@ -12,11 +12,21 @@ export function RecruiterApplicationsTableSkeleton({ rows = 7 }: { rows?: number
         <table className="dash-table">
           <thead>
             <tr>
-              <th><div className="skeleton-block rec-apps-skeleton__th" /></th>
-              <th><div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--email" /></th>
-              <th><div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--mid" /></th>
-              <th><div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--short" /></th>
-              <th><div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--short" /></th>
+              <th>
+                <div className="skeleton-block rec-apps-skeleton__th" />
+              </th>
+              <th>
+                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--email" />
+              </th>
+              <th>
+                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--mid" />
+              </th>
+              <th>
+                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--short" />
+              </th>
+              <th>
+                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--short" />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -30,13 +40,21 @@ export function RecruiterApplicationsTableSkeleton({ rows = 7 }: { rows?: number
                   </div>
                 </td>
                 {/* Email */}
-                <td><div className="skeleton-block rec-apps-skeleton__email" /></td>
+                <td>
+                  <div className="skeleton-block rec-apps-skeleton__email" />
+                </td>
                 {/* Job */}
-                <td><div className="skeleton-block rec-apps-skeleton__job" /></td>
+                <td>
+                  <div className="skeleton-block rec-apps-skeleton__job" />
+                </td>
                 {/* Status badge */}
-                <td><div className="skeleton-block rec-apps-skeleton__badge" /></td>
+                <td>
+                  <div className="skeleton-block rec-apps-skeleton__badge" />
+                </td>
                 {/* Applied date */}
-                <td><div className="skeleton-block rec-apps-skeleton__date" /></td>
+                <td>
+                  <div className="skeleton-block rec-apps-skeleton__date" />
+                </td>
               </tr>
             ))}
           </tbody>

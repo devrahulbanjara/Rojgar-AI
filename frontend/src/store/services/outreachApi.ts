@@ -1,6 +1,6 @@
+import type { ApplicationStatus } from './applicationsApi'
 import type { ApiResponse } from './baseApi'
 import { baseApi } from './baseApi'
-import type { ApplicationStatus } from './applicationsApi'
 
 export interface EmailDraftRecord {
   draft_id: string

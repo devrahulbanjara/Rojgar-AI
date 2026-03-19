@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import {
@@ -14,7 +14,10 @@ import {
   useTriggerShortlistingMutation,
 } from '@/store/services/shortlistingApi'
 
-import { ScreeningStatusCardSkeleton, ScreeningTableSkeleton } from './_components/ScreeningSkeletons'
+import {
+  ScreeningStatusCardSkeleton,
+  ScreeningTableSkeleton,
+} from './_components/ScreeningSkeletons'
 
 function scoreBadgeClass(score: number | null) {
   if (score == null) return 'gray'
@@ -25,22 +28,22 @@ function scoreBadgeClass(score: number | null) {
 
 export default function RecruiterScreeningPage() {
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
-  const jobs = jobsResp?.data.filter((job) => job.status === 'active') ?? []
+  const jobs = useMemo(
+    () => jobsResp?.data.filter((job) => job.status === 'active') ?? [],
+    [jobsResp?.data],
+  )
   const [selectedJobId, setSelectedJobId] = useState('')
   const [threshold, setThreshold] = useState(70)
-  const [shouldPollSummary, setShouldPollSummary] = useState(false)
-
-  useEffect(() => {
-    if (!selectedJobId && jobs[0]) setSelectedJobId(jobs[0].id)
-  }, [jobs, selectedJobId])
+  const [isPollingSummary, setIsPollingSummary] = useState(false)
+  const activeJobId = selectedJobId || jobs[0]?.id || ''
 
   const {
     data: summaryResp,
     refetch: refetchSummary,
     isLoading: isLoadingSummary,
-  } = useGetShortlistSummaryQuery(selectedJobId, {
-    skip: !selectedJobId,
-    pollingInterval: shouldPollSummary ? 10000 : 0,
+  } = useGetShortlistSummaryQuery(activeJobId, {
+    skip: !activeJobId,
+    pollingInterval: isPollingSummary ? 10000 : 0,
   })
   const {
     data: appsResp,
@@ -48,14 +51,15 @@ export default function RecruiterScreeningPage() {
     isLoading: isLoadingApps,
     isFetching: isFetchingApps,
   } = useGetJobApplicationsQuery(
-    { job_id: selectedJobId, page: 1, size: 100 },
-    { skip: !selectedJobId },
+    { job_id: activeJobId, page: 1, size: 100 },
+    { skip: !activeJobId },
   )
   const [triggerShortlisting, { isLoading: isTriggering }] = useTriggerShortlistingMutation()
   const [finalizeShortlist, { isLoading: isFinalizing }] = useFinalizeShortlistMutation()
   const [updateStatus, { isLoading: isUpdating }] = useUpdateApplicationStatusMutation()
 
   const summary = summaryResp?.data
+  const shouldPollSummary = isPollingSummary || summary?.shortlist_status === 'in_progress'
   const applications = useMemo(
     () => [...(appsResp?.data ?? [])].sort((a, b) => (b.score ?? -1) - (a.score ?? -1)),
     [appsResp?.data],
@@ -65,24 +69,20 @@ export default function RecruiterScreeningPage() {
     summary.total_applications > 0 &&
     (summary.shortlist_status === 'not_started' || summary.shortlist_status === 'failed')
 
-  useEffect(() => {
-    setShouldPollSummary(summary?.shortlist_status === 'in_progress')
-  }, [summary?.shortlist_status])
-
   async function handleTrigger() {
-    if (!selectedJobId) return
+    if (!activeJobId) return
     try {
-      setShouldPollSummary(true)
-      const response = await triggerShortlisting(selectedJobId).unwrap()
+      setIsPollingSummary(true)
+      const response = await triggerShortlisting(activeJobId).unwrap()
       if (response.data.shortlist_status === 'in_progress') {
         toast.success(response.message)
       } else {
-        setShouldPollSummary(false)
+        setIsPollingSummary(false)
         toast.info(response.message)
       }
       void refetchSummary()
     } catch {
-      setShouldPollSummary(false)
+      setIsPollingSummary(false)
       toast.error('Unable to start screening right now.')
     }
   }
@@ -98,14 +98,15 @@ export default function RecruiterScreeningPage() {
   }
 
   async function handleFinalize() {
-    if (!selectedJobId) return
+    if (!activeJobId) return
     try {
       await finalizeShortlist({
-        jobId: selectedJobId,
+        jobId: activeJobId,
         use_ai_recommendations: true,
         threshold,
       }).unwrap()
       toast.success('Shortlist finalized.')
+      setIsPollingSummary(false)
       void refetchSummary()
       void refetchApps()
     } catch {
@@ -113,17 +114,10 @@ export default function RecruiterScreeningPage() {
     }
   }
 
-  // Show skeleton when:
-  //  • jobs are still fetching (selectedJobId not yet auto-set from jobs[0])
-  //  • selectedJobId is still '' (useEffect tick hasn't fired yet)
-  //  • summary / apps queries are in flight after a job is selected
-  const isLoadingContent = isLoadingJobs || !selectedJobId || isLoadingSummary || isLoadingApps
-
+  const isLoadingContent = isLoadingJobs || !activeJobId || isLoadingSummary || isLoadingApps
 
   return (
     <div className="dash-content container container--app-shell">
-      {/* ── Page Header ─────────────────────────────────────────────────────── */}
-      {/* Static content: renders instantly, no skeleton needed */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Screening</h2>
@@ -132,14 +126,16 @@ export default function RecruiterScreeningPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          {/* Job select: once jobs load we show the real select; before that, a subtle skeleton */}
           {isLoadingJobs ? (
             <div className="skeleton-block screening-skeleton__select" aria-hidden="true" />
           ) : (
             <select
               className="dash-select"
-              value={selectedJobId}
-              onChange={(event) => setSelectedJobId(event.target.value)}
+              value={activeJobId}
+              onChange={(event) => {
+                setSelectedJobId(event.target.value)
+                setIsPollingSummary(false)
+              }}
             >
               <option value="">Select a job</option>
               {jobs.map((job) => (
@@ -153,7 +149,6 @@ export default function RecruiterScreeningPage() {
       </div>
 
       <div className="dashboard-overview-stack">
-        {/* ── Shortlisting Status Card ───────────────────────────────────── */}
         {isLoadingContent ? (
           <ScreeningStatusCardSkeleton />
         ) : summary ? (
@@ -162,7 +157,7 @@ export default function RecruiterScreeningPage() {
               <div className="dash-card__title">Shortlisting Status</div>
               <div className="cell-actions">
                 <span
-                  className={`badge badge--${summary.shortlist_status === 'completed' ? 'success' : summary.shortlist_status === 'failed' ? 'danger' : summary.shortlist_status === 'in_progress' ? 'warning' : 'gray'}`}
+                  className={`badge badge--${summary.shortlist_status === 'completed' ? 'success' : summary.shortlist_status === 'failed' ? 'danger' : shouldPollSummary ? 'warning' : 'gray'}`}
                 >
                   {summary.shortlist_status.replace('_', ' ')}
                 </span>
@@ -183,7 +178,6 @@ export default function RecruiterScreeningPage() {
           </div>
         ) : null}
 
-        {/* ── Applications Table ─────────────────────────────────────────── */}
         {isLoadingContent || isFetchingApps ? (
           <ScreeningTableSkeleton rows={6} />
         ) : (
