@@ -31,25 +31,48 @@ export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
           <table className="dash-table">
             <thead>
               <tr>
-                <th><div className="skeleton-block screening-skeleton__th" /></th>
-                <th><div className="skeleton-block screening-skeleton__th screening-skeleton__th--email" /></th>
-                <th><div className="skeleton-block screening-skeleton__th screening-skeleton__th--short" /></th>
-                <th><div className="skeleton-block screening-skeleton__th screening-skeleton__th--long" /></th>
-                <th><div className="skeleton-block screening-skeleton__th screening-skeleton__th--short" /></th>
-                <th><div className="skeleton-block screening-skeleton__th" /></th>
+                <th>
+                  <div className="skeleton-block screening-skeleton__th" />
+                </th>
+                <th>
+                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--email" />
+                </th>
+                <th>
+                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--short" />
+                </th>
+                <th>
+                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--long" />
+                </th>
+                <th>
+                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--short" />
+                </th>
+                <th>
+                  <div className="skeleton-block screening-skeleton__th" />
+                </th>
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: rows }).map((_, i) => (
                 <tr key={i}>
-                  <td><div className="skeleton-block screening-skeleton__td-name" /></td>
-                  <td><div className="skeleton-block screening-skeleton__td-email" /></td>
-                  <td><div className="skeleton-block screening-skeleton__td-badge" /></td>
+                  <td>
+                    <div className="skeleton-block screening-skeleton__td-name" />
+                  </td>
+                  <td>
+                    <div className="skeleton-block screening-skeleton__td-email" />
+                  </td>
+                  <td>
+                    <div className="skeleton-block screening-skeleton__td-badge" />
+                  </td>
                   <td>
                     <div className="skeleton-block screening-skeleton__td-feedback" />
-                    <div className="skeleton-block screening-skeleton__td-feedback screening-skeleton__td-feedback--short" style={{ marginTop: '0.25rem' }} />
+                    <div
+                      className="skeleton-block screening-skeleton__td-feedback screening-skeleton__td-feedback--short"
+                      style={{ marginTop: '0.25rem' }}
+                    />
                   </td>
-                  <td><div className="skeleton-block screening-skeleton__td-status" /></td>
+                  <td>
+                    <div className="skeleton-block screening-skeleton__td-status" />
+                  </td>
                   <td>
                     <div className="cell-actions">
                       <div className="skeleton-block screening-skeleton__td-action" />

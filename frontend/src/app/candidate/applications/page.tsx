@@ -565,14 +565,9 @@ export default function ApplicationsPage() {
                 <div className="app-detail__section">
                   <div className="app-detail__section-title">Application Review</div>
                   <div className="cell-actions">
-                    <span className="badge badge--primary">
-                      {selectedApplication.score}/100
-                    </span>
+                    <span className="badge badge--primary">{selectedApplication.score}/100</span>
                     <span className="cell-muted">
-                      {getScoreSummary(
-                        selectedApplication.score,
-                        selectedApplication.feedback,
-                      )}
+                      {getScoreSummary(selectedApplication.score, selectedApplication.feedback)}
                     </span>
                   </div>
                 </div>

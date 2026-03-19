@@ -27,8 +27,7 @@ export interface FinalizeShortlistResponse {
 export const shortlistingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getShortlistSummary: builder.query<ApiResponse<ShortlistSummary>, string>({
-      query: (jobId) =>
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/shortlisting/jobs/${jobId}/summary`,
+      query: (jobId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/shortlisting/jobs/${jobId}/summary`,
       providesTags: ['Applications', 'Jobs'],
     }),
     triggerShortlisting: builder.mutation<ApiResponse<TriggerShortlistResponse>, string>({

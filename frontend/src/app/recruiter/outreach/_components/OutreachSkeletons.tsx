@@ -42,15 +42,27 @@ export function OutreachDraftDetailSkeleton() {
       <div className="dash-card__body">
         {/* Candidate name + email */}
         <div className="skeleton-block outreach-skeleton__detail-name" />
-        <div className="skeleton-block outreach-skeleton__detail-email" style={{ marginTop: '0.375rem', marginBottom: '1rem' }} />
+        <div
+          className="skeleton-block outreach-skeleton__detail-email"
+          style={{ marginTop: '0.375rem', marginBottom: '1rem' }}
+        />
 
         {/* Subject field */}
         <div className="skeleton-block outreach-skeleton__detail-label" />
-        <div className="skeleton-block outreach-skeleton__detail-input" style={{ marginTop: '0.375rem' }} />
+        <div
+          className="skeleton-block outreach-skeleton__detail-input"
+          style={{ marginTop: '0.375rem' }}
+        />
 
         {/* Body textarea */}
-        <div className="skeleton-block outreach-skeleton__detail-label" style={{ marginTop: '1rem' }} />
-        <div className="skeleton-block outreach-skeleton__detail-textarea" style={{ marginTop: '0.375rem' }} />
+        <div
+          className="skeleton-block outreach-skeleton__detail-label"
+          style={{ marginTop: '1rem' }}
+        />
+        <div
+          className="skeleton-block outreach-skeleton__detail-textarea"
+          style={{ marginTop: '0.375rem' }}
+        />
 
         {/* Action buttons */}
         <div className="cell-actions" style={{ marginTop: '1rem' }}>
