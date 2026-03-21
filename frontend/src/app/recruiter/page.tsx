@@ -273,7 +273,8 @@ export default function CompanyDashboardPage() {
                   </Link>
                 </div>
                 <div className="cell-muted">
-                  Use Screening to rank applicants, Outreach for follow-ups, and Chat to search past candidates or edit jobs conversationally.
+                  Use Screening to rank applicants, Outreach for follow-ups, and Chat to search past
+                  candidates or edit jobs conversationally.
                 </div>
               </div>
             </div>

@@ -433,10 +433,21 @@ CANDIDATES = [
             "Software Architect",
         ],
         "skills": [
-            "Python", "FastAPI", "SQLAlchemy", "PostgreSQL", "Redis",
-            "AWS (EC2, RDS, SQS, Lambda)", "Docker", "Kubernetes",
-            "RabbitMQ", "Alembic", "Pytest", "Git", "Linux",
-            "System Design", "Microservices Architecture",
+            "Python",
+            "FastAPI",
+            "SQLAlchemy",
+            "PostgreSQL",
+            "Redis",
+            "AWS (EC2, RDS, SQS, Lambda)",
+            "Docker",
+            "Kubernetes",
+            "RabbitMQ",
+            "Alembic",
+            "Pytest",
+            "Git",
+            "Linux",
+            "System Design",
+            "Microservices Architecture",
         ],
         "experiences": [
             {
@@ -531,11 +542,23 @@ CANDIDATES = [
             "AI Research Engineer",
         ],
         "skills": [
-            "Python", "PyTorch", "TensorFlow", "Hugging Face Transformers",
-            "scikit-learn", "spaCy", "NLTK", "LangChain",
-            "LoRA / PEFT Fine-tuning", "MLflow", "Weights & Biases",
-            "FastAPI", "Docker", "PostgreSQL",
-            "Nepali NLP", "Computer Vision (OpenCV, YOLO)", "SQL",
+            "Python",
+            "PyTorch",
+            "TensorFlow",
+            "Hugging Face Transformers",
+            "scikit-learn",
+            "spaCy",
+            "NLTK",
+            "LangChain",
+            "LoRA / PEFT Fine-tuning",
+            "MLflow",
+            "Weights & Biases",
+            "FastAPI",
+            "Docker",
+            "PostgreSQL",
+            "Nepali NLP",
+            "Computer Vision (OpenCV, YOLO)",
+            "SQL",
         ],
         "experiences": [
             {
@@ -636,10 +659,22 @@ CANDIDATES = [
             "Analytics Engineer",
         ],
         "skills": [
-            "Python", "SQL", "Apache Airflow", "Apache Spark", "dbt",
-            "Snowflake", "PostgreSQL", "AWS (S3, EMR, Glue, Redshift)",
-            "Great Expectations", "Docker", "Pandas", "PySpark",
-            "DataHub", "Git", "Linux", "FHIR / Healthcare Data Standards",
+            "Python",
+            "SQL",
+            "Apache Airflow",
+            "Apache Spark",
+            "dbt",
+            "Snowflake",
+            "PostgreSQL",
+            "AWS (S3, EMR, Glue, Redshift)",
+            "Great Expectations",
+            "Docker",
+            "Pandas",
+            "PySpark",
+            "DataHub",
+            "Git",
+            "Linux",
+            "FHIR / Healthcare Data Standards",
         ],
         "experiences": [
             {
@@ -733,11 +768,24 @@ CANDIDATES = [
             "Product Engineer",
         ],
         "skills": [
-            "TypeScript", "React", "Next.js", "React Native",
-            "TanStack Query", "Zustand", "Tailwind CSS",
-            "Python", "FastAPI", "SQLAlchemy", "PostgreSQL",
-            "REST APIs", "Docker", "Git", "Figma",
-            "Vitest", "Pytest", "AWS (S3, EC2 basics)",
+            "TypeScript",
+            "React",
+            "Next.js",
+            "React Native",
+            "TanStack Query",
+            "Zustand",
+            "Tailwind CSS",
+            "Python",
+            "FastAPI",
+            "SQLAlchemy",
+            "PostgreSQL",
+            "REST APIs",
+            "Docker",
+            "Git",
+            "Figma",
+            "Vitest",
+            "Pytest",
+            "AWS (S3, EC2 basics)",
         ],
         "experiences": [
             {
@@ -866,7 +914,9 @@ async def seed_company(db, company_data: dict) -> list[Job]:
 
     # Admin user
     admin_info = company_data["admin"]
-    admin = make_user(admin_info["full_name"], admin_info["email"], UserRole.recruiter_admin)
+    admin = make_user(
+        admin_info["full_name"], admin_info["email"], UserRole.recruiter_admin
+    )
     db.add(admin)
     await db.flush()
 
@@ -883,7 +933,11 @@ async def seed_company(db, company_data: dict) -> list[Job]:
     db.add(company)
     await db.flush()
 
-    db.add(make_membership(admin.id, company.id, MembershipRole.admin, admin_info["job_title"]))
+    db.add(
+        make_membership(
+            admin.id, company.id, MembershipRole.admin, admin_info["job_title"]
+        )
+    )
 
     # Recruiters
     recruiter_users = []
@@ -891,7 +945,11 @@ async def seed_company(db, company_data: dict) -> list[Job]:
         r = make_user(rec["full_name"], rec["email"], UserRole.recruiter)
         db.add(r)
         await db.flush()
-        db.add(make_membership(r.id, company.id, MembershipRole.recruiter, rec["job_title"]))
+        db.add(
+            make_membership(
+                r.id, company.id, MembershipRole.recruiter, rec["job_title"]
+            )
+        )
         recruiter_users.append(r)
 
     # Jobs — distribute posting across admin and recruiters
@@ -903,7 +961,9 @@ async def seed_company(db, company_data: dict) -> list[Job]:
         await db.flush()
         created_jobs.append(job)
 
-    print(f"  ✓ {company_data['name']}: 1 admin, {len(recruiter_users)} recruiters, {len(created_jobs)} jobs")
+    print(
+        f"  ✓ {company_data['name']}: 1 admin, {len(recruiter_users)} recruiters, {len(created_jobs)} jobs"
+    )
     return created_jobs
 
 
@@ -1008,7 +1068,9 @@ async def seed_candidate(db, data: dict) -> None:
         for skill_name in data["skills"]:
             db.add(ResumeSkill(resume_id=resume.id, skill_name=skill_name))
 
-    print(f"  ✓ Candidate: {data['full_name']} ({data['email']}) — profile + {len(data['resume_variants'])} resumes")
+    print(
+        f"  ✓ Candidate: {data['full_name']} ({data['email']}) — profile + {len(data['resume_variants'])} resumes"
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -98,13 +98,7 @@ function isVisibleAIDraft(draft: JobAIDraftRecord) {
   return draft.status !== 'committed'
 }
 
-function AutoShortlistBadge({
-  enabled,
-  compact = false,
-}: {
-  enabled: boolean
-  compact?: boolean
-}) {
+function AutoShortlistBadge({ enabled, compact = false }: { enabled: boolean; compact?: boolean }) {
   return (
     <span className={`badge badge--${enabled ? 'primary' : 'gray'}${compact ? ' badge--xs' : ''}`}>
       {enabled ? 'Auto-shortlist on' : 'Manual screening'}

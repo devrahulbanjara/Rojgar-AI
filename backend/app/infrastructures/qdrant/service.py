@@ -143,9 +143,7 @@ class QdrantService:
         resume_skills = []
         if resume is not None:
             resume_skills = [
-                skill.skill_name
-                for skill in (resume.skills or [])
-                if skill.skill_name
+                skill.skill_name for skill in (resume.skills or []) if skill.skill_name
             ]
 
         parts = [

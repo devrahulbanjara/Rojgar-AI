@@ -6,9 +6,10 @@ from enum import Enum
 from typing import Annotated, Any
 
 from fastapi import BackgroundTasks
-from langchain_core.tools import tool
+from langchain_core.messages import ToolMessage
+from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
@@ -17,7 +18,7 @@ from app.infrastructures.qdrant.service import qdrant_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
-from app.modules.companies.models import Company, CompanyMembership
+from app.modules.companies.models import CompanyMembership
 from app.modules.job_ai.prompts import SALARY_SYNTHESIS_SYSTEM_PROMPT
 from app.modules.job_ai.schemas import SalaryResearch
 from app.modules.job_ai.tools import get_salary_research_data
@@ -40,6 +41,7 @@ from app.modules.recruiter_chat.schemas import (
 )
 from app.modules.resumes.models import Resume
 from app.shared.enums import ApplicationStatus
+from app.shared.enums import JobStatus
 
 
 LIST_FIELDS = {
@@ -64,6 +66,21 @@ class UIHint(str, Enum):
 
 def _state_ids(state: dict[str, Any]) -> tuple[uuid.UUID, uuid.UUID]:
     return uuid.UUID(str(state["company_id"])), uuid.UUID(str(state["recruiter_id"]))
+
+
+def _as_tool_message(
+    tool_name: str,
+    result: ToolResultEnvelope,
+    tool_call_id: str,
+) -> ToolMessage:
+    if not tool_call_id:
+        raise ValueError(f"Missing tool_call_id for tool '{tool_name}'.")
+
+    return ToolMessage(
+        content=result.model_dump_json(),
+        name=tool_name,
+        tool_call_id=tool_call_id,
+    )
 
 
 async def _load_active_recruiter(
@@ -232,6 +249,61 @@ async def _find_company_job_impl(
         )
 
 
+async def _list_company_jobs_impl(
+    company_id: uuid.UUID,
+    limit: int = 10,
+    statuses: list[JobStatus] | None = None,
+) -> ToolResultEnvelope:
+    safe_limit = max(1, min(limit, 20))
+
+    async with AsyncSessionLocal() as db:
+        query = select(Job).where(Job.company_id == company_id)
+        if statuses:
+            query = query.where(Job.status.in_(statuses))
+
+        result = await db.execute(
+            query.order_by(Job.updated_at.desc()).limit(safe_limit)
+        )
+        jobs = result.scalars().all()
+
+    if not jobs:
+        return ToolResultEnvelope(
+            tool="list_company_jobs",
+            ok=False,
+            text="You don't have any company jobs posted yet.",
+        )
+
+    job_summaries = []
+    for job in jobs:
+        location = f", {job.location}" if job.location else ""
+        job_summaries.append(
+            f"{job.title} ({job.status.value}, {job.location_type.value}{location})"
+        )
+
+    total = len(jobs)
+    intro = f"You currently have {total} company job{'s' if total != 1 else ''}"
+    listing = "; ".join(job_summaries[:5])
+    suffix = "." if total <= 5 else "; and more."
+
+    return ToolResultEnvelope(
+        tool="list_company_jobs",
+        text=f"{intro}: {listing}{suffix}",
+        data={
+            "jobs": [
+                {
+                    "job_id": str(job.id),
+                    "title": job.title,
+                    "status": job.status.value,
+                    "location": job.location,
+                    "location_type": job.location_type.value,
+                    "updated_at": job.updated_at.isoformat(),
+                }
+                for job in jobs
+            ]
+        },
+    )
+
+
 async def _search_company_candidates_impl(
     query: str,
     company_id: uuid.UUID,
@@ -265,7 +337,10 @@ async def _search_company_candidates_impl(
         )
         rows = result.all()
 
-    rows_by_application_id = {application.id: (application, job, profile) for application, job, profile in rows}
+    rows_by_application_id = {
+        application.id: (application, job, profile)
+        for application, job, profile in rows
+    }
     cards: list[CandidateCardData] = []
     seen_users: set[uuid.UUID] = set()
     for application_id in hit_ids:
@@ -284,7 +359,8 @@ async def _search_company_candidates_impl(
                 application_id=application.id,
                 full_name=application.user.full_name,
                 avatar_url=application.user.avatar_url,
-                headline=(profile.headline if profile else None) or (resume.headline if resume else None),
+                headline=(profile.headline if profile else None)
+                or (resume.headline if resume else None),
                 skills=skills,
                 applied_for_job=job.title,
                 application_status=application.status,
@@ -312,7 +388,20 @@ async def _search_company_candidates_impl(
 async def _research_salary_impl(
     role: str, country: str, year: int | None = None
 ) -> ToolResultEnvelope:
-    search_input = await get_salary_research_data(role=role, country=country, year=year)
+    normalized_role = role.strip()
+    normalized_country = country.strip()
+    if not normalized_role or not normalized_country:
+        return ToolResultEnvelope(
+            tool="research_salary",
+            ok=False,
+            text="I need both a job role and a country before I can research salary data.",
+        )
+
+    search_input = await get_salary_research_data(
+        role=normalized_role,
+        country=normalized_country,
+        year=year,
+    )
     synthesized = await ai_service.generate_structured(
         system_prompt=SALARY_SYNTHESIS_SYSTEM_PROMPT,
         user_payload=search_input,
@@ -343,7 +432,7 @@ async def _research_salary_impl(
     )
     return ToolResultEnvelope(
         tool="research_salary",
-        text=f"Here is the salary research for {role} in {country}.",
+        text=f"Here is the salary research for {normalized_role} in {normalized_country}.",
         ui_type_hint=UIHint.salary_info,
         data=result_data.model_dump(mode="json"),
     )
@@ -449,10 +538,11 @@ async def _get_candidate_detail_impl(
         result = await db.execute(
             select(Application, Job, Profile)
             .join(Job, Job.id == Application.job_id)
+            .join(User, User.id == Application.user_id)
             .outerjoin(Profile, Profile.user_id == Application.user_id)
             .where(
                 Job.company_id == company_id,
-                Application.user.has(User.full_name.ilike(f"%{candidate_name.strip()}%")),
+                User.full_name.ilike(f"%{candidate_name.strip()}%"),
                 Job.title.ilike(f"%{job_title_query.strip()}%"),
             )
             .options(
@@ -498,8 +588,10 @@ async def _get_candidate_detail_impl(
         full_name=application.user.full_name,
         email=application.user.email,
         avatar_url=application.user.avatar_url,
-        headline=(profile.headline if profile else None) or (resume.headline if resume else None),
-        summary=(profile.summary if profile else None) or (resume.summary if resume else None),
+        headline=(profile.headline if profile else None)
+        or (resume.headline if resume else None),
+        summary=(profile.summary if profile else None)
+        or (resume.summary if resume else None),
         resume_name=resume.resume_name if resume else "Unknown",
         application_status=application.status,
         score=application.score,
@@ -520,67 +612,127 @@ async def _get_candidate_detail_impl(
 
 @tool
 async def search_company_candidates(
-    query: str,
-    statuses: list[ApplicationStatus] | None = None,
-    limit: int = 10,
+    query: Annotated[
+        str,
+        "Semantic candidate search query, for example 'backend engineers with Python and fintech experience'.",
+    ],
+    statuses: Annotated[
+        list[ApplicationStatus] | None,
+        "Optional application statuses to filter by, such as shortlisted or interviewed.",
+    ] = None,
+    limit: Annotated[
+        int,
+        "Maximum number of candidates to return. Keep this small unless the recruiter explicitly asks for more.",
+    ] = 10,
     state: Annotated[dict[str, Any], InjectedState] = None,
-) -> dict:
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
     """Search past company candidates semantically by skills, experience, or feedback."""
     company_id, _ = _state_ids(state)
     result = await _search_company_candidates_impl(query, company_id, statuses, limit)
-    return result.model_dump(mode="json")
+    return _as_tool_message("search_company_candidates", result, tool_call_id)
 
 
 @tool
 async def research_salary(
-    role: str,
-    country: str,
-    year: int | None = None,
-) -> dict:
+    role: Annotated[
+        str,
+        "The exact job role to research salary for, for example 'Senior Backend Engineer'.",
+    ],
+    country: Annotated[
+        str,
+        "The country where compensation should be researched, for example 'Nepal' or 'United States'.",
+    ],
+    year: Annotated[
+        int | None,
+        "Optional year to anchor the research to. Leave empty to use the current year.",
+    ] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
     """Research market salary ranges for a role and country."""
     result = await _research_salary_impl(role, country, year)
-    return result.model_dump(mode="json")
+    return _as_tool_message("research_salary", result, tool_call_id)
 
 
 @tool
 async def find_company_job(
-    title_query: str,
+    title_query: Annotated[
+        str,
+        "Approximate job title to look up before editing, for example 'Senior Product Designer'.",
+    ],
     state: Annotated[dict[str, Any], InjectedState] = None,
-) -> dict:
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
     """Find a company job by approximate title before preparing an edit."""
     company_id, _ = _state_ids(state)
     result = await _find_company_job_impl(title_query, company_id)
-    return result.model_dump(mode="json")
+    return _as_tool_message("find_company_job", result, tool_call_id)
+
+
+@tool
+async def list_company_jobs(
+    limit: Annotated[
+        int,
+        "Maximum number of company jobs to list. Keep this small unless the recruiter asks for a full inventory.",
+    ] = 10,
+    statuses: Annotated[
+        list[JobStatus] | None,
+        "Optional job statuses to filter by, such as active or draft.",
+    ] = None,
+    state: Annotated[dict[str, Any], InjectedState] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
+    """List the company's jobs or confirm whether any jobs are posted."""
+    company_id, _ = _state_ids(state)
+    result = await _list_company_jobs_impl(company_id, limit, statuses)
+    return _as_tool_message("list_company_jobs", result, tool_call_id)
 
 
 @tool
 async def prepare_job_edit(
-    job_id: str,
-    edits: list[JobEditInstruction],
+    job_id: Annotated[
+        str,
+        "The company job ID returned by find_company_job.",
+    ],
+    edits: Annotated[
+        list[JobEditInstruction],
+        "One or more structured edit instructions describing which fields to change and how.",
+    ],
     state: Annotated[dict[str, Any], InjectedState] = None,
-) -> dict:
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
     """Prepare one or more edits to a company job. This does not write to the database."""
     company_id, _ = _state_ids(state)
     result = await _prepare_job_edit_impl(uuid.UUID(job_id), edits, company_id)
-    return result.model_dump(mode="json")
+    return _as_tool_message("prepare_job_edit", result, tool_call_id)
 
 
 @tool
 async def get_candidate_detail(
-    candidate_name: str,
-    job_title_query: str,
+    candidate_name: Annotated[
+        str,
+        "Candidate name to look up, for example 'Asha Sharma'.",
+    ],
+    job_title_query: Annotated[
+        str,
+        "Job title the candidate applied for, for example 'Frontend Engineer'.",
+    ],
     state: Annotated[dict[str, Any], InjectedState] = None,
-) -> dict:
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
     """Look up a specific candidate application by candidate name and job title."""
     company_id, _ = _state_ids(state)
-    result = await _get_candidate_detail_impl(candidate_name, job_title_query, company_id)
-    return result.model_dump(mode="json")
+    result = await _get_candidate_detail_impl(
+        candidate_name, job_title_query, company_id
+    )
+    return _as_tool_message("get_candidate_detail", result, tool_call_id)
 
 
 MODEL_TOOLS = [
     search_company_candidates,
     research_salary,
     find_company_job,
+    list_company_jobs,
     prepare_job_edit,
     get_candidate_detail,
 ]

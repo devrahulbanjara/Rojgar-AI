@@ -32,6 +32,21 @@ async def create_recruiter_chat_session(
 
 
 @router.get(
+    "/sessions",
+    response_model=UnifiedResponse[list[ChatSessionResponse]],
+    summary="List recruiter chat sessions",
+)
+async def list_recruiter_chat_sessions(
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.list_sessions(db, user)
+    return ResponseBuilder.success(
+        data=data, message="Recruiter chat sessions fetched."
+    )
+
+
+@router.get(
     "/sessions/{session_id}/history",
     response_model=UnifiedResponse[list[ChatHistoryMessage]],
     summary="Get recruiter chat history",
@@ -43,3 +58,17 @@ async def get_recruiter_chat_history(
 ):
     data = await service.get_history(db, user, session_id)
     return ResponseBuilder.success(data=data, message="Recruiter chat history fetched.")
+
+
+@router.delete(
+    "/sessions/{session_id}",
+    response_model=UnifiedResponse[None],
+    summary="Delete a recruiter chat session",
+)
+async def delete_recruiter_chat_session(
+    session_id: uuid.UUID,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    await service.delete_session(db, user, session_id)
+    return ResponseBuilder.success(data=None, message="Recruiter chat session deleted.")

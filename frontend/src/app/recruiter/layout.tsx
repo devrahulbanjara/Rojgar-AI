@@ -1,11 +1,10 @@
 'use client'
 
-import { CopilotKit } from '@copilotkit/react-core'
-import '@copilotkit/react-ui/styles.css'
-
 import { useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
 import { useLogoutMutation } from '@/store/services/authApi'
+import { CopilotKit } from '@copilotkit/react-core'
+import '@copilotkit/react-ui/styles.css'
 import { Clock, ShieldOff } from 'lucide-react'
 
 import AuthGuard from '@/components/common/AuthGuard'
@@ -97,8 +96,8 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
     <CopilotKit
       runtimeUrl="/api/copilotkit"
       agent="recruiter_chat"
-      credentials="include"
       headers={accessToken ? { Authorization: `Bearer ${accessToken}` } : {}}
+      credentials="include"
     >
       <DashNavbar role="recruiter_admin" />
       <main className="dash-page">{children}</main>

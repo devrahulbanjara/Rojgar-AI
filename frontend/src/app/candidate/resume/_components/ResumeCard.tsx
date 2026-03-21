@@ -34,7 +34,9 @@ export default function ResumeCard({
           {resume.summary ? (
             <>
               <div className="resume-card__preview-divider" />
-              <div className="resume-card__preview-body">{resume.summary.slice(0, 120) + '\u2026'}</div>
+              <div className="resume-card__preview-body">
+                {resume.summary.slice(0, 120) + '\u2026'}
+              </div>
             </>
           ) : null}
         </div>

@@ -53,7 +53,11 @@ class SearchService:
         try:
             # Build search parameters
             full_query = query.strip()
-            if country and country.strip() and country.lower() not in full_query.lower():
+            if (
+                country
+                and country.strip()
+                and country.lower() not in full_query.lower()
+            ):
                 full_query = f"{full_query} {country.strip()}"
             search_params = {"query": full_query}
 
