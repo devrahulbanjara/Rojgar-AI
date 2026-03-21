@@ -2,6 +2,9 @@ import asyncio
 
 from loguru import logger
 
+from app.modules.applications.sync import (
+    process_pending_events as process_pending_application_events,
+)
 from app.modules.jobs.sync import process_pending_events
 
 
@@ -18,6 +21,7 @@ async def sync_daemon_loop() -> None:
         try:
             await asyncio.sleep(60)
             await process_pending_events()
+            await process_pending_application_events()
         except asyncio.CancelledError:
             logger.info("Qdrant Sync Daemon shutting down gracefully.")
             break

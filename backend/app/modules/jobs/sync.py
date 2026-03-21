@@ -6,10 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
-from app.modules.jobs.enums import SyncAction, SyncStatus
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.infrastructures.qdrant.service import qdrant_service
-from app.shared.enums import JobStatus
+from app.shared.enums import JobStatus, SyncAction, SyncStatus
 
 
 async def process_sync_event(event_id: uuid.UUID) -> None:

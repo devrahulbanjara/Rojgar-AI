@@ -4,6 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.modules.applications.models import Application
+from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.models import User
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import (
@@ -13,6 +15,7 @@ from app.modules.resumes.models import (
     ResumeSkill,
 )
 from app.modules.resumes.schemas import ResumeListItem, ResumeResponse, ResumeUpdate
+from app.shared.enums import SyncAction
 
 
 async def _load_full_resume(db: AsyncSession, resume_id) -> Resume:
@@ -206,6 +209,10 @@ async def update_resume(
     if payload.skills is not None:
         resume.skills = [ResumeSkill(**skill.model_dump()) for skill in payload.skills]
 
+    linked_application_ids = list(
+        await db.scalars(select(Application.id).where(Application.resume_id == resume.id))
+    )
+    enqueue_application_sync_events(db, linked_application_ids, SyncAction.UPSERT)
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
     logger.info(f"Updated resume {resume_id} for user {user.id}")

@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import logfire
+from ag_ui_langgraph import LangGraphAgent, add_langgraph_fastapi_endpoint
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -27,6 +28,8 @@ from app.modules.job_ai.runtime import job_ai_runtime
 from app.modules.job_ai.router import router as job_ai_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.outreach.runtime import outreach_runtime
+from app.modules.recruiter_chat.router import router as recruiter_chat_router
+from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.shortlisting.router import router as shortlisting_router
 
 setup_logging()
@@ -36,6 +39,18 @@ setup_logging()
 async def lifespan(app: FastAPI):
     await qdrant_service.initialize()
     await job_ai_runtime.start()
+    await recruiter_chat_runtime.start()
+    add_langgraph_fastapi_endpoint(
+        app=app,
+        agent=LangGraphAgent(
+            name="recruiter_chat",
+            description=(
+                "Recruiter assistant that handles candidate search, salary research, job editing, and candidate lookups."
+            ),
+            graph=recruiter_chat_runtime.graph,
+        ),
+        path="/copilotkit",
+    )
     await outreach_runtime.start()
     await redis_service.connect()
 
@@ -51,6 +66,7 @@ async def lifespan(app: FastAPI):
 
     await redis_service.disconnect()
     await outreach_runtime.stop()
+    await recruiter_chat_runtime.stop()
     await job_ai_runtime.stop()
     await engine.dispose()
 
@@ -89,6 +105,7 @@ app.include_router(companies_router, prefix="/companies", tags=["Companies"])
 app.include_router(profiles_router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes_router, prefix="/resumes", tags=["Resumes"])
 app.include_router(job_ai_router, prefix="/jobs/ai", tags=["jobs-ai"])
+app.include_router(recruiter_chat_router, prefix="/recruiter-chat", tags=["recruiter-chat"])
 app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
 app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])

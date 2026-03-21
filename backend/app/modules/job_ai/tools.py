@@ -1,5 +1,6 @@
 import uuid
 from typing import Any
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -105,15 +106,18 @@ async def get_source_job_context(
     }
 
 
-async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
+async def get_salary_research_data(
+    role: str, country: str, year: int | None = None
+) -> dict[str, Any]:
     """
     Research salary and compensation data for a given role and location.
     Cached for 24 hours since salary data doesn't change rapidly.
     """
+    research_year = year or datetime.now().year
     # 1. Standardize inputs to create a stable cache key
     norm_role = re.sub(r"[^a-zA-Z0-9]+", "_", role.lower()).strip("_")
     norm_country = re.sub(r"[^a-zA-Z0-9]+", "_", country.lower()).strip("_")
-    cache_key = f"ai:salary_research:{norm_role}:{norm_country}"
+    cache_key = f"ai:salary_research:{norm_role}:{norm_country}:{research_year}"
 
     # 2. Check Cache
     cached_data = await redis_service.get(cache_key)
@@ -124,8 +128,8 @@ async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
             pass
 
     queries = [
-        f"{role} salary range in {country} 2026",
-        f"{role} compensation in {country} 2026",
+        f"{role} salary range in {country} {research_year}",
+        f"{role} compensation in {country} {research_year}",
         f"{role} salary {country}",
     ]
 
@@ -158,6 +162,7 @@ async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
     response = {
         "role": role,
         "country": country,
+        "year": research_year,
         "results": aggregated,
     }
 

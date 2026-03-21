@@ -114,6 +114,7 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'Applications', href: '/recruiter/applications' },
     { label: 'Screening', href: '/recruiter/screening' },
     { label: 'Outreach', href: '/recruiter/outreach' },
+    { label: 'Chat', href: '/recruiter/chat' },
   ]
   if (role === 'recruiter_admin') {
     items.push({ label: 'Recruiters', href: '/recruiter/recruiters' })

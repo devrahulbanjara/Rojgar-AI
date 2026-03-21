@@ -268,9 +268,12 @@ export default function CompanyDashboardPage() {
                   <Link href="/recruiter/outreach" className="btn btn--outline btn--sm">
                     Open outreach drafts
                   </Link>
+                  <Link href="/recruiter/chat" className="btn btn--ghost btn--sm">
+                    Open recruiter chat
+                  </Link>
                 </div>
                 <div className="cell-muted">
-                  Use Screening to rank applicants and Outreach to prepare or send follow-ups.
+                  Use Screening to rank applicants, Outreach for follow-ups, and Chat to search past candidates or edit jobs conversationally.
                 </div>
               </div>
             </div>

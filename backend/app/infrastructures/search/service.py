@@ -52,7 +52,10 @@ class SearchService:
         """
         try:
             # Build search parameters
-            search_params = {"query": query}
+            full_query = query.strip()
+            if country and country.strip() and country.lower() not in full_query.lower():
+                full_query = f"{full_query} {country.strip()}"
+            search_params = {"query": full_query}
 
             # Tavily-specific invocation
             result = await self._tool.ainvoke(search_params)

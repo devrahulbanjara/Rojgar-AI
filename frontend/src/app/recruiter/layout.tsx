@@ -1,5 +1,8 @@
 'use client'
 
+import { CopilotKit } from '@copilotkit/react-core'
+import '@copilotkit/react-ui/styles.css'
+
 import { useAppSelector } from '@/store/hooks'
 import { useLazyGetMeQuery } from '@/store/services/authApi'
 import { useLogoutMutation } from '@/store/services/authApi'
@@ -9,7 +12,7 @@ import AuthGuard from '@/components/common/AuthGuard'
 import DashNavbar from '@/components/layout/DashNavbar'
 
 function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
-  const { user } = useAppSelector((s) => s.auth)
+  const { user, accessToken } = useAppSelector((s) => s.auth)
   const [triggerGetMe, { isFetching }] = useLazyGetMeQuery()
   const [logout] = useLogoutMutation()
 
@@ -91,10 +94,15 @@ function CompanyLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <CopilotKit
+      runtimeUrl="/api/copilotkit"
+      agent="recruiter_chat"
+      credentials="include"
+      headers={accessToken ? { Authorization: `Bearer ${accessToken}` } : {}}
+    >
       <DashNavbar role="recruiter_admin" />
       <main className="dash-page">{children}</main>
-    </>
+    </CopilotKit>
   )
 }
 

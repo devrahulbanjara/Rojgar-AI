@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
 from app.modules.applications.models import Application
+from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.enums import MembershipStatus
 from app.modules.companies.models import CompanyMembership
 from app.modules.jobs.models import Job
@@ -23,7 +24,7 @@ from app.modules.shortlisting.schemas import (
     ShortlistSummaryResponse,
     TriggerShortlistResponse,
 )
-from app.shared.enums import ApplicationStatus, ShortlistStatus
+from app.shared.enums import ApplicationStatus, ShortlistStatus, SyncAction
 from app.infrastructures.redis.service import redis_service
 
 
@@ -142,6 +143,7 @@ async def process_auto_shortlist_for_application(
                 score, feedback = _dummy_ai_score_application(application)
                 application.score = score
                 application.feedback = feedback
+                enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
                 await db.commit()
 
                 await redis_service.delete(f"dashboard:candidate:{application.user_id}")
@@ -198,6 +200,11 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
                 score, feedback = _score_application(application)
                 application.score = score
                 application.feedback = feedback
+            enqueue_application_sync_events(
+                db,
+                [application.id for application in applications],
+                SyncAction.UPSERT,
+            )
 
             job.shortlist_status = ShortlistStatus.completed
             await db.commit()
@@ -343,7 +350,7 @@ async def finalize_shortlist(
         shortlisted_rows = shortlist_result.fetchall()
         updated_count += len(shortlisted_rows)
 
-        await db.execute(
+        rejected_result = await db.execute(
             update(Application)
             .where(
                 and_(
@@ -354,6 +361,13 @@ async def finalize_shortlist(
                 )
             )
             .values(status=ApplicationStatus.rejected)
+            .returning(Application.id)
+        )
+        rejected_rows = rejected_result.fetchall()
+        enqueue_application_sync_events(
+            db,
+            [row[0] for row in shortlisted_rows] + [row[0] for row in rejected_rows],
+            SyncAction.UPSERT,
         )
 
     job.final_shortlist_completed = True

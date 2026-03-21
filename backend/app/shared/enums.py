@@ -28,3 +28,14 @@ class ShortlistStatus(str, Enum):
     in_progress = "in_progress"
     completed = "completed"
     failed = "failed"
+
+
+class SyncAction(str, Enum):
+    UPSERT = "UPSERT"
+    DELETE = "DELETE"
+
+
+class SyncStatus(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"

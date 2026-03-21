@@ -108,8 +108,11 @@ async def get_application(
 async def update_application_status(
     application_id: str,
     payload: UpdateApplicationStatusRequest,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
-    data = await service.update_application_status(db, user, application_id, payload)
+    data = await service.update_application_status(
+        db, user, application_id, payload, bg_tasks
+    )
     return ResponseBuilder.success(data=data, message="Application status updated.")
