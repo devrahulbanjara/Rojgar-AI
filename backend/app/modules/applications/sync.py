@@ -86,9 +86,7 @@ async def process_pending_events() -> None:
         events = await db.scalars(
             select(ApplicationSyncEvent)
             .where(
-                ApplicationSyncEvent.status.in_(
-                    [SyncStatus.PENDING, SyncStatus.FAILED]
-                )
+                ApplicationSyncEvent.status.in_([SyncStatus.PENDING, SyncStatus.FAILED])
             )
             .order_by(ApplicationSyncEvent.created_at.asc())
             .limit(50)

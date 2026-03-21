@@ -56,9 +56,7 @@ class ApplicationSyncEvent(Base):
     __tablename__ = "application_sync_events"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    application_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, nullable=False, index=True
-    )
+    application_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, index=True)
     action: Mapped[SyncAction] = mapped_column(nullable=False)
     status: Mapped[SyncStatus] = mapped_column(
         nullable=False, server_default="PENDING", index=True

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from langgraph.types import Command
+from langchain_core.messages import HumanMessage, ToolMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,11 +16,11 @@ from app.modules.companies.models import Company, CompanyMembership
 from app.modules.recruiter_chat.models import RecruiterChatSession
 from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.recruiter_chat.schemas import (
-    AgentResponse,
     ChatHistoryMessage,
     ChatSessionResponse,
-    RespondToInterruptRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _new_thread_id() -> str:
@@ -62,7 +61,9 @@ def _message_content_to_text(content: Any) -> str:
 
 def _message_to_history_item(message: Any) -> ChatHistoryMessage:
     if isinstance(message, HumanMessage):
-        return ChatHistoryMessage(role="user", content=_message_content_to_text(message.content))
+        return ChatHistoryMessage(
+            role="user", content=_message_content_to_text(message.content)
+        )
     if isinstance(message, ToolMessage):
         return ChatHistoryMessage(
             role="tool",
@@ -75,23 +76,11 @@ def _message_to_history_item(message: Any) -> ChatHistoryMessage:
     )
 
 
-def _event_text_from_chunk(chunk: Any) -> str:
-    content = getattr(chunk, "content", None)
-    return _message_content_to_text(content)
-
-
-def _interrupt_payload_from_snapshot(snapshot: Any) -> dict[str, Any] | None:
-    for task in getattr(snapshot, "tasks", []) or []:
-        interrupts = getattr(task, "interrupts", None) or []
-        if not interrupts:
-            continue
-        interrupt = interrupts[0]
-        value = getattr(interrupt, "value", None)
-        if value is not None:
-            return value
-        if isinstance(interrupt, dict):
-            return interrupt.get("value")
-    return None
+def _generate_session_title(message: str) -> str | None:
+    normalized = " ".join(message.split()).strip()
+    if not normalized:
+        return None
+    return normalized[:50].rstrip(" .,;:-")
 
 
 async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
@@ -135,13 +124,34 @@ async def get_session_response(
     return ChatSessionResponse.model_validate(session)
 
 
+async def list_sessions(db: AsyncSession, user: User) -> list[ChatSessionResponse]:
+    company = await _get_active_company(db, user.id)
+    result = await db.execute(
+        select(RecruiterChatSession)
+        .where(
+            RecruiterChatSession.recruiter_id == user.id,
+            RecruiterChatSession.company_id == company.id,
+        )
+        .order_by(
+            RecruiterChatSession.last_interaction_at.desc().nullslast(),
+            RecruiterChatSession.created_at.desc(),
+        )
+    )
+    sessions = result.scalars().all()
+    return [ChatSessionResponse.model_validate(session) for session in sessions]
+
+
 async def get_history(
     db: AsyncSession, user: User, session_id: uuid.UUID
 ) -> list[ChatHistoryMessage]:
     session = await get_session(db, user, session_id)
     graph = recruiter_chat_runtime.get_graph()
-    snapshot = await graph.aget_state({"configurable": {"thread_id": session.thread_id}})
-    messages = snapshot.values.get("messages", []) if snapshot and snapshot.values else []
+    snapshot = await graph.aget_state(
+        {"configurable": {"thread_id": session.thread_id}}
+    )
+    messages = (
+        snapshot.values.get("messages", []) if snapshot and snapshot.values else []
+    )
     return [_message_to_history_item(message) for message in messages]
 
 
@@ -149,93 +159,21 @@ async def touch_session(
     db: AsyncSession, session: RecruiterChatSession, *, title: str | None = None
 ) -> None:
     session.last_interaction_at = datetime.now(timezone.utc)
-    if title and not session.title:
-        session.title = title[:255]
+    generated_title = _generate_session_title(title or "")
+    if generated_title and not session.title:
+        session.title = generated_title
     await db.commit()
 
 
-async def stream_response(
-    db: AsyncSession,
-    user: User,
-    session_id: uuid.UUID,
-    message: str,
-):
+async def delete_session(db: AsyncSession, user: User, session_id: uuid.UUID) -> None:
     session = await get_session(db, user, session_id)
-    company = await _get_active_company(db, user.id)
-    await touch_session(db, session, title=message)
+    thread_id = session.thread_id
+    await db.delete(session)
+    await db.commit()
 
-    graph = recruiter_chat_runtime.get_graph()
-    config = {"configurable": {"thread_id": session.thread_id}}
-    state_input = {
-        "messages": [HumanMessage(content=message)],
-        "recruiter_id": str(user.id),
-        "company_id": str(company.id),
-        "company_name": company.name,
-        "session_id": str(session.id),
-        "pending_edit": None,
-        "human_decision": None,
-        "edit_result": None,
-        "agent_response": None,
-    }
-
-    async def generator():
-        try:
-            async for event in graph.astream_events(state_input, config=config, version="v2"):
-                if event.get("event") == "on_chat_model_stream":
-                    chunk_text = _event_text_from_chunk(event.get("data", {}).get("chunk"))
-                    if chunk_text:
-                        yield f"data: {json.dumps({'type': 'text_chunk', 'content': chunk_text})}\n\n"
-                elif event.get("event") == "on_tool_end":
-                    output = event.get("data", {}).get("output")
-                    yield f"data: {json.dumps({'type': 'tool_result', 'tool': event.get('name'), 'data': output})}\n\n"
-
-            snapshot = await graph.aget_state(config)
-            interrupt_payload = _interrupt_payload_from_snapshot(snapshot)
-            if interrupt_payload is not None:
-                yield f"data: {json.dumps({'type': 'interrupt', 'data': interrupt_payload})}\n\n"
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
-        except Exception as exc:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
-
-    return generator()
-
-
-async def respond_to_interrupt(
-    db: AsyncSession,
-    user: User,
-    session_id: uuid.UUID,
-    payload: RespondToInterruptRequest,
-) -> AgentResponse:
-    session = await get_session(db, user, session_id)
-    await _get_active_company(db, user.id)
-    await touch_session(db, session)
-
-    graph = recruiter_chat_runtime.get_graph()
-    config = {"configurable": {"thread_id": session.thread_id}}
-    result = await graph.ainvoke(
-        Command(
-            resume={
-                "action": payload.action,
-                "patch_override": payload.patch_override,
-            }
-        ),
-        config=config,
-    )
-    if "__interrupt__" in result:
-        interrupt_value = result["__interrupt__"][0]
-        value = getattr(interrupt_value, "value", None)
-        if value is None and isinstance(interrupt_value, dict):
-            value = interrupt_value.get("value")
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Interrupt still pending: {value}",
+    try:
+        await recruiter_chat_runtime.delete_thread(thread_id)
+    except Exception:
+        logger.exception(
+            "Failed to delete recruiter chat checkpoints for thread %s", thread_id
         )
-
-    snapshot = await graph.aget_state(config)
-    response_payload = snapshot.values.get("agent_response")
-    if response_payload is None:
-        response_payload = result.get("agent_response")
-    if response_payload is None:
-        return AgentResponse(text="Done.", ui_type="text", data=None)
-    return AgentResponse.model_validate(response_payload)

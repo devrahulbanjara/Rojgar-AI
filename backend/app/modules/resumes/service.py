@@ -210,7 +210,9 @@ async def update_resume(
         resume.skills = [ResumeSkill(**skill.model_dump()) for skill in payload.skills]
 
     linked_application_ids = list(
-        await db.scalars(select(Application.id).where(Application.resume_id == resume.id))
+        await db.scalars(
+            select(Application.id).where(Application.resume_id == resume.id)
+        )
     )
     enqueue_application_sync_events(db, linked_application_ids, SyncAction.UPSERT)
     await db.commit()

@@ -1,15 +1,13 @@
 import type { NextRequest } from 'next/server'
 
+import { LangGraphHttpAgent } from '@ag-ui/langgraph'
 import {
   CopilotRuntime,
   ExperimentalEmptyAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from '@copilotkit/runtime'
-import { LangGraphHttpAgent } from '@ag-ui/langgraph'
 
 export const runtime = 'nodejs'
-
-const serviceAdapter = new ExperimentalEmptyAdapter()
 
 function getBackendBaseUrl() {
   return process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL
@@ -22,7 +20,7 @@ export const POST = async (req: NextRequest) => {
     return new Response('NEXT_PUBLIC_API_URL is not configured.', { status: 500 })
   }
 
-  const authorization = req.headers.get('authorization')
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization')
   const cookie = req.headers.get('cookie')
 
   const runtimeInstance = new CopilotRuntime({
@@ -30,7 +28,7 @@ export const POST = async (req: NextRequest) => {
       recruiter_chat: new LangGraphHttpAgent({
         url: `${backendBaseUrl}/copilotkit`,
         headers: {
-          ...(authorization ? { Authorization: authorization } : {}),
+          ...(authHeader ? { Authorization: authHeader } : {}),
           ...(cookie ? { Cookie: cookie } : {}),
         },
       }),
@@ -39,7 +37,7 @@ export const POST = async (req: NextRequest) => {
 
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
     runtime: runtimeInstance,
-    serviceAdapter,
+    serviceAdapter: new ExperimentalEmptyAdapter(),
     endpoint: '/api/copilotkit',
   })
 

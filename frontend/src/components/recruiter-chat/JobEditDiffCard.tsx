@@ -1,92 +1,118 @@
 'use client'
 
-import type { RecruiterChatJobEditDiff, RecruiterChatJobEditProposal } from '@/store/services/recruiterChatApi'
+import type { JobEditPreviewData } from '@/lib/types/recruiterChat'
 
-function renderScalarValue(value: RecruiterChatJobEditDiff['before']) {
-  if (value == null || value === '') {
-    return <span className="recruiter-chat-diff-empty">Empty</span>
-  }
+import { formatFieldLabel, isListDiff, stringifyScalar, toStringArray } from './utils'
 
-  return <span>{String(value)}</span>
-}
-
-function renderListDiff(beforeList: string[], afterList: string[]) {
-  const kept = afterList.filter((item) => beforeList.includes(item))
-  const added = afterList.filter((item) => !beforeList.includes(item))
-  const removed = beforeList.filter((item) => !afterList.includes(item))
-
-  return (
-    <ul className="recruiter-chat-diff-list">
-      {kept.map((item) => (
-        <li key={`keep-${item}`} className="recruiter-chat-diff-list__item">
-          {item}
-        </li>
-      ))}
-      {added.map((item) => (
-        <li key={`add-${item}`} className="recruiter-chat-diff-list__item recruiter-chat-diff-list__item--added">
-          + {item}
-        </li>
-      ))}
-      {removed.map((item) => (
-        <li key={`remove-${item}`} className="recruiter-chat-diff-list__item recruiter-chat-diff-list__item--removed">
-          - {item}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-export default function JobEditDiffCard({
-  proposal,
-  onConfirm,
-  onCancel,
-}: {
-  proposal: RecruiterChatJobEditProposal
-  onConfirm: (patch: Record<string, unknown>) => void
+interface JobEditDiffCardProps {
+  data: JobEditPreviewData
+  onConfirm: (patch?: Record<string, unknown>) => void
   onCancel: () => void
-}) {
+}
+
+function renderList(beforeList: string[], afterList: string[]) {
+  const allValues = Array.from(new Set([...beforeList, ...afterList]))
+
   return (
-    <section className="recruiter-chat-card recruiter-chat-card--interrupt">
-      <div className="recruiter-chat-card__header">
-        <div>
-          <div className="recruiter-chat-card__title">Confirm job edit</div>
-          <div className="recruiter-chat-card__subtitle">
-            {proposal.summary || `Review the proposed changes for ${proposal.job_title || 'this job'}.`}
-          </div>
+    <div className="recruiter-chat-diff-grid">
+      <div className="recruiter-chat-diff-pane">
+        <div className="recruiter-chat-diff-pane-label">Before</div>
+        <div className="recruiter-chat-diff-list">
+          {allValues.map((value) => {
+            const removed = beforeList.includes(value) && !afterList.includes(value)
+
+            if (!beforeList.includes(value)) return null
+
+            return (
+              <div
+                key={`before-${value}`}
+                className={`recruiter-chat-diff-list-item${removed ? ' recruiter-chat-diff-list-item--removed' : ''}`}
+              >
+                {value}
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      <div className="recruiter-chat-interrupt__diffs">
-        {(proposal.diffs ?? []).map((diff) => {
-          const beforeList = Array.isArray(diff.before) ? diff.before : null
-          const afterList = Array.isArray(diff.after) ? diff.after : null
+      <div className="recruiter-chat-diff-pane">
+        <div className="recruiter-chat-diff-pane-label">After</div>
+        <div className="recruiter-chat-diff-list">
+          {allValues.map((value) => {
+            const added = afterList.includes(value) && !beforeList.includes(value)
 
-          return (
-            <div key={diff.field} className="recruiter-chat-diff-card">
-              <div className="recruiter-chat-diff-card__title">{diff.field.replace(/_/g, ' ')}</div>
-              <div className="recruiter-chat-diff-card__grid">
-                <div className="recruiter-chat-diff-card__pane">
-                  <span className="recruiter-chat-diff-card__label">Before</span>
-                  {beforeList && afterList ? renderListDiff(beforeList, beforeList) : renderScalarValue(diff.before)}
-                </div>
-                <div className="recruiter-chat-diff-card__pane recruiter-chat-diff-card__pane--after">
-                  <span className="recruiter-chat-diff-card__label">After</span>
-                  {beforeList && afterList ? renderListDiff(beforeList, afterList) : renderScalarValue(diff.after)}
-                </div>
+            if (!afterList.includes(value)) return null
+
+            return (
+              <div
+                key={`after-${value}`}
+                className={`recruiter-chat-diff-list-item${added ? ' recruiter-chat-diff-list-item--added' : ''}`}
+              >
+                {value}
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function JobEditDiffCard({ data, onCancel, onConfirm }: JobEditDiffCardProps) {
+  return (
+    <section className="recruiter-chat-card recruiter-chat-card--job-edit">
+      <div>
+        <div className="recruiter-chat-card-title">Review Edit: {data.job_title}</div>
+        <div className="recruiter-chat-card-subtitle">{data.summary}</div>
       </div>
 
-      <div className="recruiter-chat-interrupt__actions">
-        <button type="button" className="btn btn--ghost btn--sm" onClick={onCancel}>
+      {data.diffs.length ? (
+        <div className="recruiter-chat-section-stack">
+          {data.diffs.map((diff) => {
+            if (isListDiff(diff)) {
+              return (
+                <div key={diff.field} className="recruiter-chat-diff-card">
+                  <div className="recruiter-chat-diff-title">{formatFieldLabel(diff.field)}</div>
+                  {renderList(toStringArray(diff.before), toStringArray(diff.after))}
+                </div>
+              )
+            }
+
+            return (
+              <div key={diff.field} className="recruiter-chat-diff-card">
+                <div className="recruiter-chat-diff-title">{formatFieldLabel(diff.field)}</div>
+                <div className="recruiter-chat-diff-grid">
+                  <div className="recruiter-chat-diff-pane">
+                    <div className="recruiter-chat-diff-pane-label">Before</div>
+                    <div className="recruiter-chat-scalar recruiter-chat-scalar--before">
+                      {stringifyScalar(diff.before)}
+                    </div>
+                  </div>
+                  <div className="recruiter-chat-diff-pane">
+                    <div className="recruiter-chat-diff-pane-label">After</div>
+                    <div className="recruiter-chat-scalar recruiter-chat-scalar--after">
+                      {stringifyScalar(diff.after)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <p className="recruiter-chat-muted-copy">
+          No field-level diffs were returned for this edit.
+        </p>
+      )}
+
+      <div className="recruiter-chat-card-actions">
+        <button type="button" className="btn btn--outline btn--dark btn--sm" onClick={onCancel}>
           Cancel
         </button>
         <button
           type="button"
-          className="btn btn--primary btn--sm"
-          onClick={() => onConfirm(proposal.patch ?? {})}
+          className="btn btn--dark btn--sm"
+          onClick={() => onConfirm(data.patch)}
         >
           Confirm
         </button>

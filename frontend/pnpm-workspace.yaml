@@ -1,4 +1,6 @@
 onlyBuiltDependencies:
   - '@parcel/watcher'
+  - '@scarf/scarf'
+  - core-js
   - sharp
   - unrs-resolver

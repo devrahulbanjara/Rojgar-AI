@@ -105,7 +105,9 @@ app.include_router(companies_router, prefix="/companies", tags=["Companies"])
 app.include_router(profiles_router, prefix="/profiles", tags=["Profiles"])
 app.include_router(resumes_router, prefix="/resumes", tags=["Resumes"])
 app.include_router(job_ai_router, prefix="/jobs/ai", tags=["jobs-ai"])
-app.include_router(recruiter_chat_router, prefix="/recruiter-chat", tags=["recruiter-chat"])
+app.include_router(
+    recruiter_chat_router, prefix="/recruiter-chat", tags=["recruiter-chat"]
+)
 app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
 app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])

@@ -4,7 +4,13 @@ import json
 import uuid
 from typing import Annotated, Any, Literal, TypedDict
 
-from langchain_core.messages import AIMessage, AnyMessage, SystemMessage, ToolMessage
+from langchain_core.messages import (
+    AIMessage,
+    AnyMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
@@ -23,6 +29,7 @@ from sqlalchemy import select
 
 class RecruiterChatState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
+    active_messages: list[AnyMessage]
     recruiter_id: str
     company_id: str
     company_name: str
@@ -79,7 +86,9 @@ def _latest_tool_payloads(messages: list[AnyMessage]) -> list[dict[str, Any]]:
     return payloads
 
 
-def _determine_ui_type(tool_payload: dict[str, Any] | None) -> Literal[
+def _determine_ui_type(
+    tool_payload: dict[str, Any] | None,
+) -> Literal[
     "text", "candidate_list", "salary_info", "candidate_detail", "job_edit_preview"
 ]:
     if not tool_payload or not tool_payload.get("ok"):
@@ -120,6 +129,31 @@ def _normalize_human_decision(value: Any) -> dict[str, Any]:
     return {}
 
 
+def _prune_active_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
+    system_messages = [
+        message for message in messages if isinstance(message, SystemMessage)
+    ]
+    conversational_indexes = [
+        index
+        for index, message in enumerate(messages)
+        if isinstance(message, (HumanMessage, AIMessage))
+    ]
+
+    if len(conversational_indexes) <= 6:
+        active_messages = [
+            message for message in messages if not isinstance(message, SystemMessage)
+        ]
+    else:
+        first_kept_index = conversational_indexes[-6]
+        active_messages = [
+            message
+            for message in messages[first_kept_index:]
+            if not isinstance(message, SystemMessage)
+        ]
+
+    return [*system_messages, *active_messages]
+
+
 def build_recruiter_chat_graph():
     llm = ChatGroq(
         model=settings.groq_model_recruiter_chat,
@@ -142,6 +176,13 @@ def build_recruiter_chat_graph():
         except ValueError as exc:
             raise ValueError("Recruiter chat context is invalid.") from exc
 
+        if (
+            state.get("company_name")
+            and str(state.get("company_id")) == str(company_id)
+            and str(state.get("recruiter_id")) == str(recruiter_id)
+        ):
+            return {}
+
         async with AsyncSessionLocal() as db:
             result = await db.execute(
                 select(RecruiterChatSession, Company.name)
@@ -155,7 +196,9 @@ def build_recruiter_chat_graph():
 
         session, company_name = row
         if session.company_id != company_id or session.recruiter_id != recruiter_id:
-            raise ValueError("Recruiter chat context does not match the active session.")
+            raise ValueError(
+                "Recruiter chat context does not match the active session."
+            )
 
         return {
             "company_id": str(session.company_id),
@@ -163,11 +206,21 @@ def build_recruiter_chat_graph():
             "company_name": company_name,
         }
 
+    async def prune_messages_node(state: RecruiterChatState) -> dict[str, Any]:
+        messages = state.get("messages", [])
+        active_messages = _prune_active_messages(messages)
+        return {"active_messages": active_messages}
+
     async def agent_node(state: RecruiterChatState) -> dict[str, Any]:
         system_message = SystemMessage(
-            content=RECRUITER_CHAT_SYSTEM_PROMPT.format(company_name=state["company_name"])
+            content=RECRUITER_CHAT_SYSTEM_PROMPT.format(
+                company_name=state["company_name"]
+            )
         )
-        response = await llm.ainvoke([system_message, *state["messages"]])
+        active_messages = state.get("active_messages")
+        if active_messages is None:
+            active_messages = _prune_active_messages(state.get("messages", []))
+        response = await llm.ainvoke([system_message, *active_messages])
         return {"messages": [response], "agent_response": None, "edit_result": None}
 
     async def review_edit_node(state: RecruiterChatState) -> dict[str, Any]:
@@ -179,7 +232,10 @@ def build_recruiter_chat_graph():
     async def apply_edit_node(state: RecruiterChatState) -> dict[str, Any]:
         proposal = state["pending_edit"] or {}
         decision = _normalize_human_decision(state.get("human_decision"))
-        patch = {**(proposal.get("patch") or {}), **(decision.get("patch_override") or {})}
+        patch = {
+            **(proposal.get("patch") or {}),
+            **(decision.get("patch_override") or {}),
+        }
         result = await _apply_job_edit_impl(
             job_id=proposal["job_id"],
             patch=patch,
@@ -207,7 +263,16 @@ def build_recruiter_chat_graph():
 
     async def finalize_response_node(state: RecruiterChatState) -> dict[str, Any]:
         if state.get("agent_response") is not None:
-            return {"agent_response": state["agent_response"]}
+            text = str(state["agent_response"].get("text") or "").strip()
+            should_append_message = bool(text) and (
+                not state["messages"]
+                or not isinstance(state["messages"][-1], AIMessage)
+                or _extract_text_content(state["messages"][-1].content).strip() != text
+            )
+            return {
+                "messages": [AIMessage(content=text)] if should_append_message else [],
+                "agent_response": state["agent_response"],
+            }
 
         if state.get("edit_result") is not None:
             response = AgentResponse(
@@ -215,7 +280,10 @@ def build_recruiter_chat_graph():
                 ui_type="text",
                 data=None,
             )
-            return {"agent_response": response.model_dump(mode="json")}
+            return {
+                "messages": [AIMessage(content=response.text)],
+                "agent_response": response.model_dump(mode="json"),
+            }
 
         payloads = _latest_tool_payloads(state["messages"])
         last_payload = payloads[-1] if payloads else None
@@ -235,7 +303,11 @@ def build_recruiter_chat_graph():
             else None
         )
         response = AgentResponse(text=text, ui_type=ui_type, data=data)
-        return {"agent_response": response.model_dump(mode="json")}
+        should_append_message = bool(text) and not isinstance(final_ai, AIMessage)
+        return {
+            "messages": [AIMessage(content=text)] if should_append_message else [],
+            "agent_response": response.model_dump(mode="json"),
+        }
 
     def route_after_agent(state: RecruiterChatState) -> str:
         return "tools" if tools_condition(state) == "tools" else "finalize_response"
@@ -251,7 +323,9 @@ def build_recruiter_chat_graph():
             and last_payload.get("ui_type_hint") == "job_edit_preview"
         ):
             return "review_edit"
-        return "agent"
+        if last_payload.get("tool") == "find_company_job" and last_payload.get("ok"):
+            return "agent"
+        return "finalize_response"
 
     def route_after_review(state: RecruiterChatState) -> str:
         decision = _normalize_human_decision(state.get("human_decision"))
@@ -261,6 +335,7 @@ def build_recruiter_chat_graph():
 
     builder = StateGraph(RecruiterChatState)
     builder.add_node("validate_context", validate_context_node)
+    builder.add_node("prune_messages", prune_messages_node)
     builder.add_node("agent", agent_node)
     builder.add_node("tools", ToolNode(MODEL_TOOLS))
     builder.add_node("review_edit", review_edit_node)
@@ -269,7 +344,8 @@ def build_recruiter_chat_graph():
     builder.add_node("finalize_response", finalize_response_node)
 
     builder.add_edge(START, "validate_context")
-    builder.add_edge("validate_context", "agent")
+    builder.add_edge("validate_context", "prune_messages")
+    builder.add_edge("prune_messages", "agent")
     builder.add_conditional_edges(
         "agent",
         route_after_agent,
@@ -282,8 +358,9 @@ def build_recruiter_chat_graph():
         "tools",
         route_after_tools,
         {
-            "agent": "agent",
+            "agent": "prune_messages",
             "review_edit": "review_edit",
+            "finalize_response": "finalize_response",
         },
     )
     builder.add_conditional_edges(
@@ -295,6 +372,6 @@ def build_recruiter_chat_graph():
         },
     )
     builder.add_edge("apply_edit", "finalize_response")
-    builder.add_edge("cancel_edit", END)
+    builder.add_edge("cancel_edit", "finalize_response")
     builder.add_edge("finalize_response", END)
     return builder

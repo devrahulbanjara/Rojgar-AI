@@ -35,5 +35,10 @@ class RecruiterChatRuntime:
             raise RuntimeError("Recruiter chat runtime not initialized")
         return self.graph
 
+    async def delete_thread(self, thread_id: str) -> None:
+        if self.checkpointer is None:
+            raise RuntimeError("Recruiter chat runtime not initialized")
+        await self.checkpointer.adelete_thread(thread_id)
+
 
 recruiter_chat_runtime = RecruiterChatRuntime()

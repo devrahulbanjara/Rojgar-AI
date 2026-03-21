@@ -1,21 +1,102 @@
 import type {
-  RecruiterChatCandidateDetailPayload,
-  RecruiterChatCandidateSearchPayload,
-  RecruiterChatSalaryPayload,
-  RecruiterChatToolEnvelope,
-} from '@/store/services/recruiterChatApi'
+  ChatSessionResponse,
+  JobEditDiff,
+  SalaryResearchResult,
+} from '@/lib/types/recruiterChat'
 
-export function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('') || 'C'
+export function getInitials(name: string | null | undefined, fallback = 'RC') {
+  if (!name?.trim()) return fallback
+
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('') || fallback
+  )
 }
 
-export function formatMoney(value: number | null | undefined, currency: string | null | undefined) {
+export function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+export function groupSessionsByDate(sessions: ChatSessionResponse[]) {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+  const thisWeekStart = new Date(today.getTime() - 7 * 86400000)
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const groups: Record<string, ChatSessionResponse[]> = {
+    Today: [],
+    Yesterday: [],
+    'This Week': [],
+    'This Month': [],
+    Older: [],
+  }
+
+  for (const session of sessions) {
+    const date = new Date(session.last_interaction_at ?? session.created_at)
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+    if (day.getTime() === today.getTime()) groups.Today.push(session)
+    else if (day.getTime() === yesterday.getTime()) groups.Yesterday.push(session)
+    else if (date >= thisWeekStart) groups['This Week'].push(session)
+    else if (date >= thisMonthStart) groups['This Month'].push(session)
+    else groups.Older.push(session)
+  }
+
+  return groups
+}
+
+export function getStatusTone(status: string | null | undefined) {
+  switch ((status ?? '').toLowerCase()) {
+    case 'submitted':
+    case 'applied':
+      return 'gray'
+    case 'screening':
+    case 'under_review':
+      return 'warning'
+    case 'interview':
+    case 'interview_scheduled':
+    case 'shortlisted':
+      return 'primary'
+    case 'offered':
+    case 'hired':
+      return 'success'
+    case 'withdrawn':
+      return 'muted'
+    case 'rejected':
+      return 'danger'
+    default:
+      return 'gray'
+  }
+}
+
+export function getConfidenceTone(confidence: SalaryResearchResult['confidence']) {
+  if (confidence === 'high') return 'success'
+  if (confidence === 'medium') return 'warning'
+  return 'danger'
+}
+
+export function formatMoney(value: number | null, currency: string | null) {
   if (value == null) return 'N/A'
 
   try {
@@ -25,125 +106,56 @@ export function formatMoney(value: number | null | undefined, currency: string |
       maximumFractionDigits: 0,
     }).format(value)
   } catch {
-    return `${currency || 'USD'} ${Number(value).toLocaleString()}`
+    return `${currency || 'USD'} ${value.toLocaleString('en-US')}`
   }
 }
 
-export function formatDateTime(value: string | null | undefined) {
-  if (!value) return 'Unknown'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
-
-export function formatShortDate(value: string | null | undefined) {
+export function formatDateLabel(
+  value: string | null | undefined,
+  options?: Intl.DateTimeFormatOptions,
+) {
   if (!value) return 'Present'
 
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('en-US', options ?? { month: 'short', year: 'numeric' })
+}
+
+export function formatLongDate(value: string | null | undefined) {
+  return formatDateLabel(value, {
     month: 'short',
+    day: 'numeric',
     year: 'numeric',
   })
 }
 
-export function getStatusTone(status: string | null | undefined) {
-  switch (status) {
-    case 'shortlisted':
-    case 'hired':
-      return 'success'
-    case 'interview_scheduled':
-    case 'under_review':
-      return 'primary'
-    case 'rejected':
-      return 'danger'
-    default:
-      return 'gray'
-  }
-}
-
-export function getConfidenceTone(confidence: string | null | undefined) {
-  switch (confidence) {
-    case 'high':
-      return 'success'
-    case 'medium':
-      return 'warning'
-    default:
-      return 'danger'
-  }
-}
-
-export function getSkillNames(
-  skills: RecruiterChatCandidateDetailPayload['skills'] | string[] | undefined,
-) {
-  if (!Array.isArray(skills)) return []
-  return skills
-    .map((skill) => (typeof skill === 'string' ? skill : skill.skill_name))
+export function formatFieldLabel(field: string) {
+  return field
+    .split('_')
     .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
 }
 
-export function unwrapToolEnvelope<T>(value: unknown): T | null {
-  if (!value || typeof value !== 'object') return null
+export function isListDiff(diff: JobEditDiff) {
+  return Array.isArray(diff.before) || Array.isArray(diff.after)
+}
 
-  const envelope = value as RecruiterChatToolEnvelope
-  if ('data' in envelope) {
-    return (envelope.data as T | null | undefined) ?? null
+export function toStringArray(value: unknown) {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => String(item)).filter(Boolean)
+}
+
+export function stringifyScalar(value: unknown) {
+  if (value == null || value === '') return 'Empty'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'number') return value.toLocaleString('en-US')
+  if (typeof value === 'string') return value
+
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch {
+    return String(value)
   }
-
-  return value as T
-}
-
-export function normalizeCandidateSearch(value: unknown): RecruiterChatCandidateSearchPayload | null {
-  const payload = unwrapToolEnvelope<RecruiterChatCandidateSearchPayload>(value)
-  if (!payload || !Array.isArray(payload.candidates)) return null
-  return payload
-}
-
-export function normalizeSalaryPayload(value: unknown): RecruiterChatSalaryPayload | null {
-  const payload = unwrapToolEnvelope<Record<string, unknown>>(value)
-  if (!payload) return null
-
-  return {
-    role: String(payload.role ?? 'Unknown role'),
-    country: String(payload.country ?? 'Unknown country'),
-    currency: (payload.currency as string | null | undefined) ?? null,
-    min: (payload.min as number | null | undefined) ?? (payload.recommended_min as number | null | undefined),
-    max: (payload.max as number | null | undefined) ?? (payload.recommended_max as number | null | undefined),
-    median: (payload.median as number | null | undefined) ?? null,
-    recommended_min: (payload.recommended_min as number | null | undefined) ?? null,
-    recommended_max: (payload.recommended_max as number | null | undefined) ?? null,
-    confidence: (payload.confidence as RecruiterChatSalaryPayload['confidence']) ?? 'low',
-    year_context: (payload.year_context as string | undefined) ?? '',
-    rationale: (payload.rationale as string | undefined) ?? '',
-    sources: Array.isArray(payload.sources)
-      ? payload.sources
-          .map((source) => {
-            if (!source || typeof source !== 'object') return null
-            const item = source as Record<string, unknown>
-            return {
-              title: (item.title as string | undefined) ?? undefined,
-              source_name: (item.source_name as string | undefined) ?? undefined,
-              url: String(item.url ?? ''),
-            }
-          })
-          .filter((source): source is NonNullable<typeof source> => Boolean(source?.url))
-      : [],
-  }
-}
-
-export function normalizeCandidateDetail(
-  value: unknown,
-): RecruiterChatCandidateDetailPayload | null {
-  const payload = unwrapToolEnvelope<RecruiterChatCandidateDetailPayload>(value)
-  if (!payload || !payload.full_name || !payload.resume_name) return null
-  return payload
 }
