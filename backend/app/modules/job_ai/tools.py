@@ -71,6 +71,7 @@ async def get_company_context(
                 "requirements": job.requirements,
                 "preferred_qualifications": job.preferred_qualifications,
                 "benefits": job.benefits,
+                "auto_shortlist": job.auto_shortlist,
             }
             for job in recent_jobs
         ],
@@ -100,6 +101,7 @@ async def get_source_job_context(
         "requirements": job.requirements,
         "preferred_qualifications": job.preferred_qualifications,
         "benefits": job.benefits,
+        "auto_shortlist": job.auto_shortlist,
     }
 
 

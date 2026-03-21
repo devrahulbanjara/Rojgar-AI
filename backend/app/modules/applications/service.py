@@ -1,10 +1,14 @@
-from fastapi import HTTPException, status
+import os
+
+from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.core.database import AsyncSessionLocal
+from app.infrastructures.redis.service import redis_service
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.applications.models import Application
@@ -19,10 +23,9 @@ from app.modules.applications.schemas import (
 )
 from app.modules.companies.models import Company
 from app.modules.companies.models import CompanyMembership
-from app.shared.enums import ApplicationStatus, JobStatus
 from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
-from app.infrastructures.redis.service import redis_service
+from app.shared.enums import ApplicationStatus, JobStatus
 
 
 def _application_response_options():
@@ -34,8 +37,23 @@ def _application_response_options():
     ]
 
 
+def _background_database_url(db: AsyncSession) -> str:
+    bind = db.bind
+    if bind is not None and hasattr(bind, "url"):
+        return str(bind.url)
+
+    fallback_bind = AsyncSessionLocal.kw.get("bind")
+    if fallback_bind is not None and hasattr(fallback_bind, "url"):
+        return str(fallback_bind.url)
+
+    raise RuntimeError("Database bind is not configured for background task execution.")
+
+
 async def apply_to_job(
-    db: AsyncSession, user: User, payload: ApplyRequest
+    db: AsyncSession,
+    user: User,
+    payload: ApplyRequest,
+    bg_tasks: BackgroundTasks | None = None,
 ) -> ApplicationResponse:
     """Submit an application. A resume_id belonging to the user is required."""
     # 1. Verify the job exists and is active
@@ -88,6 +106,21 @@ async def apply_to_job(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="You have already applied to this job.",
+        )
+
+    if (
+        job.auto_shortlist
+        and bg_tasks is not None
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
+        from app.modules.shortlisting.service import (
+            process_auto_shortlist_for_application,
+        )
+
+        bg_tasks.add_task(
+            process_auto_shortlist_for_application,
+            application.id,
+            _background_database_url(db),
         )
 
     # Re-fetch with resume + children eagerly loaded

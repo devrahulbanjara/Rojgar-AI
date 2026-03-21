@@ -7,14 +7,23 @@
 // ---------------------------------------------------------------------------
 export function ScreeningStatusCardSkeleton() {
   return (
-    <div className="dash-card" aria-hidden="true">
-      <div className="dash-card__body recruiter-summary__body">
-        <div className="skeleton-block screening-skeleton__card-title" />
-        <div className="cell-actions">
-          <div className="skeleton-block screening-skeleton__badge" />
-          <div className="skeleton-block screening-skeleton__badge-meta" />
-          <div className="skeleton-block screening-skeleton__run-btn" />
+    <div className="dash-card" aria-hidden="true" style={{ marginBottom: '2rem' }}>
+      <div
+        className="dash-card__body"
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1.25rem',
+        }}
+      >
+        <div className="dash-card__title" style={{ margin: 0 }}>
+          Shortlisting Status
         </div>
+        <div className="skeleton-block screening-skeleton__badge" />
+        <div className="skeleton-block screening-skeleton__badge-meta" />
+        <div className="skeleton-block screening-skeleton__run-btn" />
       </div>
     </div>
   )
@@ -26,64 +35,50 @@ export function ScreeningStatusCardSkeleton() {
 export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div className="dash-card" aria-hidden="true">
-      <div className="dash-card__body">
-        <div className="table-scroll">
-          <table className="dash-table">
-            <thead>
-              <tr>
-                <th>
-                  <div className="skeleton-block screening-skeleton__th" />
-                </th>
-                <th>
-                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--email" />
-                </th>
-                <th>
-                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--short" />
-                </th>
-                <th>
-                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--long" />
-                </th>
-                <th>
-                  <div className="skeleton-block screening-skeleton__th screening-skeleton__th--short" />
-                </th>
-                <th>
-                  <div className="skeleton-block screening-skeleton__th" />
-                </th>
+      <div className="table-scroll">
+        <table className="dash-table">
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              <th>Email</th>
+              <th>Score</th>
+              <th>Feedback</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: rows }).map((_, i) => (
+              <tr key={i}>
+                <td>
+                  <div className="skeleton-block screening-skeleton__td-name" />
+                </td>
+                <td>
+                  <div className="skeleton-block screening-skeleton__td-email" />
+                </td>
+                <td>
+                  <div className="skeleton-block screening-skeleton__td-badge" />
+                </td>
+                <td>
+                  <div className="skeleton-block screening-skeleton__td-feedback" />
+                  <div
+                    className="skeleton-block screening-skeleton__td-feedback screening-skeleton__td-feedback--short"
+                    style={{ marginTop: '0.25rem' }}
+                  />
+                </td>
+                <td>
+                  <div className="skeleton-block screening-skeleton__td-status" />
+                </td>
+                <td>
+                  <div className="cell-actions">
+                    <div className="skeleton-block screening-skeleton__td-action" />
+                    <div className="skeleton-block screening-skeleton__td-action" />
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: rows }).map((_, i) => (
-                <tr key={i}>
-                  <td>
-                    <div className="skeleton-block screening-skeleton__td-name" />
-                  </td>
-                  <td>
-                    <div className="skeleton-block screening-skeleton__td-email" />
-                  </td>
-                  <td>
-                    <div className="skeleton-block screening-skeleton__td-badge" />
-                  </td>
-                  <td>
-                    <div className="skeleton-block screening-skeleton__td-feedback" />
-                    <div
-                      className="skeleton-block screening-skeleton__td-feedback screening-skeleton__td-feedback--short"
-                      style={{ marginTop: '0.25rem' }}
-                    />
-                  </td>
-                  <td>
-                    <div className="skeleton-block screening-skeleton__td-status" />
-                  </td>
-                  <td>
-                    <div className="cell-actions">
-                      <div className="skeleton-block screening-skeleton__td-action" />
-                      <div className="skeleton-block screening-skeleton__td-action" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -100,12 +95,17 @@ export function ScreeningPageSkeleton() {
       {/* Page Header — same structure as the real header */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
-          <div className="skeleton-block screening-skeleton__page-title" />
-          <div className="skeleton-block screening-skeleton__page-subtitle" />
+          <h2 className="dash-page-header__title">Screening</h2>
+          <p className="dash-page-header__subtitle">
+            Run AI screening, review ranked candidates, and finalize the shortlist.
+          </p>
         </div>
         <div className="dash-page-header__actions">
-          {/* Job select dropdown as skeleton */}
-          <div className="skeleton-block screening-skeleton__select" />
+          {/* Job select dropdowns as skeleton */}
+          <div className="cell-actions" style={{ gap: '0.75rem' }}>
+            <div className="skeleton-block screening-skeleton__select" />
+            <div className="skeleton-block screening-skeleton__select" />
+          </div>
         </div>
       </div>
 

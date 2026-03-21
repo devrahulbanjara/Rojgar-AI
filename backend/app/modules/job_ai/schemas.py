@@ -47,6 +47,7 @@ class JobDraft(BaseModel):
     requirements: list[str] = Field(...)
     preferred_qualifications: list[str] = Field(...)
     benefits: list[str] = Field(...)
+    auto_shortlist: bool = Field(default=False)
 
     assumptions: list[str] = Field(...)
     missing_fields: list[str] = Field(...)

@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -82,8 +83,10 @@ def _job_list_item_from_row(
             "salary_max": job.salary_max,
             "currency": job.currency,
             "status": _effective_job_status(job),
+            "auto_shortlist": job.auto_shortlist,
             "expires_at": job.expires_at,
             "applications_count": int(applications_count or 0),
+            "final_shortlist_completed": job.final_shortlist_completed,
             "created_at": job.created_at,
             "match_score": match_score,
             "is_fallback": is_fallback,
@@ -108,6 +111,7 @@ def _job_detail_response_from_row(
             "salary_max": job.salary_max,
             "currency": job.currency,
             "status": _effective_job_status(job),
+            "auto_shortlist": job.auto_shortlist,
             "expires_at": job.expires_at,
             "overview": job.overview,
             "responsibilities": job.responsibilities,
@@ -157,6 +161,7 @@ async def create_job(
         salary_max=payload.salary_max,
         currency=payload.currency,
         status=payload.status,
+        auto_shortlist=payload.auto_shortlist,
         expires_at=expires_at,
         overview=payload.overview,
         responsibilities=payload.responsibilities or [],
@@ -330,8 +335,6 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
 
     cached_data = await redis_service.get(cache_key)
     if cached_data:
-        import json
-
         data = json.loads(cached_data)
         return [JobListItem.model_validate(item) for item in data]
 

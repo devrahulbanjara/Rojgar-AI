@@ -103,6 +103,7 @@ def _map_draft_to_job_create(
         requirements=draft.get("requirements", []),
         preferred_qualifications=draft.get("preferred_qualifications", []),
         benefits=draft.get("benefits", []),
+        auto_shortlist=draft.get("auto_shortlist", False),
     )
 
 

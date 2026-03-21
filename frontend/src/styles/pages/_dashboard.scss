@@ -257,6 +257,45 @@
   flex-direction: column;
 }
 
+.recruiter-dashboard__stack {
+  gap: $space-8;
+
+  @include lg {
+    gap: $space-10;
+  }
+}
+
+.recruiter-dashboard__hero-grid,
+.recruiter-dashboard__content-grid {
+  gap: $space-6;
+
+  @include lg {
+    gap: $space-8;
+  }
+}
+
+.recruiter-dashboard__stats {
+  gap: $space-6;
+  grid-template-columns: 1fr;
+
+  @include sm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include xl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stat-card {
+    padding: $space-6;
+    gap: $space-3;
+  }
+
+  .stat-card__footer {
+    margin-top: $space-2;
+  }
+}
+
 // ── Page Header ──────────────────────────────────────────────
 .dash-page-header {
   display: flex;
@@ -3500,9 +3539,128 @@
   }
 }
 
+.job-editor-form__toggle-field {
+  height: 100%;
+}
+
 .job-editor-form__footer {
   padding-top: $space-5;
   border-top: 1px solid $color-gray-200;
+}
+
+.job-editor-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-5;
+  width: 100%;
+  height: 100%;
+  padding: $space-4 $space-5;
+  border: 1px solid rgba($color-primary, 0.16);
+  border-radius: $radius-xl;
+  background:
+    linear-gradient(135deg, rgba($color-primary, 0.07), rgba($color-primary, 0.02)),
+    $color-white;
+  cursor: pointer;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.28);
+    box-shadow: 0 10px 24px rgba($color-primary, 0.08);
+  }
+}
+
+.job-editor-toggle__copy {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  min-width: 0;
+}
+
+.job-editor-toggle__title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $color-gray-900;
+}
+
+.job-editor-toggle__description {
+  font-size: $font-size-sm;
+  line-height: $line-height-loose;
+  color: $color-gray-600;
+}
+
+.job-editor-toggle__control {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-3;
+  flex-shrink: 0;
+}
+
+.job-editor-toggle__state {
+  min-width: 2rem;
+  text-align: right;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-gray-700;
+}
+
+.job-editor-toggle__switch {
+  position: relative;
+  display: inline-flex;
+}
+
+.job-editor-toggle__input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+
+  &:focus-visible + .job-editor-toggle__track {
+    box-shadow: 0 0 0 4px rgba($color-primary, 0.14);
+  }
+
+  &:checked + .job-editor-toggle__track {
+    background: linear-gradient(135deg, $color-primary, rgba($color-primary, 0.78));
+    border-color: rgba($color-primary, 0.3);
+
+    .job-editor-toggle__thumb {
+      transform: translateX(1.45rem);
+    }
+  }
+
+  &:disabled + .job-editor-toggle__track {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.job-editor-toggle__track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 3.5rem;
+  height: 2rem;
+  padding: 0.2rem;
+  border: 1px solid rgba($color-gray-400, 0.5);
+  border-radius: $radius-full;
+  background: $color-gray-300;
+  transition:
+    background $transition-fast,
+    border-color $transition-fast,
+    box-shadow $transition-fast,
+    opacity $transition-fast;
+}
+
+.job-editor-toggle__thumb {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: $radius-full;
+  background: $color-white;
+  box-shadow: 0 4px 10px rgba($color-gray-900, 0.16);
+  transition: transform $transition-fast;
 }
 
 .job-editor-list {
@@ -3709,6 +3867,16 @@
   .job-editor-form__grid,
   .job-editor-form__grid--salary {
     grid-template-columns: 1fr;
+  }
+
+  .job-editor-toggle {
+    align-items: flex-start;
+    height: auto;
+  }
+
+  .job-editor-toggle__control {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .job-editor-form__footer,
@@ -4715,14 +4883,14 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    gap: $space-1;
   }
 
-  &__name {
+  &__resume-title {
     font-family: $font-heading;
     font-weight: $font-weight-semibold;
     font-size: $font-size-base;
     color: $color-gray-900;
-    margin-bottom: $space-1;
   }
 
   &__meta {
@@ -4731,23 +4899,10 @@
     display: flex;
     align-items: center;
     gap: $space-2;
-    margin-bottom: $space-3;
   }
 
   &__sep {
     color: $color-gray-300;
-  }
-
-  &__summary {
-    font-size: $font-size-xs;
-    color: $color-gray-400;
-    line-height: $line-height-normal;
-    flex: 1;
-
-    // italic+muted treatment for the empty-state hint
-    &:has(+ .resume-card__actions) {
-      margin-bottom: $space-3;
-    }
   }
 
   &__actions {
@@ -4810,92 +4965,156 @@
   border-radius: $radius-lg;
 }
 
-.resume-card--skeleton {
-  pointer-events: none;
-
-  &:hover {
-    border-color: $color-gray-200;
-    box-shadow: none;
-  }
-}
-
-.resume-card-skeleton__preview-inner {
-  display: flex;
-  flex-direction: column;
-  gap: $space-2;
-}
-
-.resume-card-skeleton__preview-name {
-  width: 48%;
+.resume-table-skeleton__title {
+  width: 9rem;
   height: 1rem;
 }
 
-.resume-card-skeleton__preview-headline {
-  width: 62%;
-  height: 0.75rem;
+.resume-table-skeleton__updated {
+  width: 6rem;
+  height: 0.875rem;
 }
 
-.resume-card-skeleton__preview-divider {
-  width: 100%;
-  height: 1px;
-  border-radius: 0;
-}
+.resume-table-card {
+  overflow: visible;
 
-.resume-card-skeleton__preview-line {
-  width: 100%;
-  height: 0.625rem;
-
-  &--mid {
-    width: 86%;
-  }
-
-  &--short {
-    width: 68%;
+  .table-scroll {
+    overflow: visible;
   }
 }
 
-.resume-card-skeleton__info {
-  gap: $space-3;
+.resume-row {
+  &--clickable {
+    cursor: pointer;
+
+    td {
+      transition: background $transition-fast;
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba($color-primary, 0.45);
+      outline-offset: -2px;
+    }
+  }
+
+  &__title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__actions-cell {
+    width: 1%;
+    white-space: nowrap;
+  }
 }
 
-.resume-card-skeleton__name {
-  width: 58%;
-  height: 1rem;
-}
-
-.resume-card-skeleton__meta {
-  width: 52%;
-  height: 0.75rem;
-}
-
-.resume-card-skeleton__summary {
+.resume-row-actions {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: $space-2;
-  flex: 1;
-}
+  justify-content: flex-end;
 
-.resume-card-skeleton__line {
-  width: 100%;
-  height: 0.75rem;
+  &__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid transparent;
+    border-radius: $radius-lg;
+    background: transparent;
+    color: $color-gray-500;
+    cursor: pointer;
+    transition:
+      color $transition-fast,
+      background $transition-fast,
+      border-color $transition-fast;
 
-  &--mid {
-    width: 82%;
+    &:hover,
+    &:focus-visible {
+      opacity: 1;
+      color: $color-primary;
+      background: rgba($color-primary, 0.06);
+      border-color: rgba($color-primary, 0.14);
+      outline: none;
+    }
   }
 
-  &--short {
-    width: 64%;
+  &__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 180px;
+    padding: $space-2;
+    background: $color-white;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-xl;
+    z-index: $z-modal;
+    animation: dash-dropdown-in $transition-fast forwards;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    width: 100%;
+    padding: $space-3;
+    border: none;
+    border-radius: $radius-lg;
+    background: none;
+    text-align: left;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-gray-700;
+    cursor: pointer;
+    transition:
+      background $transition-fast,
+      color $transition-fast;
+
+    svg {
+      color: $color-gray-400;
+      flex-shrink: 0;
+      transition: color $transition-fast;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background: rgba($color-primary, 0.05);
+      color: $color-primary;
+      outline: none;
+
+      svg {
+        color: $color-primary;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &--danger {
+      color: $color-accent;
+
+      svg {
+        color: $color-accent;
+      }
+
+      &:hover,
+      &:focus-visible {
+        background: rgba($color-accent, 0.06);
+        color: $color-accent;
+      }
+    }
   }
 }
 
-.resume-card-skeleton__actions {
-  align-items: center;
-}
-
-.resume-card-skeleton__button {
-  flex: 1;
+.resume-table-skeleton__menu {
+  width: 2rem;
   height: 2rem;
   border-radius: $radius-lg;
+  margin-left: auto;
 }
 
 .resume-add-card--skeleton {
