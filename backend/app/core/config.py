@@ -37,12 +37,14 @@ class Settings(BaseSettings):
     qdrant_url: str
     qdrant_api_key: str
     qdrant_collection_name: str
+    qdrant_candidate_collection_name: str = "candidate_applications"
     google_api_key: str
     groq_api_key: str
     llama_cloud_api_key: str | None = None
     llama_cloud_base_url: str | None = None
     tavily_api_key: str
     groq_model_job_drafting: str = "openai/gpt-oss-120b"
+    groq_model_recruiter_chat: str = "openai/gpt-oss-120b"
     llama_extract_mode: str = "PREMIUM"
     llama_extract_parse_model: str = "gemini-2.5-pro"
     llama_extract_model: str = "openai-gpt-5-mini"

@@ -7,8 +7,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.companies.models import Company
-from app.modules.jobs.enums import SyncAction, SyncStatus
-from app.shared.enums import JobStatus, LocationType, ShortlistStatus
+from app.shared.enums import (
+    JobStatus,
+    LocationType,
+    ShortlistStatus,
+    SyncAction,
+    SyncStatus,
+)
 
 
 class Job(Base):

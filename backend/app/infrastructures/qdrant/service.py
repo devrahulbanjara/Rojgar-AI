@@ -20,55 +20,94 @@ def _expires_at_to_ts(value: datetime | None) -> int:
 class QdrantService:
     def __init__(self) -> None:
         self.collection_name = settings.qdrant_collection_name
+        self.candidate_collection_name = settings.qdrant_candidate_collection_name
         self.client = AsyncQdrantClient(
             url=settings.qdrant_url,
             api_key=settings.qdrant_api_key,
         )
 
     async def initialize(self) -> None:
-        """Robust initialization: create the collection and payload indexes."""
+        """Robust initialization: create collections and payload indexes."""
         try:
-            exists = await self.client.collection_exists(self.collection_name)
-            if not exists:
-                await self.client.create_collection(
-                    collection_name=self.collection_name,
-                    vectors_config=models.VectorParams(
-                        size=settings.embedding_output_dimensionality,
-                        distance=models.Distance.COSINE,
-                    ),
-                )
-                logger.info(f"Qdrant collection '{self.collection_name}' created.")
-            await self._ensure_indexes()
+            await self._ensure_collection(self.collection_name)
+            await self._ensure_collection(self.candidate_collection_name)
+            await self._ensure_job_indexes()
+            await self._ensure_candidate_indexes()
         except Exception as exc:
             logger.error(f"Qdrant robust init failed: {exc}")
 
-    async def _ensure_indexes(self) -> None:
-        keywords = ["status", "location_type", "company_id"]
-        integers = ["salary_min", "salary_max", "expires_at_ts"]
+    async def _ensure_collection(self, collection_name: str) -> None:
+        exists = await self.client.collection_exists(collection_name)
+        if exists:
+            return
 
-        for field in keywords:
+        await self.client.create_collection(
+            collection_name=collection_name,
+            vectors_config=models.VectorParams(
+                size=settings.embedding_output_dimensionality,
+                distance=models.Distance.COSINE,
+            ),
+        )
+        logger.info("Qdrant collection '{}' created.", collection_name)
+
+    async def _ensure_payload_indexes(
+        self,
+        collection_name: str,
+        *,
+        keyword_fields: list[str],
+        integer_fields: list[str],
+    ) -> None:
+        for field in keyword_fields:
             try:
                 await self.client.create_payload_index(
-                    collection_name=self.collection_name,
+                    collection_name=collection_name,
                     field_name=field,
                     field_schema=models.PayloadSchemaType.KEYWORD,
                 )
             except UnexpectedResponse as e:
                 if "already exists" not in str(e).lower():
-                    logger.warning(f"Could not create keyword index on {field}: {e}")
+                    logger.warning(
+                        "Could not create keyword index on {}.{}: {}",
+                        collection_name,
+                        field,
+                        e,
+                    )
 
-        for field in integers:
+        for field in integer_fields:
             try:
                 await self.client.create_payload_index(
-                    collection_name=self.collection_name,
+                    collection_name=collection_name,
                     field_name=field,
                     field_schema=models.PayloadSchemaType.INTEGER,
                 )
             except UnexpectedResponse as e:
                 if "already exists" not in str(e).lower():
-                    logger.warning(f"Could not create integer index on {field}: {e}")
+                    logger.warning(
+                        "Could not create integer index on {}.{}: {}",
+                        collection_name,
+                        field,
+                        e,
+                    )
 
-        logger.info("Qdrant payload indexes verified.")
+    async def _ensure_job_indexes(self) -> None:
+        keywords = ["status", "location_type", "company_id"]
+        integers = ["salary_min", "salary_max", "expires_at_ts"]
+        await self._ensure_payload_indexes(
+            self.collection_name,
+            keyword_fields=keywords,
+            integer_fields=integers,
+        )
+        logger.info("Qdrant job payload indexes verified.")
+
+    async def _ensure_candidate_indexes(self) -> None:
+        keywords = ["company_id", "job_id", "user_id", "application_status"]
+        integers = ["score", "updated_at_ts"]
+        await self._ensure_payload_indexes(
+            self.candidate_collection_name,
+            keyword_fields=keywords,
+            integer_fields=integers,
+        )
+        logger.info("Qdrant candidate payload indexes verified.")
 
     def _build_job_document(self, job) -> str:
         """Concatenate all relevant job text for optimal semantic matching."""
@@ -79,6 +118,49 @@ class QdrantService:
             f"REQUIREMENTS: {', '.join(job.requirements or [])}",
             f"PREFERRED QUALIFICATIONS: {', '.join(job.preferred_qualifications or [])}",
             f"BENEFITS: {', '.join(job.benefits or [])}",
+        ]
+        return "\n\n".join(parts)
+
+    def _build_application_document(self, application, job) -> str:
+        resume = application.resume
+        user = application.user
+        resume_experiences = []
+        if resume is not None:
+            resume_experiences = [
+                f"{exp.title or ''} at {exp.company_name or ''}".strip()
+                for exp in (resume.experiences or [])
+            ]
+        resume_educations = []
+        if resume is not None:
+            resume_educations = [
+                " ".join(
+                    part
+                    for part in [edu.degree, edu.field_of_study, edu.institution]
+                    if part
+                )
+                for edu in (resume.educations or [])
+            ]
+        resume_skills = []
+        if resume is not None:
+            resume_skills = [
+                skill.skill_name
+                for skill in (resume.skills or [])
+                if skill.skill_name
+            ]
+
+        parts = [
+            f"CANDIDATE: {user.full_name}",
+            f"EMAIL: {user.email}",
+            f"JOB TITLE: {job.title}",
+            f"APPLICATION STATUS: {application.status.value}",
+            f"SCORE: {application.score if application.score is not None else 'unknown'}",
+            f"FEEDBACK: {application.feedback or 'none'}",
+            f"RESUME HEADLINE: {resume.headline if resume else ''}",
+            f"RESUME SUMMARY: {resume.summary if resume else ''}",
+            f"YEARS OF EXPERIENCE: {resume.years_of_experience if resume and resume.years_of_experience is not None else 'unknown'}",
+            f"SKILLS: {', '.join(resume_skills)}",
+            f"EXPERIENCE: {', '.join(resume_experiences)}",
+            f"EDUCATION: {', '.join(resume_educations)}",
         ]
         return "\n\n".join(parts)
 
@@ -148,6 +230,57 @@ class QdrantService:
         except Exception as exc:
             logger.error(f"Qdrant delete failed for job {job_id}: {exc}")
             raise  # Re-raise so the outbox processor can mark the event FAILED
+
+    async def upsert_application(self, application, job) -> None:
+        try:
+            text_content = self._build_application_document(application, job)
+            vector = await ai_service.get_embeddings(text_content)
+            updated_at = application.updated_at or application.created_at
+            updated_at_ts = int(updated_at.timestamp()) if updated_at else 0
+            await self.client.upsert(
+                collection_name=self.candidate_collection_name,
+                points=[
+                    models.PointStruct(
+                        id=str(application.id),
+                        vector=vector,
+                        payload={
+                            "company_id": str(job.company_id),
+                            "job_id": str(job.id),
+                            "user_id": str(application.user_id),
+                            "application_status": application.status.value,
+                            "score": application.score,
+                            "updated_at_ts": updated_at_ts,
+                        },
+                    )
+                ],
+            )
+            logger.info(
+                "Application {} for job {} upserted to candidate Qdrant successfully",
+                application.id,
+                job.id,
+            )
+        except Exception as exc:
+            logger.error(
+                "Qdrant application upsert failed for application {}: {}",
+                application.id,
+                exc,
+            )
+            raise
+
+    async def delete_application(self, application_id: uuid.UUID) -> None:
+        try:
+            await self.client.delete(
+                collection_name=self.candidate_collection_name,
+                points_selector=models.PointIdsList(points=[str(application_id)]),
+            )
+            logger.info("Application {} deleted from candidate Qdrant.", application_id)
+        except Exception as exc:
+            logger.error(
+                "Qdrant application delete failed for application {}: {}",
+                application_id,
+                exc,
+            )
+            raise
 
     async def search_jobs(
         self,
@@ -268,6 +401,49 @@ class QdrantService:
             total = strict_count
 
         return results, total
+
+    async def search_applications(
+        self,
+        query: str,
+        *,
+        company_id: uuid.UUID,
+        statuses: list[str] | None = None,
+        limit: int = 10,
+    ) -> list[dict]:
+        vector = await ai_service.get_embeddings(query)
+        must_conditions: list[models.Condition] = [
+            models.FieldCondition(
+                key="company_id",
+                match=models.MatchValue(value=str(company_id)),
+            )
+        ]
+        if statuses:
+            if len(statuses) == 1:
+                must_conditions.append(
+                    models.FieldCondition(
+                        key="application_status",
+                        match=models.MatchValue(value=statuses[0]),
+                    )
+                )
+            else:
+                must_conditions.append(
+                    models.FieldCondition(
+                        key="application_status",
+                        match=models.MatchAny(any=statuses),
+                    )
+                )
+
+        response = await self.client.query_points(
+            collection_name=self.candidate_collection_name,
+            query=vector,
+            query_filter=models.Filter(must=must_conditions),
+            limit=limit,
+            with_payload=False,
+        )
+        return [
+            {"application_id": uuid.UUID(hit.id), "score": hit.score}
+            for hit in response.points
+        ]
 
 
 qdrant_service = QdrantService()

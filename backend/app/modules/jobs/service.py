@@ -11,10 +11,13 @@ from sqlalchemy.orm import selectinload
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
+from app.modules.applications.models import ApplicationSyncEvent
+from app.modules.applications.sync import (
+    process_sync_event as process_application_sync_event,
+)
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
-from app.modules.jobs.enums import SyncAction
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.jobs.schemas import (
     CompanySnippet,
@@ -25,7 +28,7 @@ from app.modules.jobs.schemas import (
 )
 from app.modules.jobs.sync import process_sync_event
 from app.modules.profiles.models import Profile
-from app.shared.enums import JobStatus, LocationType
+from app.shared.enums import JobStatus, LocationType, SyncAction
 
 
 def _utcnow() -> datetime:
@@ -470,8 +473,18 @@ async def delete_job(
             detail="Job not found or you do not have permission.",
         )
 
+    application_ids = list(
+        await db.scalars(select(Application.id).where(Application.job_id == job.id))
+    )
     job_title = job.title  # capture before deletion
     await db.delete(job)
+
+    application_sync_events = [
+        ApplicationSyncEvent(application_id=application_id, action=SyncAction.DELETE)
+        for application_id in application_ids
+    ]
+    for application_sync_event in application_sync_events:
+        db.add(application_sync_event)
 
     # 1. Transactionally write the hard-delete outbox event
     event = JobSyncEvent(job_id=uuid.UUID(str(job_id)), action=SyncAction.DELETE)
@@ -480,6 +493,8 @@ async def delete_job(
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
     bg_tasks.add_task(process_sync_event, event.id)
+    for application_sync_event in application_sync_events:
+        bg_tasks.add_task(process_application_sync_event, application_sync_event.id)
 
     await redis_service.delete(f"job:detail:{job_id}")
     await redis_service.delete(f"jobs:company:{company_id}")

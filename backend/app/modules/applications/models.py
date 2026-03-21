@@ -9,7 +9,7 @@ from sqlalchemy import Boolean, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.shared.enums import ApplicationStatus
+from app.shared.enums import ApplicationStatus, SyncAction, SyncStatus
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
@@ -50,3 +50,23 @@ class Application(Base):
 
     user: Mapped[User] = relationship(lazy="joined")
     resume: Mapped[Resume] = relationship(lazy="joined")
+
+
+class ApplicationSyncEvent(Base):
+    __tablename__ = "application_sync_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, nullable=False, index=True
+    )
+    action: Mapped[SyncAction] = mapped_column(nullable=False)
+    status: Mapped[SyncStatus] = mapped_column(
+        nullable=False, server_default="PENDING", index=True
+    )
+    error_message: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

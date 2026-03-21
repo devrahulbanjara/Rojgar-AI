@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -9,9 +10,13 @@ from sqlalchemy.orm import joinedload
 
 from app.core.database import AsyncSessionLocal
 from app.infrastructures.redis.service import redis_service
+from app.modules.applications.models import Application
+from app.modules.applications.sync import (
+    enqueue_application_sync_event,
+    process_sync_event as process_application_sync_event,
+)
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
-from app.modules.applications.models import Application
 from app.modules.applications.schemas import (
     ApplicantSummary,
     ApplicationListItem,
@@ -100,6 +105,8 @@ async def apply_to_job(
     )
     db.add(application)
     try:
+        await db.flush()
+        sync_event = enqueue_application_sync_event(db, application.id)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -107,6 +114,8 @@ async def apply_to_job(
             status_code=status.HTTP_409_CONFLICT,
             detail="You have already applied to this job.",
         )
+    if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
+        bg_tasks.add_task(process_application_sync_event, sync_event.id)
 
     if (
         job.auto_shortlist
@@ -368,6 +377,7 @@ async def update_application_status(
     user: User,
     application_id: str,
     payload: UpdateApplicationStatusRequest,
+    bg_tasks: BackgroundTasks | None = None,
 ) -> ApplicationResponse:
     """Update application status (active company members only)."""
     company_id = await _get_active_company_id(db, user)
@@ -395,8 +405,11 @@ async def update_application_status(
         )
 
     application.status = payload.status
+    sync_event = enqueue_application_sync_event(db, uuid.UUID(str(application.id)))
     await db.commit()
     await db.refresh(application)
+    if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
+        bg_tasks.add_task(process_application_sync_event, sync_event.id)
 
     # INVALIDATE CACHES
     # 1. Candidate's own dashboard & applications list
