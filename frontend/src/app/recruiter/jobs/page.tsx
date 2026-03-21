@@ -98,6 +98,20 @@ function isVisibleAIDraft(draft: JobAIDraftRecord) {
   return draft.status !== 'committed'
 }
 
+function AutoShortlistBadge({
+  enabled,
+  compact = false,
+}: {
+  enabled: boolean
+  compact?: boolean
+}) {
+  return (
+    <span className={`badge badge--${enabled ? 'primary' : 'gray'}${compact ? ' badge--xs' : ''}`}>
+      {enabled ? 'Auto-shortlist on' : 'Manual screening'}
+    </span>
+  )
+}
+
 function RecruiterJobCard({
   job,
   view,
@@ -116,20 +130,27 @@ function RecruiterJobCard({
   return (
     <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
       <div className="company-job-card__top-row">
-        <label className={`company-job-card__status company-job-card__status--${job.status}`}>
-          <select
-            value={job.status}
-            onChange={(event) => onStatusChange(event.target.value as JobStatus)}
-            className="company-job-card__status-select"
-            aria-label={`Change status for ${job.title}`}
-            disabled={isUpdatingStatus}
-          >
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="expired">Expired</option>
-          </select>
-          <ChevronDown size={13} aria-hidden="true" className="company-job-card__status-chevron" />
-        </label>
+        <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+          <label className={`company-job-card__status company-job-card__status--${job.status}`}>
+            <select
+              value={job.status}
+              onChange={(event) => onStatusChange(event.target.value as JobStatus)}
+              className="company-job-card__status-select"
+              aria-label={`Change status for ${job.title}`}
+              disabled={isUpdatingStatus}
+            >
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="expired">Expired</option>
+            </select>
+            <ChevronDown
+              size={13}
+              aria-hidden="true"
+              className="company-job-card__status-chevron"
+            />
+          </label>
+          <AutoShortlistBadge enabled={job.auto_shortlist} compact />
+        </div>
       </div>
 
       <div className="company-job-card__title">{job.title}</div>
@@ -201,13 +222,16 @@ function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 
   return (
     <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
       <div className="company-job-card__top-row">
-        <span
-          className={`company-job-card__status company-job-card__status--${getAIDraftStatusTone(draft.status)}`}
-        >
-          <span className="company-job-card__status-label">
-            {getAIDraftStatusLabel(draft.status)}
+        <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span
+            className={`company-job-card__status company-job-card__status--${getAIDraftStatusTone(draft.status)}`}
+          >
+            <span className="company-job-card__status-label">
+              {getAIDraftStatusLabel(draft.status)}
+            </span>
           </span>
-        </span>
+          <AutoShortlistBadge enabled={jobDraft?.auto_shortlist ?? false} compact />
+        </div>
       </div>
 
       <div className="company-job-card__title">{draftTitle}</div>

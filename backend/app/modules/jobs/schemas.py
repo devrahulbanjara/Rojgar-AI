@@ -20,6 +20,7 @@ class JobBase(BaseSchema):
     requirements: list[str] | None = None
     preferred_qualifications: list[str] | None = None
     benefits: list[str] | None = None
+    auto_shortlist: bool = False
 
     @model_validator(mode="after")
     def validate_job_fields(self) -> "JobBase":
@@ -83,8 +84,10 @@ class JobListItem(BaseSchema):
     salary_max: int | None = None
     currency: str = "NPR"
     status: JobStatus
+    auto_shortlist: bool = False
     expires_at: datetime | None = None
     applications_count: int = 0
+    final_shortlist_completed: bool = False
     created_at: datetime
 
     match_score: float | None = Field(
@@ -110,6 +113,7 @@ class JobDetailResponse(BaseSchema):
     salary_max: int | None = None
     currency: str
     status: JobStatus
+    auto_shortlist: bool = False
     expires_at: datetime | None = None
     overview: str | None = None
     responsibilities: list[str] = []

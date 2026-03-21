@@ -45,8 +45,10 @@ export interface JobListItem {
   salary_max: number | null
   currency: string
   status: JobStatus
+  auto_shortlist: boolean
   expires_at: string | null
   applications_count: number
+  final_shortlist_completed: boolean
   created_at: string
   match_score: number | null
   is_fallback: boolean
@@ -65,6 +67,7 @@ export interface JobDetail {
   salary_max: number | null
   currency: string
   status: JobStatus
+  auto_shortlist: boolean
   expires_at: string | null
   overview: string | null
   responsibilities: string[]
@@ -83,6 +86,7 @@ export interface CreateJobPayload {
   salary_max?: number
   currency?: string
   status?: JobStatus
+  auto_shortlist?: boolean
   expires_at?: string
   overview?: string
   responsibilities?: string[]

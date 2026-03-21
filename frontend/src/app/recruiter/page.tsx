@@ -149,15 +149,15 @@ export default function CompanyDashboardPage() {
       <div className="dash-content container container--app-shell">
         <div className="dash-page-header">
           <div className="dash-page-header__left">
-            <h2 className="dash-page-header__title">Welcome, {companyName} ðŸ¢</h2>
+            <h2 className="dash-page-header__title">Welcome, {companyName} !</h2>
             <p className="dash-page-header__subtitle">
               Manage your hiring pipeline and track performance.
             </p>
           </div>
         </div>
 
-        <div className="dashboard-overview-stack">
-          <div className="dash-grid dash-grid--2col">
+        <div className="dashboard-overview-stack recruiter-dashboard__stack">
+          <div className="dash-grid dash-grid--2col recruiter-dashboard__hero-grid">
             <Link href="/recruiter/screening" className="dash-card">
               <div className="dash-card__body">
                 <div className="dash-card__title">Pending AI Reviews</div>
@@ -178,7 +178,7 @@ export default function CompanyDashboardPage() {
             </Link>
           </div>
 
-          <div className="dash-stats">
+          <div className="dash-stats recruiter-dashboard__stats">
             {stats.map((s) => (
               <div key={s.label} className="stat-card">
                 {isRecruiterDashboardLoading ? (
@@ -196,7 +196,7 @@ export default function CompanyDashboardPage() {
             ))}
           </div>
 
-          <div className="dash-grid dash-grid--2col">
+          <div className="dash-grid dash-grid--2col recruiter-dashboard__content-grid">
             <div className="dash-card">
               <div className="dash-card__header">
                 <div>

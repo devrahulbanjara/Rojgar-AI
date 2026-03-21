@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -27,10 +27,11 @@ db = Depends(get_db)
 )
 async def apply_to_job(
     payload: ApplyRequest,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
-    data = await service.apply_to_job(db, user, payload)
+    data = await service.apply_to_job(db, user, payload, bg_tasks)
     return ResponseBuilder.success(
         data=data,
         message="Application submitted.",

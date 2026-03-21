@@ -7,7 +7,7 @@ import {
   useGetJobApplicationsQuery,
   useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
-import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
+import { JobStatus, getJobStatusLabel, useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 import {
   useFinalizeShortlistMutation,
   useGetShortlistSummaryQuery,
@@ -26,16 +26,41 @@ function scoreBadgeClass(score: number | null) {
   return 'danger'
 }
 
+function getJobOptionLabel(title: string, status: JobStatus, finalShortlistCompleted: boolean) {
+  const shortlistLabel = finalShortlistCompleted ? 'Shortlist completed' : 'Shortlist pending'
+  return `${title} (${getJobStatusLabel(status)} - ${shortlistLabel})`
+}
+
 export default function RecruiterScreeningPage() {
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
-  const jobs = useMemo(
-    () => jobsResp?.data.filter((job) => job.status === 'active') ?? [],
+  const [jobListMode, setJobListMode] = useState<'pending' | 'all'>('pending')
+  const eligibleJobs = useMemo(
+    () =>
+      [...(jobsResp?.data ?? [])]
+        .filter((job) => job.status === 'active' || job.status === 'expired')
+        .sort((a, b) => {
+          if (a.final_shortlist_completed !== b.final_shortlist_completed) {
+            return a.final_shortlist_completed ? 1 : -1
+          }
+          if (a.status === b.status) return 0
+          return a.status === 'active' ? -1 : 1
+        }),
     [jobsResp?.data],
   )
   const [selectedJobId, setSelectedJobId] = useState('')
   const [threshold, setThreshold] = useState(70)
   const [isPollingSummary, setIsPollingSummary] = useState(false)
-  const activeJobId = selectedJobId || jobs[0]?.id || ''
+  const jobs = useMemo(
+    () =>
+      jobListMode === 'pending'
+        ? eligibleJobs.filter((job) => !job.final_shortlist_completed)
+        : eligibleJobs,
+    [eligibleJobs, jobListMode],
+  )
+  const activeJobId = jobs.some((job) => job.id === selectedJobId)
+    ? selectedJobId
+    : (jobs[0]?.id ?? '')
+  const activeJob = jobs.find((job) => job.id === activeJobId) ?? null
 
   const {
     data: summaryResp,
@@ -114,7 +139,7 @@ export default function RecruiterScreeningPage() {
     }
   }
 
-  const isLoadingContent = isLoadingJobs || !activeJobId || isLoadingSummary || isLoadingApps
+  const isLoadingContent = isLoadingJobs || (!!activeJobId && (isLoadingSummary || isLoadingApps))
 
   return (
     <div className="dash-content container container--app-shell">
@@ -127,118 +152,169 @@ export default function RecruiterScreeningPage() {
         </div>
         <div className="dash-page-header__actions">
           {isLoadingJobs ? (
-            <div className="skeleton-block screening-skeleton__select" aria-hidden="true" />
+            <div className="cell-actions" style={{ gap: '0.75rem' }}>
+              <div className="skeleton-block screening-skeleton__select" aria-hidden="true" />
+              <div className="skeleton-block screening-skeleton__select" aria-hidden="true" />
+            </div>
           ) : (
-            <select
-              className="dash-select"
-              value={activeJobId}
-              onChange={(event) => {
-                setSelectedJobId(event.target.value)
-                setIsPollingSummary(false)
-              }}
-            >
-              <option value="">Select a job</option>
-              {jobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {job.title}
-                </option>
-              ))}
-            </select>
+            <div className="cell-actions" style={{ gap: '0.75rem' }}>
+              <select
+                className="dash-select"
+                value={jobListMode}
+                onChange={(event) => {
+                  setJobListMode(event.target.value as 'pending' | 'all')
+                  setIsPollingSummary(false)
+                }}
+              >
+                <option value="pending">Pending shortlists</option>
+                <option value="all">All eligible jobs</option>
+              </select>
+              <select
+                className="dash-select"
+                value={activeJobId}
+                onChange={(event) => {
+                  setSelectedJobId(event.target.value)
+                  setIsPollingSummary(false)
+                }}
+              >
+                <option value="">Select a job</option>
+                {jobs.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {getJobOptionLabel(job.title, job.status, job.final_shortlist_completed)}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
       </div>
 
       <div className="dashboard-overview-stack">
-        {isLoadingContent ? (
-          <ScreeningStatusCardSkeleton />
-        ) : summary ? (
+        {!isLoadingJobs && !activeJobId ? (
           <div className="dash-card">
-            <div className="dash-card__body recruiter-summary__body">
-              <div className="dash-card__title">Shortlisting Status</div>
-              <div className="cell-actions">
-                <span
-                  className={`badge badge--${summary.shortlist_status === 'completed' ? 'success' : summary.shortlist_status === 'failed' ? 'danger' : shouldPollSummary ? 'warning' : 'gray'}`}
-                >
-                  {summary.shortlist_status.replace('_', ' ')}
-                </span>
-                <span className="cell-muted">
-                  {summary.scored}/{summary.total_applications} scored
-                </span>
-                {canRunScreening && (
-                  <button
-                    className="btn btn--primary btn--sm"
-                    disabled={isTriggering}
-                    onClick={() => void handleTrigger()}
-                  >
-                    {isTriggering ? 'Starting...' : 'Run AI screening'}
-                  </button>
-                )}
+            <div className="dash-card__body">
+              <div className="profile-empty">
+                {jobListMode === 'pending' && eligibleJobs.length > 0
+                  ? 'No active or expired jobs are awaiting shortlist completion right now. Switch to All eligible jobs to review completed shortlists.'
+                  : 'No active or expired jobs are available for screening yet. Draft jobs will show up here after they are published.'}
               </div>
             </div>
           </div>
         ) : null}
 
-        {isLoadingContent || isFetchingApps ? (
-          <ScreeningTableSkeleton rows={6} />
-        ) : (
-          <div className="dash-card">
-            <div className="dash-card__body">
-              {applications.length === 0 ? (
-                <div className="profile-empty">No applications available for this job yet.</div>
+        {isLoadingContent ? (
+          <ScreeningStatusCardSkeleton />
+        ) : activeJobId && summary ? (
+          <div className="dash-card" style={{ marginBottom: '2rem' }}>
+            <div
+              className="dash-card__body"
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1.25rem',
+              }}
+            >
+              <div className="dash-card__title" style={{ margin: 0 }}>
+                Shortlisting Status
+              </div>
+              {activeJob?.auto_shortlist ? (
+                <span className="badge badge--primary">Auto-shortlist enabled</span>
               ) : (
-                <div className="table-scroll">
-                  <table className="dash-table">
-                    <thead>
-                      <tr>
-                        <th>Candidate</th>
-                        <th>Email</th>
-                        <th>Score</th>
-                        <th>Feedback</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {applications.map((application) => (
-                        <tr key={application.id}>
-                          <td>{application.applicant_name}</td>
-                          <td className="cell-meta">{application.applicant_email}</td>
-                          <td>
-                            <span className={`badge badge--${scoreBadgeClass(application.score)}`}>
-                              {application.score == null ? 'Pending' : `${application.score}/100`}
-                            </span>
-                          </td>
-                          <td className="cell-meta">{application.feedback ?? 'No feedback yet'}</td>
-                          <td>{application.status}</td>
-                          <td>
-                            <div className="cell-actions">
-                              <button
-                                className="btn btn--outline btn--sm"
-                                disabled={isUpdating}
-                                onClick={() => void handleStatus(application.id, 'interview')}
-                              >
-                                Shortlist
-                              </button>
-                              <button
-                                className="btn btn--ghost btn--danger btn--sm"
-                                disabled={isUpdating}
-                                onClick={() => void handleStatus(application.id, 'rejected')}
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <span className="badge badge--gray">Manual screening only</span>
+              )}
+              <span
+                className={`badge badge--${summary.shortlist_status === 'completed' ? 'success' : summary.shortlist_status === 'failed' ? 'danger' : shouldPollSummary ? 'warning' : 'gray'}`}
+              >
+                {summary.shortlist_status.replace('_', ' ')}
+              </span>
+              <span className="cell-muted">
+                {summary.scored}/{summary.total_applications} scored
+              </span>
+              {activeJob?.auto_shortlist ? (
+                <span className="cell-muted">
+                  New applicants for this job are scored automatically after they apply.
+                </span>
+              ) : null}
+              {canRunScreening && (
+                <button
+                  className="btn btn--primary btn--sm"
+                  disabled={isTriggering}
+                  onClick={() => void handleTrigger()}
+                >
+                  {isTriggering ? 'Starting...' : 'Run AI screening'}
+                </button>
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {summary?.shortlist_status === 'completed' && !summary.final_shortlist_completed ? (
+        {isLoadingContent || (activeJobId && isFetchingApps) ? (
+          <ScreeningTableSkeleton rows={6} />
+        ) : activeJobId ? (
+          applications.length === 0 ? (
+            <div className="dash-card">
+              <div className="dash-card__body">
+                <div className="profile-empty">No applications available for this job yet.</div>
+              </div>
+            </div>
+          ) : (
+            <div className="dash-card">
+              <div className="table-scroll">
+                <table className="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Candidate</th>
+                      <th>Email</th>
+                      <th>Score</th>
+                      <th>Feedback</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.map((application) => (
+                      <tr key={application.id}>
+                        <td>{application.applicant_name}</td>
+                        <td className="cell-meta">{application.applicant_email}</td>
+                        <td>
+                          <span className={`badge badge--${scoreBadgeClass(application.score)}`}>
+                            {application.score == null ? 'Pending' : `${application.score}/100`}
+                          </span>
+                        </td>
+                        <td className="cell-meta">{application.feedback ?? 'No feedback yet'}</td>
+                        <td>{application.status}</td>
+                        <td>
+                          <div className="cell-actions">
+                            <button
+                              className="btn btn--outline btn--sm"
+                              disabled={isUpdating}
+                              onClick={() => void handleStatus(application.id, 'interview')}
+                            >
+                              Shortlist
+                            </button>
+                            <button
+                              className="btn btn--ghost btn--danger btn--sm"
+                              disabled={isUpdating}
+                              onClick={() => void handleStatus(application.id, 'rejected')}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        ) : null}
+
+        {activeJobId &&
+        summary?.shortlist_status === 'completed' &&
+        !summary.final_shortlist_completed ? (
           <div className="dash-card">
             <div className="dash-card__body recruiter-summary__body">
               <div className="dash-card__title">Finalize with AI recommendations</div>

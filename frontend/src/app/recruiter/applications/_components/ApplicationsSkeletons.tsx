@@ -12,21 +12,11 @@ export function RecruiterApplicationsTableSkeleton({ rows = 7 }: { rows?: number
         <table className="dash-table">
           <thead>
             <tr>
-              <th>
-                <div className="skeleton-block rec-apps-skeleton__th" />
-              </th>
-              <th>
-                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--email" />
-              </th>
-              <th>
-                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--mid" />
-              </th>
-              <th>
-                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--short" />
-              </th>
-              <th>
-                <div className="skeleton-block rec-apps-skeleton__th rec-apps-skeleton__th--short" />
-              </th>
+              <th>Applicant</th>
+              <th>Email</th>
+              <th>Job</th>
+              <th>Status</th>
+              <th>Applied</th>
             </tr>
           </thead>
           <tbody>
@@ -75,8 +65,10 @@ export function RecruiterApplicationsPageSkeleton() {
       {/* Page header */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
-          <div className="skeleton-block rec-apps-skeleton__page-title" />
-          <div className="skeleton-block rec-apps-skeleton__page-subtitle" />
+          <h2 className="dash-page-header__title">Application Inbox</h2>
+          <p className="dash-page-header__subtitle">
+            Review applications across all active and past job postings.
+          </p>
         </div>
       </div>
 

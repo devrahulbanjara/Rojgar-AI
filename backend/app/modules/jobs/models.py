@@ -30,6 +30,9 @@ class Job(Base):
     salary_max: Mapped[int | None] = mapped_column(Integer)
     currency: Mapped[str] = mapped_column(String(10), server_default="USD")
     status: Mapped[JobStatus] = mapped_column(nullable=False, server_default="draft")
+    auto_shortlist: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
     shortlist_status: Mapped[ShortlistStatus] = mapped_column(
         nullable=False, server_default="not_started"
     )

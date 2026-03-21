@@ -21,6 +21,7 @@ export interface RecruiterJobFormState {
   salary_max: string
   currency: string
   status: JobStatus
+  auto_shortlist: boolean
   overview: string
   responsibilities: string[]
   requirements: string[]
@@ -36,6 +37,7 @@ export const EMPTY_JOB_FORM: RecruiterJobFormState = {
   salary_max: '',
   currency: 'NPR',
   status: 'draft',
+  auto_shortlist: false,
   overview: '',
   responsibilities: [],
   requirements: [],
@@ -61,6 +63,7 @@ export function formFromDetail(detail: JobDetail): RecruiterJobFormState {
     salary_max: detail.salary_max != null ? String(detail.salary_max) : '',
     currency: detail.currency,
     status: detail.status,
+    auto_shortlist: detail.auto_shortlist ?? false,
     overview: detail.overview ?? '',
     responsibilities: detail.responsibilities ?? [],
     requirements: detail.requirements ?? [],
@@ -81,6 +84,7 @@ export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
     ...(salary_max !== null && { salary_max }),
     currency: form.currency || 'NPR',
     status: form.status,
+    auto_shortlist: form.auto_shortlist,
     ...(form.overview && { overview: form.overview }),
     responsibilities: form.responsibilities,
     requirements: form.requirements,
@@ -267,6 +271,36 @@ export default function RecruiterJobEditor({
               <option value="active">Active</option>
               <option value="expired">Expired</option>
             </select>
+          </div>
+
+          <div className="job-ai-field job-ai-field--manual job-editor-form__toggle-field">
+            <label className="job-editor-toggle" htmlFor="job-auto-shortlist">
+              <div className="job-editor-toggle__copy">
+                <span className="job-editor-toggle__title">Automatic AI Shortlisting</span>
+                <span className="job-editor-toggle__description">
+                  Score new applications automatically after submission.
+                </span>
+              </div>
+
+              <span className="job-editor-toggle__control">
+                <span className="job-editor-toggle__state" aria-hidden="true">
+                  {form.auto_shortlist ? 'On' : 'Off'}
+                </span>
+                <span className="job-editor-toggle__switch">
+                  <input
+                    id="job-auto-shortlist"
+                    type="checkbox"
+                    className="job-editor-toggle__input"
+                    checked={form.auto_shortlist}
+                    onChange={(event) => set('auto_shortlist', event.target.checked)}
+                    disabled={isLoading}
+                  />
+                  <span className="job-editor-toggle__track" aria-hidden="true">
+                    <span className="job-editor-toggle__thumb" />
+                  </span>
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__salary-field">

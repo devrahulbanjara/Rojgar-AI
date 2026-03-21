@@ -36,6 +36,7 @@ export interface JobAIDraftPayload {
   salary_max: number | null
   currency: string | null
   status: JobAIJobStatus
+  auto_shortlist: boolean
   overview: string
   responsibilities: string[]
   requirements: string[]

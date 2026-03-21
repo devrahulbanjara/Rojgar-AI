@@ -12,6 +12,7 @@ type DraftField =
   | 'salary_min'
   | 'salary_max'
   | 'currency'
+  | 'auto_shortlist'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -327,6 +328,28 @@ export default function JobDraftForm({
               <option value="remote">Remote</option>
               <option value="hybrid">Hybrid</option>
             </select>
+          </FieldChrome>
+
+          <FieldChrome
+            label="Automatic AI Shortlisting"
+            helper="Turn this on when each new application should be scored automatically right after submission."
+            fieldKeys={['auto_shortlist']}
+            lockedFields={lockedFields}
+            dirtyFields={dirtyFields}
+            missingFields={missingFields}
+            disabled={disabled}
+            onToggleLock={onToggleLock}
+            onRequestUpdate={onRequestUpdate}
+          >
+            <label className="job-ai-checkbox">
+              <input
+                type="checkbox"
+                checked={draft.auto_shortlist}
+                onChange={(event) => onFieldChange('auto_shortlist', event.target.checked)}
+                disabled={disabled}
+              />
+              <span>Automatically score each new application for this job</span>
+            </label>
           </FieldChrome>
 
           <FieldChrome

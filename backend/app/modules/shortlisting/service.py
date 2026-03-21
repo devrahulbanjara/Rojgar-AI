@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import random
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -106,6 +107,64 @@ def _score_application(application: Application) -> tuple[int, str]:
         )
 
     return score, feedback
+
+
+def _dummy_ai_score_application(application: Application) -> tuple[int, str]:
+    score = random.randint(1, 100)
+    feedback = (
+        "This candidate shows potential based on their background. "
+        "Their skills align reasonably well with the core requirements. "
+        "However, further technical assessment is recommended to verify their expertise."
+    )
+    return score, feedback
+
+
+async def process_auto_shortlist_for_application(
+    application_id: uuid.UUID, database_url: str
+) -> None:
+    engine = create_async_engine(database_url)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as db:
+            application = await db.scalar(
+                select(Application)
+                .where(Application.id == application_id)
+                .options(
+                    selectinload(Application.resume).selectinload(Resume.experiences),
+                    selectinload(Application.resume).selectinload(Resume.educations),
+                    selectinload(Application.resume).selectinload(Resume.skills),
+                )
+            )
+            if application is None or application.status != ApplicationStatus.submitted:
+                return
+
+            try:
+                score, feedback = _dummy_ai_score_application(application)
+                application.score = score
+                application.feedback = feedback
+                await db.commit()
+
+                await redis_service.delete(f"dashboard:candidate:{application.user_id}")
+                await redis_service.invalidate_pattern(
+                    f"applications:candidate:{application.user_id}:*"
+                )
+                await redis_service.invalidate_pattern("dashboard:recruiter:*")
+                await redis_service.delete(f"shortlist:summary:{application.job_id}")
+
+                logger.info(
+                    "Auto-shortlisted application {} with score {}",
+                    application_id,
+                    score,
+                )
+            except Exception as exc:
+                await db.rollback()
+                logger.exception(
+                    "Auto-shortlist failed for application {}: {}",
+                    application_id,
+                    exc,
+                )
+    finally:
+        await engine.dispose()
 
 
 async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:

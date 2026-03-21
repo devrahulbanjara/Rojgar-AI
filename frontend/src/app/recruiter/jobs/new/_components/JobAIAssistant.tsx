@@ -109,10 +109,11 @@ export default function JobAIAssistant({
           >
             <option value="">None selected</option>
             {jobs.map((job) => (
-              <option key={job.id} value={job.id}>
-                {job.title}
-              </option>
-            ))}
+            <option key={job.id} value={job.id}>
+              {job.title}
+              {job.auto_shortlist ? ' - Auto-shortlist on' : ''}
+            </option>
+          ))}
           </select>
         </div>
 
