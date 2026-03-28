@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation'
 import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
-import { Bell, ChevronDown, FileText, LayoutGrid, LogOut, Search, User, X } from 'lucide-react'
+import { Bell, ChevronDown, FileText, LayoutGrid, LogOut, User, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -135,8 +135,6 @@ export default function DashNavbar({
   const navItems = buildNavItems(activeRole as DashRole)
   const isCandidate = activeRole === 'candidate'
 
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchVal, setSearchVal] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
 
@@ -162,17 +160,12 @@ export default function DashNavbar({
           ? 'Candidate'
           : userRole
 
-  const searchRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchOpen(false)
-      }
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
       }
@@ -186,18 +179,12 @@ export default function DashNavbar({
 
   useEffect(() => {
     const resetUiState = window.setTimeout(() => {
-      setSearchOpen(false)
       setDropdownOpen(false)
       setNotificationsOpen(false)
     }, 0)
 
     return () => window.clearTimeout(resetUiState)
   }, [pathname])
-
-  // Focus input when search opens
-  useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus()
-  }, [searchOpen])
 
   function isActive(href: string) {
     if (href === '/') return pathname === href
@@ -237,27 +224,7 @@ export default function DashNavbar({
 
         {/* Right side */}
         <div className="dash-navbar__right">
-          {/* Expandable search */}
-          <div
-            ref={searchRef}
-            className={`dash-navbar__search${searchOpen ? ' dash-navbar__search--open' : ''}`}
-          >
-            <button
-              className="dash-navbar__search-btn"
-              onClick={() => setSearchOpen((v) => !v)}
-              aria-label="Toggle search"
-            >
-              {searchOpen ? <X size={16} /> : <Search size={16} />}
-            </button>
-            <input
-              ref={searchInputRef}
-              className="dash-navbar__search-input"
-              placeholder="Search jobs, candidates…"
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-            />
-          </div>
-
+          
           {/* Notifications */}
           <div ref={notificationsRef} className="dash-navbar__notifications">
             <button

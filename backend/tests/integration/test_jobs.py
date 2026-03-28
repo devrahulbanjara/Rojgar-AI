@@ -2,9 +2,12 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from app.modules.jobs.service import expire_due_jobs
+from app.shared.enums import JobStatus
 from tests.integration.helpers import (
     auth_headers,
     make_company,
+    make_job,
     make_membership,
     make_user,
 )
@@ -283,6 +286,32 @@ class TestJobUpdate:
         resp = await client.get("/jobs/?q=Soon+Open+Job")
         titles = [j["title"] for j in resp.json()["data"]]
         assert "Soon Open Job" in titles
+
+    @pytest.mark.asyncio
+    async def test_manual_expire_sets_expires_at_when_missing(self, client, db):
+        user = await make_user(
+            db, "recruiter_manual_expire@test.com", role="recruiter_admin"
+        )
+        company = await make_company(db, "Manual Expire Co", "manualexpireco.com")
+        await make_membership(db, user, company)
+        create_resp = await client.post(
+            "/jobs/",
+            json={
+                "title": "Expire Me",
+                "location_type": "remote",
+                "status": "active",
+            },
+            headers=auth_headers(user),
+        )
+        job_id = create_resp.json()["data"]["id"]
+
+        resp = await client.patch(
+            f"/jobs/{job_id}", json={"status": "expired"}, headers=auth_headers(user)
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["status"] == "expired"
+        assert resp.json()["data"]["expires_at"] is not None
 
 
 class TestJobDelete:
@@ -600,3 +629,36 @@ class TestResume:
         )
         resp = await client.get("/resumes/me", headers=auth_headers(recruiter))
         assert resp.status_code == 403
+
+
+class TestJobExpiryScheduler:
+    @pytest.mark.asyncio
+    async def test_expire_due_jobs_marks_active_jobs_expired_on_expiry_date(
+        self, db, monkeypatch
+    ):
+        recruiter = await make_user(
+            db, "expiry_scheduler@test.com", role="recruiter_admin"
+        )
+        company = await make_company(db, "Expiry Co", "expiryco.com")
+        await make_membership(db, recruiter, company)
+        job = await make_job(
+            db, company, recruiter, title="Expires Today", status="active"
+        )
+        job.expires_at = datetime.now(timezone.utc).replace(
+            hour=23, minute=59, second=59, microsecond=0
+        )
+        await db.commit()
+
+        async def _noop_process_sync_event(_event_id):
+            return None
+
+        monkeypatch.setattr(
+            "app.modules.jobs.service.process_sync_event",
+            _noop_process_sync_event,
+        )
+
+        expired_count = await expire_due_jobs(db)
+        await db.refresh(job)
+
+        assert expired_count == 1
+        assert job.status == JobStatus.expired

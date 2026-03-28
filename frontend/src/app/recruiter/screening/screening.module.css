@@ -7,9 +7,9 @@
   top: calc(var(--navbar-height, 68px) + 12px);
   z-index: 20;
   background: #ffffff;
-  border: 1px solid #d8dde8;
+  border: 1px solid #e5e7eb;
   border-radius: 22px;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
   overflow: hidden;
 }
 
@@ -44,15 +44,36 @@
 
 .selectorRow {
   display: flex;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.inlineControls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  margin-left: auto;
+  min-width: 0;
 }
 
 .selectWrap {
   display: grid;
   gap: 0.35rem;
-  min-width: min(100%, 16rem);
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.selectWrapView {
+  width: 10.5rem;
+}
+
+.selectWrapJob {
+  width: 24rem;
 }
 
 .selectLabel {
@@ -64,7 +85,8 @@
 }
 
 .select {
-  min-width: 18rem;
+  min-width: 0;
+  width: 100%;
   height: 3rem;
   padding: 0 1rem;
   border: 1px solid #c8d0dc;
@@ -86,8 +108,9 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  padding: 1rem 1.75rem 1.2rem;
+  padding: 0.95rem 1.75rem 1.2rem;
   background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border-top: 1px solid #e6ebf2;
 }
 
 .badgeGroup,
@@ -104,6 +127,56 @@
   align-items: center;
   gap: 0.65rem;
   flex-wrap: wrap;
+}
+
+.statusList {
+  display: flex;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  flex-wrap: wrap;
+}
+
+.statusItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+}
+
+.statusLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c7887;
+}
+
+.statusValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.statusValueBlue {
+  color: #144da7;
+}
+
+.statusValueGreen {
+  color: #285f1c;
+}
+
+.statusValueAmber {
+  color: #7d4a12;
+}
+
+.statusValueTeal {
+  color: #0f5f67;
+}
+
+.statusValueRed {
+  color: #9b2c2c;
+}
+
+.statusValueSlate {
+  color: #536171;
 }
 
 .statusBadge,
@@ -183,15 +256,21 @@
   border-color: #f0aaaa;
 }
 
-.actionStrip {
+.thresholdCluster {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.actionCluster {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.tableHeaderActions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding: 1rem 1.75rem 1.2rem;
-  border-top: 1px solid #e6ebf2;
-  background: #ffffff;
+  margin-left: auto;
 }
 
 .thresholdLabel,
@@ -350,7 +429,12 @@
 }
 
 .tableSection {
-  margin-top: 1.25rem;
+  margin-top: -0.1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
 }
 
 .filterBar {
@@ -359,12 +443,11 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  padding: 1.1rem 1.25rem;
-  border: 1px solid #d8dde8;
-  border-bottom: 0;
-  border-radius: 22px 22px 0 0;
-  background: #ffffff;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+  padding: 1.15rem 1.35rem 1rem;
+  border: 0;
+  border-bottom: 1px solid #e6ebf2;
+  border-radius: 0;
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
 }
 
 .searchBox {
@@ -414,19 +497,16 @@
 }
 
 .tableSummary {
-  padding: 0.8rem 1.25rem;
-  border-left: 1px solid #d8dde8;
-  border-right: 1px solid #d8dde8;
-  background: #ffffff;
+  padding: 0.9rem 1.35rem;
+  border-bottom: 1px solid #e6ebf2;
+  background: #fcfdff;
 }
 
 .tableShell {
-  border: 1px solid #d8dde8;
-  border-top: 0;
-  border-radius: 0 0 22px 22px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
   background: #ffffff;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
 }
 
 .tableScroller {
@@ -445,13 +525,13 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 1rem 1.25rem;
+  padding: 1rem 1.35rem;
   text-align: left;
-  background: #ffffff;
+  background: #fbfcfe;
   border-bottom: 1px solid #e6ebf2;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: #7b8794;
 }
@@ -474,20 +554,22 @@
 
 .dataRow {
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
 }
 
 .dataRow:hover td {
-  background: #fbfdff;
+  background: #fbfcff;
 }
 
 .dataRowExpanded td {
-  background: #fbfdff;
+  background: #fbfcff;
 }
 
 .dataRow td,
 .expandedRow td {
-  padding: 1.1rem 1.25rem;
+  padding: 1.2rem 1.35rem;
   border-bottom: 1px solid #e6ebf2;
   vertical-align: top;
   background: #ffffff;
@@ -496,12 +578,12 @@
 .candidateCell {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.95rem;
 }
 
 .avatar {
-  width: 3rem;
-  height: 3rem;
+  width: 3.15rem;
+  height: 3.15rem;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -510,6 +592,7 @@
   background-position: center;
   font-size: 1.05rem;
   font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 
 .avatarBlue {
@@ -542,15 +625,20 @@
 }
 
 .candidateName {
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
   color: #111827;
+}
+
+.candidateEmail {
+  margin-top: 0.2rem;
 }
 
 .reviewCell,
 .statusActionCell {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.6rem;
   justify-items: start;
 }
 
@@ -558,8 +646,8 @@
 .referenceText {
   margin: 0;
   font-size: 13.5px;
-  line-height: 1.55;
-  color: #374151;
+  line-height: 1.6;
+  color: #334155;
 }
 
 .reviewText {
@@ -591,12 +679,12 @@
 .scoreCell {
   display: grid;
   justify-items: start;
-  gap: 0.45rem;
-  padding-top: 0.15rem;
+  gap: 0.5rem;
+  padding-top: 0.1rem;
 }
 
 .scoreBadge {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 600;
   line-height: 1;
 }
@@ -625,7 +713,7 @@
 
 .scoreBarTrack {
   width: 7rem;
-  height: 0.3rem;
+  height: 0.32rem;
   border-radius: 999px;
   background: #edf1f5;
   overflow: hidden;
@@ -679,11 +767,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 12px;
-  border-color: #c8d0dc;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  border-color: #d5dce6;
   color: #5f6b7a;
+  background: #ffffff;
 }
 
 .iconActionApprove:hover:not(:disabled) {
@@ -702,6 +791,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  color: #7b8794;
+  font-size: 12px;
 }
 
 .expandedPanel {
@@ -746,9 +837,9 @@
 }
 
 .referencePanel {
-  border: 1px solid #e4e8f0;
-  border-radius: 18px;
-  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fbfcfe;
   padding: 1rem;
 }
 
@@ -762,9 +853,9 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  padding: 1rem 1.25rem;
+  padding: 1rem 1.35rem;
   border-top: 1px solid #e6ebf2;
-  background: #ffffff;
+  background: #fcfdff;
 }
 
 .paginationButton {
@@ -790,9 +881,10 @@
 .emptyState {
   margin-bottom: 1rem;
   padding: 2rem;
-  border: 1px solid #d8dde8;
+  border: 1px solid #e5e7eb;
   border-radius: 22px;
   background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
   color: #5f6b7a;
   text-align: center;
 }
@@ -832,8 +924,29 @@
     width: 100%;
   }
 
+  .selectorRow,
+  .inlineControls {
+    flex-wrap: wrap;
+  }
+
+  .actionCluster {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .inlineControls,
+  .tableHeaderActions {
+    width: 100%;
+    margin-left: 0;
+  }
+
   .select {
     min-width: 100%;
+  }
+
+  .selectWrapView,
+  .selectWrapJob {
+    width: 100%;
   }
 
   .tableScroller {

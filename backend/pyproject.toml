@@ -34,6 +34,7 @@ dependencies = [
     "psycopg[binary]>=3.3.3",
     "llama-cloud-services",
     "llama-cloud>=0.1.46",
+    "apscheduler>=3.11.2",
 ]
 
 [tool.pytest.ini_options]
