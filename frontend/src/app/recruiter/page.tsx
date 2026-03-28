@@ -160,10 +160,10 @@ export default function CompanyDashboardPage() {
           <div className="dash-grid dash-grid--2col recruiter-dashboard__hero-grid">
             <Link href="/recruiter/screening" className="dash-card">
               <div className="dash-card__body">
-                <div className="dash-card__title">Pending AI Reviews</div>
+                <div className="dash-card__title">Pending Screening Decisions</div>
                 <div className="stat-card__value">{recruiterStats?.pending_ai_reviews ?? 0}</div>
                 <div className="dash-card__subtitle">
-                  Applications waiting for recruiter review after screening
+                  Candidates waiting for shortlisting decisions after screening
                 </div>
               </div>
             </Link>
@@ -256,14 +256,14 @@ export default function CompanyDashboardPage() {
                 <div>
                   <div className="dash-card__title">Hiring Workflow</div>
                   <div className="dash-card__subtitle">
-                    Move from AI review to candidate communication.
+                    Move from screening to shortlisting and candidate communication.
                   </div>
                 </div>
               </div>
               <div className="dash-card__body recruiter-summary__body">
                 <div className="cell-actions">
                   <Link href="/recruiter/screening" className="btn btn--primary btn--sm">
-                    Review screening queue
+                    Open screening queue
                   </Link>
                   <Link href="/recruiter/outreach" className="btn btn--outline btn--sm">
                     Open outreach drafts
@@ -273,8 +273,8 @@ export default function CompanyDashboardPage() {
                   </Link>
                 </div>
                 <div className="cell-muted">
-                  Use Screening to rank applicants, Outreach for follow-ups, and Chat to search past
-                  candidates or edit jobs conversationally.
+                  Use Screening to score applicants, make shortlisting decisions, then use Outreach
+                  for follow-ups and Chat to search past candidates or edit jobs conversationally.
                 </div>
               </div>
             </div>
@@ -286,7 +286,7 @@ export default function CompanyDashboardPage() {
                 <div>
                   <div className="dash-card__title">Your Recruiters</div>
                   <div className="dash-card__subtitle">
-                    Team members posting jobs and screening candidates
+                    Team members posting jobs and reviewing candidates
                   </div>
                 </div>
                 <Link

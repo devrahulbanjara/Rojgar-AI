@@ -12,6 +12,8 @@ import {
   useUpdateDraftMutation,
 } from '@/store/services/outreachApi'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 import {
   OutreachDraftDetailSkeleton,
   OutreachDraftListSkeleton,
@@ -153,14 +155,14 @@ export default function RecruiterOutreachPage() {
             disabled={isPreparing}
             onClick={() => void handlePrepare()}
           >
-            {isPreparing ? 'Preparing...' : 'Prepare drafts'}
+            {isPreparing ? <ButtonSpinner label="Preparing..." /> : 'Prepare drafts'}
           </button>
           <button
             className="btn btn--primary btn--sm"
             disabled={isSendingAll}
             onClick={() => void handleSendAll()}
           >
-            {isSendingAll ? 'Queueing...' : 'Send approved'}
+            {isSendingAll ? <ButtonSpinner label="Queueing..." /> : 'Send approved'}
           </button>
         </div>
       </div>
@@ -244,14 +246,14 @@ export default function RecruiterOutreachPage() {
                       disabled={isSaving}
                       onClick={() => void handleSave()}
                     >
-                      {isSaving ? 'Saving...' : 'Save'}
+                      {isSaving ? <ButtonSpinner label="Saving..." /> : 'Save'}
                     </button>
                     <button
                       className="btn btn--primary btn--sm"
                       disabled={isApproving}
                       onClick={() => void handleApprove(true)}
                     >
-                      {isApproving ? 'Processing...' : 'Approve'}
+                      {isApproving ? <ButtonSpinner label="Processing..." /> : 'Approve'}
                     </button>
                     <button
                       className="btn btn--ghost btn--danger btn--sm"

@@ -24,6 +24,7 @@ import {
 import { updateUser } from '@/store/slices/authSlice'
 import { Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import DashboardTabs from '@/components/common/DashboardTabs'
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -1524,7 +1525,7 @@ export default function ProfilePage() {
                 onClick={() => void handleAvatarCropConfirm()}
                 type="button"
               >
-                {isSubmittingCroppedAvatar ? 'Saving...' : 'Done'}
+                {isSubmittingCroppedAvatar ? <ButtonSpinner label="Saving..." /> : 'Done'}
               </button>
             </div>
           </div>

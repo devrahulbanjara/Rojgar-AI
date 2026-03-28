@@ -485,15 +485,6 @@ async def update_job(
             update_data["expires_at"]
         )
 
-    if (
-        "shortlist_threshold" in update_data
-        and _effective_job_status(job) == JobStatus.expired
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Shortlist threshold can only be changed before the job expires.",
-        )
-
     for field, value in update_data.items():
         setattr(job, field, value)
 

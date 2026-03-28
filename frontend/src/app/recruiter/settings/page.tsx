@@ -16,6 +16,7 @@ import {
 } from '@/store/services/companyApi'
 import { Building2, Camera, MapPin, Trash2, X } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
 
 type CompanyForm = {
@@ -644,7 +645,7 @@ export default function CompanySettingsPage() {
                 onClick={() => void handleLogoCropConfirm()}
                 type="button"
               >
-                {isSubmittingCroppedLogo ? 'Saving...' : 'Done'}
+                {isSubmittingCroppedLogo ? <ButtonSpinner label="Saving..." /> : 'Done'}
               </button>
             </div>
           </div>

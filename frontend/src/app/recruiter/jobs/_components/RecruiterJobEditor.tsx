@@ -5,6 +5,8 @@ import { type FormEvent, useState } from 'react'
 import type { CreateJobPayload, JobDetail, JobStatus, LocationType } from '@/store/services/jobsApi'
 import { Plus, X } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 type RecruiterJobEditorProps = {
   initial?: RecruiterJobFormState
   onSubmit: (payload: CreateJobPayload) => Promise<void>
@@ -336,9 +338,9 @@ export default function RecruiterJobEditor({
           <div className="job-ai-field job-ai-field--manual job-editor-form__toggle-field">
             <label className="job-editor-toggle" htmlFor="job-auto-shortlist">
               <div className="job-editor-toggle__copy">
-                <span className="job-editor-toggle__title">Automatic AI Shortlisting</span>
+                <span className="job-editor-toggle__title">Automatic AI Screening</span>
                 <span className="job-editor-toggle__description">
-                  Score new applications automatically after submission.
+                  Generate screening scores and feedback for new applications automatically.
                 </span>
               </div>
 
@@ -377,9 +379,7 @@ export default function RecruiterJobEditor({
               onChange={(event) => set('shortlist_threshold', event.target.value)}
               disabled={isLoading}
             />
-            <p className="job-ai-help">
-              Used by “Approve AI recommendations” after the job expires.
-            </p>
+            <p className="job-ai-help">Used when applying AI shortlisting after the job expires.</p>
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__salary-field">
@@ -456,7 +456,7 @@ export default function RecruiterJobEditor({
           disabled={isLoading}
           aria-busy={isLoading}
         >
-          {isLoading ? 'Saving...' : submitLabel}
+          {isLoading ? <ButtonSpinner label="Saving..." /> : submitLabel}
         </button>
       </div>
     </form>

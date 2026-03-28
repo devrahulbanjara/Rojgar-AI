@@ -33,7 +33,7 @@ function JobRow({ job }: { job: CompanyJobData }) {
               {job.status.replace(/_/g, ' ')}
             </span>
             <span className="recruiter-chat-badge recruiter-chat-badge--muted">
-              {job.auto_shortlist ? 'Auto-shortlist on' : 'Manual screening'}
+              {job.auto_shortlist ? 'AI screening on' : 'Manual screening'}
             </span>
           </div>
           <div className="recruiter-chat-job-row__meta-copy recruiter-chat-job-row__meta-copy--details">

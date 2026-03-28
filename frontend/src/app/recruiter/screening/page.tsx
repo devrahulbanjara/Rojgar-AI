@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useDeferredValue, useMemo, useState } from 'react'
+import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { SetStateAction } from 'react'
 import { toast } from 'react-toastify'
 
@@ -22,9 +22,13 @@ import {
   useGetShortlistSummaryQuery,
   useTriggerShortlistingMutation,
 } from '@/store/services/shortlistingApi'
-import { X as ClearSearchIcon, Search as SearchFieldIcon } from 'lucide-react'
+import { Briefcase, X as ClearSearchIcon, Search as SearchFieldIcon, Users } from 'lucide-react'
+
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+import MediaBadge from '@/components/common/MediaBadge'
 
 import {
+  ScreeningControlsSkeleton,
   ScreeningStatusCardSkeleton,
   ScreeningTableSkeleton,
 } from './_components/ScreeningSkeletons'
@@ -93,21 +97,34 @@ function getReviewState(
   options: { autoShortlist: boolean; isAiProcessing: boolean },
 ) {
   if (application.status === 'screening' || application.status === 'interview') {
-    return { label: 'Shortlisted', tone: styles.stateReviewed }
+    return { label: 'Shortlisted', tone: 'success' }
   }
   if (application.status === 'rejected') {
-    return { label: 'Rejected', tone: styles.stateMissing }
+    return { label: 'Rejected', tone: 'danger' }
   }
   if (hasCompleteReview(application)) {
-    return { label: 'Reviewed', tone: styles.stateReviewed }
+    return { label: 'Screened', tone: 'success' }
   }
   if (!options.autoShortlist) {
-    return { label: 'Pending', tone: styles.statePending }
+    return { label: 'Pending', tone: 'warning' }
   }
   if (options.isAiProcessing) {
-    return { label: 'Pending', tone: styles.statePending }
+    return { label: 'Pending', tone: 'warning' }
   }
-  return { label: 'Missing review', tone: styles.stateMissing }
+  return { label: 'Missing screening', tone: 'danger' }
+}
+
+function getSummaryTone(status: 'completed' | 'failed' | 'in_progress' | 'idle') {
+  switch (status) {
+    case 'completed':
+      return 'success'
+    case 'failed':
+      return 'danger'
+    case 'in_progress':
+      return 'warning'
+    default:
+      return 'gray'
+  }
 }
 
 function getReviewPreview(
@@ -116,12 +133,12 @@ function getReviewPreview(
 ) {
   if (application.feedback?.trim()) return application.feedback.trim()
   if (!options.autoShortlist) {
-    return 'No manual review yet. Recruiters can optionally add a score and feedback.'
+    return 'No manual screening result yet. Recruiters can add a score and feedback.'
   }
   if (options.isAiProcessing) {
-    return 'AI review in progress. This row will update when the background screening finishes.'
+    return 'AI screening is in progress. This row will update when screening finishes.'
   }
-  return 'No AI review yet. Click Rerun AI review to generate a score and feedback.'
+  return 'No AI screening result yet. Click Rerun AI screening to generate a score and feedback.'
 }
 
 function buildPagination(currentPage: number, totalPages: number) {
@@ -177,21 +194,6 @@ function LockIcon() {
   )
 }
 
-function InfoIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <path
-        d="M8 7.25V10.25M8 5.5h.01"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.2"
-      />
-    </svg>
-  )
-}
-
 function RefreshIcon() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -202,6 +204,29 @@ function RefreshIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.35"
+      />
+    </svg>
+  )
+}
+
+function SpinnerIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className={styles.spinnerIcon}>
+      <circle
+        cx="8"
+        cy="8"
+        r="5.25"
+        fill="none"
+        opacity="0.25"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M8 2.75a5.25 5.25 0 014.52 2.58"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
       />
     </svg>
   )
@@ -238,6 +263,8 @@ function XIcon() {
 }
 
 export default function RecruiterScreeningPage() {
+  const tableScrollerRef = useRef<HTMLDivElement | null>(null)
+  const feedbackTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
   const [jobListMode, setJobListMode] = useState<'pending' | 'all'>('pending')
   const [selectedJobId, setSelectedJobId] = useState('')
@@ -257,6 +284,9 @@ export default function RecruiterScreeningPage() {
         .sort((a, b) => {
           if (a.final_shortlist_completed !== b.final_shortlist_completed) {
             return a.final_shortlist_completed ? 1 : -1
+          }
+          if ((b.applications_count ?? 0) !== (a.applications_count ?? 0)) {
+            return (b.applications_count ?? 0) - (a.applications_count ?? 0)
           }
           if (a.status === b.status) return 0
           return a.status === 'active' ? -1 : 1
@@ -293,7 +323,6 @@ export default function RecruiterScreeningPage() {
     isLoading: isLoadingSummary,
   } = useGetShortlistSummaryQuery(activeJobId, {
     skip: !activeJobId,
-    pollingInterval: isPollingSummary ? 10000 : 0,
   })
 
   const {
@@ -314,6 +343,7 @@ export default function RecruiterScreeningPage() {
 
   const summary = summaryResp?.data
   const shouldPollSummary = isPollingSummary || summary?.shortlist_status === 'in_progress'
+  const isScreeningRunning = isTriggering || shouldPollSummary
   const applications = useMemo(
     () =>
       [...(appsResp?.data ?? [])].sort((left, right) => {
@@ -339,14 +369,6 @@ export default function RecruiterScreeningPage() {
   const missingCount = activeJob?.auto_shortlist ? (shouldPollSummary ? 0 : incompleteCount) : 0
   const totalCandidates = Math.max(activeJob?.applications_count ?? 0, applications.length)
   const numericThreshold = Number(threshold)
-  const aboveThresholdCount = applications.filter(
-    (application) =>
-      application.status === 'submitted' &&
-      hasCompleteReview(application) &&
-      application.score != null &&
-      application.score >= numericThreshold,
-  ).length
-
   function setThreshold(next: string) {
     if (!activeJobId) return
     setThresholdByJobId((prev) => ({ ...prev, [activeJobId]: next }))
@@ -420,6 +442,22 @@ export default function RecruiterScreeningPage() {
     setSearchTerm('')
   }
 
+  useEffect(() => {
+    if (!isPollingSummary || !activeJobId) return
+
+    const intervalId = window.setInterval(() => {
+      void refetchSummary().then((result) => {
+        const nextSummary = 'data' in result ? result.data?.data : undefined
+        if (nextSummary?.shortlist_status !== 'in_progress') {
+          setIsPollingSummary(false)
+        }
+      })
+      void refetchApps()
+    }, 5000)
+
+    return () => window.clearInterval(intervalId)
+  }, [activeJobId, isPollingSummary, refetchApps, refetchSummary])
+
   async function refreshAll() {
     await Promise.allSettled([refetchSummary(), refetchApps()])
   }
@@ -430,7 +468,7 @@ export default function RecruiterScreeningPage() {
       setIsPollingSummary(true)
       const response = await triggerShortlisting(activeJobId).unwrap()
       if (response.data.shortlist_status === 'in_progress') {
-        toast.success(response.message)
+        toast.success('AI screening started.')
       } else {
         setIsPollingSummary(false)
         toast.info(response.message)
@@ -491,17 +529,19 @@ export default function RecruiterScreeningPage() {
         delete nextDrafts[application.id]
         return nextDrafts
       })
-      toast.success('Review saved.')
+      toast.success('Screening result saved.')
       void refreshAll()
     } catch {
-      toast.error('Could not save the application review.')
+      toast.error('Could not save the screening result.')
     }
   }
 
   async function handleStatus(applicationId: string, status: 'screening' | 'rejected') {
     try {
       await updateStatus({ application_id: applicationId, body: { status } }).unwrap()
-      toast.success(status === 'screening' ? 'Candidate shortlisted.' : 'Candidate rejected.')
+      toast.success(
+        status === 'screening' ? 'Candidate approved for shortlist.' : 'Candidate rejected.',
+      )
       void refreshAll()
     } catch {
       toast.error('Could not update application status.')
@@ -515,11 +555,11 @@ export default function RecruiterScreeningPage() {
         jobId: activeJobId,
         use_ai_recommendations: false,
       }).unwrap()
-      toast.success('Shortlist marked complete.')
+      toast.success('Shortlisting marked complete.')
       setIsPollingSummary(false)
       void refreshAll()
     } catch {
-      toast.error('Could not complete the shortlist.')
+      toast.error('Could not complete shortlisting.')
     }
   }
 
@@ -536,11 +576,11 @@ export default function RecruiterScreeningPage() {
         use_ai_recommendations: true,
         threshold: numericThreshold,
       }).unwrap()
-      toast.success('AI recommendations approved.')
+      toast.success('AI shortlisting applied.')
       setIsPollingSummary(false)
       void refreshAll()
     } catch {
-      toast.error('Could not approve AI recommendations.')
+      toast.error('Could not apply AI shortlisting.')
     }
   }
 
@@ -586,9 +626,9 @@ export default function RecruiterScreeningPage() {
 
       const matchesReview =
         reviewFilter === 'all' ||
-        (reviewFilter === 'reviewed' && reviewState.label === 'Reviewed') ||
+        (reviewFilter === 'reviewed' && reviewState.label === 'Screened') ||
         (reviewFilter === 'pending' && reviewState.label === 'Pending') ||
-        (reviewFilter === 'missing' && reviewState.label === 'Missing review')
+        (reviewFilter === 'missing' && reviewState.label === 'Missing screening')
 
       return matchesSearch && matchesScore && matchesReview
     })
@@ -618,21 +658,58 @@ export default function RecruiterScreeningPage() {
   const isBusy =
     isTriggering || isFinalizing || isUpdatingStatus || isUpdatingReview || isUpdatingJob
 
+  function handleTableWheel(event: React.WheelEvent<HTMLDivElement>) {
+    const scroller = tableScrollerRef.current
+    if (!scroller) return
+
+    const hasHorizontalOverflow = scroller.scrollWidth > scroller.clientWidth
+    if (!hasHorizontalOverflow) return
+
+    const mostlyVerticalGesture = Math.abs(event.deltaY) > Math.abs(event.deltaX)
+    if (!mostlyVerticalGesture || event.deltaY === 0) return
+
+    scroller.scrollLeft += event.deltaY
+    event.preventDefault()
+  }
+
+  function resizeFeedbackTextarea(element: HTMLTextAreaElement | null) {
+    if (!element) return
+    element.style.height = '0px'
+    element.style.height = `${element.scrollHeight}px`
+  }
+
+  function setFeedbackTextareaRef(applicationId: string, element: HTMLTextAreaElement | null) {
+    feedbackTextareaRefs.current[applicationId] = element
+    resizeFeedbackTextarea(element)
+  }
+
   return (
     <div className={`dash-content container container--app-shell ${styles.screeningPage}`}>
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Screening</h2>
           <p className="dash-page-header__subtitle">
-            Review applicants, edit AI scores, and complete shortlist decisions.
+            Review applicants, edit screening scores, and make shortlisting decisions.
           </p>
+        </div>
+        <div className="dash-page-header__actions">
+          <span className="badge badge--gray">
+            <Briefcase size={13} aria-hidden="true" />
+            {jobs.length} eligible job{jobs.length === 1 ? '' : 's'}
+          </span>
+          {activeJob ? (
+            <span className="badge badge--secondary">
+              <Users size={13} aria-hidden="true" />
+              {totalCandidates} candidate{totalCandidates === 1 ? '' : 's'}
+            </span>
+          ) : null}
         </div>
       </div>
 
       {!isLoadingJobs && !activeJobId ? (
         <div className={styles.emptyState}>
           {jobListMode === 'pending' && eligibleJobs.length > 0
-            ? 'No jobs are awaiting shortlist completion right now. Switch to All eligible jobs to review completed ones.'
+            ? 'No jobs are awaiting shortlisting decisions right now. Switch to All eligible jobs to review completed ones.'
             : 'No active or expired jobs are available for screening yet.'}
         </div>
       ) : null}
@@ -640,10 +717,7 @@ export default function RecruiterScreeningPage() {
       <div className={styles.contextBar}>
         <div className={styles.contextTop}>
           {isLoadingJobs ? (
-            <div className={styles.selectorRow}>
-              <div className="skeleton-block screening-skeleton__select" aria-hidden="true" />
-              <div className="skeleton-block screening-skeleton__select" aria-hidden="true" />
-            </div>
+            <ScreeningControlsSkeleton />
           ) : (
             <div className={styles.selectorRow}>
               <label className={`${styles.selectWrap} ${styles.selectWrapView}`}>
@@ -656,7 +730,7 @@ export default function RecruiterScreeningPage() {
                     setIsPollingSummary(false)
                   }}
                 >
-                  <option value="pending">Pending shortlists</option>
+                  <option value="pending">Pending shortlisting</option>
                   <option value="all">All eligible jobs</option>
                 </select>
               </label>
@@ -684,58 +758,43 @@ export default function RecruiterScreeningPage() {
                 <div className={styles.inlineControls}>
                   <div className={styles.thresholdCluster}>
                     <span className={styles.thresholdLabel}>Shortlist threshold</span>
-                    <input
-                      id="screening-threshold"
-                      type="number"
-                      min={0}
-                      max={100}
-                      className={styles.thresholdInput}
-                      value={threshold}
-                      onChange={(event) => setThreshold(event.target.value)}
-                      disabled={activeJobExpired || isUpdatingJob}
-                    />
-                    <span className={styles.thresholdSuffix}>/100</span>
-                    <button
-                      className="btn btn--outline btn--sm"
-                      disabled={activeJobExpired || isUpdatingJob}
-                      onClick={() => void handleSaveThreshold()}
-                    >
-                      {isUpdatingJob ? 'Saving...' : 'Save'}
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.infoButton}
-                      title="Threshold stays editable while the job is active. Once the job expires, shortlist and reject actions unlock instead."
-                    >
-                      <InfoIcon />
-                    </button>
+                    <div className={styles.thresholdControls}>
+                      <input
+                        id="screening-threshold"
+                        type="number"
+                        min={0}
+                        max={100}
+                        className={styles.thresholdInput}
+                        value={threshold}
+                        onChange={(event) => setThreshold(event.target.value)}
+                        disabled={isUpdatingJob}
+                      />
+                      <span className={styles.thresholdSuffix}>/100</span>
+                      <button
+                        className="btn btn--outline btn--sm"
+                        disabled={isUpdatingJob}
+                        onClick={() => void handleSaveThreshold()}
+                      >
+                        {isUpdatingJob ? <ButtonSpinner label="Saving..." /> : 'Save'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className={styles.actionCluster}>
-                    {canRunScreening ? (
-                      <button
-                        className="btn btn--primary btn--sm"
-                        disabled={isBusy}
-                        onClick={() => void handleTrigger()}
-                      >
-                        <RefreshIcon />
-                        {isTriggering
-                          ? 'Running...'
-                          : activeJob.auto_shortlist
-                            ? `Rerun AI review (${missingCount} missing)`
-                            : 'Run AI screening'}
-                      </button>
-                    ) : null}
-
                     {canApproveAiRecommendations ? (
                       <button
                         className="btn btn--primary btn--sm"
                         disabled={isBusy}
                         onClick={() => void handleApproveAiRecommendations()}
                       >
-                        {isFinalizing
-                          ? 'Approving...'
-                          : `Approve AI recommendations (${aboveThresholdCount} above threshold)`}
+                        {isFinalizing ? (
+                          <>
+                            <SpinnerIcon />
+                            Approving...
+                          </>
+                        ) : (
+                          'Approve AI recommendations'
+                        )}
                       </button>
                     ) : null}
                   </div>
@@ -751,27 +810,27 @@ export default function RecruiterScreeningPage() {
           <>
             <div className={styles.contextMeta}>
               <div className={styles.statusList}>
-                <div className={styles.statusItem}>
-                  <span className={styles.statusLabel}>Review Mode:</span>
-                  <span
-                    className={`${styles.statusValue} ${activeJob.auto_shortlist ? styles.statusValueBlue : styles.statusValueSlate}`}
-                  >
-                    {activeJob.auto_shortlist ? 'Auto-shortlist' : 'Manual review'}
+                <span
+                  className={`badge ${activeJob.auto_shortlist ? 'badge--primary' : 'badge--gray'} ${styles.statusItem}`}
+                >
+                  <span className={styles.statusLabel}>Screening Mode:</span>
+                  <span className={styles.statusValue}>
+                    {activeJob.auto_shortlist ? 'AI screening' : 'Manual screening'}
                   </span>
-                </div>
-                <div className={styles.statusItem}>
+                </span>
+                <span
+                  className={`badge badge--${getSummaryTone(
+                    summary.shortlist_status === 'completed'
+                      ? 'completed'
+                      : summary.shortlist_status === 'failed'
+                        ? 'failed'
+                        : summary.shortlist_status === 'in_progress'
+                          ? 'in_progress'
+                          : 'idle',
+                  )} ${styles.statusItem}`}
+                >
                   <span className={styles.statusLabel}>Screening Status:</span>
-                  <span
-                    className={`${styles.statusValue} ${
-                      summary.shortlist_status === 'completed'
-                        ? styles.statusValueGreen
-                        : summary.shortlist_status === 'failed'
-                          ? styles.statusValueRed
-                          : summary.shortlist_status === 'in_progress'
-                            ? styles.statusValueAmber
-                            : styles.statusValueSlate
-                    }`}
-                  >
+                  <span className={styles.statusValue}>
                     {summary.shortlist_status === 'completed'
                       ? 'Complete'
                       : summary.shortlist_status === 'in_progress'
@@ -780,41 +839,44 @@ export default function RecruiterScreeningPage() {
                           ? 'Failed'
                           : 'Not started'}
                   </span>
-                </div>
-                <div className={styles.statusItem}>
+                </span>
+                {isScreeningRunning ? (
+                  <span className={`badge badge--primary ${styles.statusItem}`}>
+                    <SpinnerIcon />
+                    <span className={styles.statusLabel}>Live:</span>
+                    <span className={styles.statusValue}>Checking every 5s</span>
+                  </span>
+                ) : null}
+                <span
+                  className={`badge ${activeJobExpired ? 'badge--secondary' : 'badge--warning'} ${styles.statusItem}`}
+                >
                   <span className={styles.statusLabel}>Job Status:</span>
-                  <span
-                    className={`${styles.statusValue} ${activeJobExpired ? styles.statusValueTeal : styles.statusValueAmber}`}
-                  >
+                  <span className={styles.statusValue}>
                     {activeJobExpired ? 'Expired' : 'Active'}
                   </span>
-                </div>
-                <div className={styles.statusItem}>
-                  <span className={styles.statusLabel}>Shortlist:</span>
-                  <span
-                    className={`${styles.statusValue} ${
-                      summary.final_shortlist_completed
-                        ? styles.statusValueGreen
-                        : styles.statusValueSlate
-                    }`}
-                  >
+                </span>
+                <span
+                  className={`badge ${summary.final_shortlist_completed ? 'badge--success' : 'badge--gray'} ${styles.statusItem}`}
+                >
+                  <span className={styles.statusLabel}>Shortlisting:</span>
+                  <span className={styles.statusValue}>
                     {summary.final_shortlist_completed ? 'Finalized' : 'In progress'}
                   </span>
-                </div>
+                </span>
               </div>
 
               <div className={styles.statsGroup}>
-                <span className={styles.statPill}>
+                <span className={`badge badge--gray ${styles.statPill}`}>
                   <strong>{totalCandidates}</strong> candidates
                 </span>
-                <span className={styles.statPill}>
-                  <strong>{reviewedCount}</strong> reviewed
+                <span className={`badge badge--success ${styles.statPill}`}>
+                  <strong>{reviewedCount}</strong> screened
                 </span>
-                <span className={styles.statPill}>
+                <span className={`badge badge--warning ${styles.statPill}`}>
                   <strong>{pendingCount}</strong> pending
                 </span>
-                <span className={`${styles.statPill} ${styles.statPillAlert}`}>
-                  <strong>{missingCount}</strong> missing AI review
+                <span className={`badge badge--danger ${styles.statPill} ${styles.statPillAlert}`}>
+                  <strong>{missingCount}</strong> missing AI screening
                 </span>
               </div>
             </div>
@@ -888,7 +950,7 @@ export default function RecruiterScreeningPage() {
                     setReviewFilter((current) => (current === 'reviewed' ? 'all' : 'reviewed'))
                   }
                 >
-                  Reviewed
+                  Screened
                 </button>
                 <button
                   className={`${styles.filterChip} ${reviewFilter === 'pending' ? styles.filterChipActive : ''}`}
@@ -904,7 +966,7 @@ export default function RecruiterScreeningPage() {
                     setReviewFilter((current) => (current === 'missing' ? 'all' : 'missing'))
                   }
                 >
-                  Missing review
+                  Missing screening
                 </button>
               </div>
 
@@ -912,22 +974,48 @@ export default function RecruiterScreeningPage() {
                 {summary?.final_shortlist_completed ? (
                   <div className={styles.finalizedBanner}>
                     <LockIcon />
-                    Shortlist finalized
+                    Shortlisting finalized
                   </div>
                 ) : (
-                  <button
-                    className={`btn btn--sm ${canApproveAiRecommendations ? 'btn--outline' : 'btn--primary'}`}
-                    disabled={isBusy}
-                    onClick={() => void handleCompleteShortlist()}
-                  >
-                    {isFinalizing ? 'Completing...' : 'Complete shortlist'}
-                  </button>
+                  <>
+                    {isScreeningRunning ? (
+                      <button className="btn btn--primary btn--sm" disabled>
+                        <SpinnerIcon />
+                        AI screening running
+                      </button>
+                    ) : canRunScreening ? (
+                      <button
+                        className="btn btn--primary btn--sm"
+                        disabled={isBusy}
+                        onClick={() => void handleTrigger()}
+                      >
+                        <RefreshIcon />
+                        {isTriggering
+                          ? 'Running...'
+                          : activeJob?.auto_shortlist
+                            ? `Rerun AI screening (${missingCount} missing)`
+                            : 'Run AI screening'}
+                      </button>
+                    ) : null}
+
+                    <button
+                      className={`btn btn--sm ${canApproveAiRecommendations ? 'btn--outline' : 'btn--primary'}`}
+                      disabled={isBusy}
+                      onClick={() => void handleCompleteShortlist()}
+                    >
+                      {isFinalizing ? <ButtonSpinner label="Finishing..." /> : 'Finish'}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
 
             <div className={styles.tableShell}>
-              <div className={styles.tableScroller}>
+              <div
+                ref={tableScrollerRef}
+                className={styles.tableScroller}
+                onWheel={handleTableWheel}
+              >
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -960,19 +1048,13 @@ export default function RecruiterScreeningPage() {
                           >
                             <td>
                               <div className={styles.candidateCell}>
-                                <div
+                                <MediaBadge
+                                  src={application.applicant_avatar_url}
+                                  alt={application.applicant_name}
+                                  fallback={getInitials(application.applicant_name)}
                                   className={`${styles.avatar} ${getAvatarTone(application.applicant_name)}`}
-                                  style={
-                                    application.applicant_avatar_url
-                                      ? {
-                                          backgroundImage: `url(${application.applicant_avatar_url})`,
-                                        }
-                                      : undefined
-                                  }
-                                >
-                                  {!application.applicant_avatar_url &&
-                                    getInitials(application.applicant_name)}
-                                </div>
+                                  sizes="50px"
+                                />
                                 <div className={styles.candidateMeta}>
                                   <div className={styles.candidateName}>
                                     {application.applicant_name}
@@ -1044,7 +1126,9 @@ export default function RecruiterScreeningPage() {
 
                             <td>
                               <div className={styles.statusActionCell}>
-                                <span className={`${styles.statePill} ${reviewState.tone}`}>
+                                <span
+                                  className={`badge badge--${reviewState.tone} ${styles.statePill}`}
+                                >
                                   {reviewState.label}
                                 </span>
 
@@ -1055,7 +1139,7 @@ export default function RecruiterScreeningPage() {
                                   >
                                     <button
                                       className={`${styles.iconAction} ${styles.iconActionApprove}`}
-                                      title="Shortlist candidate"
+                                      title="Approve for shortlist"
                                       disabled={isUpdatingStatus}
                                       onClick={() => void handleStatus(application.id, 'screening')}
                                     >
@@ -1063,7 +1147,7 @@ export default function RecruiterScreeningPage() {
                                     </button>
                                     <button
                                       className={`${styles.iconAction} ${styles.iconActionReject}`}
-                                      title="Reject candidate"
+                                      title="Reject after screening"
                                       disabled={isUpdatingStatus}
                                       onClick={() => void handleStatus(application.id, 'rejected')}
                                     >
@@ -1078,7 +1162,7 @@ export default function RecruiterScreeningPage() {
                                 ) : (
                                   <span
                                     className={styles.lockHint}
-                                    title="Shortlist and reject actions unlock after the job expires."
+                                    title="Shortlisting decisions unlock after the job expires."
                                   >
                                     <LockIcon />
                                     After expiry
@@ -1093,52 +1177,43 @@ export default function RecruiterScreeningPage() {
                               <td colSpan={4}>
                                 <div className={styles.expandedPanel}>
                                   <div className={styles.expandedGrid}>
-                                    <div>
-                                      <div className={styles.expandedLabel}>Edit review</div>
-                                      <div className={styles.scoreEditorRow}>
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          max={100}
-                                          className={styles.scoreEditorInput}
-                                          placeholder="Score"
-                                          value={draft.score}
-                                          onChange={(event) =>
-                                            setReviewDraft(application.id, {
-                                              score: event.target.value,
-                                            })
-                                          }
-                                        />
-                                        <span className={styles.thresholdSuffix}>/100</span>
+                                    <div className={styles.editorColumn}>
+                                      <div className={styles.editorHeader}>
+                                        <div className={styles.expandedLabel}>
+                                          Edit screening result
+                                        </div>
+                                        <div className={styles.scoreEditorRow}>
+                                          <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            className={styles.scoreEditorInput}
+                                            placeholder="Score"
+                                            value={draft.score}
+                                            onChange={(event) =>
+                                              setReviewDraft(application.id, {
+                                                score: event.target.value,
+                                              })
+                                            }
+                                          />
+                                          <span className={styles.thresholdSuffix}>/100</span>
+                                        </div>
                                       </div>
                                       <textarea
+                                        ref={(element) =>
+                                          setFeedbackTextareaRef(application.id, element)
+                                        }
                                         className={styles.feedbackTextarea}
-                                        rows={5}
+                                        rows={2}
                                         placeholder="Add score context, strengths, concerns, or recruiter notes..."
                                         value={draft.feedback}
-                                        onChange={(event) =>
+                                        onChange={(event) => {
                                           setReviewDraft(application.id, {
                                             feedback: event.target.value,
                                           })
-                                        }
+                                          resizeFeedbackTextarea(event.currentTarget)
+                                        }}
                                       />
-                                    </div>
-
-                                    <div className={styles.referencePanel}>
-                                      <div className={styles.expandedLabel}>
-                                        {activeJob?.auto_shortlist
-                                          ? 'Current AI review'
-                                          : 'Current saved review'}
-                                      </div>
-                                      <div className={styles.referenceScore}>
-                                        Score:{' '}
-                                        <strong>
-                                          {application.score != null
-                                            ? `${application.score}/100`
-                                            : 'Not scored yet'}
-                                        </strong>
-                                      </div>
-                                      <p className={styles.referenceText}>{reviewText}</p>
                                     </div>
                                   </div>
 
@@ -1154,7 +1229,11 @@ export default function RecruiterScreeningPage() {
                                       disabled={isUpdatingReview || !hasReviewChanged(application)}
                                       onClick={() => void handleReviewSave(application)}
                                     >
-                                      {isUpdatingReview ? 'Saving...' : 'Save review'}
+                                      {isUpdatingReview ? (
+                                        <ButtonSpinner label="Saving..." />
+                                      ) : (
+                                        'Save review'
+                                      )}
                                     </button>
                                   </div>
                                 </div>
