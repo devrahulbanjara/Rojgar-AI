@@ -1,276 +1,315 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
+
+import Link from 'next/link'
 
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
-import {
-  useApproveDraftMutation,
-  useGetDraftsQuery,
-  usePrepareDraftsMutation,
-  useSendAllDraftsMutation,
-  useUpdateDraftMutation,
-} from '@/store/services/outreachApi'
+import { useGetDraftsQuery } from '@/store/services/outreachApi'
+import { Briefcase, CheckCircle2, Clock3, FileText, Mail, Send } from 'lucide-react'
 
-import ButtonSpinner from '@/components/common/ButtonSpinner'
+import { OutreachPageSkeleton } from './_components/OutreachSkeletons'
+import styles from './outreach.module.css'
 
-import {
-  OutreachDraftDetailSkeleton,
-  OutreachDraftListSkeleton,
-} from './_components/OutreachSkeletons'
+function getJobStatusLabel(status: string) {
+  switch (status) {
+    case 'active':
+      return 'Active'
+    case 'expired':
+      return 'Expired'
+    default:
+      return 'Draft'
+  }
+}
+
+function getJobStatusTone(status: string) {
+  switch (status) {
+    case 'active':
+      return 'warning'
+    case 'expired':
+      return 'secondary'
+    default:
+      return 'gray'
+  }
+}
 
 export default function RecruiterOutreachPage() {
-  const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
-  const jobs = useMemo(() => jobsResp?.data ?? [], [jobsResp?.data])
+  const { data, isLoading } = useGetCompanyJobsQuery()
+  const jobs = useMemo(() => data?.data ?? [], [data?.data])
+  const [jobScope, setJobScope] = useState<'finalized' | 'all'>('finalized')
   const [selectedJobId, setSelectedJobId] = useState('')
-  const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null)
-  const [draftEdits, setDraftEdits] = useState<Record<string, { subject: string; body: string }>>(
-    {},
+
+  const finalizedJobs = useMemo(
+    () =>
+      [...jobs]
+        .filter((job) => job.final_shortlist_completed)
+        .sort((left, right) => {
+          if ((right.applications_count ?? 0) !== (left.applications_count ?? 0)) {
+            return (right.applications_count ?? 0) - (left.applications_count ?? 0)
+          }
+          return left.title.localeCompare(right.title)
+        }),
+    [jobs],
   )
 
-  const activeJobId = selectedJobId || jobs[0]?.id || ''
+  const effectiveJobScope =
+    jobScope === 'finalized' && finalizedJobs.length === 0 ? 'all' : jobScope
+  const visibleJobs = useMemo(
+    () => (effectiveJobScope === 'finalized' ? finalizedJobs : jobs),
+    [effectiveJobScope, finalizedJobs, jobs],
+  )
 
-  const {
-    data: draftsResp,
-    refetch,
-    isLoading: isLoadingDrafts,
-    isFetching: isFetchingDrafts,
-  } = useGetDraftsQuery(activeJobId, {
-    skip: !activeJobId,
-    pollingInterval: activeJobId ? 10000 : 0,
-  })
+  const selectedJob = visibleJobs.find((job) => job.id === selectedJobId) ?? visibleJobs[0] ?? null
+
+  const { data: draftsResp, isLoading: isLoadingDrafts } = useGetDraftsQuery(
+    selectedJob?.id ?? '',
+    {
+      skip: !selectedJob?.id,
+    },
+  )
 
   const drafts = useMemo(() => draftsResp?.data ?? [], [draftsResp?.data])
-  const activeDraftId =
-    selectedDraftId && drafts.some((draft) => draft.draft_id === selectedDraftId)
-      ? selectedDraftId
-      : (drafts[0]?.draft_id ?? null)
-  const selectedDraft = useMemo(
-    () => drafts.find((draft) => draft.draft_id === activeDraftId) ?? null,
-    [drafts, activeDraftId],
-  )
-  const selectedDraftEdit = selectedDraft ? draftEdits[selectedDraft.draft_id] : undefined
-  const draftSubject = selectedDraftEdit?.subject ?? selectedDraft?.subject ?? ''
-  const draftBody = selectedDraftEdit?.body ?? selectedDraft?.body ?? ''
+  const pendingDrafts = drafts.filter(
+    (draft) => !draft.is_sent && !draft.is_discarded && !draft.is_approved,
+  ).length
+  const approvedDrafts = drafts.filter(
+    (draft) => draft.is_approved && !draft.is_sent && !draft.is_discarded,
+  ).length
+  const sentDrafts = drafts.filter((draft) => draft.is_sent).length
+  const canOpenWorkspace = Boolean(selectedJob?.final_shortlist_completed || drafts.length > 0)
+  const totalCandidates = selectedJob?.applications_count ?? 0
+  const activeStepKey = !canOpenWorkspace
+    ? 'generate'
+    : pendingDrafts > 0
+      ? 'review'
+      : approvedDrafts > 0
+        ? 'send'
+        : null
 
-  const [prepareDrafts, { isLoading: isPreparing }] = usePrepareDraftsMutation()
-  const [updateDraft, { isLoading: isSaving }] = useUpdateDraftMutation()
-  const [approveDraft, { isLoading: isApproving }] = useApproveDraftMutation()
-  const [sendAllDrafts, { isLoading: isSendingAll }] = useSendAllDraftsMutation()
+  const pipelineSteps = [
+    {
+      key: 'generate',
+      title: 'Generate Drafts',
+      count: totalCandidates,
+      meta: 'Candidates ready to enter outreach',
+      icon: FileText,
+    },
+    {
+      key: 'review',
+      title: 'Review & Edit',
+      count: isLoadingDrafts ? '...' : pendingDrafts,
+      meta: 'Drafts waiting for recruiter review',
+      icon: Clock3,
+    },
+    {
+      key: 'approve',
+      title: 'Approve',
+      count: isLoadingDrafts ? '...' : approvedDrafts,
+      meta: 'Approved drafts prepared for final sending',
+      icon: CheckCircle2,
+    },
+    {
+      key: 'send',
+      title: 'Send',
+      count: isLoadingDrafts ? '...' : sentDrafts,
+      meta: 'Emails already sent for this job',
+      icon: Send,
+    },
+  ]
 
-  function updateSelectedDraftEdit(patch: Partial<{ subject: string; body: string }>) {
-    if (!selectedDraft) return
-
-    setDraftEdits((current) => ({
-      ...current,
-      [selectedDraft.draft_id]: {
-        subject: current[selectedDraft.draft_id]?.subject ?? selectedDraft.subject ?? '',
-        body: current[selectedDraft.draft_id]?.body ?? selectedDraft.body ?? '',
-        ...patch,
-      },
-    }))
+  if (isLoading) {
+    return <OutreachPageSkeleton />
   }
 
-  async function handlePrepare() {
-    if (!activeJobId) return
-    try {
-      const response = await prepareDrafts({ jobId: activeJobId }).unwrap()
-      toast.success(response.message)
-      void refetch()
-    } catch {
-      toast.error('Could not prepare drafts.')
-    }
+  if (jobs.length === 0) {
+    return (
+      <div className={`dash-content container container--app-shell ${styles.outreachPage}`}>
+        <div className={styles.emptyState}>
+          Create a job first, then finish shortlisting to prepare candidate outreach.
+          <div className={styles.emptyActions}>
+            <Link href="/recruiter/jobs" className="btn btn--primary btn--sm">
+              Open jobs
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
-
-  async function handleSave() {
-    if (!selectedDraft) return
-    try {
-      await updateDraft({
-        draftId: selectedDraft.draft_id,
-        subject: draftSubject,
-        body: draftBody,
-      }).unwrap()
-      toast.success('Draft updated.')
-      void refetch()
-    } catch {
-      toast.error('Could not update draft.')
-    }
-  }
-
-  async function handleApprove(approved: boolean) {
-    if (!selectedDraft) return
-    try {
-      await approveDraft({ draftId: selectedDraft.draft_id, approved }).unwrap()
-      toast.success(approved ? 'Draft approved.' : 'Draft discarded.')
-      void refetch()
-    } catch {
-      toast.error('Could not process draft.')
-    }
-  }
-
-  async function handleSendAll() {
-    if (!activeJobId) return
-    try {
-      const response = await sendAllDrafts(activeJobId).unwrap()
-      toast.success(response.message)
-      void refetch()
-    } catch {
-      toast.error('Could not queue approved drafts.')
-    }
-  }
-
-  const isLoadingContent = isLoadingJobs || !activeJobId || isLoadingDrafts || isFetchingDrafts
 
   return (
-    <div className="dash-content container container--app-shell">
+    <div className={`dash-content container container--app-shell ${styles.outreachPage}`}>
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Outreach</h2>
           <p className="dash-page-header__subtitle">
-            Prepare, review, and send candidate communications job by job.
+            Review finalized jobs, track draft progress, and open the outreach workspace.
           </p>
         </div>
         <div className="dash-page-header__actions">
-          {isLoadingJobs ? (
-            <div className="skeleton-block outreach-skeleton__select" aria-hidden="true" />
-          ) : (
-            <select
-              className="dash-select"
-              value={activeJobId}
-              onChange={(event) => {
-                setSelectedJobId(event.target.value)
-                setSelectedDraftId(null)
-              }}
-            >
-              <option value="">Select a job</option>
-              {jobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {job.title}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            className="btn btn--outline btn--sm"
-            disabled={isPreparing}
-            onClick={() => void handlePrepare()}
-          >
-            {isPreparing ? <ButtonSpinner label="Preparing..." /> : 'Prepare drafts'}
-          </button>
-          <button
-            className="btn btn--primary btn--sm"
-            disabled={isSendingAll}
-            onClick={() => void handleSendAll()}
-          >
-            {isSendingAll ? <ButtonSpinner label="Queueing..." /> : 'Send approved'}
-          </button>
+          <span className="badge badge--gray">
+            <Briefcase size={13} aria-hidden="true" />
+            {visibleJobs.length} job{visibleJobs.length === 1 ? '' : 's'}
+          </span>
+          {selectedJob ? (
+            <span className="badge badge--secondary">
+              <Mail size={13} aria-hidden="true" />
+              {drafts.length} draft{drafts.length === 1 ? '' : 's'}
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <div className="dash-grid dash-grid--2col">
-        {isLoadingContent ? (
-          <OutreachDraftListSkeleton rows={5} />
-        ) : (
-          <div className="dash-card">
-            <div className="dash-card__body dash-card__body--no-top">
-              {drafts.length === 0 ? (
-                <div className="profile-empty">No drafts yet for this job.</div>
-              ) : (
-                drafts.map((draft) => (
-                  <button
-                    key={draft.draft_id}
-                    type="button"
-                    className={`app-item${activeDraftId === draft.draft_id ? ' app-item--active' : ''}`}
-                    onClick={() => setSelectedDraftId(draft.draft_id)}
-                  >
-                    <div className="app-item__body">
-                      <div className="app-item__top">
-                        <div className="app-item__role">{draft.candidate_name}</div>
-                        <span
-                          className={`badge badge--${draft.is_sent ? 'success' : draft.is_discarded ? 'danger' : draft.is_approved ? 'primary' : 'warning'}`}
-                        >
-                          {draft.is_sent
-                            ? 'Sent'
-                            : draft.is_discarded
-                              ? 'Discarded'
-                              : draft.is_approved
-                                ? 'Approved'
-                                : 'Review'}
-                        </span>
-                      </div>
-                      <div className="app-item__company">{draft.subject ?? 'No subject yet'}</div>
-                      <div className="app-item__meta">
-                        <span>{draft.candidate_email}</span>
-                        <span className="app-item__sep">·</span>
-                        <span>Score {draft.score ?? 'N/A'}</span>
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+      <div className={styles.contextBar}>
+        <div className={styles.contextTop}>
+          <div className={styles.selectorRow}>
+            <label className={`${styles.selectWrap} ${styles.selectWrapView}`}>
+              <span className={styles.selectLabel}>View</span>
+              <select
+                className={styles.select}
+                value={jobScope}
+                onChange={(event) =>
+                  setJobScope(event.target.value === 'all' ? 'all' : 'finalized')
+                }
+              >
+                <option value="finalized">Finalized jobs</option>
+                <option value="all">All jobs</option>
+              </select>
+            </label>
 
-        {isLoadingContent ? (
-          <OutreachDraftDetailSkeleton />
-        ) : (
-          <div className="dash-card">
-            <div className="dash-card__body">
-              {selectedDraft ? (
-                <>
-                  <div className="dash-card__title">{selectedDraft.candidate_name}</div>
-                  <div className="dash-card__subtitle" style={{ marginBottom: '1rem' }}>
-                    {selectedDraft.candidate_email}
-                  </div>
-                  <div className="resume-field">
-                    <label className="resume-field__label">Subject</label>
-                    <input
-                      className="resume-field__input"
-                      value={draftSubject}
-                      onChange={(event) => updateSelectedDraftEdit({ subject: event.target.value })}
-                    />
-                  </div>
-                  <div className="resume-field" style={{ marginTop: '1rem' }}>
-                    <label className="resume-field__label">Body</label>
-                    <textarea
-                      className="resume-field__textarea"
-                      rows={14}
-                      value={draftBody}
-                      onChange={(event) => updateSelectedDraftEdit({ body: event.target.value })}
-                    />
-                  </div>
-                  <div className="cell-actions" style={{ marginTop: '1rem' }}>
-                    <button
-                      className="btn btn--outline btn--sm"
-                      disabled={isSaving}
-                      onClick={() => void handleSave()}
-                    >
-                      {isSaving ? <ButtonSpinner label="Saving..." /> : 'Save'}
-                    </button>
-                    <button
-                      className="btn btn--primary btn--sm"
-                      disabled={isApproving}
-                      onClick={() => void handleApprove(true)}
-                    >
-                      {isApproving ? <ButtonSpinner label="Processing..." /> : 'Approve'}
-                    </button>
-                    <button
-                      className="btn btn--ghost btn--danger btn--sm"
-                      disabled={isApproving}
-                      onClick={() => void handleApprove(false)}
-                    >
-                      Discard
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="profile-empty">Select a draft to review.</div>
-              )}
+            <label className={`${styles.selectWrap} ${styles.selectWrapJob}`}>
+              <span className={styles.selectLabel}>Job</span>
+              <select
+                className={styles.select}
+                value={selectedJob?.id ?? ''}
+                onChange={(event) => setSelectedJobId(event.target.value)}
+              >
+                {visibleJobs.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {job.title}
+                    {job.final_shortlist_completed ? ' - finalized' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className={styles.actionCluster}>
+              <Link href="/recruiter/screening" className="btn btn--outline btn--sm">
+                Back to screening
+              </Link>
+              {selectedJob ? (
+                <Link
+                  href={`/recruiter/jobs/${selectedJob.id}/outreach`}
+                  className="btn btn--primary btn--sm"
+                >
+                  Open outreach workspace
+                </Link>
+              ) : null}
             </div>
           </div>
-        )}
+        </div>
+
+        {selectedJob ? (
+          <div className={styles.contextMeta}>
+            <div className={styles.statusList}>
+              <span className={`badge badge--primary ${styles.statusItem}`}>
+                <span className={styles.statusLabel}>Outreach Scope:</span>
+                <span className={styles.statusValue}>
+                  {effectiveJobScope === 'finalized' ? 'Finalized only' : 'All jobs'}
+                </span>
+              </span>
+              <span
+                className={`badge badge--${canOpenWorkspace ? 'success' : 'gray'} ${styles.statusItem}`}
+              >
+                <span className={styles.statusLabel}>Shortlisting:</span>
+                <span className={styles.statusValue}>
+                  {canOpenWorkspace ? 'Finalized' : 'Pending'}
+                </span>
+              </span>
+              <span
+                className={`badge badge--${getJobStatusTone(selectedJob.status)} ${styles.statusItem}`}
+              >
+                <span className={styles.statusLabel}>Job Status:</span>
+                <span className={styles.statusValue}>{getJobStatusLabel(selectedJob.status)}</span>
+              </span>
+              <span
+                className={`badge badge--${canOpenWorkspace ? 'success' : 'warning'} ${styles.statusItem}`}
+              >
+                <span className={styles.statusLabel}>Workspace:</span>
+                <span className={styles.statusValue}>
+                  {canOpenWorkspace ? 'Ready' : 'Waiting for shortlist'}
+                </span>
+              </span>
+            </div>
+          </div>
+        ) : null}
       </div>
+
+      {selectedJob ? (
+        <section className={styles.previewSection}>
+          <div className={styles.previewHeader}>
+            <div>
+              <div className={styles.previewTitle}>Job Outreach Status</div>
+              <div className={styles.previewSubtitle}>
+                {canOpenWorkspace
+                  ? `${selectedJob.title} is ready for recruiter outreach and candidate communication.`
+                  : `${selectedJob.title} still needs shortlisting to finish before outreach can move forward.`}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.flowPanel}>
+            <div className={styles.flowSteps}>
+              {pipelineSteps.map((step) => {
+                const Icon = step.icon
+                const isActive = step.key === activeStepKey
+
+                return (
+                  <div
+                    key={step.key}
+                    className={`${styles.flowStep} ${isActive ? styles.flowStepActive : ''}`}
+                  >
+                    <span className={styles.flowIcon}>
+                      <span className={styles.flowDot} aria-hidden="true" />
+                    </span>
+                    <div className={styles.flowBody}>
+                      <div className={styles.flowRow}>
+                        <Icon size={16} aria-hidden="true" />
+                        <span className={styles.flowHeading}>{step.title}</span>
+                        <span className={styles.flowCountBadge}>{step.count}</span>
+                      </div>
+                      <div className={styles.flowMeta}>{step.meta}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className={styles.flowFooter}>
+              <div className={styles.flowFooterCopy}>
+                {canOpenWorkspace
+                  ? approvedDrafts > 0
+                    ? 'Approved drafts are ready to send from the workspace.'
+                    : 'Open the workspace to review, edit, approve, and send candidate outreach.'
+                  : 'Finish shortlisting first so outreach can generate and manage candidate drafts.'}
+              </div>
+              <div className={styles.flowFooterBadge}>
+                <span className={`badge badge--gray ${styles.statPill}`}>
+                  <strong>{drafts.length}</strong> total drafts
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {jobScope === 'finalized' && finalizedJobs.length === 0 ? (
+            <div className={styles.helperNote}>
+              No finalized jobs were returned right now, so the view automatically switched to all
+              jobs.
+            </div>
+          ) : null}
+        </section>
+      ) : (
+        <div className={styles.emptyState}>Select a job to open its outreach summary.</div>
+      )}
     </div>
   )
 }

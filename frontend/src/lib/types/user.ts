@@ -26,6 +26,7 @@ export type ApplicationStatus =
   | 'applied'
   | 'under_review'
   | 'shortlisted'
+  | 'interview_booked'
   | 'interview_scheduled'
   | 'rejected'
   | 'hired'

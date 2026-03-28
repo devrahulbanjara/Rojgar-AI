@@ -72,6 +72,7 @@ export function getStatusTone(status: string | null | undefined) {
     case 'applied':
       return 'gray'
     case 'screening':
+    case 'interview_booked':
     case 'under_review':
       return 'warning'
     case 'interview':
