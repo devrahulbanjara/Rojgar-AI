@@ -41,7 +41,7 @@
       width: 36px;
       height: 36px;
       background: $color-primary;
-      border-radius: $radius-lg;
+      border-radius: $radius-full;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -339,7 +339,7 @@
     position: relative;
     width: 52px;
     height: 52px;
-    border-radius: $radius-xl;
+    border-radius: $radius-full;
     border: 1px solid $color-gray-200;
     background: rgba($color-primary, 0.08);
     color: $color-primary;
@@ -805,7 +805,7 @@
     position: relative;
     width: 40px;
     height: 40px;
-    border-radius: $radius-lg;
+    border-radius: $radius-full;
     border: 1px solid $color-gray-200;
     overflow: hidden;
     flex-shrink: 0;
@@ -1008,7 +1008,7 @@
 .recommended-job-skeleton__logo {
   width: 40px;
   height: 40px;
-  border-radius: $radius-lg;
+  border-radius: $radius-full;
   flex-shrink: 0;
 }
 
@@ -1247,7 +1247,7 @@
 .job-card-skeleton__logo {
   width: 40px;
   height: 40px;
-  border-radius: $radius-lg;
+  border-radius: $radius-full;
   flex-shrink: 0;
 }
 
@@ -1331,7 +1331,7 @@
   &__logo {
     width: 56px;
     height: 56px;
-    border-radius: $radius-xl;
+    border-radius: $radius-full;
     border: 3px solid $color-white;
     background: var(--job-logo-color, #{$color-primary});
     display: flex;
@@ -1955,7 +1955,7 @@
 .dashboard-table-skeleton__avatar {
   width: 30px;
   height: 30px;
-  border-radius: $radius-lg;
+  border-radius: $radius-full;
   flex-shrink: 0;
 }
 
@@ -2897,7 +2897,7 @@
   &__logo {
     width: 36px;
     height: 36px;
-    border-radius: $radius-lg;
+    border-radius: $radius-full;
     background: var(--logo-bg, #{rgba($color-primary, 0.1)});
     color: var(--logo-color, #{$color-primary});
     display: flex;
@@ -4314,7 +4314,7 @@
     position: relative;
     width: 44px;
     height: 44px;
-    border-radius: $radius-lg;
+    border-radius: $radius-full;
     background: var(--app-logo-bg, #{rgba($color-primary, 0.1)});
     color: var(--app-logo-color, #{$color-primary});
     display: flex;
@@ -4403,7 +4403,7 @@
     position: relative;
     width: 48px;
     height: 48px;
-    border-radius: $radius-lg;
+    border-radius: $radius-full;
     background: var(--app-logo-bg, #{rgba($color-primary, 0.1)});
     color: var(--app-logo-color, #{$color-primary});
     display: flex;
@@ -4575,7 +4575,7 @@
 .applications-skeleton__logo {
   width: 44px;
   height: 44px;
-  border-radius: $radius-lg;
+  border-radius: $radius-full;
   flex-shrink: 0;
 }
 
@@ -4619,7 +4619,7 @@
 .applications-detail-skeleton__logo {
   width: 48px;
   height: 48px;
-  border-radius: $radius-lg;
+  border-radius: $radius-full;
   flex-shrink: 0;
 }
 
@@ -7371,7 +7371,7 @@
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: 999px;
+  border-radius: $radius-full;
   background: linear-gradient(135deg, #0f766e, #1d4ed8);
   color: $color-white;
   font-weight: $font-weight-semibold;
@@ -8251,7 +8251,7 @@
   width: 2.25rem;
   height: 2.25rem;
   flex-shrink: 0;
-  border-radius: 999px;
+  border-radius: $radius-full;
   margin-top: 0.15rem;
   box-shadow: 0 8px 20px rgb(15 23 42 / 10%);
 }
@@ -8428,7 +8428,7 @@
 
 .recruiter-chat-avatar {
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: $radius-full;
 
   img {
     width: 100%;
@@ -9865,14 +9865,14 @@
   max-width: 100%;
   max-height: 52vh;
   margin: 0 auto;
-  border-radius: $radius-xl;
+  border-radius: $radius-full;
   overflow: hidden;
   background: $color-gray-100;
   box-shadow: inset 0 0 0 1px rgba($color-gray-200, 0.85);
 }
 
 .avatar-cropper__viewport .reactEasyCrop_Container {
-  border-radius: inherit;
+  border-radius: $radius-full;
 }
 
 .avatar-cropper__viewport .reactEasyCrop_CropArea {
@@ -10232,7 +10232,7 @@
     position: relative;
     width: 56px;
     height: 56px;
-    border-radius: $radius-xl;
+    border-radius: $radius-full;
     border: 1px solid $color-gray-200;
     background: var(--jp-logo, #{$color-secondary});
     display: flex;
@@ -10507,7 +10507,7 @@
     position: relative;
     width: 68px;
     height: 68px;
-    border-radius: $radius-xl;
+    border-radius: $radius-full;
     border: 1px solid $color-gray-200;
     background: var(--jd-logo, #{$color-secondary});
     display: flex;
@@ -11667,7 +11667,7 @@
 .rec-apps-skeleton__avatar {
   width: 32px;
   height: 32px;
-  border-radius: $radius-lg;
+  border-radius: $radius-full;
   flex-shrink: 0;
 }
 
@@ -11811,4 +11811,35 @@
   width: 5rem;
   height: 2rem;
   border-radius: $radius-full;
+}
+
+// Normalize all avatar/logo surfaces to a perfect circle across dashboard views.
+.media-badge,
+.job-card__logo,
+.app-item__logo,
+.app-detail__logo,
+.job-preview__logo,
+.jd-hero__logo,
+.profile-aside-card__avatar,
+.dash-navbar__avatar,
+.dash-navbar__dropdown-avatar,
+.dash-sidebar__user-avatar,
+.cell-user__avatar,
+.cell-user__avatar--rect,
+.profile-aside-card__avatar--rounded {
+  border-radius: 50% !important;
+}
+
+.job-card__logo,
+.app-item__logo,
+.app-detail__logo,
+.job-preview__logo,
+.jd-hero__logo,
+.profile-aside-card__avatar,
+.dash-navbar__avatar,
+.dash-navbar__dropdown-avatar,
+.dash-sidebar__user-avatar,
+.cell-user__avatar {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
 }
