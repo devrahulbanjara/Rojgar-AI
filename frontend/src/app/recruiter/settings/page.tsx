@@ -377,12 +377,12 @@ export default function CompanySettingsPage() {
             className="profile-aside-card content-stagger-item"
             style={{ '--stagger-index': 0 } as React.CSSProperties}
           >
-            <div className="profile-media-control profile-media-control--rounded">
+            <div className="profile-media-control">
               <MediaBadge
                 src={logoSrc}
                 alt={companyName}
                 fallback={getInitials(companyName, 'C').slice(0, 1)}
-                className="profile-aside-card__avatar profile-aside-card__avatar--rounded"
+                className="profile-aside-card__avatar"
                 sizes="96px"
               />
               <div className="profile-media-actions" aria-label="Company logo actions">

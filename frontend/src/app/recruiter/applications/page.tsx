@@ -147,7 +147,7 @@ export default function CompanyApplicationsPage() {
                     <td>
                       <div className="cell-user">
                         <div
-                          className="cell-user__avatar cell-user__avatar--sm cell-user__avatar--rect"
+                          className="cell-user__avatar cell-user__avatar--sm"
                           style={
                             {
                               '--avatar-bg': getAvatarColor(application.applicant_name) + '1A',
