@@ -21,6 +21,8 @@ export interface ApplicationResponse {
   status: ApplicationStatus
   created_at: string
   updated_at: string
+  score: number | null
+  feedback: string | null
 }
 
 export interface CandidateApplicationView {
@@ -74,6 +76,11 @@ export interface ApplyToJobPayload {
 
 export interface UpdateApplicationStatusPayload {
   status: ApplicationStatus
+}
+
+export interface UpdateApplicationReviewPayload {
+  score?: number | null
+  feedback?: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -138,6 +145,18 @@ export const applicationsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Applications'],
     }),
+
+    updateApplicationReview: builder.mutation<
+      ApiResponse<ApplicationResponse>,
+      { application_id: string; body: UpdateApplicationReviewPayload }
+    >({
+      query: ({ application_id, body }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${application_id}/review`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Applications'],
+    }),
   }),
 })
 
@@ -146,5 +165,6 @@ export const {
   useGetMyApplicationsQuery,
   useGetMyCompanyApplicationsQuery,
   useGetJobApplicationsQuery,
+  useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,
 } = applicationsApi

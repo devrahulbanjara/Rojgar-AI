@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -24,6 +25,7 @@ from app.modules.applications.schemas import (
     ApplyRequest,
     CandidateApplicationView,
     RecruiterApplicationView,
+    UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
 from app.modules.companies.models import Company
@@ -54,6 +56,12 @@ def _background_database_url(db: AsyncSession) -> str:
     raise RuntimeError("Database bind is not configured for background task execution.")
 
 
+def _job_is_open_for_auto_shortlisting(job: Job) -> bool:
+    return job.status == JobStatus.active and (
+        job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
+    )
+
+
 async def apply_to_job(
     db: AsyncSession,
     user: User,
@@ -69,7 +77,7 @@ async def apply_to_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found.",
         )
-    if job.status != JobStatus.active:
+    if not _job_is_open_for_auto_shortlisting(job):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This job is not currently accepting applications.",
@@ -119,6 +127,7 @@ async def apply_to_job(
 
     if (
         job.auto_shortlist
+        and _job_is_open_for_auto_shortlisting(job)
         and bg_tasks is not None
         and "PYTEST_CURRENT_TEST" not in os.environ
     ):
@@ -398,10 +407,20 @@ async def update_application_status(
     result = await db.execute(
         select(Job).where(Job.id == application.job_id, Job.company_id == company_id)
     )
-    if not result.scalar_one_or_none():
+    job = result.scalar_one_or_none()
+    if not job:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This application's job does not belong to your company.",
+        )
+
+    if payload.status in {ApplicationStatus.screening, ApplicationStatus.rejected} and (
+        job.status != JobStatus.expired
+        and (job.expires_at is None or job.expires_at > datetime.now(timezone.utc))
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shortlist and reject actions are only available after the job expires.",
         )
 
     application.status = payload.status
@@ -424,6 +443,70 @@ async def update_application_status(
         "Application {app_id} status updated to {new_status} by user {user_id}",
         app_id=application_id,
         new_status=payload.status,
+        user_id=user.id,
+    )
+    return ApplicationResponse.model_validate(application)
+
+
+async def update_application_review(
+    db: AsyncSession,
+    user: User,
+    application_id: str,
+    payload: UpdateApplicationReviewRequest,
+    bg_tasks: BackgroundTasks | None = None,
+) -> ApplicationResponse:
+    """Update manual score and/or feedback for an application (active company members only)."""
+    company_id = await _get_active_company_id(db, user)
+
+    result = await db.execute(
+        select(Application)
+        .where(Application.id == application_id)
+        .options(*_application_response_options())
+    )
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found.",
+        )
+
+    job_result = await db.execute(
+        select(Job).where(Job.id == application.job_id, Job.company_id == company_id)
+    )
+    if not job_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This application's job does not belong to your company.",
+        )
+
+    if payload.score is None and payload.feedback is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide a score, feedback, or both.",
+        )
+
+    if payload.score is not None:
+        application.score = payload.score
+    if payload.feedback is not None:
+        application.feedback = payload.feedback.strip() or None
+
+    sync_event = enqueue_application_sync_event(db, uuid.UUID(str(application.id)))
+    await db.commit()
+    await db.refresh(application)
+
+    if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
+        bg_tasks.add_task(process_application_sync_event, sync_event.id)
+
+    await redis_service.delete(f"dashboard:candidate:{application.user_id}")
+    await redis_service.invalidate_pattern(
+        f"applications:candidate:{application.user_id}:*"
+    )
+    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.delete(f"shortlist:summary:{application.job_id}")
+
+    logger.info(
+        "Application {app_id} review updated by user {user_id}",
+        app_id=application_id,
         user_id=user.id,
     )
     return ApplicationResponse.model_validate(application)

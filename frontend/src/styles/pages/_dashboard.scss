@@ -729,41 +729,51 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
   border-radius: $radius-full;
-  font-size: $font-size-xs;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
   font-weight: $font-weight-medium;
   line-height: 1.4;
+  white-space: nowrap;
 
   &--primary {
-    background: rgba($color-primary, 0.1);
-    color: $color-primary;
+    background: #e9f1ff;
+    border-color: #90b5f7;
+    color: #144da7;
   }
 
   &--success {
-    background: rgba($color-success, 0.1);
-    color: color.adjust($color-success, $lightness: -10%);
+    background: #eef7e7;
+    border-color: #9ecb73;
+    color: #285f1c;
   }
 
   &--warning {
-    background: rgba($color-warning, 0.2);
-    color: color.adjust($color-warning, $lightness: -25%);
+    background: #fdf0dc;
+    border-color: #f0ae4b;
+    color: #7d4a12;
   }
 
   &--danger {
-    background: rgba($color-accent, 0.1);
-    color: $color-accent;
+    background: #fff0f0;
+    border-color: #f0aaaa;
+    color: #9b2c2c;
   }
 
   &--secondary {
-    background: rgba($color-secondary, 0.1);
-    color: $color-secondary;
+    background: #e5f5f6;
+    border-color: #7ccfd4;
+    color: #0f5f67;
   }
 
   &--gray {
-    background: $color-gray-100;
-    color: $color-gray-600;
+    background: #f3f5f8;
+    border-color: #cfd7e3;
+    color: #536171;
   }
 }
 
@@ -2999,27 +3009,37 @@
 
 // ── Match / score badges ───────────────────────────────────────
 .match-badge {
-  background: rgba($color-success, 0.1);
-  color: $color-success;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
   border-radius: $radius-full;
-  padding: 2px $space-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  border: 1px solid #9fd3bb;
+  background: #edf9f2;
+  color: #166534;
+  font-size: 0.8125rem;
+  font-weight: $font-weight-medium;
   flex-shrink: 0;
   white-space: nowrap;
 }
 
 .score-pill {
-  background: var(--score-bg, #{rgba($color-primary, 0.1)});
-  color: var(--score-color, #{$color-primary});
-  border-radius: $radius-full;
-  padding: 3px $space-3;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
-  flex-shrink: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--score-bg, #e9f1ff);
+  color: var(--score-color, #144da7);
+  border: 1px solid var(--score-border, #90b5f7);
+  border-radius: $radius-full;
+  font-size: 0.8125rem;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .score-badge {
@@ -3042,18 +3062,28 @@
 .skill-tag {
   display: inline-flex;
   align-items: center;
-  font-size: 0.68rem;
-  background: rgba($color-primary, 0.08);
-  color: $color-primary;
-  padding: 1px $space-2;
+  justify-content: center;
+  min-height: 1.8rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid #90b5f7;
+  background: #e9f1ff;
+  color: #144da7;
+  font-size: 0.75rem;
+  font-weight: $font-weight-medium;
   border-radius: $radius-full;
 }
 
 .skill-pill {
-  font-size: $font-size-xs;
-  background: rgba($color-primary, 0.08);
-  color: $color-primary;
-  padding: 1px $space-2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.8rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid #90b5f7;
+  background: #e9f1ff;
+  color: #144da7;
+  font-size: 0.75rem;
+  font-weight: $font-weight-medium;
   border-radius: $radius-full;
 }
 
@@ -3994,7 +4024,9 @@
 
 // ── Extra-small badge ──────────────────────────────────────────
 .badge--xs {
-  font-size: 0.65rem !important;
+  min-height: 1.55rem !important;
+  padding: 0.22rem 0.65rem !important;
+  font-size: 0.7rem !important;
 }
 
 // ── Job card header right side ─────────────────────────────────
@@ -5465,19 +5497,20 @@
   display: inline-flex;
   align-items: center;
   gap: $space-2;
-  padding: $space-2 $space-3;
-  background: rgba($color-primary, 0.08);
-  border: 1px solid rgba($color-primary, 0.18);
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  background: #e9f1ff;
+  border: 1px solid #90b5f7;
   border-radius: $radius-full;
-  font-size: $font-size-xs;
+  font-size: 0.8125rem;
   font-weight: $font-weight-medium;
-  color: $color-primary;
+  color: #144da7;
 
   &__remove {
     background: none;
     border: none;
     cursor: pointer;
-    color: rgba($color-primary, 0.6);
+    color: rgb(20 77 167 / 70%);
     font-size: $font-size-sm;
     line-height: 1;
     padding: 0;
@@ -5486,7 +5519,7 @@
     transition: color $transition-fast;
 
     &:hover {
-      color: $color-accent;
+      color: #0f3d8f;
     }
   }
 }
@@ -7402,37 +7435,45 @@
 .recruiter-chat-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.28rem 0.65rem;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid transparent;
   border-radius: 999px;
-  font-size: $font-size-xs;
+  font-size: 0.8125rem;
   font-weight: $font-weight-medium;
   text-transform: capitalize;
 }
 
 .recruiter-chat-pill--gray {
-  background: $color-gray-100;
-  color: $color-gray-600;
+  background: #f5f7fb;
+  border-color: #d6dde8;
+  color: #52637a;
 }
 
 .recruiter-chat-pill--primary {
-  background: rgb(37 99 235 / 10%);
-  color: #1d4ed8;
+  background: #e9f1ff;
+  border-color: #90b5f7;
+  color: #144da7;
 }
 
 .recruiter-chat-pill--success {
-  background: rgb(16 185 129 / 12%);
-  color: #047857;
+  background: #edf9f2;
+  border-color: #9fd3bb;
+  color: #166534;
 }
 
 .recruiter-chat-pill--warning {
-  background: rgb(245 158 11 / 14%);
-  color: #b45309;
+  background: #fff4db;
+  border-color: #f3c46f;
+  color: #9a5b00;
 }
 
 .recruiter-chat-pill--danger {
-  background: rgb(239 68 68 / 12%);
-  color: #b91c1c;
+  background: #fff0f0;
+  border-color: #f0a2a2;
+  color: #b42318;
 }
 
 .recruiter-chat-score {
@@ -7444,11 +7485,14 @@
 .recruiter-chat-chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 0.65rem;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #8fcfca;
   border-radius: 999px;
-  background: rgb(15 118 110 / 8%);
+  background: #eefaf8;
   color: #0f766e;
-  font-size: $font-size-xs;
+  font-size: 0.8125rem;
   font-weight: $font-weight-medium;
 }
 
@@ -8430,76 +8474,89 @@
 .recruiter-chat-skill-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   width: fit-content;
   border-radius: 999px;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
+  font-weight: $font-weight-medium;
 }
 
 .recruiter-chat-status,
 .recruiter-chat-confidence {
-  padding: 0.38rem 0.72rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
   letter-spacing: 0.01em;
 }
 
 .recruiter-chat-status--submitted {
-  color: $color-gray-700;
-  background: rgb(241 245 249 / 92%);
+  color: #52637a;
+  background: #f5f7fb;
+  border-color: #d6dde8;
 }
 
 .recruiter-chat-status--screening {
-  color: #1d4ed8;
-  background: rgb(219 234 254 / 92%);
+  color: #144da7;
+  background: #e9f1ff;
+  border-color: #90b5f7;
 }
 
 .recruiter-chat-status--interview {
-  color: #4338ca;
-  background: rgb(224 231 255 / 92%);
+  color: #0f766e;
+  background: #eefaf8;
+  border-color: #8fcfca;
 }
 
 .recruiter-chat-status--offered,
 .recruiter-chat-status--hired {
-  color: #047857;
-  background: rgb(209 250 229 / 92%);
+  color: #166534;
+  background: #edf9f2;
+  border-color: #9fd3bb;
 }
 
 .recruiter-chat-status--rejected {
-  color: #b91c1c;
-  background: rgb(254 226 226 / 92%);
+  color: #b42318;
+  background: #fff0f0;
+  border-color: #f0a2a2;
 }
 
 .recruiter-chat-status--withdrawn {
-  color: #c2410c;
-  background: rgb(255 237 213 / 92%);
+  color: #9a5b00;
+  background: #fff4db;
+  border-color: #f3c46f;
 }
 
 .recruiter-chat-confidence--high {
-  color: #047857;
-  background: rgb(209 250 229 / 92%);
+  color: #166534;
+  background: #edf9f2;
+  border-color: #9fd3bb;
 }
 
 .recruiter-chat-confidence--medium {
-  color: #b45309;
-  background: rgb(254 243 199 / 94%);
+  color: #9a5b00;
+  background: #fff4db;
+  border-color: #f3c46f;
 }
 
 .recruiter-chat-confidence--low {
-  color: #b91c1c;
-  background: rgb(254 226 226 / 92%);
+  color: #b42318;
+  background: #fff0f0;
+  border-color: #f0a2a2;
 }
 
 .recruiter-chat-skill-pill {
-  padding: 0.42rem 0.75rem;
-  color: $color-gray-700;
-  background: rgb(241 245 249 / 88%);
-  border: 1px solid rgb(226 232 240 / 90%);
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  color: #52637a;
+  background: #f5f7fb;
+  border-color: #d6dde8;
 }
 
 .recruiter-chat-skill-pill--more {
   color: #0f766e;
-  background: rgb(204 251 241 / 86%);
-  border-color: rgb(153 246 228 / 90%);
+  background: #eefaf8;
+  border-color: #8fcfca;
 }
 
 .recruiter-chat-salary {
@@ -9647,12 +9704,17 @@
 }
 
 .resume-import__file {
-  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
   border-radius: $radius-full;
-  background: rgba($color-primary, 0.08);
-  color: $color-primary;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  border: 1px solid #90b5f7;
+  background: #e9f1ff;
+  color: #144da7;
+  font-size: 0.8125rem;
+  font-weight: $font-weight-medium;
 }
 
 .resume-import__chips-composer,
@@ -9673,11 +9735,14 @@
   display: inline-flex;
   align-items: center;
   gap: $space-2;
-  padding: 0.45rem 0.75rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
   border-radius: $radius-full;
-  background: rgba($color-primary, 0.08);
-  color: $color-gray-800;
-  font-size: $font-size-sm;
+  border: 1px solid #90b5f7;
+  background: #e9f1ff;
+  color: #144da7;
+  font-size: 0.8125rem;
+  font-weight: $font-weight-medium;
 
   button {
     display: inline-flex;
@@ -9691,8 +9756,9 @@
   }
 
   &--muted {
-    background: rgba($color-gray-400, 0.14);
-    color: $color-gray-600;
+    background: #f5f7fb;
+    border-color: #d6dde8;
+    color: #52637a;
   }
 }
 
@@ -9937,33 +10003,35 @@
 .jobs-filter-pill {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: $space-2;
-  padding: $space-2 $space-4;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
   border-radius: $radius-full;
-  font-size: $font-size-xs;
+  font-size: 0.8125rem;
   font-family: $font-body;
   font-weight: $font-weight-medium;
-  border: 1.5px solid $color-gray-200;
-  background: $color-white;
-  color: $color-gray-600;
+  border: 1px solid #d6dde8;
+  background: #f5f7fb;
+  color: #52637a;
   cursor: pointer;
   transition: all $transition-fast;
   text-align: left;
   width: 100%;
 
   &:hover {
-    border-color: rgba($color-primary, 0.4);
-    color: $color-primary;
-    background: rgba($color-primary, 0.04);
+    border-color: #90b5f7;
+    color: #144da7;
+    background: #e9f1ff;
   }
 
   &--active {
-    background: $color-primary;
-    border-color: $color-primary;
-    color: $color-white;
+    background: #e9f1ff;
+    border-color: #90b5f7;
+    color: #144da7;
 
     .jobs-filter-pill__dot {
-      background: rgba($color-white, 0.5);
+      background: #5b8def;
     }
   }
 
@@ -10808,17 +10876,20 @@
 .job-match-badge {
   display: inline-flex;
   align-items: center;
-  padding: $space-1 $space-3;
-  background: rgba($color-primary, 0.08);
-  color: $color-primary;
-  border: 1px solid rgba($color-primary, 0.2);
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  background: #e9f1ff;
+  color: #144da7;
+  border: 1px solid #90b5f7;
   border-radius: $radius-full;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: 0.8125rem;
+  font-weight: $font-weight-medium;
   white-space: nowrap;
 
   &--sm {
-    padding: math.div($space-1, 2) $space-2;
+    min-height: 1.55rem;
+    padding: 0.22rem 0.65rem;
     font-size: 0.7rem;
   }
 }

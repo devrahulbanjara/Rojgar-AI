@@ -21,6 +21,7 @@ class JobBase(BaseSchema):
     preferred_qualifications: list[str] | None = None
     benefits: list[str] | None = None
     auto_shortlist: bool = False
+    shortlist_threshold: int = Field(default=70, ge=0, le=100)
 
     @model_validator(mode="after")
     def validate_job_fields(self) -> "JobBase":
@@ -85,6 +86,7 @@ class JobListItem(BaseSchema):
     currency: str = "NPR"
     status: JobStatus
     auto_shortlist: bool = False
+    shortlist_threshold: int = 70
     expires_at: datetime | None = None
     applications_count: int = 0
     final_shortlist_completed: bool = False
@@ -114,6 +116,7 @@ class JobDetailResponse(BaseSchema):
     currency: str
     status: JobStatus
     auto_shortlist: bool = False
+    shortlist_threshold: int = 70
     expires_at: datetime | None = None
     overview: str | None = None
     responsibilities: list[str] = []

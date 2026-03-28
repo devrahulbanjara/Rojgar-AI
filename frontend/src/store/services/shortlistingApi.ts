@@ -10,6 +10,7 @@ export interface ShortlistSummary {
   pending_review: number
   shortlist_status: ShortlistStatus
   final_shortlist_completed: boolean
+  shortlist_threshold: number
 }
 
 export interface TriggerShortlistResponse {
@@ -39,7 +40,7 @@ export const shortlistingApi = baseApi.injectEndpoints({
     }),
     finalizeShortlist: builder.mutation<
       ApiResponse<FinalizeShortlistResponse>,
-      { jobId: string; use_ai_recommendations: boolean; threshold: number }
+      { jobId: string; use_ai_recommendations: boolean; threshold?: number }
     >({
       query: ({ jobId, ...body }) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/shortlisting/jobs/${jobId}/finalize`,

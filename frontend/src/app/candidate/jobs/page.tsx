@@ -301,7 +301,7 @@ export default function UserJobsPage() {
             </p>
           </div>
           <div className="dash-page-header__actions">
-            <span className="page-header-hint">
+            <span className="badge badge--gray">
               {isLoading
                 ? 'Loading jobs...'
                 : `${pagination?.total ?? 0} job${pagination?.total === 1 ? '' : 's'} available`}
@@ -523,7 +523,7 @@ export default function UserJobsPage() {
                           </div>
                           <div className="job-card__actions-wrap">
                             {job.match_score !== null && (
-                              <div className="job-match-badge" title="AI Match Score">
+                              <div className="badge badge--primary" title="AI Match Score">
                                 {Math.round(job.match_score * 100)}% Match
                               </div>
                             )}
@@ -538,11 +538,11 @@ export default function UserJobsPage() {
                         </div>
 
                         <div className="job-card__tags">
-                          <span className="job-card__tag">
+                          <span className="badge badge--gray">
                             {LOCATION_TYPE_LABELS[job.location_type]}
                           </span>
                           {(job.salary_min || job.salary_max) && (
-                            <span className="job-card__tag job-card__tag--salary">
+                            <span className="badge badge--secondary">
                               {formatSalary(job.salary_min, job.salary_max, job.currency)}
                             </span>
                           )}

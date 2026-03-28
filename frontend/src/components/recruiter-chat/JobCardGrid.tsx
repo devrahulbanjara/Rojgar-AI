@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 
 import type { CompanyJobData, CompanyJobListResult } from '@/lib/types/recruiterChat'
-import { ChevronRight, DollarSign, MapPin } from 'lucide-react'
+import { ArrowUpRight, CircleDollarSign, MapPin } from 'lucide-react'
 
 import { formatMoney, getStatusTone } from './utils'
 
@@ -44,7 +44,7 @@ function JobRow({ job }: { job: CompanyJobData }) {
               </span>
             </span>
             <span className="recruiter-chat-job-row__salary">
-              <DollarSign size={13} />
+              <CircleDollarSign size={13} />
               <span>{salaryLabel}</span>
             </span>
           </div>
@@ -52,8 +52,8 @@ function JobRow({ job }: { job: CompanyJobData }) {
       </div>
 
       <div className="recruiter-chat-job-row__meta">
-        <span className="recruiter-chat-job-row__cta">View job</span>
-        <ChevronRight size={16} className="recruiter-chat-job-row__chevron" />
+        <span className="recruiter-chat-job-row__cta">Edit</span>
+        <ArrowUpRight size={14} className="recruiter-chat-job-row__chevron" />
       </div>
     </button>
   )

@@ -31,6 +31,7 @@ type DraftField = keyof Pick<
   | 'salary_max'
   | 'currency'
   | 'auto_shortlist'
+  | 'shortlist_threshold'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -62,6 +63,7 @@ const ALL_DRAFT_FIELDS: DraftField[] = [
   'salary_max',
   'currency',
   'auto_shortlist',
+  'shortlist_threshold',
   'overview',
   'responsibilities',
   'requirements',

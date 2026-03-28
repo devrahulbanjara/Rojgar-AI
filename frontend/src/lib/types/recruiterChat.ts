@@ -7,6 +7,8 @@ export type RecruiterChatUiType =
   | 'salary_info'
   | 'candidate_detail'
   | 'job_edit_preview'
+  | 'job_clarification'
+  | 'candidate_clarification'
   | null
 
 export interface ChatSessionResponse {
@@ -33,10 +35,41 @@ export interface ChatHistoryMessage {
 
 export type ChatHistoryApiResponse = ApiResponse<ChatHistoryMessage[]>
 
-export interface ChatInterruptPayload {
-  type: 'job_edit_preview'
-  proposal: JobEditPreviewData
+export interface JobClarificationPayload {
+  job_id: string
+  job_title: string
+  status: string | null
+  location: string | null
+  question: string
 }
+
+export interface CandidateClarificationPayload {
+  application_id: string
+  candidate_name: string
+  job_title: string
+  application_status: string
+  question: string
+}
+
+export type ChatInterruptPayload =
+  | {
+      type: 'job_edit_preview'
+      proposal: JobEditPreviewData
+      job_clarification?: null
+      candidate_clarification?: null
+    }
+  | {
+      type: 'job_clarification'
+      proposal?: null
+      job_clarification: JobClarificationPayload
+      candidate_clarification?: null
+    }
+  | {
+      type: 'candidate_clarification'
+      proposal?: null
+      job_clarification?: null
+      candidate_clarification: CandidateClarificationPayload
+    }
 
 export interface ChatExchangeResponse {
   history: ChatHistoryMessage[]

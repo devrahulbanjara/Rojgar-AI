@@ -61,8 +61,9 @@ function renderList(beforeList: string[], afterList: string[]) {
 export function JobEditDiffCard({ data, onCancel, onConfirm }: JobEditDiffCardProps) {
   return (
     <section className="recruiter-chat-card recruiter-chat-card--job-edit">
-      <div>
-        <div className="recruiter-chat-card-title">Review Edit: {data.job_title}</div>
+      <div className="recruiter-chat-review-header">
+        <div className="recruiter-chat-review-eyebrow">Edit review</div>
+        <div className="recruiter-chat-card-title">Review changes for {data.job_title}</div>
         <div className="recruiter-chat-card-subtitle">{data.summary}</div>
       </div>
 
@@ -106,15 +107,19 @@ export function JobEditDiffCard({ data, onCancel, onConfirm }: JobEditDiffCardPr
       )}
 
       <div className="recruiter-chat-card-actions">
-        <button type="button" className="btn btn--outline btn--dark btn--sm" onClick={onCancel}>
+        <button
+          type="button"
+          className="recruiter-chat-action-button recruiter-chat-action-button--secondary"
+          onClick={onCancel}
+        >
           Cancel
         </button>
         <button
           type="button"
-          className="btn btn--dark btn--sm"
+          className="recruiter-chat-action-button recruiter-chat-action-button--primary"
           onClick={() => onConfirm(data.patch)}
         >
-          Confirm
+          Confirm changes
         </button>
       </div>
     </section>

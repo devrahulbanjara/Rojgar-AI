@@ -13,6 +13,7 @@ type DraftField =
   | 'salary_max'
   | 'currency'
   | 'auto_shortlist'
+  | 'shortlist_threshold'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -350,6 +351,30 @@ export default function JobDraftForm({
               />
               <span>Automatically score each new application for this job</span>
             </label>
+          </FieldChrome>
+
+          <FieldChrome
+            label="Shortlist Threshold"
+            helper="Set the score threshold used later when approving AI recommendations."
+            fieldKeys={['shortlist_threshold']}
+            lockedFields={lockedFields}
+            dirtyFields={dirtyFields}
+            missingFields={missingFields}
+            disabled={disabled}
+            onToggleLock={onToggleLock}
+            onRequestUpdate={onRequestUpdate}
+          >
+            <input
+              type="number"
+              min={0}
+              max={100}
+              className="job-ai-input"
+              value={draft.shortlist_threshold}
+              onChange={(event) =>
+                onFieldChange('shortlist_threshold', Number(event.target.value || 70))
+              }
+              disabled={disabled}
+            />
           </FieldChrome>
 
           <FieldChrome
