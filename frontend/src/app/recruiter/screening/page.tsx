@@ -646,7 +646,7 @@ export default function RecruiterScreeningPage() {
             </div>
           ) : (
             <div className={styles.selectorRow}>
-              <label className={styles.selectWrap}>
+              <label className={`${styles.selectWrap} ${styles.selectWrapView}`}>
                 <span className={styles.selectLabel}>View</span>
                 <select
                   className={styles.select}
@@ -661,7 +661,7 @@ export default function RecruiterScreeningPage() {
                 </select>
               </label>
 
-              <label className={styles.selectWrap}>
+              <label className={`${styles.selectWrap} ${styles.selectWrapJob}`}>
                 <span className={styles.selectLabel}>Job</span>
                 <select
                   className={styles.select}
@@ -679,6 +679,68 @@ export default function RecruiterScreeningPage() {
                   ))}
                 </select>
               </label>
+
+              {activeJob && summary ? (
+                <div className={styles.inlineControls}>
+                  <div className={styles.thresholdCluster}>
+                    <span className={styles.thresholdLabel}>Shortlist threshold</span>
+                    <input
+                      id="screening-threshold"
+                      type="number"
+                      min={0}
+                      max={100}
+                      className={styles.thresholdInput}
+                      value={threshold}
+                      onChange={(event) => setThreshold(event.target.value)}
+                      disabled={activeJobExpired || isUpdatingJob}
+                    />
+                    <span className={styles.thresholdSuffix}>/100</span>
+                    <button
+                      className="btn btn--outline btn--sm"
+                      disabled={activeJobExpired || isUpdatingJob}
+                      onClick={() => void handleSaveThreshold()}
+                    >
+                      {isUpdatingJob ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.infoButton}
+                      title="Threshold stays editable while the job is active. Once the job expires, shortlist and reject actions unlock instead."
+                    >
+                      <InfoIcon />
+                    </button>
+                  </div>
+
+                  <div className={styles.actionCluster}>
+                    {canRunScreening ? (
+                      <button
+                        className="btn btn--primary btn--sm"
+                        disabled={isBusy}
+                        onClick={() => void handleTrigger()}
+                      >
+                        <RefreshIcon />
+                        {isTriggering
+                          ? 'Running...'
+                          : activeJob.auto_shortlist
+                            ? `Rerun AI review (${missingCount} missing)`
+                            : 'Run AI screening'}
+                      </button>
+                    ) : null}
+
+                    {canApproveAiRecommendations ? (
+                      <button
+                        className="btn btn--primary btn--sm"
+                        disabled={isBusy}
+                        onClick={() => void handleApproveAiRecommendations()}
+                      >
+                        {isFinalizing
+                          ? 'Approving...'
+                          : `Approve AI recommendations (${aboveThresholdCount} above threshold)`}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -688,45 +750,57 @@ export default function RecruiterScreeningPage() {
         ) : activeJob && summary ? (
           <>
             <div className={styles.contextMeta}>
-              <div className={styles.badgeGroup}>
-                <span
-                  className={`${styles.statusBadge} ${activeJob.auto_shortlist ? styles.badgeBlue : styles.badgeSlate}`}
-                >
-                  <span className={styles.statusDot} />
-                  {activeJob.auto_shortlist ? 'Auto-shortlist on' : 'Manual review'}
-                </span>
-                <span
-                  className={`${styles.statusBadge} ${
-                    summary.shortlist_status === 'completed'
-                      ? styles.badgeGreen
-                      : summary.shortlist_status === 'failed'
-                        ? styles.badgeRed
-                        : summary.shortlist_status === 'in_progress'
-                          ? styles.badgeAmber
-                          : styles.badgeSlate
-                  }`}
-                >
-                  <span className={styles.statusDot} />
-                  {summary.shortlist_status === 'completed'
-                    ? 'Screening complete'
-                    : summary.shortlist_status === 'in_progress'
-                      ? 'AI review running'
-                      : summary.shortlist_status === 'failed'
-                        ? 'Screening failed'
-                        : 'Not started'}
-                </span>
-                <span
-                  className={`${styles.statusBadge} ${activeJobExpired ? styles.badgeTeal : styles.badgeAmber}`}
-                >
-                  <span className={styles.statusDot} />
-                  {activeJobExpired ? 'Job expired' : 'Job active'}
-                </span>
-                {summary.final_shortlist_completed ? (
-                  <span className={`${styles.statusBadge} ${styles.badgeGreen}`}>
-                    <span className={styles.statusDot} />
-                    Shortlist finalized
+              <div className={styles.statusList}>
+                <div className={styles.statusItem}>
+                  <span className={styles.statusLabel}>Review Mode:</span>
+                  <span
+                    className={`${styles.statusValue} ${activeJob.auto_shortlist ? styles.statusValueBlue : styles.statusValueSlate}`}
+                  >
+                    {activeJob.auto_shortlist ? 'Auto-shortlist' : 'Manual review'}
                   </span>
-                ) : null}
+                </div>
+                <div className={styles.statusItem}>
+                  <span className={styles.statusLabel}>Screening Status:</span>
+                  <span
+                    className={`${styles.statusValue} ${
+                      summary.shortlist_status === 'completed'
+                        ? styles.statusValueGreen
+                        : summary.shortlist_status === 'failed'
+                          ? styles.statusValueRed
+                          : summary.shortlist_status === 'in_progress'
+                            ? styles.statusValueAmber
+                            : styles.statusValueSlate
+                    }`}
+                  >
+                    {summary.shortlist_status === 'completed'
+                      ? 'Complete'
+                      : summary.shortlist_status === 'in_progress'
+                        ? 'Running'
+                        : summary.shortlist_status === 'failed'
+                          ? 'Failed'
+                          : 'Not started'}
+                  </span>
+                </div>
+                <div className={styles.statusItem}>
+                  <span className={styles.statusLabel}>Job Status:</span>
+                  <span
+                    className={`${styles.statusValue} ${activeJobExpired ? styles.statusValueTeal : styles.statusValueAmber}`}
+                  >
+                    {activeJobExpired ? 'Expired' : 'Active'}
+                  </span>
+                </div>
+                <div className={styles.statusItem}>
+                  <span className={styles.statusLabel}>Shortlist:</span>
+                  <span
+                    className={`${styles.statusValue} ${
+                      summary.final_shortlist_completed
+                        ? styles.statusValueGreen
+                        : styles.statusValueSlate
+                    }`}
+                  >
+                    {summary.final_shortlist_completed ? 'Finalized' : 'In progress'}
+                  </span>
+                </div>
               </div>
 
               <div className={styles.statsGroup}>
@@ -742,81 +816,6 @@ export default function RecruiterScreeningPage() {
                 <span className={`${styles.statPill} ${styles.statPillAlert}`}>
                   <strong>{missingCount}</strong> missing AI review
                 </span>
-              </div>
-            </div>
-
-            <div className={styles.actionStrip}>
-              <div className={styles.thresholdCluster}>
-                <span className={styles.thresholdLabel}>Shortlist threshold</span>
-                <input
-                  id="screening-threshold"
-                  type="number"
-                  min={0}
-                  max={100}
-                  className={styles.thresholdInput}
-                  value={threshold}
-                  onChange={(event) => setThreshold(event.target.value)}
-                  disabled={activeJobExpired || isUpdatingJob}
-                />
-                <span className={styles.thresholdSuffix}>/100</span>
-                <button
-                  className="btn btn--outline btn--sm"
-                  disabled={activeJobExpired || isUpdatingJob}
-                  onClick={() => void handleSaveThreshold()}
-                >
-                  {isUpdatingJob ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  type="button"
-                  className={styles.infoButton}
-                  title="Threshold stays editable while the job is active. Once the job expires, shortlist and reject actions unlock instead."
-                >
-                  <InfoIcon />
-                </button>
-              </div>
-
-              <div className={styles.actionCluster}>
-                {canRunScreening ? (
-                  <button
-                    className="btn btn--primary btn--sm"
-                    disabled={isBusy}
-                    onClick={() => void handleTrigger()}
-                  >
-                    <RefreshIcon />
-                    {isTriggering
-                      ? 'Running...'
-                      : activeJob.auto_shortlist
-                        ? `Rerun AI review (${missingCount} missing)`
-                        : 'Run AI screening'}
-                  </button>
-                ) : null}
-
-                {canApproveAiRecommendations ? (
-                  <button
-                    className="btn btn--primary btn--sm"
-                    disabled={isBusy}
-                    onClick={() => void handleApproveAiRecommendations()}
-                  >
-                    {isFinalizing
-                      ? 'Approving...'
-                      : `Approve AI recommendations (${aboveThresholdCount} above threshold)`}
-                  </button>
-                ) : null}
-
-                {summary.final_shortlist_completed ? (
-                  <div className={styles.finalizedBanner}>
-                    <LockIcon />
-                    Shortlist finalized
-                  </div>
-                ) : (
-                  <button
-                    className={`btn btn--sm ${canApproveAiRecommendations ? 'btn--outline' : 'btn--primary'}`}
-                    disabled={isBusy}
-                    onClick={() => void handleCompleteShortlist()}
-                  >
-                    {isFinalizing ? 'Completing...' : 'Complete shortlist'}
-                  </button>
-                )}
               </div>
             </div>
           </>
@@ -908,12 +907,23 @@ export default function RecruiterScreeningPage() {
                   Missing review
                 </button>
               </div>
-            </div>
 
-            <div className={styles.tableSummary}>
-              {filteredApplications.length === applications.length
-                ? `${filteredApplications.length} candidates loaded`
-                : `${filteredApplications.length} of ${applications.length} candidates shown`}
+              <div className={styles.tableHeaderActions}>
+                {summary?.final_shortlist_completed ? (
+                  <div className={styles.finalizedBanner}>
+                    <LockIcon />
+                    Shortlist finalized
+                  </div>
+                ) : (
+                  <button
+                    className={`btn btn--sm ${canApproveAiRecommendations ? 'btn--outline' : 'btn--primary'}`}
+                    disabled={isBusy}
+                    onClick={() => void handleCompleteShortlist()}
+                  >
+                    {isFinalizing ? 'Completing...' : 'Complete shortlist'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className={styles.tableShell}>

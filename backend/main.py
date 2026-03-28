@@ -8,9 +8,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.tasks import sync_daemon_loop
 from app.core.database import engine, get_db
 from app.core.exception_handlers import register_exception_handlers
+from app.core.job_expiry_scheduler import (
+    create_job_expiry_scheduler,
+    run_job_expiry_startup_check,
+)
+from app.core.tasks import sync_daemon_loop
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 
@@ -41,11 +45,15 @@ async def lifespan(app: FastAPI):
     await recruiter_chat_runtime.start()
     await outreach_runtime.start()
     await redis_service.connect()
+    await run_job_expiry_startup_check()
 
     daemon_task = asyncio.create_task(sync_daemon_loop())
+    job_expiry_scheduler = create_job_expiry_scheduler()
+    job_expiry_scheduler.start()
 
     yield
 
+    job_expiry_scheduler.shutdown(wait=False)
     daemon_task.cancel()
     try:
         await daemon_task

@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -39,6 +39,10 @@ def _default_expires_at() -> datetime:
     return _utcnow() + timedelta(weeks=1)
 
 
+def _today_utc() -> date:
+    return _utcnow().date()
+
+
 def _effective_job_status(job: Job) -> JobStatus:
     if (
         job.status == JobStatus.active
@@ -72,6 +76,54 @@ def _background_database_url(db: AsyncSession) -> str:
         return str(bind.url)
 
     raise RuntimeError("Database bind is not configured for background task execution.")
+
+
+async def expire_due_jobs(db: AsyncSession) -> int:
+    """
+    Expire all jobs whose expiry date is today or earlier.
+
+    This is date-based instead of timestamp-based so that a job with an
+    expires_at date of "today" is expired on that day by the scheduled task.
+    """
+    today = _today_utc()
+    result = await db.execute(
+        select(Job).where(
+            Job.status == JobStatus.active,
+            Job.expires_at.is_not(None),
+            func.date(Job.expires_at) <= today,
+        )
+    )
+    jobs = result.scalars().all()
+    if not jobs:
+        return 0
+
+    company_ids: set[uuid.UUID] = set()
+    event_ids: list[uuid.UUID] = []
+
+    for job in jobs:
+        job.status = JobStatus.expired
+        company_ids.add(job.company_id)
+        event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
+        db.add(event)
+        event_ids.append(event.id)
+
+    await db.commit()
+
+    for job in jobs:
+        await redis_service.delete(f"job:detail:{job.id}")
+    for company_id in company_ids:
+        await redis_service.delete(f"jobs:company:{company_id}")
+    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+
+    for event_id in event_ids:
+        await process_sync_event(event_id)
+
+    logger.info(
+        "Expired {} due job(s) for {} compan(y/ies).",
+        len(jobs),
+        len(company_ids),
+    )
+    return len(jobs)
 
 
 def _job_list_item_from_row(
@@ -444,6 +496,11 @@ async def update_job(
 
     for field, value in update_data.items():
         setattr(job, field, value)
+
+    if job.status == JobStatus.expired and (
+        job.expires_at is None or job.expires_at > _utcnow()
+    ):
+        job.expires_at = _utcnow()
 
     if (
         job.status == JobStatus.active
