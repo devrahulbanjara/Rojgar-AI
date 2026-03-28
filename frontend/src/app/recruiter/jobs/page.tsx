@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
@@ -66,6 +66,18 @@ function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'
   return `Up to ${currency} ${max!.toLocaleString()}`
 }
 
+function getExpiryMeta(job: JobListItem): { label: string; color: string } | null {
+  if (!job.expires_at) return null
+
+  return {
+    label:
+      job.status === 'expired'
+        ? `Expired ${formatDate(job.expires_at)}`
+        : `Expires ${formatDate(job.expires_at)}`,
+    color: job.status === 'expired' ? '#dc2626' : '#6b7280',
+  }
+}
+
 function getAIDraftStatusTone(status: string): JobStatus {
   if (status === 'approved') return 'active'
   if (status === 'rejected') return 'expired'
@@ -121,6 +133,8 @@ function RecruiterJobCard({
   onStatusChange: (status: JobStatus) => void
   isUpdatingStatus: boolean
 }) {
+  const expiryMeta = getExpiryMeta(job)
+
   return (
     <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
       <div className="company-job-card__top-row">
@@ -179,6 +193,15 @@ function RecruiterJobCard({
             <Calendar size={13} aria-hidden="true" />
             <span>Posted {formatDate(job.created_at)}</span>
           </span>
+          {expiryMeta ? (
+            <span
+              className="company-job-card__posted-date"
+              style={{ '--expires-color': expiryMeta.color } as CSSProperties}
+            >
+              <Calendar size={13} aria-hidden="true" />
+              <span>{expiryMeta.label}</span>
+            </span>
+          ) : null}
         </div>
 
         <div className="company-job-card__actions">

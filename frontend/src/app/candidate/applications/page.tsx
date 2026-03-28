@@ -3,6 +3,7 @@
 import { type CSSProperties, useMemo, useState } from 'react'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 import {
   type ApplicationStatus,
@@ -230,6 +231,8 @@ function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
 }
 
 export default function ApplicationsPage() {
+  const searchParams = useSearchParams()
+  const requestedApplicationId = searchParams.get('application')
   const [activeStage, setActiveStage] = useState<StatusFilterKey>('all')
   const [selectedMode, setSelectedMode] = useState<WorkModeFilter>('all')
   const [searchInput, setSearchInput] = useState('')
@@ -275,11 +278,13 @@ export default function ApplicationsPage() {
   const selectedApplication = useMemo(() => {
     if (filteredApplications.length === 0) return null
 
+    const preferredApplicationId = selectedApplicationId ?? requestedApplicationId
+
     return (
-      filteredApplications.find((application) => application.id === selectedApplicationId) ??
+      filteredApplications.find((application) => application.id === preferredApplicationId) ??
       filteredApplications[0]
     )
-  }, [filteredApplications, selectedApplicationId])
+  }, [filteredApplications, requestedApplicationId, selectedApplicationId])
 
   function handleSearch(event?: React.FormEvent) {
     if (event) event.preventDefault()

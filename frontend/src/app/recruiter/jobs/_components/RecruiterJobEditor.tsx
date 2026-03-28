@@ -21,6 +21,7 @@ export interface RecruiterJobFormState {
   salary_max: string
   currency: string
   status: JobStatus
+  expires_at: string
   auto_shortlist: boolean
   overview: string
   responsibilities: string[]
@@ -37,6 +38,7 @@ export const EMPTY_JOB_FORM: RecruiterJobFormState = {
   salary_max: '',
   currency: 'NPR',
   status: 'draft',
+  expires_at: '',
   auto_shortlist: false,
   overview: '',
   responsibilities: [],
@@ -63,6 +65,7 @@ export function formFromDetail(detail: JobDetail): RecruiterJobFormState {
     salary_max: detail.salary_max != null ? String(detail.salary_max) : '',
     currency: detail.currency,
     status: detail.status,
+    expires_at: detail.expires_at ? toDateTimeLocalValue(detail.expires_at) : '',
     auto_shortlist: detail.auto_shortlist ?? false,
     overview: detail.overview ?? '',
     responsibilities: detail.responsibilities ?? [],
@@ -75,6 +78,7 @@ export function formFromDetail(detail: JobDetail): RecruiterJobFormState {
 export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
   const salary_min = form.salary_min ? Number(form.salary_min) : null
   const salary_max = form.salary_max ? Number(form.salary_max) : null
+  const expires_at = form.expires_at ? new Date(form.expires_at).toISOString() : undefined
 
   return {
     title: form.title,
@@ -84,6 +88,7 @@ export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
     ...(salary_max !== null && { salary_max }),
     currency: form.currency || 'NPR',
     status: form.status,
+    ...(expires_at && { expires_at }),
     auto_shortlist: form.auto_shortlist,
     ...(form.overview && { overview: form.overview }),
     responsibilities: form.responsibilities,
@@ -91,6 +96,12 @@ export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
     preferred_qualifications: form.preferred_qualifications,
     benefits: form.benefits,
   }
+}
+
+function toDateTimeLocalValue(iso: string): string {
+  const date = new Date(iso)
+  const timezoneOffset = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16)
 }
 
 function ListInput({
@@ -213,27 +224,72 @@ export default function RecruiterJobEditor({
   return (
     <form className="job-editor-form" onSubmit={handleSubmit} noValidate>
       <div className="job-editor-form__sections">
-        <div className="job-ai-form__grid">
-          <div className="job-ai-field job-ai-field--manual">
-            <label className="job-ai-label">
-              Job Title <span className="auth__required">*</span>
-            </label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(event) => set('title', event.target.value)}
-              placeholder="e.g. Senior Frontend Engineer"
-              className={`job-ai-input${errors.title ? ' auth__input--error' : ''}`}
-              disabled={isLoading}
-            />
-            {errors.title ? (
-              <span className="auth__error-msg" role="alert">
-                {errors.title}
-              </span>
-            ) : null}
-          </div>
+        <div className="job-ai-field job-ai-field--manual job-editor-form__field job-editor-form__field--full">
+          <label className="job-ai-label">
+            Job Title <span className="auth__required">*</span>
+          </label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(event) => set('title', event.target.value)}
+            placeholder="e.g. Senior Frontend Engineer"
+            className={`job-ai-input${errors.title ? ' auth__input--error' : ''}`}
+            disabled={isLoading}
+          />
+          {errors.title ? (
+            <span className="auth__error-msg" role="alert">
+              {errors.title}
+            </span>
+          ) : null}
+        </div>
 
-          <div className="job-ai-field job-ai-field--manual">
+        <div className="job-ai-field job-ai-field--manual">
+          <label className="job-ai-label">
+            Job Overview <span className="auth__optional">(optional)</span>
+          </label>
+          <textarea
+            value={form.overview}
+            onChange={(event) => set('overview', event.target.value)}
+            placeholder="Brief summary of the role and team..."
+            rows={6}
+            className="job-ai-textarea"
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="job-ai-form__stack">
+          <ListInput
+            label="Responsibilities"
+            placeholder="Add a new responsibility item"
+            items={form.responsibilities}
+            disabled={isLoading}
+            onChange={(value) => set('responsibilities', value)}
+          />
+          <ListInput
+            label="Requirements"
+            placeholder="Add a new requirement item"
+            items={form.requirements}
+            disabled={isLoading}
+            onChange={(value) => set('requirements', value)}
+          />
+          <ListInput
+            label="Preferred Qualifications"
+            placeholder="Add a new preferred qualification item"
+            items={form.preferred_qualifications}
+            disabled={isLoading}
+            onChange={(value) => set('preferred_qualifications', value)}
+          />
+          <ListInput
+            label="Benefits"
+            placeholder="Add a new benefit item"
+            items={form.benefits}
+            disabled={isLoading}
+            onChange={(value) => set('benefits', value)}
+          />
+        </div>
+
+        <div className="job-ai-form__grid">
+          <div className="job-ai-field job-ai-field--manual job-editor-form__field">
             <label className="job-ai-label">Location</label>
             <input
               type="text"
@@ -245,7 +301,7 @@ export default function RecruiterJobEditor({
             />
           </div>
 
-          <div className="job-ai-field job-ai-field--manual">
+          <div className="job-ai-field job-ai-field--manual job-editor-form__field">
             <label className="job-ai-label">Work Type</label>
             <select
               value={form.location_type}
@@ -259,18 +315,17 @@ export default function RecruiterJobEditor({
             </select>
           </div>
 
-          <div className="job-ai-field job-ai-field--manual">
-            <label className="job-ai-label">Status</label>
-            <select
-              value={form.status}
-              onChange={(event) => set('status', event.target.value as JobStatus)}
+          <div className="job-ai-field job-ai-field--manual job-editor-form__field">
+            <label className="job-ai-label">
+              Expiry Date & Time <span className="auth__optional">(optional)</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={form.expires_at}
+              onChange={(event) => set('expires_at', event.target.value)}
               className="job-ai-input"
               disabled={isLoading}
-            >
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="expired">Expired</option>
-            </select>
+            />
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__toggle-field">
@@ -343,51 +398,20 @@ export default function RecruiterJobEditor({
               </span>
             ) : null}
           </div>
-        </div>
 
-        <div className="job-ai-field job-ai-field--manual">
-          <label className="job-ai-label">
-            Job Overview <span className="auth__optional">(optional)</span>
-          </label>
-          <textarea
-            value={form.overview}
-            onChange={(event) => set('overview', event.target.value)}
-            placeholder="Brief summary of the role and team..."
-            rows={6}
-            className="job-ai-textarea"
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="job-ai-form__stack">
-          <ListInput
-            label="Responsibilities"
-            placeholder="Add a new responsibility item"
-            items={form.responsibilities}
-            disabled={isLoading}
-            onChange={(value) => set('responsibilities', value)}
-          />
-          <ListInput
-            label="Requirements"
-            placeholder="Add a new requirement item"
-            items={form.requirements}
-            disabled={isLoading}
-            onChange={(value) => set('requirements', value)}
-          />
-          <ListInput
-            label="Preferred Qualifications"
-            placeholder="Add a new preferred qualification item"
-            items={form.preferred_qualifications}
-            disabled={isLoading}
-            onChange={(value) => set('preferred_qualifications', value)}
-          />
-          <ListInput
-            label="Benefits"
-            placeholder="Add a new benefit item"
-            items={form.benefits}
-            disabled={isLoading}
-            onChange={(value) => set('benefits', value)}
-          />
+          <div className="job-ai-field job-ai-field--manual job-editor-form__field">
+            <label className="job-ai-label">Status</label>
+            <select
+              value={form.status}
+              onChange={(event) => set('status', event.target.value as JobStatus)}
+              className="job-ai-input"
+              disabled={isLoading}
+            >
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
         </div>
       </div>
 

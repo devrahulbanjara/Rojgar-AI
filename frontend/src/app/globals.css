@@ -257,112 +257,216 @@ body {
   flex: 1;
   min-height: 0;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.recruiter-chat-copilot {
+.recruiter-chat-thread-shell {
   flex: 1;
-  height: 100%;
-}
-
-.copilotKitChat {
-  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: transparent;
 }
 
-.copilotKitMessagesContainer,
-.copilotKitMessages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem 1.1rem 0.9rem;
+.recruiter-chat-message-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.copilotKitMessagesContainer > *,
-.copilotKitMessages > * {
-  width: min(100%, 920px);
-  margin-left: auto;
-  margin-right: auto;
+.recruiter-chat-message-avatar--assistant {
+  background: rgba(0, 112, 243, 0.1);
+  color: #0070f3;
 }
 
-.copilotKitMessagesContainer > .copilotKitMessage,
-.copilotKitMessages > .copilotKitMessage {
-  width: fit-content;
+.recruiter-chat-message-avatar--user {
+  background: #0070f3;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.copilotKitMessage.copilotKitAssistantMessage {
-  background: #f1f5f9;
-  border: 0;
-  border-radius: 12px;
+.recruiter-chat-assistant-bubble {
+  max-width: min(42rem, calc(100vw - 10rem));
+  border-radius: 18px 18px 18px 8px;
+  background: #f8fafc;
+  color: var(--color-text, #111827);
   padding: 12px 16px;
   font-size: 0.92rem;
   line-height: 1.6;
-  color: var(--color-text, #111827);
-  max-width: 75%;
-  margin-right: auto;
-  margin-left: 0;
-  margin-bottom: 1.2rem;
-  text-align: left;
-  position: relative;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.copilotKitMessage.copilotKitUserMessage {
+.recruiter-chat-scroll-view {
+  flex: 1;
+  min-height: 0;
+  padding: 0 1.1rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.recruiter-chat-message-view {
+  padding: 1rem 1.5rem;
+}
+
+.recruiter-chat-message-row {
+  margin-bottom: 0.75rem;
+}
+
+.recruiter-chat-assistant-bubble--cursor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+.recruiter-chat-cursor-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.recruiter-chat-cursor-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #94a3b8;
+  animation: recruiter-chat-cursor-bounce 1.25s infinite ease-in-out;
+}
+
+.recruiter-chat-cursor-dot--2 {
+  animation-delay: 0.16s;
+}
+
+.recruiter-chat-cursor-dot--3 {
+  animation-delay: 0.32s;
+}
+
+.recruiter-chat-cursor-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.recruiter-chat-assistant-row,
+.recruiter-chat-user-row {
+  width: min(100%, 920px);
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+}
+
+.recruiter-chat-assistant-row {
+  align-items: flex-start;
+}
+
+.recruiter-chat-user-message {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.recruiter-chat-user-row {
+  justify-content: flex-end;
+}
+
+.recruiter-chat-user-bubble {
+  max-width: 75%;
+  border-radius: 18px 18px 6px 18px;
   background: #2563eb;
   color: #ffffff;
-  border-radius: 12px;
   padding: 12px 16px;
   font-size: 0.92rem;
   line-height: 1.6;
-  max-width: 75%;
-  margin-left: auto;
-  margin-right: 0;
-  text-align: right;
-  align-self: flex-end;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.copilotKitMessage .copilotKitMarkdown {
-  margin: 0;
+.recruiter-chat-tool-panel {
+  width: min(100%, 920px);
 }
 
-.copilotKitInput {
+.recruiter-chat-composer {
+  flex-shrink: 0;
+  padding: 0 1rem 0.75rem;
+}
+
+.recruiter-chat-input-shell {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  min-height: 0;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  padding: 0.55rem 0.8rem;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: none;
 }
 
-.copilotKitInput textarea {
-  font-size: 0.92rem;
-  resize: none;
-}
-
-.copilotKitInput:focus-within {
+.recruiter-chat-input-shell:focus-within {
   border-color: #0070f3;
   box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.12);
 }
 
-.copilotKitInputContainer {
-  padding: 0.25rem 1.1rem 12px;
+.recruiter-chat-input-textarea {
+  flex: 1;
+  min-height: 0;
+  padding: 0.38rem 1rem;
+  font-size: 0.88rem;
+  resize: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  line-height: 1.25;
+  overflow-y: auto;
 }
 
-.copilotKitInputContainer > * {
-  width: min(100%, 920px);
-  margin-left: auto;
-  margin-right: auto;
+.recruiter-chat-send-button {
+  width: 30px;
+  height: 30px;
+  margin-right: 0.4rem;
+  margin-bottom: 0.25rem;
+  border-radius: 999px;
+  background-color: #0070f3;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0;
+  cursor: pointer;
 }
 
-.copilotKitBranding {
-  display: none;
+.recruiter-chat-send-button:hover {
+  background-color: #005fd0;
+  color: #ffffff;
 }
 
-.copilotKitToolCall,
-.copilotKitActionExecutionMessage {
-  width: 100%;
-  margin-top: 0.55rem;
+.recruiter-chat-send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recruiter-chat-disclaimer {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b7280);
 }
 
 .recruiter-chat-markdown-paragraph {
@@ -405,18 +509,13 @@ body {
   text-underline-offset: 2px;
 }
 
-.copilotKitMessage .inProgressLabel,
-.copilotkit-response-label {
-  display: none !important;
-}
-
 .recruiter-chat-card-shell {
   width: 100%;
 }
 
 .recruiter-chat-card-count {
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted, #6b7280);
 }
 
@@ -439,6 +538,36 @@ body {
 .recruiter-chat-card--candidate:hover {
   transform: translateY(-1px);
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.recruiter-chat-card--candidate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  width: min(100%, 320px);
+  min-height: 58px;
+  padding: 0.6rem 0.7rem;
+  text-align: left;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.recruiter-chat-card--candidate-row:hover,
+.recruiter-chat-card--job-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.recruiter-chat-card--job-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  width: min(100%, 420px);
+  min-height: 0;
+  padding: 0.8rem 0.9rem;
+  text-align: left;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
 .recruiter-chat-card--salary {
@@ -471,6 +600,176 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.recruiter-chat-candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.recruiter-chat-candidate-row__main,
+.recruiter-chat-candidate-row__job,
+.recruiter-chat-candidate-row__meta {
+  display: flex;
+  align-items: center;
+}
+
+.recruiter-chat-candidate-row__main {
+  min-width: 0;
+  gap: 0.7rem;
+  flex: 1;
+}
+
+.recruiter-chat-avatar--candidate-row {
+  width: 36px;
+  height: 36px;
+}
+
+.recruiter-chat-candidate-row__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.recruiter-chat-candidate-row__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recruiter-chat-candidate-row__job {
+  gap: 0.38rem;
+  margin-top: 0.1rem;
+  font-size: 0.76rem;
+  color: var(--color-text-muted, #6b7280);
+  min-width: 0;
+}
+
+.recruiter-chat-candidate-row__job span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recruiter-chat-candidate-row__meta {
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.recruiter-chat-candidate-row__score {
+  font-size: 0.74rem;
+  color: var(--color-text-muted, #6b7280);
+  white-space: nowrap;
+}
+
+.recruiter-chat-candidate-row__chevron {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.recruiter-chat-job-row__main,
+.recruiter-chat-job-row__location,
+.recruiter-chat-job-row__salary,
+.recruiter-chat-job-row__meta {
+  display: flex;
+  align-items: center;
+}
+
+.recruiter-chat-job-row__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.recruiter-chat-job-row__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.recruiter-chat-job-row__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.recruiter-chat-job-row__meta-copy {
+  margin-top: 0.35rem;
+}
+
+.recruiter-chat-job-row__summary {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-muted, #6b7280);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recruiter-chat-job-row__meta-copy--chips,
+.recruiter-chat-job-row__meta-copy--details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+}
+
+.recruiter-chat-job-row__location {
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  color: var(--color-text-muted, #6b7280);
+  min-width: 0;
+}
+
+.recruiter-chat-job-row__location span {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.recruiter-chat-job-row__salary {
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  color: var(--color-text-muted, #6b7280);
+  min-width: 0;
+}
+
+.recruiter-chat-job-row__salary span {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.recruiter-chat-job-row__meta {
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+  align-self: center;
+}
+
+.recruiter-chat-job-row__cta {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #2563eb;
+  white-space: nowrap;
+}
+
+.recruiter-chat-job-row__chevron {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.recruiter-chat-combo-card {
+  margin-top: 0.55rem;
 }
 
 .recruiter-chat-candidate-top,
@@ -976,50 +1275,6 @@ body {
   color: #0070f3 !important;
 }
 
-.copilotKitMessage.copilotKitAssistantMessage .copilotKitMessageControls {
-  position: absolute;
-  bottom: -22px;
-  left: 0.5rem;
-  opacity: 0;
-  gap: 0.15rem;
-  padding-top: 0;
-  margin-top: 6px;
-}
-
-.copilotKitMessageControlButton {
-  width: 18px;
-  height: 18px;
-  color: #9ca3af;
-  margin-top: 6px;
-}
-
-.copilotKitMessageControlButton svg {
-  width: 14px;
-  height: 14px;
-}
-
-.copilotKitMessage.copilotKitAssistantMessage:hover .copilotKitMessageControls,
-.copilotKitMessage.copilotKitAssistantMessage .copilotKitMessageControls.currentMessage {
-  opacity: 1;
-}
-
-.copilotKitInputControlButton:not([disabled]) {
-  color: #0070f3;
-}
-
-.copilotKitInputControlButton[data-test-id='copilot-chat-ready']:not([disabled]) {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background-color: #0070f3;
-  color: #ffffff;
-}
-
-.copilotKitInputControlButton[data-test-id='copilot-chat-ready']:not([disabled]):hover {
-  background-color: #005fd0;
-  color: #ffffff;
-}
-
 @keyframes recruiter-chat-pulse {
   0%,
   100% {
@@ -1037,6 +1292,20 @@ body {
   }
 }
 
+@keyframes recruiter-chat-cursor-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
 @media (max-width: 1023px) {
   .recruiter-chat-page {
     width: 100%;
@@ -1051,11 +1320,15 @@ body {
     display: block;
   }
 
-  .copilotKitMessagesContainer,
-  .copilotKitMessages,
-  .copilotKitInputContainer {
-    padding-left: 0.9rem;
-    padding-right: 0.9rem;
+  .recruiter-chat-thread-shell,
+  .recruiter-chat-input-shell {
+    width: 100%;
+  }
+
+  .recruiter-chat-scroll-view,
+  .recruiter-chat-message-view {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
   }
 }
 
@@ -1065,13 +1338,20 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .copilotKitMessagesContainer,
-  .copilotKitMessages {
-    padding-inline: 0.85rem;
+  .recruiter-chat-user-bubble {
+    max-width: 92%;
   }
 
-  .copilotKitAssistantMessage,
-  .copilotKitUserMessage {
-    max-width: 92%;
+  .recruiter-chat-message-view--empty::before,
+  .recruiter-chat-assistant-bubble {
+    max-width: calc(100vw - 6rem);
+  }
+
+  .recruiter-chat-card--candidate-row {
+    width: 100%;
+  }
+
+  .recruiter-chat-candidate-row__meta {
+    gap: 0.4rem;
   }
 }

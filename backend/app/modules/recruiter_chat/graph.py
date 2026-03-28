@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated, Any, Literal, TypedDict
 
 from langchain_core.messages import (
@@ -11,11 +12,13 @@ from langchain_core.messages import (
     SystemMessage,
     ToolMessage,
 )
+from langchain_core.runnables import RunnableConfig
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.types import interrupt
+from loguru import logger
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
@@ -33,6 +36,7 @@ class RecruiterChatState(TypedDict):
     recruiter_id: str
     company_id: str
     company_name: str
+    thread_id: str
     session_id: str
     pending_edit: dict[str, Any] | None
     human_decision: dict[str, Any] | None
@@ -89,13 +93,19 @@ def _latest_tool_payloads(messages: list[AnyMessage]) -> list[dict[str, Any]]:
 def _determine_ui_type(
     tool_payload: dict[str, Any] | None,
 ) -> Literal[
-    "text", "candidate_list", "salary_info", "candidate_detail", "job_edit_preview"
+    "text",
+    "candidate_list",
+    "job_list",
+    "salary_info",
+    "candidate_detail",
+    "job_edit_preview",
 ]:
     if not tool_payload or not tool_payload.get("ok"):
         return "text"
     hint = tool_payload.get("ui_type_hint")
     if hint in {
         "candidate_list",
+        "job_list",
         "salary_info",
         "candidate_detail",
         "job_edit_preview",
@@ -105,6 +115,8 @@ def _determine_ui_type(
     tool_name = tool_payload.get("tool")
     if tool_name == "search_company_candidates":
         return "candidate_list"
+    if tool_name in {"list_company_jobs", "find_company_job"}:
+        return "job_list"
     if tool_name == "research_salary":
         return "salary_info"
     if tool_name == "get_candidate_detail":
@@ -154,6 +166,24 @@ def _prune_active_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
     return [*system_messages, *active_messages]
 
 
+async def _touch_session(session_id: str | None) -> None:
+    if not session_id:
+        return
+
+    try:
+        parsed_session_id = uuid.UUID(str(session_id))
+    except ValueError:
+        return
+
+    async with AsyncSessionLocal() as db:
+        session = await db.get(RecruiterChatSession, parsed_session_id)
+        if session is None:
+            return
+
+        session.last_interaction_at = datetime.now(timezone.utc)
+        await db.commit()
+
+
 def build_recruiter_chat_graph():
     llm = ChatGroq(
         model=settings.groq_model_recruiter_chat,
@@ -161,7 +191,17 @@ def build_recruiter_chat_graph():
         temperature=0,
     ).bind_tools(MODEL_TOOLS)
 
-    async def validate_context_node(state: RecruiterChatState) -> dict[str, Any]:
+    async def validate_context_node(
+        state: RecruiterChatState, config: RunnableConfig
+    ) -> dict[str, Any]:
+        configurable_thread = config.get("configurable", {}).get("thread_id", "none")
+        state_thread = state.get("thread_id", "none")
+        logger.info(
+            "configurable thread_id: {} | state thread_id: {}",
+            configurable_thread,
+            state_thread,
+        )
+
         raw_session_id = state.get("session_id")
         raw_company_id = state.get("company_id")
         raw_recruiter_id = state.get("recruiter_id")
@@ -262,6 +302,8 @@ def build_recruiter_chat_graph():
         }
 
     async def finalize_response_node(state: RecruiterChatState) -> dict[str, Any]:
+        await _touch_session(state.get("session_id"))
+
         if state.get("agent_response") is not None:
             text = str(state["agent_response"].get("text") or "").strip()
             should_append_message = bool(text) and (

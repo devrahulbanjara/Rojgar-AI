@@ -1914,6 +1914,16 @@
     padding: $space-4 0;
   }
 
+  &--link {
+    text-decoration: none;
+    color: inherit;
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background: rgba($color-primary, 0.03);
+    }
+  }
+
   &__dot {
     width: 8px;
     height: 8px;
@@ -2450,8 +2460,8 @@
     justify-content: space-between;
     gap: $space-3;
     padding: $space-4 $space-4 $space-3;
-    background: rgba($color-primary, 0.03);
-    border-bottom: 1px solid rgba($color-primary, 0.08);
+    background: $color-white;
+    border-bottom: 1px solid $color-gray-200;
   }
 
   &__notifications-title {
@@ -2502,7 +2512,7 @@
   &__notifications-footer {
     padding: $space-3 $space-4;
     border-top: 1px solid $color-gray-200;
-    background: rgba($color-gray-100, 0.6);
+    background: $color-white;
 
     a {
       display: inline-flex;
@@ -3539,6 +3549,19 @@
   }
 }
 
+.job-editor-form__toggle-field {
+  height: 100%;
+}
+
+.job-editor-form__field {
+  min-width: 0;
+}
+
+.job-editor-form__field--full {
+  grid-column: 1 / -1;
+}
+
+.job-editor-form__salary-field,
 .job-editor-form__toggle-field {
   height: 100%;
 }
@@ -6970,23 +6993,10 @@
   overflow: hidden;
 }
 
-.recruiter-chat-shell--copilot {
+.recruiter-chat-shell--assistant {
   display: flex;
   flex-direction: column;
   padding: $space-3;
-}
-
-.recruiter-copilot-chat {
-  height: 100%;
-  flex: 1;
-  min-height: 0;
-
-  --copilot-kit-primary-color: #0070f3;
-  --copilot-kit-contrast-color: #fff;
-}
-
-.recruiter-copilot-chat.copilotKitChat {
-  height: 100%;
 }
 
 .recruiter-chat-thread {
@@ -8073,54 +8083,19 @@
   overflow: hidden;
 }
 
-.recruiter-chat-shell--copilot {
+.recruiter-chat-shell--assistant {
   flex: 1;
   min-height: 0;
   padding: $space-4;
 }
 
-.recruiter-copilot-chat {
-  --copilot-kit-primary-color: #{$color-primary};
-
+.recruiter-chat-runtime {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
   height: 100%;
   overflow: hidden;
-}
-
-.recruiter-copilot-chat.copilotKitChat,
-.recruiter-copilot-chat .copilotKitMessagesContainer,
-.recruiter-copilot-chat .copilotKitMessages {
-  min-height: 0;
-}
-
-.recruiter-copilot-chat.copilotKitChat,
-.recruiter-copilot-chat .copilotKitMessagesContainer {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: $space-4;
-  min-height: 0;
-  overflow: hidden;
-  padding: $space-2 $space-1 $space-3;
-}
-
-.recruiter-copilot-chat .copilotKitMessages {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: $space-5;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: $space-4;
-}
-
-.recruiter-copilot-chat .copilotKitMessagesFooter {
-  flex-shrink: 0;
-  padding: 0 $space-4 $space-4;
 }
 
 .recruiter-chat-loading,
@@ -9269,11 +9244,7 @@
   }
 
   .recruiter-chat-main,
-  .recruiter-chat-shell,
-  .recruiter-chat-shell--copilot,
-  .recruiter-copilot-chat,
-  .recruiter-copilot-chat.copilotKitChat,
-  .recruiter-copilot-chat .copilotKitMessagesContainer {
+  .recruiter-chat-shell {
     overflow: visible;
     height: auto;
     max-height: none;
@@ -9281,12 +9252,6 @@
 
   .recruiter-chat-shell {
     min-height: calc(100vh - 11rem);
-  }
-
-  .recruiter-copilot-chat .copilotKitMessages,
-  .recruiter-copilot-chat .copilotKitMessagesFooter {
-    padding-left: $space-3;
-    padding-right: $space-3;
   }
 
   .recruiter-chat-salary__header,
@@ -9323,11 +9288,11 @@
     border-radius: $radius-xl;
   }
 
-  .recruiter-chat-shell--copilot {
+  .recruiter-chat-shell--assistant {
     padding: $space-3;
   }
 
-  .recruiter-copilot-chat .copilotKitMessages {
+  .recruiter-chat-runtime .recruiter-chat-scroll-view {
     padding: $space-3 0;
   }
 
@@ -11146,12 +11111,12 @@
 
 .job-ai-form__salary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(90px, 0.8fr);
   gap: $space-3;
 }
 
 .job-ai-form__salary-grid > :last-child {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .job-ai-next-steps__badges {

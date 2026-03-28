@@ -311,17 +311,39 @@ export default function DashNavbar({
                     </div>
                   ) : (
                     <div className="activity-list activity-list--panel">
-                      {notifications.map((activity) => (
-                        <div key={activity.id} className="activity-item activity-item--panel">
-                          <div className="activity-item__dot" />
-                          <div className="activity-item__body">
-                            <p className="activity-item__text">{activity.text}</p>
-                            <div className="activity-item__time">
-                              {formatNotificationTime(activity.time)}
+                      {notifications.map((activity) => {
+                        const href =
+                          isCandidate && 'application_id' in activity && activity.application_id
+                            ? `/candidate/applications?application=${activity.application_id}`
+                            : null
+
+                        const content = (
+                          <>
+                            <div className="activity-item__dot" />
+                            <div className="activity-item__body">
+                              <p className="activity-item__text">{activity.text}</p>
+                              <div className="activity-item__time">
+                                {formatNotificationTime(activity.time)}
+                              </div>
                             </div>
+                          </>
+                        )
+
+                        return href ? (
+                          <Link
+                            key={activity.id}
+                            href={href}
+                            className="activity-item activity-item--panel activity-item--link"
+                            onClick={() => setNotificationsOpen(false)}
+                          >
+                            {content}
+                          </Link>
+                        ) : (
+                          <div key={activity.id} className="activity-item activity-item--panel">
+                            {content}
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>

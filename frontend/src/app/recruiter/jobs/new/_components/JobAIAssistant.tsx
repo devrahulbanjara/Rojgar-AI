@@ -45,7 +45,7 @@ export default function JobAIAssistant({
     <section className="job-ai-card job-ai-assistant dash-card">
       <div className="job-ai-card__header dash-card__header">
         <div>
-          <h1 className="job-ai-card__title dash-card__title">Job Creation Copilot</h1>
+          <h1 className="job-ai-card__title dash-card__title">Job Creation Assistant</h1>
           <p className="job-ai-card__subtitle dash-card__subtitle">
             Start from a prompt, pasted hiring notes, or a previous role. AI drafts, you decide.
           </p>

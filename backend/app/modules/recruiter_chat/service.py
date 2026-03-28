@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import HTTPException, status
 from langchain_core.messages import HumanMessage, ToolMessage
+from langgraph.types import Command
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,8 +17,12 @@ from app.modules.companies.models import Company, CompanyMembership
 from app.modules.recruiter_chat.models import RecruiterChatSession
 from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.recruiter_chat.schemas import (
+    ChatExchangeResponse,
     ChatHistoryMessage,
+    ChatMessageRequest,
     ChatSessionResponse,
+    InterruptPayload,
+    RespondToInterruptRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -83,6 +88,40 @@ def _generate_session_title(message: str) -> str | None:
     return normalized[:50].rstrip(" .,;:-")
 
 
+async def _resolve_session_title_from_history(
+    session: RecruiterChatSession,
+) -> str | None:
+    graph = recruiter_chat_runtime.get_graph()
+    snapshot = await graph.aget_state(
+        {"configurable": {"thread_id": session.thread_id}}
+    )
+    messages = (
+        snapshot.values.get("messages", []) if snapshot and snapshot.values else []
+    )
+
+    for message in messages:
+        if isinstance(message, HumanMessage):
+            return _generate_session_title(_message_content_to_text(message.content))
+
+    return None
+
+
+async def _ensure_session_title(
+    db: AsyncSession, session: RecruiterChatSession
+) -> RecruiterChatSession:
+    if session.title:
+        return session
+
+    derived_title = await _resolve_session_title_from_history(session)
+    if not derived_title:
+        return session
+
+    session.title = derived_title
+    await db.commit()
+    await db.refresh(session)
+    return session
+
+
 async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
     company = await _get_active_company(db, user.id)
     session = RecruiterChatSession(
@@ -121,6 +160,7 @@ async def get_session_response(
     db: AsyncSession, user: User, session_id: uuid.UUID
 ) -> ChatSessionResponse:
     session = await get_session(db, user, session_id)
+    session = await _ensure_session_title(db, session)
     return ChatSessionResponse.model_validate(session)
 
 
@@ -138,6 +178,7 @@ async def list_sessions(db: AsyncSession, user: User) -> list[ChatSessionRespons
         )
     )
     sessions = result.scalars().all()
+    sessions = [await _ensure_session_title(db, session) for session in sessions]
     return [ChatSessionResponse.model_validate(session) for session in sessions]
 
 
@@ -145,6 +186,12 @@ async def get_history(
     db: AsyncSession, user: User, session_id: uuid.UUID
 ) -> list[ChatHistoryMessage]:
     session = await get_session(db, user, session_id)
+    return await _get_history_for_session(session)
+
+
+async def _get_history_for_session(
+    session: RecruiterChatSession,
+) -> list[ChatHistoryMessage]:
     graph = recruiter_chat_runtime.get_graph()
     snapshot = await graph.aget_state(
         {"configurable": {"thread_id": session.thread_id}}
@@ -153,6 +200,79 @@ async def get_history(
         snapshot.values.get("messages", []) if snapshot and snapshot.values else []
     )
     return [_message_to_history_item(message) for message in messages]
+
+
+def _extract_interrupt_payload(result: dict[str, Any]) -> dict[str, Any] | None:
+    interrupts = result.get("__interrupt__")
+
+    if not interrupts:
+        return None
+
+    first = interrupts[0]
+    value = getattr(first, "value", None)
+
+    if value is not None:
+        return value
+
+    if isinstance(first, dict) and "value" in first:
+        return first["value"]
+
+    return None
+
+
+async def send_message(
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+    payload: ChatMessageRequest,
+) -> ChatExchangeResponse:
+    session = await get_session(db, user, session_id)
+    graph = recruiter_chat_runtime.get_graph()
+    config = {"configurable": {"thread_id": session.thread_id}}
+    state_input = {
+        "messages": [HumanMessage(content=payload.message)],
+        "company_id": str(session.company_id),
+        "recruiter_id": str(session.recruiter_id),
+        "thread_id": session.thread_id,
+        "session_id": str(session.id),
+    }
+
+    result = await graph.ainvoke(state_input, config=config)
+    interrupt_payload = _extract_interrupt_payload(result)
+    await touch_session(db, session, title=payload.message)
+    history = await _get_history_for_session(session)
+
+    return ChatExchangeResponse(
+        history=history,
+        interrupt=InterruptPayload.model_validate(interrupt_payload)
+        if interrupt_payload
+        else None,
+    )
+
+
+async def respond_to_interrupt(
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+    decision: RespondToInterruptRequest,
+) -> ChatExchangeResponse:
+    session = await get_session(db, user, session_id)
+    graph = recruiter_chat_runtime.get_graph()
+    config = {"configurable": {"thread_id": session.thread_id}}
+    result = await graph.ainvoke(
+        Command(resume=decision.model_dump(mode="json")),
+        config=config,
+    )
+    interrupt_payload = _extract_interrupt_payload(result)
+    await touch_session(db, session)
+    history = await _get_history_for_session(session)
+
+    return ChatExchangeResponse(
+        history=history,
+        interrupt=InterruptPayload.model_validate(interrupt_payload)
+        if interrupt_payload
+        else None,
+    )
 
 
 async def touch_session(
