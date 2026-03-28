@@ -23,6 +23,7 @@ export interface FinalizeShortlistResponse {
   job_id: string
   updated_applications: number
   success: boolean
+  final_shortlist_completed?: boolean
 }
 
 export const shortlistingApi = baseApi.injectEndpoints({

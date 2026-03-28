@@ -10,6 +10,7 @@ export interface EmailDraftRecord {
   candidate_avatar_url: string | null
   application_status: ApplicationStatus
   score: number | null
+  application_feedback: string | null
   subject: string | null
   body: string | null
   is_approved: boolean
@@ -32,6 +33,11 @@ export interface SendAllDraftsResponse {
   message: string
 }
 
+export interface DeleteDraftsResponse {
+  deleted_count: number
+  message: string
+}
+
 export const outreachApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     prepareDrafts: builder.mutation<
@@ -49,6 +55,13 @@ export const outreachApi = baseApi.injectEndpoints({
       query: (jobId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/outreach/jobs/${jobId}/drafts`,
       providesTags: ['Applications'],
     }),
+    generateDraftForApplication: builder.mutation<ApiResponse<EmailDraftRecord>, string>({
+      query: (applicationId) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/outreach/applications/${applicationId}/generate-draft`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Applications'],
+    }),
     updateDraft: builder.mutation<
       ApiResponse<EmailDraftRecord>,
       { draftId: string; subject?: string; body?: string }
@@ -60,6 +73,13 @@ export const outreachApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Applications'],
     }),
+    deleteDraft: builder.mutation<ApiResponse<DeleteDraftsResponse>, string>({
+      query: (draftId) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/outreach/drafts/${draftId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Applications'],
+    }),
     approveDraft: builder.mutation<
       ApiResponse<EmailDraftRecord>,
       { draftId: string; approved: boolean }
@@ -68,6 +88,13 @@ export const outreachApi = baseApi.injectEndpoints({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/outreach/drafts/${draftId}/approve`,
         method: 'POST',
         body: { approved },
+      }),
+      invalidatesTags: ['Applications'],
+    }),
+    deleteAllDrafts: builder.mutation<ApiResponse<DeleteDraftsResponse>, string>({
+      query: (jobId) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/outreach/jobs/${jobId}/drafts`,
+        method: 'DELETE',
       }),
       invalidatesTags: ['Applications'],
     }),
@@ -83,6 +110,9 @@ export const outreachApi = baseApi.injectEndpoints({
 
 export const {
   useApproveDraftMutation,
+  useDeleteAllDraftsMutation,
+  useDeleteDraftMutation,
+  useGenerateDraftForApplicationMutation,
   useGetDraftsQuery,
   usePrepareDraftsMutation,
   useSendAllDraftsMutation,

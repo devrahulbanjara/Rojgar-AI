@@ -90,6 +90,7 @@ class JobListItem(BaseSchema):
     expires_at: datetime | None = None
     applications_count: int = 0
     final_shortlist_completed: bool = False
+    hiring_completed: bool = False
     created_at: datetime
 
     match_score: float | None = Field(
@@ -124,5 +125,6 @@ class JobDetailResponse(BaseSchema):
     preferred_qualifications: list[str] = []
     benefits: list[str] = []
     applications_count: int = 0
+    hiring_completed: bool = False
     created_at: datetime
     updated_at: datetime

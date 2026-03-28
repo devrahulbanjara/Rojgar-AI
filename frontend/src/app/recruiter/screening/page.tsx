@@ -4,6 +4,8 @@ import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from
 import type { SetStateAction } from 'react'
 import { toast } from 'react-toastify'
 
+import { useRouter } from 'next/navigation'
+
 import { getInitials } from '@/lib/mediaValidation'
 import {
   type RecruiterApplicationView,
@@ -96,7 +98,11 @@ function getReviewState(
   application: RecruiterApplicationView,
   options: { autoShortlist: boolean; isAiProcessing: boolean },
 ) {
-  if (application.status === 'screening' || application.status === 'interview') {
+  if (
+    application.status === 'screening' ||
+    application.status === 'interview' ||
+    application.status === 'interview_booked'
+  ) {
     return { label: 'Shortlisted', tone: 'success' }
   }
   if (application.status === 'rejected') {
@@ -263,6 +269,7 @@ function XIcon() {
 }
 
 export default function RecruiterScreeningPage() {
+  const router = useRouter()
   const tableScrollerRef = useRef<HTMLDivElement | null>(null)
   const feedbackTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
@@ -551,12 +558,16 @@ export default function RecruiterScreeningPage() {
   async function handleCompleteShortlist() {
     if (!activeJobId) return
     try {
-      await finalizeShortlist({
+      const response = await finalizeShortlist({
         jobId: activeJobId,
         use_ai_recommendations: false,
       }).unwrap()
       toast.success('Shortlisting marked complete.')
       setIsPollingSummary(false)
+      if (response.data.success || response.data.final_shortlist_completed) {
+        router.push(`/recruiter/jobs/${activeJobId}/outreach`)
+        return
+      }
       void refreshAll()
     } catch {
       toast.error('Could not complete shortlisting.')
@@ -571,13 +582,17 @@ export default function RecruiterScreeningPage() {
     }
 
     try {
-      await finalizeShortlist({
+      const response = await finalizeShortlist({
         jobId: activeJobId,
         use_ai_recommendations: true,
         threshold: numericThreshold,
       }).unwrap()
       toast.success('AI shortlisting applied.')
       setIsPollingSummary(false)
+      if (response.data.success || response.data.final_shortlist_completed) {
+        router.push(`/recruiter/jobs/${activeJobId}/outreach`)
+        return
+      }
       void refreshAll()
     } catch {
       toast.error('Could not apply AI shortlisting.')

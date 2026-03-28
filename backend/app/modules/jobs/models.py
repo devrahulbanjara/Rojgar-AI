@@ -47,6 +47,9 @@ class Job(Base):
     final_shortlist_completed: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
+    hiring_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, index=True
     )

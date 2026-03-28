@@ -29,8 +29,9 @@ from app.modules.auth.router import router as auth_router
 from app.modules.dashboards.router import router as dash_router
 from app.modules.job_ai.runtime import job_ai_runtime
 from app.modules.job_ai.router import router as job_ai_router
+from app.modules.interviews.router import router as interviews_router
+from app.modules.interviews.webhook import router as cal_webhook_router
 from app.modules.outreach.router import router as outreach_router
-from app.modules.outreach.runtime import outreach_runtime
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.shortlisting.router import router as shortlisting_router
@@ -43,7 +44,6 @@ async def lifespan(app: FastAPI):
     await qdrant_service.initialize()
     await job_ai_runtime.start()
     await recruiter_chat_runtime.start()
-    await outreach_runtime.start()
     await redis_service.connect()
     await run_job_expiry_startup_check()
 
@@ -61,7 +61,6 @@ async def lifespan(app: FastAPI):
         pass
 
     await redis_service.disconnect()
-    await outreach_runtime.stop()
     await recruiter_chat_runtime.stop()
     await job_ai_runtime.stop()
     await engine.dispose()
@@ -107,7 +106,9 @@ app.include_router(
 app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
 app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])
+app.include_router(interviews_router, prefix="/interviews", tags=["Interviews"])
 app.include_router(outreach_router, prefix="/outreach", tags=["Outreach"])
+app.include_router(cal_webhook_router, tags=["Webhooks"])
 
 
 @app.get("/", tags=["System"], response_model=UnifiedResponse[dict])

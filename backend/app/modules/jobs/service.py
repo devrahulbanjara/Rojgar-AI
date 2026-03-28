@@ -151,6 +151,7 @@ def _job_list_item_from_row(
             "expires_at": job.expires_at,
             "applications_count": int(applications_count or 0),
             "final_shortlist_completed": job.final_shortlist_completed,
+            "hiring_completed": job.hiring_completed,
             "created_at": job.created_at,
             "match_score": match_score,
             "is_fallback": is_fallback,
@@ -184,6 +185,7 @@ def _job_detail_response_from_row(
             "preferred_qualifications": job.preferred_qualifications,
             "benefits": job.benefits,
             "applications_count": int(applications_count or 0),
+            "hiring_completed": job.hiring_completed,
             "created_at": job.created_at,
             "updated_at": job.updated_at,
         }

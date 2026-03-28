@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 
     # Email
     send_emails: bool = True
+    interview_booking_url: str = "https://cal.com/convexhire/interview"
 
     embedding_output_dimensionality: int = 3072
     embedding_model: str = "models/gemini-embedding-001"

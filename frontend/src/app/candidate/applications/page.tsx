@@ -38,6 +38,7 @@ const STATUS_FILTERS: StageFilter[] = [
   { key: 'all', label: 'All Applications' },
   { key: 'submitted', label: 'Submitted' },
   { key: 'screening', label: 'In Review' },
+  { key: 'interview_booked', label: 'Interview Booked' },
   { key: 'interview', label: 'Interview' },
   { key: 'offered', label: 'Offer' },
   { key: 'hired', label: 'Hired' },
@@ -58,6 +59,7 @@ const ACTIVE_TIMELINE: Array<{
 }> = [
   { key: 'submitted', label: 'Submitted' },
   { key: 'screening', label: 'In Review' },
+  { key: 'interview_booked', label: 'Interview Booked' },
   { key: 'interview', label: 'Interview' },
   { key: 'offered', label: 'Offer' },
   { key: 'hired', label: 'Hired' },
@@ -140,6 +142,8 @@ function getStatusLabel(status: ApplicationStatus): string {
       return 'Submitted'
     case 'screening':
       return 'In Review'
+    case 'interview_booked':
+      return 'Interview Booked'
     case 'interview':
       return 'Interview'
     case 'offered':
@@ -155,6 +159,7 @@ function getStatusLabel(status: ApplicationStatus): string {
 
 function getStatusVariant(status: ApplicationStatus): string {
   switch (status) {
+    case 'interview_booked':
     case 'interview':
     case 'offered':
     case 'hired':
@@ -177,6 +182,8 @@ function getStatusUpdateCopy(application: CandidateApplicationView): string {
       return `Application submitted ${formatRelativeDate(application.created_at)}.`
     case 'screening':
       return `Your application is in review as of ${formatDisplayDate(application.updated_at)}.`
+    case 'interview_booked':
+      return `Interview booked on ${formatDisplayDate(application.updated_at)}.`
     case 'interview':
       return `Interview stage reached ${formatDisplayDate(application.updated_at)}.`
     case 'offered':
@@ -250,6 +257,7 @@ export default function ApplicationsPage() {
       {
         submitted: 0,
         screening: 0,
+        interview_booked: 0,
         interview: 0,
         offered: 0,
         hired: 0,
@@ -348,7 +356,9 @@ export default function ApplicationsPage() {
                 >
                   <span className="apps-sidebar__stage-label">{stage.label}</span>
                   <span className="apps-sidebar__stage-count">
-                    {stage.key === 'all' ? applications.length : statusCounts[stage.key]}
+                    {stage.key === 'all'
+                      ? applications.length
+                      : statusCounts[stage.key as ApplicationStatus]}
                   </span>
                 </button>
               ))}

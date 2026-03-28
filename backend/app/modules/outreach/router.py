@@ -10,6 +10,7 @@ from app.modules.auth.models import User
 from app.modules.outreach import service
 from app.modules.outreach.schemas import (
     ApproveDraftRequest,
+    DeleteDraftsResponse,
     EmailDraftResponse,
     PrepareDraftsRequest,
     PrepareDraftsResponse,
@@ -54,6 +55,20 @@ async def get_drafts(
     return ResponseBuilder.success(data=data, message="Drafts fetched.")
 
 
+@router.post(
+    "/applications/{application_id}/generate-draft",
+    response_model=UnifiedResponse[EmailDraftResponse],
+    summary="Generate or regenerate a draft for a single candidate",
+)
+async def generate_draft_for_application(
+    application_id: uuid.UUID,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.generate_draft_for_application(db, application_id, user.id)
+    return ResponseBuilder.success(data=data, message="Draft generated.")
+
+
 @router.patch(
     "/drafts/{draft_id}",
     response_model=UnifiedResponse[EmailDraftResponse],
@@ -67,6 +82,20 @@ async def update_draft(
 ):
     data = await service.update_draft(db, draft_id, user.id, payload)
     return ResponseBuilder.success(data=data, message="Draft updated.")
+
+
+@router.delete(
+    "/drafts/{draft_id}",
+    response_model=UnifiedResponse[DeleteDraftsResponse],
+    summary="Delete a single unsent draft",
+)
+async def delete_draft(
+    draft_id: uuid.UUID,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.delete_draft(db, draft_id, user.id)
+    return ResponseBuilder.success(data=data, message=data.message)
 
 
 @router.post(
@@ -97,4 +126,18 @@ async def send_all_drafts(
     db: AsyncSession = db_dep,
 ):
     data = await service.send_all_drafts(db, job_id, user.id, background_tasks)
+    return ResponseBuilder.success(data=data, message=data.message)
+
+
+@router.delete(
+    "/jobs/{job_id}/drafts",
+    response_model=UnifiedResponse[DeleteDraftsResponse],
+    summary="Delete all unsent drafts for a job",
+)
+async def delete_all_drafts(
+    job_id: uuid.UUID,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.delete_all_drafts_for_job(db, job_id, user.id)
     return ResponseBuilder.success(data=data, message=data.message)

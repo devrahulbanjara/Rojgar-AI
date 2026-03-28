@@ -50,6 +50,7 @@ export interface JobListItem {
   expires_at: string | null
   applications_count: number
   final_shortlist_completed: boolean
+  hiring_completed: boolean
   created_at: string
   match_score: number | null
   is_fallback: boolean
@@ -76,6 +77,8 @@ export interface JobDetail {
   requirements: string[]
   preferred_qualifications: string[]
   benefits: string[]
+  applications_count: number
+  hiring_completed: boolean
   created_at: string
   updated_at: string
 }
@@ -108,6 +111,11 @@ export interface SearchJobsParams {
   salary_max?: number
   page?: number
   size?: number
+}
+
+export interface SetHiringCompletedPayload {
+  id: string
+  hiring_completed: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -173,6 +181,18 @@ export const jobsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs'],
     }),
 
+    setHiringCompleted: builder.mutation<
+      ApiResponse<{ hiring_completed: boolean }>,
+      SetHiringCompletedPayload
+    >({
+      query: ({ id, hiring_completed }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}/hiring-completed`,
+        method: 'PATCH',
+        params: { hiring_completed },
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs', 'Interviews'],
+    }),
+
     /** DELETE /jobs/{job_id} — delete a job posting (owner only) */
     deleteJob: builder.mutation<ApiResponse<null>, string>({
       query: (id) => ({
@@ -191,5 +211,6 @@ export const {
   useGetCompanyJobsQuery,
   useGetJobByIdQuery,
   useUpdateJobMutation,
+  useSetHiringCompletedMutation,
   useDeleteJobMutation,
 } = jobsApi

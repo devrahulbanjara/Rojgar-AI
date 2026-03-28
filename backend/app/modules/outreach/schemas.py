@@ -15,6 +15,7 @@ class EmailDraftResponse(BaseSchema):
     candidate_avatar_url: str | None = None
     application_status: ApplicationStatus
     score: int | None = None
+    application_feedback: str | None = None
     subject: str | None = None
     body: str | None = None
     is_approved: bool
@@ -47,4 +48,9 @@ class PrepareDraftsResponse(BaseSchema):
 class SendAllResponse(BaseSchema):
     job_id: UUID
     queued: int
+    message: str
+
+
+class DeleteDraftsResponse(BaseSchema):
+    deleted_count: int
     message: str

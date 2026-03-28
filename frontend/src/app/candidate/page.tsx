@@ -150,6 +150,7 @@ function getStatusLabel(status: string): string {
 
 function getStatusVariant(status: string): string {
   switch (status) {
+    case 'interview_booked':
     case 'interview':
     case 'offered':
     case 'hired':

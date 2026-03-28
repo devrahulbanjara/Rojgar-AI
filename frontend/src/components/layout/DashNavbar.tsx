@@ -113,6 +113,7 @@ function buildNavItems(role: DashRole): NavItem[] {
     { label: 'My Jobs', href: '/recruiter/jobs' },
     { label: 'Applications', href: '/recruiter/applications' },
     { label: 'Screening', href: '/recruiter/screening' },
+    { label: 'Interviews', href: '/recruiter/interviews' },
     { label: 'Outreach', href: '/recruiter/outreach' },
     { label: 'Chat', href: '/recruiter/chat' },
   ]
