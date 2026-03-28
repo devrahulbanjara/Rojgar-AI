@@ -1886,3 +1886,22 @@ body {
     gap: 0.4rem;
   }
 }
+.button-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.button-spinner__icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+  animation: button-spinner-rotate 0.9s linear infinite;
+}
+
+@keyframes button-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

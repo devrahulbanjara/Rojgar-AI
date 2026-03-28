@@ -77,7 +77,7 @@ const COMPANY_NOTIFICATIONS = [
   },
   {
     id: 'company-2',
-    text: 'AI Screening ranked 12 new candidates.',
+    text: 'AI screening finished for 12 candidates.',
     time: '2 h ago',
   },
   {
@@ -224,7 +224,6 @@ export default function DashNavbar({
 
         {/* Right side */}
         <div className="dash-navbar__right">
-          
           {/* Notifications */}
           <div ref={notificationsRef} className="dash-navbar__notifications">
             <button

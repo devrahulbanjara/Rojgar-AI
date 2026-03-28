@@ -281,9 +281,12 @@ async def get_shortlist_summary(
     job = await _get_job_for_company(db, job_id, company_id)
     cache_key = f"shortlist:summary:{job_id}"
 
-    cached_data = await redis_service.get(cache_key)
-    if cached_data:
-        return ShortlistSummaryResponse.model_validate_json(cached_data)
+    if job.shortlist_status != ShortlistStatus.in_progress:
+        cached_data = await redis_service.get(cache_key)
+        if cached_data:
+            return ShortlistSummaryResponse.model_validate_json(cached_data)
+    else:
+        await redis_service.delete(cache_key)
 
     total = int(
         await db.scalar(
@@ -327,7 +330,8 @@ async def get_shortlist_summary(
         shortlist_threshold=job.shortlist_threshold,
     )
 
-    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
+    if response.shortlist_status != ShortlistStatus.in_progress:
+        await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
 
     return response
 
@@ -390,9 +394,9 @@ async def trigger_shortlisting(
     if "PYTEST_CURRENT_TEST" not in os.environ:
         bind = db.bind
         database_url = (
-            str(bind.engine.url)
+            bind.engine.url.render_as_string(hide_password=False)
             if bind is not None and hasattr(bind, "engine")
-            else str(AsyncSessionLocal.kw["bind"].url)
+            else AsyncSessionLocal.kw["bind"].url.render_as_string(hide_password=False)
         )
         background_tasks.add_task(_run_shortlisting_task, job_id, database_url)
 

@@ -13,6 +13,7 @@ import { useGetResumeByIdQuery, useUpdateResumeMutation } from '@/store/services
 import { apiResumeToUi, updateResume, upsertResume } from '@/store/slices/resumeSlice'
 import { ArrowLeft, Download } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import Loader from '@/components/common/Loader'
 
 import ResumeEditor from '../_components/ResumeEditor'
@@ -136,7 +137,7 @@ function ResumeViewer({ resume, onEdit }: { resume: Resume; onEdit: () => void }
             disabled={isDownloadingPdf}
           >
             <Download size={14} />
-            {isDownloadingPdf ? 'Downloading...' : 'Download PDF'}
+            {isDownloadingPdf ? <ButtonSpinner label="Downloading..." /> : 'Download PDF'}
           </button>
           <button className="btn btn--primary btn--sm" onClick={onEdit}>
             Edit

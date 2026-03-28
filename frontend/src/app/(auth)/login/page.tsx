@@ -12,6 +12,8 @@ import { getRoleDashboard } from '@/lib/roleRoutes'
 import { initiateGoogleOAuth, useLoginMutation } from '@/store/services/authApi'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface LoginFormState {
@@ -301,7 +303,7 @@ export default function LoginPage() {
                   className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                   aria-busy={isLoading}
                 >
-                  {isLoading ? 'Signing in…' : 'Sign in'}
+                  {isLoading ? <ButtonSpinner label="Signing in..." /> : 'Sign in'}
                 </button>
               </form>
 

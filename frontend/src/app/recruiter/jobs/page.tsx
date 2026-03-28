@@ -32,6 +32,7 @@ import {
   X,
 } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import DashboardTabs from '@/components/common/DashboardTabs'
 
 import { CompanyJobsCardsSkeleton } from './_components/CompanyJobsSkeletons'
@@ -113,7 +114,7 @@ function isVisibleAIDraft(draft: JobAIDraftRecord) {
 function AutoShortlistBadge({ enabled, compact = false }: { enabled: boolean; compact?: boolean }) {
   return (
     <span className={`badge badge--${enabled ? 'primary' : 'gray'}${compact ? ' badge--xs' : ''}`}>
-      {enabled ? 'Auto-shortlist on' : 'Manual screening'}
+      {enabled ? 'AI screening on' : 'Manual screening'}
     </span>
   )
 }
@@ -340,7 +341,7 @@ function DeleteConfirmModal({
             disabled={isLoading}
             aria-busy={isLoading}
           >
-            {isLoading ? 'Deleting...' : 'Delete'}
+            {isLoading ? <ButtonSpinner label="Deleting..." /> : 'Delete'}
           </button>
         </div>
       </div>

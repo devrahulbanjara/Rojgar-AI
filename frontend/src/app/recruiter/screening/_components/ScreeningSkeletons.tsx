@@ -1,119 +1,222 @@
-// ─── Screening Skeleton Components ──────────────────────────────────────────
-// Mirrors the exact structure of RecruiterScreeningPage for seamless
-// skeleton-to-content transitions.
+import type { CSSProperties } from 'react'
 
-// ---------------------------------------------------------------------------
-// Status Card Skeleton — "Shortlisting Status" card at the top
-// ---------------------------------------------------------------------------
+import styles from '../screening.module.css'
+
+function SkeletonBlock({ className, style }: { className?: string; style?: CSSProperties }) {
+  return (
+    <div className={`skeleton-block ${className ?? ''}`.trim()} aria-hidden="true" style={style} />
+  )
+}
+
+export function ScreeningControlsSkeleton() {
+  return (
+    <div className={styles.selectorRow} aria-hidden="true">
+      <div className={`${styles.selectWrap} ${styles.selectWrapView}`}>
+        <span className={styles.selectLabel}>View</span>
+        <SkeletonBlock style={{ width: '100%', height: '44px', borderRadius: '16px' }} />
+      </div>
+
+      <div className={`${styles.selectWrap} ${styles.selectWrapJob}`}>
+        <span className={styles.selectLabel}>Job</span>
+        <SkeletonBlock style={{ width: '100%', height: '44px', borderRadius: '16px' }} />
+      </div>
+
+      <div className={styles.inlineControls}>
+        <div className={styles.thresholdCluster}>
+          <span className={styles.thresholdLabel}>Shortlist threshold</span>
+          <div className={styles.thresholdControls}>
+            <SkeletonBlock style={{ width: '6rem', height: '44px', borderRadius: '16px' }} />
+            <SkeletonBlock style={{ width: '2.6rem', height: '12px', borderRadius: '999px' }} />
+            <SkeletonBlock style={{ width: '5.4rem', height: '40px', borderRadius: '999px' }} />
+          </div>
+        </div>
+
+        <div className={styles.actionCluster}>
+          <SkeletonBlock style={{ width: '11rem', height: '40px', borderRadius: '999px' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function ScreeningStatusCardSkeleton() {
   return (
-    <div className="dash-card" aria-hidden="true" style={{ marginBottom: '2rem' }}>
-      <div
-        className="dash-card__body"
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.25rem',
-        }}
-      >
-        <div className="dash-card__title" style={{ margin: 0 }}>
-          Shortlisting Status
-        </div>
-        <div className="skeleton-block screening-skeleton__badge" />
-        <div className="skeleton-block screening-skeleton__badge-meta" />
-        <div className="skeleton-block screening-skeleton__run-btn" />
+    <div className={styles.contextMeta} aria-hidden="true">
+      <div className={styles.statusList}>
+        <SkeletonBlock style={{ width: '12rem', height: '2rem', borderRadius: '999px' }} />
+        <SkeletonBlock style={{ width: '12.5rem', height: '2rem', borderRadius: '999px' }} />
+        <SkeletonBlock style={{ width: '9.75rem', height: '2rem', borderRadius: '999px' }} />
+        <SkeletonBlock style={{ width: '9rem', height: '2rem', borderRadius: '999px' }} />
+      </div>
+
+      <div className={styles.statsGroup}>
+        <SkeletonBlock style={{ width: '7rem', height: '2rem', borderRadius: '999px' }} />
+        <SkeletonBlock style={{ width: '6.6rem', height: '2rem', borderRadius: '999px' }} />
+        <SkeletonBlock style={{ width: '6.2rem', height: '2rem', borderRadius: '999px' }} />
+        <SkeletonBlock style={{ width: '9rem', height: '2rem', borderRadius: '999px' }} />
       </div>
     </div>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Table Skeleton — applications table rows
-// ---------------------------------------------------------------------------
 export function ScreeningTableSkeleton({ rows = 6 }: { rows?: number }) {
   return (
-    <div className="dash-card" aria-hidden="true">
-      <div className="table-scroll">
-        <table className="dash-table">
-          <thead>
-            <tr>
-              <th>Candidate</th>
-              <th>Email</th>
-              <th>Score</th>
-              <th>Feedback</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: rows }).map((_, i) => (
-              <tr key={i}>
-                <td>
-                  <div className="skeleton-block screening-skeleton__td-name" />
-                </td>
-                <td>
-                  <div className="skeleton-block screening-skeleton__td-email" />
-                </td>
-                <td>
-                  <div className="skeleton-block screening-skeleton__td-badge" />
-                </td>
-                <td>
-                  <div className="skeleton-block screening-skeleton__td-feedback" />
-                  <div
-                    className="skeleton-block screening-skeleton__td-feedback screening-skeleton__td-feedback--short"
-                    style={{ marginTop: '0.25rem' }}
-                  />
-                </td>
-                <td>
-                  <div className="skeleton-block screening-skeleton__td-status" />
-                </td>
-                <td>
-                  <div className="cell-actions">
-                    <div className="skeleton-block screening-skeleton__td-action" />
-                    <div className="skeleton-block screening-skeleton__td-action" />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <section className={styles.tableSection} aria-hidden="true">
+      <div className={styles.filterBar}>
+        <SkeletonBlock
+          style={{ flex: '1 1 22rem', maxWidth: '26rem', height: '44px', borderRadius: '999px' }}
+        />
+
+        <div className={styles.filterCluster}>
+          <SkeletonBlock style={{ width: '2.9rem', height: '12px', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '3.5rem', height: '2rem', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '4rem', height: '2rem', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '4rem', height: '2rem', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '3.25rem', height: '2rem', borderRadius: '999px' }} />
+          <span className={styles.verticalDivider} />
+          <SkeletonBlock style={{ width: '5.6rem', height: '2rem', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '5.2rem', height: '2rem', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '7.2rem', height: '2rem', borderRadius: '999px' }} />
+        </div>
+
+        <div className={styles.tableHeaderActions}>
+          <SkeletonBlock style={{ width: '9.75rem', height: '40px', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '6.5rem', height: '40px', borderRadius: '999px' }} />
+        </div>
       </div>
-    </div>
+
+      <div className={styles.tableShell}>
+        <div className={styles.tableScroller}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Review</th>
+                <th>Score</th>
+                <th>Status / Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: rows }).map((_, index) => (
+                <tr key={index} className={styles.dataRow}>
+                  <td>
+                    <div className={styles.candidateCell}>
+                      <SkeletonBlock
+                        className={styles.avatar}
+                        style={{ width: '3.1rem', height: '3.1rem', borderRadius: '999px' }}
+                      />
+                      <div className={styles.candidateMeta} style={{ width: '100%' }}>
+                        <SkeletonBlock
+                          style={{
+                            width: `${54 + (index % 3) * 9}%`,
+                            height: '15px',
+                            borderRadius: '999px',
+                          }}
+                        />
+                        <SkeletonBlock
+                          style={{
+                            width: `${68 + (index % 2) * 10}%`,
+                            height: '12px',
+                            borderRadius: '999px',
+                            marginTop: '0.45rem',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className={styles.reviewCell}>
+                      <SkeletonBlock
+                        style={{ width: '100%', height: '13px', borderRadius: '999px' }}
+                      />
+                      <SkeletonBlock
+                        style={{ width: '92%', height: '13px', borderRadius: '999px' }}
+                      />
+                      <div className={styles.reviewActions}>
+                        <SkeletonBlock
+                          style={{ width: '4.9rem', height: '12px', borderRadius: '999px' }}
+                        />
+                        <SkeletonBlock
+                          style={{ width: '5.6rem', height: '12px', borderRadius: '999px' }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className={styles.scoreCell}>
+                      <SkeletonBlock
+                        style={{ width: '4.5rem', height: '1.4rem', borderRadius: '999px' }}
+                      />
+                      <SkeletonBlock
+                        style={{ width: '7rem', height: '0.42rem', borderRadius: '999px' }}
+                      />
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className={styles.statusActionCell}>
+                      <SkeletonBlock
+                        style={{ width: '7rem', height: '2rem', borderRadius: '999px' }}
+                      />
+                      <div className={styles.rowActionButtons}>
+                        <SkeletonBlock
+                          style={{ width: '2.3rem', height: '2.3rem', borderRadius: '999px' }}
+                        />
+                        <SkeletonBlock
+                          style={{ width: '2.3rem', height: '2.3rem', borderRadius: '999px' }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className={styles.paginationBar}>
+          <SkeletonBlock style={{ width: '11rem', height: '13px', borderRadius: '999px' }} />
+
+          <div className={styles.paginationButtons}>
+            <SkeletonBlock style={{ width: '5rem', height: '2.8rem', borderRadius: '16px' }} />
+            <SkeletonBlock style={{ width: '2.8rem', height: '2.8rem', borderRadius: '16px' }} />
+            <SkeletonBlock style={{ width: '2.8rem', height: '2.8rem', borderRadius: '16px' }} />
+            <SkeletonBlock style={{ width: '2.8rem', height: '2.8rem', borderRadius: '16px' }} />
+            <SkeletonBlock style={{ width: '5rem', height: '2.8rem', borderRadius: '16px' }} />
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Full page skeleton — used in loading.tsx for instant route-level display
-// Mirrors: page header (static shell) + job select (shows as skeleton) +
-//          status card + applications table
-// ---------------------------------------------------------------------------
 export function ScreeningPageSkeleton() {
   return (
     <div className="dash-content container container--app-shell" aria-hidden="true">
-      {/* Page Header — same structure as the real header */}
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Screening</h2>
           <p className="dash-page-header__subtitle">
-            Run AI screening, review ranked candidates, and finalize the shortlist.
+            Review applicants, edit screening scores, and make shortlisting decisions.
           </p>
         </div>
+
         <div className="dash-page-header__actions">
-          {/* Job select dropdowns as skeleton */}
-          <div className="cell-actions" style={{ gap: '0.75rem' }}>
-            <div className="skeleton-block screening-skeleton__select" />
-            <div className="skeleton-block screening-skeleton__select" />
-          </div>
+          <SkeletonBlock style={{ width: '7.75rem', height: '2rem', borderRadius: '999px' }} />
+          <SkeletonBlock style={{ width: '7rem', height: '2rem', borderRadius: '999px' }} />
         </div>
       </div>
 
-      {/* Content stack */}
-      <div className="dashboard-overview-stack">
+      <div className={styles.contextBar}>
+        <div className={styles.contextTop}>
+          <ScreeningControlsSkeleton />
+        </div>
         <ScreeningStatusCardSkeleton />
-        <ScreeningTableSkeleton rows={6} />
       </div>
+
+      <ScreeningTableSkeleton rows={6} />
     </div>
   )
 }

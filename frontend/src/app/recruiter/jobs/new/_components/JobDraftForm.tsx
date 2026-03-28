@@ -332,8 +332,8 @@ export default function JobDraftForm({
           </FieldChrome>
 
           <FieldChrome
-            label="Automatic AI Shortlisting"
-            helper="Turn this on when each new application should be scored automatically right after submission."
+            label="Automatic AI Screening"
+            helper="Turn this on when each new application should be screened automatically right after submission."
             fieldKeys={['auto_shortlist']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
@@ -349,13 +349,15 @@ export default function JobDraftForm({
                 onChange={(event) => onFieldChange('auto_shortlist', event.target.checked)}
                 disabled={disabled}
               />
-              <span>Automatically score each new application for this job</span>
+              <span>
+                Automatically generate screening scores and feedback for each new application
+              </span>
             </label>
           </FieldChrome>
 
           <FieldChrome
             label="Shortlist Threshold"
-            helper="Set the score threshold used later when approving AI recommendations."
+            helper="Set the score threshold used later when applying AI shortlisting decisions."
             fieldKeys={['shortlist_threshold']}
             lockedFields={lockedFields}
             dirtyFields={dirtyFields}
