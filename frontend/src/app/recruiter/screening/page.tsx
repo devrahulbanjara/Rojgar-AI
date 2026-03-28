@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { type CSSProperties, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
+import { getInitials } from '@/lib/mediaValidation'
 import {
   useGetJobApplicationsQuery,
   useUpdateApplicationStatusMutation,
@@ -29,6 +30,13 @@ function scoreBadgeClass(score: number | null) {
 function getJobOptionLabel(title: string, status: JobStatus, finalShortlistCompleted: boolean) {
   const shortlistLabel = finalShortlistCompleted ? 'Shortlist completed' : 'Shortlist pending'
   return `${title} (${getJobStatusLabel(status)} - ${shortlistLabel})`
+}
+
+function getAvatarColor(name: string): string {
+  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+
+  return palette[seed % palette.length]
 }
 
 export default function RecruiterScreeningPage() {
@@ -276,7 +284,28 @@ export default function RecruiterScreeningPage() {
                   <tbody>
                     {applications.map((application) => (
                       <tr key={application.id}>
-                        <td>{application.applicant_name}</td>
+                        <td>
+                          <div className="cell-user">
+                            <div
+                              className="cell-user__avatar cell-user__avatar--sm"
+                              style={
+                                {
+                                  '--avatar-bg': getAvatarColor(application.applicant_name) + '1A',
+                                  '--avatar-color': getAvatarColor(application.applicant_name),
+                                  backgroundImage: application.applicant_avatar_url
+                                    ? `url(${application.applicant_avatar_url})`
+                                    : undefined,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                } as CSSProperties
+                              }
+                            >
+                              {!application.applicant_avatar_url &&
+                                getInitials(application.applicant_name)}
+                            </div>
+                            {application.applicant_name}
+                          </div>
+                        </td>
                         <td className="cell-meta">{application.applicant_email}</td>
                         <td>
                           <span className={`badge badge--${scoreBadgeClass(application.score)}`}>

@@ -2,7 +2,6 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import logfire
-from ag_ui_langgraph import LangGraphAgent, add_langgraph_fastapi_endpoint
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -40,17 +39,6 @@ async def lifespan(app: FastAPI):
     await qdrant_service.initialize()
     await job_ai_runtime.start()
     await recruiter_chat_runtime.start()
-    add_langgraph_fastapi_endpoint(
-        app=app,
-        agent=LangGraphAgent(
-            name="recruiter_chat",
-            description=(
-                "Recruiter assistant that handles candidate search, salary research, job editing, and candidate lookups."
-            ),
-            graph=recruiter_chat_runtime.graph,
-        ),
-        path="/copilotkit",
-    )
     await outreach_runtime.start()
     await redis_service.connect()
 

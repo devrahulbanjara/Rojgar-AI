@@ -9,8 +9,11 @@ from app.modules.auth.dependencies import require_active_membership
 from app.modules.auth.models import User
 from app.modules.recruiter_chat import service
 from app.modules.recruiter_chat.schemas import (
+    ChatExchangeResponse,
     ChatHistoryMessage,
+    ChatMessageRequest,
     ChatSessionResponse,
+    RespondToInterruptRequest,
 )
 
 
@@ -58,6 +61,38 @@ async def get_recruiter_chat_history(
 ):
     data = await service.get_history(db, user, session_id)
     return ResponseBuilder.success(data=data, message="Recruiter chat history fetched.")
+
+
+@router.post(
+    "/sessions/{session_id}/messages",
+    response_model=UnifiedResponse[ChatExchangeResponse],
+    summary="Send a recruiter chat message",
+)
+async def send_recruiter_chat_message(
+    session_id: uuid.UUID,
+    payload: ChatMessageRequest,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.send_message(db, user, session_id, payload)
+    return ResponseBuilder.success(data=data, message="Recruiter chat message sent.")
+
+
+@router.post(
+    "/sessions/{session_id}/interrupt",
+    response_model=UnifiedResponse[ChatExchangeResponse],
+    summary="Respond to recruiter chat review step",
+)
+async def respond_to_recruiter_chat_interrupt(
+    session_id: uuid.UUID,
+    payload: RespondToInterruptRequest,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.respond_to_interrupt(db, user, session_id, payload)
+    return ResponseBuilder.success(
+        data=data, message="Recruiter chat review response recorded."
+    )
 
 
 @router.delete(

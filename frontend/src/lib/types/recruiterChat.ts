@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/store/services/baseApi'
 export type RecruiterChatUiType =
   | 'text'
   | 'candidate_list'
+  | 'job_list'
   | 'salary_info'
   | 'candidate_detail'
   | 'job_edit_preview'
@@ -22,6 +23,27 @@ export interface ChatSessionResponse {
 export type ChatSessionsApiResponse = ApiResponse<ChatSessionResponse[]>
 export type ChatSessionApiResponse = ApiResponse<ChatSessionResponse>
 export type EmptyApiResponse = ApiResponse<null>
+
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant' | 'tool'
+  content: string
+  name?: string | null
+  created_at?: string | null
+}
+
+export type ChatHistoryApiResponse = ApiResponse<ChatHistoryMessage[]>
+
+export interface ChatInterruptPayload {
+  type: 'job_edit_preview'
+  proposal: JobEditPreviewData
+}
+
+export interface ChatExchangeResponse {
+  history: ChatHistoryMessage[]
+  interrupt: ChatInterruptPayload | null
+}
+
+export type ChatExchangeApiResponse = ApiResponse<ChatExchangeResponse>
 
 export interface ToolResultEnvelope<TData = Record<string, unknown> | null> {
   tool: string
@@ -71,6 +93,30 @@ export interface SalaryResearchResult {
   insufficient_evidence: boolean
   year_context: string
   sources: SalaryResearchSource[]
+}
+
+export interface CompanyJobData {
+  job_id: string
+  title: string
+  location: string | null
+  location_type: string
+  salary_min: number | null
+  salary_max: number | null
+  currency: string
+  status: string
+  auto_shortlist: boolean
+  expires_at: string | null
+  overview: string | null
+  responsibilities: string[]
+  requirements: string[]
+  preferred_qualifications: string[]
+  benefits: string[]
+  updated_at: string
+}
+
+export interface CompanyJobListResult {
+  total: number
+  jobs: CompanyJobData[]
 }
 
 export interface CandidateDetailData {

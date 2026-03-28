@@ -14,6 +14,7 @@ from app.shared.schemas import EducationResponse, ExperienceResponse, SkillRespo
 UIType = Literal[
     "text",
     "candidate_list",
+    "job_list",
     "salary_info",
     "candidate_detail",
     "job_edit_preview",
@@ -123,6 +124,11 @@ class CompanyJobData(BaseSchema):
     updated_at: datetime
 
 
+class CompanyJobListResult(BaseSchema):
+    total: int
+    jobs: list[CompanyJobData] = []
+
+
 class JobEditInstruction(BaseSchema):
     field: JobEditableField
     operation: JobEditOperation = "set"
@@ -194,3 +200,8 @@ class RespondToInterruptRequest(BaseSchema):
 class InterruptPayload(BaseSchema):
     type: Literal["job_edit_preview"]
     proposal: JobEditProposal
+
+
+class ChatExchangeResponse(BaseSchema):
+    history: list[ChatHistoryMessage]
+    interrupt: InterruptPayload | None = None

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -31,6 +32,7 @@ from app.modules.recruiter_chat.schemas import (
     CandidateDetailData,
     CandidateSearchResult,
     CompanyJobData,
+    CompanyJobListResult,
     JobEditDiff,
     JobEditInstruction,
     JobEditProposal,
@@ -59,6 +61,7 @@ ENUM_FIELDS = {"location_type", "status"}
 class UIHint(str, Enum):
     text = "text"
     candidate_list = "candidate_list"
+    job_list = "job_list"
     salary_info = "salary_info"
     candidate_detail = "candidate_detail"
     job_edit_preview = "job_edit_preview"
@@ -120,6 +123,61 @@ def _job_to_chat_data(job: Job) -> CompanyJobData:
         benefits=job.benefits or [],
         updated_at=job.updated_at,
     )
+
+
+TITLE_TOKEN_ALIASES: dict[str, tuple[str, ...]] = {
+    "ai": ("artificial", "intelligence"),
+    "ml": ("machine", "learning"),
+    "eng": ("engineer",),
+    "swe": ("software", "engineer"),
+    "fe": ("frontend",),
+    "be": ("backend",),
+    "fs": ("full", "stack"),
+    "pm": ("product", "manager"),
+    "sr": ("senior",),
+    "jr": ("junior",),
+}
+
+
+def _normalize_title_text(value: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", value.lower())).strip()
+
+
+def _title_tokens(value: str) -> list[str]:
+    normalized = _normalize_title_text(value)
+    if not normalized:
+        return []
+
+    expanded: list[str] = []
+    for token in normalized.split():
+        expanded.extend(TITLE_TOKEN_ALIASES.get(token, (token,)))
+    return expanded
+
+
+def _title_match_score(query: str, title: str) -> float:
+    normalized_query = _normalize_title_text(query)
+    normalized_title = _normalize_title_text(title)
+
+    if not normalized_query or not normalized_title:
+        return 0.0
+
+    if normalized_query in normalized_title:
+        return 1.0
+
+    query_tokens = _title_tokens(query)
+    title_tokens = _title_tokens(title)
+
+    if not query_tokens or not title_tokens:
+        return 0.0
+
+    title_token_set = set(title_tokens)
+    matched = sum(1 for token in query_tokens if token in title_token_set)
+    coverage = matched / max(len(query_tokens), 1)
+
+    if coverage == 1:
+        return 0.95
+
+    return coverage
 
 
 def _normalize_for_diff(value: Any) -> Any:
@@ -205,17 +263,35 @@ def _apply_job_edit_instruction(
 async def _find_company_job_impl(
     title_query: str, company_id: uuid.UUID
 ) -> ToolResultEnvelope:
+    normalized_query = title_query.strip()
+
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Job)
             .where(
                 Job.company_id == company_id,
-                Job.title.ilike(f"%{title_query.strip()}%"),
+                Job.title.ilike(f"%{normalized_query}%"),
             )
             .order_by(Job.updated_at.desc())
             .limit(5)
         )
         jobs = result.scalars().all()
+        if not jobs:
+            fuzzy_result = await db.execute(
+                select(Job)
+                .where(Job.company_id == company_id)
+                .order_by(Job.updated_at.desc())
+                .limit(50)
+            )
+            ranked_jobs = [
+                (job, _title_match_score(normalized_query, job.title))
+                for job in fuzzy_result.scalars().all()
+            ]
+            jobs = [
+                job
+                for job, score in ranked_jobs
+                if score >= 0.6
+            ][:5]
         if not jobs:
             return ToolResultEnvelope(
                 tool="find_company_job",
@@ -245,6 +321,7 @@ async def _find_company_job_impl(
         return ToolResultEnvelope(
             tool="find_company_job",
             text=f"Found job '{job.title}'.",
+            ui_type_hint=UIHint.job_list,
             data=job_data.model_dump(mode="json"),
         )
 
@@ -274,11 +351,13 @@ async def _list_company_jobs_impl(
         )
 
     job_summaries = []
+    job_cards = []
     for job in jobs:
         location = f", {job.location}" if job.location else ""
         job_summaries.append(
             f"{job.title} ({job.status.value}, {job.location_type.value}{location})"
         )
+        job_cards.append(_job_to_chat_data(job))
 
     total = len(jobs)
     intro = f"You currently have {total} company job{'s' if total != 1 else ''}"
@@ -288,19 +367,8 @@ async def _list_company_jobs_impl(
     return ToolResultEnvelope(
         tool="list_company_jobs",
         text=f"{intro}: {listing}{suffix}",
-        data={
-            "jobs": [
-                {
-                    "job_id": str(job.id),
-                    "title": job.title,
-                    "status": job.status.value,
-                    "location": job.location,
-                    "location_type": job.location_type.value,
-                    "updated_at": job.updated_at.isoformat(),
-                }
-                for job in jobs
-            ]
-        },
+        ui_type_hint=UIHint.job_list,
+        data=CompanyJobListResult(total=total, jobs=job_cards).model_dump(mode="json"),
     )
 
 
