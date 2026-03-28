@@ -41,6 +41,9 @@ class Job(Base):
     shortlist_status: Mapped[ShortlistStatus] = mapped_column(
         nullable=False, server_default="not_started"
     )
+    shortlist_threshold: Mapped[int] = mapped_column(
+        Integer, default=70, server_default="70", nullable=False
+    )
     final_shortlist_completed: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )

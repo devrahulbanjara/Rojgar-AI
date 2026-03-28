@@ -139,18 +139,14 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
         {job.company?.industry && <span>{job.company.industry}</span>}
         {job.company?.company_size && <span>· {job.company.company_size}</span>}
         {openRolesCount > 1 && (
-          <span className="job-preview__chip job-preview__chip--success">
-            {openRolesCount} active roles
-          </span>
+          <span className="badge badge--success">{openRolesCount} active roles</span>
         )}
       </div>
 
       <div className="job-preview__chips">
-        <span className="job-preview__chip">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-        {salary && <span className="job-preview__chip">{salary}</span>}
-        <span
-          className={`job-preview__chip${isActive ? ' job-preview__chip--success' : ' job-preview__chip--gray'}`}
-        >
+        <span className="badge badge--gray">{LOCATION_TYPE_LABELS[job.location_type]}</span>
+        {salary && <span className="badge badge--secondary">{salary}</span>}
+        <span className={`badge ${isActive ? 'badge--success' : 'badge--gray'}`}>
           {getJobStatusLabel(job.status)}
         </span>
         {job.expires_at &&
@@ -159,12 +155,12 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
             if (!expiry) return null
             const chipClass =
               expiry.color === '#ff4d4d'
-                ? 'job-preview__chip--danger'
+                ? 'badge--danger'
                 : expiry.color === '#f59e0b'
-                  ? 'job-preview__chip--warning'
-                  : 'job-preview__chip--gray'
+                  ? 'badge--warning'
+                  : 'badge--gray'
             return (
-              <span className={`job-preview__chip ${chipClass}`}>
+              <span className={`badge ${chipClass}`}>
                 <Calendar size={11} aria-hidden="true" />
                 {expiry.text}
               </span>

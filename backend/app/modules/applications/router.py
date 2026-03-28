@@ -11,6 +11,7 @@ from app.modules.applications.schemas import (
     ApplyRequest,
     CandidateApplicationView,
     RecruiterApplicationView,
+    UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
 
@@ -98,6 +99,24 @@ async def get_application(
 ):
     data = await service.get_application(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application fetched.")
+
+
+@router.patch(
+    "/{application_id}/review",
+    response_model=UnifiedResponse[ApplicationResponse],
+    summary="Update application score and feedback (company/recruiter only)",
+)
+async def update_application_review(
+    application_id: str,
+    payload: UpdateApplicationReviewRequest,
+    bg_tasks: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.update_application_review(
+        db, user, application_id, payload, bg_tasks
+    )
+    return ResponseBuilder.success(data=data, message="Application review updated.")
 
 
 @router.patch(

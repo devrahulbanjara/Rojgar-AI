@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -36,14 +35,12 @@ from app.modules.recruiter_chat.schemas import (
     JobEditDiff,
     JobEditInstruction,
     JobEditProposal,
-    JobSearchMatch,
     SalaryResearchResult,
     SalarySource,
     ToolResultEnvelope,
 )
 from app.modules.resumes.models import Resume
-from app.shared.enums import ApplicationStatus
-from app.shared.enums import JobStatus
+from app.shared.enums import ApplicationStatus, JobStatus
 
 
 LIST_FIELDS = {
@@ -65,6 +62,8 @@ class UIHint(str, Enum):
     salary_info = "salary_info"
     candidate_detail = "candidate_detail"
     job_edit_preview = "job_edit_preview"
+    job_clarification = "job_clarification"
+    candidate_clarification = "candidate_clarification"
 
 
 def _state_ids(state: dict[str, Any]) -> tuple[uuid.UUID, uuid.UUID]:
@@ -72,17 +71,12 @@ def _state_ids(state: dict[str, Any]) -> tuple[uuid.UUID, uuid.UUID]:
 
 
 def _as_tool_message(
-    tool_name: str,
-    result: ToolResultEnvelope,
-    tool_call_id: str,
+    tool_name: str, result: ToolResultEnvelope, tool_call_id: str
 ) -> ToolMessage:
     if not tool_call_id:
         raise ValueError(f"Missing tool_call_id for tool '{tool_name}'.")
-
     return ToolMessage(
-        content=result.model_dump_json(),
-        name=tool_name,
-        tool_call_id=tool_call_id,
+        content=result.model_dump_json(), name=tool_name, tool_call_id=tool_call_id
     )
 
 
@@ -125,61 +119,6 @@ def _job_to_chat_data(job: Job) -> CompanyJobData:
     )
 
 
-TITLE_TOKEN_ALIASES: dict[str, tuple[str, ...]] = {
-    "ai": ("artificial", "intelligence"),
-    "ml": ("machine", "learning"),
-    "eng": ("engineer",),
-    "swe": ("software", "engineer"),
-    "fe": ("frontend",),
-    "be": ("backend",),
-    "fs": ("full", "stack"),
-    "pm": ("product", "manager"),
-    "sr": ("senior",),
-    "jr": ("junior",),
-}
-
-
-def _normalize_title_text(value: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", value.lower())).strip()
-
-
-def _title_tokens(value: str) -> list[str]:
-    normalized = _normalize_title_text(value)
-    if not normalized:
-        return []
-
-    expanded: list[str] = []
-    for token in normalized.split():
-        expanded.extend(TITLE_TOKEN_ALIASES.get(token, (token,)))
-    return expanded
-
-
-def _title_match_score(query: str, title: str) -> float:
-    normalized_query = _normalize_title_text(query)
-    normalized_title = _normalize_title_text(title)
-
-    if not normalized_query or not normalized_title:
-        return 0.0
-
-    if normalized_query in normalized_title:
-        return 1.0
-
-    query_tokens = _title_tokens(query)
-    title_tokens = _title_tokens(title)
-
-    if not query_tokens or not title_tokens:
-        return 0.0
-
-    title_token_set = set(title_tokens)
-    matched = sum(1 for token in query_tokens if token in title_token_set)
-    coverage = matched / max(len(query_tokens), 1)
-
-    if coverage == 1:
-        return 0.95
-
-    return coverage
-
-
 def _normalize_for_diff(value: Any) -> Any:
     if isinstance(value, datetime):
         return value.isoformat()
@@ -213,9 +152,11 @@ def _normalize_int_value(value: str | list[str] | int | bool | None) -> int | No
 def _apply_job_edit_instruction(
     current_value: Any, instruction: JobEditInstruction
 ) -> Any:
-    field = instruction.field
-    operation = instruction.operation
-    value = instruction.value
+    field, operation, value = (
+        instruction.field,
+        instruction.operation,
+        instruction.value,
+    )
 
     if field in LIST_FIELDS:
         current_list = list(current_value or [])
@@ -260,115 +201,123 @@ def _apply_job_edit_instruction(
     raise ValueError(f"Unsupported field '{field}'.")
 
 
-async def _find_company_job_impl(
-    title_query: str, company_id: uuid.UUID
-) -> ToolResultEnvelope:
-    normalized_query = title_query.strip()
-
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(Job)
-            .where(
-                Job.company_id == company_id,
-                Job.title.ilike(f"%{normalized_query}%"),
-            )
-            .order_by(Job.updated_at.desc())
-            .limit(5)
-        )
-        jobs = result.scalars().all()
-        if not jobs:
-            fuzzy_result = await db.execute(
-                select(Job)
-                .where(Job.company_id == company_id)
-                .order_by(Job.updated_at.desc())
-                .limit(50)
-            )
-            ranked_jobs = [
-                (job, _title_match_score(normalized_query, job.title))
-                for job in fuzzy_result.scalars().all()
-            ]
-            jobs = [
-                job
-                for job, score in ranked_jobs
-                if score >= 0.6
-            ][:5]
-        if not jobs:
-            return ToolResultEnvelope(
-                tool="find_company_job",
-                ok=False,
-                text=f"I couldn't find a company job matching '{title_query}'.",
-            )
-        if len(jobs) > 1:
-            matches = [
-                JobSearchMatch(
-                    job_id=job.id,
-                    title=job.title,
-                    status=job.status,
-                    location=job.location,
-                    location_type=job.location_type,
-                    updated_at=job.updated_at,
-                )
-                for job in jobs
-            ]
-            return ToolResultEnvelope(
-                tool="find_company_job",
-                ok=False,
-                text="I found multiple matching jobs. Please choose one.",
-                data={"matches": [match.model_dump(mode="json") for match in matches]},
-            )
-        job = jobs[0]
-        job_data = _job_to_chat_data(job)
-        return ToolResultEnvelope(
-            tool="find_company_job",
-            text=f"Found job '{job.title}'.",
-            ui_type_hint=UIHint.job_list,
-            data=job_data.model_dump(mode="json"),
-        )
-
-
 async def _list_company_jobs_impl(
     company_id: uuid.UUID,
-    limit: int = 10,
     statuses: list[JobStatus] | None = None,
 ) -> ToolResultEnvelope:
-    safe_limit = max(1, min(limit, 20))
-
+    """
+    Returns ALL jobs for this company with no artificial limit.
+    The LLM uses this full list to understand which job the recruiter means.
+    Strictly scoped to the authenticated company for security.
+    """
     async with AsyncSessionLocal() as db:
         query = select(Job).where(Job.company_id == company_id)
         if statuses:
             query = query.where(Job.status.in_(statuses))
-
-        result = await db.execute(
-            query.order_by(Job.updated_at.desc()).limit(safe_limit)
-        )
+        result = await db.execute(query.order_by(Job.updated_at.desc()))
         jobs = result.scalars().all()
 
     if not jobs:
         return ToolResultEnvelope(
             tool="list_company_jobs",
             ok=False,
-            text="You don't have any company jobs posted yet.",
+            text="You don't have any jobs posted yet.",
         )
 
-    job_summaries = []
-    job_cards = []
-    for job in jobs:
-        location = f", {job.location}" if job.location else ""
-        job_summaries.append(
-            f"{job.title} ({job.status.value}, {job.location_type.value}{location})"
-        )
-        job_cards.append(_job_to_chat_data(job))
-
-    total = len(jobs)
-    intro = f"You currently have {total} company job{'s' if total != 1 else ''}"
-    listing = "; ".join(job_summaries[:5])
-    suffix = "." if total <= 5 else "; and more."
-
+    job_cards = [_job_to_chat_data(job) for job in jobs]
+    total = len(job_cards)
     return ToolResultEnvelope(
         tool="list_company_jobs",
-        text=f"{intro}: {listing}{suffix}",
+        text=f"Found {total} job{'s' if total != 1 else ''} for your company.",
         ui_type_hint=UIHint.job_list,
         data=CompanyJobListResult(total=total, jobs=job_cards).model_dump(mode="json"),
+    )
+
+
+async def _clarify_job_selection_impl(
+    job_id: str,
+    job_title: str,
+    question: str,
+    company_id: uuid.UUID,
+) -> ToolResultEnvelope:
+    """Security check: confirm the job belongs to this company before emitting a clarification interrupt."""
+    try:
+        parsed_job_id = uuid.UUID(job_id)
+    except ValueError:
+        return ToolResultEnvelope(
+            tool="clarify_job_selection", ok=False, text="Invalid job ID."
+        )
+
+    async with AsyncSessionLocal() as db:
+        job = await db.scalar(
+            select(Job).where(Job.id == parsed_job_id, Job.company_id == company_id)
+        )
+
+    if job is None:
+        return ToolResultEnvelope(
+            tool="clarify_job_selection",
+            ok=False,
+            text="That job was not found in your company.",
+        )
+
+    return ToolResultEnvelope(
+        tool="clarify_job_selection",
+        ok=True,
+        text=question,
+        ui_type_hint=UIHint.job_clarification,
+        data={
+            "job_id": str(job.id),
+            "job_title": job.title,
+            "status": job.status.value,
+            "location": job.location,
+            "question": question,
+        },
+    )
+
+
+async def _clarify_candidate_selection_impl(
+    application_id: str,
+    candidate_name: str,
+    job_title: str,
+    question: str,
+    company_id: uuid.UUID,
+) -> ToolResultEnvelope:
+    """Security check: confirm the application belongs to a company job before emitting clarification."""
+    try:
+        parsed_app_id = uuid.UUID(application_id)
+    except ValueError:
+        return ToolResultEnvelope(
+            tool="clarify_candidate_selection", ok=False, text="Invalid application ID."
+        )
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Application, Job)
+            .join(Job, Job.id == Application.job_id)
+            .where(Application.id == parsed_app_id, Job.company_id == company_id)
+        )
+        row = result.one_or_none()
+
+    if row is None:
+        return ToolResultEnvelope(
+            tool="clarify_candidate_selection",
+            ok=False,
+            text="That application was not found in your company.",
+        )
+
+    application, job = row
+    return ToolResultEnvelope(
+        tool="clarify_candidate_selection",
+        ok=True,
+        text=question,
+        ui_type_hint=UIHint.candidate_clarification,
+        data={
+            "application_id": str(application.id),
+            "candidate_name": candidate_name,
+            "job_title": job.title,
+            "application_status": application.status.value,
+            "question": question,
+        },
     )
 
 
@@ -378,12 +327,9 @@ async def _search_company_candidates_impl(
     statuses: list[ApplicationStatus] | None = None,
     limit: int = 10,
 ) -> ToolResultEnvelope:
-    status_values = [status.value for status in statuses] if statuses else None
+    status_values = [s.value for s in statuses] if statuses else None
     hits = await qdrant_service.search_applications(
-        query,
-        company_id=company_id,
-        statuses=status_values,
-        limit=limit,
+        query, company_id=company_id, statuses=status_values, limit=limit
     )
     if not hits:
         return ToolResultEnvelope(
@@ -405,36 +351,33 @@ async def _search_company_candidates_impl(
         )
         rows = result.all()
 
-    rows_by_application_id = {
-        application.id: (application, job, profile)
-        for application, job, profile in rows
-    }
+    rows_by_id = {app.id: (app, job, profile) for app, job, profile in rows}
     cards: list[CandidateCardData] = []
     seen_users: set[uuid.UUID] = set()
-    for application_id in hit_ids:
-        row = rows_by_application_id.get(application_id)
-        if row is None:
+    for app_id in hit_ids:
+        row = rows_by_id.get(app_id)
+        if not row:
             continue
-        application, job, profile = row
-        if application.user_id in seen_users:
+        app, job, profile = row
+        if app.user_id in seen_users:
             continue
-        seen_users.add(application.user_id)
-        resume = application.resume
-        skills = [skill.skill_name for skill in (resume.skills if resume else [])]
+        seen_users.add(app.user_id)
+        resume = app.resume
+        skills = [s.skill_name for s in (resume.skills if resume else [])]
         cards.append(
             CandidateCardData(
-                user_id=application.user_id,
-                application_id=application.id,
-                full_name=application.user.full_name,
-                avatar_url=application.user.avatar_url,
+                user_id=app.user_id,
+                application_id=app.id,
+                full_name=app.user.full_name,
+                avatar_url=app.user.avatar_url,
                 headline=(profile.headline if profile else None)
                 or (resume.headline if resume else None),
                 skills=skills,
                 applied_for_job=job.title,
-                application_status=application.status,
-                score=application.score,
-                feedback=application.feedback,
-                match_score=round(float(hit_scores[application.id]), 4),
+                application_status=app.status,
+                score=app.score,
+                feedback=app.feedback,
+                match_score=round(float(hit_scores[app.id]), 4),
             )
         )
 
@@ -464,11 +407,8 @@ async def _research_salary_impl(
             ok=False,
             text="I need both a job role and a country before I can research salary data.",
         )
-
     search_input = await get_salary_research_data(
-        role=normalized_role,
-        country=normalized_country,
-        year=year,
+        role=normalized_role, country=normalized_country, year=year
     )
     synthesized = await ai_service.generate_structured(
         system_prompt=SALARY_SYNTHESIS_SYSTEM_PROMPT,
@@ -487,15 +427,15 @@ async def _research_salary_impl(
         year_context=str(search_input["year"]),
         sources=[
             SalarySource(
-                source_name=source.source_name,
-                url=source.url,
-                country=source.country,
-                currency=source.currency,
-                quoted_min=source.quoted_min,
-                quoted_max=source.quoted_max,
-                notes=source.notes,
+                source_name=s.source_name,
+                url=s.url,
+                country=s.country,
+                currency=s.currency,
+                quoted_min=s.quoted_min,
+                quoted_max=s.quoted_max,
+                notes=s.notes,
             )
-            for source in synthesized.sources
+            for s in synthesized.sources
         ],
     )
     return ToolResultEnvelope(
@@ -507,9 +447,7 @@ async def _research_salary_impl(
 
 
 async def _prepare_job_edit_impl(
-    job_id: uuid.UUID,
-    edits: list[JobEditInstruction],
-    company_id: uuid.UUID,
+    job_id: uuid.UUID, edits: list[JobEditInstruction], company_id: uuid.UUID
 ) -> ToolResultEnvelope:
     async with AsyncSessionLocal() as db:
         job = await db.scalar(
@@ -522,8 +460,7 @@ async def _prepare_job_edit_impl(
                 text="I couldn't find that job in your company.",
             )
 
-    current_job = _job_to_chat_data(job)
-    current_data = current_job.model_dump(mode="json")
+    current_data = _job_to_chat_data(job).model_dump(mode="json")
     patch: dict[str, Any] = {}
     diffs: list[JobEditDiff] = []
 
@@ -545,7 +482,7 @@ async def _prepare_job_edit_impl(
             return ToolResultEnvelope(
                 tool="prepare_job_edit",
                 ok=False,
-                text="There were no actual changes to propose for that job.",
+                text="There were no actual changes to propose.",
             )
         JobUpdate.model_validate(patch)
     except Exception as exc:
@@ -571,10 +508,7 @@ async def _prepare_job_edit_impl(
 
 
 async def _apply_job_edit_impl(
-    job_id: uuid.UUID,
-    patch: dict,
-    company_id: uuid.UUID,
-    recruiter_id: uuid.UUID,
+    job_id: uuid.UUID, patch: dict, company_id: uuid.UUID, recruiter_id: uuid.UUID
 ) -> ToolResultEnvelope:
     job_id = uuid.UUID(str(job_id))
     company_id = uuid.UUID(str(company_id))
@@ -598,10 +532,20 @@ async def _apply_job_edit_impl(
 
 
 async def _get_candidate_detail_impl(
-    candidate_name: str,
-    job_title_query: str,
-    company_id: uuid.UUID,
+    candidate_name: str, job_id: str, company_id: uuid.UUID
 ) -> ToolResultEnvelope:
+    """
+    Look up a candidate's application using the confirmed job UUID.
+    """
+    try:
+        parsed_job_id = uuid.UUID(job_id)
+    except ValueError:
+        return ToolResultEnvelope(
+            tool="get_candidate_detail",
+            ok=False,
+            text="Invalid job ID. Use clarify_job_selection first.",
+        )
+
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Application, Job, Profile)
@@ -610,8 +554,8 @@ async def _get_candidate_detail_impl(
             .outerjoin(Profile, Profile.user_id == Application.user_id)
             .where(
                 Job.company_id == company_id,
+                Job.id == parsed_job_id,
                 User.full_name.ilike(f"%{candidate_name.strip()}%"),
-                Job.title.ilike(f"%{job_title_query.strip()}%"),
             )
             .options(
                 selectinload(Application.resume).selectinload(Resume.experiences),
@@ -627,45 +571,46 @@ async def _get_candidate_detail_impl(
         return ToolResultEnvelope(
             tool="get_candidate_detail",
             ok=False,
-            text=f"I couldn't find an application for {candidate_name} on '{job_title_query}'.",
+            text=f"I couldn't find an application for '{candidate_name}' on that job.",
         )
+
     if len(rows) > 1:
         matches = [
             {
-                "application_id": str(application.id),
-                "candidate_name": application.user.full_name,
+                "application_id": str(app.id),
+                "candidate_name": app.user.full_name,
                 "job_title": job.title,
-                "application_status": application.status.value,
+                "application_status": app.status.value,
             }
-            for application, job, _profile in rows
+            for app, job, _ in rows
         ]
         return ToolResultEnvelope(
             tool="get_candidate_detail",
             ok=False,
-            text="I found multiple matching applications. Please clarify which one you want.",
+            text="Multiple candidates matched that name. Use clarify_candidate_selection to confirm which one.",
             data={"matches": matches},
         )
 
-    application, job, profile = rows[0]
-    resume = application.resume
+    app, job, profile = rows[0]
+    resume = app.resume
     detail = CandidateDetailData(
-        user_id=application.user_id,
-        application_id=application.id,
+        user_id=app.user_id,
+        application_id=app.id,
         job_id=job.id,
         job_title=job.title,
-        full_name=application.user.full_name,
-        email=application.user.email,
-        avatar_url=application.user.avatar_url,
+        full_name=app.user.full_name,
+        email=app.user.email,
+        avatar_url=app.user.avatar_url,
         headline=(profile.headline if profile else None)
         or (resume.headline if resume else None),
         summary=(profile.summary if profile else None)
         or (resume.summary if resume else None),
         resume_name=resume.resume_name if resume else "Unknown",
-        application_status=application.status,
-        score=application.score,
-        feedback=application.feedback,
-        applied_at=application.created_at,
-        updated_at=application.updated_at,
+        application_status=app.status,
+        score=app.score,
+        feedback=app.feedback,
+        applied_at=app.created_at,
+        updated_at=app.updated_at,
         skills=list(resume.skills if resume else []),
         experiences=list(resume.experiences if resume else []),
         educations=list(resume.educations if resume else []),
@@ -679,19 +624,88 @@ async def _get_candidate_detail_impl(
 
 
 @tool
+async def list_company_jobs(
+    statuses: Annotated[
+        list[JobStatus] | None,
+        "Optional status filter (active, draft, closed). Leave null to return all jobs.",
+    ] = None,
+    state: Annotated[dict[str, Any], InjectedState] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
+    """
+    Return ALL jobs for this company so you can reason about which one the recruiter means.
+    Call this whenever the recruiter references a job by title — especially abbreviated or
+    partial titles like 'ml engineer', 'the senior fe role', 'that data job'. After seeing
+    the full list, use clarify_job_selection to confirm if there is any ambiguity.
+    Results are strictly scoped to the authenticated company.
+    """
+    company_id, _ = _state_ids(state)
+    result = await _list_company_jobs_impl(company_id, statuses)
+    return _as_tool_message("list_company_jobs", result, tool_call_id)
+
+
+@tool
+async def clarify_job_selection(
+    job_id: Annotated[
+        str,
+        "UUID of the job you believe the recruiter means. Must come from list_company_jobs results.",
+    ],
+    job_title: Annotated[
+        str, "Full job title as stored in the database, for the confirmation card."
+    ],
+    question: Annotated[
+        str,
+        "Question to show the recruiter, e.g. 'Did you mean Machine Learning Engineer?'",
+    ],
+    state: Annotated[dict[str, Any], InjectedState] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
+    """
+    After identifying which job the recruiter likely means from list_company_jobs, call this
+    to ask the recruiter for confirmation. The frontend shows a 'Did you mean X?' card with
+    Yes / No buttons. Always call this before prepare_job_edit or get_candidate_detail when
+    the recruiter's job reference was ambiguous or abbreviated.
+    """
+    company_id, _ = _state_ids(state)
+    result = await _clarify_job_selection_impl(job_id, job_title, question, company_id)
+    return _as_tool_message("clarify_job_selection", result, tool_call_id)
+
+
+@tool
+async def clarify_candidate_selection(
+    application_id: Annotated[
+        str, "UUID of the application from search_company_candidates results."
+    ],
+    candidate_name: Annotated[str, "Candidate's full name for the confirmation card."],
+    job_title: Annotated[str, "Job title the candidate applied for."],
+    question: Annotated[
+        str,
+        "Question to show, e.g. 'Did you mean Asha Sharma for Machine Learning Engineer?'",
+    ],
+    state: Annotated[dict[str, Any], InjectedState] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
+    """
+    When search_company_candidates returns a likely candidate match but the query was ambiguous,
+    call this to confirm with the recruiter before showing full details.
+    """
+    company_id, _ = _state_ids(state)
+    result = await _clarify_candidate_selection_impl(
+        application_id, candidate_name, job_title, question, company_id
+    )
+    return _as_tool_message("clarify_candidate_selection", result, tool_call_id)
+
+
+@tool
 async def search_company_candidates(
     query: Annotated[
         str,
-        "Semantic candidate search query, for example 'backend engineers with Python and fintech experience'.",
+        "Semantic search query, e.g. 'backend engineers with Python and fintech experience'.",
     ],
     statuses: Annotated[
-        list[ApplicationStatus] | None,
-        "Optional application statuses to filter by, such as shortlisted or interviewed.",
+        list[ApplicationStatus] | None, "Optional application status filter."
     ] = None,
-    limit: Annotated[
-        int,
-        "Maximum number of candidates to return. Keep this small unless the recruiter explicitly asks for more.",
-    ] = 10,
+    limit: Annotated[int, "Max candidates to return."] = 10,
     state: Annotated[dict[str, Any], InjectedState] = None,
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> ToolMessage:
@@ -703,18 +717,9 @@ async def search_company_candidates(
 
 @tool
 async def research_salary(
-    role: Annotated[
-        str,
-        "The exact job role to research salary for, for example 'Senior Backend Engineer'.",
-    ],
-    country: Annotated[
-        str,
-        "The country where compensation should be researched, for example 'Nepal' or 'United States'.",
-    ],
-    year: Annotated[
-        int | None,
-        "Optional year to anchor the research to. Leave empty to use the current year.",
-    ] = None,
+    role: Annotated[str, "The job role to research salary for."],
+    country: Annotated[str, "The country to research compensation in."],
+    year: Annotated[int | None, "Optional year. Defaults to current year."] = None,
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> ToolMessage:
     """Research market salary ranges for a role and country."""
@@ -723,53 +728,17 @@ async def research_salary(
 
 
 @tool
-async def find_company_job(
-    title_query: Annotated[
-        str,
-        "Approximate job title to look up before editing, for example 'Senior Product Designer'.",
-    ],
-    state: Annotated[dict[str, Any], InjectedState] = None,
-    tool_call_id: Annotated[str, InjectedToolCallId] = "",
-) -> ToolMessage:
-    """Find a company job by approximate title before preparing an edit."""
-    company_id, _ = _state_ids(state)
-    result = await _find_company_job_impl(title_query, company_id)
-    return _as_tool_message("find_company_job", result, tool_call_id)
-
-
-@tool
-async def list_company_jobs(
-    limit: Annotated[
-        int,
-        "Maximum number of company jobs to list. Keep this small unless the recruiter asks for a full inventory.",
-    ] = 10,
-    statuses: Annotated[
-        list[JobStatus] | None,
-        "Optional job statuses to filter by, such as active or draft.",
-    ] = None,
-    state: Annotated[dict[str, Any], InjectedState] = None,
-    tool_call_id: Annotated[str, InjectedToolCallId] = "",
-) -> ToolMessage:
-    """List the company's jobs or confirm whether any jobs are posted."""
-    company_id, _ = _state_ids(state)
-    result = await _list_company_jobs_impl(company_id, limit, statuses)
-    return _as_tool_message("list_company_jobs", result, tool_call_id)
-
-
-@tool
 async def prepare_job_edit(
     job_id: Annotated[
-        str,
-        "The company job ID returned by find_company_job.",
+        str, "Confirmed job UUID from clarify_job_selection. Never guess this."
     ],
     edits: Annotated[
-        list[JobEditInstruction],
-        "One or more structured edit instructions describing which fields to change and how.",
+        list[JobEditInstruction], "One or more structured edit instructions."
     ],
     state: Annotated[dict[str, Any], InjectedState] = None,
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> ToolMessage:
-    """Prepare one or more edits to a company job. This does not write to the database."""
+    """Prepare edits to a company job. Does NOT write to the database — the recruiter must confirm first."""
     company_id, _ = _state_ids(state)
     result = await _prepare_job_edit_impl(uuid.UUID(job_id), edits, company_id)
     return _as_tool_message("prepare_job_edit", result, tool_call_id)
@@ -777,30 +746,29 @@ async def prepare_job_edit(
 
 @tool
 async def get_candidate_detail(
-    candidate_name: Annotated[
-        str,
-        "Candidate name to look up, for example 'Asha Sharma'.",
-    ],
-    job_title_query: Annotated[
-        str,
-        "Job title the candidate applied for, for example 'Frontend Engineer'.",
+    candidate_name: Annotated[str, "Candidate's name (partial match supported)."],
+    job_id: Annotated[
+        str, "Confirmed job UUID from clarify_job_selection. Never guess this."
     ],
     state: Annotated[dict[str, Any], InjectedState] = None,
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> ToolMessage:
-    """Look up a specific candidate application by candidate name and job title."""
+    """
+    Fetch full application details for a candidate on a specific job.
+    Requires confirmed job_id - do not guess. If multiple candidates match the name,
+    use clarify_candidate_selection.
+    """
     company_id, _ = _state_ids(state)
-    result = await _get_candidate_detail_impl(
-        candidate_name, job_title_query, company_id
-    )
+    result = await _get_candidate_detail_impl(candidate_name, job_id, company_id)
     return _as_tool_message("get_candidate_detail", result, tool_call_id)
 
 
 MODEL_TOOLS = [
+    list_company_jobs,
+    clarify_job_selection,
+    clarify_candidate_selection,
     search_company_candidates,
     research_salary,
-    find_company_job,
-    list_company_jobs,
     prepare_job_edit,
     get_candidate_detail,
 ]

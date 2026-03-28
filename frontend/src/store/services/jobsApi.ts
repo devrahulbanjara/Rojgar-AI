@@ -46,6 +46,7 @@ export interface JobListItem {
   currency: string
   status: JobStatus
   auto_shortlist: boolean
+  shortlist_threshold: number
   expires_at: string | null
   applications_count: number
   final_shortlist_completed: boolean
@@ -68,6 +69,7 @@ export interface JobDetail {
   currency: string
   status: JobStatus
   auto_shortlist: boolean
+  shortlist_threshold: number
   expires_at: string | null
   overview: string | null
   responsibilities: string[]
@@ -87,6 +89,7 @@ export interface CreateJobPayload {
   currency?: string
   status?: JobStatus
   auto_shortlist?: boolean
+  shortlist_threshold?: number
   expires_at?: string
   overview?: string
   responsibilities?: string[]

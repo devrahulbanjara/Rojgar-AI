@@ -24,11 +24,42 @@ from app.modules.shortlisting.schemas import (
     ShortlistSummaryResponse,
     TriggerShortlistResponse,
 )
-from app.shared.enums import ApplicationStatus, ShortlistStatus, SyncAction
+from app.shared.enums import ApplicationStatus, JobStatus, ShortlistStatus, SyncAction
 from app.infrastructures.redis.service import redis_service
 
 
 SHORTLISTING_STALE_AFTER = timedelta(minutes=2)
+
+
+def _job_is_open_for_auto_shortlisting(job: Job) -> bool:
+    return job.status == JobStatus.active and (
+        job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
+    )
+
+
+def _job_has_expired(job: Job) -> bool:
+    return job.status == JobStatus.expired or (
+        job.expires_at is not None and job.expires_at <= datetime.now(timezone.utc)
+    )
+
+
+def _application_has_complete_review(application: Application) -> bool:
+    return application.score is not None and application.feedback is not None
+
+
+def _apply_review_if_missing(
+    application: Application,
+    score: int,
+    feedback: str,
+) -> bool:
+    updated = False
+    if application.score is None:
+        application.score = score
+        updated = True
+    if application.feedback is None:
+        application.feedback = feedback
+        updated = True
+    return updated
 
 
 async def _get_company_id_for_user(db: AsyncSession, user_id: uuid.UUID) -> uuid.UUID:
@@ -139,10 +170,17 @@ async def process_auto_shortlist_for_application(
             if application is None or application.status != ApplicationStatus.submitted:
                 return
 
+            job = await db.scalar(select(Job).where(Job.id == application.job_id))
+            if job is None or not _job_is_open_for_auto_shortlisting(job):
+                return
+            if _application_has_complete_review(application):
+                return
+
             try:
                 score, feedback = _dummy_ai_score_application(application)
-                application.score = score
-                application.feedback = feedback
+                updated = _apply_review_if_missing(application, score, feedback)
+                if not updated:
+                    return
                 enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
                 await db.commit()
 
@@ -169,6 +207,10 @@ async def process_auto_shortlist_for_application(
         await engine.dispose()
 
 
+async def queue_auto_shortlist_backfill(job_id: uuid.UUID, database_url: str) -> None:
+    await _run_shortlisting_task(job_id, database_url)
+
+
 async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
     engine = create_async_engine(database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -179,6 +221,13 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
             return
 
         try:
+            if not _job_is_open_for_auto_shortlisting(job) and not _job_has_expired(
+                job
+            ):
+                job.shortlist_status = ShortlistStatus.not_started
+                await db.commit()
+                return
+
             job.shortlist_status = ShortlistStatus.in_progress
             await db.commit()
 
@@ -186,7 +235,6 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
                 select(Application)
                 .where(
                     Application.job_id == job_id,
-                    Application.status == ApplicationStatus.submitted,
                 )
                 .options(
                     selectinload(Application.resume).selectinload(Resume.experiences),
@@ -197,17 +245,23 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
             applications = applications_result.scalars().all()
 
             for application in applications:
-                score, feedback = _score_application(application)
-                application.score = score
-                application.feedback = feedback
+                if _application_has_complete_review(application):
+                    continue
+                score, feedback = _dummy_ai_score_application(application)
+                _apply_review_if_missing(application, score, feedback)
+            reviewed_application_ids = [
+                application.id
+                for application in applications
+                if application.score is not None or application.feedback is not None
+            ]
             enqueue_application_sync_events(
-                db,
-                [application.id for application in applications],
-                SyncAction.UPSERT,
+                db, reviewed_application_ids, SyncAction.UPSERT
             )
 
             job.shortlist_status = ShortlistStatus.completed
             await db.commit()
+            await redis_service.delete(f"shortlist:summary:{job_id}")
+            await redis_service.invalidate_pattern("dashboard:recruiter:*")
             logger.info("Shortlisting completed for job {}", job_id)
         except Exception as exc:
             await db.rollback()
@@ -231,15 +285,22 @@ async def get_shortlist_summary(
     if cached_data:
         return ShortlistSummaryResponse.model_validate_json(cached_data)
 
-    counts = await db.execute(
-        select(
-            func.count(Application.id).label("total"),
-            func.count(Application.score).label("scored"),
-        ).where(Application.job_id == job_id)
+    total = int(
+        await db.scalar(
+            select(func.count(Application.id)).where(Application.job_id == job_id)
+        )
+        or 0
     )
-    row = counts.one()
-    total = int(row.total or 0)
-    scored = int(row.scored or 0)
+    scored = int(
+        await db.scalar(
+            select(func.count(Application.id)).where(
+                Application.job_id == job_id,
+                Application.score.is_not(None),
+                Application.feedback.is_not(None),
+            )
+        )
+        or 0
+    )
 
     if (
         job.shortlist_status == ShortlistStatus.in_progress
@@ -263,6 +324,7 @@ async def get_shortlist_summary(
         pending_review=max(total - scored, 0),
         shortlist_status=job.shortlist_status,
         final_shortlist_completed=job.final_shortlist_completed,
+        shortlist_threshold=job.shortlist_threshold,
     )
 
     await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
@@ -282,6 +344,16 @@ async def trigger_shortlisting(
         select(func.count(Application.id)).where(Application.job_id == job_id)
     )
     total_applications = int(total_applications or 0)
+    reviewed_applications = int(
+        await db.scalar(
+            select(func.count(Application.id)).where(
+                Application.job_id == job_id,
+                Application.score.is_not(None),
+                Application.feedback.is_not(None),
+            )
+        )
+        or 0
+    )
 
     if job.shortlist_status == ShortlistStatus.in_progress:
         return TriggerShortlistResponse(
@@ -297,6 +369,15 @@ async def trigger_shortlisting(
             job_id=job_id,
             shortlist_status=ShortlistStatus.not_started,
             message="This job has no applications to screen yet.",
+        )
+
+    if reviewed_applications >= total_applications:
+        job.shortlist_status = ShortlistStatus.completed
+        await db.commit()
+        return TriggerShortlistResponse(
+            job_id=job_id,
+            shortlist_status=ShortlistStatus.completed,
+            message="All applications already have score and feedback.",
         )
 
     job.shortlist_status = ShortlistStatus.in_progress
@@ -334,6 +415,19 @@ async def finalize_shortlist(
     updated_count = 0
 
     if payload.use_ai_recommendations:
+        if job.status != JobStatus.expired and (
+            job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="AI approval is only available after the job expires.",
+            )
+
+        threshold = (
+            payload.threshold
+            if payload.threshold is not None
+            else job.shortlist_threshold
+        )
         shortlist_result = await db.execute(
             update(Application)
             .where(
@@ -341,7 +435,8 @@ async def finalize_shortlist(
                     Application.job_id == job_id,
                     Application.status == ApplicationStatus.submitted,
                     Application.score.is_not(None),
-                    Application.score >= payload.threshold,
+                    Application.feedback.is_not(None),
+                    Application.score >= threshold,
                 )
             )
             .values(status=ApplicationStatus.screening)
@@ -357,7 +452,8 @@ async def finalize_shortlist(
                     Application.job_id == job_id,
                     Application.status == ApplicationStatus.submitted,
                     Application.score.is_not(None),
-                    Application.score < payload.threshold,
+                    Application.feedback.is_not(None),
+                    Application.score < threshold,
                 )
             )
             .values(status=ApplicationStatus.rejected)

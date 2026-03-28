@@ -11,6 +11,7 @@ class ShortlistSummaryResponse(BaseSchema):
     pending_review: int
     shortlist_status: ShortlistStatus
     final_shortlist_completed: bool
+    shortlist_threshold: int
 
 
 class TriggerShortlistResponse(BaseSchema):
@@ -21,7 +22,7 @@ class TriggerShortlistResponse(BaseSchema):
 
 class FinalizeShortlistRequest(BaseSchema):
     use_ai_recommendations: bool = False
-    threshold: int = 70
+    threshold: int | None = None
 
 
 class FinalizeShortlistResponse(BaseSchema):

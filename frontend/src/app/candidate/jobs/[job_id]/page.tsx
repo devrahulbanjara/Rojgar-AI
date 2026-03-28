@@ -254,14 +254,14 @@ function RecommendedCard({ job, index }: { job: CandidateDashboardRecommendedJob
           </div>
         </div>
         {job.match_score !== null && (
-          <div className="job-match-badge job-match-badge--sm" title="AI Match Score">
+          <div className="badge badge--primary badge--xs" title="AI Match Score">
             {Math.round(job.match_score * 100)}%
           </div>
         )}
       </div>
       <div className="job-card__tags">
         {tags.map((tag) => (
-          <span key={tag} className="job-card__tag">
+          <span key={tag} className="badge badge--gray">
             {tag}
           </span>
         ))}
@@ -375,17 +375,15 @@ export default function JobDetailPage() {
                   {LOCATION_TYPE_LABELS[job.location_type]}
                 </div>
                 <div className="jd-hero__chips">
-                  <span className="jd-hero__chip jd-hero__chip--primary">
+                  <span className="badge badge--primary">
                     <Briefcase size={12} aria-hidden="true" />
                     {LOCATION_TYPE_LABELS[job.location_type]}
                   </span>
-                  {salary && (
-                    <span className="jd-hero__chip jd-hero__chip--secondary">{salary}</span>
-                  )}
-                  <span className={`jd-hero__chip${isActive ? ' jd-hero__chip--success' : ''}`}>
+                  {salary && <span className="badge badge--secondary">{salary}</span>}
+                  <span className={`badge ${isActive ? 'badge--success' : 'badge--gray'}`}>
                     {getJobStatusLabel(job.status)}
                   </span>
-                  <span className="jd-hero__chip">
+                  <span className="badge badge--gray">
                     <Clock size={12} aria-hidden="true" />
                     Posted {formatDate(job.updated_at ?? job.created_at)}
                   </span>
@@ -560,13 +558,13 @@ export default function JobDetailPage() {
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {job.company?.company_size && (
-                  <span className="jd-hero__chip">
+                  <span className="badge badge--gray">
                     <Briefcase width={11} height={11} aria-hidden="true" />
                     {job.company.company_size} employees
                   </span>
                 )}
                 {job.company?.location && (
-                  <span className="jd-hero__chip">
+                  <span className="badge badge--gray">
                     <MapPin width={11} height={11} aria-hidden="true" />
                     {job.company.location}
                   </span>
@@ -576,7 +574,7 @@ export default function JobDetailPage() {
                     href={job.company.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="jd-hero__chip"
+                    className="badge badge--secondary"
                     style={{ textDecoration: 'none', cursor: 'pointer' }}
                   >
                     Visit Website ↗

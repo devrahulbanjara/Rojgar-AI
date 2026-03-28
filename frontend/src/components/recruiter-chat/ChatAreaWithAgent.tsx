@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import type { ComponentPropsWithoutRef, FormEvent, KeyboardEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ComponentPropsWithoutRef, FormEvent, KeyboardEvent, WheelEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
+
+import Image from 'next/image'
 
 import type {
   CandidateDetailData,
@@ -12,14 +14,13 @@ import type {
   ChatHistoryMessage,
   ChatInterruptPayload,
   ChatSessionResponse,
-  CompanyJobData,
   CompanyJobListResult,
   JobEditPreviewData,
   SalaryResearchResult,
   ToolResultEnvelope,
 } from '@/lib/types/recruiterChat'
 import { useAppSelector } from '@/store/hooks'
-import { Bot } from 'lucide-react'
+import { ArrowUp } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
 
 import { CandidateCardGrid } from './CandidateCardGrid'
@@ -33,6 +34,23 @@ import { RecruiterChatPanelSkeleton } from './skeletons'
 interface ChatAreaWithAgentProps {
   session: ChatSessionResponse
   onMessageSent: () => void
+}
+
+function ChatBotBadge() {
+  return (
+    <span
+      className="recruiter-chat-message-avatar recruiter-chat-message-avatar--assistant"
+      aria-hidden="true"
+    >
+      <Image
+        src="/logo/icon-light.png"
+        alt=""
+        width={16}
+        height={16}
+        className="recruiter-chat-bot-mark"
+      />
+    </span>
+  )
 }
 
 function parseToolEnvelope<TData>(
@@ -95,20 +113,95 @@ function shouldHideAssistantSummary(content: string): boolean {
   )
 }
 
+function ClarificationCard({
+  question,
+  subtitle,
+  disabled,
+  onConfirm,
+  onReject,
+}: {
+  question: string
+  subtitle: string
+  disabled: boolean
+  onConfirm: () => void
+  onReject: () => void
+}) {
+  return (
+    <div className="recruiter-chat-card recruiter-chat-card--clarification">
+      <div className="recruiter-chat-clarification__question">{question}</div>
+      <div className="recruiter-chat-clarification__subtitle">{subtitle}</div>
+      <div className="recruiter-chat-clarification__actions">
+        <button
+          type="button"
+          className="recruiter-chat-clarification__button recruiter-chat-clarification__button--primary"
+          onClick={onConfirm}
+          disabled={disabled}
+        >
+          Yes
+        </button>
+        <button
+          type="button"
+          className="recruiter-chat-clarification__button recruiter-chat-clarification__button--secondary"
+          onClick={onReject}
+          disabled={disabled}
+        >
+          No
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function renderInterruptCard(
+  interrupt: ChatInterruptPayload,
+  isSending: boolean,
+  onRespond: (action: 'confirm' | 'cancel' | 'reject', patch?: Record<string, unknown>) => void,
+): React.ReactNode {
+  if (interrupt.type === 'job_edit_preview') {
+    return (
+      <JobEditDiffCard
+        data={interrupt.proposal}
+        onConfirm={(patch) => {
+          onRespond('confirm', patch)
+        }}
+        onCancel={() => {
+          onRespond('cancel')
+        }}
+      />
+    )
+  }
+
+  if (interrupt.type === 'job_clarification') {
+    const job = interrupt.job_clarification
+    const meta = [job.status, job.location].filter(Boolean).join(' • ')
+
+    return (
+      <ClarificationCard
+        question={job.question}
+        subtitle={meta || job.job_title}
+        disabled={isSending}
+        onConfirm={() => onRespond('confirm')}
+        onReject={() => onRespond('reject')}
+      />
+    )
+  }
+
+  const candidate = interrupt.candidate_clarification
+  const subtitle = `${candidate.candidate_name} • ${candidate.job_title} • ${candidate.application_status}`
+
+  return (
+    <ClarificationCard
+      question={candidate.question}
+      subtitle={subtitle}
+      disabled={isSending}
+      onConfirm={() => onRespond('confirm')}
+      onReject={() => onRespond('reject')}
+    />
+  )
+}
+
 function renderToolMessage(message: ChatHistoryMessage): React.ReactNode | null {
   const toolName = message.name ?? 'tool'
-
-  if (toolName === 'find_company_job') {
-    const envelope = parseToolEnvelope<CompanyJobData>(toolName, message.content)
-
-    if (!envelope.ok || !envelope.data) {
-      return (
-        <ToolErrorMessage text={getToolErrorText(envelope, 'No matching company job was found.')} />
-      )
-    }
-
-    return <JobCardGrid data={{ total: 1, jobs: [envelope.data] }} />
-  }
 
   if (toolName === 'list_company_jobs') {
     const envelope = parseToolEnvelope<CompanyJobListResult>(toolName, message.content)
@@ -180,6 +273,10 @@ function renderToolMessage(message: ChatHistoryMessage): React.ReactNode | null 
     return null
   }
 
+  if (toolName === 'clarify_job_selection' || toolName === 'clarify_candidate_selection') {
+    return null
+  }
+
   const envelope = parseToolEnvelope<Record<string, unknown>>(toolName, message.content)
   return (
     <ToolErrorMessage text={getToolErrorText(envelope, 'Unable to render this tool result.')} />
@@ -221,24 +318,13 @@ function MarkdownMessage({ content }: { content: string }) {
 }
 
 export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentProps) {
-  const user = useAppSelector((state) => state.auth.user)
   const accessToken = useAppSelector((state) => state.auth.accessToken)
   const [history, setHistory] = useState<ChatHistoryMessage[]>([])
   const [pendingInterrupt, setPendingInterrupt] = useState<ChatInterruptPayload | null>(null)
   const [draftMessage, setDraftMessage] = useState('')
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const [isSending, setIsSending] = useState(false)
-
-  const userInitials = useMemo(() => {
-    return (
-      user?.full_name
-        ?.split(' ')
-        .map((part) => part[0] ?? '')
-        .join('')
-        .slice(0, 2)
-        .toUpperCase() ?? 'ME'
-    )
-  }, [user?.full_name])
+  const scrollViewRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -307,6 +393,8 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       'list_company_jobs',
       'research_salary',
       'get_candidate_detail',
+      'clarify_job_selection',
+      'clarify_candidate_selection',
     ].includes(previousMessage.name ?? '')
   }
 
@@ -367,8 +455,19 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
     }
   }
 
+  const handleThreadWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const scrollView = scrollViewRef.current
+    if (!scrollView) return
+
+    const canScroll = scrollView.scrollHeight > scrollView.clientHeight
+    if (!canScroll) return
+
+    scrollView.scrollTop += event.deltaY
+    event.preventDefault()
+  }
+
   const handleInterruptResponse = async (
-    action: 'confirm' | 'cancel',
+    action: 'confirm' | 'cancel' | 'reject',
     patch?: Record<string, unknown>,
   ) => {
     setIsSending(true)
@@ -419,9 +518,6 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       messageNodes.push(
         <div key={key} className="recruiter-chat-user-row recruiter-chat-message-row">
           <div className="recruiter-chat-user-bubble">{message.content}</div>
-          <span className="recruiter-chat-message-avatar recruiter-chat-message-avatar--user">
-            {userInitials}
-          </span>
         </div>,
       )
       continue
@@ -433,16 +529,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       }
 
       const nextMessage = history[index + 1]
-      const nextToolNode =
-        nextMessage?.role === 'tool' && nextMessage.name === 'find_company_job'
-          ? renderToolMessage(nextMessage)
-          : null
+      const nextToolNode = nextMessage?.role === 'tool' ? renderToolMessage(nextMessage) : null
 
       messageNodes.push(
         <div key={key} className="recruiter-chat-assistant-row recruiter-chat-message-row">
-          <span className="recruiter-chat-message-avatar recruiter-chat-message-avatar--assistant">
-            <Bot size={15} />
-          </span>
+          <ChatBotBadge />
           <div className="recruiter-chat-tool-panel">
             <div className="recruiter-chat-assistant-bubble">
               <MarkdownMessage content={message.content} />
@@ -473,9 +564,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
 
     messageNodes.push(
       <div key={key} className="recruiter-chat-assistant-row recruiter-chat-message-row">
-        <span className="recruiter-chat-message-avatar recruiter-chat-message-avatar--assistant">
-          <Bot size={15} />
-        </span>
+        <ChatBotBadge />
         <div className="recruiter-chat-tool-panel">{toolNode}</div>
       </div>,
     )
@@ -484,13 +573,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
   return (
     <div className="recruiter-chat-area">
       <div className="recruiter-chat-thread-shell">
-        <div className="recruiter-chat-scroll-view">
+        <div ref={scrollViewRef} className="recruiter-chat-scroll-view" onWheel={handleThreadWheel}>
           <div className="recruiter-chat-message-view">
             {hasNoMessages ? (
               <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
-                <span className="recruiter-chat-message-avatar recruiter-chat-message-avatar--assistant">
-                  <Bot size={15} />
-                </span>
+                <ChatBotBadge />
                 <div className="recruiter-chat-assistant-bubble">
                   Hi! I can help you find candidates, research salaries, edit jobs, or look up
                   applicant details. What do you need?
@@ -502,19 +589,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
 
             {pendingInterrupt ? (
               <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
-                <span className="recruiter-chat-message-avatar recruiter-chat-message-avatar--assistant">
-                  <Bot size={15} />
-                </span>
+                <ChatBotBadge />
                 <div className="recruiter-chat-tool-panel">
-                  <JobEditDiffCard
-                    data={pendingInterrupt.proposal}
-                    onConfirm={(patch) => {
-                      void handleInterruptResponse('confirm', patch)
-                    }}
-                    onCancel={() => {
-                      void handleInterruptResponse('cancel')
-                    }}
-                  />
+                  {renderInterruptCard(pendingInterrupt, isSending, (action, patch) => {
+                    void handleInterruptResponse(action, patch)
+                  })}
                 </div>
               </div>
             ) : null}
@@ -527,7 +606,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               className="recruiter-chat-input-textarea"
               placeholder={
                 pendingInterrupt
-                  ? 'Confirm or cancel the pending job edit before sending another message...'
+                  ? 'Respond to the pending clarification or review before sending another message...'
                   : 'Ask about candidates, salaries, or jobs...'
               }
               rows={1}
@@ -541,7 +620,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               className="recruiter-chat-send-button"
               disabled={isComposerDisabled || draftMessage.trim().length === 0}
             >
-              ↑
+              <ArrowUp size={14} />
             </button>
           </div>
         </form>

@@ -41,6 +41,7 @@ class JobDraft(BaseModel):
     salary_max: int | None = Field(...)
     currency: str | None = Field(..., max_length=10)
     status: JobStatus = Field(...)
+    shortlist_threshold: int = Field(default=70, ge=0, le=100)
 
     overview: str = Field(..., min_length=1)
     responsibilities: list[str] = Field(...)

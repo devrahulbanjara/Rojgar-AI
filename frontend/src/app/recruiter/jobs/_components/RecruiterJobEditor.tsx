@@ -23,6 +23,7 @@ export interface RecruiterJobFormState {
   status: JobStatus
   expires_at: string
   auto_shortlist: boolean
+  shortlist_threshold: string
   overview: string
   responsibilities: string[]
   requirements: string[]
@@ -40,6 +41,7 @@ export const EMPTY_JOB_FORM: RecruiterJobFormState = {
   status: 'draft',
   expires_at: '',
   auto_shortlist: false,
+  shortlist_threshold: '70',
   overview: '',
   responsibilities: [],
   requirements: [],
@@ -67,6 +69,7 @@ export function formFromDetail(detail: JobDetail): RecruiterJobFormState {
     status: detail.status,
     expires_at: detail.expires_at ? toDateTimeLocalValue(detail.expires_at) : '',
     auto_shortlist: detail.auto_shortlist ?? false,
+    shortlist_threshold: String(detail.shortlist_threshold ?? 70),
     overview: detail.overview ?? '',
     responsibilities: detail.responsibilities ?? [],
     requirements: detail.requirements ?? [],
@@ -78,6 +81,7 @@ export function formFromDetail(detail: JobDetail): RecruiterJobFormState {
 export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
   const salary_min = form.salary_min ? Number(form.salary_min) : null
   const salary_max = form.salary_max ? Number(form.salary_max) : null
+  const shortlist_threshold = form.shortlist_threshold ? Number(form.shortlist_threshold) : 70
   const expires_at = form.expires_at ? new Date(form.expires_at).toISOString() : undefined
 
   return {
@@ -88,6 +92,7 @@ export function formToPayload(form: RecruiterJobFormState): CreateJobPayload {
     ...(salary_max !== null && { salary_max }),
     currency: form.currency || 'NPR',
     status: form.status,
+    shortlist_threshold,
     ...(expires_at && { expires_at }),
     auto_shortlist: form.auto_shortlist,
     ...(form.overview && { overview: form.overview }),
@@ -356,6 +361,25 @@ export default function RecruiterJobEditor({
                 </span>
               </span>
             </label>
+          </div>
+
+          <div className="job-ai-field job-ai-field--manual">
+            <label className="job-ai-label" htmlFor="job-shortlist-threshold">
+              Shortlist Threshold
+            </label>
+            <input
+              id="job-shortlist-threshold"
+              type="number"
+              min={0}
+              max={100}
+              className="job-ai-input"
+              value={form.shortlist_threshold}
+              onChange={(event) => set('shortlist_threshold', event.target.value)}
+              disabled={isLoading}
+            />
+            <p className="job-ai-help">
+              Used by “Approve AI recommendations” after the job expires.
+            </p>
           </div>
 
           <div className="job-ai-field job-ai-field--manual job-editor-form__salary-field">

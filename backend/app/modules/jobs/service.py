@@ -66,6 +66,14 @@ def _should_be_searchable(job: Job) -> bool:
     )
 
 
+def _background_database_url(db: AsyncSession) -> str:
+    bind = db.bind
+    if bind is not None and hasattr(bind, "url"):
+        return str(bind.url)
+
+    raise RuntimeError("Database bind is not configured for background task execution.")
+
+
 def _job_list_item_from_row(
     job: Job,
     applications_count: int | None = None,
@@ -87,6 +95,7 @@ def _job_list_item_from_row(
             "currency": job.currency,
             "status": _effective_job_status(job),
             "auto_shortlist": job.auto_shortlist,
+            "shortlist_threshold": job.shortlist_threshold,
             "expires_at": job.expires_at,
             "applications_count": int(applications_count or 0),
             "final_shortlist_completed": job.final_shortlist_completed,
@@ -115,6 +124,7 @@ def _job_detail_response_from_row(
             "currency": job.currency,
             "status": _effective_job_status(job),
             "auto_shortlist": job.auto_shortlist,
+            "shortlist_threshold": job.shortlist_threshold,
             "expires_at": job.expires_at,
             "overview": job.overview,
             "responsibilities": job.responsibilities,
@@ -165,6 +175,7 @@ async def create_job(
         currency=payload.currency,
         status=payload.status,
         auto_shortlist=payload.auto_shortlist,
+        shortlist_threshold=payload.shortlist_threshold,
         expires_at=expires_at,
         overview=payload.overview,
         responsibilities=payload.responsibilities or [],
@@ -413,11 +424,22 @@ async def update_job(
             detail="Job not found or you do not have permission.",
         )
 
+    was_auto_shortlist_enabled = job.auto_shortlist
+    was_open_for_auto_shortlist = _should_be_searchable(job)
     update_data = payload.model_dump(exclude_unset=True)
 
     if "expires_at" in update_data:
         update_data["expires_at"] = _validate_expires_at_for_write(
             update_data["expires_at"]
+        )
+
+    if (
+        "shortlist_threshold" in update_data
+        and _effective_job_status(job) == JobStatus.expired
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shortlist threshold can only be changed before the job expires.",
         )
 
     for field, value in update_data.items():
@@ -434,6 +456,16 @@ async def update_job(
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
     db.add(event)
     await db.commit()
+
+    now_open_for_auto_shortlist = job.auto_shortlist and _should_be_searchable(job)
+    if now_open_for_auto_shortlist and (
+        not was_auto_shortlist_enabled or not was_open_for_auto_shortlist
+    ):
+        from app.modules.shortlisting.service import queue_auto_shortlist_backfill
+
+        bg_tasks.add_task(
+            queue_auto_shortlist_backfill, job.id, _background_database_url(db)
+        )
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
     bg_tasks.add_task(process_sync_event, event.id)

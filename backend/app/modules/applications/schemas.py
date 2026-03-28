@@ -24,6 +24,13 @@ class UpdateApplicationStatusRequest(BaseSchema):
     )
 
 
+class UpdateApplicationReviewRequest(BaseSchema):
+    """Company/recruiter updates manual score and/or feedback for an application."""
+
+    score: int | None = Field(default=None, ge=0, le=100)
+    feedback: str | None = None
+
+
 class ApplicationResponse(BaseSchema):
     id: UUID
     job_id: UUID
@@ -32,6 +39,8 @@ class ApplicationResponse(BaseSchema):
     status: ApplicationStatus
     created_at: datetime
     updated_at: datetime
+    score: int | None = None
+    feedback: str | None = None
     resume: ResumeResponse | None = None
 
 

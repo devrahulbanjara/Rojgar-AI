@@ -61,7 +61,7 @@ export function ChatSidebar({
       <div className="recruiter-chat-sidebar__header">
         <button
           type="button"
-          className={`btn btn--outline btn--dark btn--sm btn--full${isCreating ? ' btn--loading' : ''}`}
+          className="recruiter-chat-sidebar__new-chat"
           onClick={handleNewChat}
           disabled={isCreating}
         >

@@ -192,10 +192,9 @@ function getStatusUpdateCopy(application: CandidateApplicationView): string {
   }
 }
 
-function getScoreSummary(score: number | null, feedback: string | null): string {
-  if (score == null) return 'Awaiting review'
-  if (feedback) return feedback
-  return `Application review score: ${score}/100`
+function getReviewFeedback(feedback: string | null): string | null {
+  const trimmedFeedback = feedback?.trim()
+  return trimmedFeedback ? trimmedFeedback : null
 }
 
 function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
@@ -477,11 +476,17 @@ export default function ApplicationsPage() {
                             View Job
                           </Link>
                         </div>
-                        {application.score !== null ? (
-                          <div className="cell-actions" style={{ marginTop: '0.5rem' }}>
-                            <span className="badge badge--primary">AI reviewed</span>
+                        {getReviewFeedback(application.feedback) ? (
+                          <div
+                            className="cell-actions"
+                            style={{
+                              marginTop: '0.5rem',
+                              justifyContent: 'flex-start',
+                              textAlign: 'left',
+                            }}
+                          >
                             <span className="cell-muted">
-                              {getScoreSummary(application.score, application.feedback)}
+                              {getReviewFeedback(application.feedback)}
                             </span>
                           </div>
                         ) : null}
@@ -566,15 +571,12 @@ export default function ApplicationsPage() {
                 <p className="app-detail__activity">{getStatusUpdateCopy(selectedApplication)}</p>
               </div>
 
-              {selectedApplication.score !== null ? (
+              {getReviewFeedback(selectedApplication.feedback) ? (
                 <div className="app-detail__section">
                   <div className="app-detail__section-title">Application Review</div>
-                  <div className="cell-actions">
-                    <span className="badge badge--primary">{selectedApplication.score}/100</span>
-                    <span className="cell-muted">
-                      {getScoreSummary(selectedApplication.score, selectedApplication.feedback)}
-                    </span>
-                  </div>
+                  <p className="app-detail__activity">
+                    {getReviewFeedback(selectedApplication.feedback)}
+                  </p>
                 </div>
               ) : null}
 
@@ -605,7 +607,7 @@ export default function ApplicationsPage() {
               <div className="app-detail__actions">
                 <Link
                   href={`/candidate/jobs/${selectedApplication.job_id}`}
-                  className="btn btn--primary btn--sm"
+                  className="btn btn--outline btn--primary btn--sm"
                 >
                   View Job
                 </Link>
