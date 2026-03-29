@@ -2,13 +2,11 @@ import type { ApiResponse } from '@/store/services/baseApi'
 
 export type RecruiterChatUiType =
   | 'text'
-  | 'candidate_list'
+  | 'clarification'
+  | 'salary_answer'
   | 'job_list'
-  | 'salary_info'
-  | 'candidate_detail'
   | 'job_edit_preview'
-  | 'job_clarification'
-  | 'candidate_clarification'
+  | 'out_of_scope'
   | null
 
 export interface ChatSessionResponse {
@@ -26,146 +24,60 @@ export type ChatSessionsApiResponse = ApiResponse<ChatSessionResponse[]>
 export type ChatSessionApiResponse = ApiResponse<ChatSessionResponse>
 export type EmptyApiResponse = ApiResponse<null>
 
-export interface ChatHistoryMessage {
-  role: 'user' | 'assistant' | 'tool'
-  content: string
-  name?: string | null
-  created_at?: string | null
-}
-
-export type ChatHistoryApiResponse = ApiResponse<ChatHistoryMessage[]>
-
-export interface JobClarificationPayload {
-  job_id: string
-  job_title: string
-  status: string | null
-  location: string | null
-  question: string
-}
-
-export interface CandidateClarificationPayload {
-  application_id: string
-  candidate_name: string
-  job_title: string
-  application_status: string
-  question: string
-}
-
-export type ChatInterruptPayload =
-  | {
-      type: 'job_edit_preview'
-      proposal: JobEditPreviewData
-      job_clarification?: null
-      candidate_clarification?: null
-    }
-  | {
-      type: 'job_clarification'
-      proposal?: null
-      job_clarification: JobClarificationPayload
-      candidate_clarification?: null
-    }
-  | {
-      type: 'candidate_clarification'
-      proposal?: null
-      job_clarification?: null
-      candidate_clarification: CandidateClarificationPayload
-    }
-
-export interface ChatExchangeResponse {
-  history: ChatHistoryMessage[]
-  interrupt: ChatInterruptPayload | null
-}
-
-export type ChatExchangeApiResponse = ApiResponse<ChatExchangeResponse>
-
-export interface WebSearchSource {
+export interface SourceItem {
   title: string
   url: string
-  snippet: string
+  source_name?: string
+  snippet?: string | null
+  quoted_min?: number | null
+  quoted_max?: number | null
+  currency?: string | null
+  notes?: string | null
 }
 
-export type RecruiterChatStreamEvent =
-  | { type: 'thinking' }
-  | { type: 'message_start' }
-  | { type: 'tool_call'; tool: string }
-  | { type: 'message_delta'; content: string }
-  | { type: 'web_sources'; sources: WebSearchSource[] }
-  | { type: 'structured_result'; ui_type: RecruiterChatUiType; data: Record<string, unknown> }
-  | { type: 'final'; data: ChatExchangeResponse }
-  | { type: 'error'; message: string }
-
-export interface ToolResultEnvelope<TData = Record<string, unknown> | null> {
-  tool: string
-  ok: boolean
-  text: string
-  ui_type_hint: RecruiterChatUiType
-  data: TData
-}
-
-export interface CandidateCardData {
-  user_id: string
-  application_id: string
-  full_name: string
-  avatar_url: string | null
-  headline: string | null
-  skills: string[]
-  applied_for_job: string
-  application_status: string
-  score: number | null
-  feedback: string | null
-  match_score: number
-}
-
-export interface CandidateSearchResult {
-  total: number
-  candidates: CandidateCardData[]
-}
-
-export interface SalaryResearchSource {
-  source_name: string
-  url: string
-  country: string
+export interface JobOption {
+  job_id: string
+  title: string
+  location: string | null
+  location_type: string | null
+  status: string
+  salary_min: number | null
+  salary_max: number | null
   currency: string | null
-  quoted_min: number | null
-  quoted_max: number | null
-  notes: string | null
-}
-
-export interface SalaryResearchResult {
-  role: string
-  country: string
-  currency: string | null
-  recommended_min: number | null
-  recommended_max: number | null
-  confidence: 'low' | 'medium' | 'high'
-  rationale: string
-  insufficient_evidence: boolean
-  year_context: string
-  sources: SalaryResearchSource[]
+  expires_at: string | null
 }
 
 export interface CompanyJobData {
   job_id: string
   title: string
   location: string | null
-  location_type: string
+  location_type: string | null
   salary_min: number | null
   salary_max: number | null
-  currency: string
+  currency: string | null
   status: string
-  auto_shortlist: boolean
   expires_at: string | null
-  overview: string | null
-  responsibilities: string[]
-  requirements: string[]
-  preferred_qualifications: string[]
-  benefits: string[]
+  created_at: string
   updated_at: string
 }
 
 export interface CompanyJobListResult {
   total: number
   jobs: CompanyJobData[]
+  counts: Record<string, number>
+}
+
+export interface CandidateSearchResult {
+  total: number
+  candidates: Array<{
+    user_id: string
+    application_id: string
+    avatar_url: string | null
+    full_name: string
+    applied_for_job: string
+    application_status: string
+    match_score: number
+  }>
 }
 
 export interface CandidateDetailData {
@@ -203,6 +115,19 @@ export interface CandidateDetailData {
   }>
 }
 
+export interface SalaryResearchResult {
+  role: string
+  country: string
+  currency: string | null
+  recommended_min: number | null
+  recommended_max: number | null
+  confidence: 'low' | 'medium' | 'high'
+  rationale: string
+  insufficient_evidence: boolean
+  year_context: string
+  sources: SourceItem[]
+}
+
 export interface JobEditDiff {
   field: string
   before: unknown
@@ -216,3 +141,53 @@ export interface JobEditPreviewData {
   patch: Record<string, unknown>
   diffs: JobEditDiff[]
 }
+
+export interface RecruiterChatResponse {
+  response_type: Exclude<RecruiterChatUiType, null>
+  message: string
+  data: Record<string, unknown> | null
+}
+
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant'
+  content: string
+  created_at: string
+  response_type: RecruiterChatUiType
+  data: Record<string, unknown> | null
+}
+
+export interface PendingJobSelectionAction {
+  type: 'job_selection'
+  data: {
+    kind: string
+    request_text?: string
+    options: JobOption[]
+  }
+}
+
+export interface PendingJobEditAction {
+  type: 'job_edit'
+  data: JobEditPreviewData
+}
+
+export type PendingAction = PendingJobSelectionAction | PendingJobEditAction
+
+export interface ChatHistoryResponse {
+  history: ChatHistoryMessage[]
+  pending_action: PendingAction | null
+}
+
+export interface ChatExchangeResponse {
+  reply: RecruiterChatResponse
+  history: ChatHistoryMessage[]
+  pending_action: PendingAction | null
+}
+
+export type ChatHistoryApiResponse = ApiResponse<ChatHistoryResponse>
+export type ChatExchangeApiResponse = ApiResponse<ChatExchangeResponse>
+
+export type RecruiterChatStreamEvent =
+  | { type: 'start'; data: { type: string } }
+  | { type: 'token'; data: { content: string } }
+  | { type: 'final'; data: ChatExchangeResponse }
+  | { type: 'error'; data: { message: string } }

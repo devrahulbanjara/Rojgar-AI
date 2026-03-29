@@ -1,36 +1,149 @@
 'use client'
 
+import { useMemo } from 'react'
+import { toast } from 'react-toastify'
+
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
-import { useGetCompanyCandidateByIdQuery } from '@/store/services/applicationsApi'
-import { ArrowLeft, ExternalLink, Mail, MapPin, Phone, UserRound } from 'lucide-react'
-
-import StatusPill from '@/components/common/StatusPill'
+import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
+import type { Resume } from '@/lib/types/resume'
+import {
+  type ApplicationStatus,
+  useGetCompanyCandidateByIdQuery,
+  useUpdateApplicationStatusMutation,
+} from '@/store/services/applicationsApi'
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock3,
+  ExternalLink,
+  Hash,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+} from 'lucide-react'
 
 import { CandidateDetailSkeleton } from '../_components/CandidatesSkeletons'
 
-function formatDate(value: string) {
+function formatInterviewDate(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
     year: 'numeric',
   })
 }
 
-function formatResumeDate(value: string | null): string {
-  if (!value) return 'Present'
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    year: 'numeric',
-  })
+function formatInterviewTime(startValue: string, endValue: string) {
+  const start = new Date(startValue)
+  const end = new Date(endValue)
+  const timeFmt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${timeFmt.format(start)} - ${timeFmt.format(end)}`
+}
+
+function toMonthInput(date: string | null): string {
+  if (!date) return ''
+  return date.slice(0, 7)
+}
+
+const STATUS_LABELS: Record<ApplicationStatus, string> = {
+  applied: 'Applied',
+  screening: 'Screening',
+  shortlisted: 'Shortlisted',
+  interview_booked: 'Interview booked',
+  interview_completed: 'Interview completed',
+  offer: 'Offer',
+  rejected: 'Rejected',
+}
+
+function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
+  switch (status) {
+    case 'applied':
+    case 'screening':
+      return ['shortlisted', 'rejected']
+    case 'shortlisted':
+      return ['rejected']
+    case 'interview_booked':
+      return ['interview_completed']
+    case 'interview_completed':
+      return ['offer', 'rejected']
+    default:
+      return []
+  }
 }
 
 export default function RecruiterCandidateDetailPage() {
   const params = useParams()
   const applicationId = params.application_id as string
   const { data: resp, isLoading, isError, refetch } = useGetCompanyCandidateByIdQuery(applicationId)
+  const [updateApplicationStatus, { isLoading: isUpdatingStatus }] =
+    useUpdateApplicationStatusMutation()
   const candidate = resp?.data
+  const interview = candidate?.interview
+  const transitionOptions = candidate ? getRecruiterTransitionOptions(candidate.status) : []
+
+  const renderedResume = useMemo<Resume | null>(() => {
+    if (!candidate?.resume) return null
+
+    return {
+      id: candidate.resume.id,
+      name: candidate.resume.resume_name,
+      updatedAt: new Date(candidate.resume.updated_at).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      targetRole: candidate.resume.headline ?? '',
+      fullName: candidate.applicant_name,
+      headline: candidate.resume.headline ?? '',
+      email: candidate.applicant_email ?? '',
+      phone: candidate.resume.phone ?? candidate.candidate_phone ?? '',
+      location: candidate.resume.location ?? candidate.candidate_location ?? '',
+      website: candidate.resume.portfolio_url ?? candidate.resume.linkedin_url ?? '',
+      linkedin_url: candidate.resume.linkedin_url ?? '',
+      github_url: candidate.resume.github_url ?? '',
+      summary: candidate.resume.summary ?? '',
+      experience: candidate.resume.experiences.map((experience) => ({
+        id: experience.id,
+        title: experience.title,
+        company: experience.company_name,
+        location: '',
+        startDate: toMonthInput(experience.start_date),
+        endDate: toMonthInput(experience.end_date),
+        current: experience.end_date === null,
+        description: experience.description.join('\n'),
+      })),
+      education: candidate.resume.educations.map((education) => ({
+        id: education.id,
+        degree: [education.degree, education.field_of_study].filter(Boolean).join(' in '),
+        institution: education.institution,
+        location: '',
+        startDate: toMonthInput(education.start_date),
+        endDate: toMonthInput(education.end_date),
+        gpa: '',
+      })),
+      skills: candidate.resume.skills.map((skill) => skill.skill_name),
+    }
+  }, [candidate])
+
+  const handleStatusChange = async (nextStatus: string) => {
+    if (!candidate || !nextStatus) return
+
+    try {
+      await updateApplicationStatus({
+        application_id: candidate.id,
+        body: { status: nextStatus as ApplicationStatus },
+      }).unwrap()
+      void refetch()
+      toast.success(
+        `Application moved to ${STATUS_LABELS[nextStatus as ApplicationStatus].toLowerCase()}.`,
+      )
+    } catch {
+      toast.error('Could not update application status.')
+    }
+  }
 
   return (
     <div className="dash-content container container--app-shell">
@@ -70,38 +183,98 @@ export default function RecruiterCandidateDetailPage() {
                 <div className="recruiter-candidate-detail__copy">
                   <h2 className="recruiter-candidate-detail__title">{candidate.applicant_name}</h2>
                   <p className="recruiter-candidate-detail__subtitle">{candidate.job_title}</p>
-                  <div className="recruiter-candidate-detail__meta">
-                    <StatusPill kind="application" status={candidate.status} />
-                    <span>Applied {formatDate(candidate.created_at)}</span>
-                    {candidate.score !== null ? <span>Score {candidate.score}/100</span> : null}
+                  <div className="recruiter-candidate-detail__contacts">
+                    {candidate.applicant_email ? (
+                      <span className="recruiter-candidate-detail__contactValue">
+                        <Mail size={12} />
+                        {candidate.applicant_email}
+                      </span>
+                    ) : null}
+                    {candidate.candidate_phone ? (
+                      <span className="recruiter-candidate-detail__contactValue">
+                        <Phone size={12} />
+                        {candidate.candidate_phone}
+                      </span>
+                    ) : null}
+                    {candidate.candidate_location ? (
+                      <span className="recruiter-candidate-detail__contactValue">
+                        <MapPin size={12} />
+                        {candidate.candidate_location}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
 
-              <div className="recruiter-candidate-detail__contacts">
-                {candidate.applicant_email ? (
-                  <span className="badge badge--gray">
-                    <Mail size={12} />
-                    {candidate.applicant_email}
-                  </span>
-                ) : null}
-                {candidate.candidate_phone ? (
-                  <span className="badge badge--gray">
-                    <Phone size={12} />
-                    {candidate.candidate_phone}
-                  </span>
-                ) : null}
-                {candidate.candidate_location ? (
-                  <span className="badge badge--gray">
-                    <MapPin size={12} />
-                    {candidate.candidate_location}
-                  </span>
-                ) : null}
+              <div className="recruiter-candidate-detail__contactStatus">
+                <div className="recruiter-candidate-detail__statusControl">
+                  <select
+                    className="resume-field__input recruiter-candidate-detail__statusSelect"
+                    value={candidate.status}
+                    onChange={(event) => {
+                      const nextStatus = event.target.value
+                      void handleStatusChange(nextStatus)
+                    }}
+                    disabled={isUpdatingStatus || transitionOptions.length === 0}
+                  >
+                    <option value={candidate.status} disabled>
+                      Current: {STATUS_LABELS[candidate.status]}
+                    </option>
+                    {transitionOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {STATUS_LABELS[status]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
+                  <div className="dash-card__title">Interview scheduled</div>
+                  <div className="dash-card__subtitle">
+                    Booking details for this candidate&apos;s interview.
+                  </div>
+                </div>
+              </div>
+              <div className="dash-card__body recruiter-candidate-detail__section">
+                <div className="recruiter-candidate-detail__block">
+                  <div className="recruiter-candidate-detail__label">Interview date</div>
+                  <p className="recruiter-candidate-detail__timelineTitle">
+                    <CalendarDays size={14} aria-hidden="true" />{' '}
+                    {interview?.start_time
+                      ? formatInterviewDate(interview.start_time)
+                      : 'Not available'}
+                  </p>
+                  <p className="recruiter-candidate-detail__timelineMeta">
+                    <Clock3 size={14} aria-hidden="true" />{' '}
+                    {interview?.start_time && interview?.end_time
+                      ? formatInterviewTime(interview.start_time, interview.end_time)
+                      : 'Not available'}
+                  </p>
+                  <p className="recruiter-candidate-detail__timelineMeta">
+                    <MapPin size={14} aria-hidden="true" /> {interview?.location ?? 'Not available'}
+                  </p>
+                  <p className="cell-muted">{interview?.title ?? 'Not available'}</p>
+                </div>
+
+                <div className="recruiter-candidate-detail__block">
+                  <div className="recruiter-candidate-detail__label">Booking reference</div>
+                  <p
+                    className="recruiter-candidate-detail__timelineTitle"
+                    style={{ fontFamily: 'ui-monospace, monospace' }}
+                  >
+                    <Hash size={14} aria-hidden="true" />{' '}
+                    {interview?.cal_booking_uid ?? 'Not available'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="dash-card">
               <div className="dash-card__header">
                 <div>
@@ -112,18 +285,14 @@ export default function RecruiterCandidateDetailPage() {
                 </div>
               </div>
               <div className="dash-card__body recruiter-candidate-detail__section">
-                {candidate.candidate_headline ? (
-                  <div className="recruiter-candidate-detail__block">
-                    <div className="recruiter-candidate-detail__label">Headline</div>
-                    <p>{candidate.candidate_headline}</p>
-                  </div>
-                ) : null}
-                {candidate.candidate_summary ? (
-                  <div className="recruiter-candidate-detail__block">
-                    <div className="recruiter-candidate-detail__label">Summary</div>
-                    <p>{candidate.candidate_summary}</p>
-                  </div>
-                ) : null}
+                <div className="recruiter-candidate-detail__block">
+                  <div className="recruiter-candidate-detail__label">Headline</div>
+                  <p>{candidate.candidate_headline ?? 'Not available'}</p>
+                </div>
+                <div className="recruiter-candidate-detail__block">
+                  <div className="recruiter-candidate-detail__label">Summary</div>
+                  <p>{candidate.candidate_summary ?? 'Not available'}</p>
+                </div>
                 <div className="recruiter-candidate-detail__block">
                   <div className="recruiter-candidate-detail__label">Shared links</div>
                   <div className="recruiter-candidate-detail__links">
@@ -131,29 +300,45 @@ export default function RecruiterCandidateDetailPage() {
                       <a href={candidate.linkedin_url} target="_blank" rel="noreferrer">
                         LinkedIn <ExternalLink size={12} />
                       </a>
-                    ) : null}
+                    ) : (
+                      <p className="cell-muted">LinkedIn: Not available</p>
+                    )}
                     {candidate.github_url ? (
                       <a href={candidate.github_url} target="_blank" rel="noreferrer">
                         GitHub <ExternalLink size={12} />
                       </a>
-                    ) : null}
+                    ) : (
+                      <p className="cell-muted">GitHub: Not available</p>
+                    )}
+                    {!candidate.linkedin_url && !candidate.github_url && !candidate.portfolio_url
+                      ? null
+                      : null}
                     {candidate.portfolio_url ? (
                       <a href={candidate.portfolio_url} target="_blank" rel="noreferrer">
                         Portfolio <ExternalLink size={12} />
                       </a>
-                    ) : null}
-                    {!candidate.linkedin_url &&
-                    !candidate.github_url &&
-                    !candidate.portfolio_url ? (
-                      <p className="cell-muted">No profile links shared for this application.</p>
-                    ) : null}
+                    ) : (
+                      <p className="cell-muted">Portfolio: Not available</p>
+                    )}
                   </div>
                 </div>
                 <div className="recruiter-candidate-detail__block">
                   <div className="recruiter-candidate-detail__label">AI review</div>
-                  <p>{candidate.feedback ?? 'No feedback available yet.'}</p>
+                  <p>{candidate.feedback ?? 'Not available'}</p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
+                  <div className="dash-card__title">&nbsp;</div>
+                  <div className="dash-card__subtitle">&nbsp;</div>
+                </div>
+              </div>
+              <div className="dash-card__body" style={{ minHeight: '16rem' }}></div>
             </div>
 
             <div className="dash-card">
@@ -161,89 +346,22 @@ export default function RecruiterCandidateDetailPage() {
                 <div>
                   <div className="dash-card__title">Resume attached</div>
                   <div className="dash-card__subtitle">
-                    The resume selected by the candidate when they applied.
+                    Snapshot details from the resume selected for this application.
                   </div>
                 </div>
               </div>
-              <div className="dash-card__body recruiter-candidate-detail__section">
-                {candidate.resume ? (
-                  <>
-                    <div className="recruiter-candidate-detail__block">
-                      <div className="recruiter-candidate-detail__label">Resume</div>
-                      <p>{candidate.resume.resume_name}</p>
-                      {candidate.resume.headline ? (
-                        <p className="cell-muted">{candidate.resume.headline}</p>
-                      ) : null}
-                    </div>
-                    {candidate.resume.summary ? (
-                      <div className="recruiter-candidate-detail__block">
-                        <div className="recruiter-candidate-detail__label">Resume summary</div>
-                        <p>{candidate.resume.summary}</p>
-                      </div>
-                    ) : null}
-                    {candidate.resume.skills.length > 0 ? (
-                      <div className="recruiter-candidate-detail__block">
-                        <div className="recruiter-candidate-detail__label">Skills</div>
-                        <div className="recruiter-candidate-detail__chips">
-                          {candidate.resume.skills.map((skill) => (
-                            <span key={skill.id} className="badge badge--gray">
-                              {skill.skill_name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    {candidate.resume.experiences.length > 0 ? (
-                      <div className="recruiter-candidate-detail__block">
-                        <div className="recruiter-candidate-detail__label">Experience</div>
-                        <div className="recruiter-candidate-detail__timeline">
-                          {candidate.resume.experiences.map((experience) => (
-                            <div
-                              key={experience.id}
-                              className="recruiter-candidate-detail__timelineItem"
-                            >
-                              <div className="recruiter-candidate-detail__timelineTitle">
-                                {experience.title} · {experience.company_name}
-                              </div>
-                              <div className="recruiter-candidate-detail__timelineMeta">
-                                {formatResumeDate(experience.start_date)} —{' '}
-                                {formatResumeDate(experience.end_date)}
-                              </div>
-                              {experience.description.length > 0 ? (
-                                <ul className="recruiter-candidate-detail__timelineList">
-                                  {experience.description.map((line, index) => (
-                                    <li key={index}>{line}</li>
-                                  ))}
-                                </ul>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    {candidate.resume.educations.length > 0 ? (
-                      <div className="recruiter-candidate-detail__block">
-                        <div className="recruiter-candidate-detail__label">Education</div>
-                        <div className="recruiter-candidate-detail__timeline">
-                          {candidate.resume.educations.map((education) => (
-                            <div
-                              key={education.id}
-                              className="recruiter-candidate-detail__timelineItem"
-                            >
-                              <div className="recruiter-candidate-detail__timelineTitle">
-                                {education.degree ?? 'Education'} · {education.institution}
-                              </div>
-                              {education.field_of_study ? (
-                                <div className="recruiter-candidate-detail__timelineMeta">
-                                  {education.field_of_study}
-                                </div>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
+              <div
+                className="dash-card__body"
+                style={{
+                  overflowX: 'auto',
+                  justifyContent: 'center',
+                  background: renderedResume ? 'rgba(248, 250, 252, 0.8)' : undefined,
+                }}
+              >
+                {renderedResume ? (
+                  <div className="rv-page-shadow">
+                    <ResumeTemplate resume={renderedResume} />
+                  </div>
                 ) : (
                   <div className="profile-empty">
                     <UserRound size={18} />

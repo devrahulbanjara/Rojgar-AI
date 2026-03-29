@@ -46,8 +46,6 @@ type ReviewDraft = {
 type ScoreFilter = 'all' | 'high' | 'mid' | 'low'
 type ReviewFilter = 'all' | 'reviewed' | 'pending' | 'missing'
 
-const PAGE_SIZE = 8
-
 function getJobOptionLabel(job: JobListItem) {
   return `${job.title} (${getJobStatusLabel(job.status)})`
 }
@@ -154,29 +152,6 @@ function getReviewPreview(
     return 'AI screening is in progress. This row will update when screening finishes.'
   }
   return 'No AI review yet. Click Rerun AI screening to generate a score and feedback.'
-}
-
-function buildPagination(currentPage: number, totalPages: number) {
-  if (totalPages <= 1) return [1]
-
-  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1])
-  const validPages = [...pages]
-    .filter((page) => page >= 1 && page <= totalPages)
-    .sort((a, b) => a - b)
-  const output: Array<number | 'ellipsis'> = []
-
-  for (let index = 0; index < validPages.length; index += 1) {
-    const page = validPages[index]
-    const previous = validPages[index - 1]
-
-    if (previous != null && page - previous > 1) {
-      output.push('ellipsis')
-    }
-
-    output.push(page)
-  }
-
-  return output
 }
 
 function EditIcon() {
@@ -291,7 +266,6 @@ export default function RecruiterScreeningPage() {
   const [searchTermByJobId, setSearchTermByJobId] = useState<Record<string, string>>({})
   const [scoreFilterByJobId, setScoreFilterByJobId] = useState<Record<string, ScoreFilter>>({})
   const [reviewFilterByJobId, setReviewFilterByJobId] = useState<Record<string, ReviewFilter>>({})
-  const [pageByJobId, setPageByJobId] = useState<Record<string, number>>({})
 
   const eligibleJobs = useMemo(
     () =>
@@ -330,7 +304,6 @@ export default function RecruiterScreeningPage() {
   const searchTerm = activeJobId ? (searchTermByJobId[activeJobId] ?? '') : ''
   const scoreFilter = activeJobId ? (scoreFilterByJobId[activeJobId] ?? 'all') : 'all'
   const reviewFilter = activeJobId ? (reviewFilterByJobId[activeJobId] ?? 'all') : 'all'
-  const page = activeJobId ? (pageByJobId[activeJobId] ?? 1) : 1
   const deferredSearchTerm = useDeferredValue(searchTerm)
 
   const {
@@ -402,28 +375,17 @@ export default function RecruiterScreeningPage() {
   function setSearchTerm(next: string) {
     if (!activeJobId) return
     setSearchTermByJobId((prev) => ({ ...prev, [activeJobId]: next }))
-    setPageByJobId((prev) => ({ ...prev, [activeJobId]: 1 }))
   }
 
   function setScoreFilter(next: ScoreFilter) {
     if (!activeJobId) return
     setScoreFilterByJobId((prev) => ({ ...prev, [activeJobId]: next }))
-    setPageByJobId((prev) => ({ ...prev, [activeJobId]: 1 }))
   }
 
   function setReviewFilter(next: SetStateAction<ReviewFilter>) {
     if (!activeJobId) return
     const resolved = typeof next === 'function' ? next(reviewFilter) : next
     setReviewFilterByJobId((prev) => ({ ...prev, [activeJobId]: resolved }))
-    setPageByJobId((prev) => ({ ...prev, [activeJobId]: 1 }))
-  }
-
-  function setPage(next: SetStateAction<number>) {
-    if (!activeJobId) return
-    setPageByJobId((prev) => ({
-      ...prev,
-      [activeJobId]: typeof next === 'function' ? next(prev[activeJobId] ?? 1) : next,
-    }))
   }
 
   function setReviewDraft(applicationId: string, next: Partial<ReviewDraft>) {
@@ -664,18 +626,6 @@ export default function RecruiterScreeningPage() {
     shouldPollSummary,
   ])
 
-  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-
-  const pagedApplications = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE
-    return filteredApplications.slice(startIndex, startIndex + PAGE_SIZE)
-  }, [currentPage, filteredApplications])
-
-  const paginationModel = useMemo(
-    () => buildPagination(currentPage, totalPages),
-    [currentPage, totalPages],
-  )
   const isLoadingContent = isLoadingJobs || (!!activeJobId && (isLoadingSummary || isLoadingApps))
   const isBusy =
     isTriggering || isFinalizing || isUpdatingStatus || isUpdatingReview || isUpdatingJob
@@ -1044,7 +994,7 @@ export default function RecruiterScreeningPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {pagedApplications.map((application) => {
+                    {filteredApplications.map((application) => {
                       const reviewState = getReviewState(application, {
                         autoShortlist: Boolean(activeJob?.auto_shortlist),
                         isAiProcessing: shouldPollSummary && !hasCompleteReview(application),
@@ -1265,47 +1215,6 @@ export default function RecruiterScreeningPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
-
-              <div className={styles.paginationBar}>
-                <span className={styles.paginationInfo}>
-                  Showing {Math.min(pagedApplications.length, PAGE_SIZE)} of{' '}
-                  {filteredApplications.length} candidates
-                </span>
-
-                <div className={styles.paginationButtons}>
-                  <button
-                    className={styles.paginationButton}
-                    disabled={currentPage === 1}
-                    onClick={() => setPage((current) => Math.max(current - 1, 1))}
-                  >
-                    Previous
-                  </button>
-
-                  {paginationModel.map((token, index) =>
-                    token === 'ellipsis' ? (
-                      <span key={`ellipsis-${index}`} className={styles.paginationEllipsis}>
-                        ...
-                      </span>
-                    ) : (
-                      <button
-                        key={token}
-                        className={`${styles.paginationButton} ${currentPage === token ? styles.paginationButtonActive : ''}`}
-                        onClick={() => setPage(token)}
-                      >
-                        {token}
-                      </button>
-                    ),
-                  )}
-
-                  <button
-                    className={styles.paginationButton}
-                    disabled={currentPage === totalPages}
-                    onClick={() => setPage((current) => Math.min(current + 1, totalPages))}
-                  >
-                    Next
-                  </button>
-                </div>
               </div>
             </div>
           </section>

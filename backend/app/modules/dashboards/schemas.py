@@ -26,7 +26,6 @@ class ApplicationPipelineItem(BaseSchema):
     created_at: datetime
     updated_at: datetime
     pipeline_step: int | None
-    has_pending_action: bool
 
 
 class CandidateDashboardResponse(BaseSchema):
@@ -34,7 +33,6 @@ class CandidateDashboardResponse(BaseSchema):
     is_open_to_work: bool = False
     stats: CandidateStats
     applications: list[ApplicationPipelineItem]
-    urgent_action: str | None
 
 
 class JobPipelineItem(BaseSchema):

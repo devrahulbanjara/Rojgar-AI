@@ -57,8 +57,9 @@ export async function POST(
     return new Response(response.body, {
       status: response.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') ?? 'application/x-ndjson',
-        'Cache-Control': response.headers.get('cache-control') ?? 'no-cache, no-transform',
+        'Content-Type': response.headers.get('content-type') ?? 'text/event-stream',
+        'Cache-Control': response.headers.get('cache-control') ?? 'no-cache',
+        Connection: response.headers.get('connection') ?? 'keep-alive',
       },
     })
   } catch (error) {

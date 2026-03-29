@@ -1,28 +1,23 @@
 from typing import Any
 
 from langchain_tavily import TavilySearch
-from langchain_tavily._utilities import TavilySearchAPIWrapper
 from loguru import logger
-from pydantic import SecretStr
 
 from app.core.config import settings
 
 
 class SearchService:
     """
-    Abstraction for web search. Currently backed by Tavily,
-    but can be swapped for any provider (Perplexity, Google, etc.).
+    Small wrapper around Tavily so the rest of the app can stay provider-agnostic.
     """
 
-    def __init__(self):
-        api_wrapper = TavilySearchAPIWrapper(
-            tavily_api_key=SecretStr(settings.tavily_api_key)
-        )
-        self._tool = TavilySearch(
+    def __init__(self) -> None:
+        self._base_tool = TavilySearch(
+            tavily_api_key=settings.tavily_api_key,
             max_results=6,
             search_depth="advanced",
             include_raw_content=True,
-            api_wrapper=api_wrapper,
+            country=None,
         )
 
     async def query(
@@ -33,24 +28,6 @@ class SearchService:
         country: str | None = None,
         **kwargs,
     ) -> list[dict[str, Any]]:
-        """
-        Generic search method that returns a standardized list of results.
-
-        Args:
-            query: Search query string
-            max_results: Maximum number of results to return
-            search_depth: Search depth ("basic" or "advanced")
-            country: Optional country filter
-            **kwargs: Additional provider-specific parameters
-
-        Returns:
-            List of standardized search results with keys:
-            - title: Result title
-            - url: Result URL
-            - content: Short content snippet
-            - raw_content: Full content if available
-            - relevance_score: Relevance score (0-1)
-        """
         try:
             full_query = query.strip()
             if (
@@ -59,16 +36,19 @@ class SearchService:
                 and country.lower() not in full_query.lower()
             ):
                 full_query = f"{full_query} {country.strip()}"
-            search_params: dict[str, Any] = {"query": full_query}
-            if search_depth:
-                search_params["search_depth"] = search_depth
-            if max_results:
-                search_params["max_results"] = max_results
 
-            result = await self._tool.ainvoke(search_params)
+            tool = TavilySearch(
+                tavily_api_key=settings.tavily_api_key,
+                max_results=max_results or 6,
+                search_depth=search_depth or "advanced",
+                include_raw_content=True,
+                country=country or None,
+            )
+
+            result = await tool.ainvoke({"query": full_query})
             raw_results = result.get("results", []) if isinstance(result, dict) else []
 
-            standardized = []
+            standardized: list[dict[str, Any]] = []
             for row in raw_results:
                 standardized.append(
                     {
@@ -81,9 +61,8 @@ class SearchService:
                 )
 
             return standardized[:max_results]
-
-        except Exception as e:
-            logger.error(f"Search integration error: {e}")
+        except Exception as exc:
+            logger.error("Search integration error: {}", exc)
             return []
 
 

@@ -174,25 +174,15 @@ async def get_candidate_dashboard(
             created_at=row.created_at,
             updated_at=row.updated_at,
             pipeline_step=_pipeline_step(row.status),
-            has_pending_action=row.status == ApplicationStatus.shortlisted,
         )
         for row in application_rows.all()
     ]
-
-    pending_action = next((app for app in applications if app.has_pending_action), None)
-    urgent_action = None
-    if pending_action is not None:
-        urgent_action = (
-            f"Book your interview for {pending_action.job_title} at "
-            f"{pending_action.company_name}"
-        )
 
     response = CandidateDashboardResponse(
         user_name=current_user.full_name,
         is_open_to_work=is_open_to_work,
         stats=stats,
         applications=applications,
-        urgent_action=urgent_action,
     )
     await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
     return response

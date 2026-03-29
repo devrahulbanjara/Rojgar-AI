@@ -1,17 +1,17 @@
 'use client'
 
-import { type CSSProperties, Fragment, useMemo, useState } from 'react'
+import { type CSSProperties, Fragment, useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
+  useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 import { ChevronDown, ChevronRight, Mail, Search, UserRound, X } from 'lucide-react'
-
-import StatusPill from '@/components/common/StatusPill'
 
 import { CandidatesTableSkeleton } from './_components/CandidatesSkeletons'
 
@@ -45,6 +45,32 @@ const STATUS_OPTIONS: Array<{ value: 'all' | ApplicationStatus; label: string }>
   { value: 'rejected', label: 'Rejected' },
 ]
 
+const STATUS_LABELS: Record<ApplicationStatus, string> = {
+  applied: 'Applied',
+  screening: 'Screening',
+  shortlisted: 'Shortlisted',
+  interview_booked: 'Interview booked',
+  interview_completed: 'Interview completed',
+  offer: 'Offer',
+  rejected: 'Rejected',
+}
+
+function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
+  switch (status) {
+    case 'applied':
+    case 'screening':
+      return ['shortlisted', 'rejected']
+    case 'shortlisted':
+      return ['rejected']
+    case 'interview_booked':
+      return ['interview_completed']
+    case 'interview_completed':
+      return ['offer', 'rejected']
+    default:
+      return []
+  }
+}
+
 export default function RecruiterCandidatesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -53,6 +79,7 @@ export default function RecruiterCandidatesPage() {
   const [selectedStatus, setSelectedStatus] = useState<'all' | ApplicationStatus>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null)
+  const [updateApplicationStatus] = useUpdateApplicationStatusMutation()
 
   const { data: jobsResp } = useGetCompanyJobsQuery()
   const {
@@ -67,6 +94,10 @@ export default function RecruiterCandidatesPage() {
 
   const jobs = jobsResp?.data ?? []
   const candidates = useMemo(() => resp?.data ?? [], [resp?.data])
+  const [statusSelectValues, setStatusSelectValues] = useState<Record<string, ApplicationStatus>>(
+    {},
+  )
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
   const filteredCandidates = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -98,6 +129,42 @@ export default function RecruiterCandidatesPage() {
       ].some((value) => value.toLowerCase().includes(normalizedSearch))
     })
   }, [candidates, searchTerm, selectedJobId, selectedStatus])
+
+  useEffect(() => {
+    const nextValues: Record<string, ApplicationStatus> = {}
+    candidates.forEach((candidate) => {
+      candidate.applications.forEach((application) => {
+        nextValues[application.application_id] = application.status
+      })
+    })
+    setStatusSelectValues(nextValues)
+  }, [candidates])
+
+  const handleApplicationStatusChange = async (
+    applicationId: string,
+    nextStatus: ApplicationStatus,
+    currentStatus: ApplicationStatus,
+  ) => {
+    if (updatingStatusId) return
+    setUpdatingStatusId(applicationId)
+    try {
+      await updateApplicationStatus({
+        application_id: applicationId,
+        body: { status: nextStatus },
+      }).unwrap()
+      toast.success(`Application moved to ${STATUS_LABELS[nextStatus].toLowerCase()}.`)
+      setStatusSelectValues((prev) => ({ ...prev, [applicationId]: nextStatus }))
+    } catch {
+      toast.error('Could not update application status.')
+      setStatusSelectValues((prev) => ({ ...prev, [applicationId]: currentStatus }))
+    } finally {
+      setUpdatingStatusId(null)
+    }
+  }
+
+  const openApplication = (applicationId: string) => {
+    router.push(`/recruiter/candidates/${applicationId}`)
+  }
 
   return (
     <div className="dash-content container container--app-shell">
@@ -194,9 +261,7 @@ export default function RecruiterCandidatesPage() {
                 <tr>
                   <th>Candidate</th>
                   <th>Applications</th>
-                  <th>Latest status</th>
                   <th>Updated</th>
-                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -207,7 +272,18 @@ export default function RecruiterCandidatesPage() {
 
                   return (
                     <Fragment key={candidate.candidate_id}>
-                      <tr>
+                      <tr
+                        className="recruiter-candidates-grouped__summaryRow"
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => openApplication(candidate.latest_application_id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            openApplication(candidate.latest_application_id)
+                          }
+                        }}
+                      >
                         <td>
                           <div className="cell-user">
                             <div
@@ -249,13 +325,14 @@ export default function RecruiterCandidatesPage() {
                               <button
                                 type="button"
                                 className="recruiter-candidates-grouped__more"
-                                onClick={() =>
+                                onClick={(event) => {
+                                  event.stopPropagation()
                                   setExpandedCandidateId((current) =>
                                     current === candidate.candidate_id
                                       ? null
                                       : candidate.candidate_id,
                                   )
-                                }
+                                }}
                               >
                                 {isExpanded ? (
                                   <ChevronDown size={14} />
@@ -269,64 +346,74 @@ export default function RecruiterCandidatesPage() {
                             )}
                           </div>
                         </td>
-                        <td>
-                          <StatusPill kind="application" status={candidate.latest_status} />
-                        </td>
                         <td className="cell-muted">{formatDate(candidate.latest_updated_at)}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="btn btn--outline btn--sm"
-                            onClick={() =>
-                              router.push(
-                                `/recruiter/candidates/${candidate.latest_application_id}`,
-                              )
-                            }
-                          >
-                            Open latest
-                          </button>
-                        </td>
                       </tr>
                       {isExpanded ? (
                         <tr className="recruiter-candidates-grouped__expandedRow">
-                          <td colSpan={5}>
+                          <td colSpan={4}>
                             <div className="recruiter-candidates-grouped__expandedPanel">
                               <div className="recruiter-candidates-grouped__expandedTitle">
                                 Applications to your company
                               </div>
                               <div className="recruiter-candidates-grouped__applicationList">
-                                {candidate.applications.map((application) => (
-                                  <div
-                                    key={application.application_id}
-                                    className="recruiter-candidates-grouped__applicationItem"
-                                  >
-                                    <div className="recruiter-candidates-grouped__applicationCopy">
-                                      <div className="recruiter-candidates-grouped__applicationJob">
-                                        {application.job_title}
+                                {candidate.applications.map((application) => {
+                                  const applicationValue =
+                                    statusSelectValues[application.application_id] ??
+                                    application.status
+                                  const applicationTransitions =
+                                    getRecruiterTransitionOptions(applicationValue)
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={application.application_id}
+                                      className="recruiter-candidates-grouped__applicationItem"
+                                      onClick={() => openApplication(application.application_id)}
+                                    >
+                                      <div className="recruiter-candidates-grouped__applicationCopy">
+                                        <div className="recruiter-candidates-grouped__applicationJob">
+                                          {application.job_title}
+                                        </div>
+                                        <div className="recruiter-candidates-table__meta">
+                                          <span>Applied {formatDate(application.created_at)}</span>
+                                          {application.score !== null ? (
+                                            <span>Score {application.score}/100</span>
+                                          ) : null}
+                                        </div>
                                       </div>
-                                      <div className="recruiter-candidates-table__meta">
-                                        <span>Applied {formatDate(application.created_at)}</span>
-                                        {application.score !== null ? (
-                                          <span>Score {application.score}/100</span>
-                                        ) : null}
+                                      <div className="recruiter-candidates-grouped__applicationActions">
+                                        <select
+                                          className="resume-field__input recruiter-candidates-grouped__statusSelect"
+                                          value={applicationValue}
+                                          onChange={(event) =>
+                                            void handleApplicationStatusChange(
+                                              application.application_id,
+                                              event.target.value as ApplicationStatus,
+                                              applicationValue,
+                                            )
+                                          }
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                          }}
+                                          onMouseDown={(event) => event.stopPropagation()}
+                                          disabled={
+                                            applicationTransitions.length === 0 ||
+                                            updatingStatusId === application.application_id
+                                          }
+                                        >
+                                          <option value={applicationValue} disabled>
+                                            Current: {STATUS_LABELS[applicationValue]}
+                                          </option>
+                                          {applicationTransitions.map((status) => (
+                                            <option key={status} value={status}>
+                                              {STATUS_LABELS[status]}
+                                            </option>
+                                          ))}
+                                        </select>
                                       </div>
-                                    </div>
-                                    <div className="recruiter-candidates-grouped__applicationActions">
-                                      <StatusPill kind="application" status={application.status} />
-                                      <button
-                                        type="button"
-                                        className="btn btn--outline btn--sm"
-                                        onClick={() =>
-                                          router.push(
-                                            `/recruiter/candidates/${application.application_id}`,
-                                          )
-                                        }
-                                      >
-                                        Open
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
+                                    </button>
+                                  )
+                                })}
                               </div>
                             </div>
                           </td>

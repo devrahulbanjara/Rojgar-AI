@@ -12656,6 +12656,19 @@
 }
 
 .recruiter-candidates-grouped {
+  &__summaryRow {
+    cursor: pointer;
+
+    &:hover td {
+      background: rgba($color-primary, 0.03);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba($color-primary, 0.35);
+      outline-offset: -2px;
+    }
+  }
+
   &__applicationsCell,
   &__applicationCopy,
   &__expandedPanel {
@@ -12669,6 +12682,10 @@
   &__applicationJob {
     font-weight: $font-weight-semibold;
     color: $color-gray-900;
+  }
+
+  &__statusCell {
+    text-align: center;
   }
 
   &__more {
@@ -12715,10 +12732,28 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: $space-4;
+    width: 100%;
     padding: $space-3 $space-4;
     border: 1px solid rgba($color-gray-200, 0.95);
     border-radius: $radius-lg;
     background: rgba($color-white, 0.9);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color $transition-fast,
+      box-shadow $transition-fast,
+      background $transition-fast;
+
+    &:hover {
+      border-color: rgba($color-primary, 0.24);
+      box-shadow: 0 8px 20px rgba($color-primary, 0.08);
+      background: $color-white;
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba($color-primary, 0.28);
+      outline-offset: 2px;
+    }
   }
 
   &__applicationActions {
@@ -12727,6 +12762,10 @@
     gap: $space-3;
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  &__statusSelect {
+    min-width: 160px;
   }
 }
 
@@ -12794,7 +12833,6 @@
   }
 
   &__meta,
-  &__contacts,
   &__links,
   &__chips {
     display: flex;
@@ -12806,8 +12844,48 @@
     align-items: center;
   }
 
+  &__contacts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    margin-top: $space-1;
+  }
+
   &__grid {
     gap: $space-5;
+  }
+
+  &__contactValue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: $font-size-sm;
+    color: $color-gray-800;
+    line-height: 1.5;
+
+    svg {
+      color: $color-text-muted;
+      flex-shrink: 0;
+    }
+  }
+
+  &__contactStatus {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+    margin-left: auto;
+  }
+
+  &__statusControl {
+    width: 100%;
+    min-width: 180px;
+  }
+
+  &__statusSelect {
+    width: 100%;
+    min-width: 180px;
   }
 
   &__section {

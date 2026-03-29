@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
 import { useUpdateMyProfileMutation } from '@/store/services/profileApi'
-import { Calendar, ChevronRight } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
@@ -180,18 +180,16 @@ export default function UserDashboardPage() {
             </div>
           </div>
 
-          <p className="dash-page-header__subtitle">
+          <div className="dash-page-header__subtitle">
             {isLoading ? (
               <div
                 className="skeleton-block"
                 style={{ width: '200px', height: '14px', marginTop: '4px' }}
               />
-            ) : dashboardData?.urgent_action ? (
-              'You have 1 action waiting on you.'
             ) : (
               'Track every application and take the next step quickly.'
             )}
-          </p>
+          </div>
         </div>
       </div>
 
@@ -233,16 +231,6 @@ export default function UserDashboardPage() {
               <div className="stat-card__label">Rejected</div>
             </div>
           </div>
-
-          {dashboardData.urgent_action ? (
-            <div className="candidate-dashboard__alert">
-              <div className="candidate-dashboard__alert-dot" />
-              <div className="candidate-dashboard__alert-copy">{dashboardData.urgent_action}</div>
-              <Link href="/candidate/applications" className="btn btn--outline btn--sm">
-                Book interview
-              </Link>
-            </div>
-          ) : null}
 
           <div className="dash-card">
             <div className="dash-card__header">
@@ -320,12 +308,7 @@ export default function UserDashboardPage() {
 
                       <div className="candidate-pipeline-card__aside">
                         <StatusPill kind="application" status={application.status} />
-                        {application.has_pending_action ? (
-                          <span className="candidate-pipeline-card__action">
-                            Book interview
-                            <ChevronRight size={14} aria-hidden="true" />
-                          </span>
-                        ) : application.status === 'interview_booked' ? (
+                        {application.status === 'interview_booked' ? (
                           <span className="candidate-pipeline-card__action candidate-pipeline-card__action--muted">
                             <Calendar size={13} aria-hidden="true" />
                             Interview booked

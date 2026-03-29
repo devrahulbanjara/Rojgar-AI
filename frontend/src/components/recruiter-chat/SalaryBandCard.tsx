@@ -68,8 +68,8 @@ export function SalaryBandCard({ data }: { data: SalaryResearchResult }) {
                   source.source_name,
                   source.quoted_min != null || source.quoted_max != null
                     ? [
-                        formatMoney(source.quoted_min, source.currency ?? data.currency),
-                        formatMoney(source.quoted_max, source.currency ?? data.currency),
+                        formatMoney(source.quoted_min ?? null, source.currency ?? data.currency),
+                        formatMoney(source.quoted_max ?? null, source.currency ?? data.currency),
                       ]
                         .filter((value) => value !== 'N/A')
                         .join(' - ')

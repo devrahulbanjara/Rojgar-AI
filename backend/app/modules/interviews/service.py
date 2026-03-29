@@ -37,7 +37,9 @@ async def list_interviews(
             status_code=403, detail="Active company membership required."
         )
 
-    filters = [Job.company_id == company_id, Job.hiring_completed.is_(False)]
+    # Include interviews even when the job is marked hiring-complete, so recruiters
+    # still see bookings that match candidate-facing "interview booked" status.
+    filters = [Job.company_id == company_id]
     if job_id is not None:
         filters.append(Application.job_id == job_id)
     if start is not None:
@@ -60,6 +62,7 @@ async def list_interviews(
             cal_booking_uid=interview.cal_booking_uid,
             candidate_name=interview.candidate_name,
             candidate_email=interview.candidate_email,
+            applicant_avatar_url=application.shared_avatar_url,
             start_time=interview.start_time,
             end_time=interview.end_time,
             timezone=interview.timezone,
@@ -134,6 +137,7 @@ async def mark_interview_complete(
         cal_booking_uid=interview.cal_booking_uid,
         candidate_name=interview.candidate_name,
         candidate_email=interview.candidate_email,
+        applicant_avatar_url=application.shared_avatar_url,
         start_time=interview.start_time,
         end_time=interview.end_time,
         timezone=interview.timezone,

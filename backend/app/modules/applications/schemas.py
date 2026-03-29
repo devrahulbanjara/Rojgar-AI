@@ -131,6 +131,17 @@ class RecruiterCandidateApplicationSummary(BaseSchema):
     feedback: str | None = None
 
 
+class RecruiterCandidateInterviewView(BaseSchema):
+    id: UUID
+    cal_booking_uid: str
+    start_time: datetime
+    end_time: datetime
+    timezone: str | None = None
+    location: str | None = None
+    title: str | None = None
+    created_at: datetime
+
+
 class RecruiterCandidateListItem(BaseSchema):
     candidate_id: UUID
     applicant_name: str
@@ -166,5 +177,6 @@ class RecruiterCandidateDetailView(BaseSchema):
     job_id: UUID
     score: int | None = None
     feedback: str | None = None
+    interview: RecruiterCandidateInterviewView | None = None
     resume: ResumeResponse | None = None
     share_settings: CandidateShareSettings

@@ -1,26 +1,93 @@
 'use client'
 
+import { type CSSProperties, Fragment, type KeyboardEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { getInitials } from '@/lib/mediaValidation'
-import {
-  type InterviewItem,
-  useGetInterviewsQuery,
-  useMarkInterviewCompleteMutation,
-} from '@/store/services/interviewsApi'
+import { type InterviewItem, useGetInterviewsQuery } from '@/store/services/interviewsApi'
 import { useGetCompanyJobsQuery, useSetHiringCompletedMutation } from '@/store/services/jobsApi'
-import { CalendarDays, Clock3, MapPin, Ticket } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronRight, Hash, Mail, MapPin } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
-import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
 
+import { InterviewsTableSkeleton } from './_components/InterviewsSkeletons'
 import styles from './page.module.css'
 
 type DatePreset = 'today' | 'week' | 'month' | 'custom'
+type InterviewBucket =
+  | 'today'
+  | 'tomorrow'
+  | 'thisWeek'
+  | 'nextWeek'
+  | 'later'
+  | 'yesterday'
+  | 'past'
+
+const DEFAULT_OPEN_SECTIONS: Record<InterviewBucket, boolean> = {
+  today: true,
+  tomorrow: true,
+  thisWeek: true,
+  nextWeek: false,
+  later: false,
+  yesterday: false,
+  past: false,
+}
+
+const SECTION_META: Record<
+  InterviewBucket,
+  { label: string; description: string; tone: 'future' | 'past' }
+> = {
+  today: {
+    label: 'Today',
+    description: 'Interviews that need attention right now.',
+    tone: 'future',
+  },
+  tomorrow: {
+    label: 'Tomorrow',
+    description: 'Next-up interviews for immediate prep.',
+    tone: 'future',
+  },
+  thisWeek: {
+    label: 'This week',
+    description: 'Later this week, grouped for quick planning.',
+    tone: 'future',
+  },
+  nextWeek: {
+    label: 'Next week',
+    description: 'Upcoming interviews beyond this week.',
+    tone: 'future',
+  },
+  later: {
+    label: 'Later',
+    description: 'Future interviews scheduled further out.',
+    tone: 'future',
+  },
+  yesterday: {
+    label: 'Yesterday',
+    description: 'Recent interviews kept close for follow-up.',
+    tone: 'past',
+  },
+  past: {
+    label: 'Past',
+    description: 'Older interviews kept as reference.',
+    tone: 'past',
+  },
+}
+
+const SECTION_ORDER: InterviewBucket[] = [
+  'today',
+  'tomorrow',
+  'thisWeek',
+  'nextWeek',
+  'later',
+  'yesterday',
+  'past',
+]
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
@@ -59,34 +126,79 @@ function toInputDate(date: Date) {
   return `${year}-${month}-${day}`
 }
 
-function formatDayHeading(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-  })
-}
-
 function formatTimeRange(interview: InterviewItem) {
   const start = new Date(interview.start_time)
   const end = new Date(interview.end_time)
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
+  const timeFmt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${timeFmt.format(start)} - ${timeFmt.format(end)}`
+}
+
+function formatDateStamp(interview: InterviewItem) {
+  return new Date(interview.start_time).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
   })
-  return `${formatter.format(start)} - ${formatter.format(end)}`
+}
+
+function formatDateTimeLine(interview: InterviewItem) {
+  return `${formatDateStamp(interview)} · ${formatTimeRange(interview)}`
 }
 
 function getLocationLabel(value: string | null) {
-  return value?.trim() || 'Location pending'
+  return value?.trim() || 'Location TBD'
+}
+
+function getAvatarColor(name: string): string {
+  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return colors[seed % colors.length]
+}
+
+function getInterviewBucket(interview: InterviewItem, today: Date): InterviewBucket {
+  const interviewDate = startOfDay(new Date(interview.start_time))
+  const currentDay = startOfDay(today)
+  const diffDays = Math.round((interviewDate.getTime() - currentDay.getTime()) / 86_400_000)
+
+  if (diffDays === 0) return 'today'
+  if (diffDays === 1) return 'tomorrow'
+  if (diffDays === -1) return 'yesterday'
+
+  const thisWeekStart = startOfWeek(today)
+  const thisWeekEnd = endOfWeek(today)
+  const nextWeekStart = startOfDay(
+    new Date(thisWeekEnd.getFullYear(), thisWeekEnd.getMonth(), thisWeekEnd.getDate() + 1),
+  )
+  const nextWeekEnd = endOfWeek(nextWeekStart)
+
+  if (
+    interviewDate > currentDay &&
+    interviewDate >= thisWeekStart &&
+    interviewDate <= thisWeekEnd
+  ) {
+    return 'thisWeek'
+  }
+
+  if (interviewDate >= nextWeekStart && interviewDate <= nextWeekEnd) {
+    return 'nextWeek'
+  }
+
+  if (interviewDate > nextWeekEnd) {
+    return 'later'
+  }
+
+  return 'past'
 }
 
 export default function RecruiterInterviewsPage() {
+  const router = useRouter()
   const today = useMemo(() => new Date(), [])
-  const [preset, setPreset] = useState<DatePreset>('week')
+  const [preset, setPreset] = useState<DatePreset>('month')
   const [selectedJobId, setSelectedJobId] = useState('')
   const [customStart, setCustomStart] = useState(toInputDate(startOfWeek(today)))
   const [customEnd, setCustomEnd] = useState(toInputDate(endOfWeek(today)))
+  const [openSections, setOpenSections] =
+    useState<Record<InterviewBucket, boolean>>(DEFAULT_OPEN_SECTIONS)
 
   const range = useMemo(() => {
     if (preset === 'today') {
@@ -106,8 +218,6 @@ export default function RecruiterInterviewsPage() {
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
   const [setHiringCompleted, { isLoading: isUpdatingHiringCompleted }] =
     useSetHiringCompletedMutation()
-  const [markInterviewComplete, { isLoading: isMarkingInterviewComplete }] =
-    useMarkInterviewCompleteMutation()
 
   const jobs = useMemo(() => jobsResp?.data ?? [], [jobsResp?.data])
   const jobOptions = useMemo(
@@ -136,16 +246,36 @@ export default function RecruiterInterviewsPage() {
   } = useGetInterviewsQuery(interviewsParams)
 
   const interviews = useMemo(() => interviewsResp?.data ?? [], [interviewsResp?.data])
-  const groupedInterviews = useMemo(() => {
-    return interviews.reduce<Record<string, InterviewItem[]>>((accumulator, interview) => {
-      const dayKey = new Date(interview.start_time).toISOString().slice(0, 10)
-      accumulator[dayKey] = accumulator[dayKey] ?? []
-      accumulator[dayKey].push(interview)
-      return accumulator
-    }, {})
-  }, [interviews])
+  const sortedInterviews = useMemo(
+    () =>
+      [...interviews].sort(
+        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+      ),
+    [interviews],
+  )
 
-  const groupedEntries = Object.entries(groupedInterviews)
+  const groupedSections = useMemo(() => {
+    const sections = SECTION_ORDER.reduce(
+      (accumulator, key) => {
+        accumulator[key] = []
+        return accumulator
+      },
+      {} as Record<InterviewBucket, InterviewItem[]>,
+    )
+
+    for (const interview of sortedInterviews) {
+      sections[getInterviewBucket(interview, today)].push(interview)
+    }
+
+    return SECTION_ORDER.filter((key) => sections[key].length > 0).map((key) => ({
+      key,
+      ...SECTION_META[key],
+      items: sections[key],
+    }))
+  }, [sortedInterviews, today])
+
+  const hasFutureSections = groupedSections.some((section) => section.tone === 'future')
+  const hasPastSections = groupedSections.some((section) => section.tone === 'past')
 
   async function handleMarkHiringComplete() {
     if (!selectedJob) return
@@ -162,28 +292,41 @@ export default function RecruiterInterviewsPage() {
     }
   }
 
-  async function handleMarkInterviewComplete(interviewId: string) {
-    try {
-      await markInterviewComplete(interviewId).unwrap()
-      toast.success('Interview marked complete.')
-      void refetch()
-    } catch {
-      toast.error('Could not mark this interview as complete.')
+  function toggleSection(section: InterviewBucket) {
+    setOpenSections((current) => ({
+      ...current,
+      [section]: !current[section],
+    }))
+  }
+
+  function handleRowKeyDown(event: KeyboardEvent<HTMLElement>, interviewId: string) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      const interview = sortedInterviews.find((item) => item.id === interviewId)
+      if (interview) {
+        router.push(`/recruiter/candidates/${interview.application_id}`)
+      }
     }
   }
 
   const isLoading = isLoadingJobs || isLoadingInterviews
 
   return (
-    <div className={`dash-content container container--app-shell ${styles.page}`}>
+    <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Interviews</h2>
           <p className="dash-page-header__subtitle">
-            Upcoming candidate interviews across all your jobs.
+            Scheduled meetings with candidates. Filter by date and job, then scan grouped buckets
+            before drilling into individual interview rows.
           </p>
         </div>
         <div className="dash-page-header__actions">
+          <span className="badge badge--gray">
+            {isLoading
+              ? 'Loading...'
+              : `${sortedInterviews.length} interview${sortedInterviews.length === 1 ? '' : 's'}`}
+          </span>
           {selectedJob && !selectedJob.hiring_completed ? (
             <button
               className="btn btn--primary btn--sm"
@@ -203,178 +346,233 @@ export default function RecruiterInterviewsPage() {
         </div>
       </div>
 
-      <section className={styles.filtersCard}>
-        <div className={styles.filtersRow}>
-          <div className={styles.presetGroup}>
-            {[
-              ['today', 'Today'],
-              ['week', 'This week'],
-              ['month', 'This month'],
-              ['custom', 'Custom range'],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                className={`${styles.presetButton} ${preset === value ? styles.presetButtonActive : ''}`}
-                onClick={() => setPreset(value as DatePreset)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {preset === 'custom' ? (
-            <div className={styles.customRange}>
-              <label className={styles.dateField}>
-                <span className={styles.fieldLabel}>Start</span>
-                <input
-                  type="date"
-                  className={styles.dateInput}
-                  value={customStart}
-                  onChange={(event) => setCustomStart(event.target.value)}
-                />
-              </label>
-              <label className={styles.dateField}>
-                <span className={styles.fieldLabel}>End</span>
-                <input
-                  type="date"
-                  className={styles.dateInput}
-                  value={customEnd}
-                  min={customStart}
-                  onChange={(event) => setCustomEnd(event.target.value)}
-                />
-              </label>
-            </div>
-          ) : null}
-
-          <label className={styles.selectField}>
-            <span className={styles.fieldLabel}>Job</span>
-            <select
-              className={styles.select}
-              value={selectedJobId}
-              onChange={(event) => setSelectedJobId(event.target.value)}
-            >
-              <option value="">All jobs</option>
-              {jobOptions.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {job.title}
-                </option>
+      <div className="dash-card">
+        <div className={`dash-card__body ${styles.filtersBody}`}>
+          <div className={styles.filtersGrid}>
+            <div className={styles.presets}>
+              {(
+                [
+                  ['today', 'Today'],
+                  ['week', 'This week'],
+                  ['month', 'This month'],
+                  ['custom', 'Custom'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={
+                    preset === value ? 'btn btn--primary btn--sm' : 'btn btn--outline btn--sm'
+                  }
+                  onClick={() => setPreset(value)}
+                >
+                  {label}
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
 
-          <span className="badge badge--secondary">
-            {isLoading
-              ? 'Loading...'
-              : `${interviews.length} interview${interviews.length === 1 ? '' : 's'}`}
-          </span>
+            {preset === 'custom' ? (
+              <div className={styles.customRange}>
+                <label className={styles.dateField}>
+                  <span className={styles.fieldLabel}>From</span>
+                  <input
+                    type="date"
+                    className={styles.dateInput}
+                    value={customStart}
+                    onChange={(event) => setCustomStart(event.target.value)}
+                  />
+                </label>
+                <label className={styles.dateField}>
+                  <span className={styles.fieldLabel}>To</span>
+                  <input
+                    type="date"
+                    className={styles.dateInput}
+                    value={customEnd}
+                    min={customStart}
+                    onChange={(event) => setCustomEnd(event.target.value)}
+                  />
+                </label>
+              </div>
+            ) : null}
+
+            <div className={styles.jobField}>
+              <span className={styles.fieldLabel}>Job</span>
+              <select
+                className="resume-field__input recruiter-candidates-toolbar__select"
+                value={selectedJobId}
+                onChange={(event) => setSelectedJobId(event.target.value)}
+              >
+                <option value="">All jobs</option>
+                {jobOptions.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {job.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
       {isLoading ? (
-        <section className={styles.contentCard}>
-          <div className={styles.loadingBlock} />
-          <div className={styles.loadingBlock} />
-          <div className={styles.loadingBlock} />
-        </section>
-      ) : groupedEntries.length > 0 ? (
-        <div className={styles.groups}>
-          {groupedEntries.map(([day, items]) => (
-            <section key={day} className={styles.daySection}>
-              <div className={styles.dayHeading}>{formatDayHeading(day)}</div>
-              <div className={styles.cardList}>
-                {items.map((interview) => (
-                  <article key={interview.id} className={styles.interviewCard}>
-                    <div className={styles.cardTop}>
-                      <div className={styles.candidateBlock}>
-                        <MediaBadge
-                          src={null}
-                          alt={interview.candidate_name}
-                          fallback={getInitials(interview.candidate_name)}
-                          className={styles.avatar}
-                          sizes="44px"
-                        />
-                        <div className={styles.candidateCopy}>
-                          <div className={styles.candidateName}>{interview.candidate_name}</div>
-                          <div className={styles.candidateEmail}>{interview.candidate_email}</div>
-                        </div>
-                      </div>
-                      <Link
-                        href={`/recruiter/jobs/${interview.job_id}/edit`}
-                        className={styles.jobLink}
-                      >
-                        {interview.job_title}
-                      </Link>
-                    </div>
-
-                    <div className={styles.cardMeta}>
-                      <StatusPill
-                        kind="application"
-                        status={interview.application_status}
-                        className={styles.referenceBadge}
-                      />
-                      <span className={styles.metaItem}>
-                        <Clock3 size={14} aria-hidden="true" />
-                        {formatTimeRange(interview)}
-                        {interview.timezone ? ` (${interview.timezone})` : ''}
-                      </span>
-                      <span className={`badge badge--gray ${styles.locationBadge}`}>
-                        <MapPin size={13} aria-hidden="true" />
-                        {getLocationLabel(interview.location)}
-                      </span>
-                      <span className={`badge badge--secondary ${styles.referenceBadge}`}>
-                        <Ticket size={13} aria-hidden="true" />
-                        {interview.cal_booking_uid}
-                      </span>
-                      {interview.application_status === 'interview_booked' ? (
-                        <button
-                          type="button"
-                          className="btn btn--outline btn--sm"
-                          disabled={isMarkingInterviewComplete}
-                          onClick={() => void handleMarkInterviewComplete(interview.id)}
-                        >
-                          {isMarkingInterviewComplete ? (
-                            <ButtonSpinner label="Updating..." />
-                          ) : (
-                            'Mark complete'
-                          )}
-                        </button>
-                      ) : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
+        <InterviewsTableSkeleton count={4} />
+      ) : sortedInterviews.length === 0 ? (
+        <div className="dash-card">
+          <div className="dash-card__body dash-empty-state">
+            <CalendarDays className="dash-empty-state__icon" />
+            <p>
+              <strong>No interviews in this range.</strong>
+            </p>
+            <p className="cell-muted">
+              Try a wider date range or a different job. Bookings from your scheduling integration
+              appear here automatically.
+            </p>
+            <Link href="/recruiter/outreach" className="btn btn--primary btn--sm">
+              Open outreach
+            </Link>
+          </div>
         </div>
       ) : (
-        <section className={styles.emptyCard}>
-          <div className={styles.emptyIcon}>
-            <CalendarDays size={22} aria-hidden="true" />
+        <div className={styles.layout}>
+          <div className="dash-card">
+            <div className={`dash-card__body ${styles.timelineBody}`}>
+              {groupedSections.map((section, index) => {
+                const isOpen = openSections[section.key]
+                const showPastDivider =
+                  section.tone === 'past' &&
+                  hasFutureSections &&
+                  hasPastSections &&
+                  (index === 0 || groupedSections[index - 1]?.tone !== 'past')
+
+                return (
+                  <Fragment key={section.key}>
+                    {showPastDivider ? (
+                      <div className={styles.timelineDivider}>
+                        <span>Past interviews</span>
+                      </div>
+                    ) : null}
+
+                    <section className={styles.section}>
+                      <button
+                        type="button"
+                        className={styles.sectionHeader}
+                        onClick={() => toggleSection(section.key)}
+                      >
+                        <div className={styles.sectionTitleGroup}>
+                          <span className={styles.sectionLabel}>{section.label}</span>
+                          <span className={styles.sectionCount}>{section.items.length}</span>
+                        </div>
+                        <span className={styles.sectionDescription}>{section.description}</span>
+                        {isOpen ? (
+                          <ChevronDown size={16} aria-hidden="true" />
+                        ) : (
+                          <ChevronRight size={16} aria-hidden="true" />
+                        )}
+                      </button>
+
+                      {isOpen ? (
+                        <div className={styles.rows}>
+                          {section.items.map((interview) => {
+                            const accent = getAvatarColor(interview.candidate_name)
+                            const avatarUrl = interview.applicant_avatar_url
+
+                            return (
+                              <article
+                                key={interview.id}
+                                className={styles.row}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() =>
+                                  router.push(`/recruiter/candidates/${interview.application_id}`)
+                                }
+                                onKeyDown={(event) => handleRowKeyDown(event, interview.id)}
+                              >
+                                <div className={styles.candidateCell}>
+                                  <div
+                                    className="cell-user__avatar cell-user__avatar--sm"
+                                    style={
+                                      {
+                                        '--avatar-bg': `${accent}1A`,
+                                        '--avatar-color': accent,
+                                        backgroundImage: avatarUrl
+                                          ? `url(${avatarUrl})`
+                                          : undefined,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                      } as CSSProperties
+                                    }
+                                  >
+                                    {!avatarUrl ? getInitials(interview.candidate_name) : null}
+                                  </div>
+                                  <div className={styles.candidateCopy}>
+                                    <div className={styles.candidateHeading}>
+                                      <span className={styles.candidateName}>
+                                        {interview.candidate_name}
+                                      </span>
+                                      <span className={styles.tooltip}>
+                                        <span
+                                          className={styles.tooltipTrigger}
+                                          aria-label={`Booking ref ${interview.cal_booking_uid}`}
+                                        >
+                                          <Hash size={12} aria-hidden="true" />
+                                        </span>
+                                        <span className={styles.tooltipContent} role="tooltip">
+                                          Booking ref
+                                          <strong>{interview.cal_booking_uid}</strong>
+                                        </span>
+                                      </span>
+                                    </div>
+                                    <span className={styles.candidateMeta}>
+                                      <Mail size={12} aria-hidden="true" />
+                                      {interview.candidate_email}
+                                    </span>
+                                  </div>
+                                  <div className={styles.timeCell}>
+                                    <span className={styles.rowEyebrow}>Schedule</span>
+                                    <span className={styles.rowPrimary}>
+                                      {formatDateTimeLine(interview)}
+                                    </span>
+                                    <div className={styles.inlineMeta}>
+                                      <span className={styles.metaItem}>
+                                        <MapPin size={12} aria-hidden="true" />
+                                        {getLocationLabel(interview.location)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className={styles.detailsCell}>
+                                  <div className={styles.roleCell}>
+                                    <span className={styles.rowEyebrow}>Job</span>
+                                    <Link
+                                      href={`/recruiter/jobs/${interview.job_id}`}
+                                      className={styles.roleLink}
+                                      onClick={(event) => event.stopPropagation()}
+                                    >
+                                      {interview.job_title}
+                                    </Link>
+                                  </div>
+
+                                  <div className={styles.statusCell}>
+                                    <span className={styles.rowEyebrow}>Status</span>
+                                    <StatusPill
+                                      kind="application"
+                                      status={interview.application_status}
+                                    />
+                                  </div>
+                                </div>
+                              </article>
+                            )
+                          })}
+                        </div>
+                      ) : null}
+                    </section>
+                  </Fragment>
+                )
+              })}
+            </div>
           </div>
-          {selectedJob?.hiring_completed ? (
-            <>
-              <span className="badge badge--success">Hiring complete</span>
-              <div className={styles.emptyTitle}>This job is marked as hiring complete</div>
-              <p className={styles.emptyText}>
-                Interviews are hidden once hiring is completed for a role.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className={styles.emptyTitle}>No interviews scheduled</div>
-              <p className={styles.emptyText}>
-                Shortlist candidates in screening and send outreach emails to start booking
-                interviews.
-              </p>
-              <div className={styles.emptyActions}>
-                <Link href="/recruiter/outreach" className="btn btn--primary btn--sm">
-                  Open outreach
-                </Link>
-              </div>
-            </>
-          )}
-        </section>
+        </div>
       )}
     </div>
   )

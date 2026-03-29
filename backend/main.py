@@ -34,7 +34,6 @@ from app.modules.interviews.webhook import router as cal_webhook_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
-from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.shortlisting.router import router as shortlisting_router
 
 setup_logging()
@@ -44,7 +43,6 @@ setup_logging()
 async def lifespan(app: FastAPI):
     await qdrant_service.initialize()
     await job_ai_runtime.start()
-    await recruiter_chat_runtime.start()
     await redis_service.connect()
     await run_job_expiry_startup_check()
 
@@ -62,7 +60,6 @@ async def lifespan(app: FastAPI):
         pass
 
     await redis_service.disconnect()
-    await recruiter_chat_runtime.stop()
     await job_ai_runtime.stop()
     await engine.dispose()
 

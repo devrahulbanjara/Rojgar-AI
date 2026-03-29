@@ -22,7 +22,6 @@ export interface CandidateDashboardApplication {
   created_at: string
   updated_at: string
   pipeline_step: number | null
-  has_pending_action: boolean
 }
 
 export interface CandidateDashboardData {
@@ -30,7 +29,6 @@ export interface CandidateDashboardData {
   is_open_to_work: boolean
   stats: CandidateDashboardStats
   applications: CandidateDashboardApplication[]
-  urgent_action: string | null
 }
 
 export interface RecruiterDashboardJob {

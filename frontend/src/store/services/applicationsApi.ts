@@ -146,6 +146,16 @@ export interface RecruiterCandidateDetailView {
   job_id: string
   score: number | null
   feedback: string | null
+  interview: {
+    id: string
+    cal_booking_uid: string
+    start_time: string
+    end_time: string
+    timezone: string | null
+    location: string | null
+    title: string | null
+    created_at: string
+  } | null
   resume: {
     id: string
     user_id: string

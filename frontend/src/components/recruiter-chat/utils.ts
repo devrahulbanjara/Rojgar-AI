@@ -177,14 +177,10 @@ export function getToolActivityLabel(tool: string | null | undefined) {
 
 export function getUiTypeToolName(uiType: RecruiterChatUiType): string | null {
   switch (uiType) {
-    case 'candidate_list':
-      return 'search_company_candidates'
     case 'job_list':
       return 'list_company_jobs'
-    case 'salary_info':
+    case 'salary_answer':
       return 'research_salary'
-    case 'candidate_detail':
-      return 'get_candidate_detail'
     case 'job_edit_preview':
       return 'prepare_job_edit'
     default:

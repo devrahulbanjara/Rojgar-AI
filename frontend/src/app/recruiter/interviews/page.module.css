@@ -1,247 +1,409 @@
-.page {
-  display: grid;
-  gap: 1rem;
+.filtersBody {
+  padding: 1rem 1.25rem;
 }
 
-.filtersCard,
-.contentCard,
-.daySection,
-.emptyCard {
-  border: 1px solid rgba(226, 232, 240, 0.94);
-  border-radius: 0.75rem;
-  background: #ffffff;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
-}
-
-.filtersCard {
-  padding: 1rem 1.1rem;
-}
-
-.filtersRow {
+.filtersGrid {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.9rem;
-  flex-wrap: wrap;
+  gap: 0.875rem 1rem;
 }
 
-.presetGroup {
+.presets {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
-}
-
-.presetButton {
-  min-height: 2.4rem;
-  padding: 0.55rem 0.85rem;
-  border: 1px solid rgba(203, 213, 225, 0.92);
-  border-radius: 999px;
-  background: #fff;
-  color: #475569;
-  font-size: 0.84rem;
-  font-weight: 600;
-}
-
-.presetButtonActive {
-  border-color: rgba(96, 165, 250, 0.6);
-  background: rgba(239, 246, 255, 0.95);
-  color: var(--color-primary, #2563eb);
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .customRange {
   display: flex;
-  gap: 0.75rem;
   flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
 }
 
-.dateField,
-.selectField {
-  display: grid;
-  gap: 0.32rem;
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 .fieldLabel {
-  font-size: 0.66rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #7b8794;
+  color: var(--color-text-muted, #64748b);
 }
 
-.dateInput,
-.select {
-  min-height: 44px;
-  min-width: 11rem;
-  padding: 0.68rem 0.85rem;
-  border: 1.5px solid rgba(209, 213, 219, 0.9);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--color-gray-900, #111827);
+.dateInput {
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 0.5rem;
   font: inherit;
+  color: var(--color-gray-900, #111827);
+  background: #fff;
+}
+
+.jobField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.layout {
+  position: relative;
+}
+
+.timelineBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1rem;
+}
+
+.timelineDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin: 0.375rem 0;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.timelineDivider::before,
+.timelineDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(226, 232, 240, 0.95);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sectionHeader {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 0.875rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.9));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sectionTitleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sectionLabel {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-gray-900, #111827);
+}
+
+.sectionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(241, 245, 249, 1);
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sectionDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(520px, 2.15fr) minmax(260px, 1.15fr);
+  align-items: stretch;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.96);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.row:hover,
+.row:focus-visible {
+  border-color: rgba(148, 163, 184, 0.9);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
   outline: none;
 }
 
-.groups {
+.timeCell,
+.candidateCell,
+.candidateCopy,
+.detailsCell,
+.roleCell,
+.statusCell {
+  min-width: 0;
+}
+
+.detailsCell {
   display: grid;
-  gap: 1rem;
-}
-
-.daySection {
-  padding: 1rem 1.1rem 1.1rem;
-}
-
-.dayHeading {
-  padding-bottom: 0.9rem;
-  margin-bottom: 0.9rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-gray-900, #111827);
-}
-
-.cardList {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.interviewCard {
-  display: grid;
-  gap: 0.85rem;
-  padding: 0.95rem 1rem;
-  border: 1px solid rgba(226, 232, 240, 0.94);
-  border-radius: 0.75rem;
-  background: rgba(248, 250, 252, 0.72);
-}
-
-.cardTop {
-  display: flex;
+  grid-template-columns: minmax(240px, 1.25fr) auto;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 1rem;
 }
 
-.candidateBlock {
+.timeCell {
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  flex-direction: column;
+  gap: 0.325rem;
   min-width: 0;
 }
 
-.avatar {
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 999px;
-  background: rgba(219, 234, 254, 1);
-  color: var(--color-primary, #2563eb);
+.rowEyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #64748b);
 }
 
-.candidateCopy {
-  min-width: 0;
-}
-
-.candidateName {
+.rowPrimary {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-gray-900, #111827);
 }
 
-.candidateEmail {
-  margin-top: 0.15rem;
-  color: #64748b;
-  font-size: 0.84rem;
-}
-
-.jobLink {
-  color: var(--color-primary, #2563eb);
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: right;
-}
-
-.cardMeta {
+.inlineMeta {
   display: flex;
-  gap: 0.65rem;
   flex-wrap: wrap;
-  align-items: center;
+  gap: 0.5rem 0.875rem;
 }
 
-.metaItem {
+.metaItem,
+.candidateMeta {
   display: inline-flex;
   align-items: center;
-  gap: 0.42rem;
-  color: #475569;
-  font-size: 0.84rem;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
 }
 
-.locationBadge,
-.referenceBadge {
-  gap: 0.35rem;
-}
-
-.contentCard {
-  padding: 1rem;
-}
-
-.loadingBlock {
-  height: 5.5rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(90deg, #eef2ff 0%, #f8fafc 50%, #eef2ff 100%);
-  background-size: 200% 100%;
-  animation: interview-skeleton 1.2s infinite linear;
-}
-
-.emptyCard {
+.candidateCell {
   display: grid;
-  justify-items: center;
-  gap: 0.85rem;
-  padding: 3.5rem 1.5rem;
-  text-align: center;
-}
-
-.emptyIcon {
-  display: inline-flex;
+  grid-template-columns: auto minmax(170px, 0.85fr) minmax(230px, 1fr);
   align-items: center;
-  justify-content: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 1rem;
-  background: rgba(239, 246, 255, 1);
-  color: var(--color-primary, #2563eb);
+  gap: 0.875rem 1rem;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
 }
 
-.emptyTitle {
-  font-size: 1.1rem;
+.candidateCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  min-width: 0;
+}
+
+.candidateHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.candidateName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-gray-900, #111827);
 }
 
-.emptyText {
-  max-width: 34rem;
-  margin: 0;
-  color: #64748b;
-  line-height: 1.7;
+.tooltip {
+  position: relative;
+  display: inline-flex;
 }
 
-.emptyActions {
-  margin-top: 0.2rem;
+.tooltipTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  background: rgba(248, 250, 252, 0.95);
+  color: var(--color-text-muted, #64748b);
 }
 
-@keyframes interview-skeleton {
-  0% {
-    background-position: 200% 0;
+.tooltipContent {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 180px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  font-size: 0.75rem;
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.25);
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+
+.tooltipContent strong {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tooltip:hover .tooltipContent,
+.tooltip:focus-within .tooltipContent {
+  opacity: 1;
+}
+
+.roleCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.roleLink,
+.drawerRoleLink {
+  font-weight: 700;
+  color: var(--color-primary-600, #2563eb);
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.roleLink:hover,
+.drawerRoleLink:hover {
+  text-decoration: underline;
+}
+
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+@media (max-width: 1180px) {
+  .row {
+    grid-template-columns: minmax(380px, 1.35fr) minmax(240px, 1fr);
+    align-items: flex-start;
   }
 
-  100% {
-    background-position: -200% 0;
+  .candidateCell {
+    grid-template-columns: auto minmax(150px, 0.85fr) minmax(180px, 1fr);
+  }
+
+  .detailsCell {
+    grid-template-columns: minmax(180px, 1fr) auto;
+    align-items: flex-start;
+  }
+
+  .roleCell {
+    grid-column: 1 / 2;
+  }
+
+  .statusCell {
+    grid-column: 2 / 3;
   }
 }
 
 @media (max-width: 860px) {
-  .cardTop {
-    flex-direction: column;
-    align-items: flex-start;
+  .sectionHeader {
+    grid-template-columns: 1fr auto;
   }
 
-  .jobLink {
-    text-align: left;
+  .sectionDescription {
+    grid-column: 1 / 2;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .candidateCell {
+    grid-template-columns: auto 1fr;
+    padding-right: 0;
+    padding-bottom: 0.875rem;
+    border-right: 0;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  }
+
+  .timeCell {
+    grid-column: 2 / 3;
+  }
+
+  .detailsCell {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .candidateName {
+    white-space: normal;
+  }
+
+  .roleCell,
+  .statusCell {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .timelineBody {
+    padding: 0.875rem;
+  }
+
+  .sectionHeader,
+  .row {
+    border-radius: 0.875rem;
   }
 }

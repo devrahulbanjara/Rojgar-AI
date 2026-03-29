@@ -1015,6 +1015,17 @@ body {
   border-color: rgba(37, 99, 235, 0.24);
 }
 
+.recruiter-chat-action-button--danger {
+  background: rgba(254, 242, 242, 0.92);
+  border-color: rgba(239, 68, 68, 0.24);
+  color: #b91c1c;
+}
+
+.recruiter-chat-action-button--danger:hover:not(:disabled) {
+  background: rgba(254, 226, 226, 0.98);
+  border-color: rgba(220, 38, 38, 0.32);
+}
+
 .recruiter-chat-candidate-meta,
 .recruiter-chat-detail-meta,
 .recruiter-chat-chip-row,
@@ -1286,17 +1297,36 @@ body {
 
 .recruiter-chat-diff-list-item--added,
 .recruiter-chat-scalar--after {
-  background: rgba(219, 234, 254, 0.72);
-  color: #1e3a8a;
-  border-left: 3px solid rgba(37, 99, 235, 0.5);
+  background: rgba(220, 252, 231, 0.92);
+  color: #166534;
+  border-left: 3px solid rgba(34, 197, 94, 0.55);
 }
 
 .recruiter-chat-diff-list-item--removed,
 .recruiter-chat-scalar--before {
-  background: rgba(248, 250, 252, 0.96);
-  color: #64748b;
-  border-left: 3px solid rgba(148, 163, 184, 0.45);
+  background: rgba(254, 242, 242, 0.96);
+  color: #b91c1c;
+  border-left: 3px solid rgba(239, 68, 68, 0.45);
   text-decoration: line-through;
+}
+
+.recruiter-chat-diff-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.9rem;
+  margin-right: 0.45rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.recruiter-chat-diff-marker--added {
+  color: #15803d;
+}
+
+.recruiter-chat-diff-marker--removed {
+  color: #dc2626;
 }
 
 .recruiter-chat-tool-error {

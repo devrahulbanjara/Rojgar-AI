@@ -27,6 +27,7 @@ from app.modules.applications.schemas import (
     CandidateApplicationView,
     RecruiterCandidateApplicationSummary,
     RecruiterCandidateDetailView,
+    RecruiterCandidateInterviewView,
     RecruiterCandidateListItem,
     RecruiterApplicationView,
     UpdateApplicationReviewRequest,
@@ -34,6 +35,7 @@ from app.modules.applications.schemas import (
 )
 from app.modules.companies.models import Company
 from app.modules.companies.models import CompanyMembership
+from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
@@ -506,6 +508,9 @@ async def get_company_candidate_detail(
 
     share = _application_share_settings(application)
     applicant = application.user
+    interview = await db.scalar(
+        select(Interview).where(Interview.application_id == application.id)
+    )
 
     return RecruiterCandidateDetailView(
         id=application.id,
@@ -535,6 +540,9 @@ async def get_company_candidate_detail(
         job_id=job.id,
         score=application.score,
         feedback=application.feedback,
+        interview=RecruiterCandidateInterviewView.model_validate(interview)
+        if interview
+        else None,
         resume=application.resume,
         share_settings=share,
     )
