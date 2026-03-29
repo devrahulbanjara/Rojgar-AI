@@ -513,63 +513,83 @@ body {
 }
 
 .recruiter-chat-card-shell {
-  width: 100%;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
+  max-width: min(100%, 480px);
+  margin-top: 0.6rem;
 }
 
 .recruiter-chat-card-count {
   margin-bottom: 0.45rem;
-  font-size: 0.8rem;
-  color: var(--color-text-muted, #6b7280);
+  font-size: 0.72rem;
+  color: #94a3b8;
 }
 
 .recruiter-chat-job-mini-list {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  align-items: flex-start;
+  width: auto;
 }
 
 .recruiter-chat-job-mini-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 0.9rem;
-  min-height: 3.5rem;
+  width: fit-content;
+  max-width: 480px;
+  min-height: 0;
   padding: 0.7rem 0.9rem;
   border: 1px solid rgba(226, 232, 240, 0.92);
   border-radius: 14px;
   background: #ffffff;
+  text-align: left;
+}
+
+.recruiter-chat-job-mini-row__main {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.recruiter-chat-job-mini-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .recruiter-chat-job-mini-row__title {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
   font-size: 0.88rem;
   font-weight: 600;
   line-height: 1.35;
   color: #0f172a;
-}
-
-.recruiter-chat-job-mini-row__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-.recruiter-chat-job-mini-row__location {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
-  min-width: 0;
-  color: #64748b;
-  font-size: 0.74rem;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.recruiter-chat-job-mini-row__location span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.recruiter-chat-job-mini-row .recruiter-chat-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.recruiter-chat-job-mini-row__posted {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .recruiter-chat-card {
@@ -1680,14 +1700,14 @@ body {
 
 .recruiter-chat-session-item__title {
   font-size: 0.84rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #0f172a;
 }
 
 .recruiter-chat-session-item__meta {
   margin-top: 0.15rem;
-  font-size: 0.72rem;
-  color: #64748b;
+  font-size: 0.7rem;
+  color: #94a3b8;
 }
 
 .recruiter-chat-topbar {
@@ -1741,7 +1761,7 @@ body {
 .recruiter-chat-message-avatar--assistant {
   background: #f8fafc;
   border: 1px solid rgba(226, 232, 240, 0.95);
-  color: #1a56db;
+  color: var(--color-primary, #2563eb);
   margin-top: 0;
 }
 
@@ -1776,11 +1796,11 @@ body {
 
 .recruiter-chat-user-bubble {
   border-radius: 14px 14px 0 14px;
-  background: linear-gradient(180deg, #2b67e8, #1a56db);
+  background: var(--color-primary, #2563eb);
   padding: 0.72rem 0.92rem;
   font-size: 0.845rem;
   line-height: 1.58;
-  box-shadow: 0 10px 24px rgba(26, 86, 219, 0.14);
+  box-shadow: none;
 }
 
 .recruiter-chat-composer {
@@ -1792,15 +1812,15 @@ body {
 .recruiter-chat-input-shell {
   align-items: center;
   border: 1px solid rgba(203, 213, 225, 0.85);
-  border-radius: 24px;
+  border-radius: 18px;
   background: #f8fafc;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  padding: 0.32rem 0.4rem 0.32rem 0.95rem;
+  padding: 0.35rem 0.45rem 0.35rem 0.95rem;
 }
 
 .recruiter-chat-input-shell:focus-within {
-  border-color: #1a56db;
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .recruiter-chat-input-textarea {
@@ -1811,14 +1831,17 @@ body {
 }
 
 .recruiter-chat-send-button {
+  align-self: center;
   margin-right: 0;
   margin-bottom: 0;
-  background-color: #1a56db;
-  box-shadow: 0 8px 18px rgba(26, 86, 219, 0.18);
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-primary, #2563eb);
+  box-shadow: none;
 }
 
 .recruiter-chat-send-button:hover {
-  background-color: #1447b8;
+  background-color: var(--color-primary-hover, #1d4ed8);
 }
 
 .recruiter-chat-send-button--stop {

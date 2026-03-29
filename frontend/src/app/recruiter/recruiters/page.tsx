@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { toast } from 'react-toastify'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { getInitials } from '@/lib/mediaValidation'
@@ -25,14 +26,11 @@ function StatusBadge({ status }: { status: RecruiterMember['status'] }) {
   const { label, color } = map[status]
   return (
     <span
-      className="skill-pill"
+      className="recruiters-status-badge"
       style={
         {
-          '--pill-bg': color + '1A',
-          '--pill-color': color,
           background: color + '1A',
           color,
-          border: `1px solid ${color}33`,
         } as React.CSSProperties
       }
     >
@@ -138,9 +136,17 @@ export default function RecruitersPage() {
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">Recruiters</h2>
-          <p className="dash-page-header__subtitle">
-            Manage who can post jobs and screen candidates on behalf of your company.
-          </p>
+          <p className="dash-page-header__subtitle">Manage recruiters for your company.</p>
+        </div>
+        <div className="dash-page-header__actions">
+          <span className="page-header-hint">
+            {isLoading
+              ? 'Loading...'
+              : `${active.length} recruiter${active.length === 1 ? '' : 's'}`}
+          </span>
+          <Link href="/recruiter/company/settings" className="btn btn--primary btn--sm">
+            Invite recruiter
+          </Link>
         </div>
       </div>
 
@@ -188,23 +194,7 @@ export default function RecruitersPage() {
       {/* Active recruiters */}
       <div className="dash-card">
         <div className="dash-card__header">
-          <div>
-            <div className="dash-card__title">Active Recruiters</div>
-            <div className="dash-card__subtitle">
-              Recruiters currently working with your company
-            </div>
-          </div>
-          {!isLoading && (
-            <span className="skill-pill" style={{ background: '#0cce6b1A', color: '#0cce6b' }}>
-              {active.length}
-            </span>
-          )}
-          {isLoading && (
-            <div
-              className="skeleton-block"
-              style={{ width: '32px', height: '1.5rem', borderRadius: '9999px' }}
-            />
-          )}
+          <div className="dash-card__title">Active Recruiters</div>
         </div>
         <div className="dash-card__body dash-card__body--no-top">
           {isLoading ? (
@@ -222,7 +212,7 @@ export default function RecruitersPage() {
               {active.map((r) => (
                 <RecruiterRow key={r.membership_id} recruiter={r}>
                   <button
-                    className="btn btn--danger btn--sm"
+                    className="btn btn--ghost btn--sm recruiters-remove-btn"
                     disabled={isUpdating || isRemoving}
                     onClick={() => handleRemove(r.membership_id)}
                   >
@@ -303,11 +293,9 @@ function RecruiterRow({
       <div className="item-row__info">
         <div className="item-row__title">{recruiter.full_name}</div>
         <div className="item-row__sub">{recruiter.email}</div>
-        <div className="cell-actions cell-actions--mt">
+        <div className="recruiters-row-meta">
           <StatusBadge status={recruiter.status} />
-          <span style={{ fontSize: '0.75rem', color: 'var(--color-muted)' }}>
-            Joined {joinedDate}
-          </span>
+          <span>Joined {joinedDate}</span>
         </div>
       </div>
 
