@@ -497,7 +497,6 @@ export default function CompanyDashboardPage() {
               </div>
             </div>
           ) : null}
-
         </div>
       )}
     </div>

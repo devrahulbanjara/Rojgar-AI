@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
-import { ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import {
   OutreachDraftDetailSkeleton,
@@ -26,6 +25,7 @@ import {
   useSendAllDraftsMutation,
   useUpdateDraftMutation,
 } from '@/store/services/outreachApi'
+import { ChevronRight, MoreHorizontal } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
@@ -338,7 +338,10 @@ export default function RecruiterOutreachPage() {
 
     try {
       setIsGenerateMenuOpen(false)
-      const response = await prepareDrafts({ jobId: activeJob.id, direct_send: directSend }).unwrap()
+      const response = await prepareDrafts({
+        jobId: activeJob.id,
+        direct_send: directSend,
+      }).unwrap()
       toast.success(directSend ? 'Drafts generated and queued to send.' : response.message)
       await Promise.all([refetchDrafts(), refetchApplications()])
     } catch {
@@ -462,7 +465,10 @@ export default function RecruiterOutreachPage() {
 
             {!showJobMissingState ? (
               <>
-                <Link href="/recruiter/screening" className={`btn btn--ghost btn--sm ${styles.backLink}`}>
+                <Link
+                  href="/recruiter/screening"
+                  className={`btn btn--ghost btn--sm ${styles.backLink}`}
+                >
                   Back to screening
                 </Link>
 

@@ -122,12 +122,21 @@ function ThinkingBubble() {
   )
 }
 
-function AssistantMessage({ content, sources }: { content: string; sources: SourceItem[] }) {
-  const footer = sources.length ? <SourcesFooter sources={sources} /> : undefined
+function AssistantMessage({
+  content,
+  sources,
+  footer,
+}: {
+  content: string
+  sources: SourceItem[]
+  footer?: React.ReactNode
+}) {
+  const resolvedFooter =
+    footer || (sources.length ? <SourcesFooter sources={sources} /> : undefined)
 
   return (
     <div className="recruiter-chat-assistant-bubble recruiter-chat-assistant-bubble--inline">
-      <MarkdownMessage content={content} footer={footer} />
+      <MarkdownMessage content={content} footer={resolvedFooter} />
     </div>
   )
 }
@@ -197,10 +206,6 @@ function renderAssistantCard(
   onConfirmJobSelection: (jobId: string) => void,
   onConfirmJobEdit: (approve: boolean) => void,
 ) {
-  if (message.response_type === 'job_list' && message.data) {
-    return <JobCardGrid data={asJobListResult(message.data)} />
-  }
-
   if (message.response_type === 'job_edit_preview' && message.data) {
     const isPending =
       pendingAction?.type === 'job_edit' &&
@@ -689,6 +694,10 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               }
 
               const sources = getSources(message.data)
+              const inlineJobCard =
+                message.response_type === 'job_list' && message.data ? (
+                  <JobCardGrid data={asJobListResult(message.data)} />
+                ) : null
               const card = renderAssistantCard(
                 message,
                 pendingAction,
@@ -702,7 +711,11 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
                 <div key={key} className="recruiter-chat-assistant-row recruiter-chat-message-row">
                   <ChatBotBadge />
                   <div className="recruiter-chat-tool-panel">
-                    <AssistantMessage content={message.content} sources={sources} />
+                    <AssistantMessage
+                      content={message.content}
+                      sources={sources}
+                      footer={inlineJobCard ?? undefined}
+                    />
                     {card ? <div className="recruiter-chat-combo-card">{card}</div> : null}
                   </div>
                 </div>
