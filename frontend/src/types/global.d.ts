@@ -5,3 +5,5 @@ declare module '*.sass'
 
 // react-toastify ships its own types but its CSS entry-point is not typed
 declare module 'react-toastify/dist/ReactToastify.css'
+
+declare module 'html2pdf.js'

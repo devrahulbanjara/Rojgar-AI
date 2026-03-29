@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 
 import {
@@ -9,7 +10,9 @@ import {
   getJobStatusLabel,
   useGetJobByIdQuery,
 } from '@/store/services/jobsApi'
-import { ArrowRight, MapPin } from 'lucide-react'
+import { ArrowRight, Calendar, MapPin } from 'lucide-react'
+
+import StatusPill from '@/components/common/StatusPill'
 
 import { JobPreviewSkeleton } from './JobsSkeletons'
 
@@ -17,6 +20,16 @@ const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   onsite: 'On-site',
   remote: 'Remote',
   hybrid: 'Hybrid',
+}
+
+function getCompanyAccent(name: string): { logo: string; color: string } {
+  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+
+  return {
+    logo: name.trim().charAt(0).toUpperCase() || 'C',
+    color: palette[seed % palette.length],
+  }
 }
 
 function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'): string | null {
@@ -38,6 +51,35 @@ function formatDate(iso: string): string {
   })
 }
 
+function formatExpiryDate(iso: string | null): { text: string; color: string } | null {
+  if (!iso) return null
+
+  const expiryDate = new Date(iso)
+  const now = new Date()
+  const daysUntilExpiry = Math.floor((expiryDate.getTime() - now.getTime()) / 86400000)
+
+  if (daysUntilExpiry < 0) {
+    return { text: 'Expired', color: '#ff4d4d' }
+  }
+
+  if (daysUntilExpiry === 0) {
+    return { text: 'Expires today', color: '#f59e0b' }
+  }
+
+  if (daysUntilExpiry === 1) {
+    return { text: 'Expires tomorrow', color: '#f59e0b' }
+  }
+
+  if (daysUntilExpiry <= 7) {
+    return { text: `Expires in ${daysUntilExpiry} days`, color: '#f59e0b' }
+  }
+
+  return {
+    text: `Expires ${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    color: '#6b7280',
+  }
+}
+
 type JobPreviewPanelProps = {
   jobId: string
   allJobs: JobListItem[]
@@ -47,6 +89,7 @@ type JobPreviewPanelProps = {
 export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewPanelProps) {
   const { data: resp, isLoading } = useGetJobByIdQuery(jobId)
   const job: JobDetail | undefined = resp?.data
+  const selectedListJob = allJobs.find((item) => item.id === jobId)
 
   if (isLoading) return <JobPreviewSkeleton />
 
@@ -61,31 +104,34 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
 
   const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
   const isActive = job.status === 'active'
+  const hasApplied = selectedListJob?.has_applied ?? job.has_applied
   const openRolesCount = allJobs.filter((j) => j.company_id === job.company_id).length
+  const previewLogoUrl = job.company?.logo_url ?? selectedListJob?.company?.logo_url ?? null
+  const previewCompanyName = job.company?.name ?? selectedListJob?.company?.name ?? 'Company'
+  const accent = getCompanyAccent(previewCompanyName)
 
   return (
     <div className="job-preview content-fade-in">
-      <div
-        className="job-preview__cover"
-        style={
-          {
-            '--jp-from': 'rgba(0,112,243,0.18)',
-            '--jp-to': 'rgba(121,40,202,0.1)',
-          } as React.CSSProperties
-        }
-      >
+      <div className="job-preview__header">
         <div
           className="job-preview__logo"
-          style={{ '--jp-logo': '#7928ca' } as React.CSSProperties}
+          style={{ '--jp-logo': accent.color } as React.CSSProperties}
         >
-          {job.title[0]}
+          {previewLogoUrl ? (
+            <Image
+              src={previewLogoUrl}
+              alt={previewCompanyName}
+              fill
+              sizes="56px"
+              style={{ objectFit: 'cover' }}
+            />
+          ) : (
+            accent.logo
+          )}
         </div>
-      </div>
-
-      <div className="job-preview__header">
         <div className="job-preview__date">Posted {formatDate(job.created_at)}</div>
         <div className="job-preview__title">{job.title}</div>
-        <div className="job-preview__company">{job.company?.name}</div>
+        <div className="job-preview__company">{previewCompanyName}</div>
         <div className="job-preview__location">
           <MapPin size={12} aria-hidden="true" />
           {job.location ?? 'Location not specified'} · {LOCATION_TYPE_LABELS[job.location_type]}
@@ -96,20 +142,31 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
         {job.company?.industry && <span>{job.company.industry}</span>}
         {job.company?.company_size && <span>· {job.company.company_size}</span>}
         {openRolesCount > 1 && (
-          <span className="job-preview__chip job-preview__chip--success">
-            {openRolesCount} active roles
-          </span>
+          <span className="badge badge--success">{openRolesCount} active roles</span>
         )}
       </div>
 
       <div className="job-preview__chips">
-        <span className="job-preview__chip">{LOCATION_TYPE_LABELS[job.location_type]}</span>
-        {salary && <span className="job-preview__chip">{salary}</span>}
-        <span
-          className={`job-preview__chip${isActive ? ' job-preview__chip--success' : ' job-preview__chip--gray'}`}
-        >
-          {getJobStatusLabel(job.status)}
-        </span>
+        <span className="badge badge--gray">{LOCATION_TYPE_LABELS[job.location_type]}</span>
+        {salary && <span className="badge badge--secondary">{salary}</span>}
+        <StatusPill kind="job" status={job.status} />
+        {job.expires_at &&
+          (() => {
+            const expiry = formatExpiryDate(job.expires_at)
+            if (!expiry) return null
+            const chipClass =
+              expiry.color === '#ff4d4d'
+                ? 'badge--danger'
+                : expiry.color === '#f59e0b'
+                  ? 'badge--warning'
+                  : 'badge--gray'
+            return (
+              <span className={`badge ${chipClass}`}>
+                <Calendar size={11} aria-hidden="true" />
+                {expiry.text}
+              </span>
+            )
+          })()}
       </div>
 
       {job.overview && (
@@ -124,8 +181,13 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
           View Details
           <ArrowRight size={14} aria-hidden="true" />
         </Link>
-        <button className="btn btn--primary btn--sm" onClick={onApply} disabled={!isActive}>
-          {isActive ? 'Quick Apply' : getJobStatusLabel(job.status)}
+        <button
+          className="btn btn--primary btn--sm"
+          onClick={onApply}
+          disabled={!isActive || hasApplied}
+          title={hasApplied ? 'You have already applied to this job.' : undefined}
+        >
+          {hasApplied ? 'Applied' : isActive ? 'Quick Apply' : getJobStatusLabel(job.status)}
         </button>
       </div>
     </div>

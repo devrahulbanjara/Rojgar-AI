@@ -8,30 +8,51 @@ from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, LocationType
 
 
-# ---------------------------------------------------------------------------
-# Requests
-# ---------------------------------------------------------------------------
-
-
 class ApplyRequest(BaseSchema):
     """Candidate applies to a job. MUST attach an existing resume."""
 
     job_id: UUID
     resume_id: UUID
+    share_profile_all: bool = True
+    share_avatar: bool = True
+    share_email: bool = True
+    share_phone: bool = True
+    share_location: bool = True
+    share_links: bool = True
+    share_headline_summary: bool = True
+
+
+class CandidateShareSettings(BaseSchema):
+    share_profile_all: bool
+    share_avatar: bool
+    share_email: bool
+    share_phone: bool
+    share_location: bool
+    share_links: bool
+    share_headline_summary: bool
 
 
 class UpdateApplicationStatusRequest(BaseSchema):
-    """Company/recruiter updates the application status."""
+    """Company/recruiter updates the application status.
+
+    Only the following values are accepted:
+    shortlisted, rejected, interview_completed, offer
+    """
 
     status: ApplicationStatus = Field(
         ...,
-        description="New status for the application",
+        description=(
+            "New status. Allowed values: shortlisted, rejected, "
+            "interview_completed, offer."
+        ),
     )
 
 
-# ---------------------------------------------------------------------------
-# Responses
-# ---------------------------------------------------------------------------
+class UpdateApplicationReviewRequest(BaseSchema):
+    """Company/recruiter updates manual score and/or feedback for an application."""
+
+    score: int | None = Field(default=None, ge=0, le=100)
+    feedback: str | None = None
 
 
 class ApplicationResponse(BaseSchema):
@@ -42,6 +63,8 @@ class ApplicationResponse(BaseSchema):
     status: ApplicationStatus
     created_at: datetime
     updated_at: datetime
+    score: int | None = None
+    feedback: str | None = None
     resume: ResumeResponse | None = None
 
 
@@ -77,6 +100,8 @@ class CandidateApplicationView(BaseSchema):
     company_logo_url: str | None = None
     location: str | None = None
     location_type: LocationType
+    score: int | None = None
+    feedback: str | None = None
 
 
 class RecruiterApplicationView(BaseSchema):
@@ -91,3 +116,46 @@ class RecruiterApplicationView(BaseSchema):
     applicant_avatar_url: str | None = None
     job_title: str
     job_id: UUID
+    score: int | None = None
+    feedback: str | None = None
+
+
+class RecruiterCandidateListItem(BaseSchema):
+    id: UUID
+    candidate_id: UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    applicant_name: str
+    applicant_email: str | None = None
+    applicant_avatar_url: str | None = None
+    candidate_headline: str | None = None
+    candidate_location: str | None = None
+    job_title: str
+    job_id: UUID
+    score: int | None = None
+    feedback: str | None = None
+
+
+class RecruiterCandidateDetailView(BaseSchema):
+    id: UUID
+    candidate_id: UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    applicant_name: str
+    applicant_email: str | None = None
+    applicant_avatar_url: str | None = None
+    candidate_headline: str | None = None
+    candidate_summary: str | None = None
+    candidate_phone: str | None = None
+    candidate_location: str | None = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
+    job_title: str
+    job_id: UUID
+    score: int | None = None
+    feedback: str | None = None
+    resume: ResumeResponse | None = None
+    share_settings: CandidateShareSettings

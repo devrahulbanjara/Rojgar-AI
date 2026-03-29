@@ -130,7 +130,7 @@ class TestProfileAvatarCrud:
     async def test_avatar_upload_rejects_oversized_file(self, client, db, monkeypatch):
         user = await make_user(db, "avatar_oversize@test.com")
         monkeypatch.setattr(
-            "app.integrations.s3.service.settings.s3_max_upload_bytes",
+            "app.infrastructures.s3.service.settings.s3_max_upload_bytes",
             8,
         )
 

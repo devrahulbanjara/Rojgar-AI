@@ -1,10 +1,15 @@
 import uuid
 from typing import Any
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
+import re
 
-from app.integrations.search.service import search_service
+from app.infrastructures.redis.service import redis_service
+
+from app.infrastructures.search.service import search_service
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.job_ai.helpers import (
     MAX_SALARY_CONTENT_CHARS,
@@ -63,10 +68,12 @@ async def get_company_context(
                 "salary_min": job.salary_min,
                 "salary_max": job.salary_max,
                 "currency": job.currency,
+                "shortlist_threshold": job.shortlist_threshold,
                 "overview": job.overview,
                 "requirements": job.requirements,
                 "preferred_qualifications": job.preferred_qualifications,
                 "benefits": job.benefits,
+                "auto_shortlist": job.auto_shortlist,
             }
             for job in recent_jobs
         ],
@@ -90,25 +97,41 @@ async def get_source_job_context(
         "salary_min": job.salary_min,
         "salary_max": job.salary_max,
         "currency": job.currency,
+        "shortlist_threshold": job.shortlist_threshold,
         "status": job.status.value,
         "overview": job.overview,
         "responsibilities": job.responsibilities,
         "requirements": job.requirements,
         "preferred_qualifications": job.preferred_qualifications,
         "benefits": job.benefits,
+        "auto_shortlist": job.auto_shortlist,
     }
 
 
-async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
+async def get_salary_research_data(
+    role: str, country: str, year: int | None = None
+) -> dict[str, Any]:
     """
     Research salary and compensation data for a given role and location.
-
-    Uses web search to gather market intelligence about salary ranges,
-    compensation packages, and job market trends.
+    Cached for 24 hours since salary data doesn't change rapidly.
     """
+    research_year = year or datetime.now().year
+    # 1. Standardize inputs to create a stable cache key
+    norm_role = re.sub(r"[^a-zA-Z0-9]+", "_", role.lower()).strip("_")
+    norm_country = re.sub(r"[^a-zA-Z0-9]+", "_", country.lower()).strip("_")
+    cache_key = f"ai:salary_research:{norm_role}:{norm_country}:{research_year}"
+
+    # 2. Check Cache
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        try:
+            return json.loads(cached_data)
+        except Exception:
+            pass
+
     queries = [
-        f"{role} salary range in {country} 2026",
-        f"{role} compensation in {country} 2026",
+        f"{role} salary range in {country} {research_year}",
+        f"{role} compensation in {country} {research_year}",
         f"{role} salary {country}",
     ]
 
@@ -116,7 +139,6 @@ async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
     seen_urls: set[str] = set()
 
     for query in queries:
-        # Use the generic search service
         results = await search_service.query(query, country=country.lower())
 
         for res in results:
@@ -139,8 +161,14 @@ async def get_salary_research_data(role: str, country: str) -> dict[str, Any]:
         if len(aggregated) >= MAX_SALARY_SEARCH_RESULTS:
             break
 
-    return {
+    response = {
         "role": role,
         "country": country,
+        "year": research_year,
         "results": aggregated,
     }
+
+    # 4. Save to Cache (TTL 24 hours - 86400 seconds)
+    await redis_service.set(cache_key, json.dumps(response), ttl_seconds=86400)
+
+    return response

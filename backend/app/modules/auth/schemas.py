@@ -27,6 +27,15 @@ class ForgotPasswordRequest(BaseSchema):
     email: EmailStr
 
 
+class UpdateMeRequest(BaseSchema):
+    full_name: str = Field(min_length=2, max_length=255)
+
+
+class ChangePasswordRequest(BaseSchema):
+    current_password: str | None = None
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class ResetPasswordRequest(BaseSchema):
     token: str
     new_password: str = Field(min_length=8, max_length=128)

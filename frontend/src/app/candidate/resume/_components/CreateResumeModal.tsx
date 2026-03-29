@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 // ── Modal for naming a new resume before creation ─────────────────────────
 
 export default function CreateResumeModal({
@@ -65,7 +67,7 @@ export default function CreateResumeModal({
               className="btn btn--primary btn--sm"
               disabled={isLoading || !name.trim()}
             >
-              {isLoading ? 'Creating...' : 'Create Resume'}
+              {isLoading ? <ButtonSpinner label="Creating..." /> : 'Create Resume'}
             </button>
           </div>
         </form>

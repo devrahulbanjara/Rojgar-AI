@@ -20,7 +20,7 @@ import {
   useRespondToJobAIDraftMutation,
 } from '@/store/services/jobAiApi'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
-import { ArrowLeft, CheckCheck, CircleSlash, FolderCheck, Send, Sparkles } from 'lucide-react'
+import { ArrowLeft, CheckCheck, CircleSlash, FolderCheck, Send } from 'lucide-react'
 
 type DraftField = keyof Pick<
   JobAIDraftPayload,
@@ -30,6 +30,8 @@ type DraftField = keyof Pick<
   | 'salary_min'
   | 'salary_max'
   | 'currency'
+  | 'auto_shortlist'
+  | 'shortlist_threshold'
   | 'overview'
   | 'responsibilities'
   | 'requirements'
@@ -60,6 +62,8 @@ const ALL_DRAFT_FIELDS: DraftField[] = [
   'salary_min',
   'salary_max',
   'currency',
+  'auto_shortlist',
+  'shortlist_threshold',
   'overview',
   'responsibilities',
   'requirements',
@@ -399,102 +403,26 @@ export default function RecruiterJobAIDraftPage() {
         </Link>
       </div>
 
+      <JobAIAssistant
+        prompt={prompt}
+        sourceText={sourceText}
+        sourceJobId={sourceJobId}
+        researchSalary={researchSalary}
+        followUpFeedback={followUpFeedback}
+        draftExists={Boolean(pageState.draftId)}
+        loading={isBusy}
+        jobs={jobs}
+        onPromptChange={setPrompt}
+        onSourceTextChange={setSourceText}
+        onSourceJobIdChange={setSourceJobId}
+        onResearchSalaryChange={setResearchSalary}
+        onFollowUpFeedbackChange={setFollowUpFeedback}
+        onGenerate={handleGenerate}
+        onGeneralUpdate={() => void handleGeneralUpdate()}
+      />
+
       <div className="job-ai-page">
-        <aside className="job-ai-page__sidebar">
-          <JobAIAssistant
-            prompt={prompt}
-            sourceText={sourceText}
-            sourceJobId={sourceJobId}
-            researchSalary={researchSalary}
-            followUpFeedback={followUpFeedback}
-            draftExists={Boolean(pageState.draftId)}
-            loading={isBusy}
-            jobs={jobs}
-            onPromptChange={setPrompt}
-            onSourceTextChange={setSourceText}
-            onSourceJobIdChange={setSourceJobId}
-            onResearchSalaryChange={setResearchSalary}
-            onFollowUpFeedbackChange={setFollowUpFeedback}
-            onGenerate={handleGenerate}
-            onGeneralUpdate={() => void handleGeneralUpdate()}
-          />
-
-          <SalaryResearchCard research={pageState.salaryResearch} />
-          <AssumptionsWarnings
-            assumptions={pageState.assumptions}
-            warnings={pageState.warnings}
-            missingFields={pageState.missingFields}
-          />
-        </aside>
-
         <section className="job-ai-page__main">
-          <div className="job-ai-toolbar dash-page-header">
-            <div className="dash-page-header__left">
-              <h2 className="job-ai-toolbar__title dash-page-header__title">
-                Review the draft, then approve or post it
-              </h2>
-              <div className="job-ai-toolbar__meta">
-                <p className="job-ai-toolbar__subtitle dash-page-header__subtitle">
-                  Status:{' '}
-                  <strong>
-                    {pageState.status ? pageState.status.replaceAll('_', ' ') : 'not started'}
-                  </strong>
-                </p>
-                <p className="job-ai-toolbar__subtitle dash-page-header__subtitle">
-                  {pageState.draftId
-                    ? 'Generated drafts remain available in Jobs > Draft even if you close the browser.'
-                    : 'Generate a draft to start editing.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="job-ai-toolbar__actions dash-page-header__actions">
-              <button
-                type="button"
-                className="btn btn--outline"
-                disabled={!pageState.draft || isBusy}
-                onClick={() => void handleSaveProgress()}
-              >
-                <FolderCheck size={16} aria-hidden="true" />
-                Save Progress
-              </button>
-              <button
-                type="button"
-                className="btn btn--outline"
-                disabled={!pageState.draftId || isBusy}
-                onClick={() => void handleApprove()}
-              >
-                <CheckCheck size={16} aria-hidden="true" />
-                Approve as Draft
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
-                disabled={!pageState.draftId || isBusy}
-                onClick={() => void handlePostJob()}
-              >
-                <Send size={16} aria-hidden="true" />
-                {isCommitting ? 'Posting...' : 'Post Job'}
-              </button>
-              <button
-                type="button"
-                className="btn btn--ghost btn--danger"
-                disabled={!pageState.draftId || isBusy}
-                onClick={() => void handleDiscard()}
-              >
-                <CircleSlash size={16} aria-hidden="true" />
-                Discard
-              </button>
-            </div>
-          </div>
-
-          {pageState.dirtyFields.length > 0 ? (
-            <div className="job-ai-callout">
-              You have local edits. Use <strong>Save Progress</strong>,{' '}
-              <strong>Approve as Draft</strong>, or <strong>Post Job</strong> to persist them.
-            </div>
-          ) : null}
-
           <JobDraftForm
             draft={pageState.draft}
             dirtyFields={pageState.dirtyFields}
@@ -505,25 +433,55 @@ export default function RecruiterJobAIDraftPage() {
             onToggleLock={handleToggleLock}
             onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}
           />
-
-          <section className="job-ai-card job-ai-next-steps dash-card">
-            <div className="job-ai-card__header dash-card__header">
-              <div>
-                <h2 className="job-ai-card__title dash-card__title">How this behaves</h2>
-                <p className="job-ai-card__subtitle dash-card__subtitle">
-                  Approve as Draft keeps it in your recruiter drafts. Post Job creates the real
-                  active job. Discard removes it from the draft list.
-                </p>
-              </div>
-              <div className="job-ai-next-steps__badges">
-                <span className="job-ai-badge job-ai-badge--edited">
-                  <Sparkles size={12} aria-hidden="true" />
-                  Locked fields stay protected
-                </span>
-              </div>
-            </div>
-          </section>
         </section>
+
+        <aside className="job-ai-page__sidebar">
+          <AssumptionsWarnings
+            assumptions={pageState.assumptions}
+            warnings={pageState.warnings}
+            missingFields={pageState.missingFields}
+          />
+          <SalaryResearchCard research={pageState.salaryResearch} />
+        </aside>
+      </div>
+
+      <div className="job-ai-toolbar__actions job-ai-footer-actions">
+        <button
+          type="button"
+          className="btn btn--outline"
+          disabled={!pageState.draft || isBusy}
+          onClick={() => void handleSaveProgress()}
+        >
+          <FolderCheck size={16} aria-hidden="true" />
+          Save Progress
+        </button>
+        <button
+          type="button"
+          className="btn btn--outline"
+          disabled={!pageState.draftId || isBusy}
+          onClick={() => void handleApprove()}
+        >
+          <CheckCheck size={16} aria-hidden="true" />
+          Save as Draft
+        </button>
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={!pageState.draftId || isBusy}
+          onClick={() => void handlePostJob()}
+        >
+          <Send size={16} aria-hidden="true" />
+          {isCommitting ? 'Posting...' : 'Post Job'}
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost btn--danger"
+          disabled={!pageState.draftId || isBusy}
+          onClick={() => void handleDiscard()}
+        >
+          <CircleSlash size={16} aria-hidden="true" />
+          Discard
+        </button>
       </div>
     </div>
   )

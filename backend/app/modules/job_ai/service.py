@@ -98,11 +98,13 @@ def _map_draft_to_job_create(
         salary_max=draft.get("salary_max"),
         currency=draft.get("currency") or "USD",
         status=status_override or JobStatus(draft.get("status", "draft")),
+        shortlist_threshold=draft.get("shortlist_threshold", 70),
         overview=draft["overview"],
         responsibilities=draft.get("responsibilities", []),
         requirements=draft.get("requirements", []),
         preferred_qualifications=draft.get("preferred_qualifications", []),
         benefits=draft.get("benefits", []),
+        auto_shortlist=draft.get("auto_shortlist", False),
     )
 
 

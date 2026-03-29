@@ -62,6 +62,15 @@ export function parseApiError(
   const envelope = rtkErr?.data
   const status = rtkErr?.status
 
+  // --- Network / Connection Errors ----------------------------------------
+  if (status === 'FETCH_ERROR' || status === 'TIMEOUT_ERROR') {
+    return {
+      message: 'Unable to connect to the server. Please check if the backend is running.',
+      fieldErrors: {},
+      status,
+    }
+  }
+
   // --- Field-level validation errors (array format) -----------------------
   if (Array.isArray(envelope?.errors) && envelope.errors.length > 0) {
     const fieldErrors: Record<string, string> = {}

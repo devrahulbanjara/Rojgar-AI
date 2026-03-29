@@ -133,20 +133,23 @@
   &__badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: $space-2;
-    padding: $space-1 $space-3;
+    min-height: 2rem;
+    padding: 0.35rem 0.85rem;
     border-radius: $radius-full;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    border: 1px solid #d6dde8;
+    font-size: 0.8125rem;
+    font-weight: $font-weight-medium;
+    letter-spacing: 0.01em;
     width: fit-content;
-    background-color: $color-gray-100;
-    color: $color-gray-600;
+    background-color: #f5f7fb;
+    color: #52637a;
 
     &--featured {
-      background-color: rgba($color-primary, 0.1);
-      color: $color-primary;
+      background-color: #e9f1ff;
+      border-color: #90b5f7;
+      color: #144da7;
     }
   }
 

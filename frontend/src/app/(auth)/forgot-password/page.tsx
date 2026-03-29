@@ -9,6 +9,8 @@ import Link from 'next/link'
 import { parseApiError } from '@/lib/apiError'
 import { useForgotPasswordMutation } from '@/store/services/authApi'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 // ── Validation ─────────────────────────────────────────────────────────────
 
 function validateEmail(email: string): string | undefined {
@@ -154,7 +156,7 @@ export default function ForgotPasswordPage() {
                 className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? 'Sending link\u2026' : 'Send reset link'}
+                {isLoading ? <ButtonSpinner label="Sending link..." /> : 'Send reset link'}
               </button>
             </form>
           )}

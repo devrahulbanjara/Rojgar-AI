@@ -1,165 +1,29 @@
 'use client'
 
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 
-import {
-  PROFILE_COMPLETION_FIELDS,
-  PROFILE_COMPLETION_LABEL,
-  getProfileCompletionMeta,
-} from '@/lib/profileCompletion'
 import { useAppSelector } from '@/store/hooks'
-import {
-  type CandidateDashboardRecommendedJob,
-  useGetCandidateDashboardQuery,
-} from '@/store/services/dashboardApi'
-import { Banknote, BriefcaseBusiness, Calendar, FileStack, FileText } from 'lucide-react'
+import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
+import { useUpdateMyProfileMutation } from '@/store/services/profileApi'
+import { Calendar, ChevronRight } from 'lucide-react'
 
-type StatVariant = 'primary' | 'success' | 'secondary' | 'warning'
-type StatIconName = 'applications' | 'calendar' | 'offers' | 'resumes'
+import MediaBadge from '@/components/common/MediaBadge'
+import StatusPill from '@/components/common/StatusPill'
 
-type DashboardStat = {
-  label: string
-  value: string | null
-  icon: StatIconName
-  variant: StatVariant
-}
+type CandidateDashboardStatus =
+  | 'applied'
+  | 'screening'
+  | 'shortlisted'
+  | 'interview_booked'
+  | 'interview_completed'
+  | 'offer'
+  | 'rejected'
 
-const DASHBOARD_STAT_CONFIG: Omit<DashboardStat, 'value'>[] = [
-  {
-    label: 'Total Applications',
-    icon: 'applications',
-    variant: 'primary',
-  },
-  {
-    label: 'Active Interviews',
-    icon: 'calendar',
-    variant: 'success',
-  },
-  {
-    label: 'Offers Received',
-    icon: 'offers',
-    variant: 'secondary',
-  },
-  {
-    label: 'Resume Versions',
-    icon: 'resumes',
-    variant: 'warning',
-  },
-]
-
-function getInitials(name: string | null | undefined): string {
-  if (!name?.trim()) return 'CP'
-
-  const parts = name.trim().split(/\s+/).slice(0, 2)
-  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'CP'
-}
-
-function getStrengthColor(ratio: number): string {
-  const stops = [
-    { ratio: 0, hue: 2 },
-    { ratio: 0.34, hue: 24 },
-    { ratio: 0.68, hue: 48 },
-    { ratio: 1, hue: 146 },
-  ]
-
-  const clampedRatio = Math.max(0, Math.min(1, ratio))
-  const upperIndex = stops.findIndex((stop) => stop.ratio >= clampedRatio)
-
-  if (upperIndex <= 0) {
-    return `hsl(${stops[0].hue} 88% 58%)`
-  }
-
-  if (upperIndex === -1) {
-    return `hsl(${stops[stops.length - 1].hue} 72% 42%)`
-  }
-
-  const lower = stops[upperIndex - 1]
-  const upper = stops[upperIndex]
-  const range = upper.ratio - lower.ratio || 1
-  const progress = (clampedRatio - lower.ratio) / range
-  const hue = lower.hue + (upper.hue - lower.hue) * progress
-
-  return `hsl(${hue} 82% 52%)`
-}
-
-function ApplicationStatusIcon({ variant }: { variant: string }) {
-  const colors: Record<string, string> = {
-    success: '#0cce6b',
-    warning: '#f59e0b',
-    primary: '#0070f3',
-    gray: '#9ca3af',
-    danger: '#ff4d4d',
-  }
-
-  return (
-    <div
-      className="app-status-dot"
-      style={{ '--dot-color': colors[variant] || colors.gray } as CSSProperties}
-    />
-  )
-}
-
-function StatIcon({ icon }: { icon: StatIconName }) {
-  const icons: Record<StatIconName, ReactNode> = {
-    applications: <FileText size={16} strokeWidth={1.75} />,
-    calendar: <Calendar size={16} strokeWidth={1.75} />,
-    offers: <BriefcaseBusiness size={16} strokeWidth={1.75} />,
-    resumes: <FileStack size={16} strokeWidth={1.75} />,
-  }
-
-  return icons[icon]
-}
-
-function formatRelativeDate(iso: string): string {
-  const timestamp = new Date(iso).getTime()
-  const diffMs = Date.now() - timestamp
-  const hour = 60 * 60 * 1000
-  const day = 24 * hour
-
-  if (diffMs < hour) {
-    const minutes = Math.max(1, Math.floor(diffMs / (60 * 1000)))
-    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
-  }
-
-  if (diffMs < day) {
-    const hours = Math.max(1, Math.floor(diffMs / hour))
-    return `${hours} hour${hours === 1 ? '' : 's'} ago`
-  }
-
-  const days = Math.floor(diffMs / day)
-  if (days === 1) return 'Yesterday'
-  if (days < 7) return `${days} days ago`
-
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function getStatusLabel(status: string): string {
-  return status
-    .split('_')
-    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
-    .join(' ')
-}
-
-function getStatusVariant(status: string): string {
-  switch (status) {
-    case 'interview':
-    case 'offered':
-    case 'hired':
-      return 'success'
-    case 'screening':
-      return 'warning'
-    case 'rejected':
-    case 'withdrawn':
-      return 'danger'
-    default:
-      return 'primary'
-  }
+function getFirstName(name: string | null | undefined): string {
+  return name?.trim().split(/\s+/)[0] ?? 'there'
 }
 
 function getCompanyAccent(name: string): { logo: string; color: string } {
@@ -172,160 +36,85 @@ function getCompanyAccent(name: string): { logo: string; color: string } {
   }
 }
 
-function formatSalaryRange(job: CandidateDashboardRecommendedJob): string {
-  if (job.salary_min == null && job.salary_max == null) return 'Salary not specified'
-  if (job.salary_min != null && job.salary_max != null) {
-    return `${job.currency} ${job.salary_min.toLocaleString()}-${job.salary_max.toLocaleString()}`
-  }
-  if (job.salary_min != null) {
-    return `${job.currency} ${job.salary_min.toLocaleString()}+`
-  }
-  return `Up to ${job.currency} ${job.salary_max!.toLocaleString()}`
-}
-
-function getRecommendedJobTags(job: CandidateDashboardRecommendedJob): string[] {
-  return [job.location_type, job.company.industry]
-    .filter((value): value is string => Boolean(value))
-    .slice(0, 3)
-}
-
-function RecentApplicationsSkeletonRows({ count }: { count: number }) {
-  return Array.from({ length: count }).map((_, index) => (
-    <tr key={index} aria-hidden="true">
-      <td>
-        <div className="cell-user">
-          <div className="skeleton-block dashboard-table-skeleton__avatar" />
-          <div className="skeleton-block dashboard-table-skeleton__text dashboard-table-skeleton__text--company" />
-        </div>
-      </td>
-      <td>
-        <div className="skeleton-block dashboard-table-skeleton__text dashboard-table-skeleton__text--role" />
-      </td>
-      <td>
-        <div className="skeleton-block dashboard-table-skeleton__text dashboard-table-skeleton__text--location" />
-      </td>
-      <td>
-        <div className="skeleton-block dashboard-table-skeleton__badge" />
-      </td>
-      <td>
-        <div className="skeleton-block dashboard-table-skeleton__text dashboard-table-skeleton__text--date" />
-      </td>
-    </tr>
-  ))
-}
-
-function RecommendedJobsSkeletonCards({ count }: { count: number }) {
-  return Array.from({ length: count }).map((_, index) => (
-    <div key={index} className="job-card job-card--skeleton" aria-hidden="true">
-      <div className="job-card__header">
-        <div className="skeleton-block recommended-job-skeleton__logo" />
-        <div className="job-card__title-wrap recommended-job-skeleton__title-wrap">
-          <div className="skeleton-block recommended-job-skeleton__title" />
-          <div className="skeleton-block recommended-job-skeleton__company" />
-        </div>
-      </div>
-
-      <div className="job-card__tags">
-        <div className="skeleton-block recommended-job-skeleton__tag" />
-        <div className="skeleton-block recommended-job-skeleton__tag recommended-job-skeleton__tag--short" />
-        <div className="skeleton-block recommended-job-skeleton__tag recommended-job-skeleton__tag--mid" />
-      </div>
-
-      <div className="job-card__meta recommended-job-skeleton__meta">
-        <div className="skeleton-block recommended-job-skeleton__salary" />
-        <div className="skeleton-block recommended-job-skeleton__button" />
-      </div>
-    </div>
-  ))
-}
-
-function ProfileStrengthBanner({
-  completionPercentage,
-  initials,
-  isLoading = false,
-}: {
-  completionPercentage: number
-  initials: string
-  isLoading?: boolean
-}) {
-  const [animatedPercentage, setAnimatedPercentage] = useState(0)
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setAnimatedPercentage(completionPercentage)
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [completionPercentage])
-
-  const completionMeta = getProfileCompletionMeta(completionPercentage)
-  const segmentCount = PROFILE_COMPLETION_FIELDS.length
-
-  function getSegmentFill(index: number) {
-    const raw = animatedPercentage - index * (100 / segmentCount)
-    return Math.max(0, Math.min(100, raw * segmentCount))
+function buildTimeline(status: CandidateDashboardStatus): string[] {
+  if (status === 'rejected') {
+    return ['done', 'rejected', 'pending', 'pending', 'pending']
   }
 
-  function getSegmentGradient(index: number) {
-    const startRatio = index / Math.max(segmentCount - 1, 1)
-    const endRatio = (index + 1) / Math.max(segmentCount - 1, 1)
+  const activeStep =
+    status === 'applied'
+      ? 1
+      : status === 'screening'
+        ? 2
+        : status === 'shortlisted'
+          ? 3
+          : status === 'interview_booked' || status === 'interview_completed'
+            ? 4
+            : 5
 
-    return `linear-gradient(90deg, ${getStrengthColor(startRatio)}, ${getStrengthColor(Math.min(endRatio, 1))})`
-  }
+  return Array.from({ length: 5 }, (_, index) => {
+    const step = index + 1
+    if (step < activeStep) return 'done'
+    if (step === activeStep) return 'active'
+    return 'pending'
+  })
+}
 
+function formatApplicationMeta(createdAt: string, status: CandidateDashboardStatus): string {
+  const createdLabel = new Date(createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+
+  if (status === 'screening') return `Applied ${createdLabel} · Under review`
+  if (status === 'shortlisted') return `Applied ${createdLabel} · Shortlisted`
+  if (status === 'interview_booked') return `Applied ${createdLabel} · Interview booked`
+  if (status === 'interview_completed') return `Applied ${createdLabel} · Interview completed`
+  if (status === 'offer') return `Applied ${createdLabel} · Offer received`
+  if (status === 'rejected') return `Applied ${createdLabel} · Not progressed`
+  return `Applied ${createdLabel}`
+}
+
+const PIPELINE_LEGEND = [
+  { label: 'Completed', tone: 'done' },
+  { label: 'Current stage', tone: 'active' },
+  { label: 'Upcoming', tone: 'pending' },
+] as const
+
+function CandidateDashboardSkeleton() {
   return (
-    <div className="stat-card profile-strength-banner">
-      <div className="profile-strength-banner__identity">
-        <div className="profile-strength-banner__avatar" aria-hidden="true">
-          {initials}
-        </div>
-        <div className="profile-strength-banner__copy">
-          <div className="profile-strength-banner__label">{PROFILE_COMPLETION_LABEL}</div>
-          {isLoading ? (
-            <div className="skeleton-block profile-strength-banner__status-skeleton" />
-          ) : (
-            <div
-              className={`profile-strength-banner__status profile-strength-banner__status--${completionMeta.tone} content-fade-in`}
-            >
-              {completionMeta.label}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div
-        className="profile-strength-banner__segments"
-        aria-label={`${PROFILE_COMPLETION_LABEL} ${completionPercentage}%`}
-        style={{ gridTemplateColumns: `repeat(${segmentCount}, minmax(0, 1fr))` }}
-      >
-        {Array.from({ length: segmentCount }).map((_, index) => (
-          <div key={index} className="profile-strength-banner__segment">
-            {isLoading ? (
-              <div className="skeleton-block profile-strength-banner__segment-skeleton" />
-            ) : (
-              <div
-                className="profile-strength-banner__segment-fill content-fade-in"
-                style={{
-                  width: `${getSegmentFill(index)}%`,
-                  backgroundImage: getSegmentGradient(index),
-                }}
-              />
-            )}
+    <div className="candidate-dashboard">
+      <div className="dash-stats candidate-dashboard__stats-grid">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="stat-card" aria-hidden="true">
+            <div className="skeleton-block stat-card__value-skeleton" />
+            <div className="skeleton-block dashboard-card-skeleton__meta" />
           </div>
         ))}
       </div>
-
-      <div className="profile-strength-banner__actions">
-        {isLoading ? (
-          <div className="skeleton-block profile-strength-banner__percent-skeleton" />
-        ) : (
-          <div className="profile-strength-banner__percent content-fade-in">
-            {completionPercentage}%
-          </div>
-        )}
-        <Link href="/candidate/profile" className="profile-strength-banner__link">
-          Complete your profile →
-        </Link>
+      <div className="dash-card">
+        <div className="dash-card__body candidate-dashboard__list">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="candidate-pipeline-card" aria-hidden="true">
+              <div className="candidate-pipeline-card__identity">
+                <div className="skeleton-block candidate-pipeline-card__avatar-skeleton" />
+                <div className="candidate-pipeline-card__content">
+                  <div className="skeleton-block candidate-pipeline-card__title-skeleton" />
+                  <div className="skeleton-block candidate-pipeline-card__meta-skeleton" />
+                  <div className="candidate-pipeline-card__timeline">
+                    {Array.from({ length: 5 }).map((__, segmentIndex) => (
+                      <div
+                        key={segmentIndex}
+                        className="skeleton-block candidate-pipeline-card__timeline-skeleton"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="skeleton-block candidate-pipeline-card__badge-skeleton" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -335,234 +124,222 @@ export default function UserDashboardPage() {
   const user = useAppSelector((state) => state.auth.user)
   const {
     data: dashboardResponse,
-    isLoading: isStatsLoading,
+    isLoading,
     isError,
+    refetch: refetchDashboard,
   } = useGetCandidateDashboardQuery()
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateMyProfileMutation()
   const dashboardData = dashboardResponse?.data
-  const statsLoadError = isError ? 'Dashboard data is unavailable right now.' : null
 
-  const firstName = useMemo(
-    () =>
-      user?.full_name?.trim().split(/\s+/)[0] ??
-      dashboardData?.user_name?.trim().split(/\s+/)[0] ??
-      'there',
-    [dashboardData?.user_name, user],
-  )
-  const userInitials = useMemo(() => getInitials(user?.full_name), [user])
+  const handleToggleOpenToWork = async () => {
+    if (!dashboardData || isUpdating) return
 
-  const completionPercentage = dashboardData?.stats.profile_completion ?? 0
-  const recommendedJobs = dashboardData?.recommended_jobs ?? []
+    try {
+      const newStatus = !dashboardData.is_open_to_work
+      await updateProfile({ is_open_to_work: newStatus }).unwrap()
+      toast.success(newStatus ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
+      refetchDashboard()
+    } catch {
+      toast.error('Failed to update status.')
+    }
+  }
 
-  const stats = useMemo<DashboardStat[]>(() => {
-    const summary = dashboardData?.stats
-
-    return DASHBOARD_STAT_CONFIG.map((stat) => ({
-      ...stat,
-      value:
-        summary == null
-          ? null
-          : stat.icon === 'applications'
-            ? String(summary.total_applications)
-            : stat.icon === 'calendar'
-              ? String(summary.active_interviews)
-              : stat.icon === 'offers'
-                ? String(summary.offers_received)
-                : String(summary.total_resumes),
-    }))
-  }, [dashboardData?.stats])
+  const firstName = getFirstName(user?.full_name ?? dashboardData?.user_name)
 
   return (
-    <>
-      <div className="dash-content container container--app-shell">
-        <div className="dash-page-header">
-          <div className="dash-page-header__left">
-            <h2 className="dash-page-header__title">Welcome back, {firstName} 👋</h2>
-            <p className="dash-page-header__subtitle">
-              Here&apos;s what&apos;s happening with your job search today.
-            </p>
+    <div className="dash-content container container--app-shell">
+      <div className="dash-page-header">
+        <div className="dash-page-header__left">
+          <div className="dash-page-header__title-row">
+            {isLoading && !user ? (
+              <div className="skeleton-block" style={{ width: '240px', height: '36px' }} />
+            ) : (
+              <h1 className="dash-page-header__title">Good morning, {firstName}</h1>
+            )}
+
+            <div className="dash-page-header__status-inline">
+              {isLoading ? (
+                <div className="skeleton-block" style={{ width: '100px', height: '16px' }} />
+              ) : (
+                <div className="open-to-work-status open-to-work-status--header">
+                  <span
+                    className={`open-to-work-status__dot ${dashboardData?.is_open_to_work ? 'open-to-work-status__dot--active' : ''}`}
+                  />
+                  <span className="open-to-work-status__text">
+                    Open to Work {dashboardData?.is_open_to_work ? '· Active' : '· Off'}
+                  </span>
+                  <button
+                    className={`open-to-work-status__toggle ${isUpdating ? 'open-to-work-status__toggle--loading' : ''}`}
+                    onClick={handleToggleOpenToWork}
+                    disabled={isUpdating}
+                  >
+                    [{dashboardData?.is_open_to_work ? 'Turn off' : 'Turn on'}]
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="dash-page-header__actions">
-            <span className="page-header-hint">{statsLoadError ?? 'Last updated: just now'}</span>
+
+          <p className="dash-page-header__subtitle">
+            {isLoading ? (
+              <div
+                className="skeleton-block"
+                style={{ width: '200px', height: '14px', marginTop: '4px' }}
+              />
+            ) : dashboardData?.urgent_action ? (
+              'You have 1 action waiting on you.'
+            ) : (
+              'Track every application and take the next step quickly.'
+            )}
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <CandidateDashboardSkeleton />
+      ) : isError || !dashboardData ? (
+        <div className="dash-card">
+          <div className="dash-card__body">
+            Dashboard data is unavailable right now. Please refresh.
           </div>
         </div>
-
-        <div className="dashboard-overview-stack">
-          <div className="dash-stats dash-stats--4col">
-            {stats.map((stat) => (
-              <div key={stat.label} className="stat-card">
-                {isStatsLoading ? (
-                  <div className="skeleton-block stat-card__value-skeleton" aria-hidden="true" />
-                ) : (
-                  <div className="stat-card__value content-fade-in">{stat.value}</div>
-                )}
-                <div className="stat-card__footer">
-                  <div className={`stat-card__icon-wrap stat-card__icon-wrap--${stat.variant}`}>
-                    <StatIcon icon={stat.icon} />
-                  </div>
-                  <div className="stat-card__label">{stat.label}</div>
-                </div>
+      ) : (
+        <div className="candidate-dashboard">
+          <div className="dash-stats candidate-dashboard__stats candidate-dashboard__stats-grid">
+            <div className="stat-card">
+              <div className="stat-card__value">{dashboardData.stats.total_applications}</div>
+              <div className="stat-card__label">Applications</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card__value candidate-dashboard__stat-value--warning">
+                {dashboardData.stats.shortlisted}
               </div>
-            ))}
+              <div className="stat-card__label">Shortlisted</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card__value">{dashboardData.stats.interviews_booked}</div>
+              <div className="stat-card__label">Interviews</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card__value">{dashboardData.stats.offers}</div>
+              <div className="stat-card__label">Offers</div>
+            </div>
+            <div className="stat-card">
+              <div
+                className={`stat-card__value${dashboardData.stats.rejected > 0 ? ' candidate-dashboard__stat-value--danger' : ''}`}
+              >
+                {dashboardData.stats.rejected}
+              </div>
+              <div className="stat-card__label">Rejected</div>
+            </div>
           </div>
-          <ProfileStrengthBanner
-            completionPercentage={completionPercentage}
-            initials={userInitials}
-            isLoading={isStatsLoading}
-          />
+
+          {dashboardData.urgent_action ? (
+            <div className="candidate-dashboard__alert">
+              <div className="candidate-dashboard__alert-dot" />
+              <div className="candidate-dashboard__alert-copy">{dashboardData.urgent_action}</div>
+              <Link href="/candidate/applications" className="btn btn--outline btn--sm">
+                Book interview
+              </Link>
+            </div>
+          ) : null}
 
           <div className="dash-card">
             <div className="dash-card__header">
               <div>
-                <div className="dash-card__title">Recent Applications</div>
-                <div className="dash-card__subtitle">Your latest job applications</div>
+                <div className="dash-card__title">Your applications</div>
+                <div className="dash-card__subtitle">
+                  Know exactly where each application stands.
+                </div>
               </div>
               <Link href="/candidate/applications" className="btn btn--outline btn--sm">
-                View All
+                View all
               </Link>
             </div>
-            <div className="table-scroll">
-              <table className="dash-table">
-                <thead>
-                  <tr>
-                    <th>Company</th>
-                    <th>Role</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Applied</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isStatsLoading
-                    ? RecentApplicationsSkeletonRows({ count: 5 })
-                    : (dashboardData?.recent_applications ?? []).map((app, index) => {
-                        const accent = getCompanyAccent(app.company_name)
-                        const variant = getStatusVariant(app.status)
 
-                        return (
-                          <tr
-                            key={app.id}
-                            className="content-stagger-item"
-                            style={{ '--stagger-index': index } as CSSProperties}
-                          >
-                            <td>
-                              <div className="cell-user">
-                                <div
-                                  className="cell-user__avatar cell-user__avatar--sm cell-user__avatar--rect"
-                                  style={
-                                    {
-                                      '--avatar-bg': accent.color + '1A',
-                                      '--avatar-color': accent.color,
-                                    } as CSSProperties
-                                  }
-                                >
-                                  {accent.logo}
-                                </div>
-                                {app.company_name}
-                              </div>
-                            </td>
-                            <td className="cell-meta">{app.job_title}</td>
-                            <td className="cell-muted">{app.location ?? app.location_type}</td>
-                            <td>
-                              <span className={`badge badge--${variant}`}>
-                                <ApplicationStatusIcon variant={variant} />
-                                {getStatusLabel(app.status)}
-                              </span>
-                            </td>
-                            <td className="cell-muted">{formatRelativeDate(app.created_at)}</td>
-                          </tr>
-                        )
-                      })}
-                </tbody>
-              </table>
+            <div className="candidate-dashboard__legend">
+              {PIPELINE_LEGEND.map((item) => (
+                <span key={item.label} className="candidate-dashboard__legend-item">
+                  <span
+                    className={`candidate-dashboard__legend-dot candidate-dashboard__legend-dot--${item.tone}`}
+                  />
+                  {item.label}
+                </span>
+              ))}
             </div>
-          </div>
-        </div>
 
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Recommended for You</div>
-              <div className="dash-card__subtitle">Based on your profile and skills</div>
-            </div>
-            <Link href="/candidate/jobs" className="btn btn--outline btn--sm">
-              Browse All Jobs
-            </Link>
-          </div>
-          <div className="dash-card__body dash-card__body--recommended-jobs">
-            <div className="recommended-jobs-grid">
-              {isStatsLoading ? (
-                RecommendedJobsSkeletonCards({ count: 3 })
-              ) : recommendedJobs.length === 0 ? (
-                <div className="profile-empty">No recommended jobs available yet.</div>
+            <div className="dash-card__body candidate-dashboard__list">
+              {dashboardData.applications.length === 0 ? (
+                <div className="profile-empty">No applications yet. Start exploring jobs.</div>
               ) : (
-                recommendedJobs.map((job, index) => {
-                  const accent = getCompanyAccent(job.company.name)
-                  const tags = getRecommendedJobTags(job)
+                dashboardData.applications.map((application) => {
+                  const accent = getCompanyAccent(application.company_name)
+                  const timeline = buildTimeline(application.status)
 
                   return (
-                    <div
-                      key={job.id}
-                      className="job-card job-card--recommended content-stagger-item"
-                      style={{ '--stagger-index': index } as CSSProperties}
+                    <Link
+                      key={application.id}
+                      href={`/candidate/applications?application=${application.id}`}
+                      className="candidate-pipeline-card"
                     >
-                      <div className="job-card__header">
-                        <div
-                          className="job-card__logo"
+                      <div className="candidate-pipeline-card__identity">
+                        <MediaBadge
+                          src={application.company_logo_url}
+                          alt={application.company_name}
+                          fallback={accent.logo}
+                          className="candidate-pipeline-card__avatar"
+                          sizes="36px"
                           style={
                             {
-                              '--logo-bg': accent.color + '1A',
+                              '--logo-bg': `${accent.color}1A`,
                               '--logo-color': accent.color,
                             } as CSSProperties
                           }
-                        >
-                          {accent.logo}
-                        </div>
-                        <div className="job-card__title-wrap">
-                          <div className="job-card__title">{job.title}</div>
-                          <div className="job-card__company">
-                            <span className="job-card__company-name">{job.company.name}</span>
-                            <span className="job-card__location job-card__location--inline">
-                              <span className="job-card__location-sep">·</span>
-                              <span>{job.location ?? job.location_type}</span>
-                            </span>
+                        />
+                        <div className="candidate-pipeline-card__content">
+                          <div className="candidate-pipeline-card__title">
+                            {application.job_title}
+                          </div>
+                          <div className="candidate-pipeline-card__company">
+                            {application.company_name} ·{' '}
+                            {application.location ?? application.location_type}
+                          </div>
+                          <div className="candidate-pipeline-card__timeline">
+                            {timeline.map((segment, index) => (
+                              <span
+                                key={`${application.id}-${index}`}
+                                className={`candidate-pipeline-card__segment candidate-pipeline-card__segment--${segment}`}
+                              />
+                            ))}
+                          </div>
+                          <div className="candidate-pipeline-card__meta">
+                            {formatApplicationMeta(application.created_at, application.status)}
                           </div>
                         </div>
-                        {job.match_score !== null && (
-                          <div
-                            className="job-match-badge job-match-badge--sm"
-                            title="AI Match Score"
-                          >
-                            {Math.round(job.match_score * 100)}%
-                          </div>
-                        )}
                       </div>
-                      <div className="job-card__tags">
-                        {tags.map((tag) => (
-                          <span key={tag} className="job-card__tag">
-                            {tag}
+
+                      <div className="candidate-pipeline-card__aside">
+                        <StatusPill kind="application" status={application.status} />
+                        {application.has_pending_action ? (
+                          <span className="candidate-pipeline-card__action">
+                            Book interview
+                            <ChevronRight size={14} aria-hidden="true" />
                           </span>
-                        ))}
+                        ) : application.status === 'interview_booked' ? (
+                          <span className="candidate-pipeline-card__action candidate-pipeline-card__action--muted">
+                            <Calendar size={13} aria-hidden="true" />
+                            Interview booked
+                          </span>
+                        ) : null}
                       </div>
-                      <div className="job-card__meta">
-                        <span>
-                          <Banknote size={12} aria-hidden="true" />
-                          {formatSalaryRange(job)}
-                        </span>
-                        <Link
-                          href={`/candidate/jobs/${job.id}`}
-                          className="btn btn--primary btn--sm job-card__meta-time"
-                        >
-                          View
-                        </Link>
-                      </div>
-                    </div>
+                    </Link>
                   )
                 })
               )}
             </div>
           </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   )
 }

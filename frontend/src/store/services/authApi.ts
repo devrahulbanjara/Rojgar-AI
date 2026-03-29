@@ -31,6 +31,15 @@ export interface ForgotPasswordRequest {
   email: string
 }
 
+export interface UpdateMeRequest {
+  full_name: string
+}
+
+export interface ChangePasswordRequest {
+  current_password?: string | null
+  new_password: string
+}
+
 export interface ResetPasswordRequest {
   token: string
   new_password: string
@@ -180,6 +189,60 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
 
+    updateMe: builder.mutation<ApiResponse<AuthUser>, UpdateMeRequest>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
+        method: 'PATCH',
+        body,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          if (data.success && data.data) {
+            dispatch(updateUser(data.data))
+          }
+        } catch {
+          // handled by caller
+        }
+      },
+      invalidatesTags: ['User', 'Company'],
+    }),
+
+    updateMyAvatar: builder.mutation<ApiResponse<AuthUser>, FormData>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me/avatar`,
+        method: 'PATCH',
+        body,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          if (data.success && data.data) {
+            dispatch(updateUser(data.data))
+          }
+        } catch {
+          // handled by caller
+        }
+      },
+      invalidatesTags: ['User', 'Company'],
+    }),
+
+    removeMyAvatar: builder.mutation<EmptyResponse, void>({
+      query: () => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me/avatar`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['User', 'Company'],
+    }),
+
+    changeMyPassword: builder.mutation<EmptyResponse, ChangePasswordRequest>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me/password`,
+        method: 'PATCH',
+        body,
+      }),
+    }),
+
     /** POST /auth/google/register — 201, data: LoginData | SignupData */
     googleRegister: builder.mutation<ApiResponse<LoginData | SignupData>, GoogleRegisterRequest>({
       query: (body) => ({
@@ -218,6 +281,10 @@ export const {
   useResetPasswordMutation,
   useGetMeQuery,
   useLazyGetMeQuery,
+  useUpdateMeMutation,
+  useUpdateMyAvatarMutation,
+  useRemoveMyAvatarMutation,
+  useChangeMyPasswordMutation,
   useGoogleRegisterMutation,
 } = authApi
 
