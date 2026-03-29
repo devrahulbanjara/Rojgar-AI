@@ -31,10 +31,7 @@ import { X as ClearSearchIcon, Search as SearchFieldIcon } from 'lucide-react'
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
 
-import {
-  ScreeningControlsSkeleton,
-  ScreeningTableSkeleton,
-} from './_components/ScreeningSkeletons'
+import { ScreeningControlsSkeleton, ScreeningTableSkeleton } from './_components/ScreeningSkeletons'
 import styles from './screening.module.css'
 
 type ReviewDraft = {
@@ -679,15 +676,9 @@ export default function RecruiterScreeningPage() {
               <span className="page-header-hint">
                 {totalCandidates} candidate{totalCandidates === 1 ? '' : 's'}
               </span>
-              <span className="page-header-hint">
-                {reviewedCount} reviewed
-              </span>
-              <span className="page-header-hint">
-                {pendingCount} pending
-              </span>
-              <span className="page-header-hint">
-                {missingCount} missing agent screening
-              </span>
+              <span className="page-header-hint">{reviewedCount} reviewed</span>
+              <span className="page-header-hint">{pendingCount} pending</span>
+              <span className="page-header-hint">{missingCount} missing agent screening</span>
             </>
           ) : null}
           {activeJob && summary && !summary.final_shortlist_completed ? (
@@ -818,7 +809,6 @@ export default function RecruiterScreeningPage() {
             </div>
           )}
         </div>
-
       </div>
 
       {isLoadingContent || (activeJobId && isFetchingApps) ? (
@@ -927,27 +917,27 @@ export default function RecruiterScreeningPage() {
                       </tr>
                     </thead>
                     <tbody>
-                    {filteredApplications.map((application) => {
+                      {filteredApplications.map((application) => {
                         const reviewText = getReviewPreview(application, {
                           autoShortlist: Boolean(activeJob?.auto_shortlist),
                           isAiProcessing: shouldPollSummary && !hasCompleteReview(application),
                         })
                         const isExpanded = expandedApplicationId === application.id
-                      const draft = getReviewDraft(application)
-                      const scoreTone = getScoreTone(application.score)
-                      const scoreBarTone = getScoreBarTone(application.score)
-                      const statusOptions = getRecruiterTransitionOptions(application.status)
-                      const statusValue = statusSelectValues[application.id] ?? application.status
-                      const isStatusLocked =
-                        !activeJobExpired || Boolean(summary?.final_shortlist_completed)
-                      const statusLockLabel = summary?.final_shortlist_completed
-                        ? 'Finalized'
-                        : 'After expiry'
-                      const statusLockTitle = summary?.final_shortlist_completed
-                        ? 'Shortlisting is finalized for this job.'
-                        : 'Shortlisting decisions unlock after the job expires.'
+                        const draft = getReviewDraft(application)
+                        const scoreTone = getScoreTone(application.score)
+                        const scoreBarTone = getScoreBarTone(application.score)
+                        const statusOptions = getRecruiterTransitionOptions(application.status)
+                        const statusValue = statusSelectValues[application.id] ?? application.status
+                        const isStatusLocked =
+                          !activeJobExpired || Boolean(summary?.final_shortlist_completed)
+                        const statusLockLabel = summary?.final_shortlist_completed
+                          ? 'Finalized'
+                          : 'After expiry'
+                        const statusLockTitle = summary?.final_shortlist_completed
+                          ? 'Shortlisting is finalized for this job.'
+                          : 'Shortlisting decisions unlock after the job expires.'
 
-                      return (
+                        return (
                           <Fragment key={application.id}>
                             <tr
                               className={`${styles.dataRow} ${isExpanded ? styles.dataRowExpanded : ''}`}

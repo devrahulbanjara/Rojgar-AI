@@ -3,13 +3,19 @@
 import { useRouter } from 'next/navigation'
 
 import type { CompanyJobData, CompanyJobListResult } from '@/lib/types/recruiterChat'
-import { MapPin } from 'lucide-react'
 
 import { getStatusTone } from './utils'
 
+function formatPostedOn(value: string) {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 function JobRow({ job }: { job: CompanyJobData }) {
   const router = useRouter()
-  const locationLabel = job.location ? `${job.location_type}, ${job.location}` : job.location_type
 
   return (
     <button
@@ -17,15 +23,18 @@ function JobRow({ job }: { job: CompanyJobData }) {
       className="recruiter-chat-job-mini-row"
       onClick={() => router.push(`/recruiter/jobs/${job.job_id}`)}
     >
-      <div className="recruiter-chat-job-mini-row__title">{job.title}</div>
-      <div className="recruiter-chat-job-mini-row__meta">
-        <span className={`recruiter-chat-badge recruiter-chat-badge--${getStatusTone(job.status)}`}>
-          {job.status.replace(/_/g, ' ')}
-        </span>
-        <span className="recruiter-chat-job-mini-row__location">
-          <MapPin size={12} />
-          <span>{locationLabel}</span>
-        </span>
+      <div className="recruiter-chat-job-mini-row__main">
+        <div className="recruiter-chat-job-mini-row__header">
+          <div className="recruiter-chat-job-mini-row__title">{job.title}</div>
+          <span
+            className={`recruiter-chat-badge recruiter-chat-badge--${getStatusTone(job.status)}`}
+          >
+            {job.status.replace(/_/g, ' ')}
+          </span>
+        </div>
+        <div className="recruiter-chat-job-mini-row__posted">
+          Posted {formatPostedOn(job.created_at)}
+        </div>
       </div>
     </button>
   )
