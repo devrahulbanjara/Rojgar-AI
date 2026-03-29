@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -10,9 +10,13 @@ from app.modules.applications.schemas import (
     ApplicationResponse,
     ApplyRequest,
     CandidateApplicationView,
+    RecruiterCandidateDetailView,
+    RecruiterCandidateListItem,
     RecruiterApplicationView,
+    UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
+from app.shared.enums import ApplicationStatus
 
 router = APIRouter()
 
@@ -27,10 +31,11 @@ db = Depends(get_db)
 )
 async def apply_to_job(
     payload: ApplyRequest,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(require_candidate),
     db: AsyncSession = db,
 ):
-    data = await service.apply_to_job(db, user, payload)
+    data = await service.apply_to_job(db, user, payload, bg_tasks)
     return ResponseBuilder.success(
         data=data,
         message="Application submitted.",
@@ -70,6 +75,44 @@ async def list_my_company_applications(
 
 
 @router.get(
+    "/company/me/candidates",
+    response_model=UnifiedResponse[list[RecruiterCandidateListItem]],
+    summary="List candidate applications for the authenticated recruiter's company",
+)
+async def list_my_company_candidates(
+    job_id: str | None = Query(default=None),
+    status_filter: ApplicationStatus | None = Query(default=None, alias="status"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=50, ge=1, le=200),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.list_company_candidates(
+        db,
+        user,
+        job_id,
+        status_filter,
+        page,
+        size,
+    )
+    return ResponseBuilder.success(data=data, message="Candidates fetched.")
+
+
+@router.get(
+    "/company/me/candidates/{application_id}",
+    response_model=UnifiedResponse[RecruiterCandidateDetailView],
+    summary="Get recruiter-safe candidate details for one application",
+)
+async def get_company_candidate_detail(
+    application_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.get_company_candidate_detail(db, user, application_id)
+    return ResponseBuilder.success(data=data, message="Candidate fetched.")
+
+
+@router.get(
     "/job/{job_id}",
     response_model=UnifiedResponse[list[RecruiterApplicationView]],
     summary="List all applications for a specific job (company/recruiter only)",
@@ -100,6 +143,24 @@ async def get_application(
 
 
 @router.patch(
+    "/{application_id}/review",
+    response_model=UnifiedResponse[ApplicationResponse],
+    summary="Update application score and feedback (company/recruiter only)",
+)
+async def update_application_review(
+    application_id: str,
+    payload: UpdateApplicationReviewRequest,
+    bg_tasks: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.update_application_review(
+        db, user, application_id, payload, bg_tasks
+    )
+    return ResponseBuilder.success(data=data, message="Application review updated.")
+
+
+@router.patch(
     "/{application_id}/status",
     response_model=UnifiedResponse[ApplicationResponse],
     summary="Update application status (company/recruiter only)",
@@ -107,8 +168,11 @@ async def get_application(
 async def update_application_status(
     application_id: str,
     payload: UpdateApplicationStatusRequest,
+    bg_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = db,
 ):
-    data = await service.update_application_status(db, user, application_id, payload)
+    data = await service.update_application_status(
+        db, user, application_id, payload, bg_tasks
+    )
     return ResponseBuilder.success(data=data, message="Application status updated.")

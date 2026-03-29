@@ -30,6 +30,8 @@ import {
   UserPlus,
 } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 // ── Step type ──────────────────────────────────────────────────────────────
 
 type FlowStep =
@@ -1025,7 +1027,11 @@ function SignupContent() {
                 className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? 'Creating company…' : 'Create company & continue'}
+                {isLoading ? (
+                  <ButtonSpinner label="Creating company..." />
+                ) : (
+                  'Create company & continue'
+                )}
               </button>
             </form>
           </div>
@@ -1071,7 +1077,7 @@ function SignupContent() {
                 className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? 'Sending request…' : 'Send join request'}
+                {isLoading ? <ButtonSpinner label="Sending request..." /> : 'Send join request'}
               </button>
             </form>
           </div>

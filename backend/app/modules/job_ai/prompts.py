@@ -1,5 +1,5 @@
 JOB_DRAFT_SYSTEM_PROMPT = """
-You are an expert recruiting copilot.
+You are an expert recruiting assistant.
 
 Your job is to generate a structured job draft for a recruiter.
 You must obey the provided JSON schema exactly.

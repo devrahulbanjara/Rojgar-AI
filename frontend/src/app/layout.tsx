@@ -1,7 +1,7 @@
 import 'react-toastify/dist/ReactToastify.css'
 
 import type { Metadata } from 'next'
-import { Geist_Mono, Lato, Poppins } from 'next/font/google'
+import { EB_Garamond, Geist_Mono, Lato, Poppins } from 'next/font/google'
 
 import '@/app/globals.css'
 import LenisProvider from '@/providers/LenisProvider'
@@ -28,6 +28,14 @@ const lato = Lato({
   display: 'swap',
 })
 
+const ebGaramond = EB_Garamond({
+  variable: '--font-resume',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  display: 'swap',
+  fallback: ['Garamond', 'Times New Roman', 'serif'],
+})
+
 const geistMono = Geist_Mono({
   variable: '--font-mono',
   subsets: ['latin'],
@@ -46,7 +54,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} ${lato.variable} ${geistMono.variable}`}>
+      <body
+        className={`${poppins.variable} ${lato.variable} ${ebGaramond.variable} ${geistMono.variable}`}
+      >
         <StoreProvider>
           <LenisProvider>
             <MainLayout>{children}</MainLayout>

@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import type { JobListItem } from '@/store/services/jobsApi'
 
 type JobAIAssistantProps = {
@@ -37,11 +39,13 @@ export default function JobAIAssistant({
   onGenerate,
   onGeneralUpdate,
 }: JobAIAssistantProps) {
+  const [showHiringNotes, setShowHiringNotes] = useState(false)
+
   return (
     <section className="job-ai-card job-ai-assistant dash-card">
       <div className="job-ai-card__header dash-card__header">
         <div>
-          <h1 className="job-ai-card__title dash-card__title">Job Creation Copilot</h1>
+          <h1 className="job-ai-card__title dash-card__title">Job Creation Assistant</h1>
           <p className="job-ai-card__subtitle dash-card__subtitle">
             Start from a prompt, pasted hiring notes, or a previous role. AI drafts, you decide.
           </p>
@@ -63,19 +67,35 @@ export default function JobAIAssistant({
           />
         </div>
 
-        <div className="job-ai-assistant__section">
-          <label className="job-ai-label" htmlFor="job-ai-source-text">
-            Hiring notes or pasted JD
+        <div className="job-ai-assistant__toggle">
+          <label className="job-ai-checkbox">
+            <input
+              type="checkbox"
+              checked={showHiringNotes}
+              onChange={(event) => setShowHiringNotes(event.target.checked)}
+            />
+            <span>Have hiring notes or pasted JD?</span>
           </label>
-          <textarea
-            id="job-ai-source-text"
-            className="job-ai-textarea job-ai-textarea--lg"
-            rows={9}
-            value={sourceText}
-            onChange={(event) => onSourceTextChange(event.target.value)}
-            placeholder="Paste raw notes, Slack messages, or an older job description here."
-          />
         </div>
+
+        {showHiringNotes && (
+          <div
+            className="job-ai-assistant__section"
+            style={{ animation: 'content-fade-up 280ms ease both' }}
+          >
+            <label className="job-ai-label" htmlFor="job-ai-source-text">
+              Hiring notes or pasted JD
+            </label>
+            <textarea
+              id="job-ai-source-text"
+              className="job-ai-textarea job-ai-textarea--lg"
+              rows={9}
+              value={sourceText}
+              onChange={(event) => onSourceTextChange(event.target.value)}
+              placeholder="Paste raw notes, Slack messages, or an older job description here."
+            />
+          </div>
+        )}
 
         <div className="job-ai-assistant__section">
           <label className="job-ai-label" htmlFor="job-ai-source-job">
@@ -91,6 +111,7 @@ export default function JobAIAssistant({
             {jobs.map((job) => (
               <option key={job.id} value={job.id}>
                 {job.title}
+                {job.auto_shortlist ? ' - AI screening on' : ''}
               </option>
             ))}
           </select>

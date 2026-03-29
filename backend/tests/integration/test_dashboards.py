@@ -78,6 +78,8 @@ class TestDashboard:
         assert payload["stats"] == {
             "active_job_posts": 8,
             "total_applications": 28,
+            "pending_ai_reviews": 0,
+            "pending_email_drafts": 0,
         }
         assert len(payload["top_jobs"]) == 7
         assert all(job["status"] == "active" for job in payload["top_jobs"])

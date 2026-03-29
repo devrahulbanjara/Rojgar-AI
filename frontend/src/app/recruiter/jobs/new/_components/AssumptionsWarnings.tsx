@@ -45,9 +45,9 @@ export default function AssumptionsWarnings({
 }: AssumptionsWarningsProps) {
   return (
     <div className="job-ai-stack">
-      <InfoList title="Assumptions" items={assumptions} tone="default" />
       <InfoList title="Warnings" items={warnings} tone="warning" />
       <InfoList title="Missing Fields" items={missingFields} tone="danger" />
+      <InfoList title="Assumptions" items={assumptions} tone="default" />
     </div>
   )
 }

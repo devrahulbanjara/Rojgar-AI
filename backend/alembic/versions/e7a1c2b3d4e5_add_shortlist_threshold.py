@@ -1,0 +1,30 @@
+"""add shortlist threshold to jobs
+
+Revision ID: e7a1c2b3d4e5
+Revises: d6e5f4a3b2c1
+Create Date: 2026-03-28 17:45:00.000000
+"""
+
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+revision: str = "e7a1c2b3d4e5"
+down_revision: Union[str, Sequence[str], None] = "d6e5f4a3b2c1"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.add_column(
+        "jobs",
+        sa.Column(
+            "shortlist_threshold", sa.Integer(), server_default="70", nullable=False
+        ),
+    )
+
+
+def downgrade() -> None:
+    op.drop_column("jobs", "shortlist_threshold")

@@ -16,7 +16,7 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.modules.jobs.enums import SyncAction, SyncStatus
 from app.modules.jobs.models import Job, JobSyncEvent
-from app.integrations.qdrant.service import qdrant_service
+from app.infrastructures.qdrant.service import qdrant_service
 
 
 async def reconcile() -> None:

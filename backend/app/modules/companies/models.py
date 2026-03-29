@@ -17,6 +17,8 @@ class Company(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     logo_url: Mapped[str | None] = mapped_column(String(255))
     website_url: Mapped[str | None] = mapped_column(String(255))
+    cal_booking_url: Mapped[str | None] = mapped_column(String(500))
+    cal_organizer_email: Mapped[str | None] = mapped_column(String(255), unique=True)
     domain: Mapped[str | None] = mapped_column(String(255), unique=True)
     industry: Mapped[str | None] = mapped_column(String(100))
     company_size: Mapped[str | None] = mapped_column(String(50))

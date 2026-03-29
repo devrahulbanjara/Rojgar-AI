@@ -1,24 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-import RecruiterJobEditor, {
-  formFromDetail,
-} from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
 import { type JobAIDraftRecord, useGetJobAIDraftsQuery } from '@/store/services/jobAiApi'
 import {
-  type CreateJobPayload,
   type JobListItem,
   type JobStatus,
   type LocationType,
   getJobStatusLabel,
   useDeleteJobMutation,
   useGetCompanyJobsQuery,
-  useGetJobByIdQuery,
   useUpdateJobMutation,
 } from '@/store/services/jobsApi'
 import {
@@ -26,17 +21,18 @@ import {
   Calendar,
   ChevronDown,
   DollarSign,
+  FileText,
   LayoutGrid,
   List,
   MapPin,
   Pencil,
   Plus,
-  Sparkles,
   Trash2,
   Users,
   X,
 } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import DashboardTabs from '@/components/common/DashboardTabs'
 
 import { CompanyJobsCardsSkeleton } from './_components/CompanyJobsSkeletons'
@@ -71,6 +67,18 @@ function formatSalary(min?: number | null, max?: number | null, currency = 'NPR'
   return `Up to ${currency} ${max!.toLocaleString()}`
 }
 
+function getExpiryMeta(job: JobListItem): { label: string; color: string } | null {
+  if (!job.expires_at) return null
+
+  return {
+    label:
+      job.status === 'expired'
+        ? `Expired ${formatDate(job.expires_at)}`
+        : `Expires ${formatDate(job.expires_at)}`,
+    color: job.status === 'expired' ? '#dc2626' : '#6b7280',
+  }
+}
+
 function getAIDraftStatusTone(status: string): JobStatus {
   if (status === 'approved') return 'active'
   if (status === 'rejected') return 'expired'
@@ -103,6 +111,14 @@ function isVisibleAIDraft(draft: JobAIDraftRecord) {
   return draft.status !== 'committed'
 }
 
+function AutoShortlistBadge({ enabled, compact = false }: { enabled: boolean; compact?: boolean }) {
+  return (
+    <span className={`badge badge--${enabled ? 'primary' : 'gray'}${compact ? ' badge--xs' : ''}`}>
+      {enabled ? 'AI screening on' : 'Manual screening'}
+    </span>
+  )
+}
+
 function RecruiterJobCard({
   job,
   view,
@@ -118,23 +134,32 @@ function RecruiterJobCard({
   onStatusChange: (status: JobStatus) => void
   isUpdatingStatus: boolean
 }) {
+  const expiryMeta = getExpiryMeta(job)
+
   return (
     <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
       <div className="company-job-card__top-row">
-        <label className={`company-job-card__status company-job-card__status--${job.status}`}>
-          <select
-            value={job.status}
-            onChange={(event) => onStatusChange(event.target.value as JobStatus)}
-            className="company-job-card__status-select"
-            aria-label={`Change status for ${job.title}`}
-            disabled={isUpdatingStatus}
-          >
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="expired">Expired</option>
-          </select>
-          <ChevronDown size={13} aria-hidden="true" className="company-job-card__status-chevron" />
-        </label>
+        <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+          <label className={`company-job-card__status company-job-card__status--${job.status}`}>
+            <select
+              value={job.status}
+              onChange={(event) => onStatusChange(event.target.value as JobStatus)}
+              className="company-job-card__status-select"
+              aria-label={`Change status for ${job.title}`}
+              disabled={isUpdatingStatus}
+            >
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="expired">Expired</option>
+            </select>
+            <ChevronDown
+              size={13}
+              aria-hidden="true"
+              className="company-job-card__status-chevron"
+            />
+          </label>
+          <AutoShortlistBadge enabled={job.auto_shortlist} compact />
+        </div>
       </div>
 
       <div className="company-job-card__title">{job.title}</div>
@@ -157,7 +182,7 @@ function RecruiterJobCard({
       <div className="company-job-card__footer">
         <div className="company-job-card__footer-meta">
           <Link
-            href={`/recruiter/applications?job_id=${job.id}`}
+            href={`/recruiter/candidates?job_id=${job.id}`}
             className="company-job-card__applicants-link"
           >
             <Users size={13} aria-hidden="true" />
@@ -169,6 +194,15 @@ function RecruiterJobCard({
             <Calendar size={13} aria-hidden="true" />
             <span>Posted {formatDate(job.created_at)}</span>
           </span>
+          {expiryMeta ? (
+            <span
+              className="company-job-card__posted-date"
+              style={{ '--expires-color': expiryMeta.color } as CSSProperties}
+            >
+              <Calendar size={13} aria-hidden="true" />
+              <span>{expiryMeta.label}</span>
+            </span>
+          ) : null}
         </div>
 
         <div className="company-job-card__actions">
@@ -206,13 +240,16 @@ function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 
   return (
     <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
       <div className="company-job-card__top-row">
-        <span
-          className={`company-job-card__status company-job-card__status--${getAIDraftStatusTone(draft.status)}`}
-        >
-          <span className="company-job-card__status-label">
-            {getAIDraftStatusLabel(draft.status)}
+        <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span
+            className={`company-job-card__status company-job-card__status--${getAIDraftStatusTone(draft.status)}`}
+          >
+            <span className="company-job-card__status-label">
+              {getAIDraftStatusLabel(draft.status)}
+            </span>
           </span>
-        </span>
+          <AutoShortlistBadge enabled={jobDraft?.auto_shortlist ?? false} compact />
+        </div>
       </div>
 
       <div className="company-job-card__title">{draftTitle}</div>
@@ -238,7 +275,7 @@ function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 
             <span>Updated {formatDate(draft.updated_at)}</span>
           </span>
           <span className="company-job-card__posted-date">
-            <Sparkles size={13} aria-hidden="true" />
+            <FileText size={13} aria-hidden="true" />
             <span>{draft.mode === 'clone' ? 'Cloned with AI' : 'Drafted with AI'}</span>
           </span>
         </div>
@@ -304,64 +341,8 @@ function DeleteConfirmModal({
             disabled={isLoading}
             aria-busy={isLoading}
           >
-            {isLoading ? 'Deleting...' : 'Delete'}
+            {isLoading ? <ButtonSpinner label="Deleting..." /> : 'Delete'}
           </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function EditJobModal({ jobId, onClose }: { jobId: string; onClose: () => void }) {
-  const { data: response, isLoading: isLoadingDetail } = useGetJobByIdQuery(jobId)
-  const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation()
-
-  if (isLoadingDetail) {
-    return (
-      <div className="modal-backdrop">
-        <div className="modal" style={{ maxWidth: 760 }}>
-          <div className="modal__body" style={{ alignItems: 'center', padding: '2rem' }}>
-            <p style={{ color: 'var(--color-muted,#6b7280)' }}>Loading job details...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const detail = response?.data
-  if (!detail) return null
-
-  async function handleUpdate(payload: CreateJobPayload) {
-    try {
-      await updateJob({ id: jobId, ...payload }).unwrap()
-      toast.success('Job updated successfully.')
-      onClose()
-    } catch {
-      toast.error('Failed to update job. Please try again.')
-    }
-  }
-
-  return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div
-        className="modal recruiter-job-editor-modal"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="modal__header">
-          <span className="modal__title">Edit Job</span>
-          <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
-            <X />
-          </button>
-        </div>
-        <div className="modal__body modal__body--scroll" data-lenis-prevent>
-          <RecruiterJobEditor
-            key={`edit:${jobId}:${detail.updated_at}`}
-            initial={formFromDetail(detail)}
-            onSubmit={handleUpdate}
-            onCancel={onClose}
-            isLoading={isUpdating}
-            submitLabel="Update Job"
-          />
         </div>
       </div>
     </div>
@@ -369,6 +350,7 @@ function EditJobModal({ jobId, onClose }: { jobId: string; onClose: () => void }
 }
 
 export default function CompanyJobsPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const filterFromUrl = searchParams.get('filter')
   const [view, setView] = useState<'grid' | 'list'>(() => {
@@ -381,7 +363,6 @@ export default function CompanyJobsPage() {
       ? filterFromUrl
       : 'all',
   )
-  const [editingJobId, setEditingJobId] = useState<string | null>(null)
   const [deletingJob, setDeletingJob] = useState<JobListItem | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
@@ -551,7 +532,7 @@ export default function CompanyJobsPage() {
                 key={job.id}
                 job={job}
                 view={view}
-                onEdit={() => setEditingJobId(job.id)}
+                onEdit={() => router.push(`/recruiter/jobs/${job.id}/edit`)}
                 onDelete={() => setDeletingJob(job)}
                 onStatusChange={(status) => handleStatusChange(job, status)}
                 isUpdatingStatus={updatingStatusId === job.id}
@@ -560,10 +541,6 @@ export default function CompanyJobsPage() {
           </div>
         ) : null}
       </div>
-
-      {editingJobId ? (
-        <EditJobModal jobId={editingJobId} onClose={() => setEditingJobId(null)} />
-      ) : null}
 
       {deletingJob ? (
         <DeleteConfirmModal

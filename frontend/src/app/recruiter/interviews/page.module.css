@@ -1,0 +1,247 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.filtersCard,
+.contentCard,
+.daySection,
+.emptyCard {
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  border-radius: 0.75rem;
+  background: #ffffff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.filtersCard {
+  padding: 1rem 1.1rem;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.presetGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.presetButton {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(203, 213, 225, 0.92);
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.presetButtonActive {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(239, 246, 255, 0.95);
+  color: var(--color-primary, #2563eb);
+}
+
+.customRange {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dateField,
+.selectField {
+  display: grid;
+  gap: 0.32rem;
+}
+
+.fieldLabel {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7b8794;
+}
+
+.dateInput,
+.select {
+  min-height: 44px;
+  min-width: 11rem;
+  padding: 0.68rem 0.85rem;
+  border: 1.5px solid rgba(209, 213, 219, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-gray-900, #111827);
+  font: inherit;
+  outline: none;
+}
+
+.groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.daySection {
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.dayHeading {
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+}
+
+.cardList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.interviewCard {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  border-radius: 0.75rem;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.candidateBlock {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: rgba(219, 234, 254, 1);
+  color: var(--color-primary, #2563eb);
+}
+
+.candidateCopy {
+  min-width: 0;
+}
+
+.candidateName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+}
+
+.candidateEmail {
+  margin-top: 0.15rem;
+  color: #64748b;
+  font-size: 0.84rem;
+}
+
+.jobLink {
+  color: var(--color-primary, #2563eb);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.cardMeta {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  color: #475569;
+  font-size: 0.84rem;
+}
+
+.locationBadge,
+.referenceBadge {
+  gap: 0.35rem;
+}
+
+.contentCard {
+  padding: 1rem;
+}
+
+.loadingBlock {
+  height: 5.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, #eef2ff 0%, #f8fafc 50%, #eef2ff 100%);
+  background-size: 200% 100%;
+  animation: interview-skeleton 1.2s infinite linear;
+}
+
+.emptyCard {
+  display: grid;
+  justify-items: center;
+  gap: 0.85rem;
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: rgba(239, 246, 255, 1);
+  color: var(--color-primary, #2563eb);
+}
+
+.emptyTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-gray-900, #111827);
+}
+
+.emptyText {
+  max-width: 34rem;
+  margin: 0;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.emptyActions {
+  margin-top: 0.2rem;
+}
+
+@keyframes interview-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .cardTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .jobLink {
+    text-align: left;
+  }
+}
