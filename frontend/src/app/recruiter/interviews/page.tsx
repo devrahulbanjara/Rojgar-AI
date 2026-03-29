@@ -322,7 +322,7 @@ export default function RecruiterInterviewsPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <span className="badge badge--gray">
+          <span className="page-header-hint">
             {isLoading
               ? 'Loading...'
               : `${sortedInterviews.length} interview${sortedInterviews.length === 1 ? '' : 's'}`}
@@ -346,72 +346,62 @@ export default function RecruiterInterviewsPage() {
         </div>
       </div>
 
-      <div className="dash-card">
-        <div className={`dash-card__body ${styles.filtersBody}`}>
-          <div className={styles.filtersGrid}>
-            <div className={styles.presets}>
-              {(
-                [
-                  ['today', 'Today'],
-                  ['week', 'This week'],
-                  ['month', 'This month'],
-                  ['custom', 'Custom'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={
-                    preset === value ? 'btn btn--primary btn--sm' : 'btn btn--outline btn--sm'
-                  }
-                  onClick={() => setPreset(value)}
-                >
-                  {label}
-                </button>
+      <div className={styles.filtersBar}>
+        <div className={styles.filtersGrid}>
+          <label className={styles.selectField}>
+            <span className={styles.fieldLabel}>Date range</span>
+            <select
+              className={styles.select}
+              value={preset}
+              onChange={(event) => setPreset(event.target.value as DatePreset)}
+            >
+              <option value="today">Today</option>
+              <option value="week">This week</option>
+              <option value="month">This month</option>
+              <option value="custom">Custom range...</option>
+            </select>
+          </label>
+
+          <label className={styles.selectField}>
+            <span className={styles.fieldLabel}>Job</span>
+            <select
+              className={styles.select}
+              value={selectedJobId}
+              onChange={(event) => setSelectedJobId(event.target.value)}
+            >
+              <option value="">All jobs</option>
+              {jobOptions.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
+                </option>
               ))}
-            </div>
+            </select>
+          </label>
 
-            {preset === 'custom' ? (
-              <div className={styles.customRange}>
-                <label className={styles.dateField}>
-                  <span className={styles.fieldLabel}>From</span>
-                  <input
-                    type="date"
-                    className={styles.dateInput}
-                    value={customStart}
-                    onChange={(event) => setCustomStart(event.target.value)}
-                  />
-                </label>
-                <label className={styles.dateField}>
-                  <span className={styles.fieldLabel}>To</span>
-                  <input
-                    type="date"
-                    className={styles.dateInput}
-                    value={customEnd}
-                    min={customStart}
-                    onChange={(event) => setCustomEnd(event.target.value)}
-                  />
-                </label>
-              </div>
-            ) : null}
-
-            <div className={styles.jobField}>
-              <span className={styles.fieldLabel}>Job</span>
-              <select
-                className="resume-field__input recruiter-candidates-toolbar__select"
-                value={selectedJobId}
-                onChange={(event) => setSelectedJobId(event.target.value)}
-              >
-                <option value="">All jobs</option>
-                {jobOptions.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title}
-                  </option>
-                ))}
-              </select>
+          {preset === 'custom' ? (
+            <div className={styles.customRange}>
+              <label className={styles.dateField}>
+                <span className={styles.fieldLabel}>From</span>
+                <input
+                  type="date"
+                  className={styles.dateInput}
+                  value={customStart}
+                  onChange={(event) => setCustomStart(event.target.value)}
+                />
+              </label>
+              <label className={styles.dateField}>
+                <span className={styles.fieldLabel}>To</span>
+                <input
+                  type="date"
+                  className={styles.dateInput}
+                  value={customEnd}
+                  min={customStart}
+                  onChange={(event) => setCustomEnd(event.target.value)}
+                />
+              </label>
             </div>
+          ) : null}
           </div>
-        </div>
       </div>
 
       {isLoading ? (

@@ -177,7 +177,7 @@ export default function RecruiterCandidatesPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <span className="badge badge--gray">
+          <span className="page-header-hint">
             {filteredCandidates.length} candidate{filteredCandidates.length === 1 ? '' : 's'}
           </span>
         </div>

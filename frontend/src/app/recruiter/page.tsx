@@ -450,15 +450,13 @@ export default function CompanyDashboardPage() {
                               {member.recruiter_name}
                             </div>
                             <div className="recruiter-list-card__meta recruiter-team-activity__meta">
-                              <span
-                                className={`badge badge--${getMembershipTone(member.membership_status)}`}
-                              >
-                                {member.membership_status === 'active'
-                                  ? 'Active'
-                                  : member.membership_status === 'pending'
-                                    ? 'Pending'
-                                    : 'Rejected'}
-                              </span>
+                              {member.membership_status !== 'active' ? (
+                                <span
+                                  className={`badge badge--${getMembershipTone(member.membership_status)}`}
+                                >
+                                  {member.membership_status === 'pending' ? 'Pending' : 'Rejected'}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -500,17 +498,6 @@ export default function CompanyDashboardPage() {
             </div>
           ) : null}
 
-          <div className="recruiter-dashboard__footer-actions">
-            <Link href="/recruiter/screening" className="btn btn--primary btn--sm">
-              Open screening queue
-            </Link>
-            <Link href="/recruiter/outreach" className="btn btn--outline btn--sm">
-              Open outreach drafts
-            </Link>
-            <Link href="/recruiter/chat" className="btn btn--ghost btn--sm">
-              Open recruiter chat
-            </Link>
-          </div>
         </div>
       )}
     </div>
