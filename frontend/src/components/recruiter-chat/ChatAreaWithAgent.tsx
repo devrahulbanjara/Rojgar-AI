@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { ComponentPropsWithoutRef, FormEvent, KeyboardEvent, WheelEvent } from 'react'
+import type { ComponentPropsWithoutRef, FormEvent, KeyboardEvent, UIEvent, WheelEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 import Image from 'next/image'
@@ -16,20 +16,22 @@ import type {
   ChatSessionResponse,
   CompanyJobListResult,
   JobEditPreviewData,
-  SalaryResearchResult,
+  RecruiterChatStreamEvent,
+  SalaryResearchSource,
   ToolResultEnvelope,
+  WebSearchSource,
 } from '@/lib/types/recruiterChat'
 import { useAppSelector } from '@/store/hooks'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
 
 import { CandidateCardGrid } from './CandidateCardGrid'
 import { CandidateDetailPanel } from './CandidateDetailPanel'
 import { JobCardGrid } from './JobCardGrid'
 import { JobEditDiffCard } from './JobEditDiffCard'
-import { SalaryBandCard } from './SalaryBandCard'
 import { ToolErrorMessage } from './ToolErrorMessage'
 import { RecruiterChatPanelSkeleton } from './skeletons'
+import { getToolActivityLabel, getUiTypeToolName } from './utils'
 
 interface ChatAreaWithAgentProps {
   session: ChatSessionResponse
@@ -98,6 +100,135 @@ function getToolDisplayText(message: ChatHistoryMessage): string {
     message.content,
   )
   return envelope.text?.trim() || ''
+}
+
+interface ChatCitation {
+  label: string
+  url: string
+  meta: string | null
+}
+
+function dedupeChatCitations(sources: ChatCitation[]): ChatCitation[] {
+  const seen = new Set<string>()
+  return sources.filter((source) => {
+    const key = source.url || `${source.label}:${source.meta ?? ''}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+function getChatCitationsFromToolMessage(message: ChatHistoryMessage): ChatCitation[] {
+  if (message.role !== 'tool') {
+    return []
+  }
+
+  if (message.name === 'research_salary') {
+    const envelope = parseToolEnvelope<{ sources?: SalaryResearchSource[] }>(
+      message.name,
+      message.content,
+    )
+    const sources = envelope.data?.sources
+    if (!Array.isArray(sources)) {
+      return []
+    }
+
+    return sources
+      .filter(
+        (source): source is SalaryResearchSource =>
+          Boolean(source) &&
+          typeof source.source_name === 'string' &&
+          typeof source.url === 'string',
+      )
+      .map((source) => ({
+        label: source.source_name,
+        url: source.url,
+        meta:
+          [source.quoted_min, source.quoted_max]
+            .filter((value) => value != null)
+            .map((value) => `${value}`)
+            .join(' - ') ||
+          source.notes ||
+          null,
+      }))
+  }
+
+  if (message.name === 'web_search') {
+    const envelope = parseToolEnvelope<{ sources?: WebSearchSource[] }>(
+      message.name,
+      message.content,
+    )
+    const sources = envelope.data?.sources
+    if (!Array.isArray(sources)) {
+      return []
+    }
+
+    return sources
+      .filter(
+        (source): source is WebSearchSource =>
+          Boolean(source) &&
+          typeof source.title === 'string' &&
+          typeof source.url === 'string' &&
+          typeof source.snippet === 'string',
+      )
+      .map((source) => ({
+        label: source.title,
+        url: source.url,
+        meta: source.snippet,
+      }))
+  }
+
+  return []
+}
+
+function SourcesFooter({ sources }: { sources: ChatCitation[] }) {
+  if (!sources.length) return null
+
+  return (
+    <span className="recruiter-chat-inline-citations">
+      <span className="recruiter-chat-sources-list">
+        {sources.map((source, index) => (
+          <a
+            key={`${source.url}-${index}`}
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            className="recruiter-chat-source-chip"
+            title={
+              source.meta
+                ? `${source.label}\n${source.url}\n${source.meta}`
+                : `${source.label}\n${source.url}`
+            }
+            aria-label={
+              source.meta
+                ? `${source.label}. ${source.url}. ${source.meta}`
+                : `${source.label}. ${source.url}`
+            }
+          >
+            [{index + 1}]
+          </a>
+        ))}
+      </span>
+    </span>
+  )
+}
+
+function AssistantTextWithCitations({
+  content,
+  citations,
+}: {
+  content: string
+  citations: ChatCitation[]
+}) {
+  const footer = citations.length > 0 ? <SourcesFooter sources={citations} /> : undefined
+
+  return (
+    <div className="recruiter-chat-assistant-copy">
+      <MarkdownMessage content={content} footer={footer} />
+    </div>
+  )
 }
 
 function shouldHideAssistantSummary(content: string): boolean {
@@ -202,70 +333,70 @@ function renderInterruptCard(
 
 function renderToolMessage(message: ChatHistoryMessage): React.ReactNode | null {
   const toolName = message.name ?? 'tool'
+  const envelope = parseToolEnvelope<Record<string, unknown>>(toolName, message.content)
+  return renderToolEnvelope(toolName, envelope)
+}
 
+function renderToolEnvelope(
+  toolName: string,
+  envelope: ToolResultEnvelope<Record<string, unknown> | null>,
+): React.ReactNode | null {
   if (toolName === 'list_company_jobs') {
-    const envelope = parseToolEnvelope<CompanyJobListResult>(toolName, message.content)
+    const typedEnvelope = envelope as ToolResultEnvelope<CompanyJobListResult | null>
 
-    if (!envelope.ok || !envelope.data) {
+    if (!typedEnvelope.ok || !typedEnvelope.data) {
       return (
         <ToolErrorMessage
-          text={getToolErrorText(envelope, "You don't have any company jobs posted yet.")}
+          text={getToolErrorText(typedEnvelope, "You don't have any company jobs posted yet.")}
         />
       )
     }
 
-    return <JobCardGrid data={envelope.data} />
+    return <JobCardGrid data={typedEnvelope.data} />
   }
 
   if (toolName === 'search_company_candidates') {
-    const envelope = parseToolEnvelope<CandidateSearchResult>(toolName, message.content)
+    const typedEnvelope = envelope as ToolResultEnvelope<CandidateSearchResult | null>
 
-    if (!envelope.ok || !envelope.data) {
+    if (!typedEnvelope.ok || !typedEnvelope.data) {
       return (
         <ToolErrorMessage
-          text={getToolErrorText(envelope, 'No matching candidates were found for that request.')}
+          text={getToolErrorText(
+            typedEnvelope,
+            'No matching candidates were found for that request.',
+          )}
         />
       )
     }
 
-    return <CandidateCardGrid data={envelope.data} />
+    return <CandidateCardGrid data={typedEnvelope.data} />
   }
 
   if (toolName === 'research_salary') {
-    const envelope = parseToolEnvelope<SalaryResearchResult>(toolName, message.content)
-
-    if (!envelope.ok || !envelope.data) {
-      return (
-        <ToolErrorMessage
-          text={getToolErrorText(envelope, 'Could not fetch salary data for that request.')}
-        />
-      )
-    }
-
-    return <SalaryBandCard data={envelope.data} />
+    return null
   }
 
   if (toolName === 'get_candidate_detail') {
-    const envelope = parseToolEnvelope<CandidateDetailData>(toolName, message.content)
+    const typedEnvelope = envelope as ToolResultEnvelope<CandidateDetailData | null>
 
-    if (!envelope.ok || !envelope.data) {
+    if (!typedEnvelope.ok || !typedEnvelope.data) {
       return (
         <ToolErrorMessage
-          text={getToolErrorText(envelope, 'Candidate details could not be loaded.')}
+          text={getToolErrorText(typedEnvelope, 'Candidate details could not be loaded.')}
         />
       )
     }
 
-    return <CandidateDetailPanel data={envelope.data} />
+    return <CandidateDetailPanel data={typedEnvelope.data} />
   }
 
   if (toolName === 'prepare_job_edit') {
-    const envelope = parseToolEnvelope<JobEditPreviewData>(toolName, message.content)
+    const typedEnvelope = envelope as ToolResultEnvelope<JobEditPreviewData | null>
 
-    if (!envelope.ok || !envelope.data) {
+    if (!typedEnvelope.ok || !typedEnvelope.data) {
       return (
         <ToolErrorMessage
-          text={getToolErrorText(envelope, 'The proposed job edit could not be prepared.')}
+          text={getToolErrorText(typedEnvelope, 'The proposed job edit could not be prepared.')}
         />
       )
     }
@@ -277,43 +408,93 @@ function renderToolMessage(message: ChatHistoryMessage): React.ReactNode | null 
     return null
   }
 
-  const envelope = parseToolEnvelope<Record<string, unknown>>(toolName, message.content)
+  if (toolName === 'web_search') {
+    return null
+  }
+
   return (
     <ToolErrorMessage text={getToolErrorText(envelope, 'Unable to render this tool result.')} />
   )
 }
 
-function MarkdownMessage({ content }: { content: string }) {
+function MarkdownMessage({ content, footer }: { content: string; footer?: React.ReactNode }) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        a: ({ children, ...props }: ComponentPropsWithoutRef<'a'>) => (
-          <a
-            href={props.href}
-            target="_blank"
-            rel="noreferrer"
-            className="recruiter-chat-markdown-link"
-          >
-            {children}
-          </a>
-        ),
-        code: ({ children }) => <code className="recruiter-chat-markdown-code">{children}</code>,
-        li: ({ children }) => <li className="recruiter-chat-markdown-item">{children}</li>,
-        ol: ({ children }) => (
-          <ol className="recruiter-chat-markdown-list recruiter-chat-markdown-list--ordered">
-            {children}
-          </ol>
-        ),
-        p: ({ children }) => <p className="recruiter-chat-markdown-paragraph">{children}</p>,
-        strong: ({ children }) => (
-          <strong className="recruiter-chat-markdown-strong">{children}</strong>
-        ),
-        ul: ({ children }) => <ul className="recruiter-chat-markdown-list">{children}</ul>,
-      }}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="recruiter-chat-markdown-container">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ children, ...props }: ComponentPropsWithoutRef<'a'>) => (
+            <a
+              href={props.href}
+              target="_blank"
+              rel="noreferrer"
+              className="recruiter-chat-markdown-link"
+            >
+              {children}
+            </a>
+          ),
+          code: ({ children }) => <code className="recruiter-chat-markdown-code">{children}</code>,
+          li: ({ children }) => <li className="recruiter-chat-markdown-item">{children}</li>,
+          ol: ({ children }) => (
+            <ol className="recruiter-chat-markdown-list recruiter-chat-markdown-list--ordered">
+              {children}
+            </ol>
+          ),
+          p: ({ children }) => <p className="recruiter-chat-markdown-paragraph">{children}</p>,
+          strong: ({ children }) => (
+            <strong className="recruiter-chat-markdown-strong">{children}</strong>
+          ),
+          ul: ({ children }) => <ul className="recruiter-chat-markdown-list">{children}</ul>,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+      {footer}
+    </div>
+  )
+}
+
+function ThinkingBubble() {
+  return (
+    <div className="recruiter-chat-assistant-bubble recruiter-chat-assistant-bubble--cursor">
+      <span className="recruiter-chat-cursor-dots" aria-hidden="true">
+        <span className="recruiter-chat-cursor-dot" />
+        <span className="recruiter-chat-cursor-dot recruiter-chat-cursor-dot--2" />
+        <span className="recruiter-chat-cursor-dot recruiter-chat-cursor-dot--3" />
+      </span>
+      <span className="recruiter-chat-cursor-label">Thinking…</span>
+    </div>
+  )
+}
+
+function ToolActivityPill({ toolName }: { toolName: string }) {
+  return (
+    <div className="recruiter-chat-tool-activity">
+      <span className="recruiter-chat-cursor-dots" aria-hidden="true">
+        <span className="recruiter-chat-cursor-dot" />
+        <span className="recruiter-chat-cursor-dot recruiter-chat-cursor-dot--2" />
+        <span className="recruiter-chat-cursor-dot recruiter-chat-cursor-dot--3" />
+      </span>
+      <span>{getToolActivityLabel(toolName)}</span>
+    </div>
+  )
+}
+
+function AgentSteps({ steps }: { steps: Array<{ key: string; name: string; text: string }> }) {
+  if (!steps.length) return null
+
+  return (
+    <details className="recruiter-chat-agent-steps">
+      <summary>Agent steps</summary>
+      <div className="recruiter-chat-agent-steps__list">
+        {steps.map((step) => (
+          <div key={step.key} className="recruiter-chat-agent-steps__item">
+            <div className="recruiter-chat-agent-steps__name">{step.name}</div>
+            <div className="recruiter-chat-agent-steps__text">{step.text || 'Completed.'}</div>
+          </div>
+        ))}
+      </div>
+    </details>
   )
 }
 
@@ -324,7 +505,55 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
   const [draftMessage, setDraftMessage] = useState('')
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
+  const [streamingAssistantText, setStreamingAssistantText] = useState('')
+  const [streamingToolName, setStreamingToolName] = useState<string | null>(null)
+  const [streamingStructuredResult, setStreamingStructuredResult] =
+    useState<React.ReactNode | null>(null)
+  const [streamingWebSources, setStreamingWebSources] = useState<WebSearchSource[]>([])
+  const [streamError, setStreamError] = useState<string | null>(null)
+  const [lastSubmittedMessage, setLastSubmittedMessage] = useState<string | null>(null)
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true)
   const scrollViewRef = useRef<HTMLDivElement | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const historyBeforeSendRef = useRef<ChatHistoryMessage[]>([])
+  const streamingAssistantTextRef = useRef('')
+
+  useEffect(() => {
+    streamingAssistantTextRef.current = streamingAssistantText
+  }, [streamingAssistantText])
+
+  useEffect(() => {
+    if (!isAutoScrollEnabled) return
+
+    const scrollView = scrollViewRef.current
+    if (!scrollView) return
+
+    const behavior: ScrollBehavior =
+      isSending || Boolean(streamingAssistantText) || isThinking ? 'smooth' : 'auto'
+
+    scrollView.scrollTo({
+      top: scrollView.scrollHeight,
+      behavior,
+    })
+  }, [
+    history,
+    isAutoScrollEnabled,
+    isSending,
+    isThinking,
+    pendingInterrupt,
+    streamingAssistantText,
+  ])
+
+  useEffect(() => {
+    setIsAutoScrollEnabled(true)
+    setStreamError(null)
+    setStreamingAssistantText('')
+    setIsThinking(false)
+    setStreamingToolName(null)
+    setStreamingStructuredResult(null)
+    setStreamingWebSources([])
+  }, [session.id])
 
   useEffect(() => {
     let cancelled = false
@@ -390,8 +619,6 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
 
     return [
       'search_company_candidates',
-      'list_company_jobs',
-      'research_salary',
       'get_candidate_detail',
       'clarify_job_selection',
       'clarify_candidate_selection',
@@ -404,16 +631,48 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
     onMessageSent()
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const applyFinalExchange = (exchange: {
+    history: ChatHistoryMessage[]
+    interrupt: ChatInterruptPayload | null
+  }) => {
+    setHistory(exchange.history ?? [])
+    setPendingInterrupt(exchange.interrupt ?? null)
+    setStreamingAssistantText('')
+    setIsThinking(false)
+    setStreamingToolName(null)
+    setStreamingStructuredResult(null)
+    setStreamingWebSources([])
+    onMessageSent()
+  }
 
-    const message = draftMessage.trim()
-    if (!message || isComposerDisabled) return
+  const startStreamingMessage = async (
+    message: string,
+    { appendOptimisticUser }: { appendOptimisticUser: boolean },
+  ) => {
+    const optimisticUserMessage: ChatHistoryMessage = {
+      role: 'user',
+      content: message,
+    }
 
+    historyBeforeSendRef.current = history
+    abortControllerRef.current = new AbortController()
     setIsSending(true)
+    setIsThinking(true)
+    setIsAutoScrollEnabled(true)
+    setPendingInterrupt(null)
+    setStreamingAssistantText('')
+    setStreamingToolName(null)
+    setStreamingStructuredResult(null)
+    setStreamingWebSources([])
+    setStreamError(null)
+    setLastSubmittedMessage(message)
+
+    if (appendOptimisticUser) {
+      setHistory((currentHistory) => [...currentHistory, optimisticUserMessage])
+    }
 
     try {
-      const response = await fetch(`/api/recruiter-chat/sessions/${session.id}/messages`, {
+      const response = await fetch(`/api/recruiter-chat/sessions/${session.id}/messages/stream`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -425,21 +684,144 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
             : {}),
         },
         body: JSON.stringify({ message }),
+        signal: abortControllerRef.current.signal,
       })
 
-      const payload = (await response.json()) as ChatExchangeApiResponse
-
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message || `Request failed with status ${response.status}`)
+      if (!response.ok || !response.body) {
+        const fallbackPayload = (await response
+          .json()
+          .catch(() => null)) as ChatExchangeApiResponse | null
+        throw new Error(fallbackPayload?.message || `Request failed with status ${response.status}`)
       }
 
-      setDraftMessage('')
-      applyExchange(payload)
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done })
+
+        let newlineIndex = buffer.indexOf('\n')
+        while (newlineIndex >= 0) {
+          const line = buffer.slice(0, newlineIndex).trim()
+          buffer = buffer.slice(newlineIndex + 1)
+
+          if (line) {
+            const event = JSON.parse(line) as RecruiterChatStreamEvent
+
+            if (event.type === 'thinking') {
+              setIsThinking(true)
+              setStreamingToolName(null)
+            } else if (event.type === 'message_start') {
+              setIsThinking(false)
+              setStreamingToolName(null)
+            } else if (event.type === 'tool_call') {
+              setStreamingToolName(event.tool)
+            } else if (event.type === 'message_delta') {
+              setIsThinking(false)
+              setStreamingToolName(null)
+              setStreamingAssistantText((currentText) => currentText + event.content)
+            } else if (event.type === 'web_sources') {
+              setStreamingWebSources(
+                dedupeChatCitations(
+                  event.sources.map((source) => ({
+                    label: source.title,
+                    url: source.url,
+                    meta: source.snippet,
+                  })),
+                ).map((source) => ({
+                  title: source.label,
+                  url: source.url,
+                  snippet: source.meta ?? '',
+                })),
+              )
+            } else if (event.type === 'structured_result') {
+              const toolName = getUiTypeToolName(event.ui_type)
+              setStreamingToolName(null)
+              setStreamingStructuredResult(
+                toolName
+                  ? renderToolEnvelope(toolName, {
+                      tool: toolName,
+                      ok: true,
+                      text: '',
+                      ui_type_hint: event.ui_type,
+                      data: event.data,
+                    })
+                  : null,
+              )
+            } else if (event.type === 'final') {
+              applyFinalExchange(event.data)
+            } else if (event.type === 'error') {
+              throw new Error(event.message || 'Recruiter chat request failed.')
+            }
+          }
+
+          newlineIndex = buffer.indexOf('\n')
+        }
+
+        if (done) {
+          const trailingLine = buffer.trim()
+          if (trailingLine) {
+            const event = JSON.parse(trailingLine) as RecruiterChatStreamEvent
+            if (event.type === 'final') {
+              applyFinalExchange(event.data)
+            } else if (event.type === 'error') {
+              throw new Error(event.message || 'Recruiter chat request failed.')
+            }
+          }
+          break
+        }
+      }
     } catch (error) {
+      const aborted = abortControllerRef.current?.signal.aborted ?? false
+
+      if (aborted) {
+        if (streamingAssistantTextRef.current.trim()) {
+          setHistory((currentHistory) => [
+            ...currentHistory,
+            {
+              role: 'assistant',
+              content: streamingAssistantTextRef.current.trim(),
+            },
+          ])
+        }
+      } else {
+        setHistory(historyBeforeSendRef.current)
+        setStreamError(
+          error instanceof Error ? error.message : 'The response stream failed. Please try again.',
+        )
+      }
+
       console.warn('Failed to send recruiter chat message:', error)
+      setIsThinking(false)
+      setStreamingAssistantText('')
+      setStreamingToolName(null)
+      setStreamingStructuredResult(null)
+      setStreamingWebSources([])
     } finally {
+      abortControllerRef.current = null
       setIsSending(false)
     }
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const message = draftMessage.trim()
+    if (!message || isComposerDisabled) return
+
+    setDraftMessage('')
+    await startStreamingMessage(message, { appendOptimisticUser: true })
+  }
+
+  const handleRetry = async () => {
+    if (!lastSubmittedMessage || isSending) return
+    await startStreamingMessage(lastSubmittedMessage, { appendOptimisticUser: true })
+  }
+
+  const handleStopGeneration = () => {
+    abortControllerRef.current?.abort()
   }
 
   const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -464,6 +846,13 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
 
     scrollView.scrollTop += event.deltaY
     event.preventDefault()
+  }
+
+  const handleThreadScroll = (event: UIEvent<HTMLDivElement>) => {
+    const scrollView = event.currentTarget
+    const remainingDistance =
+      scrollView.scrollHeight - scrollView.scrollTop - scrollView.clientHeight
+    setIsAutoScrollEnabled(remainingDistance <= 96)
   }
 
   const handleInterruptResponse = async (
@@ -528,37 +917,61 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
         continue
       }
 
-      const nextMessage = history[index + 1]
-      const nextToolNode = nextMessage?.role === 'tool' ? renderToolMessage(nextMessage) : null
+      const previousToolMessages: ChatHistoryMessage[] = []
+      let previousCursor = index - 1
+      while (history[previousCursor]?.role === 'tool') {
+        previousToolMessages.unshift(history[previousCursor])
+        previousCursor -= 1
+      }
+
+      const followingToolMessages: ChatHistoryMessage[] = []
+      let cursor = index + 1
+      while (history[cursor]?.role === 'tool') {
+        followingToolMessages.push(history[cursor])
+        cursor += 1
+      }
+      const toolMessages = [...previousToolMessages, ...followingToolMessages]
+      const nextToolNode = toolMessages.length > 0 ? renderToolMessage(toolMessages[0]) : null
+      const toolSteps = followingToolMessages.map((toolMessage, toolIndex) => ({
+        key: `${key}-tool-${toolIndex}`,
+        name: toolMessage.name ?? 'tool',
+        text: getToolDisplayText(toolMessage),
+      }))
+      const citations = dedupeChatCitations(
+        toolMessages.flatMap((toolMessage) => getChatCitationsFromToolMessage(toolMessage)),
+      )
 
       messageNodes.push(
         <div key={key} className="recruiter-chat-assistant-row recruiter-chat-message-row">
           <ChatBotBadge />
           <div className="recruiter-chat-tool-panel">
-            <div className="recruiter-chat-assistant-bubble">
-              <MarkdownMessage content={message.content} />
+            <div className="recruiter-chat-assistant-bubble recruiter-chat-assistant-bubble--inline">
+              {citations.length > 0 ? (
+                <AssistantTextWithCitations content={message.content} citations={citations} />
+              ) : (
+                <MarkdownMessage content={message.content} />
+              )}
             </div>
             {nextToolNode ? <div className="recruiter-chat-combo-card">{nextToolNode}</div> : null}
+            {toolSteps.length > 0 ? <AgentSteps steps={toolSteps} /> : null}
           </div>
         </div>,
       )
 
-      if (nextToolNode) {
-        index += 1
+      if (followingToolMessages.length > 0) {
+        index += followingToolMessages.length
       }
 
       continue
     }
 
     const toolNode = renderToolMessage(message)
-    const toolText = getToolDisplayText(message)
-    const nextMessage = history[index + 1]
 
     if (!toolNode) {
       continue
     }
 
-    if (toolText && nextMessage?.role === 'assistant' && nextMessage.content.trim() === toolText) {
+    if (history[index + 1]?.role === 'assistant') {
       continue
     }
 
@@ -573,7 +986,12 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
   return (
     <div className="recruiter-chat-area">
       <div className="recruiter-chat-thread-shell">
-        <div ref={scrollViewRef} className="recruiter-chat-scroll-view" onWheel={handleThreadWheel}>
+        <div
+          ref={scrollViewRef}
+          className="recruiter-chat-scroll-view"
+          onScroll={handleThreadScroll}
+          onWheel={handleThreadWheel}
+        >
           <div className="recruiter-chat-message-view">
             {hasNoMessages ? (
               <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
@@ -586,6 +1004,64 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
             ) : null}
 
             {messageNodes}
+
+            {isThinking && !streamingAssistantText ? (
+              <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
+                <ChatBotBadge />
+                <div className="recruiter-chat-tool-panel">
+                  <ThinkingBubble />
+                  {streamingToolName ? <ToolActivityPill toolName={streamingToolName} /> : null}
+                </div>
+              </div>
+            ) : null}
+
+            {streamingAssistantText ? (
+              <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
+                <ChatBotBadge />
+                <div className="recruiter-chat-tool-panel">
+                  <div className="recruiter-chat-assistant-bubble recruiter-chat-assistant-bubble--inline">
+                    {streamingWebSources.length > 0 ? (
+                      <AssistantTextWithCitations
+                        content={streamingAssistantText}
+                        citations={streamingWebSources.map((source) => ({
+                          label: source.title,
+                          url: source.url,
+                          meta: source.snippet,
+                        }))}
+                      />
+                    ) : (
+                      <MarkdownMessage content={streamingAssistantText} />
+                    )}
+                  </div>
+                  {streamingToolName ? <ToolActivityPill toolName={streamingToolName} /> : null}
+                  {streamingStructuredResult ? (
+                    <div className="recruiter-chat-combo-card">{streamingStructuredResult}</div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {streamError ? (
+              <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
+                <ChatBotBadge />
+                <div className="recruiter-chat-tool-panel">
+                  <div className="recruiter-chat-stream-error">
+                    <div className="recruiter-chat-stream-error__title">Response interrupted</div>
+                    <div className="recruiter-chat-stream-error__body">{streamError}</div>
+                    <button
+                      type="button"
+                      className="recruiter-chat-stream-error__retry"
+                      onClick={() => {
+                        void handleRetry()
+                      }}
+                    >
+                      <RotateCcw size={13} />
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             {pendingInterrupt ? (
               <div className="recruiter-chat-assistant-row recruiter-chat-message-row">
@@ -616,11 +1092,22 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
               disabled={isComposerDisabled}
             />
             <button
-              type="submit"
-              className="recruiter-chat-send-button"
-              disabled={isComposerDisabled || draftMessage.trim().length === 0}
+              type={isSending ? 'button' : 'submit'}
+              className={`recruiter-chat-send-button${
+                isSending ? ' recruiter-chat-send-button--stop' : ''
+              }`}
+              disabled={isSending ? false : isComposerDisabled || draftMessage.trim().length === 0}
+              onClick={
+                isSending
+                  ? () => {
+                      handleStopGeneration()
+                    }
+                  : undefined
+              }
+              aria-label={isSending ? 'Stop generation' : 'Send message'}
+              title={isSending ? 'Stop generation' : 'Send message'}
             >
-              <ArrowUp size={14} />
+              {isSending ? <Square size={12} fill="currentColor" /> : <ArrowUp size={14} />}
             </button>
           </div>
         </form>

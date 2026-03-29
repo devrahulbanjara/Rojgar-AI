@@ -3339,10 +3339,6 @@
   display: grid;
   gap: $space-4;
 
-  &--list {
-    grid-template-columns: 1fr;
-  }
-
   &--grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3390,6 +3386,15 @@
 
   &:hover {
     box-shadow: $shadow-md;
+  }
+
+  &--clickable {
+    cursor: pointer;
+
+    > *:not(.company-job-card__actions),
+    > *:not(.company-job-card__actions) * {
+      cursor: inherit;
+    }
   }
 
   &__top-row {
@@ -8866,27 +8871,18 @@
 }
 
 .recruiter-chat-source-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid rgb(226 232 240 / 95%);
-  background: rgb(248 250 252 / 96%);
-  color: $color-gray-700;
-  text-decoration: none;
-  font-size: $font-size-sm;
-  transition:
-    transform $transition-fast,
-    border-color $transition-fast,
-    box-shadow $transition-fast,
-    color $transition-fast;
+  display: inline;
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: 0.85em;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 0.15rem;
+  transition: color $transition-fast;
 
   &:hover {
-    transform: translateY(-1px);
-    color: #0f766e;
-    border-color: rgb(45 212 191 / 55%);
-    box-shadow: 0 12px 24px rgb(15 23 42 / 8%);
+    color: #0f3aa7;
   }
 }
 
@@ -12444,7 +12440,7 @@
     &:hover {
       border-color: rgba($color-primary, 0.28);
       box-shadow: $shadow-md;
-      transform: translateY(-1px);
+      transform: none;
     }
   }
 

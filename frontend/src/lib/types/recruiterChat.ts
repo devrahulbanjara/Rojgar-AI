@@ -78,6 +78,22 @@ export interface ChatExchangeResponse {
 
 export type ChatExchangeApiResponse = ApiResponse<ChatExchangeResponse>
 
+export interface WebSearchSource {
+  title: string
+  url: string
+  snippet: string
+}
+
+export type RecruiterChatStreamEvent =
+  | { type: 'thinking' }
+  | { type: 'message_start' }
+  | { type: 'tool_call'; tool: string }
+  | { type: 'message_delta'; content: string }
+  | { type: 'web_sources'; sources: WebSearchSource[] }
+  | { type: 'structured_result'; ui_type: RecruiterChatUiType; data: Record<string, unknown> }
+  | { type: 'final'; data: ChatExchangeResponse }
+  | { type: 'error'; message: string }
+
 export interface ToolResultEnvelope<TData = Record<string, unknown> | null> {
   tool: string
   ok: boolean

@@ -1,6 +1,7 @@
 import type {
   ChatSessionResponse,
   JobEditDiff,
+  RecruiterChatUiType,
   SalaryResearchResult,
 } from '@/lib/types/recruiterChat'
 
@@ -152,5 +153,41 @@ export function stringifyScalar(value: unknown) {
     return JSON.stringify(value, null, 2)
   } catch {
     return String(value)
+  }
+}
+
+export function getToolActivityLabel(tool: string | null | undefined) {
+  switch (tool) {
+    case 'list_company_jobs':
+      return 'Loading company jobs...'
+    case 'search_company_candidates':
+      return 'Searching candidates...'
+    case 'research_salary':
+      return 'Researching salary data...'
+    case 'web_search':
+      return 'Searching the web...'
+    case 'prepare_job_edit':
+      return 'Preparing edit preview...'
+    case 'get_candidate_detail':
+      return 'Loading candidate details...'
+    default:
+      return 'Using a tool...'
+  }
+}
+
+export function getUiTypeToolName(uiType: RecruiterChatUiType): string | null {
+  switch (uiType) {
+    case 'candidate_list':
+      return 'search_company_candidates'
+    case 'job_list':
+      return 'list_company_jobs'
+    case 'salary_info':
+      return 'research_salary'
+    case 'candidate_detail':
+      return 'get_candidate_detail'
+    case 'job_edit_preview':
+      return 'prepare_job_edit'
+    default:
+      return null
   }
 }

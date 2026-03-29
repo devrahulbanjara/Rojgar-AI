@@ -3,6 +3,7 @@ from typing import Any
 from langchain_tavily import TavilySearch
 from langchain_tavily._utilities import TavilySearchAPIWrapper
 from loguru import logger
+from pydantic import SecretStr
 
 from app.core.config import settings
 
@@ -14,14 +15,14 @@ class SearchService:
     """
 
     def __init__(self):
-        self._api_wrapper = TavilySearchAPIWrapper(
-            tavily_api_key=settings.tavily_api_key,
+        api_wrapper = TavilySearchAPIWrapper(
+            tavily_api_key=SecretStr(settings.tavily_api_key)
         )
         self._tool = TavilySearch(
-            api_wrapper=self._api_wrapper,
             max_results=6,
             search_depth="advanced",
             include_raw_content=True,
+            api_wrapper=api_wrapper,
         )
 
     async def query(
@@ -51,7 +52,6 @@ class SearchService:
             - relevance_score: Relevance score (0-1)
         """
         try:
-            # Build search parameters
             full_query = query.strip()
             if (
                 country
@@ -59,13 +59,15 @@ class SearchService:
                 and country.lower() not in full_query.lower()
             ):
                 full_query = f"{full_query} {country.strip()}"
-            search_params = {"query": full_query}
+            search_params: dict[str, Any] = {"query": full_query}
+            if search_depth:
+                search_params["search_depth"] = search_depth
+            if max_results:
+                search_params["max_results"] = max_results
 
-            # Tavily-specific invocation
             result = await self._tool.ainvoke(search_params)
             raw_results = result.get("results", []) if isinstance(result, dict) else []
 
-            # Standardize output format
             standardized = []
             for row in raw_results:
                 standardized.append(
@@ -85,5 +87,4 @@ class SearchService:
             return []
 
 
-# Singleton instance
 search_service = SearchService()

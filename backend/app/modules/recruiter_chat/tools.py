@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Annotated, Any
 
 from fastapi import BackgroundTasks
-from langchain_core.messages import ToolMessage
+from langchain.messages import ToolMessage
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 from sqlalchemy import select
@@ -15,10 +15,12 @@ from sqlalchemy.orm import selectinload
 from app.core.database import AsyncSessionLocal
 from app.infrastructures.ai.service import ai_service
 from app.infrastructures.qdrant.service import qdrant_service
+from app.infrastructures.search.service import search_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
+from app.modules.job_ai.helpers import truncate_text
 from app.modules.job_ai.prompts import SALARY_SYNTHESIS_SYSTEM_PROMPT
 from app.modules.job_ai.schemas import SalaryResearch
 from app.modules.job_ai.tools import get_salary_research_data
@@ -218,10 +220,17 @@ async def _list_company_jobs_impl(
         jobs = result.scalars().all()
 
     if not jobs:
+        if statuses:
+            readable_statuses = ", ".join(
+                status.value.replace("_", " ") for status in statuses
+            )
+            empty_text = f"You do not have any {readable_statuses} jobs right now."
+        else:
+            empty_text = "You do not have any jobs posted yet."
         return ToolResultEnvelope(
             tool="list_company_jobs",
             ok=False,
-            text="You don't have any jobs posted yet.",
+            text=empty_text,
         )
 
     job_cards = [_job_to_chat_data(job) for job in jobs]
@@ -327,6 +336,7 @@ async def _search_company_candidates_impl(
     statuses: list[ApplicationStatus] | None = None,
     limit: int = 10,
 ) -> ToolResultEnvelope:
+    min_match_score = 0.3
     status_values = [s.value for s in statuses] if statuses else None
     hits = await qdrant_service.search_applications(
         query, company_id=company_id, statuses=status_values, limit=limit
@@ -361,6 +371,9 @@ async def _search_company_candidates_impl(
         app, job, profile = row
         if app.user_id in seen_users:
             continue
+        match_score = round(float(hit_scores[app.id]), 4)
+        if match_score < min_match_score:
+            continue
         seen_users.add(app.user_id)
         resume = app.resume
         skills = [s.skill_name for s in (resume.skills if resume else [])]
@@ -377,7 +390,7 @@ async def _search_company_candidates_impl(
                 application_status=app.status,
                 score=app.score,
                 feedback=app.feedback,
-                match_score=round(float(hit_scores[app.id]), 4),
+                match_score=match_score,
             )
         )
 
@@ -438,6 +451,33 @@ async def _research_salary_impl(
             for s in synthesized.sources
         ],
     )
+
+    source_urls = {source.url for source in result_data.sources}
+    fallback_sources = []
+    for candidate in search_input.get("results", []):
+        url = candidate.get("url")
+        title = candidate.get("title")
+        if not url or url in source_urls:
+            continue
+        fallback_sources.append(
+            SalarySource(
+                source_name=str(title or "Web search result"),
+                url=str(url),
+                country=normalized_country,
+                currency=synthesized.currency,
+                quoted_min=None,
+                quoted_max=None,
+                notes=truncate_text(candidate.get("content"), 180),
+            )
+        )
+        source_urls.add(url)
+        if len(result_data.sources) + len(fallback_sources) >= 3:
+            break
+
+    if fallback_sources and len(result_data.sources) < 3:
+        result_data.sources.extend(
+            fallback_sources[: max(0, 3 - len(result_data.sources))]
+        )
     return ToolResultEnvelope(
         tool="research_salary",
         text=f"Here is the salary research for {normalized_role} in {normalized_country}.",
@@ -728,6 +768,49 @@ async def research_salary(
 
 
 @tool
+async def web_search(
+    query: Annotated[str, "Search query to look up on the web."],
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
+) -> ToolMessage:
+    """
+    Search the web for information that may be time-sensitive, uncertain, or outside
+    the model's reliable knowledge. Do not guess when a quick search can verify it.
+    """
+    results = await search_service.query(query, max_results=4)
+    if not results:
+        result = ToolResultEnvelope(
+            tool="web_search",
+            ok=False,
+            text="No results found for that query.",
+        )
+    else:
+        snippets: list[str] = []
+        sources: list[dict[str, str]] = []
+        for row in results:
+            title = row.get("title") or "Untitled result"
+            content = (row.get("content") or "")[:300]
+            url = row.get("url") or ""
+            snippets.append(f"[{title}]({url}): {content}")
+            if url:
+                sources.append(
+                    {
+                        "title": title,
+                        "url": url,
+                        "snippet": (row.get("content") or "")[:150],
+                    }
+                )
+        result = ToolResultEnvelope(
+            tool="web_search",
+            ok=True,
+            text="\n\n".join(snippets),
+            ui_type_hint=UIHint.text,
+            data={"sources": sources},
+        )
+
+    return _as_tool_message("web_search", result, tool_call_id)
+
+
+@tool
 async def prepare_job_edit(
     job_id: Annotated[
         str, "Confirmed job UUID from clarify_job_selection. Never guess this."
@@ -769,6 +852,7 @@ MODEL_TOOLS = [
     clarify_candidate_selection,
     search_company_candidates,
     research_salary,
+    web_search,
     prepare_job_edit,
     get_candidate_detail,
 ]

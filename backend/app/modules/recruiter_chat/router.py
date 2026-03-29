@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -76,6 +77,27 @@ async def send_recruiter_chat_message(
 ):
     data = await service.send_message(db, user, session_id, payload)
     return ResponseBuilder.success(data=data, message="Recruiter chat message sent.")
+
+
+@router.post(
+    "/sessions/{session_id}/messages/stream",
+    summary="Stream a recruiter chat message response",
+)
+async def stream_recruiter_chat_message(
+    session_id: uuid.UUID,
+    payload: ChatMessageRequest,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    stream = service.stream_message(db, user, session_id, payload)
+    return StreamingResponse(
+        stream,
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post(

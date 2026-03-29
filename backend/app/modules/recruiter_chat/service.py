@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import json
 import logging
 import uuid
+from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain.messages import HumanMessage, ToolMessage
 from langgraph.types import Command
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +19,7 @@ from app.modules.companies.models import Company, CompanyMembership
 from app.modules.recruiter_chat.models import RecruiterChatSession
 from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.recruiter_chat.schemas import (
+    AgentResponse,
     ChatExchangeResponse,
     ChatHistoryMessage,
     ChatMessageRequest,
@@ -220,6 +223,10 @@ def _extract_interrupt_payload(result: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+def _stream_event_line(event: dict[str, Any]) -> str:
+    return json.dumps(event, ensure_ascii=False) + "\n"
+
+
 async def send_message(
     db: AsyncSession,
     user: User,
@@ -248,6 +255,140 @@ async def send_message(
         if interrupt_payload
         else None,
     )
+
+
+async def stream_message(
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+    payload: ChatMessageRequest,
+) -> AsyncIterator[str]:
+    session = await get_session(db, user, session_id)
+    graph = recruiter_chat_runtime.get_graph()
+    config = {"configurable": {"thread_id": session.thread_id}}
+    state_input = {
+        "messages": [HumanMessage(content=payload.message)],
+        "company_id": str(session.company_id),
+        "recruiter_id": str(session.recruiter_id),
+        "thread_id": session.thread_id,
+        "session_id": str(session.id),
+    }
+
+    yield _stream_event_line({"type": "thinking"})
+
+    latest_values: dict[str, Any] | None = None
+    started_stream = False
+    emitted_tool_calls: set[str] = set()
+
+    try:
+        async for mode, chunk in graph.astream(
+            state_input,
+            config=config,
+            stream_mode=["messages", "values"],
+        ):
+            if mode == "messages":
+                message_chunk, metadata = chunk
+                if metadata.get("langgraph_node") != "agent":
+                    continue
+
+                text = _message_content_to_text(getattr(message_chunk, "content", ""))
+                if not text:
+                    continue
+
+                if not started_stream:
+                    started_stream = True
+                    yield _stream_event_line({"type": "message_start"})
+
+                yield _stream_event_line({"type": "message_delta", "content": text})
+                continue
+
+            if mode == "values" and isinstance(chunk, dict):
+                latest_values = chunk
+                messages = chunk.get("messages", [])
+                if messages:
+                    last_message = messages[-1]
+                    tool_calls = getattr(last_message, "tool_calls", []) or []
+                    for tool_call in tool_calls:
+                        tool_key = str(
+                            tool_call.get("id")
+                            or f"{tool_call.get('name')}:{tool_call.get('args')}"
+                        )
+                        if tool_key in emitted_tool_calls:
+                            continue
+                        emitted_tool_calls.add(tool_key)
+                        yield _stream_event_line(
+                            {
+                                "type": "tool_call",
+                                "tool": tool_call.get("name", "tool"),
+                            }
+                        )
+
+        snapshot = await graph.aget_state(config)
+        interrupt_payload = _extract_interrupt_payload(
+            {"__interrupt__": snapshot.interrupts} if snapshot else latest_values or {}
+        )
+        await touch_session(db, session, title=payload.message)
+        history = await _get_history_for_session(session)
+        snapshot_values = snapshot.values if snapshot else latest_values or {}
+        agent_response = snapshot_values.get("agent_response")
+        structured_response = (
+            AgentResponse.model_validate(agent_response)
+            if isinstance(agent_response, dict)
+            else None
+        )
+        web_sources: list[dict[str, Any]] = []
+        all_messages = snapshot_values.get("messages", [])
+        for message in all_messages:
+            if not isinstance(message, ToolMessage) or message.name != "web_search":
+                continue
+
+            try:
+                payload = (
+                    json.loads(message.content)
+                    if isinstance(message.content, str)
+                    else {}
+                )
+            except json.JSONDecodeError:
+                continue
+
+            sources = (payload.get("data") or {}).get("sources", [])
+            if isinstance(sources, list):
+                web_sources.extend(
+                    source
+                    for source in sources
+                    if isinstance(source, dict) and source.get("url")
+                )
+        response = ChatExchangeResponse(
+            history=history,
+            interrupt=InterruptPayload.model_validate(interrupt_payload)
+            if interrupt_payload
+            else None,
+        )
+        if web_sources:
+            yield _stream_event_line({"type": "web_sources", "sources": web_sources})
+        if (
+            structured_response is not None
+            and structured_response.ui_type != "text"
+            and structured_response.data is not None
+        ):
+            yield _stream_event_line(
+                {
+                    "type": "structured_result",
+                    "ui_type": structured_response.ui_type,
+                    "data": structured_response.data,
+                }
+            )
+        yield _stream_event_line(
+            {"type": "final", "data": response.model_dump(mode="json")}
+        )
+    except Exception as exc:
+        logger.exception("Recruiter chat streaming failed for session %s", session.id)
+        yield _stream_event_line(
+            {
+                "type": "error",
+                "message": str(exc) or "Recruiter chat request failed.",
+            }
+        )
 
 
 async def respond_to_interrupt(

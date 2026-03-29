@@ -5,9 +5,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Any, Literal, TypedDict
 
-from langchain_core.messages import (
+from langchain_core.messages import AnyMessage
+from langchain.messages import (
     AIMessage,
-    AnyMessage,
     HumanMessage,
     SystemMessage,
     ToolMessage,
@@ -150,17 +150,29 @@ def _normalize_human_decision(value: Any) -> dict[str, Any]:
 
 def _prune_active_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
     system_messages = [m for m in messages if isinstance(m, SystemMessage)]
-    conversational_indexes = [
-        i for i, m in enumerate(messages) if isinstance(m, (HumanMessage, AIMessage))
+    conversational_messages = [
+        m for m in messages if isinstance(m, (HumanMessage, AIMessage))
     ]
-    if len(conversational_indexes) <= 6:
-        active_messages = [m for m in messages if not isinstance(m, SystemMessage)]
-    else:
-        first_kept_index = conversational_indexes[-6]
-        active_messages = [
-            m for m in messages[first_kept_index:] if not isinstance(m, SystemMessage)
-        ]
-    return [*system_messages, *active_messages]
+    if len(conversational_messages) <= 6:
+        return [*system_messages, *conversational_messages]
+
+    earlier_messages = conversational_messages[:-6]
+    recent_messages = conversational_messages[-6:]
+    memory_lines: list[str] = []
+    for message in earlier_messages:
+        if isinstance(message, HumanMessage):
+            text = _extract_text_content(message.content)
+            if text:
+                memory_lines.append(f"- Recruiter asked: {text[:100]}")
+
+    if memory_lines:
+        memory_note = SystemMessage(
+            content="Earlier in this session the recruiter discussed:\n"
+            + "\n".join(memory_lines)
+        )
+        return [*system_messages, memory_note, *recent_messages]
+
+    return [*system_messages, *recent_messages]
 
 
 async def _touch_session(session_id: str | None) -> None:
@@ -257,7 +269,22 @@ def build_recruiter_chat_graph():
         active_messages = state.get("active_messages") or _prune_active_messages(
             state.get("messages", [])
         )
-        response = await llm.ainvoke([system_message, *active_messages])
+        aggregated_chunk = None
+        async for chunk in llm.astream([system_message, *active_messages]):
+            aggregated_chunk = (
+                chunk if aggregated_chunk is None else aggregated_chunk + chunk
+            )
+
+        if aggregated_chunk is None:
+            response = await llm.ainvoke([system_message, *active_messages])
+        else:
+            response = AIMessage(
+                **{
+                    key: value
+                    for key, value in aggregated_chunk.model_dump().items()
+                    if key not in {"type", "tool_call_chunks", "chunk_position"}
+                }
+            )
         return {"messages": [response], "agent_response": None, "edit_result": None}
 
     # -- Job edit flow --
@@ -467,7 +494,13 @@ def build_recruiter_chat_graph():
         if tool_name == "list_company_jobs" and ok:
             return "agent"
 
+        if tool_name == "research_salary" and ok:
+            return "agent"
+
         # 4. Any failed tool result — agent composes a helpful response
+        if tool_name == "web_search":
+            return "agent"
+
         if not ok:
             return "agent"
 
