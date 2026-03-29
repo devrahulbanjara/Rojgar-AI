@@ -1,3 +1,4 @@
+import type { ApplicationStatus } from './applicationsApi'
 import { type ApiResponse, baseApi } from './baseApi'
 
 export interface InterviewItem {
@@ -12,6 +13,7 @@ export interface InterviewItem {
   location: string | null
   title: string | null
   created_at: string
+  application_status: ApplicationStatus
   job_id: string
   job_title: string
   company_id: string
@@ -32,7 +34,14 @@ export const interviewsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Interviews'],
     }),
+    markInterviewComplete: builder.mutation<ApiResponse<InterviewItem>, string>({
+      query: (interviewId) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/interviews/${interviewId}/complete`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Interviews', 'Applications'],
+    }),
   }),
 })
 
-export const { useGetInterviewsQuery } = interviewsApi
+export const { useGetInterviewsQuery, useMarkInterviewCompleteMutation } = interviewsApi

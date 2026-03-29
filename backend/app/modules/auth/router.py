@@ -5,7 +5,9 @@ from fastapi import (
     BackgroundTasks,
     Cookie,
     Depends,
+    File,
     Response,
+    UploadFile,
     status,
 )
 from fastapi.responses import RedirectResponse
@@ -14,6 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
+from app.infrastructures.redis.service import redis_service
+from app.infrastructures.storage.service import storage_service
 from app.modules.auth import service
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.models import User
@@ -22,6 +26,7 @@ from app.modules.auth.oauth import (
     google_oauth_callback,
 )
 from app.modules.auth.schemas import (
+    ChangePasswordRequest,
     ForgotPasswordRequest,
     GoogleRegisterRequest,
     LoginRequest,
@@ -30,6 +35,7 @@ from app.modules.auth.schemas import (
     SignupData,
     SignupRequest,
     TokenResponse,
+    UpdateMeRequest,
     UserResponse,
     VerifyEmailRequest,
 )
@@ -167,6 +173,91 @@ async def get_me(
 ):
     data = await service.get_me_data(db, current_user)
     return ResponseBuilder.success(data=data, message="Profile retrieved")
+
+
+@router.patch(
+    "/me",
+    response_model=UnifiedResponse[UserResponse],
+    summary="Update authenticated user's basic profile information",
+)
+async def update_me(
+    payload: UpdateMeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.update_me_data(db, current_user, payload)
+    await redis_service.delete(f"profile:detail:{current_user.id}")
+    await redis_service.delete(f"dashboard:candidate:{current_user.id}")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    return ResponseBuilder.success(data=data, message="Profile updated")
+
+
+@router.patch(
+    "/me/avatar",
+    response_model=UnifiedResponse[UserResponse],
+    summary="Upload or replace the authenticated user's avatar",
+)
+async def upload_my_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    previous_avatar_url = current_user.avatar_url
+    new_avatar_url = await storage_service.upload_image(file, folder="avatars")
+    current_user.avatar_url = new_avatar_url
+    await db.commit()
+    await db.refresh(current_user)
+
+    if previous_avatar_url and previous_avatar_url != new_avatar_url:
+        await storage_service.delete_image(previous_avatar_url)
+
+    await redis_service.delete(f"profile:detail:{current_user.id}")
+    await redis_service.delete(f"dashboard:candidate:{current_user.id}")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
+
+    data = await service.get_me_data(db, current_user)
+    return ResponseBuilder.success(data=data, message="Avatar updated")
+
+
+@router.delete(
+    "/me/avatar",
+    response_model=UnifiedResponse[None],
+    summary="Delete the authenticated user's avatar",
+)
+async def delete_my_avatar(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    previous_avatar_url = current_user.avatar_url
+    current_user.avatar_url = None
+    await db.commit()
+    await db.refresh(current_user)
+
+    if previous_avatar_url:
+        await storage_service.delete_image(previous_avatar_url)
+
+    await redis_service.delete(f"profile:detail:{current_user.id}")
+    await redis_service.delete(f"dashboard:candidate:{current_user.id}")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
+
+    return ResponseBuilder.success(data=None, message="Avatar removed.")
+
+
+@router.patch(
+    "/me/password",
+    response_model=UnifiedResponse[None],
+    summary="Change authenticated user's password",
+)
+async def update_my_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    await service.change_password(db, current_user, payload)
+    return ResponseBuilder.success(
+        data=None,
+        message="Password updated. Please log in again on other devices.",
+    )
 
 
 # --- Google OAuth ---

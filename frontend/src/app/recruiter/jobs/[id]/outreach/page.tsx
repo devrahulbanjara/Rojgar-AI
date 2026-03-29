@@ -10,6 +10,7 @@ import {
   OutreachDraftDetailSkeleton,
   OutreachDraftListSkeleton,
 } from '@/app/recruiter/outreach/_components/OutreachSkeletons'
+import { getApplicationStatusLabel } from '@/lib/applicationStatus'
 import { getInitials } from '@/lib/mediaValidation'
 import type { ApplicationStatus, RecruiterApplicationView } from '@/store/services/applicationsApi'
 import { useGetJobApplicationsQuery } from '@/store/services/applicationsApi'
@@ -28,6 +29,7 @@ import {
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
+import StatusPill from '@/components/common/StatusPill'
 
 import styles from './outreach.module.css'
 
@@ -44,7 +46,7 @@ type CandidateItem = {
 const WORKFLOW_STEPS = ['Job setup', 'Screening', 'Shortlisting', 'Outreach'] as const
 
 function isDraftGeneratable(status: ApplicationStatus) {
-  return status === 'screening' || status === 'rejected'
+  return status === 'shortlisted' || status === 'rejected'
 }
 
 function getDerivedOutreachStatus(
@@ -52,13 +54,12 @@ function getDerivedOutreachStatus(
   options: { finalShortlistCompleted: boolean; shortlistThreshold: number },
 ): ApplicationStatus | null {
   if (
-    application.status === 'screening' ||
+    application.status === 'shortlisted' ||
     application.status === 'interview_booked' ||
-    application.status === 'interview' ||
-    application.status === 'offered' ||
-    application.status === 'hired'
+    application.status === 'interview_completed' ||
+    application.status === 'offer'
   ) {
-    return 'screening'
+    return 'shortlisted'
   }
 
   if (application.status === 'rejected') {
@@ -66,23 +67,19 @@ function getDerivedOutreachStatus(
   }
 
   if (
-    application.status === 'submitted' &&
+    application.status === 'applied' &&
     options.finalShortlistCompleted &&
     application.score != null &&
     application.feedback != null
   ) {
-    return application.score >= options.shortlistThreshold ? 'screening' : 'rejected'
+    return application.score >= options.shortlistThreshold ? 'shortlisted' : 'rejected'
   }
 
   return null
 }
 
-function getApplicationTone(status: ApplicationStatus) {
-  return status === 'rejected' ? 'danger' : 'success'
-}
-
 function getApplicationLabel(status: ApplicationStatus) {
-  return status === 'rejected' ? 'Rejected' : 'Shortlisted'
+  return getApplicationStatusLabel(status)
 }
 
 function formatTimestamp(value: string) {
@@ -433,7 +430,7 @@ export default function RecruiterJobOutreachPage() {
   const selectedFeedback =
     selectedCandidate?.application.feedback?.trim() ||
     selectedDraft?.application_feedback?.trim() ||
-    'No screening feedback available yet.'
+    'No review feedback available yet.'
 
   return (
     <div className="dash-content container container--app-shell">
@@ -453,7 +450,7 @@ export default function RecruiterJobOutreachPage() {
               <div className="dash-card__title">{activeJob?.title ?? 'Loading job...'}</div>
               <div className="dash-card__subtitle">
                 {activeJob
-                  ? 'This is the final communication step after screening and shortlisting are complete.'
+                  ? 'This is the final communication step after review and shortlisting are complete.'
                   : 'Loading outreach context for this job.'}
               </div>
               <div className={styles.summaryPills}>
@@ -481,11 +478,7 @@ export default function RecruiterJobOutreachPage() {
                         ? 'Shortlist finalized'
                         : 'Shortlist pending'}
                     </span>
-                    <span
-                      className={`badge badge--${activeJob.status === 'active' ? 'primary' : 'gray'}`}
-                    >
-                      {activeJob.status}
-                    </span>
+                    <StatusPill kind="job" status={activeJob.status} />
                   </>
                 ) : null}
               </div>
@@ -747,23 +740,16 @@ export default function RecruiterJobOutreachPage() {
                                 <div className={styles.draftName}>
                                   {candidate.application.applicant_name}
                                 </div>
-                                <span
-                                  className={`badge badge--${getApplicationTone(
+                                <StatusPill
+                                  kind="application"
+                                  status={
                                     getDerivedOutreachStatus(candidate.application, {
                                       finalShortlistCompleted:
                                         activeJob?.final_shortlist_completed ?? false,
                                       shortlistThreshold: activeJob?.shortlist_threshold ?? 70,
-                                    }) ?? 'rejected',
-                                  )}`}
-                                >
-                                  {getApplicationLabel(
-                                    getDerivedOutreachStatus(candidate.application, {
-                                      finalShortlistCompleted:
-                                        activeJob?.final_shortlist_completed ?? false,
-                                      shortlistThreshold: activeJob?.shortlist_threshold ?? 70,
-                                    }) ?? 'rejected',
-                                  )}
-                                </span>
+                                    }) ?? 'rejected'
+                                  }
+                                />
                               </div>
                               <div className={styles.feedbackToggleRow}>
                                 <span
@@ -803,7 +789,7 @@ export default function RecruiterJobOutreachPage() {
                             <div className={styles.feedbackPanel}>
                               {candidate.application.feedback?.trim() ||
                                 candidate.draft?.application_feedback?.trim() ||
-                                'No screening feedback available yet.'}
+                                'No review feedback available yet.'}
                             </div>
                           ) : null}
                         </div>
@@ -835,13 +821,10 @@ export default function RecruiterJobOutreachPage() {
                             </div>
                             <div className={`dash-card__subtitle ${styles.detailHeaderMeta}`}>
                               <span>{selectedCandidate.application.applicant_email}</span>
-                              <span
-                                className={`badge badge--${getApplicationTone(
-                                  selectedOutreachStatus ?? 'rejected',
-                                )}`}
-                              >
-                                {getApplicationLabel(selectedOutreachStatus ?? 'rejected')}
-                              </span>
+                              <StatusPill
+                                kind="application"
+                                status={selectedOutreachStatus ?? 'rejected'}
+                              />
                             </div>
                           </div>
 
@@ -924,7 +907,7 @@ export default function RecruiterJobOutreachPage() {
                         </div>
 
                         <div className={styles.detailNotice}>
-                          <strong>Screening feedback:</strong> {selectedFeedback}
+                          <strong>Review feedback:</strong> {selectedFeedback}
                         </div>
 
                         {!selectedDraft ? (

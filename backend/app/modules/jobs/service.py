@@ -113,7 +113,7 @@ async def expire_due_jobs(db: AsyncSession) -> int:
         await redis_service.delete(f"job:detail:{job.id}")
     for company_id in company_ids:
         await redis_service.delete(f"jobs:company:{company_id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
 
     for event_id in event_ids:
         await process_sync_event(event_id)
@@ -271,7 +271,7 @@ async def create_job(
     logger.info(f"Job '{job.title}' created by user {user.id}")
 
     await redis_service.delete(f"jobs:company:{company_id}")
-    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter:*")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
 
     return _job_detail_response_from_row(job, applications_count)
 
@@ -534,7 +534,7 @@ async def update_job(
 
     await redis_service.delete(f"job:detail:{job_id}")
     await redis_service.delete(f"jobs:company:{company_id}")
-    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter:*")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
 
     return response
 
@@ -580,6 +580,6 @@ async def delete_job(
 
     await redis_service.delete(f"job:detail:{job_id}")
     await redis_service.delete(f"jobs:company:{company_id}")
-    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter:*")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
 
     logger.info(f"Job '{job_title}' deleted by user {user.id}")

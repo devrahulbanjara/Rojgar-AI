@@ -1,6 +1,6 @@
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructures.redis.service import redis_service
 
@@ -47,6 +47,30 @@ async def update_my_company(
     company = await get_admin_company(db, user)
     update_data = payload.model_dump(exclude_unset=True)
 
+    organizer_email = update_data.get("cal_organizer_email")
+    if organizer_email is not None:
+        organizer_email = organizer_email.strip().lower() or None
+        update_data["cal_organizer_email"] = organizer_email
+
+        if organizer_email is not None:
+            existing_company = await db.scalar(
+                select(Company).where(
+                    func.lower(Company.cal_organizer_email) == organizer_email,
+                    Company.id != company.id,
+                )
+            )
+            if existing_company is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "That Cal organizer email is already connected to another company."
+                    ),
+                )
+
+    booking_url = update_data.get("cal_booking_url")
+    if booking_url is not None:
+        update_data["cal_booking_url"] = booking_url.strip() or None
+
     for field, value in update_data.items():
         setattr(company, field, value)
 
@@ -55,7 +79,7 @@ async def update_my_company(
     response = _company_to_response(company)
 
     # INVALIDATE CACHE
-    await redis_service.delete(f"company:detail:{user.id}")
+    await redis_service.invalidate_pattern("company:detail:*")
 
     logger.info("Company {} updated by {}", company.id, user.id)
     return response

@@ -12,6 +12,8 @@ import {
 } from '@/store/services/jobsApi'
 import { ArrowRight, Calendar, MapPin } from 'lucide-react'
 
+import StatusPill from '@/components/common/StatusPill'
+
 import { JobPreviewSkeleton } from './JobsSkeletons'
 
 const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
@@ -146,9 +148,7 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
       <div className="job-preview__chips">
         <span className="badge badge--gray">{LOCATION_TYPE_LABELS[job.location_type]}</span>
         {salary && <span className="badge badge--secondary">{salary}</span>}
-        <span className={`badge ${isActive ? 'badge--success' : 'badge--gray'}`}>
-          {getJobStatusLabel(job.status)}
-        </span>
+        <StatusPill kind="job" status={job.status} />
         {job.expires_at &&
           (() => {
             const expiry = formatExpiryDate(job.expires_at)

@@ -1,3 +1,4 @@
+import { getJobStatusLabel as getSharedJobStatusLabel } from '@/lib/statusMetadata'
 import type { Paginated } from '@/lib/types/user'
 
 import { type ApiResponse, baseApi } from './baseApi'
@@ -10,15 +11,7 @@ export type JobStatus = 'draft' | 'active' | 'expired'
 export type LocationType = 'onsite' | 'remote' | 'hybrid'
 
 export function getJobStatusLabel(status: JobStatus): string {
-  switch (status) {
-    case 'active':
-      return 'Active'
-    case 'expired':
-      return 'Expired'
-    case 'draft':
-    default:
-      return 'Draft'
-  }
+  return getSharedJobStatusLabel(status)
 }
 
 /** Minimal company info embedded in job responses */

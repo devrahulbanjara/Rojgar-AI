@@ -9,19 +9,18 @@ import { useParams } from 'next/navigation'
 
 import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
-  type CandidateDashboardRecommendedJob,
-  useGetCandidateDashboardQuery,
-} from '@/store/services/dashboardApi'
-import {
   type JobDetail,
+  type JobListItem,
   type LocationType,
   getJobStatusLabel,
   useGetJobByIdQuery,
+  useSearchJobsQuery,
 } from '@/store/services/jobsApi'
 import { useGetMyResumesQuery } from '@/store/services/resumeApi'
 import { ArrowLeft, Banknote, Briefcase, Building, Clock, MapPin, Share2, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
+import StatusPill from '@/components/common/StatusPill'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -40,7 +39,7 @@ function formatSalary(min?: number | null, max?: number | null, currency = 'USD'
   return `Up to ${currency} ${max!.toLocaleString()}`
 }
 
-function formatSalaryRange(job: CandidateDashboardRecommendedJob): string {
+function formatSalaryRange(job: JobListItem): string {
   if (job.salary_min == null && job.salary_max == null) return 'Salary not specified'
   if (job.salary_min != null && job.salary_max != null) {
     return `${job.currency} ${job.salary_min.toLocaleString()}-${job.salary_max.toLocaleString()}`
@@ -61,7 +60,7 @@ function getCompanyAccent(name: string): { logo: string; color: string } {
   }
 }
 
-function getRecommendedJobTags(job: CandidateDashboardRecommendedJob): string[] {
+function getRecommendedJobTags(job: JobListItem): string[] {
   return [job.location_type, job.company?.industry]
     .filter((value): value is string => Boolean(value))
     .slice(0, 3)
@@ -219,7 +218,7 @@ function ApplyModal({
 // Recommended job card
 // ---------------------------------------------------------------------------
 
-function RecommendedCard({ job, index }: { job: CandidateDashboardRecommendedJob; index: number }) {
+function RecommendedCard({ job, index }: { job: JobListItem; index: number }) {
   const accent = getCompanyAccent(job.company?.name ?? job.title)
   const tags = getRecommendedJobTags(job)
 
@@ -289,11 +288,8 @@ export default function JobDetailPage() {
   const { data: resp, isLoading, isError } = useGetJobByIdQuery(jobId)
   const job: JobDetail | undefined = resp?.data
 
-  // Fetching recommended jobs from dashboard API
-  const { data: dashboardResp } = useGetCandidateDashboardQuery()
-  const recommended = (dashboardResp?.data?.recommended_jobs ?? [])
-    .filter((j) => j.id !== jobId)
-    .slice(0, 6)
+  const { data: jobsResp } = useSearchJobsQuery({ size: 7 })
+  const recommended = (jobsResp?.data?.items ?? []).filter((j) => j.id !== jobId).slice(0, 6)
 
   if (isLoading) {
     return (
@@ -380,9 +376,7 @@ export default function JobDetailPage() {
                     {LOCATION_TYPE_LABELS[job.location_type]}
                   </span>
                   {salary && <span className="badge badge--secondary">{salary}</span>}
-                  <span className={`badge ${isActive ? 'badge--success' : 'badge--gray'}`}>
-                    {getJobStatusLabel(job.status)}
-                  </span>
+                  <StatusPill kind="job" status={job.status} />
                   <span className="badge badge--gray">
                     <Clock size={12} aria-hidden="true" />
                     Posted {formatDate(job.updated_at ?? job.created_at)}

@@ -28,3 +28,17 @@ async def list_interviews(
 ):
     data = await service.list_interviews(db, user.id, job_id, start, end)
     return ResponseBuilder.success(data=data, message="Interviews fetched.")
+
+
+@router.post(
+    "/{interview_id}/complete",
+    response_model=UnifiedResponse[InterviewResponse],
+    summary="Mark an interview as completed (recruiter only)",
+)
+async def mark_interview_complete(
+    interview_id: uuid.UUID,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await service.mark_interview_complete(db, user.id, interview_id)
+    return ResponseBuilder.success(data=data, message="Interview marked as completed.")

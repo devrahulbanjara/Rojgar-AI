@@ -24,12 +24,12 @@ export interface RecruiterMember {
 
 export type ApplicationStatus =
   | 'applied'
-  | 'under_review'
+  | 'screening'
   | 'shortlisted'
   | 'interview_booked'
-  | 'interview_scheduled'
+  | 'interview_completed'
+  | 'offer'
   | 'rejected'
-  | 'hired'
 
 export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'remote' | 'hybrid'
 

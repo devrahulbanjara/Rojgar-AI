@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 
 import { useRouter } from 'next/navigation'
 
+import { getApplicationStatusLabel, getApplicationStatusVariant } from '@/lib/applicationStatus'
 import { getInitials } from '@/lib/mediaValidation'
 import {
   type RecruiterApplicationView,
@@ -28,6 +29,7 @@ import { Briefcase, X as ClearSearchIcon, Search as SearchFieldIcon, Users } fro
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
+import StatusPill from '@/components/common/StatusPill'
 
 import {
   ScreeningControlsSkeleton,
@@ -98,18 +100,25 @@ function getReviewState(
   application: RecruiterApplicationView,
   options: { autoShortlist: boolean; isAiProcessing: boolean },
 ) {
-  if (
-    application.status === 'screening' ||
-    application.status === 'interview' ||
-    application.status === 'interview_booked'
-  ) {
-    return { label: 'Shortlisted', tone: 'success' }
-  }
   if (application.status === 'rejected') {
     return { label: 'Rejected', tone: 'danger' }
   }
+  if (
+    application.status === 'shortlisted' ||
+    application.status === 'interview_booked' ||
+    application.status === 'interview_completed' ||
+    application.status === 'offer'
+  ) {
+    return {
+      label: getApplicationStatusLabel(application.status),
+      tone: getApplicationStatusVariant(application.status),
+    }
+  }
+  if (application.status === 'screening') {
+    return { label: 'Screening', tone: 'warning' }
+  }
   if (hasCompleteReview(application)) {
-    return { label: 'Screened', tone: 'success' }
+    return { label: 'Reviewed', tone: 'success' }
   }
   if (!options.autoShortlist) {
     return { label: 'Pending', tone: 'warning' }
@@ -117,7 +126,7 @@ function getReviewState(
   if (options.isAiProcessing) {
     return { label: 'Pending', tone: 'warning' }
   }
-  return { label: 'Missing screening', tone: 'danger' }
+  return { label: 'Missing review', tone: 'danger' }
 }
 
 function getSummaryTone(status: 'completed' | 'failed' | 'in_progress' | 'idle') {
@@ -139,12 +148,12 @@ function getReviewPreview(
 ) {
   if (application.feedback?.trim()) return application.feedback.trim()
   if (!options.autoShortlist) {
-    return 'No manual screening result yet. Recruiters can add a score and feedback.'
+    return 'No manual review yet. Recruiters can add a score and feedback.'
   }
   if (options.isAiProcessing) {
     return 'AI screening is in progress. This row will update when screening finishes.'
   }
-  return 'No AI screening result yet. Click Rerun AI screening to generate a score and feedback.'
+  return 'No AI review yet. Click Rerun AI screening to generate a score and feedback.'
 }
 
 function buildPagination(currentPage: number, totalPages: number) {
@@ -543,12 +552,10 @@ export default function RecruiterScreeningPage() {
     }
   }
 
-  async function handleStatus(applicationId: string, status: 'screening' | 'rejected') {
+  async function handleStatus(applicationId: string, status: 'shortlisted' | 'rejected') {
     try {
       await updateStatus({ application_id: applicationId, body: { status } }).unwrap()
-      toast.success(
-        status === 'screening' ? 'Candidate approved for shortlist.' : 'Candidate rejected.',
-      )
+      toast.success(status === 'shortlisted' ? 'Candidate shortlisted.' : 'Candidate rejected.')
       void refreshAll()
     } catch {
       toast.error('Could not update application status.')
@@ -611,7 +618,7 @@ export default function RecruiterScreeningPage() {
     !summary?.final_shortlist_completed &&
     applications.some(
       (application) =>
-        application.status === 'submitted' &&
+        (application.status === 'applied' || application.status === 'screening') &&
         application.score != null &&
         Boolean(application.feedback?.trim()),
     )
@@ -641,9 +648,9 @@ export default function RecruiterScreeningPage() {
 
       const matchesReview =
         reviewFilter === 'all' ||
-        (reviewFilter === 'reviewed' && reviewState.label === 'Screened') ||
+        (reviewFilter === 'reviewed' && reviewState.label === 'Reviewed') ||
         (reviewFilter === 'pending' && reviewState.label === 'Pending') ||
-        (reviewFilter === 'missing' && reviewState.label === 'Missing screening')
+        (reviewFilter === 'missing' && reviewState.label === 'Missing review')
 
       return matchesSearch && matchesScore && matchesReview
     })
@@ -828,7 +835,7 @@ export default function RecruiterScreeningPage() {
                 <span
                   className={`badge ${activeJob.auto_shortlist ? 'badge--primary' : 'badge--gray'} ${styles.statusItem}`}
                 >
-                  <span className={styles.statusLabel}>Screening Mode:</span>
+                  <span className={styles.statusLabel}>Review Mode:</span>
                   <span className={styles.statusValue}>
                     {activeJob.auto_shortlist ? 'AI screening' : 'Manual screening'}
                   </span>
@@ -862,13 +869,9 @@ export default function RecruiterScreeningPage() {
                     <span className={styles.statusValue}>Checking every 5s</span>
                   </span>
                 ) : null}
-                <span
-                  className={`badge ${activeJobExpired ? 'badge--secondary' : 'badge--warning'} ${styles.statusItem}`}
-                >
+                <span className={styles.statusItem}>
                   <span className={styles.statusLabel}>Job Status:</span>
-                  <span className={styles.statusValue}>
-                    {activeJobExpired ? 'Expired' : 'Active'}
-                  </span>
+                  <StatusPill kind="job" status={activeJobExpired ? 'expired' : activeJob.status} />
                 </span>
                 <span
                   className={`badge ${summary.final_shortlist_completed ? 'badge--success' : 'badge--gray'} ${styles.statusItem}`}
@@ -885,7 +888,7 @@ export default function RecruiterScreeningPage() {
                   <strong>{totalCandidates}</strong> candidates
                 </span>
                 <span className={`badge badge--success ${styles.statPill}`}>
-                  <strong>{reviewedCount}</strong> screened
+                  <strong>{reviewedCount}</strong> reviewed
                 </span>
                 <span className={`badge badge--warning ${styles.statPill}`}>
                   <strong>{pendingCount}</strong> pending
@@ -965,7 +968,7 @@ export default function RecruiterScreeningPage() {
                     setReviewFilter((current) => (current === 'reviewed' ? 'all' : 'reviewed'))
                   }
                 >
-                  Screened
+                  Reviewed
                 </button>
                 <button
                   className={`${styles.filterChip} ${reviewFilter === 'pending' ? styles.filterChipActive : ''}`}
@@ -981,7 +984,7 @@ export default function RecruiterScreeningPage() {
                     setReviewFilter((current) => (current === 'missing' ? 'all' : 'missing'))
                   }
                 >
-                  Missing screening
+                  Missing review
                 </button>
               </div>
 
@@ -1154,9 +1157,11 @@ export default function RecruiterScreeningPage() {
                                   >
                                     <button
                                       className={`${styles.iconAction} ${styles.iconActionApprove}`}
-                                      title="Approve for shortlist"
+                                      title="Shortlist candidate"
                                       disabled={isUpdatingStatus}
-                                      onClick={() => void handleStatus(application.id, 'screening')}
+                                      onClick={() =>
+                                        void handleStatus(application.id, 'shortlisted')
+                                      }
                                     >
                                       <CheckIcon />
                                     </button>

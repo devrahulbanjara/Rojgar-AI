@@ -8,30 +8,10 @@ import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
 import { useGetDraftsQuery } from '@/store/services/outreachApi'
 import { Briefcase, CheckCircle2, Clock3, FileText, Mail, Send } from 'lucide-react'
 
+import StatusPill from '@/components/common/StatusPill'
+
 import { OutreachPageSkeleton } from './_components/OutreachSkeletons'
 import styles from './outreach.module.css'
-
-function getJobStatusLabel(status: string) {
-  switch (status) {
-    case 'active':
-      return 'Active'
-    case 'expired':
-      return 'Expired'
-    default:
-      return 'Draft'
-  }
-}
-
-function getJobStatusTone(status: string) {
-  switch (status) {
-    case 'active':
-      return 'warning'
-    case 'expired':
-      return 'secondary'
-    default:
-      return 'gray'
-  }
-}
 
 export default function RecruiterOutreachPage() {
   const { data, isLoading } = useGetCompanyJobsQuery()
@@ -225,11 +205,9 @@ export default function RecruiterOutreachPage() {
                   {canOpenWorkspace ? 'Finalized' : 'Pending'}
                 </span>
               </span>
-              <span
-                className={`badge badge--${getJobStatusTone(selectedJob.status)} ${styles.statusItem}`}
-              >
+              <span className={styles.statusItem}>
                 <span className={styles.statusLabel}>Job Status:</span>
-                <span className={styles.statusValue}>{getJobStatusLabel(selectedJob.status)}</span>
+                <StatusPill kind="job" status={selectedJob.status} />
               </span>
               <span
                 className={`badge badge--${canOpenWorkspace ? 'success' : 'warning'} ${styles.statusItem}`}

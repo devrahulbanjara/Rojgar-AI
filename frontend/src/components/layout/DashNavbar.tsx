@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation'
 import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
-import { Bell, ChevronDown, FileText, LayoutGrid, LogOut, User, X } from 'lucide-react'
+import { Bell, ChevronDown, FileText, LogOut, User, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 
@@ -54,6 +54,29 @@ function formatRelativeDate(iso: string): string {
 
 function formatNotificationTime(value: string): string {
   return Number.isNaN(new Date(value).getTime()) ? value : formatRelativeDate(value)
+}
+
+function buildCandidateNotificationText(application: {
+  company_name: string
+  job_title: string
+  status: string
+}): string {
+  if (application.status === 'shortlisted') {
+    return `${application.company_name} shortlisted you for ${application.job_title}.`
+  }
+  if (application.status === 'interview_booked') {
+    return `Your interview for ${application.job_title} at ${application.company_name} is booked.`
+  }
+  if (application.status === 'offer') {
+    return `${application.company_name} sent an offer for ${application.job_title}.`
+  }
+  if (application.status === 'rejected') {
+    return `${application.company_name} closed your application for ${application.job_title}.`
+  }
+  if (application.status === 'screening') {
+    return `${application.company_name} is reviewing your ${application.job_title} application.`
+  }
+  return `You applied to ${application.job_title} at ${application.company_name}.`
 }
 
 function NotificationsSkeleton({ count }: { count: number }) {
@@ -144,7 +167,12 @@ export default function DashNavbar({
       skip: !isCandidate,
     })
   const notifications = isCandidate
-    ? (dashboardResponse?.data.recent_activity ?? [])
+    ? (dashboardResponse?.data.applications ?? []).map((application) => ({
+        id: application.id,
+        application_id: application.id,
+        text: buildCandidateNotificationText(application),
+        time: application.updated_at,
+      }))
     : COMPANY_NOTIFICATIONS
   const notificationsCount = notifications.length
   const notificationsLoading = isCandidate ? isNotificationsLoading : false
@@ -366,21 +394,12 @@ export default function DashNavbar({
                 <div className="dash-navbar__dropdown-divider" />
 
                 <Link
-                  href={role === 'candidate' ? '/candidate/profile' : '/recruiter/settings'}
+                  href={activeRole === 'candidate' ? '/candidate/profile' : '/recruiter/profile'}
                   className="dash-navbar__dropdown-item"
                   onClick={() => setDropdownOpen(false)}
                 >
                   <User size={15} />
                   View Profile
-                </Link>
-
-                <Link
-                  href={role === 'candidate' ? '/candidate' : '/recruiter'}
-                  className="dash-navbar__dropdown-item"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  <LayoutGrid size={15} />
-                  Dashboard
                 </Link>
 
                 {activeRole === 'candidate' ? (
@@ -394,7 +413,7 @@ export default function DashNavbar({
                   </Link>
                 ) : (
                   <Link
-                    href="/recruiter/settings"
+                    href="/recruiter/company/settings"
                     className="dash-navbar__dropdown-item"
                     onClick={() => setDropdownOpen(false)}
                   >

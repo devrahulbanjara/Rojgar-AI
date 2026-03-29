@@ -60,9 +60,8 @@ async def _get_job_for_company(
     return job
 
 
-async def _get_company_name(db: AsyncSession, company_id: uuid.UUID) -> str:
-    company = await db.scalar(select(Company).where(Company.id == company_id))
-    return company.name if company else "ConvexHire"
+async def _get_company(db: AsyncSession, company_id: uuid.UUID) -> Company | None:
+    return await db.scalar(select(Company).where(Company.id == company_id))
 
 
 async def _get_application_for_company(
@@ -86,25 +85,24 @@ def _resolve_outreach_status(
     job: Job, application: Application
 ) -> ApplicationStatus | None:
     if application.status in {
-        ApplicationStatus.screening,
+        ApplicationStatus.shortlisted,
         ApplicationStatus.interview_booked,
-        ApplicationStatus.interview,
-        ApplicationStatus.offered,
-        ApplicationStatus.hired,
+        ApplicationStatus.interview_completed,
+        ApplicationStatus.offer,
     }:
-        return ApplicationStatus.screening
+        return ApplicationStatus.shortlisted
 
     if application.status == ApplicationStatus.rejected:
         return ApplicationStatus.rejected
 
     if (
-        application.status == ApplicationStatus.submitted
+        application.status == ApplicationStatus.applied
         and job.final_shortlist_completed
         and application.score is not None
         and application.feedback is not None
     ):
         return (
-            ApplicationStatus.screening
+            ApplicationStatus.shortlisted
             if application.score >= job.shortlist_threshold
             else ApplicationStatus.rejected
         )
@@ -140,13 +138,14 @@ def _compose_draft(
     job_title: str,
     application_status: ApplicationStatus,
     feedback: str | None,
+    booking_url: str | None = None,
 ) -> tuple[str, str]:
     safe_name = html.escape(candidate_name)
     safe_company = html.escape(company_name)
     safe_job = html.escape(job_title)
     safe_feedback = html.escape(feedback or "")
 
-    if application_status == ApplicationStatus.screening:
+    if application_status == ApplicationStatus.shortlisted:
         subject = f"Next steps for your {job_title} application"
         body = (
             f"<p>Hi {safe_name},</p>"
@@ -154,6 +153,13 @@ def _compose_draft(
             "<p>We have reviewed your application and would like to move you forward "
             "to the next stage of our process.</p>"
         )
+        if booking_url:
+            safe_booking_url = html.escape(booking_url, quote=True)
+            body += (
+                "<p>Please book your interview using the same name and email address "
+                "you used on ConvexHire so we can match your booking automatically.</p>"
+                f'<p><a href="{safe_booking_url}">Book your interview</a></p>'
+            )
     else:
         subject = f"Update on your {job_title} application"
         body = (
@@ -179,7 +185,16 @@ async def _compose_draft_with_fallback(
     job_title: str,
     application_status: ApplicationStatus,
     feedback: str | None,
+    booking_url: str | None = None,
 ) -> tuple[str, str]:
+    if application_status == ApplicationStatus.shortlisted and not booking_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Add your company's Cal booking link in Company Settings before sending shortlist emails."
+            ),
+        )
+
     try:
         subject, body = await compose_email(
             candidate_name=candidate_name,
@@ -187,6 +202,7 @@ async def _compose_draft_with_fallback(
             job_title=job_title,
             application_status=application_status,
             feedback=feedback,
+            booking_url=booking_url,
         )
         if subject.strip() and body.strip():
             return subject, body
@@ -208,6 +224,7 @@ async def _compose_draft_with_fallback(
         job_title=job_title,
         application_status=application_status,
         feedback=feedback,
+        booking_url=booking_url,
     )
 
 
@@ -215,7 +232,7 @@ async def _upsert_generated_draft(
     db: AsyncSession,
     application: Application,
     job: Job,
-    company_name: str,
+    company: Company | None,
 ) -> EmailDraft:
     outreach_status = _resolve_outreach_status(job, application)
     if outreach_status is None:
@@ -224,7 +241,7 @@ async def _upsert_generated_draft(
             detail="Only shortlisted or rejected candidates can receive outreach drafts.",
         )
 
-    if application.status == ApplicationStatus.submitted:
+    if application.status == ApplicationStatus.applied:
         application.status = outreach_status
         enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
 
@@ -239,10 +256,11 @@ async def _upsert_generated_draft(
 
     subject, body = await _compose_draft_with_fallback(
         candidate_name=application.user.full_name,
-        company_name=company_name,
+        company_name=company.name if company else "ConvexHire",
         job_title=job.title,
         application_status=outreach_status,
         feedback=application.feedback,
+        booking_url=company.cal_booking_url if company else None,
     )
 
     if draft is None:
@@ -271,7 +289,7 @@ async def prepare_drafts(
 ) -> PrepareDraftsResponse:
     company_id = await _get_company_id(db, user_id)
     job = await _get_job_for_company(db, job_id, company_id)
-    company_name = await _get_company_name(db, company_id)
+    company = await _get_company(db, company_id)
 
     apps_result = await db.execute(
         select(Application).where(
@@ -308,7 +326,7 @@ async def prepare_drafts(
         if outreach_status is None:
             continue
 
-        if application.status == ApplicationStatus.submitted:
+        if application.status == ApplicationStatus.applied:
             application.status = outreach_status
             status_updated_ids.append(application.id)
 
@@ -316,10 +334,11 @@ async def prepare_drafts(
             continue
         subject, body = await _compose_draft_with_fallback(
             candidate_name=application.user.full_name,
-            company_name=company_name,
+            company_name=company.name if company else "ConvexHire",
             job_title=job.title,
             application_status=outreach_status,
             feedback=application.feedback,
+            booking_url=company.cal_booking_url if company else None,
         )
         db.add(
             EmailDraft(
@@ -382,9 +401,9 @@ async def generate_draft_for_application(
     application, job = await _get_application_for_company(
         db, application_id, company_id
     )
-    company_name = await _get_company_name(db, company_id)
+    company = await _get_company(db, company_id)
 
-    draft = await _upsert_generated_draft(db, application, job, company_name)
+    draft = await _upsert_generated_draft(db, application, job, company)
     await db.commit()
     await db.refresh(draft)
     return _draft_to_response(draft)

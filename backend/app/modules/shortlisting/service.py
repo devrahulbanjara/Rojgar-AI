@@ -167,7 +167,7 @@ async def process_auto_shortlist_for_application(
                     selectinload(Application.resume).selectinload(Resume.skills),
                 )
             )
-            if application is None or application.status != ApplicationStatus.submitted:
+            if application is None or application.status != ApplicationStatus.applied:
                 return
 
             job = await db.scalar(select(Job).where(Job.id == application.job_id))
@@ -181,6 +181,8 @@ async def process_auto_shortlist_for_application(
                 updated = _apply_review_if_missing(application, score, feedback)
                 if not updated:
                     return
+                if application.status == ApplicationStatus.applied:
+                    application.status = ApplicationStatus.screening
                 enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
                 await db.commit()
 
@@ -188,7 +190,7 @@ async def process_auto_shortlist_for_application(
                 await redis_service.invalidate_pattern(
                     f"applications:candidate:{application.user_id}:*"
                 )
-                await redis_service.invalidate_pattern("dashboard:recruiter:*")
+                await redis_service.invalidate_pattern("dashboard:recruiter*")
                 await redis_service.delete(f"shortlist:summary:{application.job_id}")
 
                 logger.info(
@@ -249,6 +251,8 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
                     continue
                 score, feedback = _dummy_ai_score_application(application)
                 _apply_review_if_missing(application, score, feedback)
+                if application.status == ApplicationStatus.applied:
+                    application.status = ApplicationStatus.screening
             reviewed_application_ids = [
                 application.id
                 for application in applications
@@ -261,7 +265,7 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
             job.shortlist_status = ShortlistStatus.completed
             await db.commit()
             await redis_service.delete(f"shortlist:summary:{job_id}")
-            await redis_service.invalidate_pattern("dashboard:recruiter:*")
+            await redis_service.invalidate_pattern("dashboard:recruiter*")
             logger.info("Shortlisting completed for job {}", job_id)
         except Exception as exc:
             await db.rollback()
@@ -437,13 +441,15 @@ async def finalize_shortlist(
             .where(
                 and_(
                     Application.job_id == job_id,
-                    Application.status == ApplicationStatus.submitted,
+                    Application.status.in_(
+                        [ApplicationStatus.applied, ApplicationStatus.screening]
+                    ),
                     Application.score.is_not(None),
                     Application.feedback.is_not(None),
                     Application.score >= threshold,
                 )
             )
-            .values(status=ApplicationStatus.screening)
+            .values(status=ApplicationStatus.shortlisted)
             .returning(Application.id)
         )
         shortlisted_rows = shortlist_result.fetchall()
@@ -454,7 +460,9 @@ async def finalize_shortlist(
             .where(
                 and_(
                     Application.job_id == job_id,
-                    Application.status == ApplicationStatus.submitted,
+                    Application.status.in_(
+                        [ApplicationStatus.applied, ApplicationStatus.screening]
+                    ),
                     Application.score.is_not(None),
                     Application.feedback.is_not(None),
                     Application.score < threshold,
@@ -475,7 +483,7 @@ async def finalize_shortlist(
 
     # INVALIDATE CACHE
     await redis_service.delete(f"shortlist:summary:{job_id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
 
     return FinalizeShortlistResponse(
         job_id=job_id,

@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation'
 import { useGetMyCompanyApplicationsQuery } from '@/store/services/applicationsApi'
 import { Briefcase, Mail } from 'lucide-react'
 
+import StatusPill from '@/components/common/StatusPill'
+
 import { RecruiterApplicationsTableSkeleton } from './_components/ApplicationsSkeletons'
 
 function getInitials(name: string): string {
@@ -17,42 +19,6 @@ function getAvatarColor(name: string): string {
   const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
   const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
   return colors[seed % colors.length]
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted',
-  screening: 'In Review',
-  interview: 'Interview',
-  offered: 'Offer',
-  hired: 'Hired',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-}
-
-const STATUS_VARIANTS: Record<string, string> = {
-  submitted: 'gray',
-  screening: 'warning',
-  interview: 'success',
-  offered: 'success',
-  hired: 'success',
-  rejected: 'danger',
-  withdrawn: 'gray',
-}
-
-const statusColorMap: Record<string, string> = {
-  success: '#0cce6b',
-  warning: '#f59e0b',
-  primary: '#0070f3',
-  gray: '#9ca3af',
-  danger: '#ff4d4d',
-}
-
-function getStatusLabel(status: string) {
-  return STATUS_LABELS[status] ?? status
-}
-
-function getStatusVariant(status: string) {
-  return STATUS_VARIANTS[status] ?? 'gray'
 }
 
 function formatDate(value: string) {
@@ -176,19 +142,7 @@ export default function CompanyApplicationsPage() {
                     </td>
                     <td className="cell-meta">{application.job_title}</td>
                     <td>
-                      <span className={`badge badge--${getStatusVariant(application.status)}`}>
-                        <span
-                          className="app-status-dot"
-                          style={
-                            {
-                              '--dot-color':
-                                statusColorMap[getStatusVariant(application.status)] ??
-                                statusColorMap.gray,
-                            } as CSSProperties
-                          }
-                        />
-                        {getStatusLabel(application.status)}
-                      </span>
+                      <StatusPill kind="application" status={application.status} />
                     </td>
                     <td className="cell-muted">{formatDate(application.created_at)}</td>
                   </tr>

@@ -5,14 +5,13 @@ import { type ApiResponse, baseApi } from './baseApi'
 // ---------------------------------------------------------------------------
 
 export type ApplicationStatus =
-  | 'submitted'
+  | 'applied'
   | 'screening'
+  | 'shortlisted'
   | 'interview_booked'
-  | 'interview'
-  | 'offered'
-  | 'hired'
+  | 'interview_completed'
+  | 'offer'
   | 'rejected'
-  | 'withdrawn'
 
 export interface ApplicationResponse {
   id: string

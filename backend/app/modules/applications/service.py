@@ -34,6 +34,13 @@ from app.modules.jobs.models import Job
 from app.modules.resumes.models import Resume
 from app.shared.enums import ApplicationStatus, JobStatus
 
+RECRUITER_SETTABLE = {
+    ApplicationStatus.shortlisted,
+    ApplicationStatus.rejected,
+    ApplicationStatus.interview_completed,
+    ApplicationStatus.offer,
+}
+
 
 def _application_response_options():
     """SQLAlchemy loader options for building a full ApplicationResponse."""
@@ -109,7 +116,7 @@ async def apply_to_job(
         job_id=payload.job_id,
         user_id=user.id,
         resume_id=payload.resume_id,
-        status=ApplicationStatus.submitted,
+        status=ApplicationStatus.applied,
     )
     db.add(application)
     try:
@@ -154,7 +161,7 @@ async def apply_to_job(
     await redis_service.delete(f"dashboard:candidate:{user.id}")
     await redis_service.invalidate_pattern(f"applications:candidate:{user.id}:*")
     # 2. Recruiter dashboards (easiest is to wipe all recruiter dashboards, or you could target specific ones)
-    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
     # 3. Invalidate the job detail cache because the applicant count went up
     await redis_service.delete(f"job:detail:{payload.job_id}")
 
@@ -414,14 +421,65 @@ async def update_application_status(
             detail="This application's job does not belong to your company.",
         )
 
-    if payload.status in {ApplicationStatus.screening, ApplicationStatus.rejected} and (
-        job.status != JobStatus.expired
-        and (job.expires_at is None or job.expires_at > datetime.now(timezone.utc))
-    ):
+    if payload.status not in RECRUITER_SETTABLE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Shortlist and reject actions are only available after the job expires.",
+            detail=f"Status '{payload.status.value}' cannot be set manually.",
         )
+
+    if payload.status == ApplicationStatus.shortlisted:
+        if application.status not in {
+            ApplicationStatus.applied,
+            ApplicationStatus.screening,
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only applied or screening applications can be shortlisted.",
+            )
+        if job.status != JobStatus.expired and (
+            job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Shortlist and reject actions are only available after the job expires.",
+            )
+
+    if payload.status == ApplicationStatus.rejected:
+        if application.status in {
+            ApplicationStatus.applied,
+            ApplicationStatus.screening,
+        }:
+            if job.status != JobStatus.expired and (
+                job.expires_at is None or job.expires_at > datetime.now(timezone.utc)
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Shortlist and reject actions are only available after the job expires.",
+                )
+        elif application.status not in {
+            ApplicationStatus.shortlisted,
+            ApplicationStatus.interview_completed,
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Rejection is only valid after screening decisions or interview evaluation."
+                ),
+            )
+
+    if payload.status == ApplicationStatus.interview_completed:
+        if application.status != ApplicationStatus.interview_booked:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Can only mark interview as completed when status is 'interview_booked'.",
+            )
+
+    if payload.status == ApplicationStatus.offer:
+        if application.status != ApplicationStatus.interview_completed:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Offer or reject is only valid after interview is completed.",
+            )
 
     application.status = payload.status
     sync_event = enqueue_application_sync_event(db, uuid.UUID(str(application.id)))
@@ -437,7 +495,7 @@ async def update_application_status(
         f"applications:candidate:{application.user_id}:*"
     )
     # 2. Recruiter dashboards (since counts of interviews/offers might have changed)
-    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
 
     logger.info(
         "Application {app_id} status updated to {new_status} by user {user_id}",
@@ -501,7 +559,7 @@ async def update_application_review(
     await redis_service.invalidate_pattern(
         f"applications:candidate:{application.user_id}:*"
     )
-    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
     await redis_service.delete(f"shortlist:summary:{application.job_id}")
 
     logger.info(
