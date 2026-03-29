@@ -401,7 +401,7 @@ export default function RecruiterInterviewsPage() {
               </label>
             </div>
           ) : null}
-          </div>
+        </div>
       </div>
 
       {isLoading ? (
