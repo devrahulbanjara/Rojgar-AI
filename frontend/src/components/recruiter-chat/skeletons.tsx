@@ -2,57 +2,70 @@ function SkeletonLine({ className = '' }: { className?: string }) {
   return <div className={`recruiter-chat-skeleton ${className}`.trim()} />
 }
 
+function ThreadBubbleSkeleton({
+  type,
+  withCard = false,
+}: {
+  type: 'assistant' | 'user'
+  withCard?: boolean
+}) {
+  if (type === 'user') {
+    return (
+      <div className="recruiter-chat-panel-skeleton__row recruiter-chat-panel-skeleton__row--user">
+        <div className="recruiter-chat-panel-skeleton__user-bubble">
+          <SkeletonLine className="recruiter-chat-skeleton--w-75" />
+          <SkeletonLine className="recruiter-chat-skeleton--w-45" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="recruiter-chat-panel-skeleton__row recruiter-chat-panel-skeleton__row--assistant">
+      <div className="recruiter-chat-skeleton recruiter-chat-skeleton--avatar-sm" />
+      <div className="recruiter-chat-panel-skeleton__assistant-stack">
+        <div className="recruiter-chat-panel-skeleton__assistant-bubble">
+          <SkeletonLine className="recruiter-chat-skeleton--w-35" />
+          <SkeletonLine className="recruiter-chat-skeleton--w-85" />
+          <SkeletonLine className="recruiter-chat-skeleton--w-55" />
+        </div>
+
+        {withCard ? (
+          <div className="recruiter-chat-panel-skeleton__tool-card">
+            <SkeletonLine className="recruiter-chat-skeleton--w-25" />
+            <div className="recruiter-chat-panel-skeleton__mini-card-list">
+              {[1, 2].map((item) => (
+                <div key={item} className="recruiter-chat-panel-skeleton__mini-card">
+                  <SkeletonLine className="recruiter-chat-skeleton--w-70 recruiter-chat-skeleton--title-sm" />
+                  <SkeletonLine className="recruiter-chat-skeleton--w-40" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export function RecruiterChatPanelSkeleton() {
   return (
     <div className="recruiter-chat-panel-skeleton" aria-hidden="true">
-      <div className="recruiter-chat-panel-skeleton__messages">
-        <div className="recruiter-chat-panel-skeleton__hero">
-          <div className="recruiter-chat-panel-skeleton__hero-copy">
-            <SkeletonLine className="recruiter-chat-skeleton--w-30 recruiter-chat-skeleton--title" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-55" />
-          </div>
-          <div className="recruiter-chat-panel-skeleton__hero-actions">
-            <SkeletonLine className="recruiter-chat-skeleton--pill" />
-            <SkeletonLine className="recruiter-chat-skeleton--pill" />
-          </div>
-        </div>
-
-        <div className="recruiter-chat-panel-skeleton__cards">
-          <div className="recruiter-chat-panel-skeleton__card">
-            <SkeletonLine className="recruiter-chat-skeleton--w-40 recruiter-chat-skeleton--title-sm" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-85" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-70" />
-          </div>
-          <div className="recruiter-chat-panel-skeleton__card">
-            <SkeletonLine className="recruiter-chat-skeleton--w-35 recruiter-chat-skeleton--title-sm" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-80" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-55" />
-          </div>
-        </div>
-
-        <div className="recruiter-chat-panel-skeleton__conversation">
-          <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--assistant">
-            <SkeletonLine className="recruiter-chat-skeleton--w-55" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-80" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-45" />
-          </div>
-
-          <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--user">
-            <SkeletonLine className="recruiter-chat-skeleton--w-40" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-70" />
-          </div>
-
-          <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--assistant">
-            <SkeletonLine className="recruiter-chat-skeleton--w-35" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-85" />
-            <SkeletonLine className="recruiter-chat-skeleton--w-60" />
+      <div className="recruiter-chat-panel-skeleton__thread">
+        <div className="recruiter-chat-panel-skeleton__scroll-view">
+          <div className="recruiter-chat-panel-skeleton__message-view">
+            <ThreadBubbleSkeleton type="assistant" />
+            <ThreadBubbleSkeleton type="user" />
+            <ThreadBubbleSkeleton type="assistant" withCard />
+            <ThreadBubbleSkeleton type="assistant" />
           </div>
         </div>
       </div>
 
-      <div className="recruiter-chat-panel-skeleton__input">
-        <div className="recruiter-chat-panel-skeleton__input-box">
-          <SkeletonLine className="recruiter-chat-skeleton--w-85" />
+      <div className="recruiter-chat-panel-skeleton__composer">
+        <div className="recruiter-chat-panel-skeleton__input-shell">
+          <SkeletonLine className="recruiter-chat-skeleton--w-85 recruiter-chat-panel-skeleton__input-line" />
+          <div className="recruiter-chat-skeleton recruiter-chat-skeleton--send" />
         </div>
       </div>
     </div>

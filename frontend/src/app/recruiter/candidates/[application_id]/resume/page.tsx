@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { use, useMemo } from 'react'
 
 import ResumeTemplate from '@/app/candidate/resume/_components/ResumeTemplate'
 import { useGetCompanyCandidateByIdQuery } from '@/store/services/applicationsApi'
@@ -12,9 +12,9 @@ import { mapRecruiterCandidateResume } from '../../_lib/mapRecruiterCandidateRes
 export default function RecruiterCandidateResumePage({
   params,
 }: {
-  params: { application_id: string }
+  params: Promise<{ application_id: string }>
 }) {
-  const applicationId = params.application_id
+  const { application_id: applicationId } = use(params)
   const { data: resp, isLoading, isError, refetch } = useGetCompanyCandidateByIdQuery(applicationId)
   const candidate = resp?.data
   const renderedResume = useMemo(() => mapRecruiterCandidateResume(candidate), [candidate])
