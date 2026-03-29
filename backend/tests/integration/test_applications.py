@@ -44,7 +44,7 @@ class TestApplicationSubmit:
             headers=auth_headers(cand),
         )
         assert resp.status_code == 201
-        assert resp.json()["data"]["status"] == "submitted"
+        assert resp.json()["data"]["status"] == "applied"
 
     @pytest.mark.asyncio
     async def test_cannot_apply_to_closed_job(self, client, db):
@@ -570,14 +570,20 @@ class TestApplicationStatusUpdate:
             headers=auth_headers(cand),
         )
         app_id = apply_resp.json()["data"]["id"]
+        expire_resp = await client.patch(
+            f"/jobs/{job_id}",
+            json={"status": "expired"},
+            headers=auth_headers(recruiter),
+        )
+        assert expire_resp.status_code == 200
 
         resp = await client.patch(
             f"/applications/{app_id}/status",
-            json={"status": "interview"},
+            json={"status": "shortlisted"},
             headers=auth_headers(recruiter),
         )
         assert resp.status_code == 200
-        assert resp.json()["data"]["status"] == "interview"
+        assert resp.json()["data"]["status"] == "shortlisted"
 
     @pytest.mark.asyncio
     async def test_candidate_cannot_update_application_status(self, client, db):
@@ -614,7 +620,7 @@ class TestApplicationStatusUpdate:
 
         resp = await client.patch(
             f"/applications/{app_id}/status",
-            json={"status": "hired"},
+            json={"status": "offer"},
             headers=auth_headers(cand),
         )
         assert resp.status_code == 403

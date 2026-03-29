@@ -1,3 +1,4 @@
+import { getJobStatusLabel as getSharedJobStatusLabel } from '@/lib/statusMetadata'
 import type { Paginated } from '@/lib/types/user'
 
 import { type ApiResponse, baseApi } from './baseApi'
@@ -10,21 +11,14 @@ export type JobStatus = 'draft' | 'active' | 'expired'
 export type LocationType = 'onsite' | 'remote' | 'hybrid'
 
 export function getJobStatusLabel(status: JobStatus): string {
-  switch (status) {
-    case 'active':
-      return 'Active'
-    case 'expired':
-      return 'Expired'
-    case 'draft':
-    default:
-      return 'Draft'
-  }
+  return getSharedJobStatusLabel(status)
 }
 
 /** Minimal company info embedded in job responses */
 export interface CompanySnippet {
   id: string
   name: string
+  logo_url: string | null
   industry: string | null
   company_size: string | null
   location: string | null
@@ -44,7 +38,13 @@ export interface JobListItem {
   salary_max: number | null
   currency: string
   status: JobStatus
+  auto_shortlist: boolean
+  shortlist_threshold: number
+  expires_at: string | null
   applications_count: number
+  final_shortlist_completed: boolean
+  hiring_completed: boolean
+  has_applied: boolean
   created_at: string
   match_score: number | null
   is_fallback: boolean
@@ -63,11 +63,17 @@ export interface JobDetail {
   salary_max: number | null
   currency: string
   status: JobStatus
+  auto_shortlist: boolean
+  shortlist_threshold: number
+  expires_at: string | null
   overview: string | null
   responsibilities: string[]
   requirements: string[]
   preferred_qualifications: string[]
   benefits: string[]
+  applications_count: number
+  hiring_completed: boolean
+  has_applied: boolean
   created_at: string
   updated_at: string
 }
@@ -80,6 +86,9 @@ export interface CreateJobPayload {
   salary_max?: number
   currency?: string
   status?: JobStatus
+  auto_shortlist?: boolean
+  shortlist_threshold?: number
+  expires_at?: string
   overview?: string
   responsibilities?: string[]
   requirements?: string[]
@@ -97,6 +106,11 @@ export interface SearchJobsParams {
   salary_max?: number
   page?: number
   size?: number
+}
+
+export interface SetHiringCompletedPayload {
+  id: string
+  hiring_completed: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +176,18 @@ export const jobsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs'],
     }),
 
+    setHiringCompleted: builder.mutation<
+      ApiResponse<{ hiring_completed: boolean }>,
+      SetHiringCompletedPayload
+    >({
+      query: ({ id, hiring_completed }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${id}/hiring-completed`,
+        method: 'PATCH',
+        params: { hiring_completed },
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Jobs', id }, 'Jobs', 'Interviews'],
+    }),
+
     /** DELETE /jobs/{job_id} — delete a job posting (owner only) */
     deleteJob: builder.mutation<ApiResponse<null>, string>({
       query: (id) => ({
@@ -180,5 +206,6 @@ export const {
   useGetCompanyJobsQuery,
   useGetJobByIdQuery,
   useUpdateJobMutation,
+  useSetHiringCompletedMutation,
   useDeleteJobMutation,
 } = jobsApi

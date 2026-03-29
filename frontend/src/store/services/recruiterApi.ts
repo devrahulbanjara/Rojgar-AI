@@ -84,28 +84,6 @@ export const recruiterApi = baseApi.injectEndpoints({
       ],
     }),
 
-    /** GET /recruiter/candidates */
-    getRecruiterCandidates: builder.query<
-      Paginated<JobApplication>,
-      {
-        page?: number
-        limit?: number
-        jobId?: string
-        status?: JobApplication['status']
-      }
-    >({
-      query: ({ page = 1, limit = 10, jobId, status } = {}) => ({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/recruiter/candidates`,
-        params: {
-          page,
-          limit,
-          ...(jobId && { job_id: jobId }),
-          ...(status && { status }),
-        },
-      }),
-      providesTags: ['Candidates'],
-    }),
-
     /** GET /recruiter/interviews */
     getInterviews: builder.query<InterviewSchedule[], { status?: InterviewSchedule['status'] }>({
       query: ({ status } = {}) => ({
@@ -159,7 +137,6 @@ export const {
   useGetRecruiterJobsQuery,
   useGetJobApplicationsQuery,
   useUpdateApplicationStatusMutation,
-  useGetRecruiterCandidatesQuery,
   useGetInterviewsQuery,
   useScheduleInterviewMutation,
   useUpdateInterviewMutation,

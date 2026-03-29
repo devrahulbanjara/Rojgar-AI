@@ -22,12 +22,14 @@ import {
   useUpdateMyProfileMutation,
 } from '@/store/services/profileApi'
 import { updateUser } from '@/store/slices/authSlice'
-import { Camera, MapPin, Trash2, X } from 'lucide-react'
+import { Camera, FileUp, MapPin, Trash2, X } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import DashboardTabs from '@/components/common/DashboardTabs'
 import MediaBadge from '@/components/common/MediaBadge'
 
 import { ProfileDataSkeleton } from './_components/ProfileSkeletons'
+import ResumeImportModal from './_components/ResumeImportModal'
 
 export const AVAILABLE_ROLES = [
   // Software Engineering & Web Development
@@ -171,6 +173,7 @@ type FormProfile = {
   educations: FormEducation[]
   skills: string[]
   target_roles: string[]
+  is_open_to_work: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -251,6 +254,7 @@ function apiToForm(data: CandidateProfileData): FormProfile {
     })),
     skills: data.skills.map((s) => s.skill_name),
     target_roles: data.target_roles || [],
+    is_open_to_work: data.is_open_to_work ?? false,
   }
 }
 
@@ -265,6 +269,7 @@ function formToApiUpdate(form: FormProfile): UpdateProfileRequest {
     github_url: form.github_url || null,
     portfolio_url: form.portfolio_url || null,
     years_of_experience: form.years_of_experience ? parseInt(form.years_of_experience, 10) : null,
+    is_open_to_work: form.is_open_to_work,
     experiences: form.experiences.map((e) => ({
       company_name: e.company_name,
       title: e.title,
@@ -297,6 +302,7 @@ const EMPTY_FORM: FormProfile = {
   educations: [],
   skills: [],
   target_roles: [],
+  is_open_to_work: false,
 }
 
 // ── Section tabs definition ────────────────────────────────────
@@ -354,6 +360,7 @@ export default function ProfilePage() {
   const roleDropdownRef = useRef<HTMLDivElement>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [showResumeImportModal, setShowResumeImportModal] = useState(false)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarCropDraft, setAvatarCropDraft] = useState<AvatarCropDraft | null>(null)
@@ -717,10 +724,18 @@ export default function ProfilePage() {
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">My Profile</h2>
           <p className="dash-page-header__subtitle">
-            Build your professional profile — this data powers your resumes and applications.
+            Build your professional profile to power your resumes and applications.
           </p>
         </div>
         <div className="dash-page-header__actions">
+          <button
+            type="button"
+            className="btn btn--outline btn--sm"
+            onClick={() => setShowResumeImportModal(true)}
+          >
+            <FileUp size={14} aria-hidden="true" />
+            Import Resume
+          </button>
           <span className={statusClass}>{statusHint}</span>
         </div>
       </div>
@@ -742,6 +757,19 @@ export default function ProfilePage() {
               className="profile-aside-card content-stagger-item"
               style={{ '--stagger-index': 0 } as React.CSSProperties}
             >
+              <div className="profile-completion" style={{ marginBottom: '1.5rem' }}>
+                <div className="profile-completion__header">
+                  <span className="profile-completion__label">{PROFILE_COMPLETION_LABEL}</span>
+                  <span className="profile-completion__pct">{profileCompletion}%</span>
+                </div>
+                <div className="profile-completion__bar">
+                  <div
+                    className={`profile-completion__fill profile-completion__fill--${profileCompletionMeta.tone}`}
+                    style={{ width: `${profileCompletion}%` }}
+                  />
+                </div>
+              </div>
+
               <div className="profile-media-control">
                 <MediaBadge
                   src={avatarSrc}
@@ -799,6 +827,32 @@ export default function ProfilePage() {
                   {form.location}
                 </div>
               )}
+
+              <div
+                className="open-to-work-status"
+                style={{ padding: '0.25rem 0', marginTop: '0.25rem' }}
+              >
+                <span
+                  className={`open-to-work-status__dot ${form.is_open_to_work ? 'open-to-work-status__dot--active' : ''}`}
+                />
+                <span className="open-to-work-status__text">
+                  Open to Work · {form.is_open_to_work ? 'Active' : 'Off'}
+                </span>
+                <button
+                  className={`open-to-work-status__toggle ${isSaving ? 'open-to-work-status__toggle--loading' : ''}`}
+                  onClick={() => {
+                    const next = !form.is_open_to_work
+                    const nextForm = { ...form, is_open_to_work: next }
+                    setForm(nextForm)
+                    saveProfile(nextForm)
+                    toast.success(next ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
+                  }}
+                  disabled={isSaving}
+                >
+                  {form.is_open_to_work ? 'Turn off' : 'Turn on'}
+                </button>
+              </div>
+
               <div className="profile-aside-card__divider" />
               <div className="profile-aside-card__stats">
                 <div className="profile-aside-card__stat">
@@ -951,18 +1005,6 @@ export default function ProfilePage() {
                           )}
                       </div>
                     )}
-                </div>
-              </div>
-              <div className="profile-completion">
-                <div className="profile-completion__header">
-                  <span className="profile-completion__label">{PROFILE_COMPLETION_LABEL}</span>
-                  <span className="profile-completion__pct">{profileCompletion}%</span>
-                </div>
-                <div className="profile-completion__bar">
-                  <div
-                    className={`profile-completion__fill profile-completion__fill--${profileCompletionMeta.tone}`}
-                    style={{ width: `${profileCompletion}%` }}
-                  />
                 </div>
               </div>
             </div>
@@ -1419,6 +1461,13 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {showResumeImportModal ? (
+        <ResumeImportModal
+          currentProfile={profileResp?.data ?? null}
+          onClose={() => setShowResumeImportModal(false)}
+        />
+      ) : null}
+
       {avatarCropDraft ? (
         <div
           className={`modal-backdrop modal-backdrop--animated${isAvatarCropModalClosing ? ' modal-backdrop--closing' : ''}`}
@@ -1507,7 +1556,7 @@ export default function ProfilePage() {
                 onClick={() => void handleAvatarCropConfirm()}
                 type="button"
               >
-                {isSubmittingCroppedAvatar ? 'Saving...' : 'Done'}
+                {isSubmittingCroppedAvatar ? <ButtonSpinner label="Saving..." /> : 'Done'}
               </button>
             </div>
           </div>

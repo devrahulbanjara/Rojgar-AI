@@ -12,11 +12,10 @@ import {
   useGetMyResumesQuery,
 } from '@/store/services/resumeApi'
 import { apiResumeToUi, removeResume, setResumes, upsertResume } from '@/store/slices/resumeSlice'
-import { FileText, Plus } from 'lucide-react'
+import { Ellipsis, FileText, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import CreateResumeModal from './_components/CreateResumeModal'
-import ResumeCard from './_components/ResumeCard'
-import { ResumeGridSkeleton } from './_components/ResumeSkeletons'
+import { ResumeTableSkeleton } from './_components/ResumeSkeletons'
 
 // ── Resume list page ───────────────────────────────────────────────────────
 // Clicking View or Edit routes to /candidate/resume/[id] (view or edit mode).
@@ -30,6 +29,7 @@ export default function ResumePage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   // ── RTK Query hooks ────────────────────────────────────────────────────────
   const { data: resumesResponse, isLoading: isLoadingResumes } = useGetMyResumesQuery()
@@ -45,6 +45,31 @@ export default function ResumePage() {
       dispatch(setResumes(uiResumes))
     }
   }, [resumesResponse, dispatch, user])
+
+  useEffect(() => {
+    if (!openMenuId) return
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!(event.target instanceof Element)) return
+      if (!event.target.closest('[data-resume-row-actions]')) {
+        setOpenMenuId(null)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpenMenuId(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [openMenuId])
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -113,7 +138,7 @@ export default function ResumePage() {
 
       {/* API-backed content */}
       {isLoadingResumes ? (
-        <ResumeGridSkeleton count={5} />
+        <ResumeTableSkeleton rows={6} />
       ) : resumes.length === 0 ? (
         <div className="resume-empty-state">
           <FileText size={48} style={{ opacity: 0.4 }} />
@@ -123,23 +148,87 @@ export default function ResumePage() {
           </button>
         </div>
       ) : (
-        <div className="resume-grid content-stagger">
-          {resumes.map((r, index) => (
-            <div
-              key={r.id}
-              className="content-stagger-item"
-              style={{ '--stagger-index': index } as React.CSSProperties}
-            >
-              <ResumeCard
-                resume={r}
-                onView={() => router.push(`/candidate/resume/${r.id}`)}
-                onEdit={() => router.push(`/candidate/resume/${r.id}?mode=edit`)}
-                onDelete={() => handleDelete(r.id)}
-                isDeleting={deletingId === r.id}
-                isViewing={false}
-              />
-            </div>
-          ))}
+        <div className="dash-card resume-table-card">
+          <div className="table-scroll">
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Resume Title</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resumes.map((resume) => (
+                  <tr
+                    key={resume.id}
+                    className="resume-row resume-row--clickable"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => router.push(`/candidate/resume/${resume.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        router.push(`/candidate/resume/${resume.id}`)
+                      }
+                    }}
+                  >
+                    <td className="resume-row__title">{resume.name}</td>
+                    <td className="cell-muted">Updated {resume.updatedAt}</td>
+                    <td className="resume-row__actions-cell">
+                      <div
+                        className={`resume-row-actions${openMenuId === resume.id ? ' resume-row-actions--open' : ''}`}
+                        data-resume-row-actions
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          className="resume-row-actions__trigger"
+                          aria-label={`Open actions for ${resume.name}`}
+                          aria-haspopup="menu"
+                          aria-expanded={openMenuId === resume.id}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setOpenMenuId((current) => (current === resume.id ? null : resume.id))
+                          }}
+                        >
+                          <Ellipsis size={16} aria-hidden="true" />
+                        </button>
+
+                        {openMenuId === resume.id ? (
+                          <div className="resume-row-actions__menu" role="menu">
+                            <button
+                              type="button"
+                              className="resume-row-actions__item"
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                router.push(`/candidate/resume/${resume.id}?mode=edit`)
+                              }}
+                            >
+                              <Pencil size={15} aria-hidden="true" />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="resume-row-actions__item resume-row-actions__item--danger"
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                void handleDelete(resume.id)
+                              }}
+                              disabled={deletingId === resume.id}
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                              {deletingId === resume.id ? 'Deleting…' : 'Delete'}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -3,7 +3,9 @@
 import { type CSSProperties, useMemo, useState } from 'react'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
+import { getApplicationStatusLabel } from '@/lib/applicationStatus'
 import {
   type ApplicationStatus,
   type CandidateApplicationView,
@@ -12,6 +14,7 @@ import {
 import { Search, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
+import StatusPill from '@/components/common/StatusPill'
 
 import {
   ApplicationsDetailSkeleton,
@@ -35,13 +38,13 @@ type TimelineStep = {
 
 const STATUS_FILTERS: StageFilter[] = [
   { key: 'all', label: 'All Applications' },
-  { key: 'submitted', label: 'Applied' },
-  { key: 'screening', label: 'In Review' },
-  { key: 'interview', label: 'Interview' },
-  { key: 'offered', label: 'Offer' },
-  { key: 'hired', label: 'Hired' },
+  { key: 'applied', label: 'Applied' },
+  { key: 'screening', label: 'Screening' },
+  { key: 'shortlisted', label: 'Shortlisted' },
+  { key: 'interview_booked', label: 'Interview Booked' },
+  { key: 'interview_completed', label: 'Interview Completed' },
+  { key: 'offer', label: 'Offer' },
   { key: 'rejected', label: 'Rejected' },
-  { key: 'withdrawn', label: 'Withdrawn' },
 ]
 
 const WORK_MODE_FILTERS: Array<{ key: WorkModeFilter; label: string }> = [
@@ -52,23 +55,16 @@ const WORK_MODE_FILTERS: Array<{ key: WorkModeFilter; label: string }> = [
 ]
 
 const ACTIVE_TIMELINE: Array<{
-  key: Exclude<ApplicationStatus, 'rejected' | 'withdrawn'>
+  key: Exclude<ApplicationStatus, 'rejected'>
   label: string
 }> = [
-  { key: 'submitted', label: 'Applied' },
-  { key: 'screening', label: 'In Review' },
-  { key: 'interview', label: 'Interview' },
-  { key: 'offered', label: 'Offer' },
-  { key: 'hired', label: 'Hired' },
+  { key: 'applied', label: 'Applied' },
+  { key: 'screening', label: 'Screening' },
+  { key: 'shortlisted', label: 'Shortlisted' },
+  { key: 'interview_booked', label: 'Interview Booked' },
+  { key: 'interview_completed', label: 'Interview Completed' },
+  { key: 'offer', label: 'Offer' },
 ]
-
-const statusColorMap: Record<string, string> = {
-  success: '#0cce6b',
-  warning: '#f59e0b',
-  primary: '#0070f3',
-  gray: '#9ca3af',
-  danger: '#ff4d4d',
-}
 
 function getCompanyAccent(name: string): { logo: string; color: string } {
   const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
@@ -134,65 +130,39 @@ function formatRelativeDate(iso: string): string {
 }
 
 function getStatusLabel(status: ApplicationStatus): string {
-  switch (status) {
-    case 'submitted':
-      return 'Applied'
-    case 'screening':
-      return 'In Review'
-    case 'interview':
-      return 'Interview'
-    case 'offered':
-      return 'Offer'
-    case 'hired':
-      return 'Hired'
-    case 'rejected':
-      return 'Rejected'
-    case 'withdrawn':
-      return 'Withdrawn'
-  }
-}
-
-function getStatusVariant(status: ApplicationStatus): string {
-  switch (status) {
-    case 'interview':
-    case 'offered':
-    case 'hired':
-      return 'success'
-    case 'screening':
-      return 'warning'
-    case 'rejected':
-      return 'danger'
-    case 'withdrawn':
-    case 'submitted':
-      return 'gray'
-  }
+  return getApplicationStatusLabel(status)
 }
 
 function getStatusUpdateCopy(application: CandidateApplicationView): string {
   const statusLabel = getStatusLabel(application.status)
 
   switch (application.status) {
-    case 'submitted':
+    case 'applied':
       return `Application submitted ${formatRelativeDate(application.created_at)}.`
     case 'screening':
-      return `Your application is in review as of ${formatDisplayDate(application.updated_at)}.`
-    case 'interview':
-      return `Interview stage reached ${formatDisplayDate(application.updated_at)}.`
-    case 'offered':
+      return `Your application is currently being screened as of ${formatDisplayDate(application.updated_at)}.`
+    case 'shortlisted':
+      return `You were shortlisted on ${formatDisplayDate(application.updated_at)}.`
+    case 'interview_booked':
+      return `Interview booked on ${formatDisplayDate(application.updated_at)}.`
+    case 'interview_completed':
+      return `Your interview was marked completed on ${formatDisplayDate(application.updated_at)}.`
+    case 'offer':
       return `An offer was recorded on ${formatDisplayDate(application.updated_at)}.`
-    case 'hired':
-      return `This application was marked hired on ${formatDisplayDate(application.updated_at)}.`
     case 'rejected':
       return `This application was closed as rejected on ${formatDisplayDate(application.updated_at)}.`
-    case 'withdrawn':
-      return `This application was withdrawn on ${formatDisplayDate(application.updated_at)}.`
     default:
       return `${statusLabel} ${formatRelativeDate(application.updated_at)}.`
   }
 }
 
+function getReviewFeedback(feedback: string | null): string | null {
+  const trimmedFeedback = feedback?.trim()
+  return trimmedFeedback ? trimmedFeedback : null
+}
+
 function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
-  if (application.status === 'rejected' || application.status === 'withdrawn') {
+  if (application.status === 'rejected') {
     return [
       {
         stage: 'Applied',
@@ -224,6 +194,8 @@ function buildTimeline(application: CandidateApplicationView): TimelineStep[] {
 }
 
 export default function ApplicationsPage() {
+  const searchParams = useSearchParams()
+  const requestedApplicationId = searchParams.get('application')
   const [activeStage, setActiveStage] = useState<StatusFilterKey>('all')
   const [selectedMode, setSelectedMode] = useState<WorkModeFilter>('all')
   const [searchInput, setSearchInput] = useState('')
@@ -240,13 +212,13 @@ export default function ApplicationsPage() {
         return accumulator
       },
       {
-        submitted: 0,
+        applied: 0,
         screening: 0,
-        interview: 0,
-        offered: 0,
-        hired: 0,
+        shortlisted: 0,
+        interview_booked: 0,
+        interview_completed: 0,
+        offer: 0,
         rejected: 0,
-        withdrawn: 0,
       },
     )
   }, [applications])
@@ -269,11 +241,13 @@ export default function ApplicationsPage() {
   const selectedApplication = useMemo(() => {
     if (filteredApplications.length === 0) return null
 
+    const preferredApplicationId = selectedApplicationId ?? requestedApplicationId
+
     return (
-      filteredApplications.find((application) => application.id === selectedApplicationId) ??
+      filteredApplications.find((application) => application.id === preferredApplicationId) ??
       filteredApplications[0]
     )
-  }, [filteredApplications, selectedApplicationId])
+  }, [filteredApplications, requestedApplicationId, selectedApplicationId])
 
   function handleSearch(event?: React.FormEvent) {
     if (event) event.preventDefault()
@@ -338,7 +312,9 @@ export default function ApplicationsPage() {
                 >
                   <span className="apps-sidebar__stage-label">{stage.label}</span>
                   <span className="apps-sidebar__stage-count">
-                    {stage.key === 'all' ? applications.length : statusCounts[stage.key]}
+                    {stage.key === 'all'
+                      ? applications.length
+                      : statusCounts[stage.key as ApplicationStatus]}
                   </span>
                 </button>
               ))}
@@ -409,7 +385,6 @@ export default function ApplicationsPage() {
               ) : (
                 filteredApplications.map((application, index) => {
                   const accent = getCompanyAccent(application.company_name)
-                  const statusVariant = getStatusVariant(application.status)
 
                   return (
                     <button
@@ -435,18 +410,7 @@ export default function ApplicationsPage() {
                       <div className="app-item__body">
                         <div className="app-item__top">
                           <div className="app-item__role">{application.job_title}</div>
-                          <span className={`badge badge--${statusVariant}`}>
-                            <span
-                              className="app-status-dot"
-                              style={
-                                {
-                                  '--dot-color':
-                                    statusColorMap[statusVariant] || statusColorMap.gray,
-                                } as CSSProperties
-                              }
-                            />
-                            {getStatusLabel(application.status)}
-                          </span>
+                          <StatusPill kind="application" status={application.status} />
                         </div>
                         <div className="app-item__company">
                           {application.company_name}
@@ -457,7 +421,29 @@ export default function ApplicationsPage() {
                           <span>{getLocationTypeLabel(application.location_type)}</span>
                           <span className="app-item__sep">·</span>
                           <span>Applied {formatRelativeDate(application.created_at)}</span>
+                          <Link
+                            href={`/candidate/jobs/${application.job_id}`}
+                            className="btn btn--outline btn--primary btn--sm"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ marginLeft: 'auto' }}
+                          >
+                            View Job
+                          </Link>
                         </div>
+                        {getReviewFeedback(application.feedback) ? (
+                          <div
+                            className="cell-actions"
+                            style={{
+                              marginTop: '0.5rem',
+                              justifyContent: 'flex-start',
+                              textAlign: 'left',
+                            }}
+                          >
+                            <span className="cell-muted">
+                              {getReviewFeedback(application.feedback)}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
                     </button>
                   )
@@ -498,19 +484,7 @@ export default function ApplicationsPage() {
 
               <div className="app-detail__section">
                 <div className="app-detail__section-title">Application Status</div>
-                <span className={`badge badge--${getStatusVariant(selectedApplication.status)}`}>
-                  <span
-                    className="app-status-dot"
-                    style={
-                      {
-                        '--dot-color':
-                          statusColorMap[getStatusVariant(selectedApplication.status)] ||
-                          statusColorMap.gray,
-                      } as CSSProperties
-                    }
-                  />
-                  {getStatusLabel(selectedApplication.status)}
-                </span>
+                <StatusPill kind="application" status={selectedApplication.status} />
               </div>
 
               <div className="app-detail__section">
@@ -539,6 +513,15 @@ export default function ApplicationsPage() {
                 <p className="app-detail__activity">{getStatusUpdateCopy(selectedApplication)}</p>
               </div>
 
+              {getReviewFeedback(selectedApplication.feedback) ? (
+                <div className="app-detail__section">
+                  <div className="app-detail__section-title">Application Review</div>
+                  <p className="app-detail__activity">
+                    {getReviewFeedback(selectedApplication.feedback)}
+                  </p>
+                </div>
+              ) : null}
+
               <div className="app-detail__section">
                 <div className="app-detail__section-title">Details</div>
                 <div className="app-detail__facts">
@@ -566,7 +549,7 @@ export default function ApplicationsPage() {
               <div className="app-detail__actions">
                 <Link
                   href={`/candidate/jobs/${selectedApplication.job_id}`}
-                  className="btn btn--primary btn--sm"
+                  className="btn btn--outline btn--primary btn--sm"
                 >
                   View Job
                 </Link>

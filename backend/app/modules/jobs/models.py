@@ -1,14 +1,19 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, Uuid, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.modules.companies.models import Company
-from app.modules.jobs.enums import SyncAction, SyncStatus
-from app.shared.enums import JobStatus, LocationType
+from app.shared.enums import (
+    JobStatus,
+    LocationType,
+    ShortlistStatus,
+    SyncAction,
+    SyncStatus,
+)
 
 
 class Job(Base):
@@ -30,6 +35,24 @@ class Job(Base):
     salary_max: Mapped[int | None] = mapped_column(Integer)
     currency: Mapped[str] = mapped_column(String(10), server_default="USD")
     status: Mapped[JobStatus] = mapped_column(nullable=False, server_default="draft")
+    auto_shortlist: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    shortlist_status: Mapped[ShortlistStatus] = mapped_column(
+        nullable=False, server_default="not_started"
+    )
+    shortlist_threshold: Mapped[int] = mapped_column(
+        Integer, default=70, server_default="70", nullable=False
+    )
+    final_shortlist_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    hiring_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     overview: Mapped[str | None] = mapped_column(Text)
     responsibilities: Mapped[list[str]] = mapped_column(
         ARRAY(String), server_default="{}"

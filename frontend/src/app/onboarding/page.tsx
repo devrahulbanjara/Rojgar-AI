@@ -12,6 +12,7 @@ import { updateUser } from '@/store/slices/authSlice'
 import { X } from 'lucide-react'
 
 import AuthGuard from '@/components/common/AuthGuard'
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 
 // Available predefined roles for the candidate to select
 const AVAILABLE_ROLES = [
@@ -292,7 +293,7 @@ function OnboardingForm() {
               aria-busy={isLoading}
               style={{ marginTop: '1.5rem' }}
             >
-              {isLoading ? 'Saving...' : 'Complete Onboarding'}
+              {isLoading ? <ButtonSpinner label="Saving..." /> : 'Complete Onboarding'}
             </button>
           </form>
         </div>

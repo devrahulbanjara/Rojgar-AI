@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app.integrations.s3.service import GENERIC_UPLOAD_ERROR, S3Service
+from app.infrastructures.s3.service import GENERIC_UPLOAD_ERROR, S3Service
 
 
 class DummyS3Client:
@@ -41,10 +41,14 @@ async def test_upload_image_marks_objects_public(monkeypatch):
     service = S3Service()
     fake_client = DummyS3Client()
 
-    monkeypatch.setattr("app.integrations.s3.service.settings.s3_bucket_name", "bucket")
-    monkeypatch.setattr("app.integrations.s3.service.settings.aws_region", "us-east-1")
     monkeypatch.setattr(
-        "app.integrations.s3.service.settings.s3_upload_acl", "public-read"
+        "app.infrastructures.s3.service.settings.s3_bucket_name", "bucket"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.aws_region", "us-east-1"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.s3_upload_acl", "public-read"
     )
     monkeypatch.setattr(service, "_client", fake_client)
 
@@ -66,10 +70,14 @@ async def test_upload_image_marks_objects_public(monkeypatch):
 async def test_upload_image_returns_generic_message_for_acl_failures(monkeypatch):
     service = S3Service()
 
-    monkeypatch.setattr("app.integrations.s3.service.settings.s3_bucket_name", "bucket")
-    monkeypatch.setattr("app.integrations.s3.service.settings.aws_region", "us-east-1")
     monkeypatch.setattr(
-        "app.integrations.s3.service.settings.s3_upload_acl", "public-read"
+        "app.infrastructures.s3.service.settings.s3_bucket_name", "bucket"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.aws_region", "us-east-1"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.s3.service.settings.s3_upload_acl", "public-read"
     )
     monkeypatch.setattr(service, "_client", FailingS3Client())
 

@@ -1,5 +1,6 @@
 import { baseApi } from './baseApi'
 import type { ApiResponse } from './baseApi'
+import type { ApiResumeData } from './resumeApi'
 
 // ---------------------------------------------------------------------------
 // Types — mirrors the /profiles/* API contract exactly
@@ -45,6 +46,7 @@ export interface CandidateProfileData {
   portfolio_url: string | null
   years_of_experience: number | null
   target_roles: string[]
+  is_open_to_work: boolean
   experiences: ProfileExperience[]
   educations: ProfileEducation[]
   skills: ProfileSkill[]
@@ -63,6 +65,7 @@ export interface UpdateProfileRequest {
   portfolio_url?: string | null
   years_of_experience?: number | null
   target_roles?: string[]
+  is_open_to_work?: boolean
   experiences?: Array<{
     company_name: string
     title: string
@@ -80,8 +83,90 @@ export interface UpdateProfileRequest {
   skills?: Array<{ skill_name: string }>
 }
 
+export interface ResumeImportExperience {
+  company_name: string | null
+  title: string | null
+  start_date: string | null
+  end_date: string | null
+  description: string[]
+}
+
+export interface ResumeImportEducation {
+  institution: string | null
+  degree: string | null
+  field_of_study: string | null
+  start_date: string | null
+  end_date: string | null
+}
+
+export interface ResumeImportSkill {
+  skill_name: string
+}
+
+export interface ResumeImportProfileData {
+  headline: string | null
+  summary: string | null
+  phone: string | null
+  location: string | null
+  linkedin_url: string | null
+  github_url: string | null
+  portfolio_url: string | null
+  years_of_experience: number | null
+  target_roles: string[]
+  experiences: ResumeImportExperience[]
+  educations: ResumeImportEducation[]
+  skills: ResumeImportSkill[]
+  warnings: string[]
+}
+
+export interface ResumeImportTargetOption {
+  id: string
+  resume_name: string
+}
+
+export interface ResumeImportPreviewData {
+  source_file_name: string
+  extracted_profile: ResumeImportProfileData
+  available_resume_targets: ResumeImportTargetOption[]
+}
+
+export interface ResumeImportTaskStartData {
+  task_id: string
+  status: 'pending' | 'processing'
+}
+
+export interface ResumeImportTaskStatusData {
+  task_id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  source_file_name: string | null
+  result: ResumeImportPreviewData | null
+  error: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type ResumeImportAction = 'update_profile' | 'create_resume' | 'update_resume'
+
+export interface ResumeImportCommitRequest {
+  action: ResumeImportAction
+  resume_id: string | null
+  resume_name: string | null
+  data: ResumeImportProfileData
+}
+
+export interface ResumeImportCommitData {
+  target_type: 'profile' | 'resume'
+  target_id: string
+  profile: CandidateProfileData | null
+  resume: ApiResumeData | null
+}
+
 type ProfileApiResponse = ApiResponse<CandidateProfileData>
 type EmptyResponse = ApiResponse<null>
+type ResumeImportPreviewResponse = ApiResponse<ResumeImportPreviewData>
+type ResumeImportTaskStartResponse = ApiResponse<ResumeImportTaskStartData>
+type ResumeImportTaskStatusResponse = ApiResponse<ResumeImportTaskStatusData>
+type ResumeImportCommitResponse = ApiResponse<ResumeImportCommitData>
 
 // ---------------------------------------------------------------------------
 // Profile API — injected into the shared baseApi
@@ -137,6 +222,36 @@ export const profileApi = baseApi.injectEndpoints({
       query: (userId) => `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/${userId}`,
       providesTags: (_result, _error, id) => [{ type: 'Profile', id }],
     }),
+
+    previewResumeImport: builder.mutation<ResumeImportPreviewResponse, FormData>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/preview`,
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    startResumeImport: builder.mutation<ResumeImportTaskStartResponse, FormData>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/upload`,
+        method: 'POST',
+        body,
+      }),
+    }),
+
+    getResumeImportTaskStatus: builder.query<ResumeImportTaskStatusResponse, string>({
+      query: (taskId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/tasks/${taskId}`,
+    }),
+
+    commitResumeImport: builder.mutation<ResumeImportCommitResponse, ResumeImportCommitRequest>({
+      query: (body) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/profiles/me/ai-import/commit`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Profile', 'Resumes'],
+    }),
   }),
 })
 
@@ -147,4 +262,9 @@ export const {
   useCompleteOnboardingMutation,
   useRemoveMyAvatarMutation,
   useGetPublicProfileQuery,
+  usePreviewResumeImportMutation,
+  useStartResumeImportMutation,
+  useGetResumeImportTaskStatusQuery,
+  useLazyGetResumeImportTaskStatusQuery,
+  useCommitResumeImportMutation,
 } = profileApi
