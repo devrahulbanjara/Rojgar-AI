@@ -14,14 +14,13 @@ class JobStatus(str, Enum):
 
 
 class ApplicationStatus(str, Enum):
-    submitted = "submitted"
+    applied = "applied"
     screening = "screening"
-    interview_booked = "interview_booked"
-    interview = "interview"
-    offered = "offered"
-    hired = "hired"
+    shortlisted = "shortlisted"
     rejected = "rejected"
-    withdrawn = "withdrawn"
+    interview_booked = "interview_booked"
+    interview_completed = "interview_completed"
+    offer = "offer"
 
 
 class ShortlistStatus(str, Enum):

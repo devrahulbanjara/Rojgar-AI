@@ -16,11 +16,18 @@ class ApplyRequest(BaseSchema):
 
 
 class UpdateApplicationStatusRequest(BaseSchema):
-    """Company/recruiter updates the application status."""
+    """Company/recruiter updates the application status.
+
+    Only the following values are accepted:
+    shortlisted, rejected, interview_completed, offer
+    """
 
     status: ApplicationStatus = Field(
         ...,
-        description="New status for the application",
+        description=(
+            "New status. Allowed values: shortlisted, rejected, "
+            "interview_completed, offer."
+        ),
     )
 
 

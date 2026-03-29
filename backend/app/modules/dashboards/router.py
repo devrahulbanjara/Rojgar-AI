@@ -1,17 +1,20 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
 from app.modules.auth.dependencies import (
     require_candidate,
+    require_recruiter_admin,
     require_recruiter_privileges,
 )
 from app.modules.auth.models import User
 from app.modules.dashboards import service
 from app.modules.dashboards.schemas import (
     CandidateDashboardResponse,
+    RecruiterAdminDashboardResponse,
     RecruiterDashboardResponse,
 )
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/dashboards", tags=["Dashboards"])
 
@@ -22,7 +25,6 @@ async def get_candidate_dashboard(
     db: AsyncSession = Depends(get_db),
 ):
     data = await service.get_candidate_dashboard(db, current_user)
-
     return ResponseBuilder.success(
         data=data, message="Candidate dashboard data retrieved"
     )
@@ -34,7 +36,18 @@ async def get_recruiter_dashboard(
     db: AsyncSession = Depends(get_db),
 ):
     data = await service.get_recruiter_dashboard(db, current_user)
-
     return ResponseBuilder.success(
         data=data, message="Recruiter dashboard data retrieved"
     )
+
+
+@router.get(
+    "/recruiter-admin",
+    response_model=UnifiedResponse[RecruiterAdminDashboardResponse],
+)
+async def get_recruiter_admin_dashboard(
+    current_user: User = Depends(require_recruiter_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await service.get_recruiter_admin_dashboard(db, current_user)
+    return ResponseBuilder.success(data=data, message="Admin dashboard data retrieved")

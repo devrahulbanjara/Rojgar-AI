@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, UniqueConstraint, Uuid, func
 from sqlalchemy import Boolean, Integer, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -35,7 +36,10 @@ class Application(Base):
         Boolean, default=False, server_default="false"
     )
     status: Mapped[ApplicationStatus] = mapped_column(
-        nullable=False, server_default="submitted"
+        SAEnum(ApplicationStatus, name="applicationstatus"),
+        nullable=False,
+        server_default="applied",
+        index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

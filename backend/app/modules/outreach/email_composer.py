@@ -3,8 +3,8 @@ from __future__ import annotations
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
-
 from app.core.config import settings
+
 from app.shared.enums import ApplicationStatus
 
 _SHORTLIST_SYSTEM = """
@@ -91,18 +91,19 @@ async def compose_email(
     job_title: str,
     application_status: ApplicationStatus,
     feedback: str | None,
+    booking_url: str | None = None,
 ) -> tuple[str, str]:
     first_name = _first_name(candidate_name)
     feedback_text = (feedback or "No specific feedback available.").strip()
 
-    if application_status == ApplicationStatus.screening:
+    if application_status == ApplicationStatus.shortlisted:
         subject = f"You've been shortlisted for {job_title} at {company_name}"
         body = await _shortlist_chain.ainvoke(
             {
                 "company_name": company_name,
                 "candidate_name": first_name,
                 "job_title": job_title,
-                "booking_url": settings.interview_booking_url,
+                "booking_url": booking_url or "",
                 "feedback": feedback_text,
             }
         )

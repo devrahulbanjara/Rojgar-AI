@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.core.schemas import BaseSchema
+from app.shared.enums import ApplicationStatus
 
 
 class InterviewResponse(BaseSchema):
@@ -16,6 +17,7 @@ class InterviewResponse(BaseSchema):
     location: str | None
     title: str | None
     created_at: datetime
+    application_status: ApplicationStatus
     job_id: UUID
     job_title: str
     company_id: UUID

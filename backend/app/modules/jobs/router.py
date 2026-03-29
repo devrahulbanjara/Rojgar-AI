@@ -160,5 +160,5 @@ async def set_hiring_completed(
     await db.commit()
     await redis_service.delete(f"job:detail:{job_id}")
     await redis_service.delete(f"jobs:company:{job.company_id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter:*")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
     return ResponseBuilder.success(data={"hiring_completed": hiring_completed})

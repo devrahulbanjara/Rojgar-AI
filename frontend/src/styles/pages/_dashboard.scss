@@ -5455,6 +5455,12 @@
     &::placeholder {
       color: $color-gray-300;
     }
+
+    &:disabled {
+      background: $color-gray-100;
+      color: $color-gray-400;
+      cursor: not-allowed;
+    }
   }
 
   &__checkbox-label {
@@ -5657,6 +5663,30 @@
   &__stat-label {
     font-size: $font-size-xs;
     color: $color-gray-400;
+  }
+}
+
+.company-settings__booking-copy {
+  max-width: 17rem;
+  margin: 0 0 $space-1;
+  color: $color-gray-600;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.company-settings__booking-copy--left {
+  max-width: none;
+  text-align: left;
+}
+
+.company-settings__booking-field {
+  width: 100%;
+  max-width: 17.5rem;
+
+  .resume-field__input {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -5914,6 +5944,12 @@
   width: 4rem;
   height: 2rem;
   border-radius: $radius-lg;
+
+  &--sm {
+    width: 4.5rem;
+    height: 1.75rem;
+    border-radius: $radius-md;
+  }
 }
 
 .profile-skeleton__info-grid {
@@ -5950,6 +5986,12 @@
 
   &--short {
     width: 68%;
+  }
+
+  &--icon {
+    width: 7.5rem;
+    height: 0.75rem;
+    margin-block: 0.125rem;
   }
 }
 
@@ -11878,4 +11920,545 @@
 .cell-user__avatar {
   aspect-ratio: 1 / 1;
   overflow: hidden;
+}
+
+.dashboard-card-skeleton__meta,
+.dashboard-card-skeleton__title {
+  border-radius: $radius-full;
+  height: 0.8rem;
+}
+
+.dashboard-card-skeleton__meta {
+  width: 8rem;
+}
+
+.dashboard-card-skeleton__title {
+  width: 7rem;
+}
+
+.candidate-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+
+  &__stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  &__stats {
+    .stat-card {
+      gap: $space-2;
+    }
+
+    .stat-card__label {
+      font-size: $font-size-xs;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: $color-text-muted;
+    }
+  }
+
+  &__stat-value--warning {
+    color: #ba7517;
+  }
+
+  &__stat-value--danger {
+    color: #a32d2d;
+  }
+
+  &__alert {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    border: 1px solid rgba($color-warning, 0.4);
+    background: rgba($color-warning, 0.12);
+    border-radius: $radius-xl;
+    padding: $space-4 $space-5;
+  }
+
+  &__alert-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-full;
+    background: #ba7517;
+    flex-shrink: 0;
+  }
+
+  &__alert-copy {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: #633806;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__legend {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    padding: 0 $space-6;
+    margin-top: $space-4;
+    flex-wrap: wrap;
+  }
+
+  &__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__legend-dot {
+    width: 10px;
+    height: 4px;
+    border-radius: $radius-full;
+  }
+
+  &__legend-dot--done {
+    background: #1d9e75;
+  }
+
+  &__legend-dot--active {
+    background: #378add;
+  }
+
+  &__legend-dot--pending {
+    background: $color-gray-200;
+  }
+}
+
+.candidate-pipeline-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  text-decoration: none;
+  color: inherit;
+  background: $color-white;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast,
+    transform $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.28);
+    box-shadow: $shadow-md;
+    transform: translateY(-1px);
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__avatar,
+  &__avatar-skeleton {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  &__avatar {
+    position: relative;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--logo-bg, #{$color-gray-100});
+    color: var(--logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+  }
+
+  &__content {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__company,
+  &__meta {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__timeline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: $space-1;
+  }
+
+  &__segment,
+  &__timeline-skeleton {
+    height: 4px;
+    border-radius: $radius-full;
+    flex: 1;
+  }
+
+  &__segment--done {
+    background: #1d9e75;
+  }
+
+  &__segment--active {
+    background: #378add;
+  }
+
+  &__segment--pending {
+    background: $color-gray-200;
+  }
+
+  &__segment--rejected {
+    background: #e24b4a;
+  }
+
+  &__aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: $space-2;
+    flex-shrink: 0;
+  }
+
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: $font-size-xs;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  &__action--muted {
+    color: $color-text-muted;
+  }
+
+  &__title-skeleton {
+    width: 10rem;
+    height: 0.875rem;
+    border-radius: $radius-full;
+  }
+
+  &__meta-skeleton {
+    width: 8rem;
+    height: 0.75rem;
+    border-radius: $radius-full;
+  }
+
+  &__badge-skeleton {
+    width: 6rem;
+    height: 1.75rem;
+    border-radius: $radius-full;
+  }
+}
+
+.recruiter-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+
+  &__stats {
+    gap: $space-4;
+  }
+
+  &__stats--recruiter {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  &__stats--admin {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  &__grid {
+    gap: $space-5;
+  }
+
+  &__panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-3;
+  }
+
+  &__jobs-card {
+    width: 100%;
+  }
+
+  &__legend {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    flex-wrap: wrap;
+    margin-top: $space-2;
+  }
+
+  &__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__legend-dot {
+    width: 10px;
+    height: 4px;
+    border-radius: $radius-full;
+  }
+
+  &__legend-dot--applied {
+    background: #d3d1c7;
+  }
+
+  &__legend-dot--screening {
+    background: #85b7eb;
+  }
+
+  &__legend-dot--shortlisted {
+    background: #1d9e75;
+  }
+
+  &__legend-dot--rejected {
+    background: #f09595;
+  }
+
+  &__stat-value--warning {
+    color: #ba7517;
+  }
+
+  &__stat-value--primary {
+    color: $color-primary;
+  }
+}
+
+.recruiter-list-card {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-4 $space-5;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  background: $color-white;
+
+  &--link {
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color $transition-fast,
+      box-shadow $transition-fast,
+      transform $transition-fast;
+
+    &:hover {
+      border-color: rgba($color-primary, 0.28);
+      box-shadow: $shadow-md;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  &__top--compact {
+    align-items: center;
+  }
+
+  &__content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__meta {
+    margin-top: 2px;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__title-skeleton {
+    width: 10rem;
+    height: 0.875rem;
+    border-radius: $radius-full;
+  }
+
+  &__meta-skeleton {
+    width: 7rem;
+    height: 0.75rem;
+    border-radius: $radius-full;
+  }
+}
+
+.recruiter-job-bar {
+  display: flex;
+  gap: 4px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: $radius-full;
+
+  &__segment {
+    border-radius: inherit;
+  }
+
+  &__segment--applied {
+    background: #d3d1c7;
+  }
+
+  &__segment--screening {
+    background: #85b7eb;
+  }
+
+  &__segment--shortlisted {
+    background: #1d9e75;
+  }
+
+  &__segment--rejected {
+    background: #f09595;
+  }
+}
+
+.recruiter-interview-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+
+  &__time {
+    min-width: 52px;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $color-text-muted;
+  }
+}
+
+.recruiter-draft-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  min-width: 0;
+  flex: 1;
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: $radius-full;
+    flex-shrink: 0;
+  }
+
+  &__dot--shortlist {
+    background: #1d9e75;
+  }
+
+  &__dot--rejection {
+    background: #e24b4a;
+  }
+}
+
+.recruiter-draft-actions {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  flex-shrink: 0;
+}
+
+.recruiter-team-activity {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__meta {
+    margin-top: $space-1;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 80px 1fr 32px;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__label,
+  &__count {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__count {
+    text-align: right;
+  }
+
+  &__bar {
+    height: 6px;
+    border-radius: $radius-full;
+    background: $color-gray-100;
+    overflow: hidden;
+  }
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #378add;
+  }
+
+  &__fill--success {
+    background: #1d9e75;
+  }
+}
+
+@media (max-width: $bp-md) {
+  .candidate-dashboard__alert,
+  .candidate-pipeline-card,
+  .recruiter-list-card__top,
+  .recruiter-list-card__top--compact {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .candidate-pipeline-card__aside,
+  .recruiter-draft-actions {
+    align-items: flex-start;
+  }
+
+  .recruiter-interview-row {
+    align-items: flex-start;
+  }
+
+  .recruiter-interview-row__time {
+    min-width: 0;
+  }
 }

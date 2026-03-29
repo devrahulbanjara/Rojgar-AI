@@ -26,12 +26,14 @@ from app.modules.auth.models import (
 )
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.auth.schemas import (
+    ChangePasswordRequest,
     ForgotPasswordRequest,
     GoogleRegisterRequest,
     LoginRequest,
     ResetPasswordRequest,
     SignupData,
     SignupRequest,
+    UpdateMeRequest,
     UserResponse,
     VerifyEmailRequest,
 )
@@ -52,6 +54,32 @@ async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
         created_at=user.created_at,
         membership_status=ms,
     )
+
+
+async def update_me_data(
+    db: AsyncSession, user: User, payload: UpdateMeRequest
+) -> UserResponse:
+    user.full_name = payload.full_name.strip()
+    await db.commit()
+    await db.refresh(user)
+    return await get_me_data(db, user)
+
+
+async def change_password(
+    db: AsyncSession, user: User, payload: ChangePasswordRequest
+) -> None:
+    if user.password_hash:
+        if not payload.current_password or not verify_password(
+            user.password_hash, payload.current_password
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect.",
+            )
+
+    user.password_hash = hash_password(payload.new_password)
+    await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
+    await db.commit()
 
 
 async def signup(

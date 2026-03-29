@@ -6,12 +6,17 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 
 import { getInitials } from '@/lib/mediaValidation'
-import { type InterviewItem, useGetInterviewsQuery } from '@/store/services/interviewsApi'
+import {
+  type InterviewItem,
+  useGetInterviewsQuery,
+  useMarkInterviewCompleteMutation,
+} from '@/store/services/interviewsApi'
 import { useGetCompanyJobsQuery, useSetHiringCompletedMutation } from '@/store/services/jobsApi'
 import { CalendarDays, Clock3, MapPin, Ticket } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
+import StatusPill from '@/components/common/StatusPill'
 
 import styles from './page.module.css'
 
@@ -101,6 +106,8 @@ export default function RecruiterInterviewsPage() {
   const { data: jobsResp, isLoading: isLoadingJobs } = useGetCompanyJobsQuery()
   const [setHiringCompleted, { isLoading: isUpdatingHiringCompleted }] =
     useSetHiringCompletedMutation()
+  const [markInterviewComplete, { isLoading: isMarkingInterviewComplete }] =
+    useMarkInterviewCompleteMutation()
 
   const jobs = useMemo(() => jobsResp?.data ?? [], [jobsResp?.data])
   const jobOptions = useMemo(
@@ -152,6 +159,16 @@ export default function RecruiterInterviewsPage() {
       void refetch()
     } catch {
       toast.error('Could not update hiring status.')
+    }
+  }
+
+  async function handleMarkInterviewComplete(interviewId: string) {
+    try {
+      await markInterviewComplete(interviewId).unwrap()
+      toast.success('Interview marked complete.')
+      void refetch()
+    } catch {
+      toast.error('Could not mark this interview as complete.')
     }
   }
 
@@ -291,6 +308,11 @@ export default function RecruiterInterviewsPage() {
                     </div>
 
                     <div className={styles.cardMeta}>
+                      <StatusPill
+                        kind="application"
+                        status={interview.application_status}
+                        className={styles.referenceBadge}
+                      />
                       <span className={styles.metaItem}>
                         <Clock3 size={14} aria-hidden="true" />
                         {formatTimeRange(interview)}
@@ -304,6 +326,20 @@ export default function RecruiterInterviewsPage() {
                         <Ticket size={13} aria-hidden="true" />
                         {interview.cal_booking_uid}
                       </span>
+                      {interview.application_status === 'interview_booked' ? (
+                        <button
+                          type="button"
+                          className="btn btn--outline btn--sm"
+                          disabled={isMarkingInterviewComplete}
+                          onClick={() => void handleMarkInterviewComplete(interview.id)}
+                        >
+                          {isMarkingInterviewComplete ? (
+                            <ButtonSpinner label="Updating..." />
+                          ) : (
+                            'Mark complete'
+                          )}
+                        </button>
+                      ) : null}
                     </div>
                   </article>
                 ))}

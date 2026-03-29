@@ -68,22 +68,16 @@ export function groupSessionsByDate(sessions: ChatSessionResponse[]) {
 
 export function getStatusTone(status: string | null | undefined) {
   switch ((status ?? '').toLowerCase()) {
-    case 'submitted':
     case 'applied':
       return 'gray'
     case 'screening':
-    case 'interview_booked':
-    case 'under_review':
       return 'warning'
-    case 'interview':
-    case 'interview_scheduled':
     case 'shortlisted':
       return 'primary'
-    case 'offered':
-    case 'hired':
+    case 'interview_booked':
+    case 'interview_completed':
+    case 'offer':
       return 'success'
-    case 'withdrawn':
-      return 'muted'
     case 'rejected':
       return 'danger'
     default:
