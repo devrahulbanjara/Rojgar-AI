@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -10,10 +11,11 @@ from app.modules.auth.models import User
 from app.modules.recruiter_chat import service
 from app.modules.recruiter_chat.schemas import (
     ChatExchangeResponse,
-    ChatHistoryMessage,
+    ChatHistoryResponse,
     ChatMessageRequest,
     ChatSessionResponse,
-    RespondToInterruptRequest,
+    ConfirmJobEditRequest,
+    ConfirmJobSelectionRequest,
 )
 
 
@@ -51,7 +53,7 @@ async def list_recruiter_chat_sessions(
 
 @router.get(
     "/sessions/{session_id}/history",
-    response_model=UnifiedResponse[list[ChatHistoryMessage]],
+    response_model=UnifiedResponse[ChatHistoryResponse],
     summary="Get recruiter chat history",
 )
 async def get_recruiter_chat_history(
@@ -79,20 +81,55 @@ async def send_recruiter_chat_message(
 
 
 @router.post(
-    "/sessions/{session_id}/interrupt",
-    response_model=UnifiedResponse[ChatExchangeResponse],
-    summary="Respond to recruiter chat review step",
+    "/sessions/{session_id}/messages/stream",
+    summary="Stream a recruiter chat message response",
 )
-async def respond_to_recruiter_chat_interrupt(
+async def stream_recruiter_chat_message(
     session_id: uuid.UUID,
-    payload: RespondToInterruptRequest,
+    payload: ChatMessageRequest,
     user: User = Depends(require_active_membership),
     db: AsyncSession = db_dep,
 ):
-    data = await service.respond_to_interrupt(db, user, session_id, payload)
-    return ResponseBuilder.success(
-        data=data, message="Recruiter chat review response recorded."
+    stream = service.stream_message(db, user, session_id, payload)
+    return StreamingResponse(
+        stream,
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
+
+
+@router.post(
+    "/sessions/{session_id}/confirm-job-selection",
+    response_model=UnifiedResponse[ChatExchangeResponse],
+    summary="Confirm a specific job choice for recruiter chat",
+)
+async def confirm_recruiter_chat_job_selection(
+    session_id: uuid.UUID,
+    payload: ConfirmJobSelectionRequest,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.confirm_job_selection(db, user, session_id, payload)
+    return ResponseBuilder.success(data=data, message="Job selection confirmed.")
+
+
+@router.post(
+    "/sessions/{session_id}/confirm-job-edit",
+    response_model=UnifiedResponse[ChatExchangeResponse],
+    summary="Approve or cancel the pending recruiter chat job edit",
+)
+async def confirm_recruiter_chat_job_edit(
+    session_id: uuid.UUID,
+    payload: ConfirmJobEditRequest,
+    user: User = Depends(require_active_membership),
+    db: AsyncSession = db_dep,
+):
+    data = await service.confirm_job_edit(db, user, session_id, payload)
+    return ResponseBuilder.success(data=data, message="Job edit decision recorded.")
 
 
 @router.delete(

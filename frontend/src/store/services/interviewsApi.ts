@@ -7,6 +7,7 @@ export interface InterviewItem {
   cal_booking_uid: string
   candidate_name: string
   candidate_email: string
+  applicant_avatar_url: string | null
   start_time: string
   end_time: string
   timezone: string | null

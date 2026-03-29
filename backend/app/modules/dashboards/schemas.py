@@ -26,7 +26,20 @@ class ApplicationPipelineItem(BaseSchema):
     created_at: datetime
     updated_at: datetime
     pipeline_step: int | None
-    has_pending_action: bool
+
+
+class CandidateInterviewItem(BaseSchema):
+    interview_id: UUID
+    application_id: UUID
+    job_id: UUID
+    job_title: str
+    company_name: str
+    company_logo_url: str | None = None
+    start_time: datetime
+    end_time: datetime
+    location: str | None = None
+    title: str | None = None
+    application_status: ApplicationStatus
 
 
 class CandidateDashboardResponse(BaseSchema):
@@ -34,7 +47,7 @@ class CandidateDashboardResponse(BaseSchema):
     is_open_to_work: bool = False
     stats: CandidateStats
     applications: list[ApplicationPipelineItem]
-    urgent_action: str | None
+    interviews: list[CandidateInterviewItem]
 
 
 class JobPipelineItem(BaseSchema):

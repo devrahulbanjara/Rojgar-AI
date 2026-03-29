@@ -177,7 +177,7 @@ export default function UserJobsPage() {
             </p>
           </div>
           <div className="dash-page-header__actions">
-            <span className="badge badge--gray">
+            <span className="page-header-hint">
               {isLoading
                 ? 'Loading jobs...'
                 : `${pagination?.total ?? 0} job${pagination?.total === 1 ? '' : 's'} available`}

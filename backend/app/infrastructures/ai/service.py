@@ -1,9 +1,12 @@
 import json
+from collections.abc import AsyncIterator
 from typing import Any, Type, TypeVar
 
 from fastapi import HTTPException, status
 from groq import APIStatusError, AsyncGroq, BadRequestError
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_groq import ChatGroq
 from loguru import logger
 from pydantic import BaseModel
 
@@ -65,6 +68,18 @@ class AIService:
     async def get_embeddings(self, text: str) -> list[float]:
         """Return a float vector for the given text using the configured provider."""
         return await self._embeddings.aembed_query(text)
+
+    def _build_chat_model(
+        self,
+        *,
+        model: str | None = None,
+        temperature: float = 0.0,
+    ) -> ChatGroq:
+        return ChatGroq(
+            model=model or settings.groq_model_recruiter_chat,
+            temperature=temperature,
+            api_key=settings.groq_api_key,
+        )
 
     async def generate_structured(
         self,
@@ -137,6 +152,25 @@ class AIService:
         content = response.choices[0].message.content
         data = json.loads(content)
         return schema_model.model_validate(data)
+
+    async def stream_text(
+        self,
+        *,
+        system_prompt: str,
+        user_payload: dict[str, Any],
+        model: str | None = None,
+        temperature: float = 0.0,
+    ) -> AsyncIterator[str]:
+        llm = self._build_chat_model(model=model, temperature=temperature)
+        messages = [
+            SystemMessage(content=system_prompt.strip()),
+            HumanMessage(content=json.dumps(user_payload, ensure_ascii=False)),
+        ]
+
+        async for chunk in llm.astream(messages):
+            content = getattr(chunk, "content", None)
+            if isinstance(content, str) and content:
+                yield content
 
 
 ai_service = AIService()

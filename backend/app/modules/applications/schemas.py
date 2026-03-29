@@ -120,21 +120,41 @@ class RecruiterApplicationView(BaseSchema):
     feedback: str | None = None
 
 
-class RecruiterCandidateListItem(BaseSchema):
-    id: UUID
-    candidate_id: UUID
+class RecruiterCandidateApplicationSummary(BaseSchema):
+    application_id: UUID
+    job_id: UUID
+    job_title: str
     status: ApplicationStatus
     created_at: datetime
     updated_at: datetime
-    applicant_name: str
-    applicant_email: str | None = None
-    applicant_avatar_url: str | None = None
-    candidate_headline: str | None = None
-    candidate_location: str | None = None
-    job_title: str
-    job_id: UUID
     score: int | None = None
     feedback: str | None = None
+
+
+class RecruiterCandidateInterviewView(BaseSchema):
+    id: UUID
+    cal_booking_uid: str
+    start_time: datetime
+    end_time: datetime
+    timezone: str | None = None
+    location: str | None = None
+    title: str | None = None
+    created_at: datetime
+
+
+class RecruiterCandidateListItem(BaseSchema):
+    candidate_id: UUID
+    applicant_name: str
+    applicant_email: str
+    applicant_avatar_url: str | None = None
+    latest_application_id: UUID
+    latest_status: ApplicationStatus
+    latest_applied_at: datetime
+    latest_updated_at: datetime
+    primary_job_title: str
+    primary_job_id: UUID
+    application_count: int
+    applications: list[RecruiterCandidateApplicationSummary]
 
 
 class RecruiterCandidateDetailView(BaseSchema):
@@ -157,5 +177,6 @@ class RecruiterCandidateDetailView(BaseSchema):
     job_id: UUID
     score: int | None = None
     feedback: str | None = None
+    interview: RecruiterCandidateInterviewView | None = None
     resume: ResumeResponse | None = None
     share_settings: CandidateShareSettings

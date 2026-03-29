@@ -25,7 +25,9 @@ from app.modules.applications.schemas import (
     ApplyRequest,
     CandidateShareSettings,
     CandidateApplicationView,
+    RecruiterCandidateApplicationSummary,
     RecruiterCandidateDetailView,
+    RecruiterCandidateInterviewView,
     RecruiterCandidateListItem,
     RecruiterApplicationView,
     UpdateApplicationReviewRequest,
@@ -33,6 +35,7 @@ from app.modules.applications.schemas import (
 )
 from app.modules.companies.models import Company
 from app.modules.companies.models import CompanyMembership
+from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
@@ -101,6 +104,39 @@ def _application_response_options():
     ]
 
 
+def _build_shared_profile_snapshot(
+    user: User,
+    profile: Profile | None,
+    share_settings: CandidateShareSettings,
+) -> dict[str, str | None]:
+    return {
+        "shared_full_name": user.full_name,
+        "shared_avatar_url": user.avatar_url if share_settings.share_avatar else None,
+        "shared_email_value": user.email,
+        "shared_phone_value": profile.phone
+        if profile and share_settings.share_phone
+        else None,
+        "shared_location_value": profile.location
+        if profile and share_settings.share_location
+        else None,
+        "shared_headline_value": profile.headline
+        if profile and share_settings.share_headline_summary
+        else None,
+        "shared_summary_value": profile.summary
+        if profile and share_settings.share_headline_summary
+        else None,
+        "shared_linkedin_url": profile.linkedin_url
+        if profile and share_settings.share_links
+        else None,
+        "shared_github_url": profile.github_url
+        if profile and share_settings.share_links
+        else None,
+        "shared_portfolio_url": profile.portfolio_url
+        if profile and share_settings.share_links
+        else None,
+    }
+
+
 def _background_database_url(db: AsyncSession) -> str:
     bind = db.bind
     if bind is not None and hasattr(bind, "url"):
@@ -161,13 +197,17 @@ async def apply_to_job(
             detail="You have already applied to this job.",
         )
 
+    profile = await db.scalar(select(Profile).where(Profile.user_id == user.id))
+    share_settings = _build_share_settings(payload)
+
     # 4. Create and persist the application
     application = Application(
         job_id=payload.job_id,
         user_id=user.id,
         resume_id=payload.resume_id,
         status=ApplicationStatus.applied,
-        **_build_share_settings(payload).model_dump(),
+        **share_settings.model_dump(),
+        **_build_shared_profile_snapshot(user, profile, share_settings),
     )
     db.add(application)
     try:
@@ -341,9 +381,9 @@ async def list_company_applications(
             status=application.status,
             created_at=application.created_at,
             updated_at=application.updated_at,
-            applicant_name=applicant.full_name,
-            applicant_email=applicant.email,
-            applicant_avatar_url=applicant.avatar_url,
+            applicant_name=application.shared_full_name or applicant.full_name,
+            applicant_email=application.shared_email_value or applicant.email,
+            applicant_avatar_url=application.shared_avatar_url,
             job_title=job.title,
             job_id=job.id,
             score=application.score,
@@ -351,35 +391,6 @@ async def list_company_applications(
         )
         for application, applicant, job in rows
     ]
-
-
-def _candidate_list_item_from_row(
-    application: Application,
-    applicant: User,
-    job: Job,
-    profile: Profile | None,
-) -> RecruiterCandidateListItem:
-    share = _application_share_settings(application)
-    return RecruiterCandidateListItem(
-        id=application.id,
-        candidate_id=applicant.id,
-        status=application.status,
-        created_at=application.created_at,
-        updated_at=application.updated_at,
-        applicant_name=applicant.full_name,
-        applicant_email=applicant.email if share.share_email else None,
-        applicant_avatar_url=applicant.avatar_url if share.share_avatar else None,
-        candidate_headline=profile.headline
-        if profile and share.share_headline_summary
-        else None,
-        candidate_location=profile.location
-        if profile and share.share_location
-        else None,
-        job_title=job.title,
-        job_id=job.id,
-        score=application.score,
-        feedback=application.feedback,
-    )
 
 
 async def list_company_candidates(
@@ -393,10 +404,9 @@ async def list_company_candidates(
     company_id = await _get_active_company_id(db, user)
 
     stmt = (
-        select(Application, User, Job, Profile)
+        select(Application, User, Job)
         .join(User, User.id == Application.user_id)
         .join(Job, Job.id == Application.job_id)
-        .outerjoin(Profile, Profile.user_id == Application.user_id)
         .where(Job.company_id == company_id)
     )
 
@@ -406,16 +416,68 @@ async def list_company_candidates(
     if status_filter is not None:
         stmt = stmt.where(Application.status == status_filter)
 
-    stmt = (
-        stmt.order_by(Application.updated_at.desc(), Application.created_at.desc())
-        .offset((page - 1) * size)
-        .limit(size)
-    )
+    stmt = stmt.order_by(Application.updated_at.desc(), Application.created_at.desc())
     rows = (await db.execute(stmt)).all()
-    return [
-        _candidate_list_item_from_row(application, applicant, job, profile)
-        for application, applicant, job, profile in rows
+    grouped: dict[str, dict[str, object]] = {}
+
+    for application, applicant, job in rows:
+        bucket = grouped.get(str(applicant.id))
+        summary = RecruiterCandidateApplicationSummary(
+            application_id=application.id,
+            job_id=job.id,
+            job_title=job.title,
+            status=application.status,
+            created_at=application.created_at,
+            updated_at=application.updated_at,
+            score=application.score,
+            feedback=application.feedback,
+        )
+
+        if bucket is None:
+            grouped[str(applicant.id)] = {
+                "candidate_id": applicant.id,
+                "applicant_name": application.shared_full_name or applicant.full_name,
+                "applicant_email": application.shared_email_value or applicant.email,
+                "applicant_avatar_url": application.shared_avatar_url,
+                "latest_application_id": application.id,
+                "latest_status": application.status,
+                "latest_applied_at": application.created_at,
+                "latest_updated_at": application.updated_at,
+                "primary_job_title": job.title,
+                "primary_job_id": job.id,
+                "applications": [summary],
+                "application_count": 1,
+            }
+            continue
+
+        bucket["applications"].append(summary)  # type: ignore[union-attr]
+        bucket["application_count"] = int(bucket["application_count"]) + 1
+
+    candidate_rows = [
+        RecruiterCandidateListItem(
+            candidate_id=bucket["candidate_id"],
+            applicant_name=bucket["applicant_name"],
+            applicant_email=bucket["applicant_email"],
+            applicant_avatar_url=bucket["applicant_avatar_url"],
+            latest_application_id=bucket["latest_application_id"],
+            latest_status=bucket["latest_status"],
+            latest_applied_at=bucket["latest_applied_at"],
+            latest_updated_at=bucket["latest_updated_at"],
+            primary_job_title=bucket["primary_job_title"],
+            primary_job_id=bucket["primary_job_id"],
+            application_count=bucket["application_count"],
+            applications=sorted(
+                bucket["applications"],  # type: ignore[arg-type]
+                key=lambda item: item.updated_at,
+                reverse=True,
+            ),
+        )
+        for bucket in grouped.values()
     ]
+    candidate_rows.sort(key=lambda item: item.latest_updated_at, reverse=True)
+    start = (page - 1) * size
+    end = start + size
+    return candidate_rows[start:end]
 
 
 async def get_company_candidate_detail(
@@ -444,11 +506,11 @@ async def get_company_candidate_detail(
             detail="This candidate does not belong to your company.",
         )
 
-    profile = await db.scalar(
-        select(Profile).where(Profile.user_id == application.user_id)
-    )
     share = _application_share_settings(application)
     applicant = application.user
+    interview = await db.scalar(
+        select(Interview).where(Interview.application_id == application.id)
+    )
 
     return RecruiterCandidateDetailView(
         id=application.id,
@@ -456,26 +518,31 @@ async def get_company_candidate_detail(
         status=application.status,
         created_at=application.created_at,
         updated_at=application.updated_at,
-        applicant_name=applicant.full_name,
-        applicant_email=applicant.email if share.share_email else None,
-        applicant_avatar_url=applicant.avatar_url if share.share_avatar else None,
-        candidate_headline=profile.headline
-        if profile and share.share_headline_summary
+        applicant_name=application.shared_full_name or applicant.full_name,
+        applicant_email=application.shared_email_value if share.share_email else None,
+        applicant_avatar_url=application.shared_avatar_url
+        if share.share_avatar
         else None,
-        candidate_summary=profile.summary
-        if profile and share.share_headline_summary
+        candidate_headline=application.shared_headline_value
+        if share.share_headline_summary
         else None,
-        candidate_phone=profile.phone if profile and share.share_phone else None,
-        candidate_location=profile.location
-        if profile and share.share_location
+        candidate_summary=application.shared_summary_value
+        if share.share_headline_summary
         else None,
-        linkedin_url=profile.linkedin_url if profile and share.share_links else None,
-        github_url=profile.github_url if profile and share.share_links else None,
-        portfolio_url=profile.portfolio_url if profile and share.share_links else None,
+        candidate_phone=application.shared_phone_value if share.share_phone else None,
+        candidate_location=application.shared_location_value
+        if share.share_location
+        else None,
+        linkedin_url=application.shared_linkedin_url if share.share_links else None,
+        github_url=application.shared_github_url if share.share_links else None,
+        portfolio_url=application.shared_portfolio_url if share.share_links else None,
         job_title=job.title,
         job_id=job.id,
         score=application.score,
         feedback=application.feedback,
+        interview=RecruiterCandidateInterviewView.model_validate(interview)
+        if interview
+        else None,
         resume=application.resume,
         share_settings=share,
     )

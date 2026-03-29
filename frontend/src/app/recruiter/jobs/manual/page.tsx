@@ -38,7 +38,24 @@ export default function RecruiterManualJobPage() {
         </Link>
       </div>
 
+      <div className="dash-page-header">
+        <div className="dash-page-header__left">
+          <h2 className="dash-page-header__title">Post New Job</h2>
+          <p className="dash-page-header__subtitle">
+            Create a new job posting manually by filling out the details below.
+          </p>
+        </div>
+      </div>
+
       <section className="job-ai-card job-ai-form dash-card">
+        <div className="job-ai-card__header dash-card__header">
+          <div>
+            <h3 className="dash-card__title">Job Details</h3>
+            <p className="dash-card__subtitle">
+              Fill in the job information. Fields marked with an asterisk (*) are required.
+            </p>
+          </div>
+        </div>
         <div className="job-ai-card__body dash-card__body">
           <RecruiterJobEditor
             key={`manual-create:${companyResp?.data?.location ?? ''}`}

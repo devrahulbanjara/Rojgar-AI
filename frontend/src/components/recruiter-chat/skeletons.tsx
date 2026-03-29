@@ -6,21 +6,47 @@ export function RecruiterChatPanelSkeleton() {
   return (
     <div className="recruiter-chat-panel-skeleton" aria-hidden="true">
       <div className="recruiter-chat-panel-skeleton__messages">
-        <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--assistant">
-          <SkeletonLine className="recruiter-chat-skeleton--w-55" />
-          <SkeletonLine className="recruiter-chat-skeleton--w-80" />
-          <SkeletonLine className="recruiter-chat-skeleton--w-45" />
+        <div className="recruiter-chat-panel-skeleton__hero">
+          <div className="recruiter-chat-panel-skeleton__hero-copy">
+            <SkeletonLine className="recruiter-chat-skeleton--w-30 recruiter-chat-skeleton--title" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-55" />
+          </div>
+          <div className="recruiter-chat-panel-skeleton__hero-actions">
+            <SkeletonLine className="recruiter-chat-skeleton--pill" />
+            <SkeletonLine className="recruiter-chat-skeleton--pill" />
+          </div>
         </div>
 
-        <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--user">
-          <SkeletonLine className="recruiter-chat-skeleton--w-40" />
-          <SkeletonLine className="recruiter-chat-skeleton--w-70" />
+        <div className="recruiter-chat-panel-skeleton__cards">
+          <div className="recruiter-chat-panel-skeleton__card">
+            <SkeletonLine className="recruiter-chat-skeleton--w-40 recruiter-chat-skeleton--title-sm" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-85" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-70" />
+          </div>
+          <div className="recruiter-chat-panel-skeleton__card">
+            <SkeletonLine className="recruiter-chat-skeleton--w-35 recruiter-chat-skeleton--title-sm" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-80" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-55" />
+          </div>
         </div>
 
-        <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--assistant">
-          <SkeletonLine className="recruiter-chat-skeleton--w-35" />
-          <SkeletonLine className="recruiter-chat-skeleton--w-85" />
-          <SkeletonLine className="recruiter-chat-skeleton--w-60" />
+        <div className="recruiter-chat-panel-skeleton__conversation">
+          <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--assistant">
+            <SkeletonLine className="recruiter-chat-skeleton--w-55" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-80" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-45" />
+          </div>
+
+          <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--user">
+            <SkeletonLine className="recruiter-chat-skeleton--w-40" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-70" />
+          </div>
+
+          <div className="recruiter-chat-panel-skeleton__message recruiter-chat-panel-skeleton__message--assistant">
+            <SkeletonLine className="recruiter-chat-skeleton--w-35" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-85" />
+            <SkeletonLine className="recruiter-chat-skeleton--w-60" />
+          </div>
         </div>
       </div>
 
