@@ -3,7 +3,7 @@ from typing import Any, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from app.integrations.ai.service import ai_service
+from app.infrastructures.ai.service import ai_service
 from app.modules.job_ai.prompts import (
     JOB_DRAFT_SYSTEM_PROMPT,
     REFINE_DRAFT_SYSTEM_PROMPT,

@@ -32,6 +32,7 @@ class CandidateOnboardingRequest(BaseSchema):
 
 class ProfileUpdate(DocumentUpdateBase):
     target_roles: list[str] | None = None
+    is_open_to_work: bool | None = None
 
 
 class ProfileResponse(DocumentResponseBase):
@@ -39,5 +40,6 @@ class ProfileResponse(DocumentResponseBase):
     user_id: UUID
     avatar_url: str | None = None
     target_roles: list[str] = Field(default_factory=list)
+    is_open_to_work: bool = False
     created_at: datetime
     updated_at: datetime

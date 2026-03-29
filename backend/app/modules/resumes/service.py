@@ -4,6 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.modules.applications.models import Application
+from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.models import User
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import (
@@ -13,6 +15,7 @@ from app.modules.resumes.models import (
     ResumeSkill,
 )
 from app.modules.resumes.schemas import ResumeListItem, ResumeResponse, ResumeUpdate
+from app.shared.enums import SyncAction
 
 
 async def _load_full_resume(db: AsyncSession, resume_id) -> Resume:
@@ -30,18 +33,48 @@ async def _load_full_resume(db: AsyncSession, resume_id) -> Resume:
 
 def _resume_to_response(resume: Resume) -> ResumeResponse:
     """Convert a Resume ORM instance to a response schema."""
-    return ResumeResponse.model_validate(resume)
+    return ResumeResponse(
+        id=resume.id,
+        user_id=resume.user_id,
+        resume_name=resume.resume_name,
+        headline=resume.headline,
+        summary=resume.summary,
+        phone=resume.phone,
+        location=resume.location,
+        linkedin_url=resume.linkedin_url,
+        github_url=resume.github_url,
+        portfolio_url=resume.portfolio_url,
+        years_of_experience=resume.years_of_experience,
+        experiences=resume.experiences,
+        educations=resume.educations,
+        skills=resume.skills,
+        created_at=resume.created_at,
+        updated_at=resume.updated_at,
+    )
 
 
 async def list_resumes(db: AsyncSession, user: User) -> list[ResumeListItem]:
     """List all resumes for a user (lightweight, no child collections)."""
+    return await list_resumes_by_user_id(db, user.id)
+
+
+async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListItem]:
+    """List all resumes for a user ID (lightweight, no child collections)."""
     result = await db.execute(
         select(Resume)
-        .where(Resume.user_id == user.id)
+        .where(Resume.user_id == user_id)
         .order_by(Resume.updated_at.desc())
     )
     resumes = result.scalars().all()
-    return [ResumeListItem.model_validate(r) for r in resumes]
+    return [
+        ResumeListItem(
+            id=resume.id,
+            resume_name=resume.resume_name,
+            created_at=resume.created_at,
+            updated_at=resume.updated_at,
+        )
+        for resume in resumes
+    ]
 
 
 async def fork_resume_from_profile(
@@ -176,10 +209,66 @@ async def update_resume(
     if payload.skills is not None:
         resume.skills = [ResumeSkill(**skill.model_dump()) for skill in payload.skills]
 
+    linked_application_ids = list(
+        await db.scalars(
+            select(Application.id).where(Application.resume_id == resume.id)
+        )
+    )
+    enqueue_application_sync_events(db, linked_application_ids, SyncAction.UPSERT)
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
     logger.info(f"Updated resume {resume_id} for user {user.id}")
     return _resume_to_response(resume)
+
+
+async def create_resume_from_import(
+    db: AsyncSession,
+    user: User,
+    resume_name: str,
+    payload: ResumeUpdate,
+) -> ResumeResponse:
+    """Create a new resume directly from a structured payload."""
+    resume = Resume(
+        user_id=user.id,
+        resume_name=resume_name,
+        headline=payload.headline,
+        summary=payload.summary,
+        phone=payload.phone,
+        location=payload.location,
+        linkedin_url=payload.linkedin_url,
+        github_url=payload.github_url,
+        portfolio_url=payload.portfolio_url,
+        years_of_experience=payload.years_of_experience,
+    )
+    db.add(resume)
+    await db.flush()
+
+    if payload.experiences is not None:
+        for experience in payload.experiences:
+            db.add(ResumeExperience(resume_id=resume.id, **experience.model_dump()))
+
+    if payload.educations is not None:
+        for education in payload.educations:
+            db.add(ResumeEducation(resume_id=resume.id, **education.model_dump()))
+
+    if payload.skills is not None:
+        for skill in payload.skills:
+            db.add(ResumeSkill(resume_id=resume.id, **skill.model_dump()))
+
+    await db.commit()
+    resume = await _load_full_resume(db, resume.id)
+    logger.info("Created AI-imported resume '{}' for user {}", resume_name, user.id)
+    return _resume_to_response(resume)
+
+
+async def create_resume_from_payload(
+    db: AsyncSession,
+    user: User,
+    resume_name: str,
+    payload: ResumeUpdate,
+) -> ResumeResponse:
+    """Backward-compatible alias for create_resume_from_import."""
+    return await create_resume_from_import(db, user, resume_name, payload)
 
 
 async def delete_resume(db: AsyncSession, user: User, resume_id: str) -> None:

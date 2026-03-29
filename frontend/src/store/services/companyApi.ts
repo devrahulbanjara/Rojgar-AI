@@ -32,6 +32,8 @@ export interface CompanyMediaData {
   company_size: string | null
   location: string | null
   website_url: string | null
+  cal_booking_url: string | null
+  cal_organizer_email: string | null
   description: string | null
   created_at: string
   updated_at: string
@@ -45,6 +47,8 @@ export interface UpdateCompanyRequest {
   company_size?: string | null
   location?: string | null
   website_url?: string | null
+  cal_booking_url?: string | null
+  cal_organizer_email?: string | null
   description?: string | null
 }
 

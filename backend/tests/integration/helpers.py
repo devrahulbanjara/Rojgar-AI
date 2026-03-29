@@ -99,7 +99,7 @@ async def make_application(
     user: User,
     job: Job,
     resume: Resume,
-    status: ApplicationStatus = ApplicationStatus.submitted,
+    status: ApplicationStatus = ApplicationStatus.applied,
 ) -> Application:
     application = Application(
         user_id=user.id,

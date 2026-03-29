@@ -1,313 +1,255 @@
-import { Search, Users } from 'lucide-react'
+'use client'
 
-const candidates = [
-  {
-    name: 'Alex Chen',
-    role: 'UI/UX Designer',
-    job: 'Product Designer',
-    score: 94,
-    status: 'Shortlisted',
-    stage: 'Interview',
-    initials: 'AC',
-    color: '#0070f3',
-    skills: ['Figma', 'Prototyping', 'UI Design'],
-    applied: '2 days ago',
-  },
-  {
-    name: 'Maria Santos',
-    role: 'Product Designer',
-    job: 'Visual Designer',
-    score: 91,
-    status: 'Shortlisted',
-    stage: 'Technical',
-    initials: 'MS',
-    color: '#7928ca',
-    skills: ['Design Thinking', 'Research', 'Figma'],
-    applied: '3 days ago',
-  },
-  {
-    name: 'James Park',
-    role: 'UX Researcher',
-    job: 'Senior Interaction',
-    score: 88,
-    status: 'In Review',
-    stage: 'Screening',
-    initials: 'JP',
-    color: '#0cce6b',
-    skills: ['User Testing', 'Miro', 'Analytics'],
-    applied: '1 day ago',
-  },
-  {
-    name: 'Lily Wang',
-    role: 'Visual Designer',
-    job: 'Visual Designer',
-    score: 85,
-    status: 'Applied',
-    stage: 'Applied',
-    initials: 'LW',
-    color: '#f59e0b',
-    skills: ['Illustration', 'After Effects', 'Blender'],
-    applied: '4 hours ago',
-  },
-  {
-    name: 'Carlos Rivera',
-    role: 'Motion Designer',
-    job: 'Visual Designer',
-    score: 82,
-    status: 'Applied',
-    stage: 'Applied',
-    initials: 'CR',
-    color: '#ff4d4d',
-    skills: ['After Effects', 'Cinema 4D', 'Lottie'],
-    applied: '6 hours ago',
-  },
-  {
-    name: 'Emma Larsson',
-    role: 'UX Designer',
-    job: 'Product Designer',
-    score: 79,
-    status: 'In Review',
-    stage: 'Screening',
-    initials: 'EL',
-    color: '#5E6AD2',
-    skills: ['Figma', 'Wireframing', 'UX Research'],
-    applied: '1 day ago',
-  },
-  {
-    name: 'David Kim',
-    role: 'UI Designer',
-    job: 'Visual Designer',
-    score: 76,
-    status: 'Rejected',
-    stage: 'Rejected',
-    initials: 'DK',
-    color: '#9ca3af',
-    skills: ['Sketch', 'InVision'],
-    applied: '5 days ago',
-  },
-  {
-    name: 'Sofia Greco',
-    role: 'Product Designer',
-    job: 'Senior Interaction',
-    score: 88,
-    status: 'Shortlisted',
-    stage: 'Interview',
-    initials: 'SG',
-    color: '#0cce6b',
-    skills: ['UX Design', 'Figma', 'Prototyping'],
-    applied: '2 days ago',
-  },
-]
+import { useMemo, useState } from 'react'
 
-const stageOrder: Record<string, number> = {
-  Applied: 1,
-  Screening: 2,
-  Technical: 3,
-  Interview: 4,
-  Offer: 5,
+import { useRouter, useSearchParams } from 'next/navigation'
+
+import {
+  type ApplicationStatus,
+  useGetMyCompanyCandidatesQuery,
+} from '@/store/services/applicationsApi'
+import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
+import { Mail, Search, UserRound, X } from 'lucide-react'
+
+import StatusPill from '@/components/common/StatusPill'
+
+import { CandidatesTableSkeleton } from './_components/CandidatesSkeletons'
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).slice(0, 2)
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'U'
 }
 
-export default function CompanyCandidatesPage() {
+function getAvatarColor(name: string): string {
+  const colors = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return colors[seed % colors.length]
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+const STATUS_OPTIONS: Array<{ value: 'all' | ApplicationStatus; label: string }> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'applied', label: 'Applied' },
+  { value: 'screening', label: 'Screening' },
+  { value: 'shortlisted', label: 'Shortlisted' },
+  { value: 'interview_booked', label: 'Interview booked' },
+  { value: 'interview_completed', label: 'Interview completed' },
+  { value: 'offer', label: 'Offer' },
+  { value: 'rejected', label: 'Rejected' },
+]
+
+export default function RecruiterCandidatesPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialJobId = searchParams.get('job_id') ?? 'all'
+  const [selectedJobId, setSelectedJobId] = useState(initialJobId)
+  const [selectedStatus, setSelectedStatus] = useState<'all' | ApplicationStatus>('all')
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { data: jobsResp } = useGetCompanyJobsQuery()
+  const {
+    data: resp,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetMyCompanyCandidatesQuery({
+    page: 1,
+    size: 200,
+  })
+
+  const jobs = jobsResp?.data ?? []
+  const candidates = useMemo(() => resp?.data ?? [], [resp?.data])
+
+  const filteredCandidates = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
+    return candidates.filter((candidate) => {
+      if (selectedJobId !== 'all' && candidate.job_id !== selectedJobId) {
+        return false
+      }
+
+      if (selectedStatus !== 'all' && candidate.status !== selectedStatus) {
+        return false
+      }
+
+      if (!normalizedSearch) {
+        return true
+      }
+
+      return [
+        candidate.applicant_name,
+        candidate.applicant_email ?? '',
+        candidate.job_title,
+        candidate.candidate_headline ?? '',
+        candidate.candidate_location ?? '',
+      ].some((value) => value.toLowerCase().includes(normalizedSearch))
+    })
+  }, [candidates, searchTerm, selectedJobId, selectedStatus])
+
+  const heading = 'Candidates'
+  const subtitle =
+    'Search and review every candidate across your jobs, then open a full profile when you need more detail.'
+
   return (
-    <>
-      <div className="dash-content container container--app-shell">
-        <div className="dash-page-header">
-          <div className="dash-page-header__left">
-            <h2 className="dash-page-header__title">Candidate Pipeline</h2>
-            <p className="dash-page-header__subtitle">
-              Track and manage all applicants across your job postings
-            </p>
-          </div>
+    <div className="dash-content container container--app-shell">
+      <div className="dash-page-header">
+        <div className="dash-page-header__left">
+          <h2 className="dash-page-header__title">{heading}</h2>
+          <p className="dash-page-header__subtitle">{subtitle}</p>
         </div>
-
-        {/* Pipeline summary */}
-        <div className="dash-stats dash-stats--5col">
-          {[
-            { label: 'Applied', value: 74, color: '#9ca3af', bg: '#f4f4f5' },
-            {
-              label: 'Screening',
-              value: 28,
-              color: '#0070f3',
-              bg: 'rgba(0,112,243,0.08)',
-            },
-            {
-              label: 'Technical',
-              value: 12,
-              color: '#7928ca',
-              bg: 'rgba(121,40,202,0.08)',
-            },
-            {
-              label: 'Interview',
-              value: 8,
-              color: '#f59e0b',
-              bg: 'rgba(245,158,11,0.1)',
-            },
-            {
-              label: 'Offer',
-              value: 3,
-              color: '#0cce6b',
-              bg: 'rgba(12,206,107,0.1)',
-            },
-          ].map((s) => (
-            <div key={s.label} className="stat-card stat-card--centered">
-              <div
-                className="pipeline-icon"
-                style={{ '--pipeline-bg': s.bg } as React.CSSProperties}
-              >
-                <Users size={18} stroke={s.color} aria-hidden="true" />
-              </div>
-              <div
-                className="stat-card__value stat-card__value--colored"
-                style={{ '--stat-value-color': s.color } as React.CSSProperties}
-              >
-                {s.value}
-              </div>
-              <div className="stat-card__label">{s.label}</div>
-            </div>
-          ))}
+        <div className="dash-page-header__actions">
+          <span className="badge badge--gray">
+            {filteredCandidates.length} candidate{filteredCandidates.length === 1 ? '' : 's'}
+          </span>
         </div>
+      </div>
 
-        {/* Filters */}
-        <div className="dash-filter-bar">
-          <div className="dash-topbar__search dash-topbar__search--md">
-            <Search size={16} aria-hidden="true" />
-            <input placeholder="Search candidates..." />
+      <div className="dash-card">
+        <div className="dash-card__body recruiter-candidates-toolbar">
+          <div className="dash-page-toolbar__search recruiter-candidates-toolbar__search">
+            <span className="dash-page-toolbar__icon">
+              <Search size={16} aria-hidden="true" />
+            </span>
+            <input
+              type="text"
+              className="dash-page-toolbar__input"
+              placeholder="Search by candidate, email, headline, or job"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+            {searchTerm ? (
+              <button
+                type="button"
+                className="dash-page-toolbar__clear"
+                onClick={() => setSearchTerm('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
           </div>
-          <select className="dash-select">
-            <option>All Jobs</option>
-            <option>Product Designer</option>
-            <option>Visual Designer</option>
-            <option>Senior Interaction Designer</option>
+
+          <select
+            className="resume-field__input recruiter-candidates-toolbar__select"
+            value={selectedJobId}
+            onChange={(event) => setSelectedJobId(event.target.value)}
+          >
+            <option value="all">All jobs</option>
+            {jobs.map((job) => (
+              <option key={job.id} value={job.id}>
+                {job.title}
+              </option>
+            ))}
           </select>
-          {['All', 'Shortlisted', 'In Review', 'Applied'].map((f) => (
-            <button
-              key={f}
-              className={`btn btn--sm ${f === 'All' ? 'btn--primary' : 'btn--ghost'}`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
 
-        {/* Table */}
+          <select
+            className="resume-field__input recruiter-candidates-toolbar__select"
+            value={selectedStatus}
+            onChange={(event) => setSelectedStatus(event.target.value as 'all' | ApplicationStatus)}
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <CandidatesTableSkeleton count={5} />
+      ) : isError ? (
+        <div className="dash-card">
+          <div className="dash-card__body">
+            Failed to load candidates.{' '}
+            <button className="auth__inline-link" onClick={() => void refetch()}>
+              Try again
+            </button>
+          </div>
+        </div>
+      ) : filteredCandidates.length === 0 ? (
+        <div className="dash-card">
+          <div className="dash-card__body dash-empty-state">
+            <UserRound className="dash-empty-state__icon" />
+            <p>No candidates match these filters yet.</p>
+          </div>
+        </div>
+      ) : (
         <div className="dash-card">
           <div className="table-scroll">
-            <table className="dash-table">
+            <table className="dash-table dash-table--clickable">
               <thead>
                 <tr>
                   <th>Candidate</th>
-                  <th>Applied For</th>
-                  <th>Skills</th>
-                  <th>AI Score</th>
-                  <th>Stage</th>
+                  <th>Job</th>
                   <th>Status</th>
                   <th>Applied</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {candidates.map((c) => (
-                  <tr key={c.name}>
+                {filteredCandidates.map((candidate) => (
+                  <tr
+                    key={candidate.id}
+                    onClick={() => router.push(`/recruiter/candidates/${candidate.id}`)}
+                  >
                     <td>
                       <div className="cell-user">
                         <div
-                          className="cell-user__avatar"
+                          className="cell-user__avatar cell-user__avatar--sm"
                           style={
                             {
-                              '--avatar-bg': c.color + '1A',
-                              '--avatar-color': c.color,
+                              '--avatar-bg': getAvatarColor(candidate.applicant_name) + '1A',
+                              '--avatar-color': getAvatarColor(candidate.applicant_name),
+                              backgroundImage: candidate.applicant_avatar_url
+                                ? `url(${candidate.applicant_avatar_url})`
+                                : undefined,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
                             } as React.CSSProperties
                           }
                         >
-                          {c.initials}
+                          {!candidate.applicant_avatar_url && getInitials(candidate.applicant_name)}
                         </div>
-                        <div className="cell-user__info">
-                          <div className="cell-user__name">{c.name}</div>
-                          <div className="cell-user__sub">{c.role}</div>
+                        <div className="recruiter-candidates-table__identity">
+                          <div className="recruiter-candidates-table__name">
+                            {candidate.applicant_name}
+                          </div>
+                          <div className="recruiter-candidates-table__meta">
+                            {candidate.applicant_email ? (
+                              <span>
+                                <Mail size={12} aria-hidden="true" />
+                                {candidate.applicant_email}
+                              </span>
+                            ) : (
+                              <span>Email hidden by candidate</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="cell-meta">{c.job}</td>
                     <td>
-                      <div className="cell-actions">
-                        {c.skills.slice(0, 2).map((s) => (
-                          <span key={s} className="skill-tag">
-                            {s}
-                          </span>
-                        ))}
+                      <div className="recruiter-candidates-table__job">
+                        <div>{candidate.job_title}</div>
                       </div>
                     </td>
                     <td>
-                      <span
-                        className="score-badge"
-                        style={
-                          {
-                            '--score-color':
-                              c.score >= 90 ? '#0cce6b' : c.score >= 80 ? '#0070f3' : '#f59e0b',
-                          } as React.CSSProperties
-                        }
-                      >
-                        {c.score}%
-                      </span>
+                      <StatusPill kind="application" status={candidate.status} />
                     </td>
-                    <td>
-                      {/* Stage progress */}
-                      <div className="stage-progress">
-                        {['S', 'T', 'I', 'O'].map((step, idx) => (
-                          <div
-                            key={step}
-                            className="stage-progress__bar"
-                            style={
-                              {
-                                '--bar-color':
-                                  (stageOrder[c.stage] || 0) > idx + 1
-                                    ? '#0070f3'
-                                    : stageOrder[c.stage] === idx + 2
-                                      ? 'rgba(0,112,243,0.4)'
-                                      : '#e4e4e7',
-                              } as React.CSSProperties
-                            }
-                          />
-                        ))}
-                        <span className="stage-progress__label">{c.stage}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span
-                        className={`badge badge--${c.status === 'Shortlisted' ? 'success' : c.status === 'In Review' ? 'warning' : c.status === 'Rejected' ? 'danger' : 'gray'}`}
-                      >
-                        {c.status}
-                      </span>
-                    </td>
-                    <td className="cell-muted">{c.applied}</td>
-                    <td>
-                      <div className="cell-actions">
-                        <button className="btn btn--outline btn--sm">Review</button>
-                        <button className="btn btn--ghost btn--sm">Schedule</button>
-                      </div>
-                    </td>
+                    <td className="cell-muted">{formatDate(candidate.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="dash-card__footer">
-            <span className="cell-muted">Showing 8 of 125 candidates</span>
-            <div className="cell-actions">
-              <button className="btn btn--ghost btn--sm">← Prev</button>
-              {[1, 2, 3].map((n) => (
-                <button
-                  key={n}
-                  className={`btn btn--sm ${n === 1 ? 'btn--primary' : 'btn--ghost'}`}
-                >
-                  {n}
-                </button>
-              ))}
-              <button className="btn btn--ghost btn--sm">Next →</button>
-            </div>
-          </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   )
 }

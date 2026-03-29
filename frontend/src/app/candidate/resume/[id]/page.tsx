@@ -4,18 +4,21 @@ import { useEffect, useRef, useState } from 'react'
 import { use } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import type { Resume } from '@/lib/types/resume'
 import type { RootState } from '@/store'
 import { useGetResumeByIdQuery, useUpdateResumeMutation } from '@/store/services/resumeApi'
 import { apiResumeToUi, updateResume, upsertResume } from '@/store/slices/resumeSlice'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { ArrowLeft, Download } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
 import Loader from '@/components/common/Loader'
 
 import ResumeEditor from '../_components/ResumeEditor'
 import ResumeTemplate from '../_components/ResumeTemplate'
+import { resumePrintStyles } from '../_components/resumePrintStyles'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -50,18 +53,11 @@ function uiResumeToApiUpdate(r: Resume) {
 
 // ── Resume Viewer (full-screen) ────────────────────────────────────────────
 
-function ResumeViewer({
-  resume,
-  onBack,
-  onEdit,
-}: {
-  resume: Resume
-  onBack: () => void
-  onEdit: () => void
-}) {
+function ResumeViewer({ resume, onEdit }: { resume: Resume; onEdit: () => void }) {
   const printRef = useRef<HTMLDivElement>(null)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
 
-  function handlePrint() {
+  function handlePrintFallback() {
     const content = printRef.current
     if (!content) return
     const win = window.open('', '_blank')
@@ -69,32 +65,8 @@ function ResumeViewer({
     win.document.write(`
       <html>
         <head>
-          <title>${resume.fullName} \u2014 Resume</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: 'Lato', sans-serif; font-size: 10pt; color: #111; padding: 40px 48px; }
-            .rv-header__name { font-size: 24pt; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; margin-bottom: 4px; }
-            .rv-header__headline { font-size: 10pt; margin-bottom: 8px; font-style: italic; color: #444; }
-            .rv-header__contacts { display: flex; flex-wrap: wrap; gap: 14px; font-size: 9pt; color: #444; margin-bottom: 6px; }
-            .rv-header__contact { display: flex; align-items: center; gap: 4px; }
-            .rv-link { color: #111; text-decoration: none; }
-            .rv-section { margin-top: 16px; }
-            .rv-section__heading { font-size: 10pt; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; border-bottom: 1.5px solid #111; padding-bottom: 3px; margin-bottom: 10px; }
-            .rv-section__body { font-size: 9.5pt; line-height: 1.55; color: #333; }
-            .rv-exp { margin-bottom: 14px; }
-            .rv-exp__title { font-weight: 700; font-size: 10pt; }
-            .rv-exp__company { font-weight: 700; font-size: 9pt; color: #555; margin-bottom: 2px; }
-            .rv-exp__meta { display: flex; gap: 14px; font-size: 8.5pt; color: #666; margin-top: 2px; margin-bottom: 4px; }
-            .rv-exp__meta-item { display: flex; align-items: center; gap: 3px; }
-            .rv-bullets { padding-left: 16px; font-size: 9.5pt; line-height: 1.5; color: #333; }
-            .rv-bullets li { margin-bottom: 3px; }
-            .rv-edu { margin-bottom: 10px; }
-            .rv-edu__degree { font-weight: 700; font-size: 10pt; }
-            .rv-edu__institution { font-weight: 700; font-size: 9pt; color: #555; }
-            .rv-skills { display: flex; flex-wrap: wrap; gap: 6px; }
-            .rv-skills__chip { border: 1px solid #ccc; border-radius: 3px; padding: 2px 10px; font-size: 9pt; }
-          </style>
+          <title>${resume.fullName} - Resume</title>
+          <style>${resumePrintStyles}</style>
         </head>
         <body>${content.innerHTML}</body>
       </html>
@@ -105,18 +77,67 @@ function ResumeViewer({
     win.close()
   }
 
+  async function handleDownloadPdf() {
+    const content = printRef.current
+    if (!content || isDownloadingPdf) return
+
+    setIsDownloadingPdf(true)
+
+    try {
+      const html2pdf = (await import('html2pdf.js')).default
+      const baseName = resume.fullName || resume.name || 'resume'
+      const fileName = `${
+        baseName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .trim()
+          .replace(/\s+/g, '-') || 'resume'
+      }.pdf`
+
+      await html2pdf()
+        .set({
+          filename: fileName,
+          margin: [0.18, 0.18, 0.18, 0.18],
+          enableLinks: true,
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+          },
+          jsPDF: {
+            unit: 'in',
+            format: 'letter',
+            orientation: 'portrait',
+          },
+        })
+        .from(content)
+        .save()
+    } catch (error) {
+      console.error('PDF download failed, falling back to print dialog.', error)
+      handlePrintFallback()
+    } finally {
+      setIsDownloadingPdf(false)
+    }
+  }
+
   return (
     <div className="rv-overlay">
       <div className="rv-overlay__bar">
-        <button className="btn btn--ghost btn--sm" onClick={onBack}>
-          <ArrowLeft size={14} />
-          Back
-        </button>
-        <span className="rv-overlay__title">{resume.name}</span>
-        <div className="rv-overlay__actions">
-          <button className="btn btn--ghost btn--sm" onClick={handlePrint}>
-            <Printer size={14} />
-            Print / PDF
+        <div className="rv-overlay__bar-left">
+          <Link href="/candidate/resume" className="jd-back">
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to Resumes
+          </Link>
+        </div>
+        <span className="rv-overlay__bar-title">{resume.name}</span>
+        <div className="rv-overlay__bar-right rv-overlay__actions">
+          <button
+            className="btn btn--ghost btn--sm"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf}
+          >
+            <Download size={14} />
+            {isDownloadingPdf ? <ButtonSpinner label="Downloading..." /> : 'Download PDF'}
           </button>
           <button className="btn btn--primary btn--sm" onClick={onEdit}>
             Edit
@@ -253,10 +274,6 @@ export default function ResumeDetailPage({
   }
 
   return (
-    <ResumeViewer
-      resume={resume}
-      onBack={() => router.push('/candidate/resume')}
-      onEdit={() => router.push(`/candidate/resume/${id}?mode=edit`)}
-    />
+    <ResumeViewer resume={resume} onEdit={() => router.push(`/candidate/resume/${id}?mode=edit`)} />
   )
 }

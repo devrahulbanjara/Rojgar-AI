@@ -1,4 +1,6 @@
+import json
 import uuid
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
@@ -6,12 +8,16 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.integrations.qdrant.service import qdrant_service
+from app.infrastructures.qdrant.service import qdrant_service
+from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
-from app.modules.auth.enums import MembershipStatus
+from app.modules.applications.models import ApplicationSyncEvent
+from app.modules.applications.sync import (
+    process_sync_event as process_application_sync_event,
+)
+from app.modules.auth.enums import MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
-from app.modules.jobs.enums import SyncAction
 from app.modules.jobs.models import Job, JobSyncEvent
 from app.modules.jobs.schemas import (
     CompanySnippet,
@@ -22,7 +28,102 @@ from app.modules.jobs.schemas import (
 )
 from app.modules.jobs.sync import process_sync_event
 from app.modules.profiles.models import Profile
-from app.shared.enums import LocationType
+from app.shared.enums import JobStatus, LocationType, SyncAction
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _default_expires_at() -> datetime:
+    return _utcnow() + timedelta(weeks=1)
+
+
+def _today_utc() -> date:
+    return _utcnow().date()
+
+
+def _effective_job_status(job: Job) -> JobStatus:
+    if (
+        job.status == JobStatus.active
+        and job.expires_at is not None
+        and job.expires_at <= _utcnow()
+    ):
+        return JobStatus.expired
+    return job.status
+
+
+def _validate_expires_at_for_write(expires_at: datetime | None) -> datetime | None:
+    if expires_at is None:
+        return None
+    if expires_at.tzinfo is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="expires_at must be timezone-aware.",
+        )
+    return expires_at
+
+
+def _should_be_searchable(job: Job) -> bool:
+    return _effective_job_status(job) == JobStatus.active and (
+        job.expires_at is None or job.expires_at > _utcnow()
+    )
+
+
+def _background_database_url(db: AsyncSession) -> str:
+    bind = db.bind
+    if bind is not None and hasattr(bind, "url"):
+        return str(bind.url)
+
+    raise RuntimeError("Database bind is not configured for background task execution.")
+
+
+async def expire_due_jobs(db: AsyncSession) -> int:
+    """
+    Expire all jobs whose expiry date is today or earlier.
+
+    This is date-based instead of timestamp-based so that a job with an
+    expires_at date of "today" is expired on that day by the scheduled task.
+    """
+    today = _today_utc()
+    result = await db.execute(
+        select(Job).where(
+            Job.status == JobStatus.active,
+            Job.expires_at.is_not(None),
+            func.date(Job.expires_at) <= today,
+        )
+    )
+    jobs = result.scalars().all()
+    if not jobs:
+        return 0
+
+    company_ids: set[uuid.UUID] = set()
+    event_ids: list[uuid.UUID] = []
+
+    for job in jobs:
+        job.status = JobStatus.expired
+        company_ids.add(job.company_id)
+        event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
+        db.add(event)
+        event_ids.append(event.id)
+
+    await db.commit()
+
+    for job in jobs:
+        await redis_service.delete(f"job:detail:{job.id}")
+    for company_id in company_ids:
+        await redis_service.delete(f"jobs:company:{company_id}")
+    await redis_service.invalidate_pattern("dashboard:recruiter*")
+
+    for event_id in event_ids:
+        await process_sync_event(event_id)
+
+    logger.info(
+        "Expired {} due job(s) for {} compan(y/ies).",
+        len(jobs),
+        len(company_ids),
+    )
+    return len(jobs)
 
 
 def _job_list_item_from_row(
@@ -31,6 +132,7 @@ def _job_list_item_from_row(
     *,
     match_score: float | None = None,
     is_fallback: bool = False,
+    has_applied: bool = False,
 ) -> JobListItem:
     company = CompanySnippet.model_validate(job.company)
     return JobListItem.model_validate(
@@ -44,8 +146,14 @@ def _job_list_item_from_row(
             "salary_min": job.salary_min,
             "salary_max": job.salary_max,
             "currency": job.currency,
-            "status": job.status,
+            "status": _effective_job_status(job),
+            "auto_shortlist": job.auto_shortlist,
+            "shortlist_threshold": job.shortlist_threshold,
+            "expires_at": job.expires_at,
             "applications_count": int(applications_count or 0),
+            "final_shortlist_completed": job.final_shortlist_completed,
+            "hiring_completed": job.hiring_completed,
+            "has_applied": has_applied,
             "created_at": job.created_at,
             "match_score": match_score,
             "is_fallback": is_fallback,
@@ -54,7 +162,7 @@ def _job_list_item_from_row(
 
 
 def _job_detail_response_from_row(
-    job: Job, applications_count: int | None = None
+    job: Job, applications_count: int | None = None, *, has_applied: bool = False
 ) -> JobDetailResponse:
     company = CompanySnippet.model_validate(job.company)
     return JobDetailResponse.model_validate(
@@ -69,17 +177,39 @@ def _job_detail_response_from_row(
             "salary_min": job.salary_min,
             "salary_max": job.salary_max,
             "currency": job.currency,
-            "status": job.status,
+            "status": _effective_job_status(job),
+            "auto_shortlist": job.auto_shortlist,
+            "shortlist_threshold": job.shortlist_threshold,
+            "expires_at": job.expires_at,
             "overview": job.overview,
             "responsibilities": job.responsibilities,
             "requirements": job.requirements,
             "preferred_qualifications": job.preferred_qualifications,
             "benefits": job.benefits,
             "applications_count": int(applications_count or 0),
+            "hiring_completed": job.hiring_completed,
+            "has_applied": has_applied,
             "created_at": job.created_at,
             "updated_at": job.updated_at,
         }
     )
+
+
+async def _get_applied_job_ids(
+    db: AsyncSession,
+    user: User | None,
+    job_ids: list[uuid.UUID],
+) -> set[uuid.UUID]:
+    if not user or user.primary_role != UserRole.candidate or not job_ids:
+        return set()
+
+    result = await db.execute(
+        select(Application.job_id).where(
+            Application.user_id == user.id,
+            Application.job_id.in_(job_ids),
+        )
+    )
+    return set(result.scalars().all())
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
@@ -104,6 +234,10 @@ async def create_job(
     """Create a new job posting under the user's company."""
     company_id = await _get_user_company_id(db, user)
 
+    expires_at = _validate_expires_at_for_write(payload.expires_at)
+    if expires_at is None:
+        expires_at = _default_expires_at()
+
     job = Job(
         company_id=company_id,
         posted_by=user.id,
@@ -114,12 +248,27 @@ async def create_job(
         salary_max=payload.salary_max,
         currency=payload.currency,
         status=payload.status,
+        auto_shortlist=payload.auto_shortlist,
+        shortlist_threshold=payload.shortlist_threshold,
+        expires_at=expires_at,
         overview=payload.overview,
-        responsibilities=payload.responsibilities,
-        requirements=payload.requirements,
-        preferred_qualifications=payload.preferred_qualifications,
-        benefits=payload.benefits,
+        responsibilities=payload.responsibilities or [],
+        requirements=payload.requirements or [],
+        preferred_qualifications=payload.preferred_qualifications or [],
+        benefits=payload.benefits or [],
     )
+
+    # guard against active jobs already expired
+    if (
+        job.status == JobStatus.active
+        and job.expires_at
+        and job.expires_at <= _utcnow()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Active jobs must have an expires_at in the future.",
+        )
+
     db.add(job)
     await db.flush()  # Generates job.id without committing yet
 
@@ -140,6 +289,10 @@ async def create_job(
     )
     job, applications_count = result.one()
     logger.info(f"Job '{job.title}' created by user {user.id}")
+
+    await redis_service.delete(f"jobs:company:{company_id}")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
+
     return _job_detail_response_from_row(job, applications_count)
 
 
@@ -205,8 +358,6 @@ async def search_jobs(
     - Metadata filters (location_type, salary) are applied inside
       Qdrant, with smart fallback padding for under-filled pages.
     """
-    from app.modules.auth.enums import UserRole  # local import avoids circular
-
     # 1. Determine the semantic query string
     if q and q.strip():
         search_query = q.strip()
@@ -230,6 +381,7 @@ async def search_jobs(
 
     # 3. Batch-fetch the real job rows from Postgres (preserves no ordering)
     job_ids = [res["job_id"] for res in qdrant_results]
+    applied_job_ids = await _get_applied_job_ids(db, user, job_ids)
     stmt = (
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -247,21 +399,33 @@ async def search_jobs(
         if row is None:
             continue  # ghost vector (job deleted from Postgres but not yet from Qdrant)
         job, app_count = row
+
+        if not _should_be_searchable(job):
+            continue
+
         final_jobs.append(
             _job_list_item_from_row(
                 job,
                 app_count,
                 match_score=round(res["score"], 4),
                 is_fallback=res["is_fallback"],
+                has_applied=job.id in applied_job_ids,
             )
         )
 
-    return final_jobs, total_count
+    return final_jobs, len(final_jobs) if page == 1 else total_count
 
 
 async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     """List all jobs belonging to the user's company."""
     company_id = await _get_user_company_id(db, user)
+    cache_key = f"jobs:company:{company_id}"
+
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        data = json.loads(cached_data)
+        return [JobListItem.model_validate(item) for item in data]
+
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -271,14 +435,34 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
         .order_by(Job.created_at.desc())
     )
     rows = result.all()
-    return [
+    response = [
         _job_list_item_from_row(job, applications_count)
         for job, applications_count in rows
     ]
 
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=3600,
+    )
 
-async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
+    return response
+
+
+async def get_job_detail(
+    db: AsyncSession, job_id: str, user: User | None = None
+) -> JobDetailResponse:
     """Get full job details including description."""
+    cache_key = (
+        f"job:detail:{job_id}:candidate:{user.id}"
+        if user and user.primary_role == UserRole.candidate
+        else f"job:detail:{job_id}"
+    )
+
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return JobDetailResponse.model_validate_json(cached_data)
+
     result = await db.execute(
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -293,7 +477,16 @@ async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
             detail="Job not found.",
         )
     job, applications_count = row
-    return _job_detail_response_from_row(job, applications_count)
+    applied_job_ids = await _get_applied_job_ids(db, user, [job.id])
+    response = _job_detail_response_from_row(
+        job,
+        applications_count,
+        has_applied=job.id in applied_job_ids,
+    )
+
+    await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
+
+    return response
 
 
 async def update_job(
@@ -316,28 +509,44 @@ async def update_job(
             detail="Job not found or you do not have permission.",
         )
 
-    for field in (
-        "title",
-        "location",
-        "location_type",
-        "salary_min",
-        "salary_max",
-        "currency",
-        "status",
-        "overview",
-        "responsibilities",
-        "requirements",
-        "preferred_qualifications",
-        "benefits",
+    was_auto_shortlist_enabled = job.auto_shortlist
+    was_open_for_auto_shortlist = _should_be_searchable(job)
+    update_data = payload.model_dump(exclude_unset=True)
+
+    if "expires_at" in update_data:
+        update_data["expires_at"] = _validate_expires_at_for_write(
+            update_data["expires_at"]
+        )
+
+    for field, value in update_data.items():
+        setattr(job, field, value)
+
+    if job.status == JobStatus.expired and (
+        job.expires_at is None or job.expires_at > _utcnow()
     ):
-        value = getattr(payload, field, None)
-        if value is not None:
-            setattr(job, field, value)
+        job.expires_at = _utcnow()
+
+    if (
+        job.status == JobStatus.active
+        and job.expires_at
+        and job.expires_at <= _utcnow()
+    ):
+        job.status = JobStatus.expired
 
     # 1. Transactionally write the outbox event alongside the update
     event = JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT)
     db.add(event)
     await db.commit()
+
+    now_open_for_auto_shortlist = job.auto_shortlist and _should_be_searchable(job)
+    if now_open_for_auto_shortlist and (
+        not was_auto_shortlist_enabled or not was_open_for_auto_shortlist
+    ):
+        from app.modules.shortlisting.service import queue_auto_shortlist_backfill
+
+        bg_tasks.add_task(
+            queue_auto_shortlist_backfill, job.id, _background_database_url(db)
+        )
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
     bg_tasks.add_task(process_sync_event, event.id)
@@ -351,7 +560,15 @@ async def update_job(
     )
     job, applications_count = result.one()
     logger.info(f"Job '{job.title}' updated by user {user.id}")
-    return _job_detail_response_from_row(job, applications_count)
+
+    response = _job_detail_response_from_row(job, applications_count)
+
+    await redis_service.delete(f"job:detail:{job_id}")
+    await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
+    await redis_service.delete(f"jobs:company:{company_id}")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
+
+    return response
 
 
 async def delete_job(
@@ -370,8 +587,18 @@ async def delete_job(
             detail="Job not found or you do not have permission.",
         )
 
+    application_ids = list(
+        await db.scalars(select(Application.id).where(Application.job_id == job.id))
+    )
     job_title = job.title  # capture before deletion
     await db.delete(job)
+
+    application_sync_events = [
+        ApplicationSyncEvent(application_id=application_id, action=SyncAction.DELETE)
+        for application_id in application_ids
+    ]
+    for application_sync_event in application_sync_events:
+        db.add(application_sync_event)
 
     # 1. Transactionally write the hard-delete outbox event
     event = JobSyncEvent(job_id=uuid.UUID(str(job_id)), action=SyncAction.DELETE)
@@ -380,5 +607,12 @@ async def delete_job(
 
     # 2. Fast-path: trigger immediate Qdrant sync (non-blocking, after response)
     bg_tasks.add_task(process_sync_event, event.id)
+    for application_sync_event in application_sync_events:
+        bg_tasks.add_task(process_application_sync_event, application_sync_event.id)
+
+    await redis_service.delete(f"job:detail:{job_id}")
+    await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
+    await redis_service.delete(f"jobs:company:{company_id}")
+    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
 
     logger.info(f"Job '{job_title}' deleted by user {user.id}")

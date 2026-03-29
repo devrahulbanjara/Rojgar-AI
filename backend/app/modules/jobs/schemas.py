@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from app.core.schemas import BaseSchema
@@ -14,20 +14,33 @@ class JobBase(BaseSchema):
     salary_max: int | None = None
     currency: str | None = Field(default=None, max_length=10)
     status: JobStatus | None = None
+    expires_at: datetime | None = None
     overview: str | None = None
     responsibilities: list[str] | None = None
     requirements: list[str] | None = None
     preferred_qualifications: list[str] | None = None
     benefits: list[str] | None = None
+    auto_shortlist: bool = False
+    shortlist_threshold: int = Field(default=70, ge=0, le=100)
 
     @model_validator(mode="after")
-    def check_salary_range(self) -> "JobBase":
+    def validate_job_fields(self) -> "JobBase":
         if (
             self.salary_min is not None
             and self.salary_max is not None
             and self.salary_min > self.salary_max
         ):
             raise ValueError("salary_min cannot be greater than salary_max")
+
+        if self.expires_at is not None:
+            if self.expires_at.tzinfo is None:
+                raise ValueError("expires_at must be timezone-aware")
+
+            if self.status == JobStatus.active and self.expires_at <= datetime.now(
+                timezone.utc
+            ):
+                raise ValueError("expires_at must be in the future for active jobs")
+
         return self
 
 
@@ -38,10 +51,6 @@ class JobCreate(JobBase):
     location_type: LocationType = LocationType.onsite
     currency: str = Field(default="NPR", max_length=10)
     status: JobStatus = JobStatus.draft
-    responsibilities: list[str] = []
-    requirements: list[str] = []
-    preferred_qualifications: list[str] = []
-    benefits: list[str] = []
 
 
 class JobUpdate(JobBase):
@@ -55,6 +64,7 @@ class CompanySnippet(BaseSchema):
 
     id: UUID
     name: str
+    logo_url: str | None = None
     industry: str | None = None
     company_size: str | None = None
     location: str | None = None
@@ -75,7 +85,13 @@ class JobListItem(BaseSchema):
     salary_max: int | None = None
     currency: str = "NPR"
     status: JobStatus
+    auto_shortlist: bool = False
+    shortlist_threshold: int = 70
+    expires_at: datetime | None = None
     applications_count: int = 0
+    final_shortlist_completed: bool = False
+    hiring_completed: bool = False
+    has_applied: bool = False
     created_at: datetime
 
     match_score: float | None = Field(
@@ -101,11 +117,16 @@ class JobDetailResponse(BaseSchema):
     salary_max: int | None = None
     currency: str
     status: JobStatus
+    auto_shortlist: bool = False
+    shortlist_threshold: int = 70
+    expires_at: datetime | None = None
     overview: str | None = None
     responsibilities: list[str] = []
     requirements: list[str] = []
     preferred_qualifications: list[str] = []
     benefits: list[str] = []
     applications_count: int = 0
+    hiring_completed: bool = False
+    has_applied: bool = False
     created_at: datetime
     updated_at: datetime

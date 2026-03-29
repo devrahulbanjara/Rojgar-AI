@@ -41,6 +41,40 @@ function StatusBadge({ status }: { status: RecruiterMember['status'] }) {
   )
 }
 
+function RecruiterRowSkeleton() {
+  return (
+    <div className="item-row item-row--pad" aria-hidden="true" style={{ pointerEvents: 'none' }}>
+      <div
+        className="skeleton-block"
+        style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }}
+      />
+      <div className="item-row__info" style={{ flex: 1 }}>
+        <div
+          className="skeleton-block"
+          style={{ width: '150px', height: '1.25rem', marginBottom: '0.25rem' }}
+        />
+        <div
+          className="skeleton-block"
+          style={{ width: '200px', height: '0.875rem', marginBottom: '0.75rem' }}
+        />
+        <div className="cell-actions">
+          <div
+            className="skeleton-block"
+            style={{ width: '60px', height: '1.5rem', borderRadius: '9999px' }}
+          />
+          <div className="skeleton-block" style={{ width: '100px', height: '0.875rem' }} />
+        </div>
+      </div>
+      <div className="cell-actions" style={{ gap: '0.5rem' }}>
+        <div
+          className="skeleton-block"
+          style={{ width: '80px', height: '2rem', borderRadius: '0.375rem' }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function RecruitersPage() {
   const router = useRouter()
   const { user } = useAppSelector((s) => s.auth)
@@ -110,12 +144,6 @@ export default function RecruitersPage() {
         </div>
       </div>
 
-      {isLoading && (
-        <div className="dash-card">
-          <div className="dash-card__body">Loading recruiters…</div>
-        </div>
-      )}
-
       {isError && (
         <div className="dash-card">
           <div className="dash-card__body">Failed to load recruiters. Please refresh.</div>
@@ -124,7 +152,7 @@ export default function RecruitersPage() {
 
       {/* Pending requests */}
       {!isLoading && pending.length > 0 && (
-        <div className="dash-card">
+        <div className="dash-card content-fade-in">
           <div className="dash-card__header">
             <div>
               <div className="dash-card__title">Pending Requests</div>
@@ -166,34 +194,50 @@ export default function RecruitersPage() {
               Recruiters currently working with your company
             </div>
           </div>
-          <span className="skill-pill" style={{ background: '#0cce6b1A', color: '#0cce6b' }}>
-            {active.length}
-          </span>
+          {!isLoading && (
+            <span className="skill-pill" style={{ background: '#0cce6b1A', color: '#0cce6b' }}>
+              {active.length}
+            </span>
+          )}
+          {isLoading && (
+            <div
+              className="skeleton-block"
+              style={{ width: '32px', height: '1.5rem', borderRadius: '9999px' }}
+            />
+          )}
         </div>
         <div className="dash-card__body dash-card__body--no-top">
-          {active.length === 0 ? (
+          {isLoading ? (
+            <>
+              <RecruiterRowSkeleton />
+              <RecruiterRowSkeleton />
+              <RecruiterRowSkeleton />
+            </>
+          ) : active.length === 0 ? (
             <p style={{ color: 'var(--color-muted)', padding: '1rem 0' }}>
               No active recruiters yet.
             </p>
           ) : (
-            active.map((r) => (
-              <RecruiterRow key={r.membership_id} recruiter={r}>
-                <button
-                  className="btn btn--danger btn--sm"
-                  disabled={isUpdating || isRemoving}
-                  onClick={() => handleRemove(r.membership_id)}
-                >
-                  Remove
-                </button>
-              </RecruiterRow>
-            ))
+            <div className="content-fade-in">
+              {active.map((r) => (
+                <RecruiterRow key={r.membership_id} recruiter={r}>
+                  <button
+                    className="btn btn--danger btn--sm"
+                    disabled={isUpdating || isRemoving}
+                    onClick={() => handleRemove(r.membership_id)}
+                  >
+                    Remove
+                  </button>
+                </RecruiterRow>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
       {/* Rejected */}
       {!isLoading && rejected.length > 0 && (
-        <div className="dash-card">
+        <div className="dash-card content-fade-in">
           <div className="dash-card__header">
             <div>
               <div className="dash-card__title">Rejected Requests</div>

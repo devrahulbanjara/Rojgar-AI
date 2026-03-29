@@ -11,6 +11,8 @@ import { parseApiError } from '@/lib/apiError'
 import { useResetPasswordMutation } from '@/store/services/authApi'
 import { Eye, EyeOff } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 // ── Validation ─────────────────────────────────────────────────────────────
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
@@ -259,7 +261,7 @@ function ResetPasswordInner() {
                 className={`auth__submit${isLoading ? ' auth__submit--loading' : ''}`}
                 aria-busy={isLoading}
               >
-                {isLoading ? 'Resetting password…' : 'Reset password'}
+                {isLoading ? <ButtonSpinner label="Resetting password..." /> : 'Reset password'}
               </button>
             </form>
           )}

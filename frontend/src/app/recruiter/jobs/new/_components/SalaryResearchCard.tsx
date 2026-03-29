@@ -28,11 +28,6 @@ export default function SalaryResearchCard({ research }: { research: SalaryResea
             Evidence-backed guidance for {research.role} in {research.country}
           </p>
         </div>
-        <span
-          className={`job-ai-badge job-ai-badge--confidence job-ai-badge--${research.confidence}`}
-        >
-          {research.confidence} confidence
-        </span>
       </div>
 
       <div className="job-ai-card__body dash-card__body">

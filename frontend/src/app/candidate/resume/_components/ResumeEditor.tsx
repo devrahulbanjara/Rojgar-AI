@@ -5,6 +5,8 @@ import { useState } from 'react'
 import type { EducationEntry, ExperienceEntry, Resume } from '@/lib/types/resume'
 import { ArrowLeft } from 'lucide-react'
 
+import ButtonSpinner from '@/components/common/ButtonSpinner'
+
 import SkillsSection from './SkillsSection'
 import { SECTIONS, type Section, uid } from './resumeUtils'
 
@@ -118,7 +120,7 @@ export default function ResumeEditor({
             onClick={() => onSave?.(draft)}
             disabled={isSaving}
           >
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? <ButtonSpinner label="Saving..." /> : 'Save'}
           </button>
         </div>
       </div>

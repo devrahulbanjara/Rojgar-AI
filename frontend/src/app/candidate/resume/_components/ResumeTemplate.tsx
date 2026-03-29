@@ -1,183 +1,207 @@
 'use client'
 
 import type { Resume } from '@/lib/types/resume'
-import { Calendar, Globe, Mail, MapPin, Phone } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { Github, Globe, Linkedin, Mail, MapPin, Phone } from 'lucide-react'
 
 import { fmtDate } from './resumeUtils'
 
-// ── Resume document template ───────────────────────────────────────────────
-// This renders the actual printable resume HTML. Used in viewer + print.
+type ContactItem = {
+  key: string
+  icon: LucideIcon
+  label: string
+  href?: string
+  text: string
+}
+
+function splitDescription(description: string) {
+  const lines = description
+    .split('\n')
+    .map((line) => line.replace(/^[\u2022-]\s*/, '').trim())
+    .filter(Boolean)
+
+  if (lines.length > 1) return lines
+
+  return description
+    .split(/(?<=\.)\s+(?=[A-Z])/)
+    .map((line) => line.replace(/^[\u2022-]\s*/, '').trim())
+    .filter(Boolean)
+}
+
+function normalizeUrl(url: string) {
+  return url.startsWith('http') ? url : `https://${url}`
+}
 
 export default function ResumeTemplate({ resume }: { resume: Resume }) {
+  const headline = resume.headline || resume.targetRole
+  const contactItems = [
+    resume.location
+      ? {
+          key: 'location',
+          icon: MapPin,
+          label: 'Location',
+          text: resume.location,
+        }
+      : null,
+    resume.phone
+      ? {
+          key: 'phone',
+          icon: Phone,
+          label: 'Phone',
+          href: `tel:${resume.phone.replace(/\s+/g, '')}`,
+          text: resume.phone,
+        }
+      : null,
+    resume.email
+      ? {
+          key: 'email',
+          icon: Mail,
+          label: 'Email',
+          href: `mailto:${resume.email}`,
+          text: resume.email,
+        }
+      : null,
+    resume.linkedin_url
+      ? {
+          key: 'linkedin',
+          icon: Linkedin,
+          label: 'LinkedIn',
+          href: resume.linkedin_url,
+          text: 'LinkedIn',
+        }
+      : null,
+    resume.github_url
+      ? {
+          key: 'github',
+          icon: Github,
+          label: 'GitHub',
+          href: resume.github_url,
+          text: 'GitHub',
+        }
+      : null,
+    resume.website && resume.website !== resume.linkedin_url && resume.website !== resume.github_url
+      ? {
+          key: 'website',
+          icon: Globe,
+          label: 'Portfolio',
+          href: normalizeUrl(resume.website),
+          text: 'Portfolio',
+        }
+      : null,
+  ].filter(Boolean) as ContactItem[]
+
   return (
-    <div className="rv-doc">
-      {/* Header */}
-      <div className="rv-header">
+    <article className="rv-doc resume-page">
+      <header className="rv-header">
         <h1 className="rv-header__name">{resume.fullName || 'Your Name'}</h1>
-        {resume.headline && <p className="rv-header__headline">{resume.headline}</p>}
-        <div className="rv-header__contacts">
-          {resume.phone && (
-            <span className="rv-header__contact">
-              <Phone size={12} aria-hidden="true" />
-              {resume.phone}
-            </span>
-          )}
-          {resume.email && (
-            <span className="rv-header__contact">
-              <Mail size={12} aria-hidden="true" />
-              <a href={`mailto:${resume.email}`} className="rv-link">
-                {resume.email}
-              </a>
-            </span>
-          )}
-          {resume.linkedin_url && (
-            <span className="rv-header__contact">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="12"
-                height="12"
-                fill="currentColor"
-                className="bi bi-linkedin"
-                viewBox="0 0 16 16"
-              >
-                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z" />
-              </svg>
-              <a
-                href={resume.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rv-link"
-              >
-                LinkedIn
-              </a>
-            </span>
-          )}
-          {resume.github_url && (
-            <span className="rv-header__contact">
-              <Globe size={12} aria-hidden="true" />
-              <a
-                href={resume.github_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rv-link"
-              >
-                GitHub
-              </a>
-            </span>
-          )}
-          {resume.website &&
-            resume.website !== resume.linkedin_url &&
-            resume.website !== resume.github_url && (
-              <span className="rv-header__contact">
-                <Globe size={12} aria-hidden="true" />
-                <a
-                  href={
-                    resume.website.startsWith('http') ? resume.website : `https://${resume.website}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rv-link"
-                >
-                  Portfolio
-                </a>
-              </span>
-            )}
-          {resume.location && (
-            <span className="rv-header__contact">
-              <MapPin size={12} aria-hidden="true" />
-              {resume.location}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Profile / Summary */}
-      {resume.summary && (
-        <div className="rv-section">
-          <div className="rv-section__heading">Profile</div>
-          <p className="rv-section__body">{resume.summary}</p>
-        </div>
-      )}
-
-      {/* Professional Experience */}
-      {resume.experience.length > 0 && (
-        <div className="rv-section">
-          <div className="rv-section__heading">Professional Experience</div>
-          {resume.experience.map((exp) => (
-            <div className="rv-exp" key={exp.id}>
-              <div className="rv-exp__title">{exp.title}</div>
-              {exp.company && <div className="rv-exp__company">{exp.company}</div>}
-              <div className="rv-exp__meta">
-                {(exp.startDate || exp.endDate || exp.current) && (
-                  <span className="rv-exp__meta-item">
-                    <Calendar size={11} aria-hidden="true" />
-                    {fmtDate(exp.startDate)} &ndash;{' '}
-                    {exp.current ? 'Present' : fmtDate(exp.endDate)}
-                  </span>
+        {headline && <p className="rv-header__headline">{headline}</p>}
+        {contactItems.length > 0 && (
+          <div className="rv-header__contacts">
+            {contactItems.map(({ key, icon: Icon, href, label, text }) => (
+              <span className="rv-header__contact" key={key}>
+                <Icon className="rv-header__icon" size={11} strokeWidth={1.6} aria-hidden="true" />
+                {href ? (
+                  <a
+                    href={href}
+                    className="rv-link"
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    aria-label={label}
+                  >
+                    {text}
+                  </a>
+                ) : (
+                  <span>{text}</span>
                 )}
-                {exp.location && (
-                  <span className="rv-exp__meta-item">
-                    <MapPin size={11} aria-hidden="true" />
-                    {exp.location}
-                  </span>
-                )}
-              </div>
-              {exp.description && (
-                <ul className="rv-bullets">
-                  {exp.description
-                    .split(/\n|(?<=\.)\s+(?=[A-Z])/)
-                    .filter(Boolean)
-                    .map((line, i) => (
-                      <li key={i}>{line.replace(/^[•\-]\s*/, '').trim()}</li>
-                    ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Education */}
-      {resume.education.length > 0 && (
-        <div className="rv-section">
-          <div className="rv-section__heading">Education</div>
-          {resume.education.map((edu) => (
-            <div className="rv-edu" key={edu.id}>
-              <div className="rv-edu__degree">{edu.degree}</div>
-              {edu.institution && <div className="rv-edu__institution">{edu.institution}</div>}
-              <div className="rv-exp__meta">
-                {(edu.startDate || edu.endDate) && (
-                  <span className="rv-exp__meta-item">
-                    <Calendar size={11} aria-hidden="true" />
-                    {fmtDate(edu.startDate)} &ndash; {fmtDate(edu.endDate)}
-                  </span>
-                )}
-                {edu.location && (
-                  <span className="rv-exp__meta-item">
-                    <MapPin size={11} aria-hidden="true" />
-                    {edu.location}
-                  </span>
-                )}
-                {edu.gpa && <span className="rv-exp__meta-item">GPA {edu.gpa}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Technical Skills */}
-      {resume.skills.length > 0 && (
-        <div className="rv-section">
-          <div className="rv-section__heading">Technical Skills</div>
-          <div className="rv-skills">
-            {resume.skills.map((sk) => (
-              <span className="rv-skills__chip" key={sk}>
-                {sk}
               </span>
             ))}
           </div>
-        </div>
+        )}
+      </header>
+
+      {resume.summary && (
+        <section className="rv-section">
+          <h2 className="rv-section__heading">Summary</h2>
+          <p className="rv-section__body">{resume.summary}</p>
+        </section>
       )}
-    </div>
+
+      {resume.skills.length > 0 && (
+        <section className="rv-section">
+          <h2 className="rv-section__heading">Skills</h2>
+          <div className="rv-skills-block">
+            <p className="rv-skills-line">
+              <span className="rv-skills-label">Skills:</span> {resume.skills.join(', ')}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {resume.experience.length > 0 && (
+        <section className="rv-section">
+          <h2 className="rv-section__heading">Experience</h2>
+          {resume.experience.map((exp) => {
+            const bullets = splitDescription(exp.description)
+            const hasDates = exp.startDate || exp.endDate || exp.current
+
+            return (
+              <div className="rv-exp" key={exp.id}>
+                <div className="rv-exp__topline">
+                  <div className="rv-exp__company">{exp.company || 'Company Name'}</div>
+                  {hasDates && (
+                    <div className="rv-exp__dates">
+                      {fmtDate(exp.startDate)} - {exp.current ? 'Present' : fmtDate(exp.endDate)}
+                    </div>
+                  )}
+                </div>
+                <div className="rv-exp__titleline">
+                  <div className="rv-exp__title">{exp.title || 'Job Title'}</div>
+                  {exp.location && <div className="rv-exp__location">{exp.location}</div>}
+                </div>
+                {bullets.length > 0 && (
+                  <ul className="rv-bullets">
+                    {bullets.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )
+          })}
+        </section>
+      )}
+
+      {resume.education.length > 0 && (
+        <section className="rv-section">
+          <h2 className="rv-section__heading">Education</h2>
+          {resume.education.map((edu) => {
+            const hasDates = edu.startDate || edu.endDate
+
+            return (
+              <div className="rv-edu" key={edu.id}>
+                <div className="rv-exp__topline">
+                  <div className="rv-edu__institution">{edu.institution || 'Institution Name'}</div>
+                  {hasDates && (
+                    <div className="rv-exp__dates">
+                      {fmtDate(edu.startDate)} - {fmtDate(edu.endDate)}
+                    </div>
+                  )}
+                </div>
+                <div className="rv-exp__titleline">
+                  <div className="rv-edu__degree">{edu.degree || 'Degree / Certification'}</div>
+                  {(edu.location || edu.gpa) && (
+                    <div className="rv-exp__location">
+                      {[edu.location, edu.gpa ? `GPA ${edu.gpa}` : null]
+                        .filter(Boolean)
+                        .join(' | ')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </section>
+      )}
+    </article>
   )
 }
