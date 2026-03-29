@@ -88,14 +88,13 @@
 .generateMenuWrap {
   position: relative;
   display: inline-flex;
-  z-index: 1000;
 }
 
 .generateMenu {
   position: absolute;
   top: calc(100% + 0.55rem);
   right: 0;
-  z-index: 9999;
+  z-index: 20;
   display: grid;
   gap: 0.35rem;
   min-width: 0;
