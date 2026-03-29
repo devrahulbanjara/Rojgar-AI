@@ -1394,6 +1394,13 @@ body {
   border-radius: 999px;
 }
 
+.recruiter-chat-skeleton--avatar-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
 .recruiter-chat-skeleton--w-85 {
   width: 85%;
 }
@@ -1455,6 +1462,13 @@ body {
   border-radius: 12px;
 }
 
+.recruiter-chat-skeleton--send {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
 .recruiter-chat-panel-skeleton {
   flex: 1;
   min-height: 0;
@@ -1463,110 +1477,145 @@ body {
   overflow: hidden;
 }
 
-.recruiter-chat-panel-skeleton__messages {
+.recruiter-chat-panel-skeleton__thread {
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-  padding: 1rem 1.1rem 0.9rem;
   overflow: hidden;
 }
 
-.recruiter-chat-panel-skeleton__hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.4rem 0 0.2rem;
+.recruiter-chat-panel-skeleton__scroll-view {
+  flex: 1;
+  min-width: 0;
+  padding: 0 1rem;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
 }
 
-.recruiter-chat-panel-skeleton__hero-copy {
+.recruiter-chat-panel-skeleton__message-view {
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  flex: 1;
+  gap: 1rem;
+}
+
+.recruiter-chat-panel-skeleton__row {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.recruiter-chat-panel-skeleton__row--assistant {
+  justify-content: flex-start;
+}
+
+.recruiter-chat-panel-skeleton__row--user {
+  justify-content: flex-end;
+}
+
+.recruiter-chat-panel-skeleton__assistant-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
   min-width: 0;
 }
 
-.recruiter-chat-panel-skeleton__hero-actions {
-  display: flex;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.recruiter-chat-panel-skeleton__cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.recruiter-chat-panel-skeleton__card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  padding: 1rem 1.05rem;
-  border: 1px solid rgba(226, 232, 240, 0.92);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.05);
-}
-
-.recruiter-chat-panel-skeleton__conversation {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-height: 0;
-}
-
-.recruiter-chat-panel-skeleton__message {
+.recruiter-chat-panel-skeleton__assistant-bubble {
+  width: min(42rem, calc(100vw - 10rem));
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
   padding: 12px 16px;
-  border-radius: 12px;
-  border: 0;
+  border-radius: 18px 18px 18px 8px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-.recruiter-chat-panel-skeleton__message--assistant {
-  width: min(75%, 42rem);
-  margin-right: auto;
-  background: #f1f5f9;
+.recruiter-chat-panel-skeleton__user-bubble {
+  width: min(34rem, 70%);
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 12px 16px;
+  border-radius: 18px 18px 8px 18px;
+  background: rgba(37, 99, 235, 0.12);
 }
 
-.recruiter-chat-panel-skeleton__message--user {
-  width: min(75%, 34rem);
+.recruiter-chat-panel-skeleton__user-bubble .recruiter-chat-skeleton {
   margin-left: auto;
-  background: rgba(37, 99, 235, 0.18);
 }
 
-.recruiter-chat-panel-skeleton__message--user .recruiter-chat-skeleton {
-  margin-left: auto;
+.recruiter-chat-panel-skeleton__tool-card {
+  width: min(26rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.25rem 0;
 }
 
-.recruiter-chat-panel-skeleton__input {
+.recruiter-chat-panel-skeleton__mini-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.recruiter-chat-panel-skeleton__mini-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: min(100%, 480px);
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.recruiter-chat-panel-skeleton__composer {
   flex-shrink: 0;
-  padding: 0.25rem 1.1rem 12px;
+  padding: 0.8rem 1rem 1rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
+  background: rgba(255, 255, 255, 0.98);
 }
 
-.recruiter-chat-panel-skeleton__input-box {
+.recruiter-chat-panel-skeleton__input-shell {
   display: flex;
   align-items: center;
-  width: min(100%, 920px);
-  min-height: 48px;
-  border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.96);
-  padding: 0 1rem;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 920px;
+  min-height: 0;
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f8fafc;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  padding: 0.35rem 0.45rem 0.35rem 0.95rem;
   margin-left: auto;
   margin-right: auto;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-@media (max-width: 900px) {
-  .recruiter-chat-panel-skeleton__cards {
-    grid-template-columns: minmax(0, 1fr);
+.recruiter-chat-panel-skeleton__input-line {
+  height: 0.95rem;
+}
+
+@media (max-width: 767px) {
+  .recruiter-chat-panel-skeleton__scroll-view,
+  .recruiter-chat-panel-skeleton__message-view {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  .recruiter-chat-panel-skeleton__assistant-bubble {
+    max-width: calc(100vw - 6rem);
+  }
+
+  .recruiter-chat-panel-skeleton__user-bubble {
+    width: min(92%, 34rem);
   }
 }
 
