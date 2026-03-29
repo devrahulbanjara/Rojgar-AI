@@ -1,5 +1,5 @@
-.filtersBody {
-  padding: 1rem 1.25rem;
+.filtersBar {
+  margin-bottom: 0;
 }
 
 .filtersGrid {
@@ -9,18 +9,20 @@
   gap: 0.875rem 1rem;
 }
 
-.presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
 .customRange {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: flex-end;
+}
+
+.selectField,
+.jobField {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 180px;
 }
 
 .dateField {
@@ -39,6 +41,7 @@
 }
 
 .dateInput {
+  min-width: 0;
   min-height: 48px;
   padding: 0.5rem 0.75rem;
   border: 1px solid rgba(203, 213, 225, 0.95);
@@ -48,12 +51,15 @@
   background: #fff;
 }
 
-.jobField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1 1 220px;
-  min-width: 180px;
+.select {
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 0.5rem;
+  font: inherit;
+  color: var(--color-gray-900, #111827);
+  background: #fff;
 }
 
 .layout {

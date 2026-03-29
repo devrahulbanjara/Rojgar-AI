@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { getApplicationStatusLabel, getApplicationStatusVariant } from '@/lib/applicationStatus'
 import { getInitials } from '@/lib/mediaValidation'
 import {
+  type ApplicationStatus,
   type RecruiterApplicationView,
   useGetJobApplicationsQuery,
   useUpdateApplicationReviewMutation,
@@ -25,14 +26,13 @@ import {
   useGetShortlistSummaryQuery,
   useTriggerShortlistingMutation,
 } from '@/store/services/shortlistingApi'
-import { Briefcase, X as ClearSearchIcon, Search as SearchFieldIcon, Users } from 'lucide-react'
+import { X as ClearSearchIcon, Search as SearchFieldIcon } from 'lucide-react'
 
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import MediaBadge from '@/components/common/MediaBadge'
 
 import {
   ScreeningControlsSkeleton,
-  ScreeningStatusCardSkeleton,
   ScreeningTableSkeleton,
 } from './_components/ScreeningSkeletons'
 import styles from './screening.module.css'
@@ -44,6 +44,32 @@ type ReviewDraft = {
 
 type ScoreFilter = 'all' | 'high' | 'mid' | 'low'
 type ReviewFilter = 'all' | 'reviewed' | 'pending' | 'missing'
+
+const STATUS_LABELS: Record<ApplicationStatus, string> = {
+  applied: 'Applied',
+  screening: 'Screening',
+  shortlisted: 'Shortlisted',
+  interview_booked: 'Interview booked',
+  interview_completed: 'Interview completed',
+  offer: 'Offer',
+  rejected: 'Rejected',
+}
+
+function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
+  switch (status) {
+    case 'applied':
+    case 'screening':
+      return ['shortlisted', 'rejected']
+    case 'shortlisted':
+      return ['rejected']
+    case 'interview_booked':
+      return ['interview_completed']
+    case 'interview_completed':
+      return ['offer', 'rejected']
+    default:
+      return []
+  }
+}
 
 function getJobOptionLabel(job: JobListItem) {
   return `${job.title} (${getJobStatusLabel(job.status)})`
@@ -208,36 +234,6 @@ function SpinnerIcon() {
   )
 }
 
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path
-        d="M3.5 8.5l2.7 2.7 6-6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
-}
-
-function XIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path
-        d="M4.25 4.25l7.5 7.5m0-7.5l-7.5 7.5"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.5"
-      />
-    </svg>
-  )
-}
-
 export default function RecruiterScreeningPage() {
   const router = useRouter()
   const tableScrollerRef = useRef<HTMLDivElement | null>(null)
@@ -252,6 +248,10 @@ export default function RecruiterScreeningPage() {
   const [searchTermByJobId, setSearchTermByJobId] = useState<Record<string, string>>({})
   const [scoreFilterByJobId, setScoreFilterByJobId] = useState<Record<string, ScoreFilter>>({})
   const [reviewFilterByJobId, setReviewFilterByJobId] = useState<Record<string, ReviewFilter>>({})
+  const [statusSelectValues, setStatusSelectValues] = useState<Record<string, ApplicationStatus>>(
+    {},
+  )
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
   const eligibleJobs = useMemo(
     () =>
@@ -422,6 +422,14 @@ export default function RecruiterScreeningPage() {
     return () => window.clearInterval(intervalId)
   }, [activeJobId, isPollingSummary, refetchApps, refetchSummary])
 
+  useEffect(() => {
+    const nextValues: Record<string, ApplicationStatus> = {}
+    applications.forEach((application) => {
+      nextValues[application.id] = application.status
+    })
+    setStatusSelectValues(nextValues)
+  }, [applications])
+
   async function refreshAll() {
     await Promise.allSettled([refetchSummary(), refetchApps()])
   }
@@ -500,13 +508,25 @@ export default function RecruiterScreeningPage() {
     }
   }
 
-  async function handleStatus(applicationId: string, status: 'shortlisted' | 'rejected') {
+  async function handleStatus(
+    applicationId: string,
+    status: ApplicationStatus,
+    currentStatus?: ApplicationStatus,
+  ) {
+    if (updatingStatusId) return
+    setUpdatingStatusId(applicationId)
     try {
       await updateStatus({ application_id: applicationId, body: { status } }).unwrap()
-      toast.success(status === 'shortlisted' ? 'Candidate shortlisted.' : 'Candidate rejected.')
+      setStatusSelectValues((prev) => ({ ...prev, [applicationId]: status }))
+      toast.success(`Application moved to ${STATUS_LABELS[status].toLowerCase()}.`)
       void refreshAll()
     } catch {
+      if (currentStatus) {
+        setStatusSelectValues((prev) => ({ ...prev, [applicationId]: currentStatus }))
+      }
       toast.error('Could not update application status.')
+    } finally {
+      setUpdatingStatusId(null)
     }
   }
 
@@ -651,15 +671,24 @@ export default function RecruiterScreeningPage() {
           </p>
         </div>
         <div className="dash-page-header__actions">
-          <span className="badge badge--gray">
-            <Briefcase size={13} aria-hidden="true" />
+          <span className="page-header-hint">
             {jobs.length} eligible job{jobs.length === 1 ? '' : 's'}
           </span>
           {activeJob ? (
-            <span className="badge badge--gray">
-              <Users size={13} aria-hidden="true" />
-              {totalCandidates} candidate{totalCandidates === 1 ? '' : 's'}
-            </span>
+            <>
+              <span className="page-header-hint">
+                {totalCandidates} candidate{totalCandidates === 1 ? '' : 's'}
+              </span>
+              <span className="page-header-hint">
+                {reviewedCount} reviewed
+              </span>
+              <span className="page-header-hint">
+                {pendingCount} pending
+              </span>
+              <span className="page-header-hint">
+                {missingCount} missing agent screening
+              </span>
+            </>
           ) : null}
           {activeJob && summary && !summary.final_shortlist_completed ? (
             <>
@@ -790,63 +819,6 @@ export default function RecruiterScreeningPage() {
           )}
         </div>
 
-        {isLoadingContent ? (
-          <ScreeningStatusCardSkeleton />
-        ) : activeJob && summary ? (
-          <>
-            <div className={styles.contextMeta}>
-              <div className={styles.statusList}>
-                <span className={styles.statusItem}>
-                  <span className={styles.statusValue}>
-                    {activeJob.auto_shortlist ? 'Agent screening' : 'Manual screening'}
-                  </span>
-                </span>
-                <span className={styles.statusItem}>
-                  <span className={styles.statusValue}>
-                    {summary.shortlist_status === 'completed'
-                      ? 'Complete'
-                      : summary.shortlist_status === 'in_progress'
-                        ? 'Running'
-                        : summary.shortlist_status === 'failed'
-                          ? 'Failed'
-                          : 'Not started'}
-                  </span>
-                </span>
-                {isScreeningRunning ? (
-                  <span className={`${styles.statusItem} ${styles.statusItemActive}`}>
-                    <SpinnerIcon />
-                    <span className={styles.statusValue}>Checking every 5s</span>
-                  </span>
-                ) : null}
-                <span className={styles.statusItem}>
-                  <span className={styles.statusValue}>
-                    {activeJobExpired ? 'Expired job' : getJobStatusLabel(activeJob.status)}
-                  </span>
-                </span>
-                <span className={styles.statusItem}>
-                  <span className={styles.statusValue}>
-                    {summary.final_shortlist_completed ? 'Finalized' : 'In progress'}
-                  </span>
-                </span>
-              </div>
-
-              <div className={styles.statsGroup}>
-                <span className={styles.statPill}>
-                  <strong>{totalCandidates}</strong> candidates
-                </span>
-                <span className={styles.statPill}>
-                  <strong>{reviewedCount}</strong> reviewed
-                </span>
-                <span className={styles.statPill}>
-                  <strong>{pendingCount}</strong> pending
-                </span>
-                <span className={styles.statPill}>
-                  <strong>{missingCount}</strong> missing agent screening
-                </span>
-              </div>
-            </div>
-          </>
-        ) : null}
       </div>
 
       {isLoadingContent || (activeJobId && isFetchingApps) ? (
@@ -955,21 +927,27 @@ export default function RecruiterScreeningPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredApplications.map((application) => {
-                        const reviewState = getReviewState(application, {
-                          autoShortlist: Boolean(activeJob?.auto_shortlist),
-                          isAiProcessing: shouldPollSummary && !hasCompleteReview(application),
-                        })
+                    {filteredApplications.map((application) => {
                         const reviewText = getReviewPreview(application, {
                           autoShortlist: Boolean(activeJob?.auto_shortlist),
                           isAiProcessing: shouldPollSummary && !hasCompleteReview(application),
                         })
                         const isExpanded = expandedApplicationId === application.id
-                        const draft = getReviewDraft(application)
-                        const scoreTone = getScoreTone(application.score)
-                        const scoreBarTone = getScoreBarTone(application.score)
+                      const draft = getReviewDraft(application)
+                      const scoreTone = getScoreTone(application.score)
+                      const scoreBarTone = getScoreBarTone(application.score)
+                      const statusOptions = getRecruiterTransitionOptions(application.status)
+                      const statusValue = statusSelectValues[application.id] ?? application.status
+                      const isStatusLocked =
+                        !activeJobExpired || Boolean(summary?.final_shortlist_completed)
+                      const statusLockLabel = summary?.final_shortlist_completed
+                        ? 'Finalized'
+                        : 'After expiry'
+                      const statusLockTitle = summary?.final_shortlist_completed
+                        ? 'Shortlisting is finalized for this job.'
+                        : 'Shortlisting decisions unlock after the job expires.'
 
-                        return (
+                      return (
                           <Fragment key={application.id}>
                             <tr
                               className={`${styles.dataRow} ${isExpanded ? styles.dataRowExpanded : ''}`}
@@ -1057,52 +1035,40 @@ export default function RecruiterScreeningPage() {
 
                               <td>
                                 <div className={styles.statusActionCell}>
-                                  <span
-                                    className={`${styles.statePill} ${styles[`statePill${reviewState.tone.charAt(0).toUpperCase()}${reviewState.tone.slice(1)}`] ?? ''}`}
+                                  <div
+                                    className={styles.statusSelectWrap}
+                                    onClick={(event) => event.stopPropagation()}
                                   >
-                                    {reviewState.label}
-                                  </span>
-
-                                  {activeJobExpired && !summary?.final_shortlist_completed ? (
-                                    <div
-                                      className={styles.rowActionButtons}
-                                      onClick={(event) => event.stopPropagation()}
+                                    <select
+                                      className={`resume-field__input ${styles.statusSelect}`}
+                                      value={statusValue}
+                                      disabled={
+                                        isStatusLocked || updatingStatusId === application.id
+                                      }
+                                      onChange={(event) =>
+                                        void handleStatus(
+                                          application.id,
+                                          event.target.value as ApplicationStatus,
+                                          application.status,
+                                        )
+                                      }
                                     >
-                                      <button
-                                        className={`${styles.iconAction} ${styles.iconActionApprove}`}
-                                        title="Shortlist candidate"
-                                        disabled={isUpdatingStatus}
-                                        onClick={() =>
-                                          void handleStatus(application.id, 'shortlisted')
-                                        }
-                                      >
-                                        <CheckIcon />
-                                      </button>
-                                      <button
-                                        className={`${styles.iconAction} ${styles.iconActionReject}`}
-                                        title="Reject after screening"
-                                        disabled={isUpdatingStatus}
-                                        onClick={() =>
-                                          void handleStatus(application.id, 'rejected')
-                                        }
-                                      >
-                                        <XIcon />
-                                      </button>
-                                    </div>
-                                  ) : summary?.final_shortlist_completed ? (
-                                    <span className={styles.lockHint}>
+                                      <option value={application.status}>
+                                        {STATUS_LABELS[application.status]}
+                                      </option>
+                                      {statusOptions.map((status) => (
+                                        <option key={status} value={status}>
+                                          {STATUS_LABELS[status]}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  {isStatusLocked ? (
+                                    <span className={styles.lockHint} title={statusLockTitle}>
                                       <LockIcon />
-                                      Finalized
+                                      {statusLockLabel}
                                     </span>
-                                  ) : (
-                                    <span
-                                      className={styles.lockHint}
-                                      title="Shortlisting decisions unlock after the job expires."
-                                    >
-                                      <LockIcon />
-                                      After expiry
-                                    </span>
-                                  )}
+                                  ) : null}
                                 </div>
                               </td>
                             </tr>
