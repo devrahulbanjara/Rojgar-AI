@@ -44,6 +44,7 @@ export interface JobListItem {
   applications_count: number
   final_shortlist_completed: boolean
   hiring_completed: boolean
+  has_applied: boolean
   created_at: string
   match_score: number | null
   is_fallback: boolean
@@ -72,6 +73,7 @@ export interface JobDetail {
   benefits: string[]
   applications_count: number
   hiring_completed: boolean
+  has_applied: boolean
   created_at: string
   updated_at: string
 }

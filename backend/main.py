@@ -32,6 +32,7 @@ from app.modules.job_ai.router import router as job_ai_router
 from app.modules.interviews.router import router as interviews_router
 from app.modules.interviews.webhook import router as cal_webhook_router
 from app.modules.outreach.router import router as outreach_router
+from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
 from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
 from app.modules.shortlisting.router import router as shortlisting_router
@@ -105,6 +106,9 @@ app.include_router(
 )
 app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
+app.include_router(
+    resume_gap_router, prefix="/resume-gap", tags=["Resume Gap Analysis"]
+)
 app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])
 app.include_router(interviews_router, prefix="/interviews", tags=["Interviews"])
 app.include_router(outreach_router, prefix="/outreach", tags=["Outreach"])

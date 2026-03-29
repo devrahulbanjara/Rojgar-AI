@@ -1,11 +1,13 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 
 import { useAppSelector } from '@/store/hooks'
 import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
+import { useUpdateMyProfileMutation } from '@/store/services/profileApi'
 import { Calendar, ChevronRight } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
@@ -120,8 +122,27 @@ function CandidateDashboardSkeleton() {
 
 export default function UserDashboardPage() {
   const user = useAppSelector((state) => state.auth.user)
-  const { data: dashboardResponse, isLoading, isError } = useGetCandidateDashboardQuery()
+  const {
+    data: dashboardResponse,
+    isLoading,
+    isError,
+    refetch: refetchDashboard,
+  } = useGetCandidateDashboardQuery()
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateMyProfileMutation()
   const dashboardData = dashboardResponse?.data
+
+  const handleToggleOpenToWork = async () => {
+    if (!dashboardData || isUpdating) return
+
+    try {
+      const newStatus = !dashboardData.is_open_to_work
+      await updateProfile({ is_open_to_work: newStatus }).unwrap()
+      toast.success(newStatus ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
+      refetchDashboard()
+    } catch {
+      toast.error('Failed to update status.')
+    }
+  }
 
   const firstName = getFirstName(user?.full_name ?? dashboardData?.user_name)
 
@@ -129,11 +150,47 @@ export default function UserDashboardPage() {
     <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
         <div className="dash-page-header__left">
-          <h2 className="dash-page-header__title">Good morning, {firstName}</h2>
+          <div className="dash-page-header__title-row">
+            {isLoading && !user ? (
+              <div className="skeleton-block" style={{ width: '240px', height: '36px' }} />
+            ) : (
+              <h1 className="dash-page-header__title">Good morning, {firstName}</h1>
+            )}
+
+            <div className="dash-page-header__status-inline">
+              {isLoading ? (
+                <div className="skeleton-block" style={{ width: '100px', height: '16px' }} />
+              ) : (
+                <div className="open-to-work-status open-to-work-status--header">
+                  <span
+                    className={`open-to-work-status__dot ${dashboardData?.is_open_to_work ? 'open-to-work-status__dot--active' : ''}`}
+                  />
+                  <span className="open-to-work-status__text">
+                    Open to Work {dashboardData?.is_open_to_work ? '· Active' : '· Off'}
+                  </span>
+                  <button
+                    className={`open-to-work-status__toggle ${isUpdating ? 'open-to-work-status__toggle--loading' : ''}`}
+                    onClick={handleToggleOpenToWork}
+                    disabled={isUpdating}
+                  >
+                    [{dashboardData?.is_open_to_work ? 'Turn off' : 'Turn on'}]
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           <p className="dash-page-header__subtitle">
-            {dashboardData?.urgent_action
-              ? 'You have 1 action waiting on you.'
-              : 'Track every application and take the next step quickly.'}
+            {isLoading ? (
+              <div
+                className="skeleton-block"
+                style={{ width: '200px', height: '14px', marginTop: '4px' }}
+              />
+            ) : dashboardData?.urgent_action ? (
+              'You have 1 action waiting on you.'
+            ) : (
+              'Track every application and take the next step quickly.'
+            )}
           </p>
         </div>
       </div>

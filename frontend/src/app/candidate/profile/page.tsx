@@ -173,6 +173,7 @@ type FormProfile = {
   educations: FormEducation[]
   skills: string[]
   target_roles: string[]
+  is_open_to_work: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -253,6 +254,7 @@ function apiToForm(data: CandidateProfileData): FormProfile {
     })),
     skills: data.skills.map((s) => s.skill_name),
     target_roles: data.target_roles || [],
+    is_open_to_work: data.is_open_to_work ?? false,
   }
 }
 
@@ -267,6 +269,7 @@ function formToApiUpdate(form: FormProfile): UpdateProfileRequest {
     github_url: form.github_url || null,
     portfolio_url: form.portfolio_url || null,
     years_of_experience: form.years_of_experience ? parseInt(form.years_of_experience, 10) : null,
+    is_open_to_work: form.is_open_to_work,
     experiences: form.experiences.map((e) => ({
       company_name: e.company_name,
       title: e.title,
@@ -299,6 +302,7 @@ const EMPTY_FORM: FormProfile = {
   educations: [],
   skills: [],
   target_roles: [],
+  is_open_to_work: false,
 }
 
 // ── Section tabs definition ────────────────────────────────────
@@ -753,6 +757,19 @@ export default function ProfilePage() {
               className="profile-aside-card content-stagger-item"
               style={{ '--stagger-index': 0 } as React.CSSProperties}
             >
+              <div className="profile-completion" style={{ marginBottom: '1.5rem' }}>
+                <div className="profile-completion__header">
+                  <span className="profile-completion__label">{PROFILE_COMPLETION_LABEL}</span>
+                  <span className="profile-completion__pct">{profileCompletion}%</span>
+                </div>
+                <div className="profile-completion__bar">
+                  <div
+                    className={`profile-completion__fill profile-completion__fill--${profileCompletionMeta.tone}`}
+                    style={{ width: `${profileCompletion}%` }}
+                  />
+                </div>
+              </div>
+
               <div className="profile-media-control">
                 <MediaBadge
                   src={avatarSrc}
@@ -810,6 +827,32 @@ export default function ProfilePage() {
                   {form.location}
                 </div>
               )}
+
+              <div
+                className="open-to-work-status"
+                style={{ padding: '0.25rem 0', marginTop: '0.25rem' }}
+              >
+                <span
+                  className={`open-to-work-status__dot ${form.is_open_to_work ? 'open-to-work-status__dot--active' : ''}`}
+                />
+                <span className="open-to-work-status__text">
+                  Open to Work · {form.is_open_to_work ? 'Active' : 'Off'}
+                </span>
+                <button
+                  className={`open-to-work-status__toggle ${isSaving ? 'open-to-work-status__toggle--loading' : ''}`}
+                  onClick={() => {
+                    const next = !form.is_open_to_work
+                    const nextForm = { ...form, is_open_to_work: next }
+                    setForm(nextForm)
+                    saveProfile(nextForm)
+                    toast.success(next ? "You're now 'Open to Work'!" : 'Open to Work disabled.')
+                  }}
+                  disabled={isSaving}
+                >
+                  {form.is_open_to_work ? 'Turn off' : 'Turn on'}
+                </button>
+              </div>
+
               <div className="profile-aside-card__divider" />
               <div className="profile-aside-card__stats">
                 <div className="profile-aside-card__stat">
@@ -962,18 +1005,6 @@ export default function ProfilePage() {
                           )}
                       </div>
                     )}
-                </div>
-              </div>
-              <div className="profile-completion">
-                <div className="profile-completion__header">
-                  <span className="profile-completion__label">{PROFILE_COMPLETION_LABEL}</span>
-                  <span className="profile-completion__pct">{profileCompletion}%</span>
-                </div>
-                <div className="profile-completion__bar">
-                  <div
-                    className={`profile-completion__fill profile-completion__fill--${profileCompletionMeta.tone}`}
-                    style={{ width: `${profileCompletion}%` }}
-                  />
                 </div>
               </div>
             </div>

@@ -72,6 +72,13 @@ export interface LegacyApplicationListItem {
 export interface ApplyToJobPayload {
   job_id: string
   resume_id: string
+  share_profile_all?: boolean
+  share_avatar?: boolean
+  share_email?: boolean
+  share_phone?: boolean
+  share_location?: boolean
+  share_links?: boolean
+  share_headline_summary?: boolean
 }
 
 export interface UpdateApplicationStatusPayload {
@@ -81,6 +88,88 @@ export interface UpdateApplicationStatusPayload {
 export interface UpdateApplicationReviewPayload {
   score?: number | null
   feedback?: string | null
+}
+
+export interface CandidateShareSettings {
+  share_profile_all: boolean
+  share_avatar: boolean
+  share_email: boolean
+  share_phone: boolean
+  share_location: boolean
+  share_links: boolean
+  share_headline_summary: boolean
+}
+
+export interface RecruiterCandidateListItem {
+  id: string
+  candidate_id: string
+  status: ApplicationStatus
+  created_at: string
+  updated_at: string
+  applicant_name: string
+  applicant_email: string | null
+  applicant_avatar_url: string | null
+  candidate_headline: string | null
+  candidate_location: string | null
+  job_title: string
+  job_id: string
+  score: number | null
+  feedback: string | null
+}
+
+export interface RecruiterCandidateDetailView {
+  id: string
+  candidate_id: string
+  status: ApplicationStatus
+  created_at: string
+  updated_at: string
+  applicant_name: string
+  applicant_email: string | null
+  applicant_avatar_url: string | null
+  candidate_headline: string | null
+  candidate_summary: string | null
+  candidate_phone: string | null
+  candidate_location: string | null
+  linkedin_url: string | null
+  github_url: string | null
+  portfolio_url: string | null
+  job_title: string
+  job_id: string
+  score: number | null
+  feedback: string | null
+  resume: {
+    id: string
+    user_id: string
+    resume_name: string
+    headline: string | null
+    summary: string | null
+    phone: string | null
+    location: string | null
+    linkedin_url: string | null
+    github_url: string | null
+    portfolio_url: string | null
+    years_of_experience: number | null
+    experiences: {
+      id: string
+      company_name: string
+      title: string
+      start_date: string | null
+      end_date: string | null
+      description: string[]
+    }[]
+    educations: {
+      id: string
+      institution: string
+      degree: string | null
+      field_of_study: string | null
+      start_date: string | null
+      end_date: string | null
+    }[]
+    skills: { id: string; skill_name: string }[]
+    created_at: string
+    updated_at: string
+  } | null
+  share_settings: CandidateShareSettings
 }
 
 // ---------------------------------------------------------------------------
@@ -96,7 +185,7 @@ export const applicationsApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Applications'],
+      invalidatesTags: ['Applications', 'Candidates'],
     }),
 
     /** GET /applications/me — list all applications for the current candidate */
@@ -123,6 +212,23 @@ export const applicationsApi = baseApi.injectEndpoints({
       providesTags: ['Applications'],
     }),
 
+    getMyCompanyCandidates: builder.query<
+      ApiResponse<RecruiterCandidateListItem[]>,
+      { page?: number; size?: number; job_id?: string; status?: ApplicationStatus } | void
+    >({
+      query: (params) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/company/me/candidates`,
+        params: params ?? undefined,
+      }),
+      providesTags: ['Candidates'],
+    }),
+
+    getCompanyCandidateById: builder.query<ApiResponse<RecruiterCandidateDetailView>, string>({
+      query: (applicationId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/company/me/candidates/${applicationId}`,
+      providesTags: (_result, _error, id) => [{ type: 'Candidates', id }],
+    }),
+
     getJobApplications: builder.query<
       ApiResponse<RecruiterApplicationView[]>,
       { job_id: string; page?: number; size?: number }
@@ -143,7 +249,7 @@ export const applicationsApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body,
       }),
-      invalidatesTags: ['Applications'],
+      invalidatesTags: ['Applications', 'Candidates'],
     }),
 
     updateApplicationReview: builder.mutation<
@@ -155,7 +261,7 @@ export const applicationsApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body,
       }),
-      invalidatesTags: ['Applications'],
+      invalidatesTags: ['Applications', 'Candidates'],
     }),
   }),
 })
@@ -164,6 +270,8 @@ export const {
   useApplyToJobMutation,
   useGetMyApplicationsQuery,
   useGetMyCompanyApplicationsQuery,
+  useGetMyCompanyCandidatesQuery,
+  useGetCompanyCandidateByIdQuery,
   useGetJobApplicationsQuery,
   useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,

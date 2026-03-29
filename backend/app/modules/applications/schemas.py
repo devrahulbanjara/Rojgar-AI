@@ -13,6 +13,23 @@ class ApplyRequest(BaseSchema):
 
     job_id: UUID
     resume_id: UUID
+    share_profile_all: bool = True
+    share_avatar: bool = True
+    share_email: bool = True
+    share_phone: bool = True
+    share_location: bool = True
+    share_links: bool = True
+    share_headline_summary: bool = True
+
+
+class CandidateShareSettings(BaseSchema):
+    share_profile_all: bool
+    share_avatar: bool
+    share_email: bool
+    share_phone: bool
+    share_location: bool
+    share_links: bool
+    share_headline_summary: bool
 
 
 class UpdateApplicationStatusRequest(BaseSchema):
@@ -101,3 +118,44 @@ class RecruiterApplicationView(BaseSchema):
     job_id: UUID
     score: int | None = None
     feedback: str | None = None
+
+
+class RecruiterCandidateListItem(BaseSchema):
+    id: UUID
+    candidate_id: UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    applicant_name: str
+    applicant_email: str | None = None
+    applicant_avatar_url: str | None = None
+    candidate_headline: str | None = None
+    candidate_location: str | None = None
+    job_title: str
+    job_id: UUID
+    score: int | None = None
+    feedback: str | None = None
+
+
+class RecruiterCandidateDetailView(BaseSchema):
+    id: UUID
+    candidate_id: UUID
+    status: ApplicationStatus
+    created_at: datetime
+    updated_at: datetime
+    applicant_name: str
+    applicant_email: str | None = None
+    applicant_avatar_url: str | None = None
+    candidate_headline: str | None = None
+    candidate_summary: str | None = None
+    candidate_phone: str | None = None
+    candidate_location: str | None = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
+    job_title: str
+    job_id: UUID
+    score: int | None = None
+    feedback: str | None = None
+    resume: ResumeResponse | None = None
+    share_settings: CandidateShareSettings
