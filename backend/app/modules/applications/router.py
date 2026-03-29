@@ -10,10 +10,13 @@ from app.modules.applications.schemas import (
     ApplicationResponse,
     ApplyRequest,
     CandidateApplicationView,
+    RecruiterCandidateDetailView,
+    RecruiterCandidateListItem,
     RecruiterApplicationView,
     UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
+from app.shared.enums import ApplicationStatus
 
 router = APIRouter()
 
@@ -69,6 +72,44 @@ async def list_my_company_applications(
 ):
     data = await service.list_my_company_applications(db, user, job_id, page, size)
     return ResponseBuilder.success(data=data, message="Applications fetched.")
+
+
+@router.get(
+    "/company/me/candidates",
+    response_model=UnifiedResponse[list[RecruiterCandidateListItem]],
+    summary="List candidate applications for the authenticated recruiter's company",
+)
+async def list_my_company_candidates(
+    job_id: str | None = Query(default=None),
+    status_filter: ApplicationStatus | None = Query(default=None, alias="status"),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=50, ge=1, le=200),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.list_company_candidates(
+        db,
+        user,
+        job_id,
+        status_filter,
+        page,
+        size,
+    )
+    return ResponseBuilder.success(data=data, message="Candidates fetched.")
+
+
+@router.get(
+    "/company/me/candidates/{application_id}",
+    response_model=UnifiedResponse[RecruiterCandidateDetailView],
+    summary="Get recruiter-safe candidate details for one application",
+)
+async def get_company_candidate_detail(
+    application_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.get_company_candidate_detail(db, user, application_id)
+    return ResponseBuilder.success(data=data, message="Candidate fetched.")
 
 
 @router.get(

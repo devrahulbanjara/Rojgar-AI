@@ -46,6 +46,7 @@ export interface CandidateProfileData {
   portfolio_url: string | null
   years_of_experience: number | null
   target_roles: string[]
+  is_open_to_work: boolean
   experiences: ProfileExperience[]
   educations: ProfileEducation[]
   skills: ProfileSkill[]
@@ -64,6 +65,7 @@ export interface UpdateProfileRequest {
   portfolio_url?: string | null
   years_of_experience?: number | null
   target_roles?: string[]
+  is_open_to_work?: boolean
   experiences?: Array<{
     company_name: string
     title: string

@@ -7,7 +7,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
-import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
   type JobDetail,
   type JobListItem,
@@ -16,11 +15,11 @@ import {
   useGetJobByIdQuery,
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
-import { useGetMyResumesQuery } from '@/store/services/resumeApi'
-import { ArrowLeft, Banknote, Briefcase, Building, Clock, MapPin, Share2, X } from 'lucide-react'
+import { ArrowLeft, Banknote, Briefcase, Building, Clock, MapPin, Share2 } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
+import ApplyFlowModal from '@/components/jobs/ApplyModal'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -86,131 +85,21 @@ function ApplyModal({
   jobId,
   jobTitle,
   onClose,
+  onSuccess,
 }: {
   jobId: string
   jobTitle: string
   onClose: () => void
+  onSuccess?: () => void
 }) {
-  const { data: resumesResp, isLoading: loadingResumes } = useGetMyResumesQuery()
-  const [applyToJob, { isLoading: applying }] = useApplyToJobMutation()
-  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
-
-  const resumes = resumesResp?.data ?? []
-
-  async function handleSubmit() {
-    if (!selectedResumeId) return
-    try {
-      await applyToJob({ job_id: jobId, resume_id: selectedResumeId }).unwrap()
-      toast.success('Application submitted successfully!')
-      onClose()
-    } catch (err: unknown) {
-      const msg = (err as { data?: { message?: string } })?.data?.message
-      toast.error(msg ?? 'Failed to submit application.')
-    }
-  }
-
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div
-        className="modal modal--md"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="apply-modal-title"
-      >
-        <div className="modal__header">
-          <div className="modal__title" id="apply-modal-title">
-            Apply to {jobTitle}
-          </div>
-          <button className="btn btn--ghost btn--sm" onClick={onClose} aria-label="Close">
-            <X size={16} />
-          </button>
-        </div>
-        <div className="modal__body">
-          {loadingResumes ? (
-            <p>Loading your resumes…</p>
-          ) : resumes.length === 0 ? (
-            <p style={{ color: 'var(--color-muted,#6b7280)' }}>
-              You need to{' '}
-              <Link href="/candidate/resume" className="auth__inline-link">
-                create a resume
-              </Link>{' '}
-              before applying.
-            </p>
-          ) : (
-            <>
-              <p
-                style={{
-                  marginBottom: '0.75rem',
-                  fontSize: '0.875rem',
-                  color: 'var(--color-muted,#6b7280)',
-                }}
-              >
-                Select a resume to submit with your application:
-              </p>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                }}
-              >
-                {resumes.map((r) => (
-                  <label
-                    key={r.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '0.75rem',
-                      borderRadius: '0.5rem',
-                      border: `1.5px solid ${selectedResumeId === r.id ? 'var(--color-primary,#0070f3)' : 'var(--color-gray-200,#e5e7eb)'}`,
-                      cursor: 'pointer',
-                      background: selectedResumeId === r.id ? 'rgba(0,112,243,0.06)' : '',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="resume"
-                      value={r.id}
-                      checked={selectedResumeId === r.id}
-                      onChange={() => setSelectedResumeId(r.id)}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{r.resume_name}</div>
-                      {r.headline && (
-                        <div
-                          style={{
-                            fontSize: '0.8125rem',
-                            color: 'var(--color-muted,#6b7280)',
-                          }}
-                        >
-                          {r.headline}
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        <div className="modal__footer">
-          <button className="btn btn--ghost" onClick={onClose}>
-            Cancel
-          </button>
-          {resumes.length > 0 && (
-            <button
-              className="btn btn--primary"
-              onClick={handleSubmit}
-              disabled={!selectedResumeId || applying}
-            >
-              {applying ? 'Submitting…' : 'Submit Application'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <ApplyFlowModal
+      isOpen={true}
+      jobId={jobId}
+      jobTitle={jobTitle}
+      onClose={onClose}
+      onSuccess={onSuccess}
+    />
   )
 }
 
@@ -285,7 +174,7 @@ export default function JobDetailPage() {
   const jobId = params.job_id as string
   const [applying, setApplying] = useState(false)
 
-  const { data: resp, isLoading, isError } = useGetJobByIdQuery(jobId)
+  const { data: resp, isLoading, isError, refetch } = useGetJobByIdQuery(jobId)
   const job: JobDetail | undefined = resp?.data
 
   const { data: jobsResp } = useSearchJobsQuery({ size: 7 })
@@ -328,6 +217,7 @@ export default function JobDetailPage() {
 
   const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
   const isActive = job.status === 'active'
+  const hasApplied = job.has_applied
 
   return (
     <>
@@ -387,17 +277,29 @@ export default function JobDetailPage() {
               <div className="jd-hero__apply-wrap">
                 <button
                   className="jd-hero__apply-btn"
-                  onClick={() => setApplying(true)}
-                  disabled={!isActive}
+                  onClick={() => {
+                    if (!hasApplied) {
+                      setApplying(true)
+                    }
+                  }}
+                  disabled={!isActive || hasApplied}
                   title={
-                    isActive
-                      ? undefined
-                      : job.status === 'draft'
-                        ? 'This job is still in draft.'
-                        : 'This job has expired.'
+                    hasApplied
+                      ? 'You have already applied to this job.'
+                      : isActive
+                        ? undefined
+                        : job.status === 'draft'
+                          ? 'This job is still in draft.'
+                          : 'This job has expired.'
                   }
                 >
-                  <span>{isActive ? 'Apply Now' : getJobStatusLabel(job.status)}</span>
+                  <span>
+                    {hasApplied
+                      ? 'Applied'
+                      : isActive
+                        ? 'Apply Now'
+                        : getJobStatusLabel(job.status)}
+                  </span>
                 </button>
                 <button
                   style={{
@@ -607,7 +509,14 @@ export default function JobDetailPage() {
       </div>
 
       {applying && (
-        <ApplyModal jobId={job.id} jobTitle={job.title} onClose={() => setApplying(false)} />
+        <ApplyModal
+          jobId={job.id}
+          jobTitle={job.title}
+          onClose={() => setApplying(false)}
+          onSuccess={() => {
+            void refetch()
+          }}
+        />
       )}
     </>
   )

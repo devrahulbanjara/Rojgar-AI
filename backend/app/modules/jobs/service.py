@@ -15,7 +15,7 @@ from app.modules.applications.models import ApplicationSyncEvent
 from app.modules.applications.sync import (
     process_sync_event as process_application_sync_event,
 )
-from app.modules.auth.enums import MembershipStatus
+from app.modules.auth.enums import MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import CompanyMembership
 from app.modules.jobs.models import Job, JobSyncEvent
@@ -132,6 +132,7 @@ def _job_list_item_from_row(
     *,
     match_score: float | None = None,
     is_fallback: bool = False,
+    has_applied: bool = False,
 ) -> JobListItem:
     company = CompanySnippet.model_validate(job.company)
     return JobListItem.model_validate(
@@ -152,6 +153,7 @@ def _job_list_item_from_row(
             "applications_count": int(applications_count or 0),
             "final_shortlist_completed": job.final_shortlist_completed,
             "hiring_completed": job.hiring_completed,
+            "has_applied": has_applied,
             "created_at": job.created_at,
             "match_score": match_score,
             "is_fallback": is_fallback,
@@ -160,7 +162,7 @@ def _job_list_item_from_row(
 
 
 def _job_detail_response_from_row(
-    job: Job, applications_count: int | None = None
+    job: Job, applications_count: int | None = None, *, has_applied: bool = False
 ) -> JobDetailResponse:
     company = CompanySnippet.model_validate(job.company)
     return JobDetailResponse.model_validate(
@@ -186,10 +188,28 @@ def _job_detail_response_from_row(
             "benefits": job.benefits,
             "applications_count": int(applications_count or 0),
             "hiring_completed": job.hiring_completed,
+            "has_applied": has_applied,
             "created_at": job.created_at,
             "updated_at": job.updated_at,
         }
     )
+
+
+async def _get_applied_job_ids(
+    db: AsyncSession,
+    user: User | None,
+    job_ids: list[uuid.UUID],
+) -> set[uuid.UUID]:
+    if not user or user.primary_role != UserRole.candidate or not job_ids:
+        return set()
+
+    result = await db.execute(
+        select(Application.job_id).where(
+            Application.user_id == user.id,
+            Application.job_id.in_(job_ids),
+        )
+    )
+    return set(result.scalars().all())
 
 
 async def _get_user_company_id(db: AsyncSession, user: User):
@@ -338,8 +358,6 @@ async def search_jobs(
     - Metadata filters (location_type, salary) are applied inside
       Qdrant, with smart fallback padding for under-filled pages.
     """
-    from app.modules.auth.enums import UserRole  # local import avoids circular
-
     # 1. Determine the semantic query string
     if q and q.strip():
         search_query = q.strip()
@@ -363,6 +381,7 @@ async def search_jobs(
 
     # 3. Batch-fetch the real job rows from Postgres (preserves no ordering)
     job_ids = [res["job_id"] for res in qdrant_results]
+    applied_job_ids = await _get_applied_job_ids(db, user, job_ids)
     stmt = (
         select(Job, func.count(Application.id).label("applications_count"))
         .options(selectinload(Job.company))
@@ -390,6 +409,7 @@ async def search_jobs(
                 app_count,
                 match_score=round(res["score"], 4),
                 is_fallback=res["is_fallback"],
+                has_applied=job.id in applied_job_ids,
             )
         )
 
@@ -429,9 +449,15 @@ async def list_company_jobs(db: AsyncSession, user: User) -> list[JobListItem]:
     return response
 
 
-async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
+async def get_job_detail(
+    db: AsyncSession, job_id: str, user: User | None = None
+) -> JobDetailResponse:
     """Get full job details including description."""
-    cache_key = f"job:detail:{job_id}"
+    cache_key = (
+        f"job:detail:{job_id}:candidate:{user.id}"
+        if user and user.primary_role == UserRole.candidate
+        else f"job:detail:{job_id}"
+    )
 
     cached_data = await redis_service.get(cache_key)
     if cached_data:
@@ -451,7 +477,12 @@ async def get_job_detail(db: AsyncSession, job_id: str) -> JobDetailResponse:
             detail="Job not found.",
         )
     job, applications_count = row
-    response = _job_detail_response_from_row(job, applications_count)
+    applied_job_ids = await _get_applied_job_ids(db, user, [job.id])
+    response = _job_detail_response_from_row(
+        job,
+        applications_count,
+        has_applied=job.id in applied_job_ids,
+    )
 
     await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=3600)
 
@@ -533,6 +564,7 @@ async def update_job(
     response = _job_detail_response_from_row(job, applications_count)
 
     await redis_service.delete(f"job:detail:{job_id}")
+    await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
     await redis_service.delete(f"jobs:company:{company_id}")
     bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
 
@@ -579,6 +611,7 @@ async def delete_job(
         bg_tasks.add_task(process_application_sync_event, application_sync_event.id)
 
     await redis_service.delete(f"job:detail:{job_id}")
+    await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
     await redis_service.delete(f"jobs:company:{company_id}")
     bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
 

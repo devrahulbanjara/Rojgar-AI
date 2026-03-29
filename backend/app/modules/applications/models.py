@@ -35,6 +35,27 @@ class Application(Base):
     shortlist_notified: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
+    share_profile_all: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    share_avatar: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    share_email: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    share_phone: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    share_location: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    share_links: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    share_headline_summary: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
     status: Mapped[ApplicationStatus] = mapped_column(
         SAEnum(ApplicationStatus, name="applicationstatus"),
         nullable=False,

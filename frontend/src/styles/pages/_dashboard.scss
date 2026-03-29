@@ -308,13 +308,26 @@
     display: flex;
     flex-direction: column;
     gap: $space-1;
+    flex: 1;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: baseline;
+    gap: $space-4;
+    flex-wrap: wrap;
   }
 
   &__title {
     font-family: $font-heading;
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-semibold;
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
     color: $color-gray-900;
+  }
+
+  &__status-inline {
+    display: flex;
+    align-items: center;
   }
 
   &__subtitle {
@@ -722,6 +735,46 @@
 
   tr:hover td {
     background: rgba($color-primary, 0.02);
+  }
+
+  &--clickable {
+    tbody tr {
+      cursor: pointer;
+      transition: background-color $transition-fast;
+
+      &:hover td {
+        background: rgba($color-primary, 0.05);
+      }
+    }
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────
+.skeleton-block {
+  background-color: $color-gray-200;
+  border-radius: $radius-md;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba($color-white, 0.45), transparent);
+    animation: skeleton-shimmer 1.6s infinite linear;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
   }
 }
 
@@ -11597,6 +11650,118 @@
   }
 }
 
+// ── Open to Work Status (Inline) ──────────────────────────────
+.open-to-work-status {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  margin-top: $space-1;
+  font-size: $font-size-sm;
+  color: $color-gray-500;
+  line-height: 1.5;
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $color-gray-300;
+    transition: all $transition-base;
+    flex-shrink: 0;
+
+    &--active {
+      background: $color-success;
+      box-shadow: 0 0 0 2px rgba($color-success, 0.2);
+    }
+  }
+
+  &__text {
+    font-weight: $font-weight-medium;
+  }
+
+  // Header specific subtler version
+  &--header {
+    margin-top: 0;
+    gap: $space-2;
+    color: $color-gray-600;
+
+    .open-to-work-status__dot {
+      width: 7px;
+      height: 7px;
+    }
+
+    .open-to-work-status__text {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-regular;
+    }
+
+    .open-to-work-status__toggle {
+      color: $color-gray-400;
+      font-weight: $font-weight-regular;
+      text-decoration: none;
+      margin-left: $space-2;
+
+      &:hover {
+        color: $color-primary;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__toggle {
+    margin-left: $space-1;
+    background: none;
+    border: none;
+    padding: 0;
+    color: $color-primary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: all $transition-base;
+
+    &:hover {
+      color: color.adjust($color-primary, $lightness: -10%);
+      text-decoration: none;
+    }
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.6;
+      text-decoration: none;
+    }
+
+    &--loading {
+      position: relative;
+      padding-right: 18px;
+
+      &::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        margin-top: -6px;
+        width: 12px;
+        height: 12px;
+        border: 2px solid transparent;
+        border-top-color: currentcolor;
+        border-radius: 50%;
+        animation: open-to-work-spin 0.6s linear infinite;
+      }
+    }
+  }
+}
+
+@keyframes open-to-work-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 // Page-header level
 .screening-skeleton__page-title {
   width: 7rem;
@@ -12440,6 +12605,217 @@
   }
 }
 
+.recruiter-candidates-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr);
+  gap: $space-4;
+  align-items: center;
+
+  &__search {
+    width: 100%;
+  }
+
+  &__select {
+    min-height: 48px;
+  }
+}
+
+.recruiter-candidates-table {
+  &__identity,
+  &__job {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__meta,
+  &__feedback {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__meta span,
+  &__feedback {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+}
+
+.recruiter-candidates-note {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.recruiter-candidate-detail {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+
+  &__hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-5;
+    flex-wrap: wrap;
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    min-width: 0;
+  }
+
+  &__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($color-primary, 0.08);
+    color: $color-primary;
+    font-family: $font-heading;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: $font-heading;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+  }
+
+  &__meta,
+  &__contacts,
+  &__links,
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+
+  &__meta {
+    align-items: center;
+  }
+
+  &__grid {
+    gap: $space-5;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: $space-5;
+  }
+
+  &__block {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    p {
+      margin: 0;
+      color: $color-gray-700;
+      line-height: 1.65;
+    }
+  }
+
+  &__label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $color-text-muted;
+  }
+
+  &__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: $color-primary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__timeline {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__timelineItem {
+    padding: $space-3 $space-4;
+    border: 1px solid $color-gray-200;
+    border-radius: $radius-xl;
+    background: $color-gray-100;
+  }
+
+  &__timelineTitle {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__timelineMeta {
+    margin-top: 0.15rem;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__timelineList {
+    margin: $space-2 0 0;
+    padding-left: 1.1rem;
+    color: $color-gray-700;
+    font-size: $font-size-sm;
+
+    li + li {
+      margin-top: 0.35rem;
+    }
+  }
+}
+
 @media (max-width: $bp-md) {
   .candidate-dashboard__alert,
   .candidate-pipeline-card,
@@ -12460,5 +12836,9 @@
 
   .recruiter-interview-row__time {
     min-width: 0;
+  }
+
+  .recruiter-candidates-toolbar {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

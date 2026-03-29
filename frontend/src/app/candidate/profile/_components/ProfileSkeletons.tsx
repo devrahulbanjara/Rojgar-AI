@@ -3,10 +3,34 @@ export function ProfileDataSkeleton() {
     <div className="profile-layout" aria-hidden="true">
       <aside className="profile-layout__aside">
         <div className="profile-aside-card profile-aside-card--skeleton">
+          <div
+            className="profile-completion profile-skeleton__completion"
+            style={{ marginBottom: '1.5rem' }}
+          >
+            <div className="profile-completion__header">
+              <div className="skeleton-block profile-skeleton__completion-label" />
+              <div className="skeleton-block profile-skeleton__completion-pct" />
+            </div>
+            <div className="skeleton-block profile-skeleton__completion-bar" />
+          </div>
           <div className="skeleton-block profile-skeleton__avatar" />
           <div className="skeleton-block profile-skeleton__name" />
           <div className="skeleton-block profile-skeleton__headline" />
           <div className="skeleton-block profile-skeleton__location" />
+          <div
+            className="open-to-work-status open-to-work-status--skeleton"
+            style={{ padding: '0.25rem 0', marginTop: '0.25rem' }}
+          >
+            <div
+              className="skeleton-block"
+              style={{ width: '8px', height: '8px', borderRadius: '50%' }}
+            />
+            <div className="skeleton-block" style={{ width: '120px', height: '14px' }} />
+            <div
+              className="skeleton-block"
+              style={{ width: '50px', height: '14px', marginLeft: 'auto' }}
+            />
+          </div>
           <div className="profile-aside-card__divider" />
           <div className="profile-aside-card__stats">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -15,14 +39,6 @@ export function ProfileDataSkeleton() {
                 <div className="skeleton-block profile-skeleton__stat-label" />
               </div>
             ))}
-          </div>
-          <div className="profile-aside-card__divider" />
-          <div className="profile-completion profile-skeleton__completion">
-            <div className="profile-completion__header">
-              <div className="skeleton-block profile-skeleton__completion-label" />
-              <div className="skeleton-block profile-skeleton__completion-pct" />
-            </div>
-            <div className="skeleton-block profile-skeleton__completion-bar" />
           </div>
         </div>
       </aside>

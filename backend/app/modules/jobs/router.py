@@ -99,9 +99,10 @@ async def list_company_jobs(
 )
 async def get_job(
     job_id: str,
+    user: User | None = Depends(get_optional_user),
     db: AsyncSession = db,
 ):
-    data = await service.get_job_detail(db, job_id)
+    data = await service.get_job_detail(db, job_id, user)
     return ResponseBuilder.success(data=data, message="Job fetched.")
 
 

@@ -52,6 +52,7 @@ def _profile_to_response(
         portfolio_url=profile.portfolio_url,
         years_of_experience=profile.years_of_experience,
         target_roles=profile.target_roles or [],
+        is_open_to_work=profile.is_open_to_work,
         experiences=profile.experiences,
         educations=profile.educations,
         skills=profile.skills,

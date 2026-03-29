@@ -10,6 +10,7 @@ from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
+from app.modules.profiles.models import Profile
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.dashboards.schemas import (
     ApplicationPipelineItem,
@@ -135,6 +136,11 @@ async def get_candidate_dashboard(
 
     stats = await _get_candidate_stats(db, current_user.id)
 
+    profile_result = await db.execute(
+        select(Profile.is_open_to_work).where(Profile.user_id == current_user.id)
+    )
+    is_open_to_work = profile_result.scalar() or False
+
     application_rows = await db.execute(
         select(
             Application.id,
@@ -183,6 +189,7 @@ async def get_candidate_dashboard(
 
     response = CandidateDashboardResponse(
         user_name=current_user.full_name,
+        is_open_to_work=is_open_to_work,
         stats=stats,
         applications=applications,
         urgent_action=urgent_action,

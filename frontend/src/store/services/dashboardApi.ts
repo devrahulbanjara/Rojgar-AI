@@ -27,6 +27,7 @@ export interface CandidateDashboardApplication {
 
 export interface CandidateDashboardData {
   user_name: string
+  is_open_to_work: boolean
   stats: CandidateDashboardStats
   applications: CandidateDashboardApplication[]
   urgent_action: string | null

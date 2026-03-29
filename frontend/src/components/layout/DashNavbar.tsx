@@ -134,7 +134,7 @@ function buildNavItems(role: DashRole): NavItem[] {
   const items: NavItem[] = [
     { label: 'Dashboard', href: '/recruiter' },
     { label: 'My Jobs', href: '/recruiter/jobs' },
-    { label: 'Applications', href: '/recruiter/applications' },
+    { label: 'Candidates', href: '/recruiter/candidates' },
     { label: 'Screening', href: '/recruiter/screening' },
     { label: 'Interviews', href: '/recruiter/interviews' },
     { label: 'Outreach', href: '/recruiter/outreach' },
@@ -176,7 +176,7 @@ export default function DashNavbar({
     : COMPANY_NOTIFICATIONS
   const notificationsCount = notifications.length
   const notificationsLoading = isCandidate ? isNotificationsLoading : false
-  const notificationsLink = isCandidate ? '/candidate/applications' : '/recruiter/applications'
+  const notificationsLink = isCandidate ? '/candidate/applications' : '/recruiter/candidates'
 
   const displayName = user?.full_name ?? userName
   const displayInitials = getInitials(displayName, userInitials)
@@ -345,7 +345,7 @@ export default function DashNavbar({
 
                 <div className="dash-navbar__notifications-footer">
                   <Link href={notificationsLink} onClick={() => setNotificationsOpen(false)}>
-                    {isCandidate ? 'View applications' : 'View inbox'}
+                    {isCandidate ? 'View applications' : 'View candidates'}
                   </Link>
                 </div>
               </div>

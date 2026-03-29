@@ -31,6 +31,7 @@ class ApplicationPipelineItem(BaseSchema):
 
 class CandidateDashboardResponse(BaseSchema):
     user_name: str
+    is_open_to_work: bool = False
     stats: CandidateStats
     applications: list[ApplicationPipelineItem]
     urgent_action: str | None

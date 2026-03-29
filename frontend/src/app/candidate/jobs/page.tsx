@@ -1,22 +1,17 @@
 'use client'
 
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
 
-import Link from 'next/link'
-
-import { useApplyToJobMutation } from '@/store/services/applicationsApi'
 import {
   type JobListItem,
   type LocationType,
   type SearchJobsParams,
   useSearchJobsQuery,
 } from '@/store/services/jobsApi'
-import { useGetMyResumesQuery } from '@/store/services/resumeApi'
 import { Bookmark, Briefcase, Calendar, ChevronDown, Clock, MapPin, Search, X } from 'lucide-react'
 
-import Loader from '@/components/common/Loader'
 import MediaBadge from '@/components/common/MediaBadge'
+import ApplyFlowModal from '@/components/jobs/ApplyModal'
 
 import { JobCardsSkeleton, JobPreviewSkeleton } from './_components/JobsSkeletons'
 
@@ -102,140 +97,21 @@ function ApplyModal({
   jobId,
   jobTitle,
   onClose,
+  onSuccess,
 }: {
   jobId: string
   jobTitle: string
   onClose: () => void
+  onSuccess?: () => void
 }) {
-  const { data: resumesResp, isLoading: loadingResumes } = useGetMyResumesQuery()
-  const [applyToJob, { isLoading: applying }] = useApplyToJobMutation()
-  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
-
-  const resumes = resumesResp?.data ?? []
-
-  async function handleSubmit() {
-    if (!selectedResumeId) return
-    try {
-      await applyToJob({ job_id: jobId, resume_id: selectedResumeId }).unwrap()
-      toast.success('Application submitted successfully!')
-      onClose()
-    } catch (err: unknown) {
-      const msg = (err as { data?: { message?: string } })?.data?.message
-      toast.error(msg ?? 'Failed to submit application.')
-    }
-  }
-
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div
-        className="modal modal--md"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="apply-modal-title"
-      >
-        <div className="modal__header">
-          <div className="modal__title" id="apply-modal-title">
-            Apply to {jobTitle}
-          </div>
-          <button className="btn btn--ghost btn--sm" onClick={onClose} aria-label="Close">
-            <X size={16} />
-          </button>
-        </div>
-        <div className="modal__body">
-          {loadingResumes ? (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                padding: '1.5rem 0',
-              }}
-            >
-              <Loader size="sm" />
-            </div>
-          ) : resumes.length === 0 ? (
-            <p style={{ color: 'var(--color-muted,#6b7280)' }}>
-              You need to{' '}
-              <Link href="/candidate/resume" className="auth__inline-link">
-                create a resume
-              </Link>{' '}
-              before applying.
-            </p>
-          ) : (
-            <>
-              <p
-                style={{
-                  marginBottom: '0.75rem',
-                  fontSize: '0.875rem',
-                  color: 'var(--color-muted,#6b7280)',
-                }}
-              >
-                Select a resume to submit with your application:
-              </p>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                }}
-              >
-                {resumes.map((r) => (
-                  <label
-                    key={r.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '0.75rem',
-                      borderRadius: '0.5rem',
-                      border: `1.5px solid ${selectedResumeId === r.id ? 'var(--color-primary,#7c3aed)' : 'var(--color-gray-200,#e5e7eb)'}`,
-                      cursor: 'pointer',
-                      background:
-                        selectedResumeId === r.id ? 'var(--color-primary-50,#ede9fe)' : '',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="resume"
-                      value={r.id}
-                      checked={selectedResumeId === r.id}
-                      onChange={() => setSelectedResumeId(r.id)}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{r.resume_name}</div>
-                      {r.headline && (
-                        <div
-                          style={{
-                            fontSize: '0.8125rem',
-                            color: 'var(--color-muted,#6b7280)',
-                          }}
-                        >
-                          {r.headline}
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        <div className="modal__footer">
-          <button className="btn btn--ghost" onClick={onClose}>
-            Cancel
-          </button>
-          {resumes.length > 0 && (
-            <button
-              className="btn btn--primary"
-              onClick={handleSubmit}
-              disabled={!selectedResumeId || applying}
-            >
-              {applying ? 'Submitting…' : 'Submit Application'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <ApplyFlowModal
+      isOpen={true}
+      jobId={jobId}
+      jobTitle={jobTitle}
+      onClose={onClose}
+      onSuccess={onSuccess}
+    />
   )
 }
 
@@ -265,7 +141,7 @@ export default function UserJobsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const { data: jobsResp, isLoading, isError } = useSearchJobsQuery(appliedParams)
+  const { data: jobsResp, isLoading, isError, refetch } = useSearchJobsQuery(appliedParams)
   const { items: jobs = [], pagination } = jobsResp?.data ?? {}
 
   const resolvedId = selectedJobId ?? jobs[0]?.id ?? null
@@ -608,7 +484,7 @@ export default function UserJobsPage() {
                 allJobs={jobs}
                 onApply={() => {
                   const j = jobs.find((x) => x.id === resolvedId)
-                  if (j) setApplyingToJob(j)
+                  if (j && !j.has_applied) setApplyingToJob(j)
                 }}
               />
             </Suspense>
@@ -629,6 +505,9 @@ export default function UserJobsPage() {
           jobId={applyingToJob.id}
           jobTitle={applyingToJob.title}
           onClose={() => setApplyingToJob(null)}
+          onSuccess={() => {
+            void refetch()
+          }}
         />
       )}
     </>

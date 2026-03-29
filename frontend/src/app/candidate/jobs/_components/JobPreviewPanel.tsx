@@ -104,6 +104,7 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
 
   const salary = formatSalary(job.salary_min, job.salary_max, job.currency)
   const isActive = job.status === 'active'
+  const hasApplied = selectedListJob?.has_applied ?? job.has_applied
   const openRolesCount = allJobs.filter((j) => j.company_id === job.company_id).length
   const previewLogoUrl = job.company?.logo_url ?? selectedListJob?.company?.logo_url ?? null
   const previewCompanyName = job.company?.name ?? selectedListJob?.company?.name ?? 'Company'
@@ -180,8 +181,13 @@ export default function JobPreviewPanel({ jobId, allJobs, onApply }: JobPreviewP
           View Details
           <ArrowRight size={14} aria-hidden="true" />
         </Link>
-        <button className="btn btn--primary btn--sm" onClick={onApply} disabled={!isActive}>
-          {isActive ? 'Quick Apply' : getJobStatusLabel(job.status)}
+        <button
+          className="btn btn--primary btn--sm"
+          onClick={onApply}
+          disabled={!isActive || hasApplied}
+          title={hasApplied ? 'You have already applied to this job.' : undefined}
+        >
+          {hasApplied ? 'Applied' : isActive ? 'Quick Apply' : getJobStatusLabel(job.status)}
         </button>
       </div>
     </div>
