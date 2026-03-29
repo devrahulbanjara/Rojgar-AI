@@ -7,18 +7,26 @@
  *  - Unauthenticated users  → /login?next=<current-path>
  *  - Wrong-role users       → their own role dashboard
  *
+ * Session restore (new tab / sessionStorage):
+ *  If there is no access token in Redux (e.g. sessionStorage is per-tab), we POST
+ *  /auth/refresh using the HttpOnly refresh cookie before deciding the user is logged out.
+ *
  * Usage:
  *   <AuthGuard requiredRole="candidate">{children}</AuthGuard>
  *   <AuthGuard requiredRole={["recruiter_admin", "recruiter"]}>{children}</AuthGuard>
  */
 import { type ReactNode, useEffect, useState } from 'react'
+import { useStore } from 'react-redux'
 import { toast } from 'react-toastify'
 
 import { usePathname, useRouter } from 'next/navigation'
 
 import { getRoleDashboard } from '@/lib/roleRoutes'
 import type { PrimaryRole } from '@/lib/types/user'
-import { useAppSelector } from '@/store/hooks'
+import type { RootState } from '@/store'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useLazyGetMeQuery, useRefreshMutation } from '@/store/services/authApi'
+import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice'
 
 interface AuthGuardProps {
   /** One role or an array of roles allowed to access this section. */
@@ -33,22 +41,63 @@ function hasRequiredRole(role: PrimaryRole, required: PrimaryRole | PrimaryRole[
 export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const dispatch = useAppDispatch()
+  const store = useStore<RootState>()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
 
-  // Ensure the initial client render matches the server (both output null)
-  // before the Redux store is rehydrated from localStorage.
+  const [refreshToken] = useRefreshMutation()
+  const [triggerGetMe] = useLazyGetMeQuery()
+
+  // Client-only mount (match server render)
   const [mounted, setMounted] = useState(false)
+  // After trying POST /auth/refresh when Redux has no access token (shared cookie, new tab)
+  const [sessionChecked, setSessionChecked] = useState(false)
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
   useEffect(() => {
-    // Still hydrating from localStorage — wait
     if (typeof window === 'undefined') return
 
+    let cancelled = false
+
+    async function restoreSession() {
+      const token = store.getState().auth.accessToken
+      if (token) {
+        if (!cancelled) setSessionChecked(true)
+        return
+      }
+
+      try {
+        const result = await refreshToken().unwrap()
+        if (cancelled) return
+        if (result.success && result.data?.access_token) {
+          dispatch(updateAccessToken(result.data.access_token))
+          try {
+            await triggerGetMe().unwrap()
+          } catch {
+            dispatch(clearCredentials())
+          }
+        }
+      } catch {
+        // No valid refresh cookie — user is logged out
+      } finally {
+        if (!cancelled) setSessionChecked(true)
+      }
+    }
+
+    void restoreSession()
+    return () => {
+      cancelled = true
+    }
+  }, [store, dispatch, refreshToken, triggerGetMe])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!mounted || !sessionChecked) return
+
     if (!isAuthenticated || !user) {
-      // Not logged in — send to login with a return URL
       toast.error('Please log in to access that page.')
       const next = encodeURIComponent(pathname)
       router.replace(`/login?next=${next}`)
@@ -56,13 +105,11 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
     }
 
     if (!hasRequiredRole(user.primary_role, requiredRole)) {
-      // Logged in but wrong role — send to their own dashboard
       toast.error("You don't have permission to access that page.")
       router.replace(getRoleDashboard(user.primary_role))
       return
     }
 
-    // Check onboarding status for candidates
     if (user.primary_role === 'candidate') {
       if (!user.is_onboarded && !pathname.startsWith('/onboarding')) {
         toast.info('Please complete your onboarding profile first.')
@@ -74,10 +121,9 @@ export default function AuthGuard({ requiredRole, children }: AuthGuardProps) {
         return
       }
     }
-  }, [isAuthenticated, user, requiredRole, pathname, router])
+  }, [mounted, sessionChecked, isAuthenticated, user, requiredRole, pathname, router])
 
-  // While redirecting, render nothing (avoids content flash)
-  if (!mounted) return null
+  if (!mounted || !sessionChecked) return null
 
   if (!isAuthenticated || !user || !hasRequiredRole(user.primary_role, requiredRole)) {
     return null

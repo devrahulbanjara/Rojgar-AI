@@ -429,6 +429,7 @@ export default function RecruiterJobAIDraftPage() {
             lockedFields={pageState.lockedFields}
             missingFields={pageState.missingFields}
             disabled={isBusy}
+            isLoading={isBusy}
             onFieldChange={handleFieldChange}
             onToggleLock={handleToggleLock}
             onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}

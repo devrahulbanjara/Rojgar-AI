@@ -321,7 +321,7 @@ export default function CompanySettingsPage() {
                   ? saveError
                   : saveSuccess
                     ? 'Saved ✓'
-                    : 'Changes saved automatically'}
+                    : 'Save to apply changes'}
           </span>
         </div>
       </div>
@@ -449,6 +449,22 @@ export default function CompanySettingsPage() {
                   disabled={isReadOnly}
                   type="email"
                 />
+              </div>
+              <div className="profile-aside-card__actions">
+                <button
+                  className="btn btn--primary btn--sm"
+                  disabled={isWorking || isReadOnly}
+                  onClick={() => void handleSave()}
+                  type="button"
+                >
+                  {isReadOnly ? (
+                    'Read only'
+                  ) : isSaving ? (
+                    <ButtonSpinner label="Saving..." />
+                  ) : (
+                    'Save'
+                  )}
+                </button>
               </div>
             </div>
           </aside>

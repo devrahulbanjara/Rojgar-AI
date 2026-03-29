@@ -1,154 +1,479 @@
 from __future__ import annotations
 
-import logging
+import json
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
-from langchain_core.messages import HumanMessage, ToolMessage
-from langgraph.types import Command
+from loguru import logger
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.enums import MembershipStatus
+from app.core.config import settings
+from app.infrastructures.ai.service import ai_service
 from app.modules.auth.models import User
-from app.modules.companies.models import Company, CompanyMembership
+from app.modules.job_ai.prompts import SALARY_SYNTHESIS_SYSTEM_PROMPT
+from app.modules.job_ai.schemas import SalaryResearch
+from app.modules.job_ai.tools import get_salary_research_data
+from app.modules.jobs.models import Job
 from app.modules.recruiter_chat.models import RecruiterChatSession
-from app.modules.recruiter_chat.runtime import recruiter_chat_runtime
+from app.modules.recruiter_chat.prompts import (
+    DIRECT_RECRUITING_RESPONSE_PROMPT,
+    INTENT_CLASSIFIER_PROMPT,
+    JOB_EDIT_PATCH_PROMPT,
+    RECRUITING_WEB_STREAM_ANSWER_PROMPT,
+    SALARY_SLOT_EXTRACTION_PROMPT,
+    SALARY_STREAM_ANSWER_PROMPT,
+    SEARCH_SYNTHESIS_PROMPT,
+)
 from app.modules.recruiter_chat.schemas import (
     ChatExchangeResponse,
     ChatHistoryMessage,
+    ChatHistoryResponse,
     ChatMessageRequest,
+    ChatResponseType,
     ChatSessionResponse,
-    InterruptPayload,
-    RespondToInterruptRequest,
+    CompanyJobListResult,
+    ConfirmJobEditRequest,
+    ConfirmJobSelectionRequest,
+    JobEditDiff,
+    PendingActionPayload,
+    PendingActionType,
+    RecruiterChatResponse,
 )
+from app.modules.recruiter_chat.tools import (
+    build_job_counts,
+    build_source_items,
+    effective_job_status,
+    find_job_matches,
+    get_active_company,
+    get_active_company_id,
+    get_company_jobs,
+    get_job_by_id_for_company,
+    search_web,
+    serialize_job_list_item,
+    serialize_job_option,
+)
+from app.shared.enums import JobStatus
 
-logger = logging.getLogger(__name__)
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-def _new_thread_id() -> str:
-    return f"recruiter-chat-{uuid.uuid4()}"
+def _new_state() -> dict[str, Any]:
+    return {
+        "mode": "idle",
+        "history": [],
+        "salary_slots": {
+            "role": None,
+            "country": None,
+            "period": None,
+            "year": None,
+        },
+        "pending_job_match": None,
+        "pending_edit": None,
+    }
 
 
-async def _get_active_company(db: AsyncSession, user_id: uuid.UUID) -> Company:
-    result = await db.execute(
-        select(Company)
-        .join(CompanyMembership, CompanyMembership.company_id == Company.id)
-        .where(
-            CompanyMembership.user_id == user_id,
-            CompanyMembership.status == MembershipStatus.active,
-        )
+def _copy_state(state: dict[str, Any] | None) -> dict[str, Any]:
+    base = _new_state()
+    if not state:
+        return base
+    base.update(state)
+    if not isinstance(base.get("history"), list):
+        base["history"] = []
+    if not isinstance(base.get("salary_slots"), dict):
+        base["salary_slots"] = _new_state()["salary_slots"]
+    return base
+
+
+def _append_history(
+    state: dict[str, Any],
+    role: str,
+    content: str,
+    *,
+    response_type: ChatResponseType | None = None,
+    data: dict | None = None,
+) -> None:
+    state["history"].append(
+        {
+            "role": role,
+            "content": content,
+            "created_at": _utcnow().isoformat(),
+            "response_type": response_type.value if response_type else None,
+            "data": data,
+        }
     )
-    company = result.scalar_one_or_none()
-    if company is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Active company membership required.",
-        )
-    return company
+    state["history"] = state["history"][-60:]
 
 
-def _message_content_to_text(content: Any) -> str:
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        parts: list[str] = []
-        for item in content:
-            if isinstance(item, str):
-                parts.append(item)
-            elif isinstance(item, dict) and item.get("type") == "text":
-                parts.append(str(item.get("text", "")))
-        return "".join(parts).strip()
-    return str(content or "").strip()
-
-
-def _message_to_history_item(message: Any) -> ChatHistoryMessage:
-    if isinstance(message, HumanMessage):
-        return ChatHistoryMessage(
-            role="user", content=_message_content_to_text(message.content)
-        )
-    if isinstance(message, ToolMessage):
-        return ChatHistoryMessage(
-            role="tool",
-            content=_message_content_to_text(message.content),
-            name=message.name,
-        )
-    return ChatHistoryMessage(
-        role="assistant",
-        content=_message_content_to_text(getattr(message, "content", "")),
-    )
+def _history_to_schema(state: dict[str, Any]) -> list[ChatHistoryMessage]:
+    items: list[ChatHistoryMessage] = []
+    for row in state.get("history", []):
+        try:
+            response_type = row.get("response_type")
+            items.append(
+                ChatHistoryMessage(
+                    role=row["role"],
+                    content=row["content"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                    response_type=ChatResponseType(response_type)
+                    if response_type
+                    else None,
+                    data=row.get("data"),
+                )
+            )
+        except Exception:
+            continue
+    return items
 
 
 def _generate_session_title(message: str) -> str | None:
-    normalized = " ".join(message.split()).strip()
+    normalized = re.sub(r"\s+", " ", (message or "").strip())
     if not normalized:
         return None
-    return normalized[:50].rstrip(" .,;:-")
+    return normalized[:80]
 
 
-async def _resolve_session_title_from_history(
-    session: RecruiterChatSession,
-) -> str | None:
-    graph = recruiter_chat_runtime.get_graph()
-    snapshot = await graph.aget_state(
-        {"configurable": {"thread_id": session.thread_id}}
+def _serialize_response(
+    response_type: ChatResponseType,
+    message: str,
+    data: dict | None = None,
+) -> RecruiterChatResponse:
+    return RecruiterChatResponse(
+        response_type=response_type,
+        message=message,
+        data=data,
     )
-    messages = (
-        snapshot.values.get("messages", []) if snapshot and snapshot.values else []
-    )
 
-    for message in messages:
-        if isinstance(message, HumanMessage):
-            return _generate_session_title(_message_content_to_text(message.content))
+
+def _pending_action_from_state(state: dict[str, Any]) -> PendingActionPayload | None:
+    if state.get("pending_job_match"):
+        return PendingActionPayload(
+            type=PendingActionType.job_selection,
+            data=state["pending_job_match"],
+        )
+
+    if state.get("pending_edit"):
+        return PendingActionPayload(
+            type=PendingActionType.job_edit,
+            data=state["pending_edit"],
+        )
 
     return None
 
 
-async def _ensure_session_title(
-    db: AsyncSession, session: RecruiterChatSession
-) -> RecruiterChatSession:
-    if session.title:
-        return session
+class IntentClassification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-    derived_title = await _resolve_session_title_from_history(session)
-    if not derived_title:
-        return session
-
-    session.title = derived_title
-    await db.commit()
-    await db.refresh(session)
-    return session
+    intent: str
+    reason: str | None
 
 
-async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
-    company = await _get_active_company(db, user.id)
-    session = RecruiterChatSession(
-        recruiter_id=user.id,
-        company_id=company.id,
-        thread_id=_new_thread_id(),
-        last_interaction_at=datetime.now(timezone.utc),
+class SalarySlotExtraction(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: str | None
+    country: str | None
+    period: str | None
+    year: int | None
+
+
+class SearchSynthesis(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    answer: str
+
+
+class DirectRecruitingResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    answer: str
+
+
+class JobEditPatchPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None
+    location: str | None
+    location_type: str | None
+    salary_min: int | None
+    salary_max: int | None
+    currency: str | None
+    status: str | None
+    expires_at: str | None
+    overview: str | None
+    responsibilities: list[str] | None
+    requirements: list[str] | None
+    preferred_qualifications: list[str] | None
+    benefits: list[str] | None
+    auto_shortlist: bool | None
+    shortlist_threshold: int | None
+
+
+class JobEditPatchSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    summary: str
+    patch: JobEditPatchPayload
+
+
+async def _classify_intent(message: str) -> str:
+    text = message.lower().strip()
+
+    if text in {
+        "hi",
+        "hello",
+        "hey",
+        "yo",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    }:
+        return "recruiting_web_question"
+
+    if "who are you" in text or "what can you do" in text or "what do you do" in text:
+        return "recruiting_web_question"
+
+    if "how are you" in text:
+        return "recruiting_web_question"
+
+    if any(word in text for word in ["edit", "change", "update", "modify"]):
+        if "job" in text or "opening" in text or "role" in text:
+            return "job_edit"
+
+    if any(term in text for term in ["salary", "compensation", "pay"]):
+        if "our " in text or "my " in text:
+            return "job_query"
+        return "salary_research"
+
+    if any(
+        term in text
+        for term in [
+            "job",
+            "opening",
+            "role",
+            "draft jobs",
+            "active jobs",
+            "expired jobs",
+        ]
+    ):
+        return "job_query"
+
+    recruiting_hints = [
+        "hire",
+        "hiring",
+        "recruit",
+        "recruiting",
+        "interview",
+        "candidate",
+        "resume",
+        "today's date",
+        "todays date",
+        "current date",
+        "current time",
+        "labor law",
+        "layoffs",
+        "machine learning",
+        "artificial intelligence",
+        "devops",
+        "backend",
+        "frontend",
+        "data science",
+        "software engineer",
+        "what is ",
+        "explain ",
+        "tell me ",
+    ]
+    if any(hint in text for hint in recruiting_hints):
+        return "recruiting_web_question"
+
+    if any(
+        hint in text
+        for hint in [
+            "movie",
+            "actor",
+            "song",
+            "celebrity",
+            "cricket score",
+            "football score",
+        ]
+    ):
+        return "out_of_scope"
+
+    classified = await ai_service.generate_structured(
+        system_prompt=INTENT_CLASSIFIER_PROMPT,
+        user_payload={"message": message},
+        schema_model=IntentClassification,
+        model=settings.groq_model_recruiter_chat,
     )
-    db.add(session)
-    await db.commit()
-    await db.refresh(session)
-    return ChatSessionResponse.model_validate(session)
+    return classified.intent
+
+
+async def _extract_salary_slots(message: str) -> SalarySlotExtraction:
+    return await ai_service.generate_structured(
+        system_prompt=SALARY_SLOT_EXTRACTION_PROMPT,
+        user_payload={"message": message},
+        schema_model=SalarySlotExtraction,
+        model=settings.groq_model_recruiter_chat,
+    )
+
+
+def _merge_salary_slots(
+    current_slots: dict[str, Any],
+    extracted: SalarySlotExtraction,
+) -> dict[str, Any]:
+    merged = dict(current_slots)
+    if extracted.role and not merged.get("role"):
+        merged["role"] = extracted.role
+    if extracted.country and not merged.get("country"):
+        merged["country"] = extracted.country
+    if extracted.period in {"monthly", "yearly"} and not merged.get("period"):
+        merged["period"] = extracted.period
+    if extracted.year and not merged.get("year"):
+        merged["year"] = extracted.year
+    return merged
+
+
+def _next_missing_salary_question(slots: dict[str, Any]) -> str | None:
+    missing = []
+    if not slots.get("role"):
+        missing.append("job role")
+    if not slots.get("country"):
+        missing.append("country")
+    if not slots.get("period"):
+        missing.append("monthly or yearly")
+
+    if not missing:
+        return None
+
+    if missing == ["country", "monthly or yearly"]:
+        return "Which country should I use, and do you want monthly or yearly salary?"
+    if missing == ["job role"]:
+        return "Which job role should I use?"
+    if missing == ["country"]:
+        return "Which country should I use?"
+    if missing == ["monthly or yearly"]:
+        return "Do you want monthly or yearly salary?"
+    return f"I need these details first: {', '.join(missing)}."
+
+
+async def _synthesize_search_answer(
+    question: str,
+    results: list[dict[str, Any]],
+    extra_context: dict[str, Any] | None = None,
+) -> str:
+    synthesized = await ai_service.generate_structured(
+        system_prompt=SEARCH_SYNTHESIS_PROMPT,
+        user_payload={
+            "question": question,
+            "search_results": results[:5],
+            "context": extra_context or {},
+        },
+        schema_model=SearchSynthesis,
+        model=settings.groq_model_recruiter_chat,
+    )
+    return synthesized.answer.strip()
+
+
+async def _build_direct_recruiting_answer(
+    question: str,
+    *,
+    company_name: str,
+) -> str:
+    response = await ai_service.generate_structured(
+        system_prompt=DIRECT_RECRUITING_RESPONSE_PROMPT,
+        user_payload={
+            "question": question,
+            "company_name": company_name,
+        },
+        schema_model=DirectRecruitingResponse,
+        model=settings.groq_model_recruiter_chat,
+    )
+    return response.answer.strip()
+
+
+def _job_to_editable_context(job: Job) -> dict[str, Any]:
+    return {
+        "id": str(job.id),
+        "title": job.title,
+        "location": job.location,
+        "location_type": job.location_type.value if job.location_type else None,
+        "salary_min": job.salary_min,
+        "salary_max": job.salary_max,
+        "currency": job.currency,
+        "status": effective_job_status(job),
+        "expires_at": job.expires_at.isoformat() if job.expires_at else None,
+        "overview": job.overview,
+        "responsibilities": job.responsibilities or [],
+        "requirements": job.requirements or [],
+        "preferred_qualifications": job.preferred_qualifications or [],
+        "benefits": job.benefits or [],
+        "auto_shortlist": job.auto_shortlist,
+        "shortlist_threshold": job.shortlist_threshold,
+    }
+
+
+def _normalize_for_diff(value: Any) -> Any:
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if hasattr(value, "value"):
+        return value.value
+    return value
+
+
+def _build_diff(old: dict[str, Any], patch: dict[str, Any]) -> list[JobEditDiff]:
+    diff: list[JobEditDiff] = []
+    for field, new_value in patch.items():
+        old_value = old.get(field)
+        if old_value != new_value:
+            diff.append(
+                JobEditDiff(
+                    field=field,
+                    before=_normalize_for_diff(old_value),
+                    after=_normalize_for_diff(new_value),
+                )
+            )
+    return diff
+
+
+async def _prepare_job_edit_preview(
+    job: Job,
+    request_text: str,
+) -> tuple[str, dict[str, Any], list[JobEditDiff]]:
+    current = _job_to_editable_context(job)
+    proposal = await ai_service.generate_structured(
+        system_prompt=JOB_EDIT_PATCH_PROMPT,
+        user_payload={
+            "current_job": current,
+            "request_text": request_text,
+        },
+        schema_model=JobEditPatchSchema,
+        model=settings.groq_model_recruiter_chat,
+    )
+    patch = proposal.patch.model_dump(exclude_none=True)
+    diff = _build_diff(current, patch)
+    return proposal.summary.strip(), patch, diff
 
 
 async def get_session(
-    db: AsyncSession, user: User, session_id: uuid.UUID
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
 ) -> RecruiterChatSession:
-    company = await _get_active_company(db, user.id)
-    result = await db.execute(
+    company_id = await get_active_company_id(db, user.id)
+    session = await db.scalar(
         select(RecruiterChatSession).where(
             RecruiterChatSession.id == session_id,
             RecruiterChatSession.recruiter_id == user.id,
-            RecruiterChatSession.company_id == company.id,
+            RecruiterChatSession.company_id == company_id,
         )
     )
-    session = result.scalar_one_or_none()
-    if session is None:
+    if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Recruiter chat session not found.",
@@ -156,68 +481,529 @@ async def get_session(
     return session
 
 
-async def get_session_response(
-    db: AsyncSession, user: User, session_id: uuid.UUID
-) -> ChatSessionResponse:
-    session = await get_session(db, user, session_id)
-    session = await _ensure_session_title(db, session)
+async def _save_session_state(
+    db: AsyncSession,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    *,
+    title_hint: str | None = None,
+) -> None:
+    session.state_json = state
+    session.last_interaction_at = _utcnow()
+    if not session.title and title_hint:
+        session.title = _generate_session_title(title_hint)
+    await db.commit()
+    await db.refresh(session)
+
+
+async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
+    company_id = await get_active_company_id(db, user.id)
+    session = RecruiterChatSession(
+        recruiter_id=user.id,
+        company_id=company_id,
+        thread_id=str(uuid.uuid4()),
+        state_json=_new_state(),
+        last_interaction_at=_utcnow(),
+    )
+    db.add(session)
+    await db.commit()
+    await db.refresh(session)
     return ChatSessionResponse.model_validate(session)
 
 
 async def list_sessions(db: AsyncSession, user: User) -> list[ChatSessionResponse]:
-    company = await _get_active_company(db, user.id)
-    result = await db.execute(
+    company_id = await get_active_company_id(db, user.id)
+    rows = await db.execute(
         select(RecruiterChatSession)
         .where(
             RecruiterChatSession.recruiter_id == user.id,
-            RecruiterChatSession.company_id == company.id,
+            RecruiterChatSession.company_id == company_id,
         )
         .order_by(
             RecruiterChatSession.last_interaction_at.desc().nullslast(),
             RecruiterChatSession.created_at.desc(),
         )
     )
-    sessions = result.scalars().all()
-    sessions = [await _ensure_session_title(db, session) for session in sessions]
-    return [ChatSessionResponse.model_validate(session) for session in sessions]
+    return [
+        ChatSessionResponse.model_validate(session) for session in rows.scalars().all()
+    ]
 
 
 async def get_history(
-    db: AsyncSession, user: User, session_id: uuid.UUID
-) -> list[ChatHistoryMessage]:
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+) -> ChatHistoryResponse:
     session = await get_session(db, user, session_id)
-    return await _get_history_for_session(session)
+    state = _copy_state(session.state_json)
+    return ChatHistoryResponse(
+        history=_history_to_schema(state),
+        pending_action=_pending_action_from_state(state),
+    )
 
 
-async def _get_history_for_session(
+async def _handle_salary_flow(
+    db: AsyncSession,
     session: RecruiterChatSession,
-) -> list[ChatHistoryMessage]:
-    graph = recruiter_chat_runtime.get_graph()
-    snapshot = await graph.aget_state(
-        {"configurable": {"thread_id": session.thread_id}}
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    extracted = await _extract_salary_slots(message)
+    slots = _merge_salary_slots(state["salary_slots"], extracted)
+    state["salary_slots"] = slots
+
+    next_question = _next_missing_salary_question(slots)
+    if next_question:
+        state["mode"] = "collecting_salary_slots"
+        _append_history(
+            state,
+            "assistant",
+            next_question,
+            response_type=ChatResponseType.clarification,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(
+            ChatResponseType.clarification,
+            next_question,
+            data={"salary_slots": slots},
+        )
+
+    role = slots["role"]
+    country = slots["country"]
+    period = slots["period"]
+    year = slots.get("year") or _utcnow().year
+
+    search_input = await get_salary_research_data(
+        role=role,
+        country=country,
+        year=year,
     )
-    messages = (
-        snapshot.values.get("messages", []) if snapshot and snapshot.values else []
+    synthesized = await ai_service.generate_structured(
+        system_prompt=SALARY_SYNTHESIS_SYSTEM_PROMPT,
+        user_payload=search_input,
+        schema_model=SalaryResearch,
     )
-    return [_message_to_history_item(message) for message in messages]
+
+    sources = [
+        {"title": source.source_name, "url": source.url}
+        for source in synthesized.sources
+        if source.url
+    ]
+    if len(sources) < 3:
+        extra_sources = build_source_items(search_input.get("results", []), limit=4)
+        for extra_source in extra_sources:
+            if extra_source["url"] not in {source["url"] for source in sources}:
+                sources.append(extra_source)
+            if len(sources) >= 3:
+                break
+
+    min_text = (
+        f"{int(synthesized.recommended_min):,}"
+        if synthesized.recommended_min is not None
+        else None
+    )
+    max_text = (
+        f"{int(synthesized.recommended_max):,}"
+        if synthesized.recommended_max is not None
+        else None
+    )
+    range_text = (
+        f"{synthesized.currency or ''} {min_text} - {max_text}".strip()
+        if min_text and max_text
+        else "I could not produce a reliable numeric range."
+    )
+    answer = (
+        f"The {period} salary range for {role} in {country} is about {range_text}. "
+        f"{synthesized.rationale.strip()}"
+    ).strip()
+    data = {
+        "role": role,
+        "country": country,
+        "period": period,
+        "year": year,
+        "confidence": synthesized.confidence,
+        "recommended_min": synthesized.recommended_min,
+        "recommended_max": synthesized.recommended_max,
+        "currency": synthesized.currency,
+        "sources": sources,
+    }
+
+    state["mode"] = "idle"
+    state["salary_slots"] = _new_state()["salary_slots"]
+    _append_history(
+        state,
+        "assistant",
+        answer,
+        response_type=ChatResponseType.salary_answer,
+        data=data,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.salary_answer, answer, data=data)
 
 
-def _extract_interrupt_payload(result: dict[str, Any]) -> dict[str, Any] | None:
-    interrupts = result.get("__interrupt__")
-
-    if not interrupts:
-        return None
-
-    first = interrupts[0]
-    value = getattr(first, "value", None)
-
-    if value is not None:
-        return value
-
-    if isinstance(first, dict) and "value" in first:
-        return first["value"]
-
+def _job_query_filter(message: str) -> str | None:
+    text = message.lower()
+    if "draft" in text:
+        return JobStatus.draft.value
+    if "expired" in text:
+        return JobStatus.expired.value
+    if "active" in text:
+        return JobStatus.active.value
     return None
+
+
+async def _handle_job_query(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    company_id = await get_active_company_id(db, user.id)
+    jobs = await get_company_jobs(db, company_id)
+    counts = build_job_counts(jobs)
+    status_filter = _job_query_filter(message)
+    filtered_jobs = (
+        [job for job in jobs if effective_job_status(job) == status_filter]
+        if status_filter
+        else jobs
+    )
+    lower = message.lower()
+
+    if "how many" in lower or "do i have any" in lower:
+        label = status_filter or "total"
+        count = counts[label] if label in counts else counts["total"]
+        if status_filter:
+            reply = f"You currently have {count} {status_filter} job(s)."
+        else:
+            reply = f"You currently have {count} job(s) in total."
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.text,
+            data={"counts": counts},
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(
+            ChatResponseType.text, reply, data={"counts": counts}
+        )
+
+    if any(
+        term in lower for term in ["list", "show", "what are", "which jobs", "openings"]
+    ):
+        payload = CompanyJobListResult(
+            total=len(filtered_jobs),
+            jobs=[serialize_job_list_item(job) for job in filtered_jobs],
+            counts=counts,
+        ).model_dump(mode="json")
+        if status_filter and not filtered_jobs:
+            reply = f"You do not have any {status_filter} jobs right now."
+            response_type = ChatResponseType.text
+            data = {"counts": counts}
+        else:
+            reply = f"I found {len(filtered_jobs)} job(s) for your company."
+            response_type = ChatResponseType.job_list
+            data = payload
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=response_type,
+            data=data,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(response_type, reply, data=data)
+
+    if any(term in lower for term in ["salary", "compensation", "pay"]):
+        matches = find_job_matches(filtered_jobs or jobs, message)
+        if not matches:
+            reply = (
+                "I could not match that to one of your company jobs. "
+                "Ask me to list your jobs first or mention the exact role title."
+            )
+            _append_history(
+                state,
+                "assistant",
+                reply,
+                response_type=ChatResponseType.clarification,
+            )
+            await _save_session_state(db, session, state, title_hint=message)
+            return _serialize_response(ChatResponseType.clarification, reply)
+
+        if len(matches) == 1:
+            job = matches[0]
+            if job.salary_min is not None and job.salary_max is not None:
+                salary_text = f"{job.currency or ''} {job.salary_min:,} - {job.salary_max:,}".strip()
+            else:
+                salary_text = "This job does not currently have a salary range set."
+            reply = f"The salary for {job.title} is {salary_text}."
+            _append_history(
+                state,
+                "assistant",
+                reply,
+                response_type=ChatResponseType.text,
+                data={"job": serialize_job_list_item(job)},
+            )
+            await _save_session_state(db, session, state, title_hint=message)
+            return _serialize_response(
+                ChatResponseType.text,
+                reply,
+                data={"job": serialize_job_list_item(job)},
+            )
+
+        state["mode"] = "awaiting_job_match_confirmation"
+        state["pending_job_match"] = {
+            "kind": "job_query_salary",
+            "request_text": message,
+            "options": [serialize_job_option(job) for job in matches],
+        }
+        reply = "I found multiple possible job matches. Please choose the exact job."
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.clarification,
+            data={"options": state["pending_job_match"]["options"]},
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(
+            ChatResponseType.clarification,
+            reply,
+            data={"options": state["pending_job_match"]["options"]},
+        )
+
+    payload = CompanyJobListResult(
+        total=len(filtered_jobs),
+        jobs=[serialize_job_list_item(job) for job in filtered_jobs],
+        counts=counts,
+    ).model_dump(mode="json")
+    reply = f"I found {len(filtered_jobs)} job(s) for your company."
+    _append_history(
+        state,
+        "assistant",
+        reply,
+        response_type=ChatResponseType.job_list,
+        data=payload,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.job_list, reply, data=payload)
+
+
+async def _handle_job_edit(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    company_id = await get_active_company_id(db, user.id)
+    jobs = await get_company_jobs(db, company_id)
+    matches = find_job_matches(jobs, message)
+
+    if not matches:
+        reply = (
+            "I could not match that edit request to one of your company jobs. "
+            "Ask me to list your jobs first or mention the exact role title."
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.clarification,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.clarification, reply)
+
+    if len(matches) > 1:
+        state["mode"] = "awaiting_job_match_confirmation"
+        state["pending_job_match"] = {
+            "kind": "job_edit",
+            "request_text": message,
+            "options": [serialize_job_option(job) for job in matches],
+        }
+        reply = "I found multiple possible jobs for that edit request. Please choose the exact job first."
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.clarification,
+            data={"options": state["pending_job_match"]["options"]},
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(
+            ChatResponseType.clarification,
+            reply,
+            data={"options": state["pending_job_match"]["options"]},
+        )
+
+    job = matches[0]
+    summary, patch, diff = await _prepare_job_edit_preview(job, message)
+    if not patch or not diff:
+        reply = "I understood the request, but I do not see any actual change to apply."
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.text,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, reply)
+
+    preview = {
+        "job_id": str(job.id),
+        "job_title": job.title,
+        "summary": summary,
+        "patch": patch,
+        "diffs": [item.model_dump(mode="json") for item in diff],
+    }
+    state["mode"] = "awaiting_edit_confirmation"
+    state["pending_edit"] = preview
+    reply = "I prepared the job edit preview. Approve it and I will apply the changes."
+    _append_history(
+        state,
+        "assistant",
+        reply,
+        response_type=ChatResponseType.job_edit_preview,
+        data=preview,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.job_edit_preview, reply, data=preview)
+
+
+async def _handle_recruiting_web_question(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    lower = message.lower()
+    company = await get_active_company(db, user.id)
+    company_name = company.name.strip() if company.name else "your company"
+
+    if lower in {
+        "hi",
+        "hello",
+        "hey",
+        "yo",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    }:
+        reply = (
+            f"Hi! I'm the recruiting assistant for {company_name}. "
+            "I can help with salary research, your company jobs, safe job edits, and recruiting-related questions."
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.text,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, reply)
+
+    if (
+        "who are you" in lower
+        or "what can you do" in lower
+        or "what do you do" in lower
+    ):
+        reply = (
+            f"I'm the recruiting assistant for {company_name}. "
+            "I can help you review company jobs, research salary ranges, prepare safe job edits for approval, and answer recruiting-related hiring questions."
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.text,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, reply)
+
+    if "today" in lower and "date" in lower:
+        reply = f"Today's date is {_utcnow().date().isoformat()}."
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.text,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, reply)
+
+    if "current time" in lower or "time is it" in lower:
+        reply = f"The current UTC time is {_utcnow().strftime('%H:%M:%S')}."
+        _append_history(
+            state,
+            "assistant",
+            reply,
+            response_type=ChatResponseType.text,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, reply)
+
+    if not any(
+        marker in lower
+        for marker in [
+            "today",
+            "current",
+            "latest",
+            "recent",
+            "news",
+            "law",
+            "layoff",
+            "date",
+            "time",
+        ]
+    ):
+        answer = await _build_direct_recruiting_answer(
+            message,
+            company_name=company_name,
+        )
+        _append_history(
+            state,
+            "assistant",
+            answer,
+            response_type=ChatResponseType.text,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        return _serialize_response(ChatResponseType.text, answer)
+
+    results = await search_web(message, max_results=5)
+    answer = await _synthesize_search_answer(question=message, results=results)
+    data = {"sources": build_source_items(results, limit=4)}
+    _append_history(
+        state,
+        "assistant",
+        answer,
+        response_type=ChatResponseType.text,
+        data=data,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.text, answer, data=data)
+
+
+async def _handle_out_of_scope(
+    db: AsyncSession,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+) -> RecruiterChatResponse:
+    reply = (
+        "I can't help with unrelated or unprofessional requests. "
+        "I can only help with salary research, your company jobs, job edits with confirmation, "
+        "and recruiting-related current information."
+    )
+    _append_history(
+        state,
+        "assistant",
+        reply,
+        response_type=ChatResponseType.out_of_scope,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    return _serialize_response(ChatResponseType.out_of_scope, reply)
 
 
 async def send_message(
@@ -227,73 +1013,619 @@ async def send_message(
     payload: ChatMessageRequest,
 ) -> ChatExchangeResponse:
     session = await get_session(db, user, session_id)
-    graph = recruiter_chat_runtime.get_graph()
-    config = {"configurable": {"thread_id": session.thread_id}}
-    state_input = {
-        "messages": [HumanMessage(content=payload.message)],
-        "company_id": str(session.company_id),
-        "recruiter_id": str(session.recruiter_id),
-        "thread_id": session.thread_id,
-        "session_id": str(session.id),
-    }
+    state = _copy_state(session.state_json)
 
-    result = await graph.ainvoke(state_input, config=config)
-    interrupt_payload = _extract_interrupt_payload(result)
-    await touch_session(db, session, title=payload.message)
-    history = await _get_history_for_session(session)
+    user_message = payload.message.strip()
+    if not user_message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message cannot be empty.",
+        )
+
+    _append_history(state, "user", user_message)
+
+    if state.get("mode") == "collecting_salary_slots":
+        reply = await _handle_salary_flow(db, session, state, user_message)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=_pending_action_from_state(state),
+        )
+
+    if state.get("mode") == "awaiting_job_match_confirmation":
+        reply = _serialize_response(
+            ChatResponseType.clarification,
+            "Please choose the job from the frontend options so I can continue.",
+            data=state.get("pending_job_match"),
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply.message,
+            response_type=reply.response_type,
+            data=reply.data,
+        )
+        await _save_session_state(db, session, state, title_hint=user_message)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=_pending_action_from_state(state),
+        )
+
+    if state.get("mode") == "awaiting_edit_confirmation":
+        reply = _serialize_response(
+            ChatResponseType.job_edit_preview,
+            "I am still waiting for your approval or cancellation for the pending job edit.",
+            data=state.get("pending_edit"),
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply.message,
+            response_type=reply.response_type,
+            data=reply.data,
+        )
+        await _save_session_state(db, session, state, title_hint=user_message)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=_pending_action_from_state(state),
+        )
+
+    intent = await _classify_intent(user_message)
+    if intent == "salary_research":
+        reply = await _handle_salary_flow(db, session, state, user_message)
+    elif intent == "job_query":
+        reply = await _handle_job_query(db, user, session, state, user_message)
+    elif intent == "job_edit":
+        reply = await _handle_job_edit(db, user, session, state, user_message)
+    elif intent == "recruiting_web_question":
+        reply = await _handle_recruiting_web_question(
+            db,
+            user,
+            session,
+            state,
+            user_message,
+        )
+    else:
+        reply = await _handle_out_of_scope(db, session, state, user_message)
 
     return ChatExchangeResponse(
-        history=history,
-        interrupt=InterruptPayload.model_validate(interrupt_payload)
-        if interrupt_payload
-        else None,
+        reply=reply,
+        history=_history_to_schema(state),
+        pending_action=_pending_action_from_state(state),
     )
 
 
-async def respond_to_interrupt(
+async def confirm_job_selection(
     db: AsyncSession,
     user: User,
     session_id: uuid.UUID,
-    decision: RespondToInterruptRequest,
+    payload: ConfirmJobSelectionRequest,
 ) -> ChatExchangeResponse:
     session = await get_session(db, user, session_id)
-    graph = recruiter_chat_runtime.get_graph()
-    config = {"configurable": {"thread_id": session.thread_id}}
-    result = await graph.ainvoke(
-        Command(resume=decision.model_dump(mode="json")),
-        config=config,
+    state = _copy_state(session.state_json)
+    pending = state.get("pending_job_match")
+
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No pending job selection exists for this session.",
+        )
+
+    company_id = await get_active_company_id(db, user.id)
+    job = await get_job_by_id_for_company(db, company_id, payload.job_id)
+    kind = pending.get("kind")
+    request_text = pending.get("request_text", "")
+
+    state["pending_job_match"] = None
+    state["mode"] = "idle"
+
+    if kind == "job_query_salary":
+        if job.salary_min is not None and job.salary_max is not None:
+            salary_text = (
+                f"{job.currency or ''} {job.salary_min:,} - {job.salary_max:,}".strip()
+            )
+        else:
+            salary_text = "This job does not currently have a salary range set."
+        reply_text = f"The salary for {job.title} is {salary_text}."
+        reply = _serialize_response(
+            ChatResponseType.text,
+            reply_text,
+            data={"job": serialize_job_list_item(job)},
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply_text,
+            response_type=reply.response_type,
+            data=reply.data,
+        )
+        await _save_session_state(db, session, state, title_hint=request_text)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=None,
+        )
+
+    if kind == "job_edit":
+        summary, patch, diff = await _prepare_job_edit_preview(job, request_text)
+        if not patch or not diff:
+            reply_text = (
+                "I understood the request, but I do not see any actual change to apply."
+            )
+            reply = _serialize_response(ChatResponseType.text, reply_text)
+            _append_history(
+                state,
+                "assistant",
+                reply_text,
+                response_type=reply.response_type,
+            )
+            await _save_session_state(db, session, state, title_hint=request_text)
+            return ChatExchangeResponse(
+                reply=reply,
+                history=_history_to_schema(state),
+                pending_action=None,
+            )
+
+        preview = {
+            "job_id": str(job.id),
+            "job_title": job.title,
+            "summary": summary,
+            "patch": patch,
+            "diffs": [item.model_dump(mode="json") for item in diff],
+        }
+        state["mode"] = "awaiting_edit_confirmation"
+        state["pending_edit"] = preview
+        reply_text = (
+            "I prepared the job edit preview. Approve it and I will apply the changes."
+        )
+        reply = _serialize_response(
+            ChatResponseType.job_edit_preview,
+            reply_text,
+            data=preview,
+        )
+        _append_history(
+            state,
+            "assistant",
+            reply_text,
+            response_type=reply.response_type,
+            data=reply.data,
+        )
+        await _save_session_state(db, session, state, title_hint=request_text)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=_pending_action_from_state(state),
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Unsupported pending job selection type.",
     )
-    interrupt_payload = _extract_interrupt_payload(result)
-    await touch_session(db, session)
-    history = await _get_history_for_session(session)
-
-    return ChatExchangeResponse(
-        history=history,
-        interrupt=InterruptPayload.model_validate(interrupt_payload)
-        if interrupt_payload
-        else None,
-    )
 
 
-async def touch_session(
-    db: AsyncSession, session: RecruiterChatSession, *, title: str | None = None
-) -> None:
-    session.last_interaction_at = datetime.now(timezone.utc)
-    generated_title = _generate_session_title(title or "")
-    if generated_title and not session.title:
-        session.title = generated_title
-    await db.commit()
-
-
-async def delete_session(db: AsyncSession, user: User, session_id: uuid.UUID) -> None:
+async def confirm_job_edit(
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+    payload: ConfirmJobEditRequest,
+) -> ChatExchangeResponse:
     session = await get_session(db, user, session_id)
-    thread_id = session.thread_id
+    state = _copy_state(session.state_json)
+    pending = state.get("pending_edit")
+
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No pending job edit exists for this session.",
+        )
+
+    company_id = await get_active_company_id(db, user.id)
+
+    if not payload.approve:
+        state["mode"] = "idle"
+        state["pending_edit"] = None
+        reply_text = "Okay, I cancelled the pending job edit."
+        reply = _serialize_response(ChatResponseType.text, reply_text)
+        _append_history(
+            state,
+            "assistant",
+            reply_text,
+            response_type=reply.response_type,
+        )
+        await _save_session_state(db, session, state)
+        return ChatExchangeResponse(
+            reply=reply,
+            history=_history_to_schema(state),
+            pending_action=None,
+        )
+
+    job_id = uuid.UUID(str(pending["job_id"]))
+    job = await get_job_by_id_for_company(db, company_id, job_id)
+    patch = pending.get("patch") or {}
+
+    for field, value in patch.items():
+        if hasattr(job, field):
+            setattr(job, field, value)
+    await db.commit()
+    await db.refresh(job)
+
+    state["mode"] = "idle"
+    state["pending_edit"] = None
+
+    reply_text = f"I updated {job.title} successfully."
+    reply = _serialize_response(
+        ChatResponseType.text,
+        reply_text,
+        data={"job": serialize_job_list_item(job)},
+    )
+    _append_history(
+        state,
+        "assistant",
+        reply_text,
+        response_type=reply.response_type,
+        data=reply.data,
+    )
+    await _save_session_state(db, session, state)
+    return ChatExchangeResponse(
+        reply=reply,
+        history=_history_to_schema(state),
+        pending_action=None,
+    )
+
+
+async def delete_session(
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+) -> None:
+    session = await get_session(db, user, session_id)
     await db.delete(session)
     await db.commit()
 
+
+def _sse(event: str, data: dict[str, Any]) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _final_exchange_payload(
+    *,
+    reply: RecruiterChatResponse,
+    state: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "reply": reply.model_dump(mode="json"),
+        "history": [item.model_dump(mode="json") for item in _history_to_schema(state)],
+        "pending_action": (
+            _pending_action_from_state(state).model_dump(mode="json")
+            if _pending_action_from_state(state)
+            else None
+        ),
+    }
+
+
+def _is_direct_recruiting_prompt(message: str) -> bool:
+    lower = message.lower().strip()
+    return any(
+        phrase in lower
+        for phrase in [
+            "what is ",
+            "explain ",
+            "tell me ",
+            "machine learning",
+            "artificial intelligence",
+            "devops",
+            "backend",
+            "frontend",
+            "data science",
+            "software engineer",
+            "how are you",
+        ]
+    )
+
+
+async def _handle_salary_flow_stream(
+    db: AsyncSession,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+):
+    extracted = await _extract_salary_slots(message)
+    slots = _merge_salary_slots(state["salary_slots"], extracted)
+    state["salary_slots"] = slots
+
+    next_question = _next_missing_salary_question(slots)
+    if next_question:
+        state["mode"] = "collecting_salary_slots"
+        reply = _serialize_response(
+            ChatResponseType.clarification,
+            next_question,
+            data={"salary_slots": slots},
+        )
+        _append_history(
+            state,
+            "assistant",
+            next_question,
+            response_type=reply.response_type,
+            data=reply.data,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
+    role = slots["role"]
+    country = slots["country"]
+    period = slots["period"]
+    year = slots.get("year") or _utcnow().year
+
+    search_input = await get_salary_research_data(
+        role=role,
+        country=country,
+        year=year,
+    )
+    results = search_input.get("results", [])
+    sources = build_source_items(results, limit=4)
+
+    yield _sse("start", {"type": ChatResponseType.salary_answer.value})
+    full_text = ""
+
+    async for chunk in ai_service.stream_text(
+        system_prompt=SALARY_STREAM_ANSWER_PROMPT,
+        user_payload={
+            "question": f"What is the {period} salary of {role} in {country} in {year}?",
+            "role": role,
+            "country": country,
+            "period": period,
+            "year": year,
+            "search_results": results[:5],
+            "salary_context": search_input,
+        },
+        model=settings.groq_model_recruiter_chat,
+    ):
+        full_text += chunk
+        yield _sse("token", {"content": chunk})
+
+    if not full_text.strip():
+        fallback_reply = await _handle_salary_flow(db, session, state, message)
+        yield _sse("final", _final_exchange_payload(reply=fallback_reply, state=state))
+        return
+
+    state["mode"] = "idle"
+    state["salary_slots"] = _new_state()["salary_slots"]
+    reply = _serialize_response(
+        ChatResponseType.salary_answer,
+        full_text.strip(),
+        data={
+            "role": role,
+            "country": country,
+            "period": period,
+            "year": year,
+            "sources": sources,
+        },
+    )
+    _append_history(
+        state,
+        "assistant",
+        reply.message,
+        response_type=reply.response_type,
+        data=reply.data,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+
+
+async def _handle_recruiting_web_question_stream(
+    db: AsyncSession,
+    user: User,
+    session: RecruiterChatSession,
+    state: dict[str, Any],
+    message: str,
+):
+    lower = message.lower().strip()
+
+    if (
+        lower
+        in {
+            "hi",
+            "hello",
+            "hey",
+            "yo",
+            "good morning",
+            "good afternoon",
+            "good evening",
+        }
+        or "who are you" in lower
+        or "what can you do" in lower
+        or "what do you do" in lower
+        or "how are you" in lower
+    ):
+        reply = await _handle_recruiting_web_question(db, user, session, state, message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
+    if "today" in lower and "date" in lower:
+        reply = await _handle_recruiting_web_question(db, user, session, state, message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
+    if "current time" in lower or "time is it" in lower:
+        reply = await _handle_recruiting_web_question(db, user, session, state, message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
+    company = await get_active_company(db, user.id)
+    company_name = company.name.strip() if company.name else "your company"
+
+    if _is_direct_recruiting_prompt(message):
+        yield _sse("start", {"type": ChatResponseType.text.value})
+        full_text = ""
+        async for chunk in ai_service.stream_text(
+            system_prompt=(
+                "You are a concise recruiting assistant for a company's hiring team.\n\n"
+                "Write a short answer in 2-4 sentences.\n"
+                "Answer directly from general professional knowledge.\n"
+                "Good topics include job-family concepts, technology/domain summaries relevant to hiring,\n"
+                "recruiting best practices, and assistant-introduction questions.\n"
+                "If the user asks who you are, explain that you are the recruiting assistant for the provided company name.\n"
+                "Keep the tone practical and recruiter-friendly.\n"
+                "Do not mention internal tooling or implementation details."
+            ),
+            user_payload={
+                "question": message,
+                "company_name": company_name,
+            },
+            model=settings.groq_model_recruiter_chat,
+        ):
+            full_text += chunk
+            yield _sse("token", {"content": chunk})
+
+        if not full_text.strip():
+            reply = await _handle_recruiting_web_question(
+                db, user, session, state, message
+            )
+            yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+            return
+
+        reply = _serialize_response(ChatResponseType.text, full_text.strip())
+        _append_history(
+            state,
+            "assistant",
+            reply.message,
+            response_type=reply.response_type,
+        )
+        await _save_session_state(db, session, state, title_hint=message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
+    results = await search_web(message, max_results=5)
+    sources = build_source_items(results, limit=4)
+
+    yield _sse("start", {"type": ChatResponseType.text.value})
+    full_text = ""
+    async for chunk in ai_service.stream_text(
+        system_prompt=RECRUITING_WEB_STREAM_ANSWER_PROMPT,
+        user_payload={
+            "question": message,
+            "search_results": results[:5],
+        },
+        model=settings.groq_model_recruiter_chat,
+    ):
+        full_text += chunk
+        yield _sse("token", {"content": chunk})
+
+    if not full_text.strip():
+        reply = await _handle_recruiting_web_question(db, user, session, state, message)
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+        return
+
+    reply = _serialize_response(
+        ChatResponseType.text,
+        full_text.strip(),
+        data={"sources": sources},
+    )
+    _append_history(
+        state,
+        "assistant",
+        reply.message,
+        response_type=reply.response_type,
+        data=reply.data,
+    )
+    await _save_session_state(db, session, state, title_hint=message)
+    yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+
+
+async def stream_message(
+    db: AsyncSession,
+    user: User,
+    session_id: uuid.UUID,
+    payload: ChatMessageRequest,
+):
     try:
-        await recruiter_chat_runtime.delete_thread(thread_id)
-    except Exception:
-        logger.exception(
-            "Failed to delete recruiter chat checkpoints for thread %s", thread_id
+        session = await get_session(db, user, session_id)
+        state = _copy_state(session.state_json)
+
+        user_message = payload.message.strip()
+        if not user_message:
+            yield _sse("error", {"message": "Message cannot be empty."})
+            return
+
+        _append_history(state, "user", user_message)
+
+        if state.get("mode") == "collecting_salary_slots":
+            async for event in _handle_salary_flow_stream(
+                db, session, state, user_message
+            ):
+                yield event
+            return
+
+        if state.get("mode") == "awaiting_job_match_confirmation":
+            reply = _serialize_response(
+                ChatResponseType.clarification,
+                "Please choose the job from the frontend options so I can continue.",
+                data=state.get("pending_job_match"),
+            )
+            _append_history(
+                state,
+                "assistant",
+                reply.message,
+                response_type=reply.response_type,
+                data=reply.data,
+            )
+            await _save_session_state(db, session, state, title_hint=user_message)
+            yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+            return
+
+        if state.get("mode") == "awaiting_edit_confirmation":
+            reply = _serialize_response(
+                ChatResponseType.job_edit_preview,
+                "I am still waiting for your approval or cancellation for the pending job edit.",
+                data=state.get("pending_edit"),
+            )
+            _append_history(
+                state,
+                "assistant",
+                reply.message,
+                response_type=reply.response_type,
+                data=reply.data,
+            )
+            await _save_session_state(db, session, state, title_hint=user_message)
+            yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+            return
+
+        intent = await _classify_intent(user_message)
+
+        if intent == "salary_research":
+            async for event in _handle_salary_flow_stream(
+                db, session, state, user_message
+            ):
+                yield event
+            return
+
+        if intent == "recruiting_web_question":
+            async for event in _handle_recruiting_web_question_stream(
+                db,
+                user,
+                session,
+                state,
+                user_message,
+            ):
+                yield event
+            return
+
+        if intent == "job_query":
+            reply = await _handle_job_query(db, user, session, state, user_message)
+        elif intent == "job_edit":
+            reply = await _handle_job_edit(db, user, session, state, user_message)
+        else:
+            reply = await _handle_out_of_scope(db, session, state, user_message)
+
+        yield _sse("final", _final_exchange_payload(reply=reply, state=state))
+    except Exception as exc:
+        logger.exception("Recruiter chat stream failed")
+        yield _sse(
+            "error",
+            {
+                "message": str(exc) or "Recruiter chat request failed.",
+            },
         )

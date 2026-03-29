@@ -11,6 +11,7 @@ class InterviewResponse(BaseSchema):
     cal_booking_uid: str
     candidate_name: str
     candidate_email: str
+    applicant_avatar_url: str | None = None
     start_time: datetime
     end_time: datetime
     timezone: str | None

@@ -1,17 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { type CSSProperties, Fragment, useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import {
   type ApplicationStatus,
   useGetMyCompanyCandidatesQuery,
+  useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
 import { useGetCompanyJobsQuery } from '@/store/services/jobsApi'
-import { Mail, Search, UserRound, X } from 'lucide-react'
-
-import StatusPill from '@/components/common/StatusPill'
+import { ChevronDown, ChevronRight, Mail, Search, UserRound, X } from 'lucide-react'
 
 import { CandidatesTableSkeleton } from './_components/CandidatesSkeletons'
 
@@ -45,6 +45,32 @@ const STATUS_OPTIONS: Array<{ value: 'all' | ApplicationStatus; label: string }>
   { value: 'rejected', label: 'Rejected' },
 ]
 
+const STATUS_LABELS: Record<ApplicationStatus, string> = {
+  applied: 'Applied',
+  screening: 'Screening',
+  shortlisted: 'Shortlisted',
+  interview_booked: 'Interview booked',
+  interview_completed: 'Interview completed',
+  offer: 'Offer',
+  rejected: 'Rejected',
+}
+
+function getRecruiterTransitionOptions(status: ApplicationStatus): ApplicationStatus[] {
+  switch (status) {
+    case 'applied':
+    case 'screening':
+      return ['shortlisted', 'rejected']
+    case 'shortlisted':
+      return ['rejected']
+    case 'interview_booked':
+      return ['interview_completed']
+    case 'interview_completed':
+      return ['offer', 'rejected']
+    default:
+      return []
+  }
+}
+
 export default function RecruiterCandidatesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -52,6 +78,8 @@ export default function RecruiterCandidatesPage() {
   const [selectedJobId, setSelectedJobId] = useState(initialJobId)
   const [selectedStatus, setSelectedStatus] = useState<'all' | ApplicationStatus>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null)
+  const [updateApplicationStatus] = useUpdateApplicationStatusMutation()
 
   const { data: jobsResp } = useGetCompanyJobsQuery()
   const {
@@ -66,16 +94,26 @@ export default function RecruiterCandidatesPage() {
 
   const jobs = jobsResp?.data ?? []
   const candidates = useMemo(() => resp?.data ?? [], [resp?.data])
+  const [statusSelectValues, setStatusSelectValues] = useState<Record<string, ApplicationStatus>>(
+    {},
+  )
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
   const filteredCandidates = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
     return candidates.filter((candidate) => {
-      if (selectedJobId !== 'all' && candidate.job_id !== selectedJobId) {
+      if (
+        selectedJobId !== 'all' &&
+        !candidate.applications.some((application) => application.job_id === selectedJobId)
+      ) {
         return false
       }
 
-      if (selectedStatus !== 'all' && candidate.status !== selectedStatus) {
+      if (
+        selectedStatus !== 'all' &&
+        !candidate.applications.some((application) => application.status === selectedStatus)
+      ) {
         return false
       }
 
@@ -85,24 +123,58 @@ export default function RecruiterCandidatesPage() {
 
       return [
         candidate.applicant_name,
-        candidate.applicant_email ?? '',
-        candidate.job_title,
-        candidate.candidate_headline ?? '',
-        candidate.candidate_location ?? '',
+        candidate.applicant_email,
+        candidate.primary_job_title,
+        ...candidate.applications.map((application) => application.job_title),
       ].some((value) => value.toLowerCase().includes(normalizedSearch))
     })
   }, [candidates, searchTerm, selectedJobId, selectedStatus])
 
-  const heading = 'Candidates'
-  const subtitle =
-    'Search and review every candidate across your jobs, then open a full profile when you need more detail.'
+  useEffect(() => {
+    const nextValues: Record<string, ApplicationStatus> = {}
+    candidates.forEach((candidate) => {
+      candidate.applications.forEach((application) => {
+        nextValues[application.application_id] = application.status
+      })
+    })
+    setStatusSelectValues(nextValues)
+  }, [candidates])
+
+  const handleApplicationStatusChange = async (
+    applicationId: string,
+    nextStatus: ApplicationStatus,
+    currentStatus: ApplicationStatus,
+  ) => {
+    if (updatingStatusId) return
+    setUpdatingStatusId(applicationId)
+    try {
+      await updateApplicationStatus({
+        application_id: applicationId,
+        body: { status: nextStatus },
+      }).unwrap()
+      toast.success(`Application moved to ${STATUS_LABELS[nextStatus].toLowerCase()}.`)
+      setStatusSelectValues((prev) => ({ ...prev, [applicationId]: nextStatus }))
+    } catch {
+      toast.error('Could not update application status.')
+      setStatusSelectValues((prev) => ({ ...prev, [applicationId]: currentStatus }))
+    } finally {
+      setUpdatingStatusId(null)
+    }
+  }
+
+  const openApplication = (applicationId: string) => {
+    router.push(`/recruiter/candidates/${applicationId}`)
+  }
 
   return (
     <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
         <div className="dash-page-header__left">
-          <h2 className="dash-page-header__title">{heading}</h2>
-          <p className="dash-page-header__subtitle">{subtitle}</p>
+          <h2 className="dash-page-header__title">Candidates</h2>
+          <p className="dash-page-header__subtitle">
+            Review one row per candidate, then open the exact application you want when you need the
+            details they shared for that job.
+          </p>
         </div>
         <div className="dash-page-header__actions">
           <span className="badge badge--gray">
@@ -120,7 +192,7 @@ export default function RecruiterCandidatesPage() {
             <input
               type="text"
               className="dash-page-toolbar__input"
-              placeholder="Search by candidate, email, headline, or job"
+              placeholder="Search by candidate, email, or job"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
@@ -184,67 +256,172 @@ export default function RecruiterCandidatesPage() {
       ) : (
         <div className="dash-card">
           <div className="table-scroll">
-            <table className="dash-table dash-table--clickable">
+            <table className="dash-table recruiter-candidates-grouped">
               <thead>
                 <tr>
                   <th>Candidate</th>
-                  <th>Job</th>
-                  <th>Status</th>
-                  <th>Applied</th>
+                  <th>Applications</th>
+                  <th>Updated</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCandidates.map((candidate) => (
-                  <tr
-                    key={candidate.id}
-                    onClick={() => router.push(`/recruiter/candidates/${candidate.id}`)}
-                  >
-                    <td>
-                      <div className="cell-user">
-                        <div
-                          className="cell-user__avatar cell-user__avatar--sm"
-                          style={
-                            {
-                              '--avatar-bg': getAvatarColor(candidate.applicant_name) + '1A',
-                              '--avatar-color': getAvatarColor(candidate.applicant_name),
-                              backgroundImage: candidate.applicant_avatar_url
-                                ? `url(${candidate.applicant_avatar_url})`
-                                : undefined,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                            } as React.CSSProperties
+                {filteredCandidates.map((candidate) => {
+                  const hasMoreApplications = candidate.application_count > 1
+                  const isExpanded = expandedCandidateId === candidate.candidate_id
+                  const additionalCount = Math.max(candidate.application_count - 1, 0)
+
+                  return (
+                    <Fragment key={candidate.candidate_id}>
+                      <tr
+                        className="recruiter-candidates-grouped__summaryRow"
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => openApplication(candidate.latest_application_id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            openApplication(candidate.latest_application_id)
                           }
-                        >
-                          {!candidate.applicant_avatar_url && getInitials(candidate.applicant_name)}
-                        </div>
-                        <div className="recruiter-candidates-table__identity">
-                          <div className="recruiter-candidates-table__name">
-                            {candidate.applicant_name}
+                        }}
+                      >
+                        <td>
+                          <div className="cell-user">
+                            <div
+                              className="cell-user__avatar cell-user__avatar--sm"
+                              style={
+                                {
+                                  '--avatar-bg': getAvatarColor(candidate.applicant_name) + '1A',
+                                  '--avatar-color': getAvatarColor(candidate.applicant_name),
+                                  backgroundImage: candidate.applicant_avatar_url
+                                    ? `url(${candidate.applicant_avatar_url})`
+                                    : undefined,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                } as CSSProperties
+                              }
+                            >
+                              {!candidate.applicant_avatar_url &&
+                                getInitials(candidate.applicant_name)}
+                            </div>
+                            <div className="recruiter-candidates-table__identity">
+                              <div className="recruiter-candidates-table__name">
+                                {candidate.applicant_name}
+                              </div>
+                              <div className="recruiter-candidates-table__meta">
+                                <span>
+                                  <Mail size={12} aria-hidden="true" />
+                                  {candidate.applicant_email}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="recruiter-candidates-table__meta">
-                            {candidate.applicant_email ? (
-                              <span>
-                                <Mail size={12} aria-hidden="true" />
-                                {candidate.applicant_email}
-                              </span>
+                        </td>
+                        <td>
+                          <div className="recruiter-candidates-grouped__applicationsCell">
+                            <div className="recruiter-candidates-grouped__primaryJob">
+                              {candidate.primary_job_title}
+                            </div>
+                            {hasMoreApplications ? (
+                              <button
+                                type="button"
+                                className="recruiter-candidates-grouped__more"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  setExpandedCandidateId((current) =>
+                                    current === candidate.candidate_id
+                                      ? null
+                                      : candidate.candidate_id,
+                                  )
+                                }}
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown size={14} />
+                                ) : (
+                                  <ChevronRight size={14} />
+                                )}
+                                +{additionalCount} more
+                              </button>
                             ) : (
-                              <span>Email hidden by candidate</span>
+                              <span className="cell-muted">1 application</span>
                             )}
                           </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="recruiter-candidates-table__job">
-                        <div>{candidate.job_title}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <StatusPill kind="application" status={candidate.status} />
-                    </td>
-                    <td className="cell-muted">{formatDate(candidate.created_at)}</td>
-                  </tr>
-                ))}
+                        </td>
+                        <td className="cell-muted">{formatDate(candidate.latest_updated_at)}</td>
+                      </tr>
+                      {isExpanded ? (
+                        <tr className="recruiter-candidates-grouped__expandedRow">
+                          <td colSpan={4}>
+                            <div className="recruiter-candidates-grouped__expandedPanel">
+                              <div className="recruiter-candidates-grouped__expandedTitle">
+                                Applications to your company
+                              </div>
+                              <div className="recruiter-candidates-grouped__applicationList">
+                                {candidate.applications.map((application) => {
+                                  const applicationValue =
+                                    statusSelectValues[application.application_id] ??
+                                    application.status
+                                  const applicationTransitions =
+                                    getRecruiterTransitionOptions(applicationValue)
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={application.application_id}
+                                      className="recruiter-candidates-grouped__applicationItem"
+                                      onClick={() => openApplication(application.application_id)}
+                                    >
+                                      <div className="recruiter-candidates-grouped__applicationCopy">
+                                        <div className="recruiter-candidates-grouped__applicationJob">
+                                          {application.job_title}
+                                        </div>
+                                        <div className="recruiter-candidates-table__meta">
+                                          <span>Applied {formatDate(application.created_at)}</span>
+                                          {application.score !== null ? (
+                                            <span>Score {application.score}/100</span>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                      <div className="recruiter-candidates-grouped__applicationActions">
+                                        <select
+                                          className="resume-field__input recruiter-candidates-grouped__statusSelect"
+                                          value={applicationValue}
+                                          onChange={(event) =>
+                                            void handleApplicationStatusChange(
+                                              application.application_id,
+                                              event.target.value as ApplicationStatus,
+                                              applicationValue,
+                                            )
+                                          }
+                                          onClick={(event) => {
+                                            event.stopPropagation()
+                                          }}
+                                          onMouseDown={(event) => event.stopPropagation()}
+                                          disabled={
+                                            applicationTransitions.length === 0 ||
+                                            updatingStatusId === application.application_id
+                                          }
+                                        >
+                                          <option value={applicationValue} disabled>
+                                            Current: {STATUS_LABELS[applicationValue]}
+                                          </option>
+                                          {applicationTransitions.map((status) => (
+                                            <option key={status} value={status}>
+                                              {STATUS_LABELS[status]}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -130,9 +130,10 @@ async def get_salary_research_data(
             pass
 
     queries = [
-        f"{role} salary range in {country} {research_year}",
-        f"{role} compensation in {country} {research_year}",
-        f"{role} salary {country}",
+        f"{role} salary {country} {research_year}",
+        f"{role} salary {country} rupees NPR",
+        f"{role} compensation package Kathmandu",
+        f"average {role} salary South Asia",
     ]
 
     aggregated: list[dict[str, Any]] = []

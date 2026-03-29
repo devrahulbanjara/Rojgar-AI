@@ -22,8 +22,6 @@ import {
   ChevronDown,
   DollarSign,
   FileText,
-  LayoutGrid,
-  List,
   MapPin,
   Pencil,
   Plus,
@@ -49,9 +47,6 @@ const FILTER_OPTIONS: { label: string; value: JobStatus | 'all' }[] = [
   { label: 'Draft', value: 'draft' },
   { label: 'Expired', value: 'expired' },
 ]
-
-const RECRUITER_JOBS_VIEW_KEY = 'recruiter-jobs-view'
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -121,25 +116,31 @@ function AutoShortlistBadge({ enabled, compact = false }: { enabled: boolean; co
 
 function RecruiterJobCard({
   job,
-  view,
   onEdit,
   onDelete,
   onStatusChange,
   isUpdatingStatus,
 }: {
   job: JobListItem
-  view: 'grid' | 'list'
-  onEdit: () => void
-  onDelete: () => void
+  onEdit: (event: React.MouseEvent) => void
+  onDelete: (event: React.MouseEvent) => void
   onStatusChange: (status: JobStatus) => void
   isUpdatingStatus: boolean
 }) {
+  const router = useRouter()
   const expiryMeta = getExpiryMeta(job)
 
   return (
-    <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
+    <div
+      className="company-job-card company-job-card--clickable company-job-card--grid"
+      onClick={() => router.push(`/recruiter/jobs/${job.id}`)}
+    >
       <div className="company-job-card__top-row">
-        <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div
+          className="cell-actions"
+          style={{ gap: '0.5rem', flexWrap: 'wrap' }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <label className={`company-job-card__status company-job-card__status--${job.status}`}>
             <select
               value={job.status}
@@ -184,6 +185,7 @@ function RecruiterJobCard({
           <Link
             href={`/recruiter/candidates?job_id=${job.id}`}
             className="company-job-card__applicants-link"
+            onClick={(e) => e.stopPropagation()}
           >
             <Users size={13} aria-hidden="true" />
             <span>
@@ -205,7 +207,7 @@ function RecruiterJobCard({
           ) : null}
         </div>
 
-        <div className="company-job-card__actions">
+        <div className="company-job-card__actions" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             className="company-job-card__icon-btn"
@@ -230,7 +232,7 @@ function RecruiterJobCard({
   )
 }
 
-function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 'grid' | 'list' }) {
+function RecruiterAIDraftCard({ draft }: { draft: JobAIDraftRecord }) {
   const jobDraft = draft.latest_draft
   const draftTitle = getAIDraftTitle(draft)
   const locationLabel = jobDraft?.location
@@ -238,7 +240,7 @@ function RecruiterAIDraftCard({ draft, view }: { draft: JobAIDraftRecord; view: 
     : LOCATION_TYPE_LABELS[jobDraft?.location_type ?? 'remote']
 
   return (
-    <div className={`company-job-card${view === 'grid' ? ' company-job-card--grid' : ''}`}>
+    <div className="company-job-card company-job-card--grid">
       <div className="company-job-card__top-row">
         <div className="cell-actions" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
           <span
@@ -353,11 +355,6 @@ export default function CompanyJobsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const filterFromUrl = searchParams.get('filter')
-  const [view, setView] = useState<'grid' | 'list'>(() => {
-    if (typeof window === 'undefined') return 'list'
-    const savedView = window.localStorage.getItem(RECRUITER_JOBS_VIEW_KEY)
-    return savedView === 'grid' || savedView === 'list' ? savedView : 'list'
-  })
   const [activeFilter, setActiveFilter] = useState<JobStatus | 'all'>(
     filterFromUrl === 'active' || filterFromUrl === 'draft' || filterFromUrl === 'expired'
       ? filterFromUrl
@@ -389,13 +386,6 @@ export default function CompanyJobsPage() {
   const isLoading = isLoadingJobs || isLoadingDrafts
   const isError = isJobsError || isDraftsError
   const hasVisibleItems = filteredJobs.length > 0 || visibleAIDrafts.length > 0
-
-  function handleViewChange(nextView: 'grid' | 'list') {
-    setView(nextView)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(RECRUITER_JOBS_VIEW_KEY, nextView)
-    }
-  }
 
   const counts: Record<JobStatus | 'all', number> = {
     all: allJobs.length + allAIDrafts.length,
@@ -445,20 +435,6 @@ export default function CompanyJobsPage() {
             </p>
           </div>
           <div className="dash-page-header__actions">
-            <button
-              className={`btn btn--sm ${view === 'grid' ? 'btn--primary' : 'btn--ghost'}`}
-              onClick={() => handleViewChange('grid')}
-              aria-label="Grid view"
-            >
-              <LayoutGrid size={14} aria-hidden="true" />
-            </button>
-            <button
-              className={`btn btn--sm ${view === 'list' ? 'btn--primary' : 'btn--ghost'}`}
-              onClick={() => handleViewChange('list')}
-              aria-label="List view"
-            >
-              <List size={14} aria-hidden="true" />
-            </button>
             <Link href="/recruiter/jobs/new" className="btn btn--outline btn--sm">
               <Plus size={14} aria-hidden="true" />
               AI Draft Job
@@ -482,9 +458,7 @@ export default function CompanyJobsPage() {
           />
         </div>
 
-        {isLoading ? (
-          <CompanyJobsCardsSkeleton view={view} count={view === 'grid' ? 4 : 5} />
-        ) : null}
+        {isLoading ? <CompanyJobsCardsSkeleton count={4} /> : null}
 
         {isError ? (
           <div className="dash-card">
@@ -523,17 +497,22 @@ export default function CompanyJobsPage() {
         ) : null}
 
         {!isLoading && !isError && hasVisibleItems ? (
-          <div className={`company-jobs-cards company-jobs-cards--${view}`}>
+          <div className="company-jobs-cards company-jobs-cards--grid">
             {visibleAIDrafts.map((draft) => (
-              <RecruiterAIDraftCard key={`ai-${draft.id}`} draft={draft} view={view} />
+              <RecruiterAIDraftCard key={`ai-${draft.id}`} draft={draft} />
             ))}
             {filteredJobs.map((job) => (
               <RecruiterJobCard
                 key={job.id}
                 job={job}
-                view={view}
-                onEdit={() => router.push(`/recruiter/jobs/${job.id}/edit`)}
-                onDelete={() => setDeletingJob(job)}
+                onEdit={(e) => {
+                  e.stopPropagation()
+                  router.push(`/recruiter/jobs/${job.id}/edit`)
+                }}
+                onDelete={(e) => {
+                  e.stopPropagation()
+                  setDeletingJob(job)
+                }}
                 onStatusChange={(status) => handleStatusChange(job, status)}
                 isUpdatingStatus={updatingStatusId === job.id}
               />
