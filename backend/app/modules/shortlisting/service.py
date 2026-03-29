@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import random
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -26,6 +25,7 @@ from app.modules.shortlisting.schemas import (
 )
 from app.shared.enums import ApplicationStatus, JobStatus, ShortlistStatus, SyncAction
 from app.infrastructures.redis.service import redis_service
+from app.agents.shortlisting import evaluate_application_with_shortlisting_agent
 
 
 SHORTLISTING_STALE_AFTER = timedelta(minutes=2)
@@ -141,16 +141,6 @@ def _score_application(application: Application) -> tuple[int, str]:
     return score, feedback
 
 
-def _dummy_ai_score_application(application: Application) -> tuple[int, str]:
-    score = random.randint(1, 100)
-    feedback = (
-        "This candidate shows potential based on their background. "
-        "Their skills align reasonably well with the core requirements. "
-        "However, further technical assessment is recommended to verify their expertise."
-    )
-    return score, feedback
-
-
 async def process_auto_shortlist_for_application(
     application_id: uuid.UUID, database_url: str
 ) -> None:
@@ -177,8 +167,13 @@ async def process_auto_shortlist_for_application(
                 return
 
             try:
-                score, feedback = _dummy_ai_score_application(application)
-                updated = _apply_review_if_missing(application, score, feedback)
+                result = await evaluate_application_with_shortlisting_agent(
+                    job=job,
+                    application=application,
+                )
+                updated = _apply_review_if_missing(
+                    application, result.score, result.feedback
+                )
                 if not updated:
                     return
                 if application.status == ApplicationStatus.applied:
@@ -196,7 +191,7 @@ async def process_auto_shortlist_for_application(
                 logger.info(
                     "Auto-shortlisted application {} with score {}",
                     application_id,
-                    score,
+                    result.score,
                 )
             except Exception as exc:
                 await db.rollback()
@@ -249,8 +244,11 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
             for application in applications:
                 if _application_has_complete_review(application):
                     continue
-                score, feedback = _dummy_ai_score_application(application)
-                _apply_review_if_missing(application, score, feedback)
+                result = await evaluate_application_with_shortlisting_agent(
+                    job=job,
+                    application=application,
+                )
+                _apply_review_if_missing(application, result.score, result.feedback)
                 if application.status == ApplicationStatus.applied:
                     application.status = ApplicationStatus.screening
             reviewed_application_ids = [

@@ -4411,7 +4411,10 @@
   border: 1px solid $color-gray-200;
   border-radius: $radius-xl;
   cursor: pointer;
-  transition: all $transition-fast;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast,
+    background-color $transition-fast;
 
   &:hover {
     border-color: rgba($color-primary, 0.4);
@@ -12057,6 +12060,7 @@
 .job-card__logo,
 .app-item__logo,
 .app-detail__logo,
+.candidate-interview-card__avatar,
 .job-preview__logo,
 .jd-hero__logo,
 .profile-aside-card__avatar,
@@ -12072,6 +12076,7 @@
 .job-card__logo,
 .app-item__logo,
 .app-detail__logo,
+.candidate-interview-card__avatar,
 .job-preview__logo,
 .jd-hero__logo,
 .profile-aside-card__avatar,
@@ -12333,6 +12338,89 @@
     width: 6rem;
     height: 1.75rem;
     border-radius: $radius-full;
+  }
+}
+
+.candidate-interview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  text-decoration: none;
+  color: inherit;
+  background: $color-white;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.22);
+    box-shadow: $shadow-md;
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: $radius-full;
+    background: var(--logo-bg, #{rgba($color-primary, 0.1)});
+    color: var(--logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  &__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__company {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__schedule {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.9rem;
+    margin-top: $space-1;
+  }
+
+  &__metaItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__aside {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
   }
 }
 
@@ -12968,6 +13056,7 @@
 @media (max-width: $bp-md) {
   .candidate-dashboard__alert,
   .candidate-pipeline-card,
+  .candidate-interview-card,
   .recruiter-list-card__top,
   .recruiter-list-card__top--compact {
     flex-direction: column;
@@ -12975,6 +13064,7 @@
   }
 
   .candidate-pipeline-card__aside,
+  .candidate-interview-card__aside,
   .recruiter-draft-actions {
     align-items: flex-start;
   }

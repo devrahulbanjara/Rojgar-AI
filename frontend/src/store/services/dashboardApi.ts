@@ -24,11 +24,26 @@ export interface CandidateDashboardApplication {
   pipeline_step: number | null
 }
 
+export interface CandidateDashboardInterview {
+  interview_id: string
+  application_id: string
+  job_id: string
+  job_title: string
+  company_name: string
+  company_logo_url: string | null
+  start_time: string
+  end_time: string
+  location: string | null
+  title: string | null
+  application_status: ApplicationStatus
+}
+
 export interface CandidateDashboardData {
   user_name: string
   is_open_to_work: boolean
   stats: CandidateDashboardStats
   applications: CandidateDashboardApplication[]
+  interviews: CandidateDashboardInterview[]
 }
 
 export interface RecruiterDashboardJob {

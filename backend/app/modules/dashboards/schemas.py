@@ -28,11 +28,26 @@ class ApplicationPipelineItem(BaseSchema):
     pipeline_step: int | None
 
 
+class CandidateInterviewItem(BaseSchema):
+    interview_id: UUID
+    application_id: UUID
+    job_id: UUID
+    job_title: str
+    company_name: str
+    company_logo_url: str | None = None
+    start_time: datetime
+    end_time: datetime
+    location: str | None = None
+    title: str | None = None
+    application_status: ApplicationStatus
+
+
 class CandidateDashboardResponse(BaseSchema):
     user_name: str
     is_open_to_work: bool = False
     stats: CandidateStats
     applications: list[ApplicationPipelineItem]
+    interviews: list[CandidateInterviewItem]
 
 
 class JobPipelineItem(BaseSchema):

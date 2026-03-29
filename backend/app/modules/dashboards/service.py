@@ -14,6 +14,7 @@ from app.modules.profiles.models import Profile
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.dashboards.schemas import (
     ApplicationPipelineItem,
+    CandidateInterviewItem,
     CandidateDashboardResponse,
     CandidateStats,
     JoinRequestItem,
@@ -178,11 +179,54 @@ async def get_candidate_dashboard(
         for row in application_rows.all()
     ]
 
+    interview_rows = await db.execute(
+        select(
+            Interview.id.label("interview_id"),
+            Interview.application_id,
+            Application.job_id,
+            Job.title.label("job_title"),
+            Company.name.label("company_name"),
+            Company.logo_url.label("company_logo_url"),
+            Interview.start_time,
+            Interview.end_time,
+            Interview.location,
+            Interview.title,
+            Application.status.label("application_status"),
+        )
+        .join(Application, Application.id == Interview.application_id)
+        .join(Job, Job.id == Application.job_id)
+        .join(Company, Company.id == Job.company_id)
+        .where(
+            Application.user_id == current_user.id,
+            Application.status == ApplicationStatus.interview_booked,
+        )
+        .order_by(Interview.start_time.asc())
+        .limit(8)
+    )
+
+    interviews = [
+        CandidateInterviewItem(
+            interview_id=row.interview_id,
+            application_id=row.application_id,
+            job_id=row.job_id,
+            job_title=row.job_title,
+            company_name=row.company_name,
+            company_logo_url=row.company_logo_url,
+            start_time=row.start_time,
+            end_time=row.end_time,
+            location=row.location,
+            title=row.title,
+            application_status=row.application_status,
+        )
+        for row in interview_rows.all()
+    ]
+
     response = CandidateDashboardResponse(
         user_name=current_user.full_name,
         is_open_to_work=is_open_to_work,
         stats=stats,
         applications=applications,
+        interviews=interviews,
     )
     await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)
     return response
