@@ -120,21 +120,30 @@ class RecruiterApplicationView(BaseSchema):
     feedback: str | None = None
 
 
-class RecruiterCandidateListItem(BaseSchema):
-    id: UUID
-    candidate_id: UUID
+class RecruiterCandidateApplicationSummary(BaseSchema):
+    application_id: UUID
+    job_id: UUID
+    job_title: str
     status: ApplicationStatus
     created_at: datetime
     updated_at: datetime
-    applicant_name: str
-    applicant_email: str | None = None
-    applicant_avatar_url: str | None = None
-    candidate_headline: str | None = None
-    candidate_location: str | None = None
-    job_title: str
-    job_id: UUID
     score: int | None = None
     feedback: str | None = None
+
+
+class RecruiterCandidateListItem(BaseSchema):
+    candidate_id: UUID
+    applicant_name: str
+    applicant_email: str
+    applicant_avatar_url: str | None = None
+    latest_application_id: UUID
+    latest_status: ApplicationStatus
+    latest_applied_at: datetime
+    latest_updated_at: datetime
+    primary_job_title: str
+    primary_job_id: UUID
+    application_count: int
+    applications: list[RecruiterCandidateApplicationSummary]
 
 
 class RecruiterCandidateDetailView(BaseSchema):

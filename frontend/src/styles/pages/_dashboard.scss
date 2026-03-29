@@ -320,8 +320,8 @@
 
   &__title {
     font-family: $font-heading;
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
+    font-size: 1.6rem;
+    font-weight: $font-weight-semibold;
     color: $color-gray-900;
   }
 
@@ -12659,6 +12659,81 @@
   color: $color-text-muted;
 }
 
+.recruiter-candidates-grouped {
+  &__applicationsCell,
+  &__applicationCopy,
+  &__expandedPanel {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    min-width: 0;
+  }
+
+  &__primaryJob,
+  &__applicationJob {
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+    cursor: pointer;
+  }
+
+  &__expandedRow {
+    td {
+      padding-top: 0;
+      background: rgba($color-primary, 0.02);
+    }
+  }
+
+  &__expandedPanel {
+    padding: $space-4 0 $space-2;
+  }
+
+  &__expandedTitle {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $color-text-muted;
+  }
+
+  &__applicationList {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__applicationItem {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-4;
+    padding: $space-3 $space-4;
+    border: 1px solid rgba($color-gray-200, 0.95);
+    border-radius: $radius-lg;
+    background: rgba($color-white, 0.9);
+  }
+
+  &__applicationActions {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
 .recruiter-candidate-detail {
   display: flex;
   flex-direction: column;
@@ -12840,5 +12915,15 @@
 
   .recruiter-candidates-toolbar {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recruiter-candidates-grouped {
+    &__applicationItem {
+      flex-direction: column;
+    }
+
+    &__applicationActions {
+      justify-content: flex-start;
+    }
   }
 }

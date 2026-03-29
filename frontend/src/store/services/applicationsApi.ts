@@ -101,18 +101,27 @@ export interface CandidateShareSettings {
 }
 
 export interface RecruiterCandidateListItem {
-  id: string
   candidate_id: string
+  applicant_name: string
+  applicant_email: string
+  applicant_avatar_url: string | null
+  latest_application_id: string
+  latest_status: ApplicationStatus
+  latest_applied_at: string
+  latest_updated_at: string
+  primary_job_title: string
+  primary_job_id: string
+  application_count: number
+  applications: RecruiterCandidateApplicationSummary[]
+}
+
+export interface RecruiterCandidateApplicationSummary {
+  application_id: string
+  job_id: string
+  job_title: string
   status: ApplicationStatus
   created_at: string
   updated_at: string
-  applicant_name: string
-  applicant_email: string | null
-  applicant_avatar_url: string | null
-  candidate_headline: string | null
-  candidate_location: string | null
-  job_title: string
-  job_id: string
   score: number | null
   feedback: string | null
 }
