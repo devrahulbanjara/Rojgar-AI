@@ -522,6 +522,56 @@ body {
   color: var(--color-text-muted, #6b7280);
 }
 
+.recruiter-chat-job-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.recruiter-chat-job-mini-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  min-height: 3.5rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.recruiter-chat-job-mini-row__title {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.recruiter-chat-job-mini-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.recruiter-chat-job-mini-row__location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 0;
+  color: #64748b;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.recruiter-chat-job-mini-row__location span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .recruiter-chat-card {
   width: 100%;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -965,6 +1015,17 @@ body {
   border-color: rgba(37, 99, 235, 0.24);
 }
 
+.recruiter-chat-action-button--danger {
+  background: rgba(254, 242, 242, 0.92);
+  border-color: rgba(239, 68, 68, 0.24);
+  color: #b91c1c;
+}
+
+.recruiter-chat-action-button--danger:hover:not(:disabled) {
+  background: rgba(254, 226, 226, 0.98);
+  border-color: rgba(220, 38, 38, 0.32);
+}
+
 .recruiter-chat-candidate-meta,
 .recruiter-chat-detail-meta,
 .recruiter-chat-chip-row,
@@ -1119,12 +1180,35 @@ body {
   color: #1e3a8a;
 }
 
-.recruiter-chat-sources-list,
+.recruiter-chat-markdown-container {
+  display: inline;
+}
+
+.recruiter-chat-markdown-paragraph {
+  display: inline;
+  margin: 0;
+}
+
+.recruiter-chat-markdown-paragraph:not(:last-child)::after {
+  content: '\A';
+  white-space: pre;
+}
+
+.recruiter-chat-inline-citations {
+  display: inline;
+  margin-left: 0.15rem;
+}
+
+.recruiter-chat-sources-list {
+  display: inline;
+}
+
 .recruiter-chat-section-stack,
 .recruiter-chat-diff-list {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .recruiter-chat-feedback {
@@ -1213,17 +1297,36 @@ body {
 
 .recruiter-chat-diff-list-item--added,
 .recruiter-chat-scalar--after {
-  background: rgba(219, 234, 254, 0.72);
-  color: #1e3a8a;
-  border-left: 3px solid rgba(37, 99, 235, 0.5);
+  background: rgba(220, 252, 231, 0.92);
+  color: #166534;
+  border-left: 3px solid rgba(34, 197, 94, 0.55);
 }
 
 .recruiter-chat-diff-list-item--removed,
 .recruiter-chat-scalar--before {
-  background: rgba(248, 250, 252, 0.96);
-  color: #64748b;
-  border-left: 3px solid rgba(148, 163, 184, 0.45);
+  background: rgba(254, 242, 242, 0.96);
+  color: #b91c1c;
+  border-left: 3px solid rgba(239, 68, 68, 0.45);
   text-decoration: line-through;
+}
+
+.recruiter-chat-diff-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.9rem;
+  margin-right: 0.45rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.recruiter-chat-diff-marker--added {
+  color: #15803d;
+}
+
+.recruiter-chat-diff-marker--removed {
+  color: #dc2626;
 }
 
 .recruiter-chat-tool-error {
@@ -1241,6 +1344,16 @@ body {
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.28);
   animation: recruiter-chat-pulse 1.4s ease-in-out infinite;
+}
+
+.recruiter-chat-skeleton--title {
+  height: 1.1rem;
+  border-radius: 12px;
+}
+
+.recruiter-chat-skeleton--title-sm {
+  height: 0.95rem;
+  border-radius: 12px;
 }
 
 .recruiter-chat-skeleton-stack {
@@ -1335,9 +1448,55 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.1rem;
   padding: 1rem 1.1rem 0.9rem;
   overflow: hidden;
+}
+
+.recruiter-chat-panel-skeleton__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0 0.2rem;
+}
+
+.recruiter-chat-panel-skeleton__hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.recruiter-chat-panel-skeleton__hero-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.recruiter-chat-panel-skeleton__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.recruiter-chat-panel-skeleton__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.05);
+}
+
+.recruiter-chat-panel-skeleton__conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
 }
 
 .recruiter-chat-panel-skeleton__message {
@@ -1383,6 +1542,12 @@ body {
   margin-left: auto;
   margin-right: auto;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 900px) {
+  .recruiter-chat-panel-skeleton__cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .recruiter-chat-mobile-drawer {
@@ -1654,6 +1819,156 @@ body {
 
 .recruiter-chat-send-button:hover {
   background-color: #1447b8;
+}
+
+.recruiter-chat-send-button--stop {
+  background-color: #0f172a;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+}
+
+.recruiter-chat-send-button--stop:hover {
+  background-color: #1e293b;
+}
+
+.recruiter-chat-stream-error {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-width: min(100%, 32rem);
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  background: #fff7f7;
+  color: #7f1d1d;
+}
+
+.recruiter-chat-stream-error__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.recruiter-chat-stream-error__body {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #991b1b;
+}
+
+.recruiter-chat-stream-error__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(185, 28, 28, 0.08);
+  color: #b91c1c;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.recruiter-chat-stream-error__retry:hover {
+  background: rgba(185, 28, 28, 0.14);
+}
+
+.recruiter-chat-tool-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #3358c4;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.recruiter-chat-agent-steps {
+  margin-top: 0.55rem;
+  width: 100%;
+  max-width: 42rem;
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.recruiter-chat-agent-steps summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.recruiter-chat-agent-steps summary::-webkit-details-marker {
+  display: none;
+}
+
+.recruiter-chat-agent-steps__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 0.8rem 0.8rem;
+}
+
+.recruiter-chat-agent-steps__item {
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.88);
+}
+
+.recruiter-chat-agent-steps__item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.recruiter-chat-agent-steps__name {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.recruiter-chat-agent-steps__text {
+  margin-top: 0.22rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.recruiter-chat-source-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recruiter-chat-source-link__meta {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.recruiter-chat-source-chip {
+  display: inline;
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: 0.85em;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 0.15rem;
+  transition: color 0.15s ease;
+}
+
+.recruiter-chat-source-chip:hover {
+  color: #0f3aa7;
 }
 
 .recruiter-chat-card-count {

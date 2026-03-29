@@ -70,7 +70,9 @@ export default function RecruiterChatPage() {
             }}
           />
         ) : (
-          <div className="recruiter-chat-page__empty">Unable to load conversation.</div>
+          <div className="recruiter-chat-page__empty">
+            <p>Start a new chat to begin your hiring journey.</p>
+          </div>
         )}
       </div>
     </div>

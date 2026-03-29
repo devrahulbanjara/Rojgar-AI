@@ -1,202 +1,39 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from enum import Enum
 from uuid import UUID
 
 from pydantic import Field
 
 from app.core.schemas import BaseSchema
-from app.shared.enums import ApplicationStatus, JobStatus, LocationType
-from app.shared.schemas import EducationResponse, ExperienceResponse, SkillResponse
+from app.shared.enums import LocationType
 
 
-UIType = Literal[
-    "text",
-    "candidate_list",
-    "job_list",
-    "salary_info",
-    "candidate_detail",
-    "job_edit_preview",
-    "job_clarification",
-    "candidate_clarification",
-]
-
-JobEditableField = Literal[
-    "title",
-    "location",
-    "location_type",
-    "salary_min",
-    "salary_max",
-    "currency",
-    "status",
-    "expires_at",
-    "overview",
-    "responsibilities",
-    "requirements",
-    "preferred_qualifications",
-    "benefits",
-    "auto_shortlist",
-]
-
-JobEditOperation = Literal["set", "clear", "append", "remove", "replace"]
+class ChatResponseType(str, Enum):
+    text = "text"
+    clarification = "clarification"
+    salary_answer = "salary_answer"
+    job_list = "job_list"
+    job_edit_preview = "job_edit_preview"
+    out_of_scope = "out_of_scope"
 
 
-class AgentResponse(BaseSchema):
-    text: str
-    ui_type: UIType
-    data: dict | None = None
+class PendingActionType(str, Enum):
+    job_selection = "job_selection"
+    job_edit = "job_edit"
 
 
-class ToolResultEnvelope(BaseSchema):
-    tool: str
-    ok: bool = True
-    text: str
-    ui_type_hint: UIType | None = None
-    data: dict | None = None
+class ChatMessageRequest(BaseSchema):
+    message: str = Field(min_length=1, max_length=5000)
 
 
-class CandidateCardData(BaseSchema):
-    user_id: UUID
-    application_id: UUID
-    full_name: str
-    avatar_url: str | None = None
-    headline: str | None = None
-    skills: list[str] = []
-    applied_for_job: str
-    application_status: ApplicationStatus
-    score: int | None = None
-    feedback: str | None = None
-    match_score: float
-
-
-class CandidateSearchResult(BaseSchema):
-    total: int
-    candidates: list[CandidateCardData] = []
-
-
-class SalarySource(BaseSchema):
-    source_name: str
-    url: str
-    country: str
-    currency: str | None = None
-    quoted_min: float | None = None
-    quoted_max: float | None = None
-    notes: str | None = None
-
-
-class SalaryResearchResult(BaseSchema):
-    role: str
-    country: str
-    currency: str | None = None
-    recommended_min: float | None = None
-    recommended_max: float | None = None
-    confidence: Literal["low", "medium", "high"]
-    rationale: str
-    insufficient_evidence: bool
-    year_context: str
-    sources: list[SalarySource] = []
-
-
-class JobSearchMatch(BaseSchema):
+class ConfirmJobSelectionRequest(BaseSchema):
     job_id: UUID
-    title: str
-    status: JobStatus
-    location: str | None = None
-    location_type: LocationType
-    updated_at: datetime
 
 
-class CompanyJobData(BaseSchema):
-    job_id: UUID
-    title: str
-    location: str | None = None
-    location_type: LocationType
-    salary_min: int | None = None
-    salary_max: int | None = None
-    currency: str
-    status: JobStatus
-    auto_shortlist: bool = False
-    expires_at: datetime | None = None
-    overview: str | None = None
-    responsibilities: list[str] = []
-    requirements: list[str] = []
-    preferred_qualifications: list[str] = []
-    benefits: list[str] = []
-    updated_at: datetime
-
-
-class CompanyJobListResult(BaseSchema):
-    total: int
-    jobs: list[CompanyJobData] = []
-
-
-class JobEditInstruction(BaseSchema):
-    field: JobEditableField
-    operation: JobEditOperation = "set"
-    value: str | int | bool | list[str] | None = None
-
-
-class JobEditDiff(BaseSchema):
-    field: JobEditableField
-    before: str | int | bool | list[str] | None = None
-    after: str | int | bool | list[str] | None = None
-
-
-class JobEditProposal(BaseSchema):
-    job_id: UUID
-    job_title: str
-    summary: str
-    patch: dict
-    diffs: list[JobEditDiff]
-
-
-class CandidateDetailData(BaseSchema):
-    user_id: UUID
-    application_id: UUID
-    job_id: UUID
-    job_title: str
-    full_name: str
-    email: str
-    avatar_url: str | None = None
-    headline: str | None = None
-    summary: str | None = None
-    resume_name: str
-    application_status: ApplicationStatus
-    score: int | None = None
-    feedback: str | None = None
-    applied_at: datetime
-    updated_at: datetime
-    skills: list[SkillResponse] = []
-    experiences: list[ExperienceResponse] = []
-    educations: list[EducationResponse] = []
-
-
-class JobClarificationPayload(BaseSchema):
-    """
-    Sent to the frontend when the LLM has identified a likely job match
-    but the recruiter's query was ambiguous and needs confirmation.
-    The frontend renders a 'Did you mean X?' card with Yes / No buttons.
-    """
-
-    job_id: UUID
-    job_title: str
-    status: JobStatus | None = None
-    location: str | None = None
-    question: str  # e.g. "Did you mean Machine Learning Engineer?"
-
-
-class CandidateClarificationPayload(BaseSchema):
-    """
-    Same pattern for candidate disambiguation.
-    Shown when the LLM found multiple candidates matching the name/job query.
-    """
-
-    application_id: UUID
-    candidate_name: str
-    job_title: str
-    application_status: ApplicationStatus
-    question: str  # e.g. "Did you mean Asha Sharma for Machine Learning Engineer?"
+class ConfirmJobEditRequest(BaseSchema):
+    approve: bool
 
 
 class ChatSessionResponse(BaseSchema):
@@ -210,43 +47,82 @@ class ChatSessionResponse(BaseSchema):
     updated_at: datetime
 
 
+class SourceItem(BaseSchema):
+    title: str
+    url: str
+
+
 class ChatHistoryMessage(BaseSchema):
-    role: Literal["user", "assistant", "tool"]
+    role: str
     content: str
-    name: str | None = None
-    created_at: datetime | None = None
+    created_at: datetime
+    response_type: ChatResponseType | None = None
+    data: dict | None = None
 
 
-class ChatMessageRequest(BaseSchema):
-    message: str = Field(min_length=1)
+class JobOption(BaseSchema):
+    job_id: UUID
+    title: str
+    location: str | None = None
+    location_type: LocationType | None = None
+    status: str
+    salary_min: int | None = None
+    salary_max: int | None = None
+    currency: str | None = None
+    expires_at: datetime | None = None
 
 
-class RespondToInterruptRequest(BaseSchema):
-    """
-    Unified response to any interrupt type.
+class CompanyJobData(BaseSchema):
+    job_id: UUID
+    title: str
+    location: str | None = None
+    location_type: LocationType | None = None
+    salary_min: int | None = None
+    salary_max: int | None = None
+    currency: str | None = None
+    status: str
+    expires_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
 
-    - job_edit_preview:   action = "confirm" | "cancel",  patch_override optionally set
-    - job_clarification:  action = "confirm" | "reject"
-    - candidate_clarification: action = "confirm" | "reject"
-    """
 
-    action: Literal["confirm", "cancel", "reject"]
-    patch_override: dict | None = None
+class CompanyJobListResult(BaseSchema):
+    total: int
+    jobs: list[CompanyJobData] = Field(default_factory=list)
+    counts: dict[str, int] = Field(default_factory=dict)
 
 
-class InterruptPayload(BaseSchema):
-    """
-    Unified interrupt envelope sent to the frontend.
-    Only one of `proposal`, `job_clarification`, or `candidate_clarification` will be set,
-    depending on `type`.
-    """
+class JobEditDiff(BaseSchema):
+    field: str
+    before: str | int | bool | list[str] | None = None
+    after: str | int | bool | list[str] | None = None
 
-    type: Literal["job_edit_preview", "job_clarification", "candidate_clarification"]
-    proposal: JobEditProposal | None = None
-    job_clarification: JobClarificationPayload | None = None
-    candidate_clarification: CandidateClarificationPayload | None = None
+
+class JobEditPreviewData(BaseSchema):
+    job_id: UUID
+    job_title: str
+    summary: str
+    patch: dict = Field(default_factory=dict)
+    diffs: list[JobEditDiff] = Field(default_factory=list)
+
+
+class RecruiterChatResponse(BaseSchema):
+    response_type: ChatResponseType
+    message: str
+    data: dict | None = None
+
+
+class PendingActionPayload(BaseSchema):
+    type: PendingActionType
+    data: dict
+
+
+class ChatHistoryResponse(BaseSchema):
+    history: list[ChatHistoryMessage] = Field(default_factory=list)
+    pending_action: PendingActionPayload | None = None
 
 
 class ChatExchangeResponse(BaseSchema):
-    history: list[ChatHistoryMessage]
-    interrupt: InterruptPayload | None = None
+    reply: RecruiterChatResponse
+    history: list[ChatHistoryMessage] = Field(default_factory=list)
+    pending_action: PendingActionPayload | None = None

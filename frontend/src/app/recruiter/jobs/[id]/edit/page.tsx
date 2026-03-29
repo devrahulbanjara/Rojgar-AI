@@ -16,6 +16,8 @@ import {
 } from '@/store/services/jobsApi'
 import { ArrowLeft } from 'lucide-react'
 
+import { CompanyJobEditorSkeleton } from '../../_components/CompanyJobsSkeletons'
+
 export default function RecruiterEditJobPage() {
   const params = useParams()
   const router = useRouter()
@@ -41,11 +43,35 @@ export default function RecruiterEditJobPage() {
     return (
       <div className="dash-content container container--app-shell">
         <div className="job-editor-page">
-          <div className="dash-card">
-            <div className="dash-card__body" style={{ alignItems: 'center', padding: '2rem' }}>
-              <p style={{ color: 'var(--color-muted,#6b7280)' }}>Loading job details...</p>
+          <div className="job-editor-page__header">
+            <Link href="/recruiter/jobs" className="job-editor-page__back">
+              <ArrowLeft size={16} aria-hidden="true" />
+              <span>Back to Jobs</span>
+            </Link>
+          </div>
+
+          <div className="dash-page-header">
+            <div className="dash-page-header__left">
+              <h2 className="dash-page-header__title">Edit Job</h2>
+              <p className="dash-page-header__subtitle">
+                Update job details and save changes to your posting.
+              </p>
             </div>
           </div>
+
+          <section className="dash-card">
+            <div className="dash-card__header">
+              <div>
+                <h3 className="dash-card__title">Job Details</h3>
+                <p className="dash-card__subtitle">
+                  Review and update the job information. Changes will be reflected immediately.
+                </p>
+              </div>
+            </div>
+            <div className="dash-card__body">
+              <CompanyJobEditorSkeleton />
+            </div>
+          </section>
         </div>
       </div>
     )

@@ -56,6 +56,16 @@ class Application(Base):
     share_headline_summary: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False
     )
+    shared_full_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_email_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_phone_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_location_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_headline_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_summary_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_linkedin_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_github_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shared_portfolio_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ApplicationStatus] = mapped_column(
         SAEnum(ApplicationStatus, name="applicationstatus"),
         nullable=False,

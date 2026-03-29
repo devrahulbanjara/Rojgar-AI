@@ -65,8 +65,17 @@ export function ChatSidebar({
           onClick={handleNewChat}
           disabled={isCreating}
         >
-          {isCreating ? <Loader2 size={14} /> : <Plus size={14} />}
-          <span>New Chat</span>
+          {isCreating ? (
+            <span className="button-spinner" aria-live="polite">
+              <Loader2 size={14} className="button-spinner__icon" />
+              <span>Creating...</span>
+            </span>
+          ) : (
+            <>
+              <Plus size={14} />
+              <span>New Chat</span>
+            </>
+          )}
         </button>
       </div>
 

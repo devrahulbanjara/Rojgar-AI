@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     aws_access_key_id: str | None = None
     aws_secret_access_key: str | None = None
     aws_region: str = "us-east-1"
+    aws_access_key_id_shortlisting: str | None = None
+    aws_secret_access_key_shortlisting: str | None = None
+    aws_bedrock_shortlisting_model_id: str = "us.anthropic.claude-sonnet-4-6"
+    aws_bedrock_shortlisting_temperature: float = 0.0
+    aws_bedrock_shortlisting_max_tokens: int = 1200
     s3_bucket_name: str | None = None
     s3_upload_acl: str | None = "public-read"
     s3_max_upload_bytes: int = 5 * 1024 * 1024
@@ -82,6 +87,8 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str | None = None
     redis_enabled: bool = True
+    shortlisting_reflection_max_iterations: int = 2
+    shortlisting_web_search_max_results: int = 3
 
     @property
     def database_url(self) -> str:

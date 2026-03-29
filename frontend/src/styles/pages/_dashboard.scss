@@ -320,8 +320,8 @@
 
   &__title {
     font-family: $font-heading;
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
+    font-size: 1.6rem;
+    font-weight: $font-weight-semibold;
     color: $color-gray-900;
   }
 
@@ -3339,10 +3339,6 @@
   display: grid;
   gap: $space-4;
 
-  &--list {
-    grid-template-columns: 1fr;
-  }
-
   &--grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3390,6 +3386,15 @@
 
   &:hover {
     box-shadow: $shadow-md;
+  }
+
+  &--clickable {
+    cursor: pointer;
+
+    > *:not(.company-job-card__actions),
+    > *:not(.company-job-card__actions) * {
+      cursor: inherit;
+    }
   }
 
   &__top-row {
@@ -4406,7 +4411,10 @@
   border: 1px solid $color-gray-200;
   border-radius: $radius-xl;
   cursor: pointer;
-  transition: all $transition-fast;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast,
+    background-color $transition-fast;
 
   &:hover {
     border-color: rgba($color-primary, 0.4);
@@ -8866,27 +8874,18 @@
 }
 
 .recruiter-chat-source-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid rgb(226 232 240 / 95%);
-  background: rgb(248 250 252 / 96%);
-  color: $color-gray-700;
-  text-decoration: none;
-  font-size: $font-size-sm;
-  transition:
-    transform $transition-fast,
-    border-color $transition-fast,
-    box-shadow $transition-fast,
-    color $transition-fast;
+  display: inline;
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: 0.85em;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 0.15rem;
+  transition: color $transition-fast;
 
   &:hover {
-    transform: translateY(-1px);
-    color: #0f766e;
-    border-color: rgb(45 212 191 / 55%);
-    box-shadow: 0 12px 24px rgb(15 23 42 / 8%);
+    color: #0f3aa7;
   }
 }
 
@@ -12061,6 +12060,7 @@
 .job-card__logo,
 .app-item__logo,
 .app-detail__logo,
+.candidate-interview-card__avatar,
 .job-preview__logo,
 .jd-hero__logo,
 .profile-aside-card__avatar,
@@ -12076,6 +12076,7 @@
 .job-card__logo,
 .app-item__logo,
 .app-detail__logo,
+.candidate-interview-card__avatar,
 .job-preview__logo,
 .jd-hero__logo,
 .profile-aside-card__avatar,
@@ -12340,6 +12341,89 @@
   }
 }
 
+.candidate-interview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border: 1px solid $color-gray-200;
+  border-radius: $radius-xl;
+  text-decoration: none;
+  color: inherit;
+  background: $color-white;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast;
+
+  &:hover {
+    border-color: rgba($color-primary, 0.22);
+    box-shadow: $shadow-md;
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: $radius-full;
+    background: var(--logo-bg, #{rgba($color-primary, 0.1)});
+    color: var(--logo-color, #{$color-primary});
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  &__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__company {
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__schedule {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.9rem;
+    margin-top: $space-1;
+  }
+
+  &__metaItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: $font-size-xs;
+    color: $color-text-muted;
+  }
+
+  &__aside {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+}
+
 .recruiter-dashboard {
   display: flex;
   flex-direction: column;
@@ -12444,7 +12528,7 @@
     &:hover {
       border-color: rgba($color-primary, 0.28);
       box-shadow: $shadow-md;
-      transform: translateY(-1px);
+      transform: none;
     }
   }
 
@@ -12659,6 +12743,120 @@
   color: $color-text-muted;
 }
 
+.recruiter-candidates-grouped {
+  &__summaryRow {
+    cursor: pointer;
+
+    &:hover td {
+      background: rgba($color-primary, 0.03);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba($color-primary, 0.35);
+      outline-offset: -2px;
+    }
+  }
+
+  &__applicationsCell,
+  &__applicationCopy,
+  &__expandedPanel {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    min-width: 0;
+  }
+
+  &__primaryJob,
+  &__applicationJob {
+    font-weight: $font-weight-semibold;
+    color: $color-gray-900;
+  }
+
+  &__statusCell {
+    text-align: center;
+  }
+
+  &__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+    cursor: pointer;
+  }
+
+  &__expandedRow {
+    td {
+      padding-top: 0;
+      background: rgba($color-primary, 0.02);
+    }
+  }
+
+  &__expandedPanel {
+    padding: $space-4 0 $space-2;
+  }
+
+  &__expandedTitle {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $color-text-muted;
+  }
+
+  &__applicationList {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__applicationItem {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-4;
+    width: 100%;
+    padding: $space-3 $space-4;
+    border: 1px solid rgba($color-gray-200, 0.95);
+    border-radius: $radius-lg;
+    background: rgba($color-white, 0.9);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color $transition-fast,
+      box-shadow $transition-fast,
+      background $transition-fast;
+
+    &:hover {
+      border-color: rgba($color-primary, 0.24);
+      box-shadow: 0 8px 20px rgba($color-primary, 0.08);
+      background: $color-white;
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba($color-primary, 0.28);
+      outline-offset: 2px;
+    }
+  }
+
+  &__applicationActions {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  &__statusSelect {
+    min-width: 160px;
+  }
+}
+
 .recruiter-candidate-detail {
   display: flex;
   flex-direction: column;
@@ -12723,7 +12921,6 @@
   }
 
   &__meta,
-  &__contacts,
   &__links,
   &__chips {
     display: flex;
@@ -12735,8 +12932,48 @@
     align-items: center;
   }
 
+  &__contacts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    margin-top: $space-1;
+  }
+
   &__grid {
     gap: $space-5;
+  }
+
+  &__contactValue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: $font-size-sm;
+    color: $color-gray-800;
+    line-height: 1.5;
+
+    svg {
+      color: $color-text-muted;
+      flex-shrink: 0;
+    }
+  }
+
+  &__contactStatus {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-2;
+    margin-left: auto;
+  }
+
+  &__statusControl {
+    width: 100%;
+    min-width: 180px;
+  }
+
+  &__statusSelect {
+    width: 100%;
+    min-width: 180px;
   }
 
   &__section {
@@ -12819,6 +13056,7 @@
 @media (max-width: $bp-md) {
   .candidate-dashboard__alert,
   .candidate-pipeline-card,
+  .candidate-interview-card,
   .recruiter-list-card__top,
   .recruiter-list-card__top--compact {
     flex-direction: column;
@@ -12826,6 +13064,7 @@
   }
 
   .candidate-pipeline-card__aside,
+  .candidate-interview-card__aside,
   .recruiter-draft-actions {
     align-items: flex-start;
   }
@@ -12840,5 +13079,15 @@
 
   .recruiter-candidates-toolbar {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recruiter-candidates-grouped {
+    &__applicationItem {
+      flex-direction: column;
+    }
+
+    &__applicationActions {
+      justify-content: flex-start;
+    }
   }
 }

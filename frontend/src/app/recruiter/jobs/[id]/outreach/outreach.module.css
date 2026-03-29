@@ -1,10 +1,12 @@
 .page {
   display: grid;
-  gap: 1.25rem;
+  gap: 0.35rem;
+  margin-top: 0;
 }
 
 .workspaceGrid {
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  margin-top: -0.1rem;
 }
 
 .contextCard {
@@ -103,7 +105,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 1.35rem 1.15rem;
+  padding: 1rem 1.35rem 0.65rem;
   background: rgba(248, 250, 252, 0.88);
 }
 
@@ -193,6 +195,8 @@
 .listCardBody {
   display: grid;
   gap: 0.8rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
   max-height: 42rem;
   overflow-y: auto;
 }
@@ -209,7 +213,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 0.95rem 1rem;
+  padding: 1rem;
 }
 
 .draftAvatar {
