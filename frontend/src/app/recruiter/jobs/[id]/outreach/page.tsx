@@ -43,7 +43,7 @@ type CandidateItem = {
   draft: EmailDraftRecord | null
 }
 
-const WORKFLOW_STEPS = ['Job setup', 'Screening', 'Shortlisting', 'Outreach'] as const
+type WorkflowStepKey = 'generate' | 'review' | 'approve' | 'send'
 
 function isDraftGeneratable(status: ApplicationStatus) {
   return status === 'shortlisted' || status === 'rejected'
@@ -254,17 +254,33 @@ export default function RecruiterJobOutreachPage() {
 
   const candidatesReadyCount = candidateItems.length
   const savedDraftCount = drafts.length
-  const pendingSendCount = useMemo(
-    () => drafts.filter((draft) => !draft.is_sent && !draft.is_discarded).length,
-    [drafts],
-  )
-  const sentCount = useMemo(() => drafts.filter((draft) => draft.is_sent).length, [drafts])
   const hasEligibleCandidates = candidatesReadyCount > 0
   const hasDrafts = savedDraftCount > 0
   const allSent =
     hasEligibleCandidates && candidateItems.every((candidate) => Boolean(candidate.draft?.is_sent))
   const hasUnsentDrafts = drafts.some((draft) => !draft.is_sent)
   const canSendAll = drafts.some((draft) => !draft.is_sent && !draft.is_discarded)
+  const reviewDraftCount = drafts.filter((draft) => !draft.is_sent && !draft.is_discarded).length
+  const approveDraftCount = drafts.filter(
+    (draft) => !draft.is_sent && !draft.is_discarded && !draft.is_approved,
+  ).length
+  const sendDraftCount = drafts.filter(
+    (draft) => !draft.is_sent && !draft.is_discarded && draft.is_approved,
+  ).length
+  const workflowSteps = [
+    { key: 'generate' as const, label: 'Generate drafts', count: candidatesReadyCount },
+    { key: 'review' as const, label: 'Review & edit', count: reviewDraftCount },
+    { key: 'approve' as const, label: 'Approve', count: approveDraftCount },
+    { key: 'send' as const, label: 'Send', count: sendDraftCount },
+  ]
+  const activeWorkflowStep: WorkflowStepKey =
+    sendDraftCount > 0
+      ? 'send'
+      : approveDraftCount > 0
+        ? 'approve'
+        : reviewDraftCount > 0
+          ? 'review'
+          : 'generate'
 
   function getDraftEdit(draft: EmailDraftRecord) {
     return (
@@ -442,133 +458,106 @@ export default function RecruiterJobOutreachPage() {
               Generate, review, and send hiring updates to shortlisted and rejected candidates.
             </p>
           </div>
+          <div className="dash-page-header__actions">
+            <span className="page-header-hint">1 job</span>
+            <span className="page-header-hint">
+              {savedDraftCount} draft{savedDraftCount === 1 ? '' : 's'}
+            </span>
+
+            {!showJobMissingState ? (
+              <>
+                <Link href="/recruiter/screening" className="btn btn--outline btn--sm">
+                  Back to screening
+                </Link>
+
+                {hasDrafts ? (
+                  <div className={styles.generateMenuWrap}>
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      disabled={isPreparing}
+                      onClick={() => setIsGenerateMenuOpen((current) => !current)}
+                    >
+                      {isPreparing ? <ButtonSpinner label="Generating..." /> : 'Generate drafts'}
+                    </button>
+                    {isGenerateMenuOpen ? (
+                      <div className={styles.generateMenu}>
+                        <button
+                          type="button"
+                          className={styles.generateMenuItem}
+                          disabled={isPreparing}
+                          onClick={() => void handlePrepare(false)}
+                        >
+                          Review and send
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.generateMenuItem}
+                          disabled={isPreparing}
+                          onClick={() => void handlePrepare(true)}
+                        >
+                          Direct send without review
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {hasUnsentDrafts ? (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--danger btn--sm"
+                    disabled={isDeletingAll}
+                    onClick={() => void handleDeleteAll()}
+                  >
+                    {isDeletingAll ? <ButtonSpinner label="Deleting..." /> : 'Delete all'}
+                  </button>
+                ) : null}
+
+                {canSendAll ? (
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--sm"
+                    disabled={isSendingAll}
+                    onClick={() => void handleSendAll()}
+                  >
+                    {isSendingAll ? <ButtonSpinner label="Queueing..." /> : 'Send all'}
+                  </button>
+                ) : null}
+              </>
+            ) : null}
+          </div>
         </div>
 
-        <section className={styles.contextCard}>
-          <div className={styles.contextTop}>
-            <div className={styles.contextCopy}>
-              <div className="dash-card__title">{activeJob?.title ?? 'Loading job...'}</div>
-              <div className="dash-card__subtitle">
-                {activeJob
-                  ? 'This is the final communication step after review and shortlisting are complete.'
-                  : 'Loading outreach context for this job.'}
-              </div>
-              <div className={styles.summaryPills}>
-                <span className={`badge badge--secondary ${styles.pill}`}>
-                  {candidatesReadyCount} candidate{candidatesReadyCount === 1 ? '' : 's'} ready
-                </span>
-                <span className={`badge badge--primary ${styles.pill}`}>
-                  {savedDraftCount} draft{savedDraftCount === 1 ? '' : 's'}
-                </span>
-                <span className={`badge badge--warning ${styles.pill}`}>
-                  {pendingSendCount} pending send
-                </span>
-                <span className={`badge badge--success ${styles.pill}`}>{sentCount} sent</span>
-              </div>
+        {!showJobMissingState ? (
+          <>
+            <div className={styles.contextBar}>
+              <span className={styles.contextLabel}>Job</span>
+              <span className={styles.contextValue}>{activeJob?.title ?? 'Loading job...'}</span>
             </div>
 
-            <div className={styles.contextAside}>
-              <div className={styles.contextMeta}>
-                {activeJob ? (
-                  <>
-                    <span
-                      className={`badge badge--${activeJob.final_shortlist_completed ? 'success' : 'warning'}`}
-                    >
-                      {activeJob.final_shortlist_completed
-                        ? 'Shortlist finalized'
-                        : 'Shortlist pending'}
-                    </span>
-                    <StatusPill kind="job" status={activeJob.status} />
-                  </>
-                ) : null}
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div className="dash-card__title">Job Outreach Status</div>
               </div>
-
-              {!showJobMissingState ? (
-                <div className={styles.headerActions}>
-                  <Link href="/recruiter/screening" className="btn btn--outline btn--sm">
-                    Back to screening
-                  </Link>
-
-                  {hasDrafts ? (
-                    <div className={styles.generateMenuWrap}>
-                      <button
-                        type="button"
-                        className="btn btn--secondary btn--sm"
-                        disabled={isPreparing}
-                        onClick={() => setIsGenerateMenuOpen((current) => !current)}
-                      >
-                        {isPreparing ? <ButtonSpinner label="Generating..." /> : 'Generate drafts'}
-                      </button>
-                      {isGenerateMenuOpen ? (
-                        <div className={styles.generateMenu}>
-                          <button
-                            type="button"
-                            className={styles.generateMenuItem}
-                            disabled={isPreparing}
-                            onClick={() => void handlePrepare(false)}
-                          >
-                            Review and send
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.generateMenuItem}
-                            disabled={isPreparing}
-                            onClick={() => void handlePrepare(true)}
-                          >
-                            Direct send without review
-                          </button>
-                        </div>
-                      ) : null}
+              <div className={`dash-card__body dash-card__body--no-top ${styles.workflowCardBody}`}>
+                <div className={styles.workflowList} aria-label="Outreach workflow">
+                  {workflowSteps.map((step) => (
+                    <div
+                      key={step.key}
+                      className={`${styles.workflowStep} ${
+                        activeWorkflowStep === step.key ? styles.workflowStepActive : ''
+                      }`}
+                    >
+                      <span className={styles.workflowStepLabel}>{step.label}</span>
+                      <span className={styles.workflowCount}>{step.count}</span>
                     </div>
-                  ) : null}
-
-                  {hasUnsentDrafts ? (
-                    <button
-                      type="button"
-                      className="btn btn--ghost btn--danger btn--sm"
-                      disabled={isDeletingAll}
-                      onClick={() => void handleDeleteAll()}
-                    >
-                      {isDeletingAll ? <ButtonSpinner label="Deleting..." /> : 'Delete all'}
-                    </button>
-                  ) : null}
-
-                  {canSendAll ? (
-                    <button
-                      type="button"
-                      className="btn btn--primary btn--sm"
-                      disabled={isSendingAll}
-                      onClick={() => void handleSendAll()}
-                    >
-                      {isSendingAll ? <ButtonSpinner label="Queueing..." /> : 'Send all'}
-                    </button>
-                  ) : null}
+                  ))}
                 </div>
-              ) : null}
+              </div>
             </div>
-          </div>
-
-          <div className={styles.summaryRow}>
-            <div className={styles.workflowRail} aria-label="Hiring pipeline">
-              {WORKFLOW_STEPS.map((step, index) => (
-                <div
-                  key={step}
-                  className={`${styles.workflowStep} ${index === 3 ? styles.workflowStepActive : ''}`}
-                >
-                  <span
-                    className={`${styles.workflowDot} ${index === 3 ? styles.workflowDotActive : ''}`}
-                  >
-                    {index + 1}
-                  </span>
-                  <span>{step}</span>
-                  {index < WORKFLOW_STEPS.length - 1 ? (
-                    <span className={styles.workflowLine} />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+          </>
+        ) : null}
 
         {showJobMissingState ? (
           <div className="dash-card">

@@ -5,7 +5,7 @@
 .contextBar {
   display: grid;
   gap: 0.85rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .filterSection,
@@ -18,7 +18,7 @@
 }
 
 .filterSection {
-  margin-bottom: 0.9rem;
+  margin-bottom: 0;
 }
 
 .contextTop {
@@ -616,6 +616,16 @@
 .statusActionCell {
   justify-items: center;
   width: 100%;
+}
+
+.statusSelectWrap {
+  width: 100%;
+  max-width: 12rem;
+}
+
+.statusSelect {
+  width: 100%;
+  min-height: 2.45rem;
 }
 
 .rowActionButtons {
