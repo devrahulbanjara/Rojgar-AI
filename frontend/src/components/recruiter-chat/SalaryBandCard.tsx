@@ -45,7 +45,7 @@ export function SalaryBandCard({ data }: { data: SalaryResearchResult }) {
         </div>
       ) : null}
 
-      {data.insufficient_evidence ? (
+      {!hasRange ? (
         <div className="recruiter-chat-muted-copy">
           <p>Insufficient data for a reliable salary band.</p>
           <p>{data.rationale}</p>
@@ -56,17 +56,30 @@ export function SalaryBandCard({ data }: { data: SalaryResearchResult }) {
 
       {data.sources.length ? (
         <div className="recruiter-chat-sources">
-          <div className="recruiter-chat-sources-label">Sources</div>
           <div className="recruiter-chat-sources-list">
-            {data.sources.map((source) => (
+            {data.sources.map((source, index) => (
               <a
                 key={`${source.source_name}-${source.url}`}
                 href={source.url}
                 target="_blank"
                 rel="noreferrer"
-                className="recruiter-chat-source-link"
+                className="recruiter-chat-source-chip"
+                title={[
+                  source.source_name,
+                  source.quoted_min != null || source.quoted_max != null
+                    ? [
+                        formatMoney(source.quoted_min ?? null, source.currency ?? data.currency),
+                        formatMoney(source.quoted_max ?? null, source.currency ?? data.currency),
+                      ]
+                        .filter((value) => value !== 'N/A')
+                        .join(' - ')
+                    : source.notes,
+                ]
+                  .filter(Boolean)
+                  .join(' - ')}
+                aria-label={source.source_name}
               >
-                {source.source_name}
+                [{index + 1}]
               </a>
             ))}
           </div>

@@ -6,9 +6,10 @@ export function CandidatesTableSkeleton({ count = 5 }: { count?: number }) {
           <thead>
             <tr>
               <th>Candidate</th>
-              <th>Job</th>
-              <th>Status</th>
-              <th>Applied</th>
+              <th>Applications</th>
+              <th>Latest status</th>
+              <th>Updated</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -30,7 +31,7 @@ export function CandidatesTableSkeleton({ count = 5 }: { count?: number }) {
                   </div>
                 </td>
                 <td>
-                  <div className="skeleton-block" style={{ width: '140px', height: '1.125rem' }} />
+                  <div className="skeleton-block" style={{ width: '160px', height: '1.125rem' }} />
                 </td>
                 <td>
                   <div
@@ -40,6 +41,12 @@ export function CandidatesTableSkeleton({ count = 5 }: { count?: number }) {
                 </td>
                 <td>
                   <div className="skeleton-block" style={{ width: '100px', height: '1.125rem' }} />
+                </td>
+                <td>
+                  <div
+                    className="skeleton-block"
+                    style={{ width: '88px', height: '2rem', borderRadius: '999px' }}
+                  />
                 </td>
               </tr>
             ))}

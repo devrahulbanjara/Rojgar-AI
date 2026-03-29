@@ -22,7 +22,20 @@ export interface CandidateDashboardApplication {
   created_at: string
   updated_at: string
   pipeline_step: number | null
-  has_pending_action: boolean
+}
+
+export interface CandidateDashboardInterview {
+  interview_id: string
+  application_id: string
+  job_id: string
+  job_title: string
+  company_name: string
+  company_logo_url: string | null
+  start_time: string
+  end_time: string
+  location: string | null
+  title: string | null
+  application_status: ApplicationStatus
 }
 
 export interface CandidateDashboardData {
@@ -30,7 +43,7 @@ export interface CandidateDashboardData {
   is_open_to_work: boolean
   stats: CandidateDashboardStats
   applications: CandidateDashboardApplication[]
-  urgent_action: string | null
+  interviews: CandidateDashboardInterview[]
 }
 
 export interface RecruiterDashboardJob {

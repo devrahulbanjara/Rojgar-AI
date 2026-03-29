@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { useMemo } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
@@ -8,7 +9,7 @@ import Link from 'next/link'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
 import { useUpdateMyProfileMutation } from '@/store/services/profileApi'
-import { Calendar, ChevronRight } from 'lucide-react'
+import { CalendarDays, Clock3, MapPin } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
@@ -75,6 +76,22 @@ function formatApplicationMeta(createdAt: string, status: CandidateDashboardStat
   return `Applied ${createdLabel}`
 }
 
+function formatInterviewDateLine(startTime: string): string {
+  return new Date(startTime).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatInterviewTimeLine(startTime: string, endTime: string): string {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+  return `${formatter.format(new Date(startTime))} - ${formatter.format(new Date(endTime))}`
+}
+
 const PIPELINE_LEGEND = [
   { label: 'Completed', tone: 'done' },
   { label: 'Current stage', tone: 'active' },
@@ -130,6 +147,7 @@ export default function UserDashboardPage() {
   } = useGetCandidateDashboardQuery()
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMyProfileMutation()
   const dashboardData = dashboardResponse?.data
+  const interviews = useMemo(() => dashboardData?.interviews ?? [], [dashboardData?.interviews])
 
   const handleToggleOpenToWork = async () => {
     if (!dashboardData || isUpdating) return
@@ -180,18 +198,16 @@ export default function UserDashboardPage() {
             </div>
           </div>
 
-          <p className="dash-page-header__subtitle">
+          <div className="dash-page-header__subtitle">
             {isLoading ? (
               <div
                 className="skeleton-block"
                 style={{ width: '200px', height: '14px', marginTop: '4px' }}
               />
-            ) : dashboardData?.urgent_action ? (
-              'You have 1 action waiting on you.'
             ) : (
               'Track every application and take the next step quickly.'
             )}
-          </p>
+          </div>
         </div>
       </div>
 
@@ -233,16 +249,6 @@ export default function UserDashboardPage() {
               <div className="stat-card__label">Rejected</div>
             </div>
           </div>
-
-          {dashboardData.urgent_action ? (
-            <div className="candidate-dashboard__alert">
-              <div className="candidate-dashboard__alert-dot" />
-              <div className="candidate-dashboard__alert-copy">{dashboardData.urgent_action}</div>
-              <Link href="/candidate/applications" className="btn btn--outline btn--sm">
-                Book interview
-              </Link>
-            </div>
-          ) : null}
 
           <div className="dash-card">
             <div className="dash-card__header">
@@ -320,17 +326,6 @@ export default function UserDashboardPage() {
 
                       <div className="candidate-pipeline-card__aside">
                         <StatusPill kind="application" status={application.status} />
-                        {application.has_pending_action ? (
-                          <span className="candidate-pipeline-card__action">
-                            Book interview
-                            <ChevronRight size={14} aria-hidden="true" />
-                          </span>
-                        ) : application.status === 'interview_booked' ? (
-                          <span className="candidate-pipeline-card__action candidate-pipeline-card__action--muted">
-                            <Calendar size={13} aria-hidden="true" />
-                            Interview booked
-                          </span>
-                        ) : null}
                       </div>
                     </Link>
                   )
@@ -338,6 +333,78 @@ export default function UserDashboardPage() {
               )}
             </div>
           </div>
+
+          {interviews.length > 0 ? (
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
+                  <div className="dash-card__title">Your interviews</div>
+                  <div className="dash-card__subtitle">
+                    Keep your booked interviews in view with time and location at a glance.
+                  </div>
+                </div>
+                <Link href="/candidate/applications" className="btn btn--outline btn--sm">
+                  View applications
+                </Link>
+              </div>
+
+              <div className="dash-card__body candidate-dashboard__list">
+                {interviews.map((interview) => {
+                  const accent = getCompanyAccent(interview.company_name)
+
+                  return (
+                    <Link
+                      key={interview.interview_id}
+                      href={`/candidate/applications?application=${interview.application_id}`}
+                      className="candidate-interview-card"
+                    >
+                      <div className="candidate-interview-card__left">
+                        <MediaBadge
+                          src={interview.company_logo_url}
+                          alt={interview.company_name}
+                          fallback={accent.logo}
+                          className="candidate-interview-card__avatar"
+                          sizes="40px"
+                          style={
+                            {
+                              '--logo-bg': `${accent.color}1A`,
+                              '--logo-color': accent.color,
+                            } as CSSProperties
+                          }
+                        />
+                        <div className="candidate-interview-card__copy">
+                          <div className="candidate-interview-card__title">
+                            {interview.job_title}
+                          </div>
+                          <div className="candidate-interview-card__company">
+                            {interview.company_name}
+                          </div>
+                          <div className="candidate-interview-card__schedule">
+                            <span className="candidate-interview-card__metaItem">
+                              <CalendarDays size={13} aria-hidden="true" />
+                              {formatInterviewDateLine(interview.start_time)}
+                            </span>
+                            <span className="candidate-interview-card__metaItem">
+                              <Clock3 size={13} aria-hidden="true" />
+                              {formatInterviewTimeLine(interview.start_time, interview.end_time)}
+                            </span>
+                            <span className="candidate-interview-card__metaItem">
+                              <MapPin size={13} aria-hidden="true" />
+                              {interview.location?.trim() || 'Location TBD'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="candidate-interview-card__aside">
+                        <StatusPill kind="application" status={interview.application_status} />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

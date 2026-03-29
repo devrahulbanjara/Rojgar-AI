@@ -5,6 +5,8 @@ import { type ReactNode, useState } from 'react'
 import type { JobAIDraftPayload } from '@/store/services/jobAiApi'
 import { Lock, LockOpen, Plus, X } from 'lucide-react'
 
+import { CompanyJobEditorSkeleton } from '../../_components/CompanyJobsSkeletons'
+
 type DraftField =
   | 'title'
   | 'location'
@@ -28,6 +30,7 @@ type JobDraftFormProps = {
   lockedFields: string[]
   missingFields: string[]
   disabled: boolean
+  isLoading?: boolean
   onFieldChange: <K extends DraftField>(field: K, value: JobAIDraftPayload[K]) => void
   onToggleLock: (field: DraftField) => void
   onRequestUpdate: (fields: DraftField[], feedback: string) => void
@@ -233,10 +236,29 @@ export default function JobDraftForm({
   lockedFields,
   missingFields,
   disabled,
+  isLoading,
   onFieldChange,
   onToggleLock,
   onRequestUpdate,
 }: JobDraftFormProps) {
+  if (isLoading) {
+    return (
+      <section className="job-ai-card job-ai-form dash-card">
+        <div className="job-ai-card__header dash-card__header">
+          <div>
+            <h2 className="job-ai-card__title dash-card__title">Draft Details</h2>
+            <p className="job-ai-card__subtitle dash-card__subtitle">
+              AI is currently loading or updating the draft details...
+            </p>
+          </div>
+        </div>
+        <div className="job-ai-card__body dash-card__body">
+          <CompanyJobEditorSkeleton />
+        </div>
+      </section>
+    )
+  }
+
   if (!draft) {
     return (
       <section className="job-ai-card job-ai-card--placeholder dash-card">
