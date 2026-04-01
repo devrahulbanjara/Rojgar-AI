@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 
 import { CandidateDetailSkeleton } from '../_components/CandidatesSkeletons'
+import InterviewRecordingCard from '../_components/InterviewRecordingCard'
 import { mapRecruiterCandidateResume } from '../_lib/mapRecruiterCandidateResume'
 
 function formatInterviewDate(value: string) {
@@ -284,15 +285,7 @@ export default function RecruiterCandidateDetailPage() {
           </div>
 
           <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">&nbsp;</div>
-                  <div className="dash-card__subtitle">&nbsp;</div>
-                </div>
-              </div>
-              <div className="dash-card__body" style={{ minHeight: '16rem' }}></div>
-            </div>
+            <InterviewRecordingCard applicationId={applicationId} />
 
             <div className="dash-card">
               <div className="dash-card__header">

@@ -30,6 +30,7 @@ from app.modules.dashboards.router import router as dash_router
 from app.modules.job_ai.runtime import job_ai_runtime
 from app.modules.job_ai.router import router as job_ai_router
 from app.modules.interviews.router import router as interviews_router
+from app.modules.interviews.recording_router import router as recording_router
 from app.modules.interviews.webhook import router as cal_webhook_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.resume_gap.router import router as resume_gap_router
@@ -108,6 +109,11 @@ app.include_router(
 )
 app.include_router(shortlisting_router, prefix="/shortlisting", tags=["Shortlisting"])
 app.include_router(interviews_router, prefix="/interviews", tags=["Interviews"])
+app.include_router(
+    recording_router,
+    prefix="/interview-recordings",
+    tags=["Interview Recordings"],
+)
 app.include_router(outreach_router, prefix="/outreach", tags=["Outreach"])
 app.include_router(cal_webhook_router, tags=["Webhooks"])
 

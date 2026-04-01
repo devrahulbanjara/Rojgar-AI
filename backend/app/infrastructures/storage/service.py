@@ -117,5 +117,66 @@ class StorageService:
         file.file.seek(current_position)
         return size
 
+    async def upload_audio(self, file: UploadFile, folder: str) -> tuple[str, str]:
+        """
+        Upload audio file. Returns (public_url, s3_key).
+        Accepts webm, mp4, ogg, wav, m4a, mpeg, mpga.
+        Max 200MB.
+        """
+        allowed = {"webm", "mp4", "ogg", "wav", "m4a", "mpeg", "mpga"}
+        extension = self._extract_extension(file.filename) or "webm"
+        if extension not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unsupported audio format.",
+            )
+
+        max_bytes = 200 * 1024 * 1024
+        file_size = self._get_file_size(file)
+        if file_size > max_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Audio file exceeds 200MB limit.",
+            )
+
+        file_key = f"{folder}/{uuid.uuid4()}.{extension}"
+        await file.seek(0)
+
+        content_type = file.content_type or f"audio/{extension}"
+
+        try:
+            await asyncio.to_thread(
+                self.client.upload_fileobj,
+                file.file,
+                self.bucket,
+                file_key,
+                ExtraArgs={"ContentType": content_type},
+            )
+        except Exception as exc:
+            logger.exception("Audio upload failed for key %s: %s", file_key, exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Upload failed. Please try again later.",
+            ) from exc
+
+        url = f"{settings.s3_base_url}/{file_key}"
+        logger.info("Storage: Uploaded audio %s", url)
+        return url, file_key
+
+    async def generate_presigned_url(self, file_key: str, expires_in: int = 3600) -> str:
+        """Generate a presigned URL for an S3 object."""
+        try:
+            url = await asyncio.to_thread(
+                self.client.generate_presigned_url,
+                "get_object",
+                Params={"Bucket": self.bucket, "Key": file_key},
+                ExpiresIn=expires_in,
+            )
+            return url
+        except Exception as exc:
+            logger.error("Failed to generate presigned URL for %s: %s", file_key, exc)
+            # Fallback to the public URL pattern just in case
+            return f"{settings.s3_base_url}/{file_key}"
+
 
 storage_service = StorageService()
