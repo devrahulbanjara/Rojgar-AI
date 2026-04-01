@@ -163,7 +163,9 @@ class StorageService:
         logger.info("Storage: Uploaded audio %s", url)
         return url, file_key
 
-    async def generate_presigned_url(self, file_key: str, expires_in: int = 3600) -> str:
+    async def generate_presigned_url(
+        self, file_key: str, expires_in: int = 3600
+    ) -> str:
         """Generate a presigned URL for an S3 object."""
         try:
             url = await asyncio.to_thread(

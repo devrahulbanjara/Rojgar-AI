@@ -15,6 +15,7 @@ import { CalendarDays, ChevronDown, ChevronRight, Hash, Mail, MapPin } from 'luc
 import ButtonSpinner from '@/components/common/ButtonSpinner'
 import StatusPill from '@/components/common/StatusPill'
 
+import BatchTranscriptionModal from './_components/BatchTranscriptionModal'
 import { InterviewsTableSkeleton } from './_components/InterviewsSkeletons'
 import styles from './page.module.css'
 
@@ -199,6 +200,7 @@ export default function RecruiterInterviewsPage() {
   const [customEnd, setCustomEnd] = useState(toInputDate(endOfWeek(today)))
   const [openSections, setOpenSections] =
     useState<Record<InterviewBucket, boolean>>(DEFAULT_OPEN_SECTIONS)
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
 
   const range = useMemo(() => {
     if (preset === 'today') {
@@ -343,6 +345,14 @@ export default function RecruiterInterviewsPage() {
           {selectedJob?.hiring_completed ? (
             <span className="badge badge--success">Hiring complete</span>
           ) : null}
+          <button
+            type="button"
+            className="btn btn--outline btn--sm"
+            disabled={!selectedJobId}
+            onClick={() => setIsBatchModalOpen(true)}
+          >
+            Batch Transcribe
+          </button>
         </div>
       </div>
 
@@ -564,6 +574,10 @@ export default function RecruiterInterviewsPage() {
           </div>
         </div>
       )}
+
+      {selectedJobId && isBatchModalOpen ? (
+        <BatchTranscriptionModal jobId={selectedJobId} onClose={() => setIsBatchModalOpen(false)} />
+      ) : null}
     </div>
   )
 }

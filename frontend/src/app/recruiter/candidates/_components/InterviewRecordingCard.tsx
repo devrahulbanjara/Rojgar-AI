@@ -6,14 +6,12 @@ import { toast } from 'react-toastify'
 import {
   type InterviewRecording,
   useDeleteRecordingMutation,
-  useEvaluateRecordingMutation,
   useGetRecordingsQuery,
   useTranscribeRecordingMutation,
   useUploadRecordingMutation,
 } from '@/store/services/recordingsApi'
 import {
   AlertCircle,
-  Brain,
   CheckCircle2,
   Loader2,
   Mic,
@@ -62,7 +60,6 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
   const { data: resp, isLoading: isLoadingRecordings } = useGetRecordingsQuery(applicationId)
   const [uploadRecording, { isLoading: isUploading }] = useUploadRecordingMutation()
   const [transcribeRecording, { isLoading: isTranscribing }] = useTranscribeRecordingMutation()
-  const [evaluateRecording, { isLoading: isEvaluating }] = useEvaluateRecordingMutation()
   const [deleteRecording] = useDeleteRecordingMutation()
 
   const recordings = resp?.data ?? []
@@ -117,7 +114,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
     const frequencyData = frequencyDataRef.current
 
     if (!flatten && analyser && frequencyData) {
-      analyser.getByteFrequencyData(frequencyData)
+      analyser.getByteFrequencyData(frequencyData as Uint8Array<ArrayBuffer>)
     }
 
     ctx.fillStyle = '#2563eb'
@@ -329,15 +326,6 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
     }
   }
 
-  const handleEvaluate = async (recordingId: string) => {
-    try {
-      await evaluateRecording(recordingId).unwrap()
-      toast.success('Evaluation complete.')
-    } catch {
-      toast.error('Evaluation failed.')
-    }
-  }
-
   const handleDelete = async (recordingId: string) => {
     try {
       await deleteRecording({ recordingId, applicationId }).unwrap()
@@ -356,7 +344,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
       <div className="dash-card__header">
         <div>
           <div className="dash-card__title">Interview recording</div>
-          <div className="dash-card__subtitle">Record, transcribe, and evaluate the interview.</div>
+          <div className="dash-card__subtitle">Record and transcribe the interview.</div>
         </div>
       </div>
 
@@ -434,7 +422,7 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
         {/* ====== STATE: preview — play & save ====== */}
         {recorderState === 'preview' && previewUrl && (
           <div className="rec-card__preview">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            {}
             <audio controls src={previewUrl} className="rec-card__audio" />
 
             <div className="rec-card__previewActions">
@@ -477,10 +465,8 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
                 key={rec.id}
                 rec={rec}
                 onTranscribe={handleTranscribe}
-                onEvaluate={handleEvaluate}
                 onDelete={handleDelete}
                 isTranscribing={isTranscribing}
-                isEvaluating={isEvaluating}
               />
             ))}
           </div>
@@ -497,17 +483,13 @@ export default function InterviewRecordingCard({ applicationId }: Props) {
 function RecordingItem({
   rec,
   onTranscribe,
-  onEvaluate,
   onDelete,
   isTranscribing,
-  isEvaluating,
 }: {
   rec: InterviewRecording
   onTranscribe: (id: string) => void
-  onEvaluate: (id: string) => void
   onDelete: (id: string) => void
   isTranscribing: boolean
-  isEvaluating: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const isProcessing = rec.status === 'transcribing' || rec.status === 'evaluating'
@@ -515,7 +497,7 @@ function RecordingItem({
   return (
     <div className="rec-item">
       <div className="rec-item__header">
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        {}
         <audio controls src={rec.s3_audio_url} className="rec-card__audio" />
 
         <div className="rec-item__meta">
@@ -548,23 +530,6 @@ function RecordingItem({
             </button>
           )}
 
-          {rec.status === 'transcribed' && (
-            <button
-              className="rec-card__actionBtn rec-card__actionBtn--primary"
-              onClick={() => onEvaluate(rec.id)}
-              disabled={isEvaluating}
-              type="button"
-              title="Evaluate"
-            >
-              {isEvaluating ? (
-                <Loader2 size={14} className="rec-card__spin" />
-              ) : (
-                <Brain size={14} />
-              )}
-              Evaluate
-            </button>
-          )}
-
           <button
             className="rec-card__actionBtn rec-card__actionBtn--cancel"
             onClick={() => onDelete(rec.id)}
@@ -587,16 +552,6 @@ function RecordingItem({
             {expanded ? 'Hide transcript' : 'Show transcript'}
           </button>
           {expanded && <p className="rec-item__text">{rec.transcript}</p>}
-        </div>
-      )}
-
-      {/* Evaluation */}
-      {rec.evaluation && (
-        <div className="rec-item__section rec-item__section--eval">
-          <div className="rec-item__evalHeader">
-            <Brain size={14} /> AI Evaluation
-          </div>
-          <p className="rec-item__text">{rec.evaluation}</p>
         </div>
       )}
     </div>

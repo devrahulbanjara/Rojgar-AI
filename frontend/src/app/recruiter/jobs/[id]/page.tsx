@@ -12,6 +12,7 @@ import { ArrowLeft, Briefcase, Building, Clock, MapPin, Pencil, Share2 } from 'l
 import StatusPill from '@/components/common/StatusPill'
 
 import { CompanyJobDetailSkeleton } from '../_components/CompanyJobsSkeletons'
+import EvaluationSchemaBuilder from '../_components/EvaluationSchemaBuilder'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -243,6 +244,8 @@ export default function RecruiterJobDetailPage() {
               </ul>
             </div>
           )}
+
+          <EvaluationSchemaBuilder jobId={job.id} />
         </div>
       </div>
     </div>

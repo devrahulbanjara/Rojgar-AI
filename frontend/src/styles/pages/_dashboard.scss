@@ -13174,7 +13174,7 @@
 
   &__recording--active {
     .rec-card__dot {
-      animation: recPulse 1.2s ease-in-out infinite;
+      animation: rec-pulse 1.2s ease-in-out infinite;
     }
   }
 
@@ -13221,26 +13221,25 @@
     max-width: 560px;
     height: 84px;
     border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.26);
+    border: 1px solid rgb(148 163 184 / 26%);
     background: linear-gradient(
       135deg,
-      rgba(15, 23, 42, 0.88) 0%,
-      rgba(30, 41, 59, 0.82) 50%,
-      rgba(15, 23, 42, 0.9) 100%
+      rgb(15 23 42 / 88%) 0%,
+      rgb(30 41 59 / 82%) 50%,
+      rgb(15 23 42 / 90%) 100%
     );
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 10px 24px rgba(15, 23, 42, 0.24);
+      inset 0 1px 0 rgb(255 255 255 / 8%),
+      0 10px 24px rgb(15 23 42 / 24%);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     display: block;
     overflow: hidden;
   }
 
   &__mic--recording {
     animation:
-      recPulse 1.2s ease-in-out infinite,
-      recMicScale 1.4s ease-in-out infinite;
+      rec-pulse 1.2s ease-in-out infinite,
+      rec-mic-scale 1.4s ease-in-out infinite;
     transform-origin: center;
   }
 
@@ -13345,7 +13344,7 @@
   }
 
   &__spin {
-    animation: recSpin 1s linear infinite;
+    animation: rec-spin 1s linear infinite;
   }
 }
 
@@ -13476,35 +13475,39 @@
   }
 }
 
-@keyframes recPulse {
+@keyframes rec-pulse {
   0%,
   100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.4;
     transform: scale(1.25);
   }
 }
 
-@keyframes recSpin {
+@keyframes rec-spin {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
-@keyframes recMicScale {
+@keyframes rec-mic-scale {
   0%,
   100% {
     transform: scale(1);
   }
+
   45% {
     transform: scale(1.18);
   }
+
   70% {
     transform: scale(1.08);
   }
