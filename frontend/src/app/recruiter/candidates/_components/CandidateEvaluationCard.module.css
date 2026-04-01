@@ -1,0 +1,145 @@
+.cardBody {
+  display: grid;
+  gap: 1rem;
+}
+
+.emptyState {
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.875rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.summaryCard {
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: #fff;
+}
+
+.summaryLabel {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.summaryValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.scoreGood {
+  color: #15803d;
+}
+
+.scoreOkay {
+  color: #b45309;
+}
+
+.scoreLow {
+  color: #dc2626;
+}
+
+.criteriaList {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.criterionRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 120px;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: #fff;
+}
+
+.criterionMeta {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.criterionLabel {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.criterionHint {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  font: inherit;
+  color: #0f172a;
+  background: #fff;
+}
+
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.notesList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.noteCard {
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: #fff;
+}
+
+.noteTitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.noteText {
+  margin: 0;
+  line-height: 1.65;
+  color: #334155;
+}
+
+@media (max-width: 860px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .criterionRow {
+    grid-template-columns: 1fr;
+  }
+}
