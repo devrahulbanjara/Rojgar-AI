@@ -15,3 +15,7 @@ class InterviewRecordingResponse(BaseSchema):
     duration_seconds: int | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class BatchTranscribeRequest(BaseSchema):
+    application_ids: list[UUID]

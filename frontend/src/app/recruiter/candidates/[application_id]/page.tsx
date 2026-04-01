@@ -24,6 +24,7 @@ import {
   UserRound,
 } from 'lucide-react'
 
+import CandidateEvaluationCard from '../_components/CandidateEvaluationCard'
 import { CandidateDetailSkeleton } from '../_components/CandidatesSkeletons'
 import InterviewRecordingCard from '../_components/InterviewRecordingCard'
 import { mapRecruiterCandidateResume } from '../_lib/mapRecruiterCandidateResume'
@@ -285,7 +286,10 @@ export default function RecruiterCandidateDetailPage() {
           </div>
 
           <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
-            <InterviewRecordingCard applicationId={applicationId} />
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              <InterviewRecordingCard applicationId={applicationId} />
+              <CandidateEvaluationCard applicationId={applicationId} />
+            </div>
 
             <div className="dash-card">
               <div className="dash-card__header">

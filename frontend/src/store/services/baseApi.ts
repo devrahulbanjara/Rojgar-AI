@@ -121,6 +121,7 @@ export const baseApi = createApi({
     'JobAIDrafts',
     'RecruiterChatSessions',
     'Recordings',
+    'Evaluation',
   ],
   endpoints: () => ({}),
 })
