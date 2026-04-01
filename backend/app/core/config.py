@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     shortlisting_reflection_max_iterations: int = 2
     shortlisting_web_search_max_results: int = 3
 
+    # Whisper (transcription)
+    whisper_endpoint_url: str = "https://api.openai.com/v1/audio/transcriptions"
+    whisper_api_key: str = ""
+
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
