@@ -8,6 +8,14 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.cache import (
+    get_job_applicant_user_ids,
+    invalidate_candidate_read_caches_for_users,
+    invalidate_company_application_caches,
+    invalidate_company_dashboard_caches,
+    invalidate_interview_list_caches,
+    invalidate_job_detail_caches,
+)
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
@@ -110,10 +118,10 @@ async def expire_due_jobs(db: AsyncSession) -> int:
     await db.commit()
 
     for job in jobs:
-        await redis_service.delete(f"job:detail:{job.id}")
+        await invalidate_job_detail_caches(str(job.id))
     for company_id in company_ids:
         await redis_service.delete(f"jobs:company:{company_id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+        await invalidate_company_dashboard_caches(db, str(company_id))
 
     for event_id in event_ids:
         await process_sync_event(event_id)
@@ -291,7 +299,7 @@ async def create_job(
     logger.info(f"Job '{job.title}' created by user {user.id}")
 
     await redis_service.delete(f"jobs:company:{company_id}")
-    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
+    await invalidate_company_dashboard_caches(db, str(company_id))
 
     return _job_detail_response_from_row(job, applications_count)
 
@@ -508,6 +516,7 @@ async def update_job(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found or you do not have permission.",
         )
+    applicant_user_ids = await get_job_applicant_user_ids(db, job_id)
 
     was_auto_shortlist_enabled = job.auto_shortlist
     was_open_for_auto_shortlist = _should_be_searchable(job)
@@ -563,10 +572,12 @@ async def update_job(
 
     response = _job_detail_response_from_row(job, applications_count)
 
-    await redis_service.delete(f"job:detail:{job_id}")
-    await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
+    await invalidate_job_detail_caches(job_id)
     await redis_service.delete(f"jobs:company:{company_id}")
-    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
+    await invalidate_company_dashboard_caches(db, str(company_id))
+    await invalidate_company_application_caches(str(company_id))
+    await invalidate_interview_list_caches(str(company_id))
+    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
     return response
 
@@ -590,6 +601,7 @@ async def delete_job(
     application_ids = list(
         await db.scalars(select(Application.id).where(Application.job_id == job.id))
     )
+    applicant_user_ids = await get_job_applicant_user_ids(db, job_id)
     job_title = job.title  # capture before deletion
     await db.delete(job)
 
@@ -610,9 +622,37 @@ async def delete_job(
     for application_sync_event in application_sync_events:
         bg_tasks.add_task(process_application_sync_event, application_sync_event.id)
 
-    await redis_service.delete(f"job:detail:{job_id}")
-    await redis_service.invalidate_pattern(f"job:detail:{job_id}:candidate:*")
+    await invalidate_job_detail_caches(job_id)
     await redis_service.delete(f"jobs:company:{company_id}")
-    bg_tasks.add_task(redis_service.invalidate_pattern, "dashboard:recruiter*")
+    await invalidate_company_dashboard_caches(db, str(company_id))
+    await invalidate_company_application_caches(str(company_id))
+    await invalidate_interview_list_caches(str(company_id))
+    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
     logger.info(f"Job '{job_title}' deleted by user {user.id}")
+
+
+async def set_hiring_completed(
+    db: AsyncSession,
+    user: User,
+    job_id: uuid.UUID,
+    hiring_completed: bool,
+) -> dict[str, bool]:
+    company_id = await _get_user_company_id(db, user)
+    result = await db.execute(
+        select(Job).where(Job.id == job_id, Job.company_id == company_id)
+    )
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    applicant_user_ids = await get_job_applicant_user_ids(db, str(job_id))
+    job.hiring_completed = hiring_completed
+    await db.commit()
+
+    await invalidate_job_detail_caches(str(job_id))
+    await redis_service.delete(f"jobs:company:{job.company_id}")
+    await invalidate_company_dashboard_caches(db, str(job.company_id))
+    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
+
+    return {"hiring_completed": hiring_completed}

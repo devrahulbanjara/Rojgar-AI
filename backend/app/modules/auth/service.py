@@ -7,8 +7,13 @@ from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import (
+    invalidate_company_dashboard_caches,
+    invalidate_profile_read_caches,
+)
 from app.core.config import settings
 from app.infrastructures.email.service import EmailService
+from app.infrastructures.redis.service import redis_service
 from app.core.security import (
     create_tokens,
     create_pending_signup_token,
@@ -38,6 +43,22 @@ from app.modules.auth.schemas import (
     VerifyEmailRequest,
 )
 from app.modules.auth.utils import build_user_dict, get_membership_status
+
+
+async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
+    await invalidate_profile_read_caches(str(user.id))
+
+    company_id = await db.scalar(
+        select(CompanyMembership.company_id).where(
+            CompanyMembership.user_id == user.id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+    if company_id is None:
+        return
+
+    await invalidate_company_dashboard_caches(db, str(company_id))
+    await redis_service.delete(f"company:recruiters:{company_id}")
 
 
 async def get_me_data(db: AsyncSession, user: User) -> UserResponse:

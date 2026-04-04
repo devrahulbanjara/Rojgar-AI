@@ -8,8 +8,13 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import (
+    invalidate_candidate_read_caches,
+    invalidate_company_application_caches,
+    invalidate_company_dashboard_caches,
+    invalidate_interview_list_caches,
+)
 from app.core.database import get_db
-from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.companies.models import Company
@@ -109,11 +114,10 @@ async def cal_webhook_handler(
     enqueue_application_sync_event(db, application.id)
 
     await db.commit()
-    await redis_service.delete(f"dashboard:candidate:{application.user_id}")
-    await redis_service.invalidate_pattern(
-        f"applications:candidate:{application.user_id}:*"
-    )
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await invalidate_candidate_read_caches(str(application.user_id))
+    await invalidate_company_dashboard_caches(db, str(company.id))
+    await invalidate_company_application_caches(str(company.id), str(application.id))
+    await invalidate_interview_list_caches(str(company.id))
 
     logger.info(
         "Interview booked: {} ({}) at {}",

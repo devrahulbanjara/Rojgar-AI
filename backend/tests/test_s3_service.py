@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app.infrastructures.s3.service import GENERIC_UPLOAD_ERROR, S3Service
+from app.infrastructures.storage.service import StorageService
 
 
 class DummyS3Client:
@@ -38,18 +38,16 @@ class FailingS3Client:
 
 
 async def test_upload_image_marks_objects_public(monkeypatch):
-    service = S3Service()
+    monkeypatch.setattr(
+        "app.infrastructures.storage.service.settings.s3_bucket_name", "bucket"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.storage.service.settings.aws_region", "us-east-1"
+    )
+    service = StorageService()
     fake_client = DummyS3Client()
 
-    monkeypatch.setattr(
-        "app.infrastructures.s3.service.settings.s3_bucket_name", "bucket"
-    )
-    monkeypatch.setattr(
-        "app.infrastructures.s3.service.settings.aws_region", "us-east-1"
-    )
-    monkeypatch.setattr(
-        "app.infrastructures.s3.service.settings.s3_upload_acl", "public-read"
-    )
+    service.bucket = "bucket"
     monkeypatch.setattr(service, "_client", fake_client)
 
     upload = UploadFile(
@@ -61,24 +59,19 @@ async def test_upload_image_marks_objects_public(monkeypatch):
     url = await service.upload_image(upload, folder="avatars")
 
     assert url.startswith("https://bucket.s3.us-east-1.amazonaws.com/avatars/")
-    assert fake_client.calls[0]["extra_args"] == {
-        "ContentType": "image/png",
-        "ACL": "public-read",
-    }
+    assert fake_client.calls[0]["extra_args"] == {"ContentType": "image/png"}
 
 
 async def test_upload_image_returns_generic_message_for_acl_failures(monkeypatch):
-    service = S3Service()
+    monkeypatch.setattr(
+        "app.infrastructures.storage.service.settings.s3_bucket_name", "bucket"
+    )
+    monkeypatch.setattr(
+        "app.infrastructures.storage.service.settings.aws_region", "us-east-1"
+    )
+    service = StorageService()
 
-    monkeypatch.setattr(
-        "app.infrastructures.s3.service.settings.s3_bucket_name", "bucket"
-    )
-    monkeypatch.setattr(
-        "app.infrastructures.s3.service.settings.aws_region", "us-east-1"
-    )
-    monkeypatch.setattr(
-        "app.infrastructures.s3.service.settings.s3_upload_acl", "public-read"
-    )
+    service.bucket = "bucket"
     monkeypatch.setattr(service, "_client", FailingS3Client())
 
     upload = UploadFile(
@@ -91,4 +84,4 @@ async def test_upload_image_returns_generic_message_for_acl_failures(monkeypatch
         await service.upload_image(upload, folder="avatars")
 
     assert exc_info.value.status_code == 500
-    assert exc_info.value.detail == GENERIC_UPLOAD_ERROR
+    assert exc_info.value.detail == "Upload failed. Please try again later."

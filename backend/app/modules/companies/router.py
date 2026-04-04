@@ -18,7 +18,6 @@ from app.modules.companies.schemas import (
     UpdateCompanyRequest,
     UpdateRecruiterStatusRequest,
 )
-from app.infrastructures.redis.service import redis_service
 from app.modules.companies.utils import get_admin_company
 
 router = APIRouter()
@@ -153,8 +152,7 @@ async def upload_company_logo(
     if previous_logo_url and previous_logo_url != new_logo_url:
         await storage_service.delete_image(previous_logo_url)
 
-    # INVALIDATE CACHE
-    await redis_service.delete(f"company:detail:{user.id}")
+    await service.invalidate_company_content_caches(db, str(company.id))
 
     data = CompanyResponse.model_validate(company)
     return ResponseBuilder.success(data=data, message="Company logo updated.")
@@ -178,7 +176,6 @@ async def delete_company_logo(
     if previous_logo_url:
         await storage_service.delete_image(previous_logo_url)
 
-    # INVALIDATE CACHE
-    await redis_service.delete(f"company:detail:{user.id}")
+    await service.invalidate_company_content_caches(db, str(company.id))
 
     return ResponseBuilder.success(data=None, message="Company logo removed.")

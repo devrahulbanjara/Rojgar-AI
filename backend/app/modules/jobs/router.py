@@ -1,20 +1,16 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import PaginatedData, ResponseBuilder, UnifiedResponse
-from app.infrastructures.redis.service import redis_service
 from app.modules.auth.dependencies import (
     get_current_user,
     get_optional_user,
     require_active_membership,
 )
 from app.modules.auth.models import User
-from app.modules.companies.models import CompanyMembership
-from app.modules.jobs.models import Job
 from app.modules.jobs import service
 from app.modules.jobs.schemas import (
     JobCreate,
@@ -148,18 +144,5 @@ async def set_hiring_completed(
     user: User = Depends(require_active_membership),
     db: AsyncSession = db,
 ):
-    result = await db.execute(
-        select(Job)
-        .join(CompanyMembership, CompanyMembership.company_id == Job.company_id)
-        .where(Job.id == job_id, CompanyMembership.user_id == user.id)
-    )
-    job = result.scalar_one_or_none()
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found.")
-
-    job.hiring_completed = hiring_completed
-    await db.commit()
-    await redis_service.delete(f"job:detail:{job_id}")
-    await redis_service.delete(f"jobs:company:{job.company_id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
-    return ResponseBuilder.success(data={"hiring_completed": hiring_completed})
+    data = await service.set_hiring_completed(db, user, job_id, hiring_completed)
+    return ResponseBuilder.success(data=data)

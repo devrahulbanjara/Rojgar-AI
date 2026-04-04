@@ -1,7 +1,17 @@
+import json
+
 from fastapi import BackgroundTasks, HTTPException, status
 from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.cache import (
+    get_company_applicant_user_ids,
+    invalidate_candidate_read_caches_for_users,
+    invalidate_company_dashboard_caches,
+    invalidate_company_detail_caches,
+    invalidate_job_detail_caches,
+)
 from app.infrastructures.redis.service import redis_service
 
 from app.core.security import create_pending_signup_token, decode_pending_signup_token
@@ -9,6 +19,7 @@ from app.infrastructures.email.service import EmailService
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.jobs.models import Job
 from app.modules.companies.schemas import (
     CompanyResponse,
     JoinCompanyRequest,
@@ -22,6 +33,31 @@ from app.modules.companies.utils import get_admin_company, get_member_company
 
 def _company_to_response(company: Company) -> CompanyResponse:
     return CompanyResponse.model_validate(company)
+
+
+def _company_recruiters_cache_key(company_id: str) -> str:
+    return f"company:recruiters:{company_id}"
+
+
+async def _get_company_job_ids(db: AsyncSession, company_id: str) -> list[str]:
+    result = await db.execute(select(Job.id).where(Job.company_id == company_id))
+    return [str(job_id) for job_id in result.scalars().all()]
+
+
+async def invalidate_company_content_caches(db: AsyncSession, company_id: str) -> None:
+    await invalidate_company_detail_caches(db, company_id)
+    await invalidate_company_dashboard_caches(db, company_id)
+    await redis_service.delete_many(
+        f"jobs:company:{company_id}",
+        _company_recruiters_cache_key(company_id),
+    )
+
+    job_ids = await _get_company_job_ids(db, company_id)
+    for job_id in job_ids:
+        await invalidate_job_detail_caches(job_id)
+
+    applicant_user_ids = await get_company_applicant_user_ids(db, company_id)
+    await invalidate_candidate_read_caches_for_users(applicant_user_ids)
 
 
 async def get_my_company(db: AsyncSession, user: User) -> CompanyResponse:
@@ -78,8 +114,7 @@ async def update_my_company(
     await db.refresh(company)
     response = _company_to_response(company)
 
-    # INVALIDATE CACHE
-    await redis_service.invalidate_pattern("company:detail:*")
+    await invalidate_company_content_caches(db, str(company.id))
 
     logger.info("Company {} updated by {}", company.id, user.id)
     return response
@@ -195,6 +230,12 @@ async def list_company_recruiters(
 ) -> list[RecruiterMemberResponse]:
     """List all recruiters for the admin's company."""
     company = await get_admin_company(db, user)
+    cache_key = _company_recruiters_cache_key(str(company.id))
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        data = json.loads(cached_data)
+        return [RecruiterMemberResponse.model_validate(item) for item in data]
+
     result = await db.execute(
         select(CompanyMembership, User)
         .join(User, CompanyMembership.user_id == User.id)
@@ -205,7 +246,7 @@ async def list_company_recruiters(
         .order_by(CompanyMembership.created_at.desc())
     )
     rows = result.all()
-    return [
+    response = [
         RecruiterMemberResponse(
             membership_id=m.id,
             user_id=u.id,
@@ -217,6 +258,13 @@ async def list_company_recruiters(
         )
         for m, u in rows
     ]
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=300,
+        ttl_jitter_seconds=60,
+    )
+    return response
 
 
 async def update_recruiter_status(
@@ -254,6 +302,13 @@ async def update_recruiter_status(
     membership.status = payload.status
     await db.commit()
     await db.refresh(membership)
+    await redis_service.delete_many(
+        f"company:detail:{recruiter_user.id}",
+        f"dashboard:recruiter:{recruiter_user.id}",
+        f"dashboard:recruiter-admin:{recruiter_user.id}",
+        _company_recruiters_cache_key(str(company.id)),
+    )
+    await invalidate_company_dashboard_caches(db, str(company.id))
 
     logger.info(
         f"Company {company.name}: recruiter {recruiter_user.email} status → {payload.status}"
@@ -289,4 +344,11 @@ async def remove_recruiter(db: AsyncSession, user: User, membership_id: str) -> 
 
     await db.delete(membership)
     await db.commit()
+    await redis_service.delete_many(
+        f"company:detail:{membership.user_id}",
+        f"dashboard:recruiter:{membership.user_id}",
+        f"dashboard:recruiter-admin:{membership.user_id}",
+        _company_recruiters_cache_key(str(company.id)),
+    )
+    await invalidate_company_dashboard_caches(db, str(company.id))
     logger.info(f"Company {company.name}: recruiter membership {membership_id} removed")
