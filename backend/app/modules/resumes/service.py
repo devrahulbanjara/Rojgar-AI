@@ -1,9 +1,18 @@
+import json
+
 from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.cache import (
+    get_resume_application_ids,
+    invalidate_application_candidate_detail_caches,
+    invalidate_resume_caches,
+    invalidate_resume_gap_caches,
+)
+from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
 from app.modules.auth.models import User
@@ -16,6 +25,14 @@ from app.modules.resumes.models import (
 )
 from app.modules.resumes.schemas import ResumeListItem, ResumeResponse, ResumeUpdate
 from app.shared.enums import SyncAction
+
+
+def _resume_list_cache_key(user_id: str) -> str:
+    return f"resumes:list:{user_id}"
+
+
+def _resume_detail_cache_key(user_id: str, resume_id: str) -> str:
+    return f"resume:detail:{resume_id}:user:{user_id}"
 
 
 async def _load_full_resume(db: AsyncSession, resume_id) -> Resume:
@@ -60,13 +77,19 @@ async def list_resumes(db: AsyncSession, user: User) -> list[ResumeListItem]:
 
 async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListItem]:
     """List all resumes for a user ID (lightweight, no child collections)."""
+    cache_key = _resume_list_cache_key(str(user_id))
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        data = json.loads(cached_data)
+        return [ResumeListItem.model_validate(item) for item in data]
+
     result = await db.execute(
         select(Resume)
         .where(Resume.user_id == user_id)
         .order_by(Resume.updated_at.desc())
     )
     resumes = result.scalars().all()
-    return [
+    response = [
         ResumeListItem(
             id=resume.id,
             resume_name=resume.resume_name,
@@ -75,6 +98,13 @@ async def list_resumes_by_user_id(db: AsyncSession, user_id) -> list[ResumeListI
         )
         for resume in resumes
     ]
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=900,
+        ttl_jitter_seconds=120,
+    )
+    return response
 
 
 async def fork_resume_from_profile(
@@ -143,12 +173,18 @@ async def fork_resume_from_profile(
 
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
+    await invalidate_resume_caches(str(user.id), str(resume.id))
     logger.info(f"Forked resume '{resume_name}' for user {user.id}")
     return _resume_to_response(resume)
 
 
 async def get_resume(db: AsyncSession, user: User, resume_id: str) -> ResumeResponse:
     """Fetch a specific resume owned by the user."""
+    cache_key = _resume_detail_cache_key(str(user.id), resume_id)
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return ResumeResponse.model_validate_json(cached_data)
+
     result = await db.execute(
         select(Resume)
         .where(Resume.id == resume_id, Resume.user_id == user.id)
@@ -164,7 +200,14 @@ async def get_resume(db: AsyncSession, user: User, resume_id: str) -> ResumeResp
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resume not found.",
         )
-    return _resume_to_response(resume)
+    response = _resume_to_response(resume)
+    await redis_service.set(
+        cache_key,
+        response.model_dump_json(),
+        ttl_seconds=900,
+        ttl_jitter_seconds=120,
+    )
+    return response
 
 
 async def update_resume(
@@ -217,6 +260,11 @@ async def update_resume(
     enqueue_application_sync_events(db, linked_application_ids, SyncAction.UPSERT)
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
+    await invalidate_resume_caches(str(user.id), str(resume.id))
+    await invalidate_resume_gap_caches(str(resume.id))
+    await invalidate_application_candidate_detail_caches(
+        [str(application_id) for application_id in linked_application_ids]
+    )
     logger.info(f"Updated resume {resume_id} for user {user.id}")
     return _resume_to_response(resume)
 
@@ -257,6 +305,7 @@ async def create_resume_from_import(
 
     await db.commit()
     resume = await _load_full_resume(db, resume.id)
+    await invalidate_resume_caches(str(user.id), str(resume.id))
     logger.info("Created AI-imported resume '{}' for user {}", resume_name, user.id)
     return _resume_to_response(resume)
 
@@ -282,6 +331,10 @@ async def delete_resume(db: AsyncSession, user: User, resume_id: str) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resume not found.",
         )
+    linked_application_ids = await get_resume_application_ids(db, resume_id)
     await db.delete(resume)
     await db.commit()
+    await invalidate_resume_caches(str(user.id), resume_id)
+    await invalidate_resume_gap_caches(resume_id)
+    await invalidate_application_candidate_detail_caches(linked_application_ids)
     logger.info(f"Deleted resume {resume_id} for user {user.id}")

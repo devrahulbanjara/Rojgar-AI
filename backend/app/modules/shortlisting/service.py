@@ -10,6 +10,12 @@ from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import selectinload
 
+from app.core.cache import (
+    invalidate_candidate_read_caches,
+    invalidate_candidate_read_caches_for_users,
+    invalidate_company_application_caches,
+    invalidate_company_dashboard_caches,
+)
 from app.core.database import AsyncSessionLocal
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_events
@@ -181,11 +187,11 @@ async def process_auto_shortlist_for_application(
                 enqueue_application_sync_events(db, [application.id], SyncAction.UPSERT)
                 await db.commit()
 
-                await redis_service.delete(f"dashboard:candidate:{application.user_id}")
-                await redis_service.invalidate_pattern(
-                    f"applications:candidate:{application.user_id}:*"
+                await invalidate_candidate_read_caches(str(application.user_id))
+                await invalidate_company_dashboard_caches(db, str(job.company_id))
+                await invalidate_company_application_caches(
+                    str(job.company_id), str(application.id)
                 )
-                await redis_service.invalidate_pattern("dashboard:recruiter*")
                 await redis_service.delete(f"shortlist:summary:{application.job_id}")
 
                 logger.info(
@@ -262,8 +268,9 @@ async def _run_shortlisting_task(job_id: uuid.UUID, database_url: str) -> None:
 
             job.shortlist_status = ShortlistStatus.completed
             await db.commit()
+            await invalidate_company_dashboard_caches(db, str(job.company_id))
+            await invalidate_company_application_caches(str(job.company_id))
             await redis_service.delete(f"shortlist:summary:{job_id}")
-            await redis_service.invalidate_pattern("dashboard:recruiter*")
             logger.info("Shortlisting completed for job {}", job_id)
         except Exception as exc:
             await db.rollback()
@@ -419,6 +426,8 @@ async def finalize_shortlist(
     job = await _get_job_for_company(db, job_id, company_id)
 
     updated_count = 0
+    shortlisted_rows = []
+    rejected_rows = []
 
     if payload.use_ai_recommendations:
         if job.status != JobStatus.expired and (
@@ -448,7 +457,7 @@ async def finalize_shortlist(
                 )
             )
             .values(status=ApplicationStatus.shortlisted)
-            .returning(Application.id)
+            .returning(Application.id, Application.user_id)
         )
         shortlisted_rows = shortlist_result.fetchall()
         updated_count += len(shortlisted_rows)
@@ -467,7 +476,7 @@ async def finalize_shortlist(
                 )
             )
             .values(status=ApplicationStatus.rejected)
-            .returning(Application.id)
+            .returning(Application.id, Application.user_id)
         )
         rejected_rows = rejected_result.fetchall()
         enqueue_application_sync_events(
@@ -479,9 +488,11 @@ async def finalize_shortlist(
     job.final_shortlist_completed = True
     await db.commit()
 
-    # INVALIDATE CACHE
+    changed_user_ids = [str(row[1]) for row in shortlisted_rows + rejected_rows]
+    await invalidate_candidate_read_caches_for_users(changed_user_ids)
+    await invalidate_company_application_caches(str(company_id))
+    await invalidate_company_dashboard_caches(db, str(company_id))
     await redis_service.delete(f"shortlist:summary:{job_id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
 
     return FinalizeShortlistResponse(
         job_id=job_id,

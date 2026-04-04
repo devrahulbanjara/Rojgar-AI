@@ -1,19 +1,27 @@
-import pytest
 import asyncio
+import os
+
+import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
+
 from main import app
-from app.core.database import Base, get_db
 from app.core.config import settings
+from app.core.database import Base, get_db
 
 
 @pytest.fixture(scope="session", autouse=True)
 def disable_emails():
     """Prevent real emails from being sent during tests."""
+    original_send_emails = settings.send_emails
+    original_redis_enabled = settings.redis_enabled
     settings.send_emails = False
+    settings.redis_enabled = False
     yield
-    settings.send_emails = True
+    settings.send_emails = original_send_emails
+    settings.redis_enabled = original_redis_enabled
 
 
 @pytest.fixture(scope="session")
@@ -27,10 +35,21 @@ def event_loop():
 @pytest.fixture(scope="session")
 async def engine():
     """Create engine and setup tables."""
+    database_url = os.getenv("TEST_DATABASE_URL") or settings.test_database_url
     engine = create_async_engine(
-        settings.test_database_url,
+        database_url,
         poolclass=NullPool,
     )
+
+    try:
+        async with engine.connect() as connection:
+            await connection.execute(text("SELECT 1"))
+    except Exception as exc:
+        await engine.dispose()
+        pytest.skip(
+            "Database-backed tests require a reachable Postgres test database via "
+            f"`TEST_DATABASE_URL` or the configured `test_db_*` settings: {exc}"
+        )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

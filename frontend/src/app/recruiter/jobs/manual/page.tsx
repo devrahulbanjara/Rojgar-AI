@@ -1,15 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import EvaluationSchemaSetupCard, {
+  DEFAULT_EVALUATION_SCHEMA_DRAFT,
+  type EvaluationSchemaDraft,
+  buildEvaluationSchemaPayload,
+  validateEvaluationSchemaDraft,
+} from '@/app/recruiter/jobs/_components/EvaluationSchemaSetupCard'
 import RecruiterJobEditor, {
   getCreateJobInitialForm,
 } from '@/app/recruiter/jobs/_components/RecruiterJobEditor'
 import { parseApiError } from '@/lib/apiError'
 import { useGetMyCompanyQuery } from '@/store/services/companyApi'
+import { useUpsertJobEvaluationSchemaMutation } from '@/store/services/evaluationApi'
 import { type CreateJobPayload, useCreateJobMutation } from '@/store/services/jobsApi'
 import { ArrowLeft } from 'lucide-react'
 
@@ -17,10 +25,43 @@ export default function RecruiterManualJobPage() {
   const router = useRouter()
   const { data: companyResp } = useGetMyCompanyQuery()
   const [createJob, { isLoading: isCreating }] = useCreateJobMutation()
+  const [upsertSchema] = useUpsertJobEvaluationSchemaMutation()
+  const [evaluationEnabled, setEvaluationEnabled] = useState(false)
+  const [evaluationDraft, setEvaluationDraft] = useState<EvaluationSchemaDraft>(
+    DEFAULT_EVALUATION_SCHEMA_DRAFT,
+  )
 
   async function handleCreate(payload: CreateJobPayload) {
+    if (evaluationEnabled) {
+      const validationMessage = validateEvaluationSchemaDraft(evaluationDraft)
+      if (validationMessage) {
+        toast.error(validationMessage)
+        return
+      }
+    }
+
     try {
-      await createJob(payload).unwrap()
+      const response = await createJob(payload).unwrap()
+      const jobId = response.data.id
+
+      if (evaluationEnabled) {
+        try {
+          await upsertSchema({
+            jobId,
+            ...buildEvaluationSchemaPayload(evaluationDraft),
+          }).unwrap()
+          toast.success('Job posted and evaluation schema saved.')
+          router.push(`/recruiter/jobs/${jobId}`)
+          return
+        } catch {
+          toast.warn(
+            'Job posted, but the evaluation schema could not be saved. You can add it from the job page.',
+          )
+          router.push(`/recruiter/jobs/${jobId}`)
+          return
+        }
+      }
+
       toast.success('Job posted successfully.')
       router.push('/recruiter/jobs')
     } catch (error) {
@@ -67,6 +108,13 @@ export default function RecruiterManualJobPage() {
           />
         </div>
       </section>
+
+      <EvaluationSchemaSetupCard
+        enabled={evaluationEnabled}
+        onEnabledChange={setEvaluationEnabled}
+        onChange={setEvaluationDraft}
+        disabled={isCreating}
+      />
     </div>
   )
 }
