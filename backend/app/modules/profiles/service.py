@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.cache import invalidate_profile_read_caches
 from app.infrastructures.redis.service import redis_service
 
 from app.modules.auth.models import User
@@ -61,8 +62,17 @@ def _profile_to_response(
     )
 
 
+async def invalidate_profile_reads(user_id: str) -> None:
+    await invalidate_profile_read_caches(user_id)
+
+
 async def get_or_create_profile(db: AsyncSession, user: User) -> ProfileResponse:
     """Return the user's profile, creating an empty one if it does not exist."""
+    cache_key = f"profile:detail:{user.id}"
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return ProfileResponse.model_validate_json(cached_data)
+
     result = await db.execute(
         select(Profile)
         .where(Profile.user_id == user.id)
@@ -87,7 +97,14 @@ async def get_or_create_profile(db: AsyncSession, user: User) -> ProfileResponse
         profile = await _load_full_profile(db, profile.id)
         logger.info(f"Created empty profile for user {user.id}")
 
-    return _profile_to_response(profile, user.avatar_url)
+    response = _profile_to_response(profile, user.avatar_url)
+    await redis_service.set(
+        cache_key,
+        response.model_dump_json(),
+        ttl_seconds=900,
+        ttl_jitter_seconds=120,
+    )
+    return response
 
 
 async def update_profile(
@@ -134,9 +151,7 @@ async def update_profile(
     profile = await _load_full_profile(db, profile.id)
     response = _profile_to_response(profile, user.avatar_url)
 
-    # INVALIDATE CACHE
-    await redis_service.delete(f"profile:detail:{user.id}")
-    await redis_service.delete(f"dashboard:candidate:{user.id}")
+    await invalidate_profile_read_caches(str(user.id))
 
     logger.info(f"Updated profile for user {user.id}")
     return response
@@ -217,9 +232,7 @@ async def complete_onboarding(
     profile = await _load_full_profile(db, profile.id)
     response = _profile_to_response(profile, user.avatar_url)
 
-    # INVALIDATE CACHE
-    await redis_service.delete(f"profile:detail:{user.id}")
-    await redis_service.delete(f"dashboard:candidate:{user.id}")
+    await invalidate_profile_read_caches(str(user.id))
 
     logger.info(
         f"Candidate {user.id} completed onboarding with roles: {payload.target_roles}"

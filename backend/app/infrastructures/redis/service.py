@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import random
+
 import redis.asyncio as redis
 from loguru import logger
 
@@ -20,11 +24,13 @@ class RedisService:
                 decode_responses=True,
                 socket_timeout=2.0,
                 socket_connect_timeout=2.0,
+                socket_keepalive=True,
+                health_check_interval=30,
             )
             await self._client.ping()
             logger.info("Successfully connected to Redis.")
-        except Exception as e:
-            logger.error(f"Failed to connect to Redis: {e}")
+        except Exception as exc:
+            logger.error("Failed to connect to Redis: {}", exc)
             self._client = None
 
     async def disconnect(self) -> None:
@@ -34,45 +40,80 @@ class RedisService:
     def _build_key(self, key: str) -> str:
         return f"{self.prefix}:{key}"
 
+    def _build_ttl(self, ttl_seconds: int, ttl_jitter_seconds: int) -> int:
+        if ttl_seconds <= 0:
+            raise ValueError("ttl_seconds must be greater than zero.")
+        if ttl_jitter_seconds <= 0:
+            return ttl_seconds
+        return ttl_seconds + random.randint(0, ttl_jitter_seconds)
+
     async def get(self, key: str) -> str | None:
         """Fetch a value from cache. Fails gracefully."""
         if not self._client:
             return None
         try:
             return await self._client.get(self._build_key(key))
-        except Exception as e:
-            logger.error(f"Redis GET failed for key {key}: {e}")
+        except Exception as exc:
+            logger.error("Redis GET failed for key {}: {}", key, exc)
             return None
 
-    async def set(self, key: str, value: str, ttl_seconds: int = 300) -> None:
+    async def set(
+        self,
+        key: str,
+        value: str,
+        ttl_seconds: int = 300,
+        *,
+        ttl_jitter_seconds: int = 0,
+    ) -> None:
         """Set a value in cache with a TTL. Fails gracefully."""
         if not self._client:
             return
         try:
-            await self._client.setex(self._build_key(key), ttl_seconds, value)
-        except Exception as e:
-            logger.error(f"Redis SET failed for key {key}: {e}")
+            effective_ttl = self._build_ttl(ttl_seconds, ttl_jitter_seconds)
+            await self._client.set(self._build_key(key), value, ex=effective_ttl)
+        except Exception as exc:
+            logger.error("Redis SET failed for key {}: {}", key, exc)
 
     async def delete(self, key: str) -> None:
         """Delete a specific key (used for event-driven invalidation)."""
-        if not self._client:
+        await self.delete_many(key)
+
+    async def delete_many(self, *keys: str) -> None:
+        """Delete multiple keys with a single Redis call where possible."""
+        if not self._client or not keys:
             return
+
+        prefixed_keys = [self._build_key(key) for key in keys]
         try:
-            await self._client.delete(self._build_key(key))
-        except Exception as e:
-            logger.error(f"Redis DELETE failed for key {key}: {e}")
+            await self._client.unlink(*prefixed_keys)
+        except Exception as exc:
+            logger.error("Redis DELETE failed for keys {}: {}", keys, exc)
 
     async def invalidate_pattern(self, pattern: str) -> None:
-        """Invalidate keys by pattern (e.g., 'dashboard:candidate:*')"""
-        if not self._client:
+        """Invalidate keys by pattern without using blocking KEYS scans."""
+        await self.invalidate_patterns(pattern)
+
+    async def invalidate_patterns(self, *patterns: str) -> None:
+        if not self._client or not patterns:
             return
+
         try:
-            full_pattern = self._build_key(pattern)
-            keys = await self._client.keys(full_pattern)
-            if keys:
-                await self._client.delete(*keys)
-        except Exception as e:
-            logger.error(f"Redis INVALIDATE PATTERN failed: {e}")
+            for pattern in patterns:
+                full_pattern = self._build_key(pattern)
+                batch: list[str] = []
+                async for redis_key in self._client.scan_iter(
+                    match=full_pattern,
+                    count=200,
+                ):
+                    batch.append(redis_key)
+                    if len(batch) >= 200:
+                        await self._client.unlink(*batch)
+                        batch.clear()
+
+                if batch:
+                    await self._client.unlink(*batch)
+        except Exception as exc:
+            logger.error("Redis INVALIDATE PATTERN failed for {}: {}", patterns, exc)
 
 
 redis_service = RedisService()

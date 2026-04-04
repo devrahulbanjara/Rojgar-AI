@@ -16,7 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.responses import ResponseBuilder, UnifiedResponse
-from app.infrastructures.redis.service import redis_service
 from app.infrastructures.storage.service import storage_service
 from app.modules.auth import service
 from app.modules.auth.dependencies import get_current_user
@@ -186,9 +185,7 @@ async def update_me(
     db: AsyncSession = db,
 ):
     data = await service.update_me_data(db, current_user, payload)
-    await redis_service.delete(f"profile:detail:{current_user.id}")
-    await redis_service.delete(f"dashboard:candidate:{current_user.id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await service.invalidate_user_read_caches(db, current_user)
     return ResponseBuilder.success(data=data, message="Profile updated")
 
 
@@ -211,9 +208,7 @@ async def upload_my_avatar(
     if previous_avatar_url and previous_avatar_url != new_avatar_url:
         await storage_service.delete_image(previous_avatar_url)
 
-    await redis_service.delete(f"profile:detail:{current_user.id}")
-    await redis_service.delete(f"dashboard:candidate:{current_user.id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await service.invalidate_user_read_caches(db, current_user)
 
     data = await service.get_me_data(db, current_user)
     return ResponseBuilder.success(data=data, message="Avatar updated")
@@ -236,9 +231,7 @@ async def delete_my_avatar(
     if previous_avatar_url:
         await storage_service.delete_image(previous_avatar_url)
 
-    await redis_service.delete(f"profile:detail:{current_user.id}")
-    await redis_service.delete(f"dashboard:candidate:{current_user.id}")
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await service.invalidate_user_read_caches(db, current_user)
 
     return ResponseBuilder.success(data=None, message="Avatar removed.")
 

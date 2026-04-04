@@ -1,7 +1,11 @@
-from app.core.security import create_tokens
+import uuid
+from datetime import datetime, timedelta, timezone
+
+from app.core.security import create_tokens, hash_password
 from app.modules.applications.models import Application
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
+from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
 from app.modules.profiles.models import (
     Profile,
@@ -19,14 +23,18 @@ async def make_user(
     email: str,
     role: str = "candidate",
     verified: bool = True,
+    *,
+    full_name: str = "Test User",
+    password: str | None = None,
+    onboarded: bool = True,
 ) -> User:
     user = User(
-        full_name="Test User",
+        full_name=full_name,
         email=email,
         primary_role=role,
         is_email_verified=verified,
-        is_onboarded=True,
-        password_hash=None,
+        is_onboarded=onboarded,
+        password_hash=hash_password(password) if password else None,
     )
     db.add(user)
     await db.commit()
@@ -111,6 +119,37 @@ async def make_application(
     await db.commit()
     await db.refresh(application)
     return application
+
+
+async def make_interview(
+    db: AsyncSession,
+    application: Application,
+    *,
+    candidate_name: str = "Test Candidate",
+    candidate_email: str = "candidate@test.com",
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+    timezone_name: str = "Asia/Kathmandu",
+    location: str = "Google Meet",
+    title: str = "Interview",
+) -> Interview:
+    start = start_time or (datetime.now(timezone.utc) + timedelta(days=1))
+    end = end_time or (start + timedelta(hours=1))
+    interview = Interview(
+        application_id=application.id,
+        cal_booking_uid=str(uuid.uuid4()),
+        candidate_name=candidate_name,
+        candidate_email=candidate_email,
+        start_time=start,
+        end_time=end,
+        timezone=timezone_name,
+        location=location,
+        title=title,
+    )
+    db.add(interview)
+    await db.commit()
+    await db.refresh(interview)
+    return interview
 
 
 async def make_profile(

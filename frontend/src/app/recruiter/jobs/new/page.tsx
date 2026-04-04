@@ -6,11 +6,18 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+import EvaluationSchemaSetupCard, {
+  DEFAULT_EVALUATION_SCHEMA_DRAFT,
+  type EvaluationSchemaDraft,
+  buildEvaluationSchemaPayload,
+  validateEvaluationSchemaDraft,
+} from '@/app/recruiter/jobs/_components/EvaluationSchemaSetupCard'
 import AssumptionsWarnings from '@/app/recruiter/jobs/new/_components/AssumptionsWarnings'
 import JobAIAssistant from '@/app/recruiter/jobs/new/_components/JobAIAssistant'
 import JobDraftForm from '@/app/recruiter/jobs/new/_components/JobDraftForm'
 import SalaryResearchCard from '@/app/recruiter/jobs/new/_components/SalaryResearchCard'
 import { parseApiError } from '@/lib/apiError'
+import { useUpsertJobEvaluationSchemaMutation } from '@/store/services/evaluationApi'
 import {
   type JobAIDraftPayload,
   type JobAIDraftRecord,
@@ -135,6 +142,10 @@ export default function RecruiterJobAIDraftPage() {
   const [sourceJobId, setSourceJobId] = useState('')
   const [researchSalary, setResearchSalary] = useState(true)
   const [followUpFeedback, setFollowUpFeedback] = useState('')
+  const [evaluationEnabled, setEvaluationEnabled] = useState(false)
+  const [evaluationDraft, setEvaluationDraft] = useState<EvaluationSchemaDraft>(
+    DEFAULT_EVALUATION_SCHEMA_DRAFT,
+  )
   const [pageState, setPageState] = useState<PageState>(() => ({
     ...EMPTY_PAGE_STATE,
     loading: Boolean(draftIdFromUrl),
@@ -144,6 +155,7 @@ export default function RecruiterJobAIDraftPage() {
   const [fetchDraft] = useLazyGetJobAIDraftQuery()
   const [respondToDraft, { isLoading: isResponding }] = useRespondToJobAIDraftMutation()
   const [commitDraft, { isLoading: isCommitting }] = useCommitJobAIDraftMutation()
+  const [upsertSchema] = useUpsertJobEvaluationSchemaMutation()
   const { data: jobsResp } = useGetCompanyJobsQuery()
 
   const jobs = jobsResp?.data ?? []
@@ -374,6 +386,13 @@ export default function RecruiterJobAIDraftPage() {
 
   async function handlePostJob() {
     if (!pageState.draftId || !pageState.draft) return
+    if (evaluationEnabled) {
+      const validationMessage = validateEvaluationSchemaDraft(evaluationDraft)
+      if (validationMessage) {
+        toast.error(validationMessage)
+        return
+      }
+    }
 
     setPageState((prev) => ({ ...prev, saving: true }))
 
@@ -386,6 +405,25 @@ export default function RecruiterJobAIDraftPage() {
       }).unwrap()
 
       clearLocalDraftCache(pageState.draftId)
+
+      if (evaluationEnabled) {
+        try {
+          await upsertSchema({
+            jobId: response.data.job.id,
+            ...buildEvaluationSchemaPayload(evaluationDraft),
+          }).unwrap()
+          toast.success(`"${response.data.job.title}" was posted with its evaluation schema.`)
+          router.push(`/recruiter/jobs/${response.data.job.id}`)
+          return
+        } catch {
+          toast.warn(
+            'Job posted, but the evaluation schema could not be saved. You can add it from the job page.',
+          )
+          router.push(`/recruiter/jobs/${response.data.job.id}`)
+          return
+        }
+      }
+
       toast.success(`"${response.data.job.title}" was posted successfully.`)
       router.push('/recruiter/jobs')
     } catch (error) {
@@ -433,6 +471,12 @@ export default function RecruiterJobAIDraftPage() {
             onFieldChange={handleFieldChange}
             onToggleLock={handleToggleLock}
             onRequestUpdate={(fields, feedback) => void handleRegenerate(fields, feedback)}
+          />
+          <EvaluationSchemaSetupCard
+            enabled={evaluationEnabled}
+            onEnabledChange={setEvaluationEnabled}
+            onChange={setEvaluationDraft}
+            disabled={isBusy}
           />
         </section>
 

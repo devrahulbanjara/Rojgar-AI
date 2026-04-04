@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 from datetime import datetime, timezone
@@ -10,6 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.core.database import AsyncSessionLocal
+from app.core.cache import (
+    invalidate_candidate_read_caches,
+    invalidate_company_application_caches,
+    invalidate_company_dashboard_caches,
+    invalidate_interview_list_caches,
+    invalidate_job_detail_caches,
+)
 from app.infrastructures.redis.service import redis_service
 from app.modules.applications.models import Application
 from app.modules.applications.sync import (
@@ -47,6 +55,35 @@ RECRUITER_SETTABLE = {
     ApplicationStatus.interview_completed,
     ApplicationStatus.offer,
 }
+
+
+def _company_applications_cache_key(
+    company_id: str,
+    job_id: str | None,
+    page: int,
+    size: int,
+) -> str:
+    job_scope = job_id or "all"
+    return f"applications:company:{company_id}:job:{job_scope}:p{page}:s{size}"
+
+
+def _company_candidates_cache_key(
+    company_id: str,
+    job_id: str | None,
+    status_filter: ApplicationStatus | None,
+    page: int,
+    size: int,
+) -> str:
+    job_scope = job_id or "all"
+    status_scope = status_filter.value if status_filter is not None else "all"
+    return (
+        f"applications:company:{company_id}:candidates:job:{job_scope}:"
+        f"status:{status_scope}:p{page}:s{size}"
+    )
+
+
+def _company_candidate_detail_cache_key(company_id: str, application_id: str) -> str:
+    return f"applications:company:{company_id}:candidate-detail:{application_id}"
 
 
 def _build_share_settings(payload: ApplyRequest) -> CandidateShareSettings:
@@ -247,15 +284,11 @@ async def apply_to_job(
     )
     application = result.scalar_one()
 
-    # INVALIDATE CACHES asynchronously
-    # 1. Candidate's own dashboard & applications list
-    await redis_service.delete(f"dashboard:candidate:{user.id}")
-    await redis_service.invalidate_pattern(f"applications:candidate:{user.id}:*")
-    # 2. Recruiter dashboards (easiest is to wipe all recruiter dashboards, or you could target specific ones)
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
-    # 3. Invalidate the job detail cache because the applicant count went up
-    await redis_service.delete(f"job:detail:{payload.job_id}")
-    await redis_service.invalidate_pattern(f"job:detail:{payload.job_id}:candidate:*")
+    await invalidate_candidate_read_caches(str(user.id))
+    await invalidate_company_dashboard_caches(db, str(job.company_id))
+    await invalidate_company_application_caches(str(job.company_id))
+    await invalidate_job_detail_caches(str(payload.job_id))
+    await redis_service.delete(f"shortlist:summary:{payload.job_id}")
 
     logger.info(
         "User {user_id} applied to job {job_id}", user_id=user.id, job_id=payload.job_id
@@ -358,6 +391,14 @@ async def list_company_applications(
     size: int = 20,
 ) -> list[RecruiterApplicationView]:
     """Return applications for a company inbox, optionally filtered to a single job."""
+    cache_key = _company_applications_cache_key(
+        str(company_id), str(job_id) if job_id else None, page, size
+    )
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        data = json.loads(cached_data)
+        return [RecruiterApplicationView.model_validate(item) for item in data]
+
     stmt = (
         select(Application, User, Job)
         .join(User, User.id == Application.user_id)
@@ -375,7 +416,7 @@ async def list_company_applications(
     )
     rows = (await db.execute(stmt)).all()
 
-    return [
+    response = [
         RecruiterApplicationView(
             id=application.id,
             status=application.status,
@@ -391,6 +432,13 @@ async def list_company_applications(
         )
         for application, applicant, job in rows
     ]
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=180,
+        ttl_jitter_seconds=30,
+    )
+    return response
 
 
 async def list_company_candidates(
@@ -402,6 +450,17 @@ async def list_company_candidates(
     size: int,
 ) -> list[RecruiterCandidateListItem]:
     company_id = await _get_active_company_id(db, user)
+    cache_key = _company_candidates_cache_key(
+        str(company_id),
+        job_id,
+        status_filter,
+        page,
+        size,
+    )
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        data = json.loads(cached_data)
+        return [RecruiterCandidateListItem.model_validate(item) for item in data]
 
     stmt = (
         select(Application, User, Job)
@@ -477,13 +536,24 @@ async def list_company_candidates(
     candidate_rows.sort(key=lambda item: item.latest_updated_at, reverse=True)
     start = (page - 1) * size
     end = start + size
-    return candidate_rows[start:end]
+    response = candidate_rows[start:end]
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=180,
+        ttl_jitter_seconds=30,
+    )
+    return response
 
 
 async def get_company_candidate_detail(
     db: AsyncSession, user: User, application_id: str
 ) -> RecruiterCandidateDetailView:
     company_id = await _get_active_company_id(db, user)
+    cache_key = _company_candidate_detail_cache_key(str(company_id), application_id)
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        return RecruiterCandidateDetailView.model_validate_json(cached_data)
 
     result = await db.execute(
         select(Application)
@@ -512,7 +582,7 @@ async def get_company_candidate_detail(
         select(Interview).where(Interview.application_id == application.id)
     )
 
-    return RecruiterCandidateDetailView(
+    response = RecruiterCandidateDetailView(
         id=application.id,
         candidate_id=applicant.id,
         status=application.status,
@@ -546,6 +616,13 @@ async def get_company_candidate_detail(
         resume=application.resume,
         share_settings=share,
     )
+    await redis_service.set(
+        cache_key,
+        response.model_dump_json(),
+        ttl_seconds=180,
+        ttl_jitter_seconds=30,
+    )
+    return response
 
 
 async def list_user_applications(
@@ -735,14 +812,11 @@ async def update_application_status(
     if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
         bg_tasks.add_task(process_application_sync_event, sync_event.id)
 
-    # INVALIDATE CACHES
-    # 1. Candidate's own dashboard & applications list
-    await redis_service.delete(f"dashboard:candidate:{application.user_id}")
-    await redis_service.invalidate_pattern(
-        f"applications:candidate:{application.user_id}:*"
-    )
-    # 2. Recruiter dashboards (since counts of interviews/offers might have changed)
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await invalidate_candidate_read_caches(str(application.user_id))
+    await invalidate_company_dashboard_caches(db, str(company_id))
+    await invalidate_company_application_caches(str(company_id), str(application.id))
+    if payload.status == ApplicationStatus.interview_completed:
+        await invalidate_interview_list_caches(str(company_id))
 
     logger.info(
         "Application {app_id} status updated to {new_status} by user {user_id}",
@@ -802,11 +876,9 @@ async def update_application_review(
     if bg_tasks is not None and "PYTEST_CURRENT_TEST" not in os.environ:
         bg_tasks.add_task(process_application_sync_event, sync_event.id)
 
-    await redis_service.delete(f"dashboard:candidate:{application.user_id}")
-    await redis_service.invalidate_pattern(
-        f"applications:candidate:{application.user_id}:*"
-    )
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await invalidate_candidate_read_caches(str(application.user_id))
+    await invalidate_company_dashboard_caches(db, str(company_id))
+    await invalidate_company_application_caches(str(company_id), str(application.id))
     await redis_service.delete(f"shortlist:summary:{application.job_id}")
 
     logger.info(

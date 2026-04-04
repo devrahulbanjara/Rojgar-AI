@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import datetime
 
@@ -7,6 +8,12 @@ from fastapi import HTTPException
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import (
+    invalidate_candidate_read_caches,
+    invalidate_company_application_caches,
+    invalidate_company_dashboard_caches,
+    invalidate_interview_list_caches,
+)
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.auth.enums import MembershipStatus
@@ -16,6 +23,21 @@ from app.modules.interviews.models import Interview
 from app.modules.interviews.schemas import InterviewResponse
 from app.modules.jobs.models import Job
 from app.shared.enums import ApplicationStatus
+
+
+def _interview_list_cache_key(
+    company_id: str,
+    job_id: uuid.UUID | None,
+    start: datetime | None,
+    end: datetime | None,
+) -> str:
+    job_scope = str(job_id) if job_id is not None else "all"
+    start_scope = start.isoformat() if start is not None else "none"
+    end_scope = end.isoformat() if end is not None else "none"
+    return (
+        f"interviews:company:{company_id}:job:{job_scope}:"
+        f"start:{start_scope}:end:{end_scope}"
+    )
 
 
 async def list_interviews(
@@ -36,6 +58,11 @@ async def list_interviews(
         raise HTTPException(
             status_code=403, detail="Active company membership required."
         )
+    cache_key = _interview_list_cache_key(str(company_id), job_id, start, end)
+    cached_data = await redis_service.get(cache_key)
+    if cached_data:
+        data = json.loads(cached_data)
+        return [InterviewResponse.model_validate(item) for item in data]
 
     # Include interviews even when the job is marked hiring-complete, so recruiters
     # still see bookings that match candidate-facing "interview booked" status.
@@ -55,7 +82,7 @@ async def list_interviews(
         .order_by(Interview.start_time.asc())
     )
 
-    return [
+    response = [
         InterviewResponse(
             id=interview.id,
             application_id=interview.application_id,
@@ -76,6 +103,13 @@ async def list_interviews(
         )
         for interview, application, job in rows.all()
     ]
+    await redis_service.set(
+        cache_key,
+        json.dumps([item.model_dump(mode="json") for item in response]),
+        ttl_seconds=180,
+        ttl_jitter_seconds=30,
+    )
+    return response
 
 
 async def mark_interview_complete(
@@ -125,11 +159,10 @@ async def mark_interview_complete(
     await db.commit()
     await db.refresh(interview)
 
-    await redis_service.delete(f"dashboard:candidate:{application.user_id}")
-    await redis_service.invalidate_pattern(
-        f"applications:candidate:{application.user_id}:*"
-    )
-    await redis_service.invalidate_pattern("dashboard:recruiter*")
+    await invalidate_candidate_read_caches(str(application.user_id))
+    await invalidate_company_dashboard_caches(db, str(company_id))
+    await invalidate_company_application_caches(str(company_id), str(application.id))
+    await invalidate_interview_list_caches(str(company_id))
 
     return InterviewResponse(
         id=interview.id,

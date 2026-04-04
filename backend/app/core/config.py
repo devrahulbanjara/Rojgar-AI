@@ -85,8 +85,9 @@ class Settings(BaseSettings):
     resume_import_allowed_extensions: tuple[str, ...] = ("pdf",)
 
     # Redis
-    redis_url: str | None = None
+    redis_url: str | None = None  # i am using upstash from convexhire gmail
     redis_enabled: bool = True
+
     shortlisting_reflection_max_iterations: int = 2
     shortlisting_web_search_max_results: int = 3
 
