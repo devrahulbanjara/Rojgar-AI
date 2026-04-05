@@ -1,0 +1,40 @@
+{
+  "resume_id": "resume_009",
+  "model": "gemini-3-flash-preview",
+  "api_key_slot": 1,
+  "seed": 10009,
+  "attempts_used": 1,
+  "style_key": "simple_single_column",
+  "style_label": "simple normal single-column",
+  "style_bucket_index": 9,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Education",
+    "skills_section_title": "Core Competencies",
+    "skills_lines": [
+      "Advertising: Meta Business Suite, Google Ads (SEM/UAC), TikTok Ads, Affiliate Marketing",
+      "Analytics: Google Analytics 4 (GA4), GTM, SQL Basics, Data Visualization",
+      "Optimization: SEO (Technical & On-page), A/B Testing, Conversion Rate Optimization (CRO)",
+      "Tools: Mailchimp, SEMrush, Canva, Google Search Console"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "digital marketing",
+    "edge_case": "Campaign-driven bullets with strong measurable outcomes.",
+    "company_hint": "Daraz Nepal, Foodmandu, CG Corp Global, Pathao Nepal, IME Group, Buddha Air",
+    "education_hint": "Tribhuvan University, Kathmandu Model College, Prime College, St. Xavier's College",
+    "location_hint": "Kathmandu, Lalitpur, Pokhara, Bharatpur"
+  }
+}

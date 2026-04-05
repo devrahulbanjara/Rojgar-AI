@@ -1,0 +1,43 @@
+{
+  "resume_id": "resume_029",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10029,
+  "attempts_used": 1,
+  "style_key": "double_column_canva",
+  "style_label": "double-column Canva-style early-career",
+  "style_bucket_index": 14,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Academic Background",
+    "skills_section_title": "Core Competencies",
+    "skills_lines": [
+      "Logistics, Supply Chain, Inventory Control, Vendor Management",
+      "Data Analysis, MS Excel, Process Improvement, Team Leadership"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0
+        ]
+      },
+      {
+        "title": "Internship & Community Work",
+        "entry_indices": [
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "operations coordination",
+    "edge_case": "Mix of internship, full-time, and volunteer work presented in a youthful style.",
+    "company_hint": "Buddha Air, Yeti Airlines, Sipradi, Daraz Nepal, Foodmandu, CG Corp Global",
+    "education_hint": "Pokhara University, Tribhuvan University, Purbanchal University, Kathmandu Model College",
+    "location_hint": "Kathmandu, Pokhara, Bharatpur, Bhairahawa"
+  }
+}

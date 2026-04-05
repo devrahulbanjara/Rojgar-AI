@@ -1,0 +1,78 @@
+{
+  "full_name": "Siddhartha Bajracharya",
+  "headline": "Machine Learning Engineer",
+  "summary": "Data-driven ML Engineer with 5 years of experience building scalable production models and automated pipelines. Proven track record in NLP and predictive analytics within the fintech and software service sectors in Nepal.",
+  "phone": "+977-9841234567",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "linkedin.com/in/siddhartha-bjr",
+  "github_url": "github.com/sbajracharya-ml",
+  "portfolio_url": null,
+  "years_of_experience": 5,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Fusemachines Nepal",
+      "title": "Machine Learning Engineer",
+      "start_date": "2021-03-01",
+      "end_date": null,
+      "description": [
+        "Developed and deployed production-grade recommendation systems for regional e-commerce platforms using Python and PyTorch.",
+        "Optimized model inference latency by 40% through model quantization and ONNX runtime integration.",
+        "Published 'Scalable Feature Engineering for Low-Resource Languages' at the 2022 Nepal AI Research Workshop."
+      ]
+    },
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "Data Scientist",
+      "start_date": "2019-01-01",
+      "end_date": "2021-02-28",
+      "description": [
+        "Built end-to-end data pipelines using Apache Airflow and AWS Glue for processing multi-terabyte financial datasets.",
+        "Collaborated with cross-functional teams to implement predictive churn models that improved customer retention by 15%.",
+        "Automated data cleaning workflows using Spark, reducing manual data preparation time by 20 hours per week."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2014-08-01",
+      "end_date": "2018-12-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "PyTorch"
+    },
+    {
+      "skill_name": "TensorFlow"
+    },
+    {
+      "skill_name": "SQL"
+    },
+    {
+      "skill_name": "Apache Spark"
+    },
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "NLP"
+    },
+    {
+      "skill_name": "Git"
+    }
+  ],
+  "warnings": []
+}

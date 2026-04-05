@@ -1,0 +1,42 @@
+{
+  "resume_id": "resume_043",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10043,
+  "attempts_used": 1,
+  "style_key": "professional_standard",
+  "style_label": "professional industry-standard",
+  "style_bucket_index": 13,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Academic Qualifications",
+    "skills_section_title": "Core Technical Competencies",
+    "skills_lines": [
+      "Languages & Frameworks: Python, SQL",
+      "Big Data & Cloud: Apache Spark, AWS, Snowflake, Kafka",
+      "Data Infrastructure: Data Warehousing, ETL Development, PostgreSQL",
+      "DevOps & Leadership: Docker, Kubernetes, Team Leadership, Agile Methodology"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "lead",
+    "domain": "data platform",
+    "edge_case": "More than 10 years of experience across 5 to 6 real Nepal organizations.",
+    "company_hint": "Deerwalk, Cotiviti Nepal, Verisk Nepal, Fusemachines Nepal, Nabil Bank, Nepal Telecom",
+    "education_hint": "Kathmandu University, Tribhuvan University, Pulchowk Campus, Pokhara University",
+    "location_hint": "Kathmandu, Lalitpur, Bharatpur"
+  }
+}

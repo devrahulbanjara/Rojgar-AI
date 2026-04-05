@@ -1,0 +1,38 @@
+{
+  "resume_id": "resume_012",
+  "model": "gemini-3-flash-preview",
+  "api_key_slot": 1,
+  "seed": 10012,
+  "attempts_used": 1,
+  "style_key": "simple_single_column",
+  "style_label": "simple normal single-column",
+  "style_bucket_index": 12,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Profile",
+    "education_title": "Education",
+    "skills_section_title": "Core Competencies",
+    "skills_lines": [
+      "Financial Operations: Financial Reconciliation, NRB Regulatory Compliance, Treasury Management, Merchant Settlements, AML/CFT, NFRS Reporting",
+      "Strategy & Tools: Risk Management, Team Leadership, Tally ERP, Finacle, Advanced Excel, P&L Analysis"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "senior",
+    "domain": "finance operations",
+    "edge_case": "Corporate progression across banking and payments roles.",
+    "company_hint": "Nabil Bank, NIC Asia Bank, Global IME Bank, IME Group, Khalti, eSewa",
+    "education_hint": "Tribhuvan University, Kathmandu University School of Management, Apex College, Prime College",
+    "location_hint": "Kathmandu, Lalitpur, Biratnagar, Butwal"
+  }
+}

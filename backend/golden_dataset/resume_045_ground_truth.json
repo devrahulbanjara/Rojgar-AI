@@ -1,0 +1,114 @@
+{
+  "full_name": "Siddhartha Bikram Thapa",
+  "headline": "Principal Platform Engineer",
+  "summary": "Strategic technical leader with over 12 years of experience in architecting scalable distributed systems and cloud infrastructure. Expert in designing high-availability platforms, CI/CD automation, and securing cloud environments for fintech and enterprise applications in the Nepal technology ecosystem.",
+  "phone": "+977-9801234567",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "https://linkedin.com/in/siddhartha-thapa-dev",
+  "github_url": "https://github.com/sbthapa-nepal",
+  "portfolio_url": null,
+  "years_of_experience": 12,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "F1Soft International",
+      "title": "Principal Platform Architect",
+      "start_date": "2018-06-01",
+      "end_date": null,
+      "description": [
+        "Lead the platform engineering division, overseeing infrastructure for digital payment ecosystems serving millions of users.",
+        "Transitioned legacy monolithic deployments to a containerized microservices architecture using Kubernetes, reducing deployment time by 60%.",
+        "Mentored a team of 15+ DevOps and SRE engineers to adopt Site Reliability Engineering principles."
+      ]
+    },
+    {
+      "company_name": "Independent Consultant",
+      "title": "Cloud Infrastructure Advisor",
+      "start_date": "2020-01-01",
+      "end_date": null,
+      "description": [
+        "Provide strategic advisory services to local tech startups on cloud migration strategies (AWS/Azure) and cost optimization.",
+        "Design secure multi-region disaster recovery protocols for regional financial institutions.",
+        "Advise on compliance and regulatory data sovereignty requirements in Nepal."
+      ]
+    },
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "Senior DevOps Engineer",
+      "start_date": "2015-03-01",
+      "end_date": "2018-05-31",
+      "description": [
+        "Developed automated provisioning scripts using Terraform and Ansible for diverse client projects.",
+        "Implemented robust monitoring and observability stacks using ELK and Prometheus/Grafana.",
+        "Collaborated with cross-functional teams to streamline the software development lifecycle."
+      ]
+    },
+    {
+      "company_name": "CloudFactory Nepal",
+      "title": "System Administrator",
+      "start_date": "2012-07-01",
+      "end_date": "2015-02-28",
+      "description": [
+        "Managed core Linux server infrastructure and internal enterprise networking.",
+        "Optimized high-traffic web service performance through load balancing and caching strategies."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus, Tribhuvan University",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2008-09-01",
+      "end_date": "2012-06-30"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "Terraform"
+    },
+    {
+      "skill_name": "Ansible"
+    },
+    {
+      "skill_name": "Go"
+    },
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Prometheus"
+    },
+    {
+      "skill_name": "Grafana"
+    },
+    {
+      "skill_name": "Linux Kernel Tuning"
+    },
+    {
+      "skill_name": "CI/CD Pipeline Design"
+    },
+    {
+      "skill_name": "System Architecture"
+    },
+    {
+      "skill_name": "Cloud Security"
+    },
+    {
+      "skill_name": "Disaster Recovery"
+    },
+    {
+      "skill_name": "Database Management"
+    }
+  ],
+  "warnings": []
+}

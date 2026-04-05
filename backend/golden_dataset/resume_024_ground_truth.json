@@ -1,0 +1,79 @@
+{
+  "full_name": "Aman Shrestha",
+  "headline": "Junior Android Developer",
+  "summary": "Motivated Computer Science graduate with a strong passion for building native Android applications. Proven ability to translate complex requirements into clean, functional code through academic projects and startup experience. Seeking to leverage skills in Kotlin and Jetpack Compose to contribute to dynamic mobile development teams in Nepal.",
+  "phone": "+977-9841234567",
+  "location": "Kathmandu, Nepal",
+  "linkedin_url": "linkedin.com/in/aman-shrestha-np",
+  "github_url": "github.com/aman-dev-ktm",
+  "portfolio_url": null,
+  "years_of_experience": 1,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "Mobile Development Intern",
+      "start_date": "2023-06-01",
+      "end_date": "2023-12-01",
+      "description": [
+        "Collaborated with senior engineers to implement UI components for a fintech application using Jetpack Compose.",
+        "Participated in daily stand-ups and sprint planning sessions using Agile methodologies.",
+        "Identified and fixed over 15 bugs in the production codebase, improving app stability by 10%.",
+        "Assisted in integrating RESTful APIs to display real-time transaction data."
+      ]
+    },
+    {
+      "company_name": "Academic Project - Smart Library Management",
+      "title": "Lead Android Developer",
+      "start_date": "2022-08-01",
+      "end_date": "2023-03-01",
+      "description": [
+        "Developed an Android app for library book tracking using Firebase for real-time data synchronization.",
+        "Implemented QR code scanning for book check-in/out, reducing manual entry errors by 40%.",
+        "Architected the application using MVVM design pattern to ensure scalability and maintainability."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Nepal College of Information Technology",
+      "degree": "Bachelor of Engineering in Computer Engineering",
+      "field_of_study": "Computer Science",
+      "start_date": "2019-09-01",
+      "end_date": "2023-05-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Kotlin"
+    },
+    {
+      "skill_name": "Java"
+    },
+    {
+      "skill_name": "Android SDK"
+    },
+    {
+      "skill_name": "Jetpack Compose"
+    },
+    {
+      "skill_name": "Firebase"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "RESTful APIs"
+    },
+    {
+      "skill_name": "MVVM Architecture"
+    },
+    {
+      "skill_name": "SQLite"
+    },
+    {
+      "skill_name": "XML Layouts"
+    }
+  ],
+  "warnings": []
+}

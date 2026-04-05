@@ -1,0 +1,97 @@
+{
+  "full_name": "Roshan Shrestha",
+  "headline": "Digital Marketing Strategist | Performance Marketing Specialist",
+  "summary": "Data-driven Digital Marketing professional with over 6 years of experience in scaling growth for Nepal's leading e-commerce and ride-sharing platforms. Expert in performance marketing, campaign optimization, and ROI-focused strategies. Proven ability to manage high-volume budgets and deliver measurable growth in user acquisition and retention.",
+  "phone": "+977-9841234567",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "https://www.linkedin.com/in/roshanshrestha-digital",
+  "github_url": null,
+  "portfolio_url": null,
+  "years_of_experience": 6,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Pathao Nepal",
+      "title": "Senior Performance Marketing Lead",
+      "start_date": "2021-05-01",
+      "end_date": null,
+      "description": [
+        "Developed and executed full-funnel digital marketing strategies for Ride, Food, and Bazaar verticals, resulting in a 45% increase in Monthly Active Users (MAU) within 18 months.",
+        "Managed a monthly advertising budget of NPR 2.5 million across Meta, Google Ads, and TikTok, maintaining an average Customer Acquisition Cost (CAC) 15% below target.",
+        "Scaled app installations by 200,000+ through optimized Google Universal App Campaigns (UAC) and localized creative testing.",
+        "Collaborated with the data team to implement advanced event tracking, improving conversion attribution accuracy by 30%."
+      ]
+    },
+    {
+      "company_name": "Daraz Nepal (Alibaba Group)",
+      "title": "Digital Marketing Executive",
+      "start_date": "2018-02-01",
+      "end_date": "2021-04-15",
+      "description": [
+        "Led the digital execution for major shopping festivals including 11.11 and 12.12, achieving a record-breaking 12x ROAS on Meta advertising spend.",
+        "Managed and optimized the Daraz Affiliate Program, growing the active affiliate network by 40% and contributing to 8% of total platform GMV.",
+        "Executed A/B testing on landing pages and ad copies that improved click-through rates (CTR) by 22% for the electronics category.",
+        "Coordinated with the regional marketing team in Pakistan and Bangladesh to align cross-border campaign strategies and localized content."
+      ]
+    },
+    {
+      "company_name": "SoftNEP",
+      "title": "SEO & Content Marketing Specialist",
+      "start_date": "2016-07-01",
+      "end_date": "2018-01-30",
+      "description": [
+        "Performed technical SEO audits and on-page optimization for 15+ local and international clients, increasing organic traffic by an average of 60%.",
+        "Managed a team of content writers to produce SEO-optimized blog posts and landing pages, ranking 50+ high-competition keywords on the first page of Google.",
+        "Implemented local SEO strategies for Nepali hospitality brands, leading to a 40% increase in Google Maps visibility and direct bookings."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Kathmandu College of Management (KCM)",
+      "degree": "Bachelor of Business Administration (BBA)",
+      "field_of_study": "Marketing & Advertising",
+      "start_date": "2012-08-01",
+      "end_date": "2016-06-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Meta Business Suite"
+    },
+    {
+      "skill_name": "Google Ads (SEM/UAC)"
+    },
+    {
+      "skill_name": "Google Analytics 4 (GA4)"
+    },
+    {
+      "skill_name": "Search Engine Optimization (SEO)"
+    },
+    {
+      "skill_name": "Performance Marketing"
+    },
+    {
+      "skill_name": "A/B Testing"
+    },
+    {
+      "skill_name": "Email Marketing (Mailchimp)"
+    },
+    {
+      "skill_name": "Conversion Rate Optimization (CRO)"
+    },
+    {
+      "skill_name": "Content Strategy"
+    },
+    {
+      "skill_name": "Affiliate Marketing"
+    },
+    {
+      "skill_name": "SQL Basics"
+    },
+    {
+      "skill_name": "TikTok Ads Manager"
+    }
+  ],
+  "warnings": []
+}

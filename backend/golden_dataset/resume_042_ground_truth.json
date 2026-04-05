@@ -1,0 +1,101 @@
+{
+  "full_name": "Sujit Manandhar",
+  "headline": "Lead Software Engineer | Distributed Systems & Scalable Architecture",
+  "summary": "Accomplished Lead Engineer with over 9 years of experience architecting high-throughput distributed systems and payment infrastructure. Expert in designing microservices architectures that handle millions of daily transactions. Proven track record of scaling engineering teams, optimizing database performance, and implementing robust CI/CD pipelines within high-growth fintech environments. Passionate about system reliability, cloud-native deployments, and mentoring cross-functional teams to deliver secure, performant software solutions.",
+  "phone": "+977-9841-556-782",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "linkedin.com/in/sujit-manandhar-np",
+  "github_url": "github.com/sujit-manandhar",
+  "portfolio_url": null,
+  "years_of_experience": 9,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "eSewa",
+      "title": "Lead Software Engineer",
+      "start_date": "2019-03-01",
+      "end_date": null,
+      "description": [
+        "Lead a team of 15 engineers in the development and maintenance of the core transaction processing engine, ensuring 99.99% system availability.",
+        "Architected and migrated legacy monolith components to a Go-based microservices architecture, reducing latency by 40%.",
+        "Implemented distributed caching strategies using Redis to handle peak-load traffic during festival seasons.",
+        "Enhanced security protocols, including mTLS and advanced encryption at rest, to comply with Nepal Rastra Bank payment regulations."
+      ]
+    },
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "Senior Software Engineer",
+      "start_date": "2016-01-01",
+      "end_date": "2019-02-01",
+      "description": [
+        "Developed scalable backend solutions for international clients using Java and Spring Boot.",
+        "Spearheaded the integration of automated testing frameworks which decreased production bug rates by 60%.",
+        "Mentored junior developers and conducted architecture reviews to ensure adherence to best practices."
+      ]
+    },
+    {
+      "company_name": "Deerwalk Inc.",
+      "title": "Software Engineer",
+      "start_date": "2014-06-01",
+      "end_date": "2015-12-01",
+      "description": [
+        "Collaborated on data-intensive healthcare analytics platforms, working heavily with SQL and ETL processes.",
+        "Optimized complex database queries, resulting in significant improvements in data retrieval performance."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2010-09-01",
+      "end_date": "2014-05-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Go"
+    },
+    {
+      "skill_name": "Java"
+    },
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "PostgreSQL"
+    },
+    {
+      "skill_name": "Redis"
+    },
+    {
+      "skill_name": "Apache Kafka"
+    },
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "Microservices"
+    },
+    {
+      "skill_name": "System Design"
+    },
+    {
+      "skill_name": "CI/CD Pipelines"
+    },
+    {
+      "skill_name": "gRPC"
+    },
+    {
+      "skill_name": "RESTful API Design"
+    }
+  ],
+  "warnings": []
+}

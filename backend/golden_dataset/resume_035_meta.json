@@ -1,0 +1,39 @@
+{
+  "resume_id": "resume_035",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10035,
+  "attempts_used": 1,
+  "style_key": "professional_standard",
+  "style_label": "professional industry-standard",
+  "style_bucket_index": 5,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Academic Background",
+    "skills_section_title": "Technical Expertise",
+    "skills_lines": [
+      "Cloud Infrastructure: AWS (EC2, EKS, Lambda, RDS, S3, DynamoDB, CloudFormation)",
+      "DevOps & Automation: Terraform, Jenkins, Ansible, CI/CD, Bash Scripting",
+      "Containerization & Monitoring: Docker, Kubernetes, Prometheus, Grafana",
+      "Languages & Tools: Python, Linux, Git"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "cloud architecture",
+    "edge_case": "AWS-centric profile with certification coverage and pragmatic delivery bullets.",
+    "company_hint": "CloudFactory Nepal, Cotiviti Nepal, Verisk Nepal, F1Soft, Deerwalk, Ncell",
+    "education_hint": "Kathmandu University, Pulchowk Campus, Nepal Engineering College, Kathmandu Engineering College",
+    "location_hint": "Kathmandu, Lalitpur, Bhairahawa"
+  }
+}

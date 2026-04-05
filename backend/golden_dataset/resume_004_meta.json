@@ -1,0 +1,40 @@
+{
+  "resume_id": "resume_004",
+  "model": "gemini-3-flash-preview",
+  "api_key_slot": 1,
+  "seed": 10004,
+  "attempts_used": 1,
+  "style_key": "simple_single_column",
+  "style_label": "simple normal single-column",
+  "style_bucket_index": 4,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Education",
+    "skills_section_title": "Technical Expertise",
+    "skills_lines": [
+      "Automation Tools: Selenium, Appium, Postman, JMeter",
+      "Languages & Databases: Java, Python, SQL",
+      "Testing Methodologies: Manual Testing, API Testing, Regression Testing, Bug Reporting",
+      "Management Tools: JIRA"
+    ],
+    "experience_sections": [
+      {
+        "title": "Work Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "qa engineering",
+    "edge_case": "Strong testing focus, sparse bullets, and limited public links.",
+    "company_hint": "F1Soft, Khalti, eSewa, Deerwalk, Verisk Nepal, Ncell",
+    "education_hint": "Tribhuvan University, Prime College, Nepal Engineering College, Softwarica College",
+    "location_hint": "Kathmandu, Lalitpur, Bharatpur"
+  }
+}
