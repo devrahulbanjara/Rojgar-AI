@@ -1,0 +1,86 @@
+{
+  "full_name": "Anusha Karki",
+  "headline": "Communications & Content Specialist",
+  "summary": "Creative communications professional with 4 years of experience in digital storytelling and brand management in the Nepali market. Proven track record in scaling social media engagement and managing cross-platform content campaigns.",
+  "phone": "+977-9801234567",
+  "location": "Kathmandu, Nepal",
+  "linkedin_url": null,
+  "github_url": null,
+  "portfolio_url": "https://anushakarki.portfolio.np",
+  "years_of_experience": 4,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Foodmandu",
+      "title": "Content Marketing Executive",
+      "start_date": "2021-06-01",
+      "end_date": "2023-12-31",
+      "description": [
+        "Developed and executed content strategies for social media platforms, resulting in a 25% increase in organic reach.",
+        "Collaborated with the design team to create engaging visual content for seasonal promotional campaigns.",
+        "Managed email marketing newsletters reaching over 50,000 subscribers in the Kathmandu Valley."
+      ]
+    },
+    {
+      "company_name": "Daraz Nepal",
+      "title": "Junior Copywriter",
+      "start_date": "2020-03-01",
+      "end_date": "2021-05-01",
+      "description": [
+        "Authored compelling product descriptions and promotional copy for high-traffic e-commerce campaigns.",
+        "Maintained brand voice consistency across all digital channels during the 11.11 and 12.12 sales events.",
+        "Worked closely with the SEO team to optimize website content for better search engine rankings."
+      ]
+    },
+    {
+      "company_name": "The Kathmandu Post (Campus Editorial)",
+      "title": "Editorial Intern / Campus Correspondent",
+      "start_date": "2018-09-01",
+      "end_date": "2020-02-01",
+      "description": [
+        "Reported on campus events and student-led initiatives at St. Xavier's College.",
+        "Drafted and edited weekly opinion pieces, gaining experience in rapid turnaround editorial processes.",
+        "Assisted senior editors with fact-checking and archival research for feature stories."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "St. Xavier's College",
+      "degree": "Bachelor of Arts",
+      "field_of_study": "Mass Communication and Journalism",
+      "start_date": "2016-08-01",
+      "end_date": "2020-05-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Copywriting"
+    },
+    {
+      "skill_name": "SEO Writing"
+    },
+    {
+      "skill_name": "Social Media Strategy"
+    },
+    {
+      "skill_name": "Content Management Systems"
+    },
+    {
+      "skill_name": "Adobe Photoshop"
+    },
+    {
+      "skill_name": "Canva"
+    },
+    {
+      "skill_name": "Email Marketing"
+    },
+    {
+      "skill_name": "Google Analytics"
+    },
+    {
+      "skill_name": "Brand Storytelling"
+    }
+  ],
+  "warnings": []
+}

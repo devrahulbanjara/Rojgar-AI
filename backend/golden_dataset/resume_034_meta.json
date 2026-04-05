@@ -1,0 +1,38 @@
+{
+  "resume_id": "resume_034",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10034,
+  "attempts_used": 1,
+  "style_key": "professional_standard",
+  "style_label": "professional industry-standard",
+  "style_bucket_index": 4,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Education",
+    "skills_section_title": "Technical Competencies",
+    "skills_lines": [
+      "Languages & Frameworks: Python, PyTorch, TensorFlow, SQL, Spark",
+      "Infrastructure & DevOps: AWS, Docker, Kubernetes, Git",
+      "Domain Expertise: Natural Language Processing (NLP), Model Deployment, Feature Engineering"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "machine learning engineering",
+    "edge_case": "Production ML systems with one publication or workshop mention folded into experience bullets.",
+    "company_hint": "Fusemachines Nepal, Deerwalk, Verisk Nepal, CloudFactory Nepal, Cotiviti Nepal",
+    "education_hint": "Kathmandu University, Tribhuvan University, Pulchowk Campus, St. Xavier's College",
+    "location_hint": "Kathmandu, Lalitpur, Dharan"
+  }
+}

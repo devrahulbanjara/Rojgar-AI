@@ -1,0 +1,43 @@
+{
+  "resume_id": "resume_024",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10024,
+  "attempts_used": 1,
+  "style_key": "double_column_canva",
+  "style_label": "double-column Canva-style early-career",
+  "style_bucket_index": 9,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Academic Background",
+    "skills_section_title": "Core Competencies",
+    "skills_lines": [
+      "Languages: Kotlin, Java",
+      "Frameworks & Tools: Android SDK, Jetpack Compose, Firebase, Git, MVVM",
+      "Concepts: RESTful APIs, SQLite, XML Layouts"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0
+        ]
+      },
+      {
+        "title": "Technical Projects",
+        "entry_indices": [
+          1
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "junior",
+    "domain": "mobile app development",
+    "edge_case": "Student projects and one startup internship, mostly Android-focused.",
+    "company_hint": "Khalti, eSewa, F1Soft, Foodmandu, Ncell, Nepal Telecom",
+    "education_hint": "Islington College, Softwarica College, Pokhara University, Kathmandu Engineering College",
+    "location_hint": "Kathmandu, Lalitpur, Pokhara"
+  }
+}

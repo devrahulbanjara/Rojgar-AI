@@ -1,0 +1,40 @@
+{
+  "resume_id": "resume_032",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10032,
+  "attempts_used": 1,
+  "style_key": "professional_standard",
+  "style_label": "professional industry-standard",
+  "style_bucket_index": 2,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Profile",
+    "education_title": "Academic Background",
+    "skills_section_title": "Technical Competencies",
+    "skills_lines": [
+      "Cloud & Orchestration: AWS, Kubernetes, Docker",
+      "IaC & Automation: Terraform, Ansible, Bash Scripting",
+      "Monitoring & CI/CD: Prometheus, Grafana, Jenkins, GitLab CI",
+      "Languages & Databases: Python, Go, PostgreSQL, Redis"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "platform engineering",
+    "edge_case": "More than 12 listed skills but still disciplined and readable.",
+    "company_hint": "CloudFactory Nepal, Cotiviti Nepal, Verisk Nepal, Deerwalk, Leapfrog Technology, Fusemachines Nepal",
+    "education_hint": "Kathmandu University, Pulchowk Campus, Kathmandu Engineering College, Nepal Engineering College",
+    "location_hint": "Kathmandu, Lalitpur, Hetauda"
+  }
+}

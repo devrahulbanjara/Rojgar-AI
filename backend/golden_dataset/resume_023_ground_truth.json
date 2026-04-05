@@ -1,0 +1,79 @@
+{
+  "full_name": "Aayush Shrestha",
+  "headline": "Junior Business Analyst",
+  "summary": "Detail-oriented Business Analyst graduate with a strong foundation in process optimization and data visualization. Proven ability to translate complex business requirements into actionable technical solutions, developed through rigorous academic projects and a successful internship at Nabil Bank.",
+  "phone": "+977-9841234567",
+  "location": "Kathmandu, Nepal",
+  "linkedin_url": "linkedin.com/in/aayush-shrestha-np",
+  "github_url": null,
+  "portfolio_url": null,
+  "years_of_experience": 1,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Nabil Bank",
+      "title": "Business Analyst Intern",
+      "start_date": "2023-06-01",
+      "end_date": "2023-12-01",
+      "description": [
+        "Assisted the digital banking department in mapping user journeys for mobile application upgrades.",
+        "Analyzed transaction data to identify patterns, contributing to a 5% improvement in payment gateway efficiency.",
+        "Prepared documentation and process flowcharts for new regulatory compliance requirements.",
+        "Collaborated with cross-functional teams to troubleshoot client-reported issues in the online portal."
+      ]
+    },
+    {
+      "company_name": "Kathmandu University School of Management",
+      "title": "Data Research Assistant",
+      "start_date": "2022-08-01",
+      "end_date": "2023-05-30",
+      "description": [
+        "Conducted quantitative market research for senior faculty members focusing on SME growth in Nepal.",
+        "Utilized Python and Excel to clean and visualize survey data for academic reporting.",
+        "Presented findings during departmental seminars, receiving commendation for clarity and precision."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Kathmandu University School of Management",
+      "degree": "Bachelor of Business Administration",
+      "field_of_study": "Business Information Systems",
+      "start_date": "2019-09-01",
+      "end_date": "2023-07-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Business Process Modeling"
+    },
+    {
+      "skill_name": "Data Analysis"
+    },
+    {
+      "skill_name": "SQL"
+    },
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "Tableau"
+    },
+    {
+      "skill_name": "Microsoft Excel"
+    },
+    {
+      "skill_name": "Requirement Engineering"
+    },
+    {
+      "skill_name": "Stakeholder Management"
+    },
+    {
+      "skill_name": "Agile Methodology"
+    },
+    {
+      "skill_name": "Jira"
+    }
+  ],
+  "warnings": []
+}

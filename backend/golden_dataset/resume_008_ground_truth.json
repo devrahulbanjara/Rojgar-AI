@@ -1,0 +1,114 @@
+{
+  "full_name": "Manish Shrestha",
+  "headline": "Senior DevOps Engineer | CKA | AWS Certified Solutions Architect",
+  "summary": "Result-oriented DevOps Engineer with 6 years of experience in automating, scaling, and monitoring cloud infrastructure. Proven track record in implementing Infrastructure as Code (IaC) and robust CI/CD pipelines for high-traffic applications. Strong expertise in Kubernetes orchestration and security-first infrastructure design. Certified Kubernetes Administrator (CKA) and AWS Solutions Architect with a deep focus on optimizing operational efficiency and system reliability.",
+  "phone": "+977-9841234567",
+  "location": "Kathmandu, Nepal",
+  "linkedin_url": "https://linkedin.com/in/mshrestha-devops",
+  "github_url": "https://github.com/mshrestha-ops",
+  "portfolio_url": null,
+  "years_of_experience": 6,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Logpoint Nepal",
+      "title": "Senior DevOps Engineer",
+      "start_date": "2021-01-01",
+      "end_date": null,
+      "description": [
+        "Architected and managed production-grade Kubernetes clusters on AWS EKS, improving deployment frequency by 40%.",
+        "Automated infrastructure provisioning using Terraform and Ansible, reducing manual environment setup time from days to minutes.",
+        "Designed and implemented a centralized logging and monitoring solution using ELK stack and Prometheus/Grafana for a global SIEM platform.",
+        "Lead the migration of legacy monolithic services to a microservices architecture using Docker and Helm.",
+        "Mentored junior engineers on cloud-native best practices and security hardening of Linux servers."
+      ]
+    },
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "DevOps Engineer",
+      "start_date": "2018-07-01",
+      "end_date": "2020-12-31",
+      "description": [
+        "Developed and maintained CI/CD pipelines using Jenkins and GitLab CI for multiple client projects across North America and Nepal.",
+        "Optimized cloud costs by 25% through the implementation of AWS Auto Scaling groups and Reserved Instances.",
+        "Managed RDS databases and implemented automated backup and recovery strategies.",
+        "Collaborated with development teams to containerize applications and ensure environment parity across Dev, Staging, and Production."
+      ]
+    },
+    {
+      "company_name": "CloudFactory Nepal",
+      "title": "Associate Infrastructure Engineer",
+      "start_date": "2017-10-01",
+      "end_date": "2018-06-30",
+      "description": [
+        "Provided 24/7 infrastructure support for a global workforce platform, ensuring 99.9% uptime.",
+        "Automated routine server maintenance tasks using Bash and Python scripting.",
+        "Assisted in the configuration and management of Nginx load balancers and VPC peering.",
+        "Monitored system health and responded to incidents using PagerDuty and Nagios."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus, Tribhuvan University",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2013-11-01",
+      "end_date": "2017-10-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "Kubernetes (CKA)"
+    },
+    {
+      "skill_name": "Terraform"
+    },
+    {
+      "skill_name": "Ansible"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Jenkins"
+    },
+    {
+      "skill_name": "Prometheus"
+    },
+    {
+      "skill_name": "Grafana"
+    },
+    {
+      "skill_name": "Linux Administration"
+    },
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "Bash Scripting"
+    },
+    {
+      "skill_name": "CI/CD"
+    },
+    {
+      "skill_name": "ELK Stack"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "Networking"
+    },
+    {
+      "skill_name": "Helm"
+    },
+    {
+      "skill_name": "Azure"
+    }
+  ],
+  "warnings": []
+}

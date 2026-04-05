@@ -1,0 +1,37 @@
+{
+  "resume_id": "resume_022",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10022,
+  "attempts_used": 1,
+  "style_key": "double_column_canva",
+  "style_label": "double-column Canva-style early-career",
+  "style_bucket_index": 7,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Profile",
+    "education_title": "Academic Background",
+    "skills_section_title": "Core Competencies",
+    "skills_lines": [
+      "Digital Marketing: Social Media Strategy, Facebook Ads Manager, Google Analytics, SEO",
+      "Creative Tools: Canva, Copywriting, Content Creation, Market Research"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "junior",
+    "domain": "digital marketing",
+    "edge_case": "Internships plus freelance campaign work for local Nepal businesses.",
+    "company_hint": "Daraz Nepal, Foodmandu, CG Corp Global, Buddha Air, IME Group, Pathao Nepal",
+    "education_hint": "Tribhuvan University, Prime College, Kathmandu Model College, Patan Multiple Campus",
+    "location_hint": "Kathmandu, Lalitpur, Pokhara, Bharatpur"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "full_name": "Siddhartha Shrestha",
+  "headline": "Senior Machine Learning Engineer",
+  "summary": "Experienced Machine Learning Engineer with over 7 years of expertise in building scalable AI solutions, computer vision, and natural language processing models. Proven track record of deploying production-grade systems in the fintech and health-tech sectors within the Nepal technology ecosystem. Passionate about leveraging data-driven insights to solve complex operational challenges.",
+  "phone": "+977-9841234567",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "https://linkedin.com/in/siddhartha-shrestha-np",
+  "github_url": "https://github.com/sshrestha-dev",
+  "portfolio_url": null,
+  "years_of_experience": 7,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Fusemachines Nepal",
+      "title": "Senior AI Engineer",
+      "start_date": "2020-03-01",
+      "end_date": null,
+      "description": [
+        "Lead the development of custom NLP models for automated document processing, improving throughput by 40%.",
+        "Collaborate with cross-functional teams to integrate deep learning pipelines into enterprise-grade applications.",
+        "Mentor junior engineers and conduct code reviews for Python-based ML production environments."
+      ]
+    },
+    {
+      "company_name": "Freelance Consultant",
+      "title": "Data Science Consultant",
+      "start_date": "2019-02-01",
+      "end_date": "2020-02-01",
+      "description": [
+        "Advised local startups on building scalable data infrastructure during a one-year period of independent research and professional development.",
+        "Completed advanced certification in Reinforcement Learning and contributed to open-source libraries."
+      ]
+    },
+    {
+      "company_name": "Cotiviti Nepal",
+      "title": "Machine Learning Engineer",
+      "start_date": "2017-01-01",
+      "end_date": "2019-01-01",
+      "description": [
+        "Developed predictive models to detect anomalies in healthcare claims, resulting in significant cost savings.",
+        "Optimized SQL and Spark queries to process terabytes of clinical data efficiently.",
+        "Collaborated with data engineers to transition models from research prototypes to production microservices."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus, Tribhuvan University",
+      "degree": "Master of Science",
+      "field_of_study": "Computer System and Knowledge Engineering",
+      "start_date": "2014-08-01",
+      "end_date": "2016-12-01"
+    },
+    {
+      "institution": "Kathmandu University",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2010-09-01",
+      "end_date": "2014-06-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "TensorFlow"
+    },
+    {
+      "skill_name": "PyTorch"
+    },
+    {
+      "skill_name": "SQL"
+    },
+    {
+      "skill_name": "Apache Spark"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "NLP"
+    },
+    {
+      "skill_name": "Computer Vision"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "Linux"
+    },
+    {
+      "skill_name": "Tableau"
+    },
+    {
+      "skill_name": "Data Visualization"
+    },
+    {
+      "skill_name": "Statistical Modeling"
+    },
+    {
+      "skill_name": "Microservices"
+    }
+  ],
+  "warnings": []
+}
