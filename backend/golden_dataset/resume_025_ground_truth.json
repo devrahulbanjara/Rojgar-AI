@@ -1,0 +1,71 @@
+{
+  "full_name": "Sajina Shrestha",
+  "headline": "Customer Experience Specialist",
+  "summary": "Motivated Customer Success professional with a background in service operations and digital platform support. Experienced in managing high-volume inquiries and ensuring client satisfaction through effective communication and problem-solving.",
+  "phone": "+977-9841234567",
+  "location": "Kathmandu, Nepal",
+  "linkedin_url": "linkedin.com/in/sajinashrestha-np",
+  "github_url": null,
+  "portfolio_url": null,
+  "years_of_experience": 2,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Daraz Nepal",
+      "title": "Customer Service Representative",
+      "start_date": "2022-09-01",
+      "end_date": "2023-12-31",
+      "description": [
+        "Managed over 50+ customer support tickets daily via chat, email, and phone, maintaining a 95% satisfaction rating.",
+        "Collaborated with the logistics team to resolve delivery discrepancies, reducing average resolution time by 15%.",
+        "Educated customers on platform features, payment methods, and return policies to ensure a seamless shopping experience."
+      ]
+    },
+    {
+      "company_name": "Khalti",
+      "title": "Operations Intern",
+      "start_date": "2022-03-01",
+      "end_date": "2022-08-31",
+      "description": [
+        "Supported the KYC verification team in processing user documents, ensuring compliance with regulatory standards.",
+        "Documented operational bottlenecks and assisted in the preparation of weekly performance reports for the management team."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Kathmandu College of Management",
+      "degree": "Bachelor of Business Administration",
+      "field_of_study": "Marketing and Management",
+      "start_date": "2018-09-01",
+      "end_date": "2022-06-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Customer Relationship Management"
+    },
+    {
+      "skill_name": "Technical Support"
+    },
+    {
+      "skill_name": "Problem Solving"
+    },
+    {
+      "skill_name": "Microsoft Office Suite"
+    },
+    {
+      "skill_name": "Nepali"
+    },
+    {
+      "skill_name": "English"
+    },
+    {
+      "skill_name": "Data Entry"
+    },
+    {
+      "skill_name": "Conflict Resolution"
+    }
+  ],
+  "warnings": []
+}

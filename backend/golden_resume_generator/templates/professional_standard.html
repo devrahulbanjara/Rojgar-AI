@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @page { size: A4; margin: 15mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      color: #1f2937;
+      font-size: 10pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .header {
+      margin-bottom: 16px;
+    }
+    .name {
+      font-size: 23pt;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: 0.2px;
+      margin-bottom: 4px;
+    }
+    .headline {
+      font-size: 11pt;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    .contact {
+      font-size: 8.8pt;
+      color: #4b5563;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 6px 0;
+    }
+    .contact-item {
+      display: inline-block;
+      margin-right: 12px;
+      margin-bottom: 3px;
+    }
+    .section {
+      margin-bottom: 15px;
+    }
+    .section-title {
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 7px;
+    }
+    .summary {
+      color: #374151;
+    }
+    .experience-item,
+    .education-item {
+      margin-bottom: 11px;
+    }
+    .row {
+      display: table;
+      width: 100%;
+    }
+    .left,
+    .right {
+      display: table-cell;
+      vertical-align: top;
+    }
+    .right {
+      width: 26%;
+      text-align: right;
+      color: #6b7280;
+      white-space: nowrap;
+      font-size: 8.5pt;
+    }
+    .role-title,
+    .school-name {
+      font-weight: 700;
+      color: #111827;
+    }
+    .company-name,
+    .degree-line {
+      color: #4b5563;
+      margin-top: 1px;
+    }
+    ul {
+      margin: 5px 0 0 18px;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 3px;
+    }
+    .skills {
+      color: #374151;
+    }
+    .skill-line {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="name">{{ full_name or "" }}</div>
+    {% if headline %}<div class="headline">{{ headline }}</div>{% endif %}
+    <div class="contact">
+      {% if location %}<span class="contact-item">{{ location }}</span>{% endif %}
+      {% if phone %}<span class="contact-item">{{ phone }}</span>{% endif %}
+      {% if linkedin_url %}<span class="contact-item">{{ linkedin_url }}</span>{% endif %}
+      {% if github_url %}<span class="contact-item">{{ github_url }}</span>{% endif %}
+      {% if portfolio_url %}<span class="contact-item">{{ portfolio_url }}</span>{% endif %}
+    </div>
+  </div>
+
+  {% if summary %}
+  <div class="section">
+    <div class="section-title">{{ summary_title }}</div>
+    <div class="summary">{{ summary }}</div>
+  </div>
+  {% endif %}
+
+  {% if show_skills_section %}
+  <div class="section">
+    <div class="section-title">{{ skills_section_title }}</div>
+    <div class="skills">
+      {% for skill_line in skills_lines %}
+      <div class="skill-line">{{ skill_line }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% for experience_section in experience_sections %}
+  <div class="section">
+    <div class="section-title">{{ experience_section.title }}</div>
+    {% for exp in experience_section.entries %}
+    <div class="experience-item">
+      <div class="row">
+        <div class="left">
+          <div class="role-title">{{ exp.title }}</div>
+          <div class="company-name">{{ exp.company_name }}</div>
+        </div>
+        <div class="right">{{ format_date_range(exp.start_date, exp.end_date) }}</div>
+      </div>
+      {% if exp.description %}
+      <ul>
+        {% for bullet in exp.description %}
+        <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  {% if educations %}
+  <div class="section">
+    <div class="section-title">{{ education_title }}</div>
+    {% for edu in educations %}
+    <div class="education-item">
+      <div class="row">
+        <div class="left">
+          <div class="school-name">{{ edu.institution }}</div>
+          <div class="degree-line">
+            {{ edu.degree or "" }}{% if edu.degree and edu.field_of_study %} in {% endif %}{{ edu.field_of_study or "" }}
+          </div>
+        </div>
+        <div class="right">{{ format_date_range(edu.start_date, edu.end_date, end_label="") }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</body>
+</html>

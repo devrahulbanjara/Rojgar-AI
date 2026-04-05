@@ -1,0 +1,39 @@
+{
+  "resume_id": "resume_006",
+  "model": "gemini-3-flash-preview",
+  "api_key_slot": 1,
+  "seed": 10006,
+  "attempts_used": 1,
+  "style_key": "simple_single_column",
+  "style_label": "simple normal single-column",
+  "style_bucket_index": 6,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Profile",
+    "education_title": "Education",
+    "skills_section_title": "Expertise",
+    "skills_lines": [
+      "Tools: Figma, Adobe XD, Sketch, Principle, InVision",
+      "Design: User Research, Wireframing, Prototyping, Design Systems, Information Architecture",
+      "Technical: HTML5, CSS3, Interaction Design, Usability Testing"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "product design",
+    "edge_case": "Portfolio present, no GitHub, project-heavy storytelling.",
+    "company_hint": "Leapfrog Technology, Braindigit, Daraz Nepal, Foodmandu, F1Soft, Khalti",
+    "education_hint": "Kathmandu University, Islington College, Kathmandu Model College, St. Xavier's College",
+    "location_hint": "Kathmandu, Lalitpur, Bhaktapur"
+  }
+}

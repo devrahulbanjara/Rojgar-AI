@@ -1,0 +1,107 @@
+{
+  "full_name": "Roshan Shrestha",
+  "headline": "Junior Software Engineer",
+  "summary": "Enthusiastic Computer Engineering graduate from Pulchowk Campus with a strong foundation in full-stack development and software architecture. Proven ability to deliver high-quality code through a professional internship at Nepal's leading fintech firm and several complex academic projects. Committed to continuous learning and solving real-world problems through technology.",
+  "phone": "+977 9841234567",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "https://linkedin.com/in/roshan-shrestha-np",
+  "github_url": "https://github.com/roshanshr",
+  "portfolio_url": null,
+  "years_of_experience": 1,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "F1Soft International",
+      "title": "Software Engineer Intern",
+      "start_date": "2023-12-01",
+      "end_date": "2024-02-28",
+      "description": [
+        "Collaborated with the backend team to optimize transaction processing modules for the eSewa ecosystem, improving response times by 15%.",
+        "Assisted in the development of RESTful APIs using Java Spring Boot to support new feature rollouts in the mobile banking application.",
+        "Participated in daily stand-ups and code reviews, ensuring adherence to internal coding standards and security protocols.",
+        "Identified and resolved 20+ bugs within the staging environment, contributing to a stable production release."
+      ]
+    },
+    {
+      "company_name": "Pulchowk Campus (Final Year Project)",
+      "title": "Lead Developer - Local Market E-commerce Platform",
+      "start_date": "2023-01-01",
+      "end_date": "2023-09-30",
+      "description": [
+        "Developed a full-stack e-commerce solution tailored for local Nepalese artisans using React.js and Django Rest Framework.",
+        "Implemented a secure payment gateway integration simulation and a real-time inventory management system.",
+        "Optimized database queries in PostgreSQL, reducing page load times for product listings by 30%.",
+        "Managed the project lifecycle using Git/GitHub and coordinated tasks among a team of three students."
+      ]
+    },
+    {
+      "company_name": "Academic Project",
+      "title": "Developer - Facial Recognition Attendance System",
+      "start_date": "2022-06-01",
+      "end_date": "2022-11-30",
+      "description": [
+        "Built an automated attendance tracking application using Python, OpenCV, and the dlib library.",
+        "Achieved 94% accuracy in facial detection and recognition within a controlled classroom environment.",
+        "Integrated an automated email reporting system that sends weekly attendance summaries to faculty members.",
+        "Utilized SQLite for lightweight local storage of student records and attendance logs."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus, Institute of Engineering (TU)",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2019-11-01",
+      "end_date": "2023-10-31"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "JavaScript"
+    },
+    {
+      "skill_name": "Java"
+    },
+    {
+      "skill_name": "C++"
+    },
+    {
+      "skill_name": "Django"
+    },
+    {
+      "skill_name": "React.js"
+    },
+    {
+      "skill_name": "Spring Boot"
+    },
+    {
+      "skill_name": "PostgreSQL"
+    },
+    {
+      "skill_name": "SQLite"
+    },
+    {
+      "skill_name": "REST APIs"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "OpenCV"
+    },
+    {
+      "skill_name": "Linux"
+    },
+    {
+      "skill_name": "HTML/CSS"
+    }
+  ],
+  "warnings": []
+}

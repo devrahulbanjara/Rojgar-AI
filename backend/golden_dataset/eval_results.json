@@ -1,0 +1,4464 @@
+[
+  {
+    "resume_id": "resume_001",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "junior",
+    "source_pdf": "golden_dataset/resume_001.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Shrestha",
+          "extracted": "Roshan Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Junior Software Engineer",
+          "extracted": "Junior Software Engineer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977 9841234567",
+          "extracted": "+977 9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/roshan-shrestha-np",
+          "extracted": "https://linkedin.com/in/roshan-shrestha-np"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/roshanshr",
+          "extracted": "https://github.com/roshanshr"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": ""
+        },
+        "years_of_experience": {
+          "outcome": "omission",
+          "ground_truth": 1,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "omission": 1,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.875
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "developer - facial recognition attendance system academic project",
+            "extracted_text": "developer - facial recognition attendance system academic project"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "lead developer - local market e-commerce platform pulchowk campus (final year project)",
+            "extracted_text": "lead developer - local market e-commerce platform pulchowk campus (final year project)"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "software engineer intern f1soft international",
+            "extracted_text": "software engineer intern f1soft international"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of engineering computer engineering pulchowk campus, institute of engineering (tu)",
+            "extracted_text": "bachelor of engineering in computer engineering computer engineering pulchowk campus, institute of engineering (tu)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 0.9583
+  },
+  {
+    "resume_id": "resume_002",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "junior",
+    "source_pdf": "golden_dataset/resume_002.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Sandesh Adhikari",
+          "extracted": "Sandesh Adhikari"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Junior Frontend Developer",
+          "extracted": "Junior Frontend Developer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/sandesh-adhikari-frontend",
+          "extracted": "https://linkedin.com/in/sandesh-adhikari-frontend"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/sandesh-dev-np",
+          "extracted": "https://github.com/sandesh-dev-np"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": "https://sandesh.me",
+          "extracted": "https://sandesh.me"
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 1,
+          "extracted": 1
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "frontend intern leapfrog technology",
+            "extracted_text": "frontend intern leapfrog technology"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "frontend developer (contract) freelance ui project",
+            "extracted_text": "frontend developer (contract) freelance ui project"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "junior frontend developer eb pearls nepal",
+            "extracted_text": "junior frontend developer eb pearls nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "b.sc. (hons) computing software engineering islington college (london metropolitan university)",
+            "extracted_text": "b.sc. (hons) computing in software engineering islington college (london metropolitan university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_003",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_003.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Manish Karki",
+          "extracted": "Manish Karki"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Backend Engineer",
+          "extracted": "Senior Backend Engineer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/manishkarki-backend",
+          "extracted": "https://linkedin.com/in/manishkarki-backend"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/manishk-dev",
+          "extracted": "https://github.com/manishk-dev"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 7,
+          "extracted": 7
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "junior backend developer younginnovations",
+            "extracted_text": "junior backend developer younginnovations"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "software engineer (backend) cotiviti nepal",
+            "extracted_text": "software engineer (backend) cotiviti nepal"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior backend engineer leapfrog technology",
+            "extracted_text": "senior backend engineer leapfrog technology"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor in computer engineering computer engineering pulchowk campus, institute of engineering",
+            "extracted_text": "bachelor in computer engineering in computer engineering computer engineering pulchowk campus, institute of engineering"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_004",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_004.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Gurung",
+          "extracted": "Roshan Gurung"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior QA Automation Engineer",
+          "extracted": "Senior QA Automation Engineer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 6,
+          "extracted": 6
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "qa intern younginnovations",
+            "extracted_text": "qa intern younginnovations"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "qa engineer leapfrog technology",
+            "extracted_text": "qa engineer leapfrog technology"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior qa engineer f1soft international",
+            "extracted_text": "senior qa engineer f1soft international"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of engineering computer engineering tribhuvan university, institute of engineering (pulchowk campus)",
+            "extracted_text": "bachelor of engineering in computer engineering computer engineering tribhuvan university, institute of engineering (pulchowk campus)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_005",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_005.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Adhikari",
+          "extracted": "Roshan Adhikari"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Data Analyst | Business Intelligence Specialist",
+          "extracted": "Senior Data Analyst | Business Intelligence Specialist"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Kathmandu, Nepal",
+          "extracted": "Kathmandu, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://www.linkedin.com/in/roshan-adhikari-analyst",
+          "extracted": "https://www.linkedin.com/in/roshan-adhikari-analyst"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 7,
+          "extracted": 7
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "junior data analyst cloudfactory nepal",
+            "extracted_text": "junior data analyst cloudfactory nepal"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "data analyst leapfrog technology",
+            "extracted_text": "data analyst leapfrog technology"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior data analyst global ime bank",
+            "extracted_text": "senior data analyst global ime bank"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "higher secondary (+2) science st. xavier's college",
+            "extracted_text": "higher secondary (+2) in science science st. xavier's college"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of science computer science kathmandu university",
+            "extracted_text": "bachelor of science in computer science computer science kathmandu university"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_006",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_006.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Shrestha",
+          "extracted": "Roshan Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Product Designer",
+          "extracted": "Senior Product Designer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/roshanshrestha-design",
+          "extracted": "https://linkedin.com/in/roshanshrestha-design"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": ""
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": "https://roshandesigns.myportfolio.com",
+          "extracted": "https://roshandesigns.myportfolio.com"
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 6,
+          "extracted": 6
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "associate ui/ux designer braindigit it solution",
+            "extracted_text": "associate ui/ux designer braindigit it solution"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "product designer khalti",
+            "extracted_text": "product designer khalti"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior product designer daraz nepal",
+            "extracted_text": "senior product designer daraz nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bsc (hons) computing information technology islington college (london metropolitan university)",
+            "extracted_text": "bsc (hons) computing in information technology computing in information technology islington college (london metropolitan university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_007",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_007.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Bibek Shrestha",
+          "extracted": "Bibek Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Mobile Application Developer | Flutter & Native Android",
+          "extracted": "Senior Mobile Application Developer | Flutter & Native Android"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/bibekshrestha-mobile",
+          "extracted": "https://linkedin.com/in/bibekshrestha-mobile"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/bibek-dev-np",
+          "extracted": "https://github.com/bibek-dev-np"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 5,
+          "extracted": 5
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 5,
+        "extracted_count": 5,
+        "matched_count": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 4,
+            "extracted_index": 4,
+            "score": 1.0,
+            "ground_truth_text": "mobile intern softnep",
+            "extracted_text": "mobile intern softnep"
+          },
+          {
+            "ground_truth_index": 3,
+            "extracted_index": 3,
+            "score": 1.0,
+            "ground_truth_text": "junior android developer infodevelopers pvt. ltd.",
+            "extracted_text": "junior android developer infodevelopers pvt. ltd."
+          },
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "mobile app developer braindigit it solution",
+            "extracted_text": "mobile app developer braindigit it solution"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "mobile application developer khalti",
+            "extracted_text": "mobile application developer khalti"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior mobile developer foodmandu",
+            "extracted_text": "senior mobile developer foodmandu"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bsc (hons) computing software engineering softwarica college (london metropolitan university)",
+            "extracted_text": "bsc (hons) computing in software engineering softwarica college (london metropolitan university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_008",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_008.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Manish Shrestha",
+          "extracted": "Manish Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior DevOps Engineer | CKA | AWS Certified Solutions Architect",
+          "extracted": "Senior DevOps Engineer | CKA | AWS Certified Solutions Architect"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Kathmandu, Nepal",
+          "extracted": "Kathmandu, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/mshrestha-devops",
+          "extracted": "https://linkedin.com/in/mshrestha-devops"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/mshrestha-ops",
+          "extracted": "https://github.com/mshrestha-ops"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 6,
+          "extracted": 6
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "associate infrastructure engineer cloudfactory nepal",
+            "extracted_text": "associate infrastructure engineer cloudfactory nepal"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "devops engineer leapfrog technology",
+            "extracted_text": "devops engineer leapfrog technology"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior devops engineer logpoint nepal",
+            "extracted_text": "senior devops engineer logpoint nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of engineering computer engineering pulchowk campus, tribhuvan university",
+            "extracted_text": "bachelor of engineering computer engineering pulchowk campus, tribhuvan university"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_009",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "mid",
+    "source_pdf": "golden_dataset/resume_009.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Shrestha",
+          "extracted": "Roshan Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Digital Marketing Strategist | Performance Marketing Specialist",
+          "extracted": "Digital Marketing Strategist | Performance Marketing Specialist"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://www.linkedin.com/in/roshanshrestha-digital",
+          "extracted": "https://www.linkedin.com/in/roshanshrestha-digital"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 6,
+          "extracted": 6
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "seo & content marketing specialist softnep",
+            "extracted_text": "seo & content marketing specialist softnep"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "digital marketing executive daraz nepal (alibaba group)",
+            "extracted_text": "digital marketing executive daraz nepal (alibaba group)"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior performance marketing lead pathao nepal",
+            "extracted_text": "senior performance marketing lead pathao nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of business administration (bba) marketing & advertising kathmandu college of management (kcm)",
+            "extracted_text": "bachelor of business administration (bba) marketing & advertising kathmandu college of management (kcm)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_010",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "senior",
+    "source_pdf": "golden_dataset/resume_010.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Bahadur Shrestha",
+          "extracted": "Roshan Bahadur Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Information Security Analyst | CISSP | CISM",
+          "extracted": "Senior Information Security Analyst | CISSP | CISM"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://www.linkedin.com/in/roshans-cyber-np",
+          "extracted": "https://www.linkedin.com/in/roshans-cyber-np"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "wrong",
+          "ground_truth": 11,
+          "extracted": 10
+        }
+      },
+      "counts": {
+        "correct": 7,
+        "wrong": 1,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.875
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "junior system administrator infodevelopers pvt. ltd.",
+            "extracted_text": "junior system administrator infodevelopers pvt. ltd."
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "information security officer nabil bank ltd.",
+            "extracted_text": "information security officer nabil bank ltd."
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior security engineer logpoint nepal",
+            "extracted_text": "senior security engineer logpoint nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 1,
+        "extracted_count": 1,
+        "matched_count": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of engineering computer engineering pulchowk campus, institute of engineering",
+            "extracted_text": "bachelor of engineering in computer engineering computer engineering pulchowk campus, institute of engineering"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 0.9583
+  },
+  {
+    "resume_id": "resume_011",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "senior",
+    "source_pdf": "golden_dataset/resume_011.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Shrestha",
+          "extracted": "Roshan Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Product Manager | Fintech & E-commerce Specialist",
+          "extracted": "Senior Product Manager | Fintech & E-commerce Specialist"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/roshanshrestha-pm",
+          "extracted": "https://linkedin.com/in/roshanshrestha-pm"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": "https://roshanshrestha.com.np",
+          "extracted": "https://roshanshrestha.com.np"
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 12,
+          "extracted": 12
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 4,
+        "extracted_count": 4,
+        "matched_count": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 3,
+            "extracted_index": 3,
+            "score": 1.0,
+            "ground_truth_text": "business analyst younginnovations",
+            "extracted_text": "business analyst younginnovations"
+          },
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "associate product manager eb pearls nepal",
+            "extracted_text": "associate product manager eb pearls nepal"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "product manager daraz nepal",
+            "extracted_text": "product manager daraz nepal"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "senior product manager f1soft international",
+            "extracted_text": "senior product manager f1soft international"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of engineering computer engineering kathmandu university",
+            "extracted_text": "bachelor of engineering in computer engineering computer engineering kathmandu university"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "master of business administration information systems kathmandu university school of management (kusom)",
+            "extracted_text": "master of business administration in information systems information systems kathmandu university school of management (kusom)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_012",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "senior",
+    "source_pdf": "golden_dataset/resume_012.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Manish Raj Bhandari",
+          "extracted": "Manish Raj Bhandari"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior Finance Operations Manager | Fintech & Digital Payments Expert",
+          "extracted": "Senior Finance Operations Manager | Fintech & Digital Payments Expert"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "linkedin.com/in/manish-rbhandari-finops",
+          "extracted": "linkedin.com/in/manish-rbhandari-finops"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 12,
+          "extracted": 12
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "finance officer nabil bank",
+            "extracted_text": "finance officer nabil bank"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "operations manager global ime bank ltd.",
+            "extracted_text": "operations manager global ime bank ltd."
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "head of finance operations esewa (f1soft international)",
+            "extracted_text": "head of finance operations esewa (f1soft international)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of business studies (bbs) accounting and finance shanker dev campus (tribhuvan university)",
+            "extracted_text": "bachelor of business studies (bbs) in accounting and finance accounting and finance shanker dev campus (tribhuvan university)"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "master of business administration (mba) finance kathmandu university school of management (kusom)",
+            "extracted_text": "master of business administration (mba) in finance finance kathmandu university school of management (kusom)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_013",
+    "status": "ok",
+    "error": null,
+    "style_key": "simple_single_column",
+    "career_level": "senior",
+    "source_pdf": "golden_dataset/resume_013.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Anjali Shrestha",
+          "extracted": "Anjali Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Senior HR Business Partner | Strategic Talent Management & Operations",
+          "extracted": "Senior HR Business Partner | Strategic Talent Management & Operations"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Kathmandu, Nepal",
+          "extracted": "Kathmandu, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://www.linkedin.com/in/anjali-shrestha-hrbp-nepal",
+          "extracted": "https://www.linkedin.com/in/anjali-shrestha-hrbp-nepal"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 11,
+          "extracted": 11
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 4,
+        "extracted_count": 4,
+        "matched_count": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 3,
+            "extracted_index": 3,
+            "score": 1.0,
+            "ground_truth_text": "hr intern sipradi trading pvt. ltd.",
+            "extracted_text": "hr intern sipradi trading pvt. ltd."
+          },
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "hr generalist ncell (axiata)",
+            "extracted_text": "hr generalist ncell (axiata)"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "senior talent acquisition specialist cg corp global",
+            "extracted_text": "senior talent acquisition specialist cg corp global"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "hr business partner daraz nepal (alibaba group)",
+            "extracted_text": "hr business partner daraz nepal (alibaba group)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of business administration (bba) management kathmandu college of management (kathmandu university)",
+            "extracted_text": "bachelor of business administration (bba) management kathmandu college of management (kathmandu university)"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "master of business administration (mba) human resources management ace institute of management (pokhara university)",
+            "extracted_text": "master of business administration (mba) human resources management ace institute of management (pokhara university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 1.0
+  },
+  {
+    "resume_id": "resume_014",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '422 Unprocessable Entity' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+    "style_key": "simple_single_column",
+    "career_level": "lead",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_015",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '422 Unprocessable Entity' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+    "style_key": "simple_single_column",
+    "career_level": "lead",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_016",
+    "status": "failed",
+    "error": "ReadTimeout: ",
+    "style_key": "double_column_canva",
+    "career_level": "intern",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_017",
+    "status": "ok",
+    "error": null,
+    "style_key": "double_column_canva",
+    "career_level": "intern",
+    "source_pdf": "golden_dataset/resume_017.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Shrestha",
+          "extracted": "Roshan Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Data Science Intern | Computer Engineering Student",
+          "extracted": "Data Science Intern | Computer Engineering Student"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://www.linkedin.com/in/roshanshrestha-np",
+          "extracted": "https://www.linkedin.com/in/roshanshrestha-np"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/roshan-codes",
+          "extracted": "https://github.com/roshan-codes"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "omission",
+          "ground_truth": 1,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "omission": 1,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.875
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "project lead - smart traffic management system ku hackfest 2022",
+            "extracted_text": "project lead - smart traffic management system ku hackfest 2022"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "research assistant kathmandu university ai lab",
+            "extracted_text": "research assistant kathmandu university ai lab"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "data science intern fusemachines nepal",
+            "extracted_text": "data science intern fusemachines nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "plus two (high school) science st. xavier's college",
+            "extracted_text": "plus two (high school) science st. xavier's college"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bachelor of engineering computer engineering kathmandu university",
+            "extracted_text": "bachelor of engineering computer engineering kathmandu university"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 0.9583
+  },
+  {
+    "resume_id": "resume_018",
+    "status": "ok",
+    "error": null,
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "source_pdf": "golden_dataset/resume_018.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Gurung",
+          "extracted": "Roshan Gurung"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Junior Frontend Developer",
+          "extracted": "Junior Frontend Developer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/roshangurung-dev",
+          "extracted": "https://linkedin.com/in/roshangurung-dev"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/roshan-g-dev",
+          "extracted": "https://github.com/roshan-g-dev"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": "https://roshangurung.com.np",
+          "extracted": "https://roshangurung.com.np"
+        },
+        "years_of_experience": {
+          "outcome": "omission",
+          "ground_truth": 1,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "omission": 1,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.875
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "frontend developer student resource hub (academic project)",
+            "extracted_text": "frontend developer student resource hub (academic project)"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "lead frontend developer nepal e-mart ui (personal project)",
+            "extracted_text": "lead frontend developer nepal e-mart ui (personal project)"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "frontend development intern leapfrog technology",
+            "extracted_text": "frontend development intern leapfrog technology"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "higher secondary (+2) science kathmandu model college",
+            "extracted_text": "higher secondary (+2) in science science kathmandu model college"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bsc (hons) computing software engineering islington college (london metropolitan university)",
+            "extracted_text": "bsc (hons) computing in software engineering software engineering islington college (london metropolitan university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 0.9583
+  },
+  {
+    "resume_id": "resume_019",
+    "status": "ok",
+    "error": null,
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "source_pdf": "golden_dataset/resume_019.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Gurung",
+          "extracted": "Roshan Gurung"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Junior Backend Developer",
+          "extracted": "Junior Backend Developer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Samakhushi, Kathmandu, Nepal",
+          "extracted": "Samakhushi, Kathmandu, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/roshangurung-dev",
+          "extracted": "https://linkedin.com/in/roshangurung-dev"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/roshan-codes",
+          "extracted": "https://github.com/roshan-codes"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "omission",
+          "ground_truth": 1,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "omission": 1,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.875
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "lead backend developer - e-commerce microservices islington college capstone project",
+            "extracted_text": "lead backend developer - e-commerce microservices islington college capstone project"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "backend development intern f1soft international",
+            "extracted_text": "backend development intern f1soft international"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "higher secondary (+2) science little angels' college",
+            "extracted_text": "higher secondary (+2) in science science little angels' college"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bsc (hons) computing information technology islington college (london metropolitan university)",
+            "extracted_text": "bsc (hons) computing in information technology computing in information technology islington college (london metropolitan university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 0.9583
+  },
+  {
+    "resume_id": "resume_020",
+    "status": "ok",
+    "error": null,
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "source_pdf": "golden_dataset/resume_020.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Roshan Shrestha",
+          "extracted": "Roshan Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Junior QA Engineer | Manual & Automation Testing",
+          "extracted": "Junior QA Engineer | Manual & Automation Testing"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9841234567",
+          "extracted": "+977-9841234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/roshanshrestha-qa",
+          "extracted": "https://linkedin.com/in/roshanshrestha-qa"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/roshan-qa-nepal",
+          "extracted": "https://github.com/roshan-qa-nepal"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "correct",
+          "ground_truth": 1,
+          "extracted": 1
+        }
+      },
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 1.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1": 0.8,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "qa intern f1soft international",
+            "extracted_text": "qa intern f1soft international"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "junior qa engineer khalti (sparrow pay pvt. ltd.)",
+            "extracted_text": "junior qa engineer khalti (sparrow pay pvt. ltd.)"
+          }
+        ],
+        "missed_ground_truth": [
+          "final year project: e-commerce automation framework softwarica college of it & e-commerce"
+        ],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "higher secondary (+2) science prime college",
+            "extracted_text": "higher secondary (+2) in science science prime college"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "b.sc. (hons) computing information technology softwarica college of it & e-commerce",
+            "extracted_text": "b.sc. (hons) computing in information technology computing in information technology softwarica college of it & e-commerce"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.9
+    },
+    "overall_score": 0.9333
+  },
+  {
+    "resume_id": "resume_021",
+    "status": "ok",
+    "error": null,
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "source_pdf": "golden_dataset/resume_021.pdf",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "correct",
+          "ground_truth": "Pratiksha Shrestha",
+          "extracted": "Pratiksha Shrestha"
+        },
+        "headline": {
+          "outcome": "correct",
+          "ground_truth": "Junior UX/UI Designer",
+          "extracted": "Junior UX/UI Designer"
+        },
+        "phone": {
+          "outcome": "correct",
+          "ground_truth": "+977-9861234567",
+          "extracted": "+977-9861234567"
+        },
+        "location": {
+          "outcome": "correct",
+          "ground_truth": "Lalitpur, Nepal",
+          "extracted": "Lalitpur, Nepal"
+        },
+        "linkedin_url": {
+          "outcome": "correct",
+          "ground_truth": "https://linkedin.com/in/pratikshashresthadesign",
+          "extracted": "https://linkedin.com/in/pratikshashresthadesign"
+        },
+        "github_url": {
+          "outcome": "correct",
+          "ground_truth": "https://github.com/pratiksha-ui",
+          "extracted": "https://github.com/pratiksha-ui"
+        },
+        "portfolio_url": {
+          "outcome": "correct",
+          "ground_truth": "https://behance.net/pratikshashrestha",
+          "extracted": "https://behance.net/pratikshashrestha"
+        },
+        "years_of_experience": {
+          "outcome": "omission",
+          "ground_truth": 1,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "omission": 1,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.875
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 3,
+        "extracted_count": 3,
+        "matched_count": 3,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 2,
+            "extracted_index": 2,
+            "score": 1.0,
+            "ground_truth_text": "ui designer freelance design project",
+            "extracted_text": "ui designer freelance design project"
+          },
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "lead ui designer hamro sahayatri (academic capstone)",
+            "extracted_text": "lead ui designer hamro sahayatri (academic capstone)"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "ux/ui design intern eb pearls nepal",
+            "extracted_text": "ux/ui design intern eb pearls nepal"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 2,
+        "extracted_count": 2,
+        "matched_count": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "matches": [
+          {
+            "ground_truth_index": 1,
+            "extracted_index": 1,
+            "score": 1.0,
+            "ground_truth_text": "professional certification ui/ux design training broadway infosys",
+            "extracted_text": "professional certification in ui/ux design training broadway infosys"
+          },
+          {
+            "ground_truth_index": 0,
+            "extracted_index": 0,
+            "score": 1.0,
+            "ground_truth_text": "bsc (hons) computing multimedia and ux design islington college (london metropolitan university)",
+            "extracted_text": "bsc (hons) computing in multimedia and ux design islington college (london metropolitan university)"
+          }
+        ],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 1.0
+    },
+    "overall_score": 0.9583
+  },
+  {
+    "resume_id": "resume_022",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_023",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_024",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_025",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "junior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_026",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_027",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_028",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_029",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_030",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "double_column_canva",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_031",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_032",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_033",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_034",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_035",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "mid",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_036",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "senior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_037",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "senior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_038",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "senior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_039",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "senior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_040",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "senior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_041",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "senior",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_042",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "lead",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_043",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "lead",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_044",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "lead",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  },
+  {
+    "resume_id": "resume_045",
+    "status": "failed",
+    "error": "HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/profiles/me/ai-import/preview'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+    "style_key": "professional_standard",
+    "career_level": "principal",
+    "scalar_test": {
+      "fields": {
+        "full_name": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "headline": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "phone": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "location": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "linkedin_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "github_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "portfolio_url": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        },
+        "years_of_experience": {
+          "outcome": "error",
+          "ground_truth": null,
+          "extracted": null
+        }
+      },
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "omission": 0,
+        "hallucination": 0,
+        "total": 8
+      },
+      "accuracy": 0.0
+    },
+    "list_test": {
+      "experiences": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "educations": {
+        "ground_truth_count": 0,
+        "extracted_count": 0,
+        "matched_count": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "matches": [],
+        "missed_ground_truth": [],
+        "extra_extracted": []
+      },
+      "overall_macro_f1": 0.0
+    },
+    "overall_score": 0.0
+  }
+]

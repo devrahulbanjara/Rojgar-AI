@@ -1,0 +1,99 @@
+{
+  "full_name": "Roshan Gurung",
+  "headline": "Junior Backend Developer",
+  "summary": "Detail-oriented Junior Backend Developer and recent BSc (Hons) Computing graduate from Islington College. Proven ability to develop robust server-side logic and manage databases through a comprehensive internship at F1Soft International and a complex academic capstone project. Skilled in Java, Spring Boot, and Node.js with a strong foundation in microservices and RESTful API design.",
+  "phone": "+977-9841234567",
+  "location": "Samakhushi, Kathmandu, Nepal",
+  "linkedin_url": "https://linkedin.com/in/roshangurung-dev",
+  "github_url": "https://github.com/roshan-codes",
+  "portfolio_url": null,
+  "years_of_experience": 1,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "F1Soft International",
+      "title": "Backend Development Intern",
+      "start_date": "2023-06-01",
+      "end_date": "2023-08-31",
+      "description": [
+        "Assisted the core banking integration team in developing RESTful APIs using Java and Spring Boot for mobile banking modules.",
+        "Collaborated with senior developers to optimize SQL queries, reducing database response time by 15% for transaction history lookups.",
+        "Wrote unit tests using JUnit and Mockito to ensure 85% code coverage for new microservices.",
+        "Participated in daily stand-ups and Agile sprints, contributing to the deployment of three feature updates."
+      ]
+    },
+    {
+      "company_name": "Islington College Capstone Project",
+      "title": "Lead Backend Developer - E-Commerce Microservices",
+      "start_date": "2022-09-01",
+      "end_date": "2023-05-15",
+      "description": [
+        "Architected and implemented a scalable backend for a multi-vendor e-commerce platform using Node.js and Express.",
+        "Integrated Khalti Payment Gateway API for secure, real-time transaction processing within the Nepal market context.",
+        "Designed a normalized PostgreSQL schema and utilized Redis for session management and caching.",
+        "Containerized the entire application suite using Docker to ensure environment consistency during development and testing."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Islington College (London Metropolitan University)",
+      "degree": "BSc (Hons) Computing",
+      "field_of_study": "Information Technology",
+      "start_date": "2019-11-01",
+      "end_date": "2023-06-15"
+    },
+    {
+      "institution": "Little Angels' College",
+      "degree": "Higher Secondary (+2)",
+      "field_of_study": "Science",
+      "start_date": "2017-07-01",
+      "end_date": "2019-05-30"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Java"
+    },
+    {
+      "skill_name": "Spring Boot"
+    },
+    {
+      "skill_name": "Node.js"
+    },
+    {
+      "skill_name": "Express.js"
+    },
+    {
+      "skill_name": "PostgreSQL"
+    },
+    {
+      "skill_name": "MongoDB"
+    },
+    {
+      "skill_name": "Redis"
+    },
+    {
+      "skill_name": "REST APIs"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "JUnit"
+    },
+    {
+      "skill_name": "Microservices"
+    },
+    {
+      "skill_name": "Postman"
+    },
+    {
+      "skill_name": "Linux"
+    }
+  ],
+  "warnings": []
+}

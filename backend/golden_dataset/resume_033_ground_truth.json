@@ -1,0 +1,98 @@
+{
+  "full_name": "Siddhartha Shakya",
+  "headline": "Full Stack Developer",
+  "summary": "Result-oriented Full Stack Developer with 6 years of experience in building scalable web applications. Proficient in modern JavaScript frameworks and cloud infrastructure. Strong track record of improving system performance and leading development sprints in fast-paced environments.",
+  "phone": "+977-9841234567",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "linkedin.com/in/siddhartha-shakya-np",
+  "github_url": "github.com/sshakya-dev",
+  "portfolio_url": null,
+  "years_of_experience": 6,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "Senior Software Engineer",
+      "start_date": "2021-03-01",
+      "end_date": null,
+      "description": [
+        "Lead a team of 5 developers in building high-traffic enterprise applications using React and Node.js.",
+        "Reduced API latency by 40% through database query optimization and Redis caching strategies.",
+        "Mentored junior developers and conducted rigorous code reviews to maintain high quality standards."
+      ]
+    },
+    {
+      "company_name": "Freelance",
+      "title": "Full Stack Consultant",
+      "start_date": "2019-06-01",
+      "end_date": "2021-02-01",
+      "description": [
+        "Developed custom e-commerce solutions for local businesses in Kathmandu, integrating Khalti and eSewa payment gateways.",
+        "Architected serverless backends using AWS Lambda and PostgreSQL for real-time inventory management systems.",
+        "Collaborated with UI/UX designers to create responsive, mobile-first interfaces."
+      ]
+    },
+    {
+      "company_name": "F1Soft International",
+      "title": "Software Engineer",
+      "start_date": "2018-01-01",
+      "end_date": "2019-05-01",
+      "description": [
+        "Worked on core banking components, ensuring transaction security and high availability.",
+        "Implemented automated testing suites with Jest and Cypress, increasing test coverage from 30% to 75%.",
+        "Collaborated with cross-functional teams to deploy features in an Agile environment."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Nepal College of Information Technology",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2013-09-01",
+      "end_date": "2017-08-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "JavaScript"
+    },
+    {
+      "skill_name": "TypeScript"
+    },
+    {
+      "skill_name": "React"
+    },
+    {
+      "skill_name": "Node.js"
+    },
+    {
+      "skill_name": "PostgreSQL"
+    },
+    {
+      "skill_name": "MongoDB"
+    },
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "GraphQL"
+    },
+    {
+      "skill_name": "Redis"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "CI/CD Pipeline"
+    }
+  ],
+  "warnings": []
+}

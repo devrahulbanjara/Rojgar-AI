@@ -1,0 +1,40 @@
+{
+  "resume_id": "resume_042",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10042,
+  "attempts_used": 1,
+  "style_key": "professional_standard",
+  "style_label": "professional industry-standard",
+  "style_bucket_index": 12,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Academic Background",
+    "skills_section_title": "Technical Competencies",
+    "skills_lines": [
+      "Languages: Go, Java, Python",
+      "Infrastructure & DevOps: Kubernetes, Docker, AWS, CI/CD",
+      "Data & Messaging: PostgreSQL, Redis, Apache Kafka",
+      "Architecture: Microservices, gRPC, RESTful API Design"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "lead",
+    "domain": "product engineering",
+    "edge_case": "Dense technical summary and large-scale systems work without becoming exaggerated.",
+    "company_hint": "F1Soft, eSewa, Khalti, Deerwalk, Leapfrog Technology, Verisk Nepal",
+    "education_hint": "Kathmandu University, Pulchowk Campus, Nepal Engineering College, Islington College",
+    "location_hint": "Kathmandu, Lalitpur, Pokhara"
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "full_name": "Roshan Shrestha",
+  "headline": "Engineering Manager | Software Architect",
+  "summary": "Strategic Engineering Manager with over 11 years of experience in the Nepal IT sector, specializing in building high-performance engineering cultures and scalable cloud architectures. Successfully transitioned from a Senior Individual Contributor role into leadership, with a proven track record of managing cross-functional teams at Leapfrog and Cotiviti. Expert in Agile methodologies, delivery management, and mentoring technical talent to achieve organizational goals.",
+  "phone": "+977 9841445566",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "https://www.linkedin.com/in/roshanshrestha-nep",
+  "github_url": "https://github.com/roshan-dev-np",
+  "portfolio_url": null,
+  "years_of_experience": 11,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "Leapfrog Technology",
+      "title": "Engineering Manager",
+      "start_date": "2021-01-01",
+      "end_date": null,
+      "description": [
+        "Oversee delivery for three cross-functional engineering teams (20+ engineers) focused on US-based healthcare and fintech products.",
+        "Transitioned from a Lead Engineer role to full-time Management, focusing on sprint planning, resource allocation, and stakeholder management.",
+        "Implemented a structured mentorship program that reduced onboarding time for junior developers by 30%.",
+        "Drive technical strategy and architectural reviews for microservices-based platforms hosted on AWS.",
+        "Collaborate with Product Managers to define roadmaps and ensure timely delivery of high-impact features."
+      ]
+    },
+    {
+      "company_name": "Cotiviti Nepal",
+      "title": "Senior Software Engineer / Team Lead",
+      "start_date": "2017-05-01",
+      "end_date": "2020-12-31",
+      "description": [
+        "Led a team of 6 developers in the Healthcare Informatics division, balancing hands-on coding with team leadership responsibilities.",
+        "Architected and developed complex data processing pipelines using Java and Spring Boot for large-scale medical claim analysis.",
+        "Facilitated daily stand-ups and sprint retrospectives, improving team velocity by 15% through process optimization.",
+        "Acted as the primary technical point of contact for US-based stakeholders during the transition of legacy systems to modern cloud infrastructure."
+      ]
+    },
+    {
+      "company_name": "Deerwalk Inc.",
+      "title": "Software Engineer",
+      "start_date": "2014-06-01",
+      "end_date": "2017-04-30",
+      "description": [
+        "Developed and maintained enterprise-level web applications using Java, Hibernate, and Oracle DB.",
+        "Optimized SQL queries and database schemas, resulting in a 40% reduction in reporting latency.",
+        "Collaborated with the QA team to implement automated unit testing, increasing code coverage to 85%."
+      ]
+    },
+    {
+      "company_name": "F1Soft International",
+      "title": "Junior Software Engineer",
+      "start_date": "2012-08-01",
+      "end_date": "2014-05-31",
+      "description": [
+        "Contributed to the development of mobile banking modules for major commercial banks in Nepal.",
+        "Assisted in the integration of third-party APIs for utility payment services.",
+        "Participated in the full software development life cycle from requirement gathering to deployment."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus, Institute of Engineering",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2008-11-01",
+      "end_date": "2012-07-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "Engineering Management"
+    },
+    {
+      "skill_name": "Agile & Scrum"
+    },
+    {
+      "skill_name": "Team Leadership"
+    },
+    {
+      "skill_name": "Java"
+    },
+    {
+      "skill_name": "Spring Boot"
+    },
+    {
+      "skill_name": "Microservices"
+    },
+    {
+      "skill_name": "AWS"
+    },
+    {
+      "skill_name": "PostgreSQL"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "CI/CD"
+    },
+    {
+      "skill_name": "React"
+    },
+    {
+      "skill_name": "Node.js"
+    },
+    {
+      "skill_name": "Mentorship"
+    },
+    {
+      "skill_name": "Delivery Management"
+    },
+    {
+      "skill_name": "JIRA"
+    }
+  ],
+  "warnings": []
+}

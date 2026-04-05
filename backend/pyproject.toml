@@ -35,6 +35,11 @@ dependencies = [
     "llama-cloud-services",
     "llama-cloud>=0.1.46",
     "apscheduler>=3.11.2",
+    "google-genai>=1.67.0",
+    "weasyprint>=68.1",
+    "jinja2>=3.1.6",
+    "rapidfuzz>=3.14.3",
+    "rich>=14.3.3",
 ]
 
 [tool.pytest.ini_options]

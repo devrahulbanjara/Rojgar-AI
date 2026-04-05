@@ -1,0 +1,45 @@
+{
+  "resume_id": "resume_016",
+  "model": "gemini-3-flash-preview",
+  "api_key_slot": 1,
+  "seed": 10016,
+  "attempts_used": 1,
+  "style_key": "double_column_canva",
+  "style_label": "double-column Canva-style early-career",
+  "style_bucket_index": 1,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "About Me",
+    "education_title": "Education",
+    "skills_section_title": "Technical Proficiency",
+    "skills_lines": [
+      "Languages: Python, JavaScript, C++, SQL",
+      "Web Frameworks: Django, React.js, FastAPI",
+      "Developer Tools: Git, Docker, Linux, Postman",
+      "Databases: PostgreSQL, Firebase"
+    ],
+    "experience_sections": [
+      {
+        "title": "Key Projects",
+        "entry_indices": [
+          1,
+          2
+        ]
+      },
+      {
+        "title": "Leadership & Activities",
+        "entry_indices": [
+          0
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "intern",
+    "domain": "software engineering",
+    "edge_case": "No formal work experience, only projects, hackathons, and one campus club role.",
+    "company_hint": "F1Soft, eSewa, Khalti, Deerwalk, Leapfrog Technology",
+    "education_hint": "Pulchowk Campus, Kathmandu University, Islington College, Softwarica College",
+    "location_hint": "Kathmandu, Lalitpur, Bhaktapur, Banepa"
+  }
+}

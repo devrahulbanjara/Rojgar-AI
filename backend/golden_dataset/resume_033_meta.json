@@ -1,0 +1,44 @@
+{
+  "resume_id": "resume_033",
+  "model": "gemini-3.1-flash-lite-preview",
+  "api_key_slot": 1,
+  "seed": 10033,
+  "attempts_used": 1,
+  "style_key": "professional_standard",
+  "style_label": "professional industry-standard",
+  "style_bucket_index": 3,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Profile",
+    "education_title": "Education",
+    "skills_section_title": "Core Competencies",
+    "skills_lines": [
+      "Languages & Frameworks: JavaScript, TypeScript, React, Node.js, GraphQL",
+      "Databases & Cloud: PostgreSQL, MongoDB, Redis, AWS, Docker",
+      "DevOps & Tools: Git, CI/CD, Kubernetes"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          2
+        ]
+      },
+      {
+        "title": "Freelance Projects",
+        "entry_indices": [
+          1
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "full stack development",
+    "edge_case": "Freelance plus full-time employment mixed together with sensible chronology.",
+    "company_hint": "Braindigit, Leapfrog Technology, Deerwalk, F1Soft, Khalti, Foodmandu",
+    "education_hint": "Islington College, Softwarica College, Kathmandu University, Pokhara University",
+    "location_hint": "Kathmandu, Lalitpur, Pokhara"
+  }
+}

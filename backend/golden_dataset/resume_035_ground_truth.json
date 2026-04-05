@@ -1,0 +1,92 @@
+{
+  "full_name": "Siddhartha Shakya",
+  "headline": "Cloud Architect | AWS Certified Solutions Architect",
+  "summary": "Results-oriented Cloud Architect with over 6 years of experience in designing and implementing scalable, secure, and cost-effective cloud solutions. Specialized in migrating on-premise infrastructure to AWS, optimizing microservices deployments, and managing high-availability environments for enterprise-level applications in the Nepali tech sector.",
+  "phone": "+977-9841000000",
+  "location": "Lalitpur, Nepal",
+  "linkedin_url": "linkedin.com/in/siddhartha-shakya-cloud",
+  "github_url": null,
+  "portfolio_url": null,
+  "years_of_experience": 6,
+  "target_roles": [],
+  "experiences": [
+    {
+      "company_name": "CloudFactory Nepal",
+      "title": "Senior Cloud Engineer",
+      "start_date": "2020-03-01",
+      "end_date": null,
+      "description": [
+        "Lead architect for migrating legacy monolithic applications to containerized microservices using AWS EKS.",
+        "Reduced cloud infrastructure costs by 30% through comprehensive resource tagging, rightsizing, and implementation of AWS Savings Plans.",
+        "Designed and maintained CI/CD pipelines using Jenkins and Terraform, reducing deployment time by 45%.",
+        "Mentored a team of 4 junior engineers on best practices for AWS security and compliance."
+      ]
+    },
+    {
+      "company_name": "Cotiviti Nepal",
+      "title": "Cloud Infrastructure Associate",
+      "start_date": "2017-06-01",
+      "end_date": "2020-02-01",
+      "description": [
+        "Managed multi-region AWS environments, ensuring 99.99% uptime for healthcare data processing platforms.",
+        "Implemented automated backup and disaster recovery solutions using AWS Lambda and S3 Lifecycle policies.",
+        "Collaborated with development teams to troubleshoot performance bottlenecks in production databases.",
+        "Automated server provisioning tasks using Ansible and AWS CloudFormation."
+      ]
+    }
+  ],
+  "educations": [
+    {
+      "institution": "Pulchowk Campus",
+      "degree": "Bachelor of Engineering",
+      "field_of_study": "Computer Engineering",
+      "start_date": "2012-09-01",
+      "end_date": "2016-08-01"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "AWS Solutions Architect - Professional"
+    },
+    {
+      "skill_name": "Terraform"
+    },
+    {
+      "skill_name": "Docker"
+    },
+    {
+      "skill_name": "Kubernetes"
+    },
+    {
+      "skill_name": "Python"
+    },
+    {
+      "skill_name": "Bash Scripting"
+    },
+    {
+      "skill_name": "Jenkins"
+    },
+    {
+      "skill_name": "AWS Lambda"
+    },
+    {
+      "skill_name": "Amazon RDS"
+    },
+    {
+      "skill_name": "DynamoDB"
+    },
+    {
+      "skill_name": "Linux Administration"
+    },
+    {
+      "skill_name": "Git"
+    },
+    {
+      "skill_name": "Prometheus"
+    },
+    {
+      "skill_name": "Grafana"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,39 @@
+{
+  "resume_id": "resume_005",
+  "model": "gemini-3-flash-preview",
+  "api_key_slot": 1,
+  "seed": 10005,
+  "attempts_used": 1,
+  "style_key": "simple_single_column",
+  "style_label": "simple normal single-column",
+  "style_bucket_index": 5,
+  "date_style": "month_year",
+  "render_plan": {
+    "summary_title": "Professional Summary",
+    "education_title": "Education",
+    "skills_section_title": "Technical Skills",
+    "skills_lines": [
+      "Languages: SQL, Python (Pandas, NumPy, Scikit-learn), R",
+      "BI Tools: Power BI (DAX), Tableau, Advanced Excel (VBA)",
+      "Core Competencies: Data Visualization, ETL, Statistical Analysis, Data Mining, Business Intelligence"
+    ],
+    "experience_sections": [
+      {
+        "title": "Professional Experience",
+        "entry_indices": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "spec": {
+    "career_level": "mid",
+    "domain": "data analysis",
+    "edge_case": "No GitHub or portfolio link anywhere on the resume.",
+    "company_hint": "Nabil Bank, Global IME Bank, NIC Asia Bank, Nepal Telecom, Daraz Nepal, CG Corp Global",
+    "education_hint": "Kathmandu University, Pokhara University, St. Xavier's College, Patan Multiple Campus",
+    "location_hint": "Kathmandu, Lalitpur, Hetauda, Pokhara"
+  }
+}
