@@ -11,6 +11,12 @@ type AuditTrailCardProps = {
   emptyText: string
 }
 
+type AuditTrailCardSkeletonProps = {
+  title: string
+  subtitle: string
+  itemCount?: number
+}
+
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('en-US', {
     month: 'short',
@@ -23,6 +29,52 @@ function formatDateTime(value: string): string {
 
 function prettyJson(value: unknown): string {
   return JSON.stringify(value ?? {}, null, 2)
+}
+
+export function AuditTrailCardSkeleton({
+  title,
+  subtitle,
+  itemCount = 6,
+}: AuditTrailCardSkeletonProps) {
+  return (
+    <div className="dash-card" aria-hidden="true">
+      <div className="dash-card__header">
+        <div>
+          <div className="dash-card__title">{title}</div>
+          <div className="dash-card__subtitle">{subtitle}</div>
+        </div>
+      </div>
+      <div className="dash-card__body">
+        <div className="audit-trail">
+          <div className="audit-trail__list">
+            {Array.from({ length: itemCount }).map((_, index) => (
+              <div key={index} className="audit-trail__item audit-trail__item--skeleton">
+                <div className="skeleton-block audit-trail__itemTitleSkeleton" />
+                <div className="skeleton-block audit-trail__itemMetaSkeleton" />
+              </div>
+            ))}
+          </div>
+
+          <div className="audit-trail__detail audit-trail__detail--skeleton">
+            <div className="audit-trail__headline">
+              <div className="audit-trail__headlineStack">
+                <div className="skeleton-block audit-trail__headlinePrimarySkeleton" />
+                <div className="skeleton-block audit-trail__headlineSecondarySkeleton" />
+              </div>
+              <div className="skeleton-block audit-trail__headlineMetaSkeleton" />
+            </div>
+
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="audit-trail__section">
+                <div className="skeleton-block audit-trail__sectionLabelSkeleton" />
+                <div className="skeleton-block audit-trail__codeSkeleton" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function AuditTrailCard({ title, subtitle, items, emptyText }: AuditTrailCardProps) {

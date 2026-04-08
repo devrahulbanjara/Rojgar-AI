@@ -14333,7 +14333,7 @@
     width: 100%;
     border: 1px solid $color-gray-200;
     border-radius: $radius-lg;
-    background: $color-surface;
+    background: $color-white;
     padding: $space-3;
     text-align: left;
     cursor: pointer;
@@ -14350,11 +14350,21 @@
     }
   }
 
+  &__item--skeleton {
+    cursor: default;
+    pointer-events: none;
+  }
+
   &__itemTitle {
     font-size: $font-size-sm;
     font-weight: $font-weight-semibold;
     color: $color-text;
     text-transform: capitalize;
+  }
+
+  &__itemTitleSkeleton {
+    width: 74%;
+    height: 0.95rem;
   }
 
   &__itemMeta {
@@ -14363,11 +14373,21 @@
     color: $color-text-muted;
   }
 
+  &__itemMetaSkeleton {
+    width: 56%;
+    height: 0.75rem;
+    margin-top: $space-2;
+  }
+
   &__detail {
     border: 1px solid $color-gray-200;
     border-radius: $radius-xl;
-    background: $color-surface;
+    background: $color-white;
     padding: $space-4;
+  }
+
+  &__detail--skeleton {
+    min-height: 30rem;
   }
 
   &__headline {
@@ -14378,8 +14398,36 @@
     margin-bottom: $space-4;
   }
 
+  &__headlineStack {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__headlinePrimarySkeleton {
+    width: 12rem;
+    height: 1rem;
+  }
+
+  &__headlineSecondarySkeleton {
+    width: 16rem;
+    height: 0.8rem;
+  }
+
+  &__headlineMetaSkeleton {
+    width: 9rem;
+    height: 0.8rem;
+  }
+
   &__section + &__section {
     margin-top: $space-4;
+  }
+
+  &__sectionLabelSkeleton {
+    width: 6rem;
+    height: 0.75rem;
   }
 
   &__code {
@@ -14394,5 +14442,12 @@
     overflow: auto;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+  }
+
+  &__codeSkeleton {
+    width: 100%;
+    height: 7rem;
+    margin-top: $space-2;
+    border-radius: $radius-lg;
   }
 }

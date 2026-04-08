@@ -208,7 +208,7 @@ export const authApi = baseApi.injectEndpoints({
       invalidatesTags: ['User', 'Company'],
     }),
 
-    updateMyAvatar: builder.mutation<ApiResponse<AuthUser>, FormData>({
+    updateMyAuthAvatar: builder.mutation<ApiResponse<AuthUser>, FormData>({
       query: (body) => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me/avatar`,
         method: 'PATCH',
@@ -227,7 +227,7 @@ export const authApi = baseApi.injectEndpoints({
       invalidatesTags: ['User', 'Company'],
     }),
 
-    removeMyAvatar: builder.mutation<EmptyResponse, void>({
+    removeMyAuthAvatar: builder.mutation<EmptyResponse, void>({
       query: () => ({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me/avatar`,
         method: 'DELETE',
@@ -282,8 +282,8 @@ export const {
   useGetMeQuery,
   useLazyGetMeQuery,
   useUpdateMeMutation,
-  useUpdateMyAvatarMutation,
-  useRemoveMyAvatarMutation,
+  useUpdateMyAuthAvatarMutation,
+  useRemoveMyAuthAvatarMutation,
   useChangeMyPasswordMutation,
   useGoogleRegisterMutation,
 } = authApi

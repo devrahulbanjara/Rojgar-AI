@@ -2,7 +2,7 @@
 
 import { useGetMyAuditLogsQuery } from '@/store/services/auditApi'
 
-import AuditTrailCard from '@/components/common/AuditTrailCard'
+import AuditTrailCard, { AuditTrailCardSkeleton } from '@/components/common/AuditTrailCard'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 
 export default function CandidateAuditPage() {
@@ -23,9 +23,10 @@ export default function CandidateAuditPage() {
       </div>
 
       {isLoading ? (
-        <div className="dash-card">
-          <div className="dash-card__body">Loading your audit records...</div>
-        </div>
+        <AuditTrailCardSkeleton
+          title="Your audit entries"
+          subtitle="Stored evidence of actions that affected your account and candidate journey."
+        />
       ) : isError ? (
         <DashboardErrorState error={error} isRetrying={isFetching} onRetry={() => void refetch()} />
       ) : (

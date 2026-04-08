@@ -7,12 +7,8 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 
 import { getCompanyAccent } from '@/lib/companyAccent'
-import {
-  buildProfileStrengthBreakdown,
-  calculateProfileCompletionPercentage,
-} from '@/lib/profileCompletion'
+import { calculateProfileCompletionPercentage } from '@/lib/profileCompletion'
 import { useAppSelector } from '@/store/hooks'
-import { useGetMyActivityQuery } from '@/store/services/activityApi'
 import {
   useGetCandidateDashboardAnalyticsQuery,
   useGetCandidateDashboardQuery,
@@ -20,7 +16,6 @@ import {
 import { useGetMyProfileQuery, useUpdateMyProfileMutation } from '@/store/services/profileApi'
 import { CalendarDays, Clock3, MapPin } from 'lucide-react'
 
-import ActivityFeedCard from '@/components/common/ActivityFeedCard'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
@@ -104,6 +99,19 @@ const PIPELINE_LEGEND = [
 function CandidateDashboardSkeleton() {
   return (
     <div className="candidate-dashboard">
+      <CandidateDashboardInsights
+        analytics={undefined}
+        isLoading={true}
+        rangeKey="30d"
+        onRangeChange={() => {}}
+        readiness={{
+          completion: 0,
+          targetRoles: 0,
+          skills: 0,
+          isOpenToWork: false,
+        }}
+      />
+
       <div className="dash-stats candidate-dashboard__stats-grid">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="stat-card" aria-hidden="true">
@@ -112,7 +120,14 @@ function CandidateDashboardSkeleton() {
           </div>
         ))}
       </div>
-      <div className="dash-card">
+
+      <div className="dash-card" aria-hidden="true">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Your applications</div>
+            <div className="dash-card__subtitle">Know exactly where each application stands.</div>
+          </div>
+        </div>
         <div className="dash-card__body candidate-dashboard__list">
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="candidate-pipeline-card" aria-hidden="true">
@@ -129,6 +144,32 @@ function CandidateDashboardSkeleton() {
                       />
                     ))}
                   </div>
+                </div>
+              </div>
+              <div className="skeleton-block candidate-pipeline-card__badge-skeleton" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="dash-card" aria-hidden="true">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Your interviews</div>
+            <div className="dash-card__subtitle">
+              Keep your booked interviews in view with time and location at a glance.
+            </div>
+          </div>
+        </div>
+        <div className="dash-card__body candidate-dashboard__list">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="candidate-interview-card" aria-hidden="true">
+              <div className="candidate-interview-card__left">
+                <div className="skeleton-block candidate-pipeline-card__avatar-skeleton" />
+                <div className="candidate-interview-card__copy">
+                  <div className="skeleton-block candidate-pipeline-card__title-skeleton" />
+                  <div className="skeleton-block candidate-pipeline-card__meta-skeleton" />
+                  <div className="skeleton-block candidate-pipeline-card__meta-skeleton" />
                 </div>
               </div>
               <div className="skeleton-block candidate-pipeline-card__badge-skeleton" />
@@ -163,7 +204,6 @@ export default function UserDashboardPage() {
     refetch: refetchProfile,
   } = useGetMyProfileQuery()
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMyProfileMutation()
-  const { data: activityResponse } = useGetMyActivityQuery(8)
   const dashboardData = dashboardResponse?.data
   const analyticsData = analyticsResponse?.data
   const profile = profileResponse?.data
@@ -172,7 +212,6 @@ export default function UserDashboardPage() {
     () => calculateProfileCompletionPercentage(profile ?? null),
     [profile],
   )
-  const profileStrength = useMemo(() => buildProfileStrengthBreakdown(profile ?? null), [profile])
 
   const handleToggleOpenToWork = async () => {
     if (!dashboardData || isUpdating) return
@@ -289,47 +328,6 @@ export default function UserDashboardPage() {
                 {dashboardData.stats.rejected}
               </div>
               <div className="stat-card__label">Rejected</div>
-            </div>
-          </div>
-
-          <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-            <ActivityFeedCard
-              title="Recent activity"
-              subtitle="Every recorded application and interview update."
-              items={activityResponse?.data ?? []}
-              emptyText="Your recent application activity will appear here."
-            />
-
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Profile strength</div>
-                  <div className="dash-card__subtitle">
-                    Complete these sections to improve application readiness.
-                  </div>
-                </div>
-                <Link href="/candidate/profile" className="btn btn--outline btn--sm">
-                  Edit profile
-                </Link>
-              </div>
-              <div className="dash-card__body">
-                <div className="dashboard-funnel-list">
-                  {profileStrength.map((item) => (
-                    <div key={item.key} className="dashboard-funnel-list__row">
-                      <div className="dashboard-funnel-list__label">{item.label}</div>
-                      <div className="dashboard-funnel-list__track">
-                        <span
-                          className={`dashboard-funnel-list__fill ${item.complete ? 'dashboard-funnel-list__fill--offer' : 'dashboard-funnel-list__fill--rejected'}`}
-                          style={{ width: item.complete ? '100%' : '32%' }}
-                        />
-                      </div>
-                      <div className="dashboard-funnel-list__value">
-                        {item.complete ? 'Done' : 'Missing'}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 

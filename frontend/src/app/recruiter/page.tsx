@@ -6,7 +6,6 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 
 import { useAppSelector } from '@/store/hooks'
-import { useGetCompanyActivityQuery } from '@/store/services/activityApi'
 import { useUpdateRecruiterStatusMutation } from '@/store/services/companyApi'
 import {
   type RecruiterAdminDashboardData,
@@ -18,7 +17,6 @@ import {
 } from '@/store/services/dashboardApi'
 import { useApproveDraftMutation } from '@/store/services/outreachApi'
 
-import ActivityFeedCard from '@/components/common/ActivityFeedCard'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 import StatusPill from '@/components/common/StatusPill'
 
@@ -79,6 +77,15 @@ function getExpiryLabel(daysUntilExpiry: number | null): string {
 function RecruiterDashboardSkeleton({ showAdmin }: { showAdmin: boolean }) {
   return (
     <div className="recruiter-dashboard">
+      <RecruiterDashboardInsights
+        analytics={undefined}
+        isLoading={true}
+        rangeKey="30d"
+        onRangeChange={() => {}}
+      />
+
+      {showAdmin ? <RecruiterAdminInsights analytics={undefined} isLoading={true} /> : null}
+
       <div
         className={`dash-stats ${showAdmin ? 'recruiter-dashboard__stats--admin' : 'recruiter-dashboard__stats--recruiter'}`}
       >
@@ -91,36 +98,112 @@ function RecruiterDashboardSkeleton({ showAdmin }: { showAdmin: boolean }) {
       </div>
 
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__header">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
-            </div>
-            <div className="dash-card__body recruiter-dashboard__panel-list">
-              {Array.from({ length: 3 }).map((__, rowIndex) => (
-                <div key={rowIndex} className="recruiter-list-card">
-                  <div className="skeleton-block recruiter-list-card__title-skeleton" />
-                  <div className="skeleton-block recruiter-list-card__meta-skeleton" />
-                </div>
-              ))}
+        <div className="dash-card">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Quick actions</div>
+              <div className="dash-card__subtitle">
+                Jump into the highest-priority recruiter workflows.
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="dash-card" aria-hidden="true">
-        <div className="dash-card__header">
-          <div className="skeleton-block dashboard-card-skeleton__title" />
-        </div>
-        <div className="dash-card__body recruiter-dashboard__panel-list">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="recruiter-list-card">
+          <div className="dash-card__body recruiter-dashboard__panel-list">
+            <Link href="/recruiter/screening" className="recruiter-list-card">
+              <div className="recruiter-list-card__title">Review screening queue</div>
+              <div className="recruiter-list-card__meta">
+                Assess scores and shortlist decisions.
+              </div>
+            </Link>
+            <Link href="/recruiter/outreach" className="recruiter-list-card">
+              <div className="recruiter-list-card__title">Approve outreach drafts</div>
+              <div className="recruiter-list-card__meta">Send shortlist and rejection updates.</div>
+            </Link>
+            <Link href="/recruiter/interviews" className="recruiter-list-card">
+              <div className="recruiter-list-card__title">Check interviews</div>
+              <div className="recruiter-list-card__meta">See upcoming bookings and recordings.</div>
+            </Link>
+            <div className="recruiter-list-card" aria-hidden="true">
               <div className="skeleton-block recruiter-list-card__title-skeleton" />
               <div className="skeleton-block recruiter-list-card__meta-skeleton" />
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Email drafts to approve</div>
+              <div className="dash-card__subtitle">Review communication before it goes out.</div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__panel-list">
+            {Array.from({ length: 3 }).map((_, rowIndex) => (
+              <div key={rowIndex} className="recruiter-list-card">
+                <div className="skeleton-block recruiter-list-card__title-skeleton" />
+                <div className="skeleton-block recruiter-list-card__meta-skeleton" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Today&apos;s interviews</div>
+              <div className="dash-card__subtitle">Interview schedule for the day.</div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__panel-list">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="recruiter-list-card">
+                <div className="skeleton-block recruiter-list-card__title-skeleton" />
+                <div className="skeleton-block recruiter-list-card__meta-skeleton" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Active jobs</div>
+              <div className="dash-card__subtitle">
+                Sorted by expiry urgency, with pipeline context.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__panel-list">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="recruiter-list-card">
+                <div className="skeleton-block recruiter-list-card__title-skeleton" />
+                <div className="skeleton-block recruiter-list-card__meta-skeleton" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {showAdmin ? (
+        <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="dash-card" aria-hidden="true">
+              <div className="dash-card__header">
+                <div className="skeleton-block dashboard-card-skeleton__title" />
+              </div>
+              <div className="dash-card__body recruiter-dashboard__panel-list">
+                {Array.from({ length: 3 }).map((__, rowIndex) => (
+                  <div key={rowIndex} className="recruiter-list-card">
+                    <div className="skeleton-block recruiter-list-card__title-skeleton" />
+                    <div className="skeleton-block recruiter-list-card__meta-skeleton" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -142,7 +225,6 @@ export default function CompanyDashboardPage() {
   const isError = isAdmin ? adminQuery.isError : recruiterQuery.isError
   const recruiterAnalyticsData = recruiterAnalyticsQuery.data?.data
   const adminAnalyticsData = isAdmin ? adminAnalyticsQuery.data?.data : undefined
-  const { data: activityResponse } = useGetCompanyActivityQuery(10)
   const isAnalyticsLoading = isAdmin
     ? adminAnalyticsQuery.isLoading || recruiterAnalyticsQuery.isLoading
     : recruiterAnalyticsQuery.isLoading
@@ -306,13 +388,6 @@ export default function CompanyDashboardPage() {
                 </Link>
               </div>
             </div>
-
-            <ActivityFeedCard
-              title="Recent activity"
-              subtitle="Recorded application, outreach, interview, and access updates."
-              items={activityResponse?.data ?? []}
-              emptyText="Your company activity feed will appear here."
-            />
           </div>
 
           <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
