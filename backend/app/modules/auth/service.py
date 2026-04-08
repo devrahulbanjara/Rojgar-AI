@@ -12,6 +12,7 @@ from app.core.cache import (
     invalidate_profile_read_caches,
 )
 from app.core.config import settings
+from app.core.request_context import bind_actor
 from app.infrastructures.email.service import EmailService
 from app.infrastructures.redis.service import redis_service
 from app.core.security import (
@@ -24,6 +25,7 @@ from app.core.security import (
     verify_password,
 )
 from app.modules.activity.service import create_activity_event
+from app.modules.audit.service import create_custom_audit_log
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import (
     OAuthAccount,
@@ -62,6 +64,17 @@ async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
     await redis_service.delete(f"company:recruiters:{company_id}")
 
 
+async def _get_active_company_id_for_user(
+    db: AsyncSession, user_id
+) -> str | None:
+    return await db.scalar(
+        select(CompanyMembership.company_id).where(
+            CompanyMembership.user_id == user_id,
+            CompanyMembership.status == MembershipStatus.active,
+        )
+    )
+
+
 async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
     """Return authenticated user's profile with membership status."""
     ms = await get_membership_status(db, user)
@@ -81,7 +94,20 @@ async def get_me_data(db: AsyncSession, user: User) -> UserResponse:
 async def update_me_data(
     db: AsyncSession, user: User, payload: UpdateMeRequest
 ) -> UserResponse:
+    previous_name = user.full_name
     user.full_name = payload.full_name.strip()
+    company_id = await _get_active_company_id_for_user(db, user.id)
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        target_user_id=user.id,
+        company_id=company_id,
+        action_type="update_profile",
+        before_json={"full_name": previous_name},
+        after_json={"full_name": user.full_name},
+        diff_json={"full_name": {"before": previous_name, "after": user.full_name}},
+    )
     await db.commit()
     await db.refresh(user)
     return await get_me_data(db, user)
@@ -101,6 +127,16 @@ async def change_password(
 
     user.password_hash = hash_password(payload.new_password)
     await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
+    company_id = await _get_active_company_id_for_user(db, user.id)
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        target_user_id=user.id,
+        company_id=company_id,
+        action_type="change_password",
+        metadata={"refresh_tokens_revoked": True},
+    )
     await db.commit()
 
 
@@ -113,6 +149,17 @@ async def signup(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
+
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        action_type="signup_requested",
+        metadata={
+            "email": payload.email,
+            "primary_role": payload.primary_role.value,
+        },
+    )
+    await db.commit()
 
     # Build the common pending data shared by all roles.
     pending_data = {
@@ -172,6 +219,7 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
     )
     db.add(user)
     await db.flush()  # generate user.id before creating related rows
+    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
 
     # Link OAuth account if this originated from a Google signup
     if data.get("google_id"):
@@ -237,6 +285,20 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
             )
 
     await db.commit()
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        target_user_id=user.id,
+        company_id=await _get_active_company_id_for_user(db, user.id),
+        action_type="verify_email",
+        after_json={
+            "email": user.email,
+            "primary_role": user.primary_role.value,
+            "is_email_verified": True,
+        },
+    )
+    await db.commit()
     logger.info(f"User created via email verification: {email}")
 
 
@@ -255,8 +317,10 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Please verify your email before logging in",
         )
+    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
 
     tokens, jti, refresh_expires_at = create_tokens(str(user.id))
+    company_id = await _get_active_company_id_for_user(db, user.id)
 
     # 1. Set the httpOnly cookie
     response.set_cookie(
@@ -270,6 +334,15 @@ async def login(db: AsyncSession, payload: LoginRequest, response: Response) -> 
 
     # 2. Persist JTI
     db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=refresh_expires_at))
+    await create_custom_audit_log(
+        db,
+        entity_type="auth_session",
+        entity_id=jti,
+        target_user_id=user.id,
+        company_id=company_id,
+        action_type="login",
+        metadata={"email": user.email},
+    )
     await db.commit()
 
     # 3. REMOVE refresh_token from the JSON response
@@ -316,6 +389,17 @@ async def google_register(
             "primary_role": payload.primary_role.value,
         }
         setup_token = create_pending_signup_token(pending_data)
+        await create_custom_audit_log(
+            db,
+            entity_type="user",
+            action_type="signup_requested",
+            metadata={
+                "email": data["email"],
+                "primary_role": payload.primary_role.value,
+                "auth_provider": "google",
+            },
+        )
+        await db.commit()
         logger.info(
             f"Google recruiter/admin signup deferred for {data['email']} (awaiting company step)"
         )
@@ -340,6 +424,7 @@ async def google_register(
             provider_account_id=data["google_id"],
         )
     )
+    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
 
     tokens, jti, refresh_expires_at = create_tokens(str(user.id))
     response.set_cookie(
@@ -351,6 +436,28 @@ async def google_register(
         expires=refresh_expires_at,
     )
     db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=refresh_expires_at))
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        target_user_id=user.id,
+        company_id=await _get_active_company_id_for_user(db, user.id),
+        action_type="signup_completed",
+        after_json={
+            "email": user.email,
+            "primary_role": user.primary_role.value,
+            "auth_provider": "google",
+        },
+    )
+    await create_custom_audit_log(
+        db,
+        entity_type="auth_session",
+        entity_id=jti,
+        target_user_id=user.id,
+        company_id=await _get_active_company_id_for_user(db, user.id),
+        action_type="login",
+        metadata={"email": user.email, "auth_provider": "google"},
+    )
     await db.commit()
 
     logger.info(f"New user registered via Google: {user.email} as {user.primary_role}")
@@ -383,6 +490,15 @@ async def login_swagger(db: AsyncSession, payload: OAuth2PasswordRequestForm) ->
             jti=jti,
             expires_at=refresh_expires_at,
         )
+    )
+    await create_custom_audit_log(
+        db,
+        entity_type="auth_session",
+        entity_id=jti,
+        target_user_id=user.id,
+        company_id=await _get_active_company_id_for_user(db, user.id),
+        action_type="login",
+        metadata={"email": user.email, "channel": "swagger"},
     )
     await db.commit()
 
@@ -434,6 +550,15 @@ async def refresh_tokens(
             expires_at=new_expires_at,
         )
     )
+    await create_custom_audit_log(
+        db,
+        entity_type="auth_session",
+        entity_id=new_jti,
+        target_user_id=token_row.user_id,
+        company_id=await _get_active_company_id_for_user(db, token_row.user_id),
+        action_type="refresh",
+        metadata={"rotated_from": jti},
+    )
     await db.commit()
 
     # 7. Update the httpOnly cookie with the NEW refresh token
@@ -462,8 +587,16 @@ async def logout(
     if refresh_token:
         decoded = decode_refresh_token(refresh_token)
         if decoded:
-            _, jti = decoded
+            user_id, jti = decoded
             await db.execute(delete(RefreshToken).where(RefreshToken.jti == jti))
+            await create_custom_audit_log(
+                db,
+                entity_type="auth_session",
+                entity_id=jti,
+                target_user_id=user_id,
+                company_id=await _get_active_company_id_for_user(db, user_id),
+                action_type="logout",
+            )
             await db.commit()
 
     # 2. Clear the cookie from the browser
@@ -483,6 +616,15 @@ async def forgot_password(
         reset_token = secrets.token_urlsafe(32)
         user.password_reset_token = reset_token
         user.password_reset_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        await create_custom_audit_log(
+            db,
+            entity_type="user",
+            entity_id=user.id,
+            target_user_id=user.id,
+            company_id=await _get_active_company_id_for_user(db, user.id),
+            action_type="password_reset_requested",
+            metadata={"email": user.email},
+        )
         await db.commit()
         logger.info(f"Password reset requested: {user.email}")
 
@@ -519,6 +661,16 @@ async def reset_password(db: AsyncSession, payload: ResetPasswordRequest) -> dic
 
     # revoke all refresh tokens on password reset — force re-login everywhere
     await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
+    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    await create_custom_audit_log(
+        db,
+        entity_type="user",
+        entity_id=user.id,
+        target_user_id=user.id,
+        company_id=await _get_active_company_id_for_user(db, user.id),
+        action_type="password_reset_completed",
+        metadata={"refresh_tokens_revoked": True},
+    )
     await db.commit()
 
     logger.info(f"Password reset successful: {user.email}")

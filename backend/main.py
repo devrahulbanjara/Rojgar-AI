@@ -14,10 +14,12 @@ from app.core.job_expiry_scheduler import (
     create_job_expiry_scheduler,
     run_job_expiry_startup_check,
 )
+from app.core.request_middleware import RequestContextMiddleware
 from app.core.tasks import sync_daemon_loop
 from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 
+from app.modules.audit.router import router as audit_router
 from app.modules.companies.router import router as companies_router
 from app.modules.activity.router import router as activity_router
 from app.modules.profiles.router import router as profiles_router
@@ -92,6 +94,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestContextMiddleware)
 
 if settings.environment == "dev":
     logfire.configure()
@@ -100,6 +103,7 @@ if settings.environment == "dev":
 register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(audit_router)
 app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router, prefix="/companies", tags=["Companies"])

@@ -134,6 +134,7 @@ export const baseApi = createApi({
     'Recordings',
     'Evaluation',
     'Activity',
+    'Audit',
     'Notifications',
     'RecruiterPreferences',
   ],

@@ -45,7 +45,7 @@ async def create_activity_event(
         interview_id=interview_id,
         draft_id=draft_id,
         actor_user_id=actor_user_id,
-        metadata=metadata,
+        metadata_json=metadata,
     )
     db.add(event)
     await db.flush()

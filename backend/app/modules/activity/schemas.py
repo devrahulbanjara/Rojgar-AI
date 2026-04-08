@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from pydantic import Field
+
 from app.core.schemas import BaseSchema
 
 
@@ -20,5 +22,5 @@ class ActivityEventResponse(BaseSchema):
     title: str
     description: str | None = None
     href: str | None = None
-    metadata: dict | None = None
+    metadata: dict | None = Field(default=None, validation_alias="metadata_json")
     created_at: datetime
