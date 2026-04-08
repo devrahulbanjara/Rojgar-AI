@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.request_context import bind_actor
 from app.core.security import decode_access_token
 from app.modules.auth.enums import UserRole
 from app.modules.auth.models import User
@@ -27,7 +28,10 @@ async def get_optional_user(
     if not user_id:
         return None
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+    if user is not None:
+        bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
+    return user
 
 
 async def get_current_user(
@@ -49,6 +53,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
+    bind_actor(actor_user_id=user.id, actor_role=user.primary_role.value)
     return user
 
 

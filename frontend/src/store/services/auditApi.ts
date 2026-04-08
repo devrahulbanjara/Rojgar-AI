@@ -1,0 +1,74 @@
+import { type ApiResponse, baseApi } from './baseApi'
+
+export interface AuditLogItem {
+  id: string
+  actor_user_id: string | null
+  actor_role: string | null
+  target_user_id: string | null
+  company_id: string | null
+  entity_type: string
+  entity_id: string | null
+  parent_entity_type: string | null
+  parent_entity_id: string | null
+  action_type: string
+  request_id: string | null
+  request_path: string | null
+  request_method: string | null
+  ip_address: string | null
+  user_agent: string | null
+  source: string
+  reason: string | null
+  success: boolean
+  error_message: string | null
+  before_json: Record<string, unknown> | null
+  after_json: Record<string, unknown> | null
+  diff_json: Record<string, { before: unknown; after: unknown }> | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+export type CompanyAuditParams = {
+  limit?: number
+  entity_type?: string
+  action_type?: string
+  actor_user_id?: string
+  target_user_id?: string
+  start_at?: string
+  end_at?: string
+}
+
+export const auditApi = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    getMyAuditLogs: builder.query<
+      ApiResponse<AuditLogItem[]>,
+      { limit?: number; entity_type?: string; action_type?: string } | void
+    >({
+      query: (params) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit/me`,
+        params: params ?? undefined,
+      }),
+      providesTags: ['Audit'],
+    }),
+    getCompanyAuditLogs: builder.query<ApiResponse<AuditLogItem[]>, CompanyAuditParams | void>({
+      query: (params) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit/company`,
+        params: params ?? undefined,
+      }),
+      providesTags: ['Audit'],
+    }),
+    getEntityAuditTrail: builder.query<
+      ApiResponse<AuditLogItem[]>,
+      { entityType: string; entityId: string }
+    >({
+      query: ({ entityType, entityId }) => ({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit/entity/${entityType}/${entityId}`,
+      }),
+      providesTags: (_result, _error, arg) => [
+        { type: 'Audit', id: `${arg.entityType}:${arg.entityId}` },
+      ],
+    }),
+  }),
+})
+
+export const { useGetMyAuditLogsQuery, useGetCompanyAuditLogsQuery, useGetEntityAuditTrailQuery } =
+  auditApi

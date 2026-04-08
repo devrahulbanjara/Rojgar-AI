@@ -80,16 +80,28 @@ class TestActivityAndNotifications:
             "/notifications",
             headers=auth_headers(recruiter),
         )
+        candidate_audit_resp = await client.get(
+            f"/audit/entity/application/{application_id}",
+            headers=auth_headers(candidate),
+        )
+        company_audit_resp = await client.get(
+            "/audit/company",
+            headers=auth_headers(recruiter),
+        )
 
         assert candidate_activity_resp.status_code == 200
         assert recruiter_activity_resp.status_code == 200
         assert candidate_notifications_resp.status_code == 200
         assert recruiter_notifications_resp.status_code == 200
+        assert candidate_audit_resp.status_code == 200
+        assert company_audit_resp.status_code == 200
 
         candidate_events = candidate_activity_resp.json()["data"]
         recruiter_events = recruiter_activity_resp.json()["data"]
         candidate_notifications = candidate_notifications_resp.json()["data"]
         recruiter_notifications = recruiter_notifications_resp.json()["data"]
+        candidate_audit = candidate_audit_resp.json()["data"]
+        company_audit = company_audit_resp.json()["data"]
 
         assert candidate_events[0]["event_type"] == "application_applied"
         assert candidate_events[0]["application_id"] == application_id
@@ -100,6 +112,16 @@ class TestActivityAndNotifications:
         assert any(
             notification["kind"] == "application_received"
             for notification in recruiter_notifications
+        )
+        assert any(
+            item["entity_type"] == "application"
+            and item["action_type"] == "create"
+            and item["entity_id"] == application_id
+            for item in candidate_audit
+        )
+        assert any(
+            item["entity_type"] == "application" and item["entity_id"] == application_id
+            for item in company_audit
         )
 
     @pytest.mark.asyncio
@@ -335,3 +357,55 @@ class TestActivityAndNotifications:
         )
         assert mark_all_resp.status_code == 200
         assert mark_all_resp.json()["data"]["updated"] >= 1
+
+    @pytest.mark.asyncio
+    async def test_auth_and_company_audit_filters(self, client, db):
+        recruiter = await make_user(
+            db,
+            "audit-login.recruiter@test.com",
+            role="recruiter_admin",
+            full_name="Audit Recruiter",
+            password="Password@123",
+        )
+        company = await make_company(db, "Audit Console Co", "auditconsoleco.com")
+        await make_membership(db, recruiter, company)
+        recruiter_member = await make_user(
+            db,
+            "audit-member.recruiter@test.com",
+            role="recruiter",
+            full_name="Scoped Recruiter",
+        )
+        await make_membership(db, recruiter_member, company, role="recruiter")
+
+        login_resp = await client.post(
+            "/auth/login",
+            json={"email": recruiter.email, "password": "Password@123"},
+        )
+        assert login_resp.status_code == 200
+
+        company_audit_resp = await client.get(
+            "/audit/company",
+            params={"action_type": "create", "entity_type": "membership"},
+            headers=auth_headers(recruiter),
+        )
+        assert company_audit_resp.status_code == 200
+        company_audit = company_audit_resp.json()["data"]
+        assert any(
+            item["entity_type"] == "membership" and item["action_type"] == "create"
+            for item in company_audit
+        )
+
+        my_audit_resp = await client.get(
+            "/audit/me",
+            params={"action_type": "login"},
+            headers=auth_headers(recruiter),
+        )
+        assert my_audit_resp.status_code == 200
+        my_audit = my_audit_resp.json()["data"]
+        assert any(item["action_type"] == "login" for item in my_audit)
+
+        recruiter_company_audit_resp = await client.get(
+            "/audit/company",
+            headers=auth_headers(recruiter_member),
+        )
+        assert recruiter_company_audit_resp.status_code == 403
