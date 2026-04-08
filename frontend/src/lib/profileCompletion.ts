@@ -16,6 +16,12 @@ export type ProfileCompletionSource = {
 
 export type ProfileCompletionTone = 'danger' | 'warning' | 'success'
 
+export type ProfileStrengthBreakdownItem = {
+  key: string
+  label: string
+  complete: boolean
+}
+
 type ProfileCompletionField = {
   key: string
   isComplete: (profile: ProfileCompletionSource) => boolean
@@ -70,6 +76,41 @@ export function calculateProfileCompletionPercentage(
   ).length
 
   return Math.round((completedFields / PROFILE_COMPLETION_FIELDS.length) * 100)
+}
+
+export function buildProfileStrengthBreakdown(
+  profile: ProfileCompletionSource | null,
+): ProfileStrengthBreakdownItem[] {
+  const source = profile ?? {}
+
+  return [
+    { key: 'headline', label: 'Headline', complete: hasText(source.headline) },
+    { key: 'summary', label: 'Summary', complete: hasText(source.summary) },
+    { key: 'phone', label: 'Phone', complete: hasText(source.phone) },
+    { key: 'location', label: 'Location', complete: hasText(source.location) },
+    {
+      key: 'links',
+      label: 'Links',
+      complete:
+        hasText(source.linkedin_url) || hasText(source.github_url) || hasText(source.portfolio_url),
+    },
+    {
+      key: 'experience',
+      label: 'Work history',
+      complete: hasArrayItems(source.experiences),
+    },
+    {
+      key: 'education',
+      label: 'Education',
+      complete: hasArrayItems(source.educations),
+    },
+    { key: 'skills', label: 'Skills', complete: hasArrayItems(source.skills) },
+    {
+      key: 'years_of_experience',
+      label: 'Years of experience',
+      complete: hasExperienceValue(source.years_of_experience),
+    },
+  ]
 }
 
 export function getProfileCompletionMeta(score: number): {

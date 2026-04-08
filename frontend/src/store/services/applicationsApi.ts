@@ -23,6 +23,89 @@ export interface ApplicationResponse {
   updated_at: string
   score: number | null
   feedback: string | null
+  resume: {
+    id: string
+    user_id: string
+    resume_name: string
+    headline: string | null
+    summary: string | null
+    phone: string | null
+    location: string | null
+    linkedin_url: string | null
+    github_url: string | null
+    portfolio_url: string | null
+    years_of_experience: number | null
+    experiences: {
+      id: string
+      company_name: string
+      title: string
+      start_date: string | null
+      end_date: string | null
+      description: string[]
+    }[]
+    educations: {
+      id: string
+      institution: string
+      degree: string | null
+      field_of_study: string | null
+      start_date: string | null
+      end_date: string | null
+    }[]
+    skills: { id: string; skill_name: string }[]
+    created_at: string
+    updated_at: string
+  } | null
+  job_title: string | null
+  company_name: string | null
+  company_logo_url: string | null
+  location: string | null
+  location_type: 'remote' | 'onsite' | 'hybrid' | null
+  interview: {
+    id: string
+    cal_booking_uid: string
+    start_time: string
+    end_time: string
+    timezone: string | null
+    location: string | null
+    title: string | null
+    created_at: string
+  } | null
+  timeline: ActivityEvent[]
+  next_step_hint: string | null
+}
+
+export interface ActivityEvent {
+  id: string
+  user_id: string | null
+  company_id: string | null
+  application_id: string | null
+  job_id: string | null
+  interview_id: string | null
+  draft_id: string | null
+  actor_user_id: string | null
+  event_type: string
+  audience: string
+  title: string
+  description: string | null
+  href: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+export interface ApplicationOutreachAuditItem {
+  draft_id: string
+  subject: string | null
+  is_approved: boolean
+  is_sent: boolean
+  is_discarded: boolean
+  generated_by_user_id: string | null
+  approved_by_user_id: string | null
+  approved_at: string | null
+  sent_by_user_id: string | null
+  sent_at: string | null
+  discarded_by_user_id: string | null
+  discarded_at: string | null
+  updated_at: string
 }
 
 export interface CandidateApplicationView {
@@ -189,6 +272,8 @@ export interface RecruiterCandidateDetailView {
     updated_at: string
   } | null
   share_settings: CandidateShareSettings
+  timeline: ActivityEvent[]
+  outreach_audit: ApplicationOutreachAuditItem[]
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +333,24 @@ export const applicationsApi = baseApi.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: 'Candidates', id }],
     }),
 
+    getApplicationById: builder.query<ApiResponse<ApplicationResponse>, string>({
+      query: (applicationId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${applicationId}`,
+      providesTags: (_result, _error, id) => [{ type: 'Applications', id }],
+    }),
+
+    getApplicationTimeline: builder.query<ApiResponse<ActivityEvent[]>, string>({
+      query: (applicationId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/${applicationId}/timeline`,
+      providesTags: (_result, _error, id) => [{ type: 'Activity', id }],
+    }),
+
+    getCompanyCandidateTimeline: builder.query<ApiResponse<ActivityEvent[]>, string>({
+      query: (applicationId) =>
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/applications/company/me/candidates/${applicationId}/timeline`,
+      providesTags: (_result, _error, id) => [{ type: 'Activity', id }],
+    }),
+
     getJobApplications: builder.query<
       ApiResponse<RecruiterApplicationView[]>,
       { job_id: string; page?: number; size?: number }
@@ -291,6 +394,9 @@ export const {
   useGetMyCompanyApplicationsQuery,
   useGetMyCompanyCandidatesQuery,
   useGetCompanyCandidateByIdQuery,
+  useGetApplicationByIdQuery,
+  useGetApplicationTimelineQuery,
+  useGetCompanyCandidateTimelineQuery,
   useGetJobApplicationsQuery,
   useUpdateApplicationReviewMutation,
   useUpdateApplicationStatusMutation,

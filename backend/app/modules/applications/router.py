@@ -16,6 +16,7 @@ from app.modules.applications.schemas import (
     UpdateApplicationReviewRequest,
     UpdateApplicationStatusRequest,
 )
+from app.modules.activity.schemas import ActivityEventResponse
 from app.shared.enums import ApplicationStatus
 
 router = APIRouter()
@@ -140,6 +141,34 @@ async def get_application(
 ):
     data = await service.get_application(db, user, application_id)
     return ResponseBuilder.success(data=data, message="Application fetched.")
+
+
+@router.get(
+    "/{application_id}/timeline",
+    response_model=UnifiedResponse[list[ActivityEventResponse]],
+    summary="Get the event timeline for a specific application",
+)
+async def get_application_timeline(
+    application_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.get_application_timeline(db, user, application_id)
+    return ResponseBuilder.success(data=data, message="Application timeline fetched.")
+
+
+@router.get(
+    "/company/me/candidates/{application_id}/timeline",
+    response_model=UnifiedResponse[list[ActivityEventResponse]],
+    summary="Get the recruiter timeline for a specific candidate application",
+)
+async def get_company_candidate_timeline(
+    application_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = db,
+):
+    data = await service.get_company_candidate_timeline(db, user, application_id)
+    return ResponseBuilder.success(data=data, message="Candidate timeline fetched.")
 
 
 @router.patch(

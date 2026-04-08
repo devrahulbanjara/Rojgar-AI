@@ -8,7 +8,11 @@ import { usePathname } from 'next/navigation'
 
 import { getInitials } from '@/lib/mediaValidation'
 import { useAppSelector } from '@/store/hooks'
-import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
+import {
+  useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+} from '@/store/services/notificationsApi'
 import { Bell, ChevronDown, FileText, LogOut, User, X } from 'lucide-react'
 
 import MediaBadge from '@/components/common/MediaBadge'
@@ -56,29 +60,6 @@ function formatNotificationTime(value: string): string {
   return Number.isNaN(new Date(value).getTime()) ? value : formatRelativeDate(value)
 }
 
-function buildCandidateNotificationText(application: {
-  company_name: string
-  job_title: string
-  status: string
-}): string {
-  if (application.status === 'shortlisted') {
-    return `${application.company_name} shortlisted you for ${application.job_title}.`
-  }
-  if (application.status === 'interview_booked') {
-    return `Your interview for ${application.job_title} at ${application.company_name} is booked.`
-  }
-  if (application.status === 'offer') {
-    return `${application.company_name} sent an offer for ${application.job_title}.`
-  }
-  if (application.status === 'rejected') {
-    return `${application.company_name} closed your application for ${application.job_title}.`
-  }
-  if (application.status === 'screening') {
-    return `${application.company_name} is reviewing your ${application.job_title} application.`
-  }
-  return `You applied to ${application.job_title} at ${application.company_name}.`
-}
-
 function NotificationsSkeleton({ count }: { count: number }) {
   return Array.from({ length: count }).map((_, index) => (
     <div key={index} className="activity-item activity-item--panel activity-item--skeleton">
@@ -91,34 +72,6 @@ function NotificationsSkeleton({ count }: { count: number }) {
     </div>
   ))
 }
-
-const COMPANY_NOTIFICATIONS = [
-  {
-    id: 'company-1',
-    text: 'Alex Chen applied for Product Designer.',
-    time: '1 h ago',
-  },
-  {
-    id: 'company-2',
-    text: 'AI screening finished for 12 candidates.',
-    time: '2 h ago',
-  },
-  {
-    id: 'company-3',
-    text: 'Interview scheduled with Maria Santos.',
-    time: '3 h ago',
-  },
-  {
-    id: 'company-4',
-    text: 'Visual Designer post expires in 3 days.',
-    time: 'Today',
-  },
-  {
-    id: 'company-5',
-    text: 'James Park accepted the offer.',
-    time: 'Yesterday',
-  },
-] as const
 
 function buildNavItems(role: DashRole): NavItem[] {
   if (role === 'candidate') {
@@ -162,21 +115,23 @@ export default function DashNavbar({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
 
-  const { data: dashboardResponse, isFetching: isNotificationsLoading } =
-    useGetCandidateDashboardQuery(undefined, {
-      skip: !isCandidate,
-    })
-  const notifications = isCandidate
-    ? (dashboardResponse?.data.applications ?? []).map((application) => ({
-        id: application.id,
-        application_id: application.id,
-        text: buildCandidateNotificationText(application),
-        time: application.updated_at,
-      }))
-    : COMPANY_NOTIFICATIONS
-  const notificationsCount = notifications.length
-  const notificationsLoading = isCandidate ? isNotificationsLoading : false
-  const notificationsLink = isCandidate ? '/candidate/applications' : '/recruiter/candidates'
+  const { data: notificationsResponse, isFetching: notificationsLoading } =
+    useGetNotificationsQuery(12)
+  const [markNotificationRead] = useMarkNotificationReadMutation()
+  const [markAllNotificationsRead] = useMarkAllNotificationsReadMutation()
+  const notifications =
+    notificationsResponse?.data.map((notification) => ({
+      id: notification.id,
+      text: notification.body ?? notification.title,
+      title: notification.title,
+      time: notification.created_at,
+      href:
+        notification.href ??
+        (isCandidate ? '/candidate/notifications' : '/recruiter/notifications'),
+      isRead: notification.is_read,
+    })) ?? []
+  const notificationsCount = notifications.filter((notification) => !notification.isRead).length
+  const notificationsLink = isCandidate ? '/candidate/notifications' : '/recruiter/notifications'
 
   const displayName = user?.full_name ?? userName
   const displayInitials = getInitials(displayName, userInitials)
@@ -280,8 +235,8 @@ export default function DashNavbar({
                     <div className="dash-navbar__notifications-subtitle">
                       {notificationsLoading
                         ? 'Loading recent updates...'
-                        : notificationsCount > 0
-                          ? `${notificationsCount} recent update${notificationsCount === 1 ? '' : 's'}`
+                        : notifications.length > 0
+                          ? `${notificationsCount} unread update${notificationsCount === 1 ? '' : 's'}`
                           : 'No new updates right now'}
                     </div>
                   </div>
@@ -300,22 +255,22 @@ export default function DashNavbar({
                     <div className="activity-list activity-list--panel" aria-hidden="true">
                       <NotificationsSkeleton count={4} />
                     </div>
-                  ) : notificationsCount === 0 ? (
+                  ) : notifications.length === 0 ? (
                     <div className="dash-navbar__notifications-empty">
                       Application updates will show up here when there is something new.
                     </div>
                   ) : (
                     <div className="activity-list activity-list--panel">
                       {notifications.map((activity) => {
-                        const href =
-                          isCandidate && 'application_id' in activity && activity.application_id
-                            ? `/candidate/applications?application=${activity.application_id}`
-                            : null
+                        const href = activity.href
 
                         const content = (
                           <>
                             <div className="activity-item__dot" />
                             <div className="activity-item__body">
+                              <p className="activity-item__text">
+                                <strong>{activity.title}</strong>
+                              </p>
                               <p className="activity-item__text">{activity.text}</p>
                               <div className="activity-item__time">
                                 {formatNotificationTime(activity.time)}
@@ -329,7 +284,10 @@ export default function DashNavbar({
                             key={activity.id}
                             href={href}
                             className="activity-item activity-item--panel activity-item--link"
-                            onClick={() => setNotificationsOpen(false)}
+                            onClick={() => {
+                              void markNotificationRead(activity.id)
+                              setNotificationsOpen(false)
+                            }}
                           >
                             {content}
                           </Link>
@@ -345,8 +303,17 @@ export default function DashNavbar({
 
                 <div className="dash-navbar__notifications-footer">
                   <Link href={notificationsLink} onClick={() => setNotificationsOpen(false)}>
-                    {isCandidate ? 'View applications' : 'View candidates'}
+                    View all notifications
                   </Link>
+                  {notificationsCount > 0 ? (
+                    <button
+                      type="button"
+                      className="auth__inline-link"
+                      onClick={() => void markAllNotificationsRead()}
+                    >
+                      Mark all read
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -413,12 +380,12 @@ export default function DashNavbar({
                   </Link>
                 ) : (
                   <Link
-                    href="/recruiter/company/settings"
+                    href="/recruiter/settings"
                     className="dash-navbar__dropdown-item"
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FileText size={15} />
-                    Company Settings
+                    Recruiter Settings
                   </Link>
                 )}
 

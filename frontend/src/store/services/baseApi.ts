@@ -1,3 +1,4 @@
+import { LIVE_DATA_UNAVAILABLE_MESSAGE, isBackendConnectionStatus } from '@/lib/backendConnection'
 import {
   BaseQueryFn,
   FetchArgs,
@@ -7,6 +8,7 @@ import {
 } from '@reduxjs/toolkit/query/react'
 
 import { clearCredentials, updateAccessToken } from '../slices/authSlice'
+import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '../slices/uiSlice'
 
 // ---------------------------------------------------------------------------
 // Unified response envelope (matches backend contract)
@@ -93,10 +95,19 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
       api.dispatch(updateAccessToken(refreshData.data.access_token))
       // Retry original request with the new token
       result = await rawBaseQuery(args, api, extraOptions)
+    } else if (isBackendConnectionStatus(refreshResult.error?.status)) {
+      api.dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+      result = refreshResult
     } else {
       // Refresh failed — wipe session, UI handles redirect
       api.dispatch(clearCredentials())
     }
+  }
+
+  if (result.error && isBackendConnectionStatus(result.error.status)) {
+    api.dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+  } else if (result.data) {
+    api.dispatch(clearBackendConnectionIssue())
   }
 
   return result
@@ -122,6 +133,9 @@ export const baseApi = createApi({
     'RecruiterChatSessions',
     'Recordings',
     'Evaluation',
+    'Activity',
+    'Notifications',
+    'RecruiterPreferences',
   ],
   endpoints: () => ({}),
 })

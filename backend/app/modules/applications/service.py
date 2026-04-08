@@ -24,9 +24,15 @@ from app.modules.applications.sync import (
     enqueue_application_sync_event,
     process_sync_event as process_application_sync_event,
 )
+from app.modules.activity.service import (
+    create_activity_event,
+    list_application_timeline,
+)
+from app.modules.activity.schemas import ActivityEventResponse
 from app.modules.auth.enums import MembershipStatus
 from app.modules.auth.models import User
 from app.modules.applications.schemas import (
+    ApplicationOutreachAuditItem,
     ApplicantSummary,
     ApplicationListItem,
     ApplicationResponse,
@@ -45,6 +51,7 @@ from app.modules.companies.models import Company
 from app.modules.companies.models import CompanyMembership
 from app.modules.interviews.models import Interview
 from app.modules.jobs.models import Job
+from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import Profile
 from app.modules.resumes.models import Resume
 from app.shared.enums import ApplicationStatus, JobStatus
@@ -55,6 +62,63 @@ RECRUITER_SETTABLE = {
     ApplicationStatus.interview_completed,
     ApplicationStatus.offer,
 }
+
+
+def _application_detail_href(application_id: str) -> str:
+    return f"/candidate/applications/{application_id}"
+
+
+def _recruiter_candidate_href(application_id: str) -> str:
+    return f"/recruiter/candidates/{application_id}"
+
+
+def _status_event_copy(
+    status: ApplicationStatus,
+    *,
+    applicant_name: str,
+    job_title: str,
+    company_name: str,
+) -> tuple[str, str]:
+    if status == ApplicationStatus.shortlisted:
+        return (
+            f"Shortlisted for {job_title}",
+            f"{company_name} shortlisted {applicant_name} for {job_title}.",
+        )
+    if status == ApplicationStatus.rejected:
+        return (
+            f"Application closed for {job_title}",
+            f"{company_name} closed the application for {job_title}.",
+        )
+    if status == ApplicationStatus.interview_completed:
+        return (
+            f"Interview completed for {job_title}",
+            f"The interview for {job_title} was marked complete.",
+        )
+    if status == ApplicationStatus.offer:
+        return (
+            f"Offer recorded for {job_title}",
+            f"{company_name} recorded an offer for {applicant_name}.",
+        )
+    return (
+        f"Application updated for {job_title}",
+        f"{company_name} updated the application for {job_title}.",
+    )
+
+
+def _candidate_next_step_hint(status: ApplicationStatus) -> str:
+    if status == ApplicationStatus.applied:
+        return "Your application has been submitted. The next update will appear here when screening starts."
+    if status == ApplicationStatus.screening:
+        return "Your application is under review. Keep your profile and resume ready in case the recruiter requests next steps."
+    if status == ApplicationStatus.shortlisted:
+        return "You have been shortlisted. Watch for outreach or interview booking instructions."
+    if status == ApplicationStatus.interview_booked:
+        return "Your interview is booked. Review the schedule and prepare with the resume you used for this application."
+    if status == ApplicationStatus.interview_completed:
+        return "Your interview is complete. The recruiter can now move this application to offer or rejection."
+    if status == ApplicationStatus.offer:
+        return "An offer has been recorded for this application."
+    return "This application is no longer moving through the process."
 
 
 def _company_applications_cache_key(
@@ -138,6 +202,35 @@ def _application_response_options():
         joinedload(Application.resume).selectinload(Resume.experiences),
         joinedload(Application.resume).selectinload(Resume.educations),
         joinedload(Application.resume).selectinload(Resume.skills),
+    ]
+
+
+async def _get_outreach_audit_items(
+    db: AsyncSession,
+    application_id,
+) -> list[ApplicationOutreachAuditItem]:
+    result = await db.execute(
+        select(EmailDraft)
+        .where(EmailDraft.application_id == application_id)
+        .order_by(EmailDraft.updated_at.asc())
+    )
+    return [
+        ApplicationOutreachAuditItem(
+            draft_id=draft.id,
+            subject=draft.subject,
+            is_approved=draft.is_approved,
+            is_sent=draft.is_sent,
+            is_discarded=draft.is_discarded,
+            generated_by_user_id=draft.generated_by_user_id,
+            approved_by_user_id=draft.approved_by_user_id,
+            approved_at=draft.approved_at,
+            sent_by_user_id=draft.sent_by_user_id,
+            sent_at=draft.sent_at,
+            discarded_by_user_id=draft.discarded_by_user_id,
+            discarded_at=draft.discarded_at,
+            updated_at=draft.updated_at,
+        )
+        for draft in result.scalars().all()
     ]
 
 
@@ -249,6 +342,45 @@ async def apply_to_job(
     db.add(application)
     try:
         await db.flush()
+        company = await db.scalar(select(Company).where(Company.id == job.company_id))
+        await create_activity_event(
+            db,
+            event_type="application_applied",
+            audience="candidate",
+            title=f"Applied to {job.title}",
+            description=(
+                f"You applied to {job.title}"
+                + (f" at {company.name}." if company else ".")
+            ),
+            href=_application_detail_href(str(application.id)),
+            user_id=application.user_id,
+            company_id=job.company_id,
+            application_id=application.id,
+            job_id=job.id,
+            actor_user_id=user.id,
+            metadata={
+                "status": application.status.value,
+                "job_title": job.title,
+                "company_name": company.name if company else None,
+            },
+        )
+        await create_activity_event(
+            db,
+            event_type="application_received",
+            audience="recruiter",
+            title=f"New applicant for {job.title}",
+            description=f"{user.full_name} applied to {job.title}.",
+            href=_recruiter_candidate_href(str(application.id)),
+            user_id=None,
+            company_id=job.company_id,
+            application_id=application.id,
+            job_id=job.id,
+            actor_user_id=user.id,
+            metadata={
+                "candidate_name": user.full_name,
+                "status": application.status.value,
+            },
+        )
         sync_event = enqueue_application_sync_event(db, application.id)
         await db.commit()
     except IntegrityError:
@@ -581,6 +713,8 @@ async def get_company_candidate_detail(
     interview = await db.scalar(
         select(Interview).where(Interview.application_id == application.id)
     )
+    timeline = await list_application_timeline(db, application_id=str(application.id))
+    outreach_audit = await _get_outreach_audit_items(db, application.id)
 
     response = RecruiterCandidateDetailView(
         id=application.id,
@@ -615,6 +749,8 @@ async def get_company_candidate_detail(
         else None,
         resume=application.resume,
         share_settings=share,
+        timeline=timeline,
+        outreach_audit=outreach_audit,
     )
     await redis_service.set(
         cache_key,
@@ -688,7 +824,40 @@ async def get_application(
 
     # Applicant can see their own
     if application.user_id == user.id:
-        return ApplicationResponse.model_validate(application)
+        job = await db.scalar(select(Job).where(Job.id == application.job_id))
+        company = (
+            await db.scalar(select(Company).where(Company.id == job.company_id))
+            if job is not None
+            else None
+        )
+        interview = await db.scalar(
+            select(Interview).where(Interview.application_id == application.id)
+        )
+        timeline = await list_application_timeline(
+            db, application_id=str(application.id)
+        )
+        return ApplicationResponse(
+            id=application.id,
+            job_id=application.job_id,
+            user_id=application.user_id,
+            resume_id=application.resume_id,
+            status=application.status,
+            created_at=application.created_at,
+            updated_at=application.updated_at,
+            score=application.score,
+            feedback=application.feedback,
+            resume=application.resume,
+            job_title=job.title if job is not None else None,
+            company_name=company.name if company is not None else None,
+            company_logo_url=company.logo_url if company is not None else None,
+            location=job.location if job is not None else None,
+            location_type=job.location_type if job is not None else None,
+            interview=RecruiterCandidateInterviewView.model_validate(interview)
+            if interview
+            else None,
+            timeline=timeline,
+            next_step_hint=_candidate_next_step_hint(application.status),
+        )
 
     # Active company members (recruiter / recruiter_admin) can see applications
     # for jobs belonging to their company — but only if their membership is active.
@@ -703,13 +872,58 @@ async def get_application(
                 Job.id == application.job_id, Job.company_id == company_id
             )
         )
-        if result.scalar_one_or_none():
-            return ApplicationResponse.model_validate(application)
+        job = result.scalar_one_or_none()
+        if job:
+            company = await db.scalar(
+                select(Company).where(Company.id == job.company_id)
+            )
+            interview = await db.scalar(
+                select(Interview).where(Interview.application_id == application.id)
+            )
+            timeline = await list_application_timeline(
+                db, application_id=str(application.id)
+            )
+            return ApplicationResponse(
+                id=application.id,
+                job_id=application.job_id,
+                user_id=application.user_id,
+                resume_id=application.resume_id,
+                status=application.status,
+                created_at=application.created_at,
+                updated_at=application.updated_at,
+                score=application.score,
+                feedback=application.feedback,
+                resume=application.resume,
+                job_title=job.title,
+                company_name=company.name if company is not None else None,
+                company_logo_url=company.logo_url if company is not None else None,
+                location=job.location,
+                location_type=job.location_type,
+                interview=RecruiterCandidateInterviewView.model_validate(interview)
+                if interview
+                else None,
+                timeline=timeline,
+                next_step_hint=_candidate_next_step_hint(application.status),
+            )
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="You do not have permission to view this application.",
     )
+
+
+async def get_application_timeline(
+    db: AsyncSession, user: User, application_id: str
+) -> list[ActivityEventResponse]:
+    await get_application(db, user, application_id)
+    return await list_application_timeline(db, application_id=application_id)
+
+
+async def get_company_candidate_timeline(
+    db: AsyncSession, user: User, application_id: str
+) -> list[ActivityEventResponse]:
+    await get_company_candidate_detail(db, user, application_id)
+    return await list_application_timeline(db, application_id=application_id)
 
 
 async def update_application_status(
@@ -805,7 +1019,44 @@ async def update_application_status(
                 detail="Offer or reject is only valid after interview is completed.",
             )
 
+    company = await db.scalar(select(Company).where(Company.id == company_id))
     application.status = payload.status
+    candidate_title, candidate_description = _status_event_copy(
+        payload.status,
+        applicant_name=application.user.full_name,
+        job_title=job.title,
+        company_name=company.name if company else "Your recruiter",
+    )
+    await create_activity_event(
+        db,
+        event_type=f"application_{payload.status.value}",
+        audience="candidate",
+        title=candidate_title,
+        description=candidate_description,
+        href=_application_detail_href(str(application.id)),
+        user_id=application.user_id,
+        company_id=company_id,
+        application_id=application.id,
+        job_id=job.id,
+        actor_user_id=user.id,
+        metadata={"status": payload.status.value, "job_title": job.title},
+    )
+    await create_activity_event(
+        db,
+        event_type=f"candidate_{payload.status.value}",
+        audience="recruiter",
+        title=f"{application.user.full_name}: {payload.status.value.replace('_', ' ')}",
+        description=f"{application.user.full_name} is now {payload.status.value.replace('_', ' ')} for {job.title}.",
+        href=_recruiter_candidate_href(str(application.id)),
+        company_id=company_id,
+        application_id=application.id,
+        job_id=job.id,
+        actor_user_id=user.id,
+        metadata={
+            "status": payload.status.value,
+            "candidate_name": application.user.full_name,
+        },
+    )
     sync_event = enqueue_application_sync_event(db, uuid.UUID(str(application.id)))
     await db.commit()
     await db.refresh(application)
@@ -868,6 +1119,46 @@ async def update_application_review(
         application.score = payload.score
     if payload.feedback is not None:
         application.feedback = payload.feedback.strip() or None
+
+    job = await db.scalar(select(Job).where(Job.id == application.job_id))
+    company = (
+        await db.scalar(select(Company).where(Company.id == company_id))
+        if job is not None
+        else None
+    )
+    await create_activity_event(
+        db,
+        event_type="application_review_updated",
+        audience="recruiter",
+        title=f"Review updated for {application.user.full_name}",
+        description=f"Manual review notes were updated for {application.user.full_name} on {job.title if job else 'this application'}.",
+        href=_recruiter_candidate_href(str(application.id)),
+        company_id=company_id,
+        application_id=application.id,
+        job_id=job.id if job else None,
+        actor_user_id=user.id,
+        metadata={
+            "score": application.score,
+            "has_feedback": bool(application.feedback),
+        },
+    )
+    if payload.feedback is not None or payload.score is not None:
+        await create_activity_event(
+            db,
+            event_type="application_review_ready",
+            audience="candidate",
+            title=f"Review updated for {job.title if job else 'your application'}",
+            description=(
+                f"{company.name if company else 'The recruiter'} updated the review for your application."
+            ),
+            href=_application_detail_href(str(application.id)),
+            user_id=application.user_id,
+            company_id=company_id,
+            application_id=application.id,
+            job_id=job.id if job else None,
+            actor_user_id=user.id,
+            metadata={"score": application.score},
+        )
 
     sync_event = enqueue_application_sync_event(db, uuid.UUID(str(application.id)))
     await db.commit()

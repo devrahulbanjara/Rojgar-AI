@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from app.core.schemas import BaseSchema
@@ -48,6 +48,43 @@ class CandidateDashboardResponse(BaseSchema):
     stats: CandidateStats
     applications: list[ApplicationPipelineItem]
     interviews: list[CandidateInterviewItem]
+
+
+class StageCountPoint(BaseSchema):
+    stage: str
+    count: int
+
+
+class CandidateAnalyticsStats(BaseSchema):
+    total_applications: int
+    screening: int
+    shortlisted: int
+    interviews: int
+    offers: int
+    rejected: int
+
+
+class CandidateAnalyticsTimeseriesPoint(BaseSchema):
+    date: date
+    applications: int
+    shortlisted: int
+    interviews: int
+    offers: int
+    rejected: int
+
+
+class CandidateAnalyticsVelocity(BaseSchema):
+    avg_days_to_shortlist: float | None = None
+    avg_days_to_interview: float | None = None
+    avg_days_to_offer: float | None = None
+
+
+class CandidateDashboardAnalyticsResponse(BaseSchema):
+    range_key: str
+    stats: CandidateAnalyticsStats
+    funnel: list[StageCountPoint]
+    timeseries: list[CandidateAnalyticsTimeseriesPoint]
+    velocity: CandidateAnalyticsVelocity
 
 
 class JobPipelineItem(BaseSchema):
@@ -110,6 +147,7 @@ class TeamMemberActivity(BaseSchema):
     membership_id: UUID
     recruiter_name: str
     membership_status: MembershipStatus
+    active_jobs: int = 0
     shortlisted_this_month: int
     interviews_this_month: int
 
@@ -127,3 +165,108 @@ class RecruiterAdminDashboardResponse(BaseSchema):
     pending_drafts: list[PendingDraftItem]
     join_requests: list[JoinRequestItem]
     team_activity: list[TeamMemberActivity]
+
+
+class RecruiterAnalyticsStats(BaseSchema):
+    active_jobs: int
+    applications: int
+    screening: int
+    shortlisted: int
+    interview_booked: int
+    interview_completed: int
+    offers: int
+    pending_drafts: int
+
+
+class RecruiterAnalyticsTimeseriesPoint(BaseSchema):
+    date: date
+    new_applicants: int
+    completed_reviews: int
+    interviews_scheduled: int
+
+
+class InterviewLoadPoint(BaseSchema):
+    date: date
+    count: int
+
+
+class ScoreDistributionBucket(BaseSchema):
+    label: str
+    count: int
+
+
+class ScoreDistribution(BaseSchema):
+    buckets: list[ScoreDistributionBucket]
+
+
+class OutreachStateBreakdown(BaseSchema):
+    drafted: int
+    approved: int
+    sent: int
+    discarded: int
+
+
+class RecruiterOutreachSummary(BaseSchema):
+    shortlist: OutreachStateBreakdown
+    rejection: OutreachStateBreakdown
+
+
+class JobHealthPoint(BaseSchema):
+    job_id: UUID
+    job_title: str
+    days_until_expiry: int | None
+    applications: int
+    shortlisted: int
+    interviews: int
+    offers: int
+
+
+class RecruiterAnalyticsVelocity(BaseSchema):
+    avg_days_to_review: float | None = None
+    avg_days_to_shortlist: float | None = None
+    avg_days_to_interview: float | None = None
+
+
+class RecruiterDashboardAnalyticsResponse(BaseSchema):
+    range_key: str
+    stats: RecruiterAnalyticsStats
+    funnel: list[StageCountPoint]
+    applications_timeseries: list[RecruiterAnalyticsTimeseriesPoint]
+    interview_load: list[InterviewLoadPoint]
+    score_distribution: ScoreDistribution
+    job_health: list[JobHealthPoint]
+    outreach: RecruiterOutreachSummary
+    velocity: RecruiterAnalyticsVelocity
+
+
+class MembershipBreakdownPoint(BaseSchema):
+    status: MembershipStatus
+    count: int
+
+
+class JoinRequestTimeseriesPoint(BaseSchema):
+    date: date
+    requested: int
+    approved: int
+    rejected: int
+
+
+class RecruiterAdminAnalyticsStats(BaseSchema):
+    active_jobs: int
+    applications: int
+    shortlisted: int
+    interviews: int
+    offers: int
+    pending_join_requests: int
+    active_recruiters: int
+
+
+class RecruiterAdminDashboardAnalyticsResponse(BaseSchema):
+    range_key: str
+    stats: RecruiterAdminAnalyticsStats
+    company_funnel: list[StageCountPoint]
+    join_request_timeseries: list[JoinRequestTimeseriesPoint]
+    membership_breakdown: list[MembershipBreakdownPoint]
+    team_activity: list[TeamMemberActivity]
+    portfolio_health: list[JobHealthPoint]
+    velocity: RecruiterAnalyticsVelocity

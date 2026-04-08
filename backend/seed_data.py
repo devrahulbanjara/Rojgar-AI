@@ -1,7 +1,7 @@
 """
 Comprehensive seed script for ConvexHire – Nepal IT Hiring Platform.
 
-Seeds an empty database with realistic data simulating an active hiring platform:
+Seeds a clean local database with a broad, realistic demo dataset:
   - 2 companies (each with 1 admin + 2 recruiters)
   - 4 jobs per company (8 total), all expired → ready for shortlisting
   - 5 candidates (each with profile + 2 resumes)
@@ -17,27 +17,40 @@ Usage:
 """
 
 import asyncio
+import json
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
-from app.core.database import AsyncSessionLocal
+from sqlalchemy import func, select, text
+
+import app.core.model_registry  # noqa: F401
+from app.core.database import AsyncSessionLocal, Base, engine
 from app.core.security import hash_password
-from app.modules.applications.models import Application
+from app.modules.activity.service import create_activity_event
+from app.modules.applications.models import Application, ApplicationSyncEvent
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
 from app.modules.interviews.evaluation_models import (
+    CandidateEvaluationScore,
     JobEvaluationSchema,
 )
 from app.modules.interviews.models import Interview
+from app.modules.interviews.recording_model import InterviewRecording
+from app.modules.job_ai.models import JobAIDraft
 from app.modules.jobs.models import Job, JobSyncEvent
+from app.modules.notifications.models import Notification
 from app.modules.outreach.models import EmailDraft
 from app.modules.profiles.models import (
     Profile,
     ProfileEducation,
     ProfileExperience,
     ProfileSkill,
+    ResumeImportTask,
 )
+from app.modules.recruiter_chat.models import RecruiterChatSession
+from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.modules.resumes.models import (
     Resume,
     ResumeEducation,
@@ -48,13 +61,15 @@ from app.shared.enums import (
     ApplicationStatus,
     JobStatus,
     LocationType,
+    RecordingStatus,
     ShortlistStatus,
     SyncAction,
 )
 
 COMMON_PW = hash_password("Password@123")
+DEFAULT_LOGIN_PASSWORD = "Password@123"
 
-NOW = datetime(2026, 4, 4, 10, 0, 0, tzinfo=timezone.utc)
+NOW = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 EXPIRED_DATE = NOW - timedelta(days=3)  # Jobs expired 3 days ago
 
 
@@ -910,6 +925,15 @@ CANDIDATES = [
                     "high-stakes financial systems. Seeking a Tech Lead or Engineering Manager role."
                 ),
             },
+            {
+                "resume_name": "Merchant Integrations & API Platform Profile",
+                "headline": "Senior Backend Engineer | API Platforms, Webhooks, and Merchant Integrations",
+                "summary": (
+                    "Backend engineer with strong product-facing API experience, integration ownership, "
+                    "and operational tooling depth. Best aligned to partner APIs, onboarding workflows, "
+                    "merchant systems, and platform engineering roles in fintech."
+                ),
+            },
         ],
     },
     {
@@ -1345,6 +1369,396 @@ CANDIDATES = [
             },
         ],
     },
+    {
+        "full_name": "Nischal Kharel",
+        "email": "nischal.kharel@gmail.com",
+        "years_of_experience": 8,
+        "headline": "Staff Platform Engineer | SRE, Observability, and Incident Response",
+        "summary": (
+            "Platform and reliability engineer with 8 years of experience building internal developer "
+            "platforms, production observability stacks, and incident response systems for fintech and "
+            "high-growth product teams in Nepal. I have led reliability programs around SLOs, service "
+            "ownership, and production debugging. Most recently I owned tracing, alerting quality, and "
+            "platform APIs for engineering teams shipping high-volume payment and operations systems."
+        ),
+        "phone": "+977-9818-445566",
+        "location": "Maitidevi, Kathmandu",
+        "linkedin_url": "https://linkedin.com/in/nischalkharel",
+        "github_url": "https://github.com/nischal-kharel",
+        "portfolio_url": None,
+        "target_roles": [
+            "Staff Platform Engineer",
+            "Site Reliability Engineer",
+            "Platform Reliability Lead",
+        ],
+        "is_open_to_work": True,
+        "skills": [
+            "Python",
+            "Go",
+            "FastAPI",
+            "PostgreSQL",
+            "Redis",
+            "Kubernetes",
+            "Terraform",
+            "AWS",
+            "Prometheus",
+            "Grafana",
+            "OpenTelemetry",
+            "Incident Management",
+            "SLO Design",
+            "Linux",
+            "System Design",
+        ],
+        "experiences": [
+            {
+                "company_name": "CloudFactory Nepal",
+                "title": "Staff Platform Engineer",
+                "start_date": date(2022, 3, 1),
+                "end_date": None,
+                "description": [
+                    "Led the platform reliability roadmap for internal developer tooling used by 20+ engineering squads",
+                    "Introduced OpenTelemetry-based tracing and service health dashboards that cut mean time to detect critical issues by 45%",
+                    "Built internal APIs for deployment metadata, release auditability, and ownership tracking",
+                    "Facilitated incident reviews and reliability drills across platform and product teams",
+                ],
+            },
+            {
+                "company_name": "F1Soft International Pvt. Ltd.",
+                "title": "Site Reliability Engineer",
+                "start_date": date(2019, 1, 1),
+                "end_date": date(2022, 2, 28),
+                "description": [
+                    "Managed Kubernetes workloads, alerting, and production diagnostics for high-volume digital payment services",
+                    "Built Prometheus and Grafana monitoring templates adopted by backend teams across multiple payment products",
+                    "Automated incident runbooks and reliability scorecards for engineering leadership",
+                ],
+            },
+            {
+                "company_name": "Leapfrog Technology",
+                "title": "Systems Engineer",
+                "start_date": date(2016, 7, 1),
+                "end_date": date(2018, 12, 31),
+                "description": [
+                    "Maintained AWS environments, CI/CD pipelines, and logging systems for US-based SaaS teams",
+                    "Improved release confidence through infrastructure automation and deployment guardrails",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Kathmandu University (KU), Dhulikhel",
+                "degree": "Bachelor of Engineering",
+                "field_of_study": "Computer Engineering",
+                "start_date": date(2011, 8, 1),
+                "end_date": date(2015, 8, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Platform Reliability - Staff IC",
+                "headline": "Staff Platform Engineer | Reliability, Observability, and Internal APIs",
+                "summary": (
+                    "Platform engineer focused on observability, incident response, and production tooling. "
+                    "Strong background in Kubernetes, metrics, tracing, and reliability-driven developer experience."
+                ),
+            },
+            {
+                "resume_name": "SRE and Incident Response Lead",
+                "headline": "Site Reliability Engineer | SLOs, Alerting, and Production Operations",
+                "summary": (
+                    "Reliability engineer with deep hands-on experience in service health, incident operations, "
+                    "and platform automation for payment and SaaS environments."
+                ),
+            },
+        ],
+    },
+    {
+        "full_name": "Samikshya Rai",
+        "email": "samikshya.rai@gmail.com",
+        "years_of_experience": 6,
+        "headline": "Senior Frontend Platform Engineer | React, Next.js, Design Systems",
+        "summary": (
+            "Frontend engineer with 6 years of experience building shared UI foundations, enterprise design "
+            "systems, and high-performance React products. I work best at the intersection of product teams "
+            "and platform needs: reusable components, accessibility, design tokens, form systems, and frontend "
+            "quality standards. I have led major migrations to modern React and Next.js stacks."
+        ),
+        "phone": "+977-9842-556677",
+        "location": "Kupondole, Lalitpur",
+        "linkedin_url": "https://linkedin.com/in/samikshyarai",
+        "github_url": "https://github.com/samikshya-rai",
+        "portfolio_url": "https://samikshyarai.dev",
+        "target_roles": [
+            "Senior Frontend Engineer",
+            "Frontend Platform Engineer",
+            "Design Systems Lead",
+        ],
+        "is_open_to_work": True,
+        "skills": [
+            "TypeScript",
+            "React",
+            "Next.js",
+            "React Native",
+            "Storybook",
+            "SCSS",
+            "Redux Toolkit",
+            "Design Systems",
+            "Accessibility",
+            "Performance Optimization",
+            "Cypress",
+            "Playwright",
+            "Figma Collaboration",
+            "Component Architecture",
+        ],
+        "experiences": [
+            {
+                "company_name": "Leapfrog Technology",
+                "title": "Senior Frontend Engineer",
+                "start_date": date(2022, 4, 1),
+                "end_date": None,
+                "description": [
+                    "Owned a shared component platform and design token system used across multiple client applications",
+                    "Led migration from legacy CRA frontends to Next.js with measurable improvements in performance and maintainability",
+                    "Standardized accessibility reviews and component-level quality checks across frontend teams",
+                ],
+            },
+            {
+                "company_name": "Braindigit IT Solution",
+                "title": "Frontend Engineer",
+                "start_date": date(2019, 5, 1),
+                "end_date": date(2022, 3, 31),
+                "description": [
+                    "Built dashboard-heavy React and Next.js applications for B2B workflows",
+                    "Created reusable form, table, and analytics components used by multiple product squads",
+                    "Improved Lighthouse performance and frontend error monitoring coverage",
+                ],
+            },
+            {
+                "company_name": "Freelance / Contract",
+                "title": "Web and Mobile UI Developer",
+                "start_date": date(2018, 1, 1),
+                "end_date": date(2019, 4, 30),
+                "description": [
+                    "Delivered marketing sites, admin tools, and small mobile app features for startup clients",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "BSc CSIT, Tribhuvan University",
+                "degree": "Bachelor of Science",
+                "field_of_study": "Computer Science and Information Technology",
+                "start_date": date(2013, 10, 1),
+                "end_date": date(2017, 10, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Frontend Platform and Design Systems",
+                "headline": "Senior Frontend Platform Engineer | React, Next.js, and Design Systems",
+                "summary": (
+                    "Frontend engineer specializing in shared UI architecture, accessibility, and product-wide "
+                    "component systems for dashboard and workflow applications."
+                ),
+            },
+            {
+                "resume_name": "Product Frontend Lead Profile",
+                "headline": "Frontend Lead | Product UX, Performance, and React Platforms",
+                "summary": (
+                    "Experienced React and Next.js engineer with strong product intuition, UI consistency work, "
+                    "and a track record of improving frontend delivery quality."
+                ),
+            },
+        ],
+    },
+    {
+        "full_name": "Binod Acharya",
+        "email": "binod.acharya@gmail.com",
+        "years_of_experience": 6,
+        "headline": "Senior Data Engineer | Payments Analytics, Airflow, dbt, and Warehousing",
+        "summary": (
+            "Data engineer with 6 years of experience building batch and streaming pipelines, analytics models, "
+            "and warehouse foundations for fintech and healthcare products. I have worked on payment events, "
+            "risk data, reconciliation reporting, and internal BI layers. My strongest areas are SQL modeling, "
+            "Airflow, dbt, Kafka-backed ingestion, and production data quality."
+        ),
+        "phone": "+977-9804-667788",
+        "location": "Baneshwor, Kathmandu",
+        "linkedin_url": "https://linkedin.com/in/binodacharya",
+        "github_url": "https://github.com/binod-acharya",
+        "portfolio_url": None,
+        "target_roles": [
+            "Senior Data Engineer",
+            "Analytics Engineer",
+            "Data Platform Engineer",
+        ],
+        "is_open_to_work": True,
+        "skills": [
+            "Python",
+            "SQL",
+            "dbt",
+            "Apache Airflow",
+            "Kafka",
+            "Spark",
+            "PostgreSQL",
+            "Snowflake",
+            "BigQuery",
+            "Great Expectations",
+            "Data Modeling",
+            "Looker",
+            "Redis",
+            "Docker",
+            "Terraform",
+        ],
+        "experiences": [
+            {
+                "company_name": "F1Soft International Pvt. Ltd.",
+                "title": "Senior Data Engineer - Payments Analytics",
+                "start_date": date(2022, 1, 1),
+                "end_date": None,
+                "description": [
+                    "Built payment-event ingestion and analytics models used by product, finance, and risk teams",
+                    "Maintained Airflow and dbt pipelines for reconciliation, merchant health, and transaction monitoring",
+                    "Introduced warehouse quality checks and data lineage practices for critical reporting tables",
+                ],
+            },
+            {
+                "company_name": "Cotiviti Nepal",
+                "title": "Data Engineer",
+                "start_date": date(2019, 2, 1),
+                "end_date": date(2021, 12, 31),
+                "description": [
+                    "Built ETL workflows and curated analytics marts for healthcare claims and operational reporting",
+                    "Worked with Airflow, warehouse transforms, and SQL optimization across large reporting datasets",
+                ],
+            },
+            {
+                "company_name": "Deerwalk Services",
+                "title": "ETL Developer",
+                "start_date": date(2017, 7, 1),
+                "end_date": date(2019, 1, 31),
+                "description": [
+                    "Developed ETL jobs, source-system integrations, and reporting table refresh processes",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Pulchowk Campus, Institute of Engineering (IOE), TU",
+                "degree": "Bachelor of Engineering",
+                "field_of_study": "Electronics and Communication Engineering",
+                "start_date": date(2011, 11, 1),
+                "end_date": date(2015, 11, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Payments Analytics Platform",
+                "headline": "Senior Data Engineer | Payments Analytics, Airflow, dbt, Kafka",
+                "summary": (
+                    "Senior data engineer focused on fintech analytics, pipeline orchestration, warehouse modeling, "
+                    "and production-grade data quality."
+                ),
+            },
+            {
+                "resume_name": "Data Platform and Warehousing",
+                "headline": "Data Platform Engineer | SQL Modeling, Airflow, and Warehouse Reliability",
+                "summary": (
+                    "Data engineer with strong warehouse foundations, orchestration practices, and analytics engineering "
+                    "experience across large operational datasets."
+                ),
+            },
+        ],
+    },
+    {
+        "full_name": "Prabesh Koirala",
+        "email": "prabesh.koirala@gmail.com",
+        "years_of_experience": 5,
+        "headline": "Senior Backend Engineer | Integrations, APIs, and Merchant Systems",
+        "summary": (
+            "Backend engineer with 5 years of experience building partner integrations, merchant-facing APIs, "
+            "and internal developer tooling for payment and SaaS products. I have owned API security, webhook "
+            "reliability, partner onboarding workflows, and operational dashboards for business teams. I enjoy "
+            "roles that sit close to product, external integrations, and practical systems design."
+        ),
+        "phone": "+977-9813-778899",
+        "location": "Bhaisepati, Lalitpur",
+        "linkedin_url": "https://linkedin.com/in/prabeshkoirala",
+        "github_url": "https://github.com/prabesh-koirala",
+        "portfolio_url": None,
+        "target_roles": [
+            "Senior Backend Engineer",
+            "Integrations Engineer",
+            "API Platform Engineer",
+        ],
+        "is_open_to_work": True,
+        "skills": [
+            "Python",
+            "FastAPI",
+            "Django",
+            "PostgreSQL",
+            "Redis",
+            "RabbitMQ",
+            "OAuth 2.0",
+            "API Security",
+            "Webhook Systems",
+            "Docker",
+            "AWS",
+            "OpenAPI",
+            "Pytest",
+            "System Design",
+        ],
+        "experiences": [
+            {
+                "company_name": "Khalti Digital Wallet",
+                "title": "Senior Backend Engineer - Merchant Integrations",
+                "start_date": date(2021, 5, 1),
+                "end_date": None,
+                "description": [
+                    "Owned merchant onboarding APIs, settlement webhooks, and partner integration tooling",
+                    "Improved partner integration turnaround by standardizing auth flows, documentation, and operational diagnostics",
+                    "Built internal dashboards for support and account management teams to triage merchant issues faster",
+                ],
+            },
+            {
+                "company_name": "InfoDevelopers Pvt. Ltd.",
+                "title": "Software Engineer",
+                "start_date": date(2018, 6, 1),
+                "end_date": date(2021, 4, 30),
+                "description": [
+                    "Built backend APIs and service integrations for banking and financial software deployments",
+                    "Worked on API contracts, async jobs, and partner-facing integration support",
+                ],
+            },
+        ],
+        "educations": [
+            {
+                "institution": "Kathford International College of Engineering and Management",
+                "degree": "Bachelor of Engineering",
+                "field_of_study": "Computer Engineering",
+                "start_date": date(2012, 9, 1),
+                "end_date": date(2016, 9, 1),
+            }
+        ],
+        "resume_variants": [
+            {
+                "resume_name": "Backend Integrations Engineer",
+                "headline": "Senior Backend Engineer | APIs, Integrations, and Merchant Workflows",
+                "summary": (
+                    "Backend engineer focused on partner APIs, reliable integrations, and product workflows "
+                    "for merchant and operations teams."
+                ),
+            },
+            {
+                "resume_name": "Platform APIs and Merchant Systems",
+                "headline": "API Platform Engineer | FastAPI, Webhooks, and Payment Integrations",
+                "summary": (
+                    "Experienced in developer-facing API design, webhook delivery, and merchant enablement systems "
+                    "for payment products."
+                ),
+            },
+        ],
+    },
 ]
 
 
@@ -1354,7 +1768,8 @@ CANDIDATES = [
 # Format: (candidate_idx, company_idx, job_idx, resume_variant_idx,
 #           score, feedback, status, share_overrides)
 #
-# candidate_idx: 0=Aashish, 1=Dipika, 2=Suraj, 3=Nisha, 4=Rajan
+# candidate_idx: 0=Aashish, 1=Dipika, 2=Suraj, 3=Nisha, 4=Rajan,
+#                5=Nischal, 6=Samikshya, 7=Binod, 8=Prabesh
 # company_idx: 0=Pinnacle, 1=NovaMind
 # job_idx: per-company index (0-3)
 # resume_variant_idx: 0 or 1
@@ -1391,6 +1806,16 @@ APPLICATIONS = [
         "Weak match. Suraj is a data engineer, not a backend application engineer. While he has Python and SQL skills, his experience is in ETL/data pipelines rather than building transactional microservices. No FastAPI, distributed systems, or fintech application experience.",
         ApplicationStatus.rejected,
         {"share_phone": False, "share_links": False},
+    ),
+    (
+        5,
+        0,
+        0,
+        0,
+        88,
+        "Strong fit. Nischal brings platform reliability depth, solid fintech production experience, and excellent debugging examples. The panel moved him forward quickly and completed an interview loop on the historical backend opening.",
+        ApplicationStatus.interview_booked,
+        {},
     ),
     # Job 1: Lead Frontend Engineer (React Native / Next.js)
     (
@@ -1455,6 +1880,16 @@ APPLICATIONS = [
         ApplicationStatus.rejected,
         {},
     ),
+    (
+        0,
+        0,
+        3,
+        2,
+        33,
+        "Weak match. Aashish is a strong backend engineer, but this role requires dedicated QA automation ownership, test strategy leadership, and hands-on browser/API test suite design. His developer testing experience is useful but not enough for a specialist QA role.",
+        ApplicationStatus.rejected,
+        {"share_avatar": False},
+    ),
     # --- NovaMind AI Jobs ---
     # Job 0: ML Engineer – NLP & LLM Fine-tuning
     (
@@ -1507,6 +1942,26 @@ APPLICATIONS = [
         "Weak match. Dipika is an ML engineer, not a data engineer. She has some data pipeline experience from building training datasets, but lacks Airflow, dbt, Snowflake, or formal data engineering skills. The overlap is limited to Python and general data handling.",
         ApplicationStatus.rejected,
         {"share_avatar": False, "share_links": False},
+    ),
+    (
+        0,
+        1,
+        1,
+        2,
+        44,
+        "Partial overlap. Aashish has strong backend data handling experience and good SQL fundamentals, but the role requires deeper ownership of orchestration, warehouse modeling, and analytics engineering practices than his profile currently demonstrates.",
+        ApplicationStatus.rejected,
+        {"share_phone": False},
+    ),
+    (
+        5,
+        1,
+        2,
+        1,
+        64,
+        "Good platform and systems depth, but the panel preferred candidates with stronger direct product feature ownership and frontend collaboration examples for this full-stack SaaS role.",
+        ApplicationStatus.rejected,
+        {"share_phone": False, "share_links": False},
     ),
     (
         4,
@@ -1586,6 +2041,1476 @@ APPLICATIONS = [
 # ============================================================================
 # HELPERS
 # ============================================================================
+EXTRA_COMPANY_JOBS = {
+    0: [
+        {
+            "seed_key": "platform_observability_active",
+            "poster_slot": 1,
+            "title": "Platform Reliability Engineer (Observability & Internal APIs)",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 125000,
+            "salary_max": 185000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 68,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=12),
+            "overview": "Own developer-platform APIs, observability tooling, and production diagnostics that keep Pinnacle Tech's payment workloads healthy.",
+            "responsibilities": [
+                "Build internal platform APIs and tooling for backend teams",
+                "Improve tracing, metrics, alerting, and incident diagnostics",
+                "Partner with DevOps and backend teams on reliability goals",
+                "Reduce mean time to detect and resolve production issues",
+            ],
+            "requirements": [
+                "Strong Python backend fundamentals",
+                "Experience with observability stacks such as Grafana and Prometheus",
+                "Comfort with PostgreSQL, Redis, and API debugging",
+                "Ability to reason about production incidents and root causes",
+            ],
+            "preferred_qualifications": [
+                "Experience supporting fintech or regulated systems",
+                "Knowledge of distributed tracing and SLO-driven operations",
+            ],
+            "benefits": [
+                "Hybrid work and internet allowance",
+                "Health insurance and festival bonuses",
+                "Learning budget for certifications and courses",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "backend",
+                    "label": "Backend Engineering",
+                    "max_score": 10,
+                    "weight": 1.8,
+                },
+                {
+                    "key": "observability",
+                    "label": "Observability & Reliability",
+                    "max_score": 10,
+                    "weight": 1.6,
+                },
+                {
+                    "key": "debugging",
+                    "label": "Debugging & Incident Response",
+                    "max_score": 10,
+                    "weight": 1.2,
+                },
+                {
+                    "key": "communication",
+                    "label": "Communication",
+                    "max_score": 10,
+                    "weight": 0.8,
+                },
+            ],
+        },
+        {
+            "seed_key": "frontend_platform_active",
+            "poster_slot": 2,
+            "title": "Senior Frontend Platform Engineer (Design Systems)",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 120000,
+            "salary_max": 178000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": False,
+            "shortlist_threshold": 64,
+            "shortlist_status": ShortlistStatus.not_started,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=18),
+            "overview": "Lead the shared frontend platform that powers banking portals, recruiter tools, and internal admin surfaces.",
+            "responsibilities": [
+                "Maintain shared UI foundations across web products",
+                "Improve accessibility, form systems, and component APIs",
+                "Set performance standards for React and Next.js pages",
+            ],
+            "requirements": [
+                "Advanced React and TypeScript experience",
+                "Experience with component libraries and design systems",
+                "Strong debugging skills for frontend state and rendering issues",
+            ],
+            "preferred_qualifications": [
+                "Experience in product platforms or multi-app frontend systems",
+                "Understanding of analytics and experimentation tooling",
+            ],
+            "benefits": [
+                "Hybrid schedule",
+                "Festival bonuses and health insurance",
+                "Personal development budget",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "react",
+                    "label": "React & TypeScript",
+                    "max_score": 10,
+                    "weight": 1.8,
+                },
+                {
+                    "key": "systems",
+                    "label": "Design Systems",
+                    "max_score": 10,
+                    "weight": 1.5,
+                },
+                {
+                    "key": "performance",
+                    "label": "Performance",
+                    "max_score": 10,
+                    "weight": 1.0,
+                },
+                {
+                    "key": "collaboration",
+                    "label": "Collaboration",
+                    "max_score": 10,
+                    "weight": 0.7,
+                },
+            ],
+        },
+        {
+            "seed_key": "data_platform_draft",
+            "poster_slot": 0,
+            "title": "Data Platform Engineer (Streaming & Warehousing)",
+            "location": "Kathmandu",
+            "location_type": LocationType.remote,
+            "salary_min": 135000,
+            "salary_max": 195000,
+            "currency": "NPR",
+            "status": JobStatus.draft,
+            "auto_shortlist": False,
+            "shortlist_threshold": 70,
+            "shortlist_status": ShortlistStatus.not_started,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=28),
+            "overview": "Draft role for the next wave of payment analytics and streaming infrastructure work.",
+            "responsibilities": [
+                "Design warehouse ingestion jobs",
+                "Own streaming pipelines and quality checks",
+            ],
+            "requirements": [
+                "Strong SQL and Python data tooling experience",
+                "Exposure to batch and stream processing systems",
+            ],
+            "preferred_qualifications": [
+                "Fintech analytics background",
+            ],
+            "benefits": [
+                "Remote-friendly setup",
+                "Equipment and certification support",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "data",
+                    "label": "Data Engineering",
+                    "max_score": 10,
+                    "weight": 2.0,
+                },
+                {
+                    "key": "sql",
+                    "label": "SQL & Modeling",
+                    "max_score": 10,
+                    "weight": 1.0,
+                },
+            ],
+        },
+        {
+            "seed_key": "merchant_integrations_active",
+            "poster_slot": 1,
+            "title": "Senior Backend Engineer (Merchant Integrations & Partner APIs)",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 145000,
+            "salary_max": 215000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 70,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=16),
+            "overview": "Own merchant onboarding APIs, partner integrations, webhook delivery, and the internal tooling that supports commercial rollout for Pinnacle's payment products.",
+            "responsibilities": [
+                "Build and maintain merchant-facing APIs and partner onboarding flows",
+                "Own webhook reliability, retry behavior, and integration diagnostics",
+                "Collaborate with support and business teams on operational tooling",
+                "Design secure auth and API governance patterns for external partners",
+            ],
+            "requirements": [
+                "Strong Python backend experience in production systems",
+                "Experience with partner integrations, external APIs, or webhook-based workflows",
+                "Good understanding of PostgreSQL, queues, and operational debugging",
+                "Ability to work across product, engineering, and business teams",
+            ],
+            "preferred_qualifications": [
+                "Payments, merchant systems, or fintech integration experience",
+                "Exposure to OAuth, API security, and external developer experience",
+            ],
+            "benefits": [
+                "Hybrid work and communication allowance",
+                "Medical coverage and festival bonuses",
+                "Learning budget and internal leadership mentorship",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "backend",
+                    "label": "Backend Engineering",
+                    "max_score": 10,
+                    "weight": 1.8,
+                },
+                {
+                    "key": "integrations",
+                    "label": "Integrations & APIs",
+                    "max_score": 10,
+                    "weight": 1.6,
+                },
+                {
+                    "key": "product_execution",
+                    "label": "Product Execution",
+                    "max_score": 10,
+                    "weight": 1.0,
+                },
+                {
+                    "key": "communication",
+                    "label": "Cross-team Communication",
+                    "max_score": 10,
+                    "weight": 0.8,
+                },
+            ],
+        },
+        {
+            "seed_key": "risk_analytics_active",
+            "poster_slot": 1,
+            "title": "Senior Data Platform Engineer (Risk Analytics)",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 150000,
+            "salary_max": 220000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 72,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=21),
+            "overview": "Build the data platform that powers transaction risk analytics, merchant monitoring, and finance-ready reporting across Pinnacle's payment operations.",
+            "responsibilities": [
+                "Develop ingestion and warehouse models for risk and transaction analytics",
+                "Own Airflow orchestration, dbt transformations, and data quality checks",
+                "Partner with risk, finance, and product teams on reliable analytical datasets",
+                "Improve observability and operating standards for production pipelines",
+            ],
+            "requirements": [
+                "Strong SQL and Python data engineering fundamentals",
+                "Hands-on experience with Airflow, dbt, and warehouse modeling",
+                "Ability to reason about data quality, lineage, and operational reliability",
+                "Experience supporting analytics use cases for business stakeholders",
+            ],
+            "preferred_qualifications": [
+                "Fintech or payments analytics experience",
+                "Exposure to Kafka, Spark, or event-based ingestion pipelines",
+            ],
+            "benefits": [
+                "Hybrid work and equipment support",
+                "Medical insurance and learning budget",
+                "Quarterly bonus tied to platform and business impact",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "data_platform",
+                    "label": "Data Platform Engineering",
+                    "max_score": 10,
+                    "weight": 1.9,
+                },
+                {
+                    "key": "sql_modeling",
+                    "label": "SQL & Modeling",
+                    "max_score": 10,
+                    "weight": 1.4,
+                },
+                {
+                    "key": "quality",
+                    "label": "Data Quality & Reliability",
+                    "max_score": 10,
+                    "weight": 1.1,
+                },
+                {
+                    "key": "stakeholder",
+                    "label": "Stakeholder Communication",
+                    "max_score": 10,
+                    "weight": 0.7,
+                },
+            ],
+        },
+        {
+            "seed_key": "engineering_manager_active",
+            "poster_slot": 0,
+            "title": "Engineering Manager (Payments Platform)",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 190000,
+            "salary_max": 285000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": False,
+            "shortlist_threshold": 74,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=24),
+            "overview": "Lead a cross-functional payments platform team spanning backend services, platform reliability, and delivery execution for Pinnacle's core transaction products.",
+            "responsibilities": [
+                "Lead a multi-disciplinary engineering team delivering payment infrastructure and internal platform capabilities",
+                "Own hiring, technical planning, and delivery quality for a core product area",
+                "Coach senior engineers and create clear ownership across services and team processes",
+                "Partner with product, compliance, and operations leaders on roadmap execution",
+            ],
+            "requirements": [
+                "Strong backend engineering background with proven people leadership experience",
+                "Ability to operate across architecture, delivery planning, and hiring",
+                "Experience managing high-stakes systems in regulated or workflow-heavy products",
+                "Clear communication with senior stakeholders and cross-functional teams",
+            ],
+            "preferred_qualifications": [
+                "Experience in fintech, payments, or banking products",
+                "Prior ownership of platform or infrastructure-heavy engineering teams",
+            ],
+            "benefits": [
+                "Leadership bonus and annual performance review upside",
+                "Hybrid work, health insurance, and festival bonuses",
+                "Executive coaching and conference budget",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "technical_leadership",
+                    "label": "Technical Leadership",
+                    "max_score": 10,
+                    "weight": 1.7,
+                },
+                {
+                    "key": "people_management",
+                    "label": "People Management",
+                    "max_score": 10,
+                    "weight": 1.5,
+                },
+                {
+                    "key": "delivery",
+                    "label": "Execution & Delivery",
+                    "max_score": 10,
+                    "weight": 1.1,
+                },
+                {
+                    "key": "stakeholder_management",
+                    "label": "Stakeholder Management",
+                    "max_score": 10,
+                    "weight": 0.9,
+                },
+            ],
+        },
+    ],
+    1: [
+        {
+            "seed_key": "applied_ai_active",
+            "poster_slot": 1,
+            "title": "Applied AI Engineer (Search, Ranking & Automation)",
+            "location": "Lalitpur",
+            "location_type": LocationType.hybrid,
+            "salary_min": 150000,
+            "salary_max": 230000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": True,
+            "shortlist_threshold": 72,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=10),
+            "overview": "Build ranking, search, and recruiter-assistant automation features for a fast-growing hiring product.",
+            "responsibilities": [
+                "Build retrieval and ranking systems for jobs and candidates",
+                "Experiment with prompt, evaluation, and agent workflows",
+                "Ship production APIs for AI-assisted recruiter experiences",
+            ],
+            "requirements": [
+                "Strong Python skills and experience with production APIs",
+                "Experience with search, embeddings, or recommendation systems",
+                "Comfort evaluating model quality with concrete metrics",
+            ],
+            "preferred_qualifications": [
+                "Experience with LangGraph or agent orchestration",
+                "Product intuition for recruiter workflows",
+            ],
+            "benefits": [
+                "Flexible hybrid setup",
+                "Medical coverage and learning stipend",
+                "Quarterly performance bonus",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "python",
+                    "label": "Python & APIs",
+                    "max_score": 10,
+                    "weight": 1.6,
+                },
+                {
+                    "key": "search",
+                    "label": "Search & Ranking",
+                    "max_score": 10,
+                    "weight": 1.5,
+                },
+                {
+                    "key": "ml_product",
+                    "label": "Applied ML Product Sense",
+                    "max_score": 10,
+                    "weight": 1.0,
+                },
+                {
+                    "key": "experimentation",
+                    "label": "Evaluation Rigor",
+                    "max_score": 10,
+                    "weight": 0.9,
+                },
+            ],
+        },
+        {
+            "seed_key": "qa_automation_active",
+            "poster_slot": 2,
+            "title": "Staff QA Automation Engineer",
+            "location": "Lalitpur",
+            "location_type": LocationType.hybrid,
+            "salary_min": 110000,
+            "salary_max": 165000,
+            "currency": "NPR",
+            "status": JobStatus.active,
+            "auto_shortlist": False,
+            "shortlist_threshold": 62,
+            "shortlist_status": ShortlistStatus.in_progress,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=15),
+            "overview": "Strengthen release quality for recruiter tooling, candidate flows, and interview management surfaces.",
+            "responsibilities": [
+                "Design automation coverage for critical flows",
+                "Drive test strategy for frontend and backend changes",
+                "Improve flaky-test detection and reporting",
+            ],
+            "requirements": [
+                "Strong API and UI automation experience",
+                "Experience with Playwright, Pytest, or similar tooling",
+                "Ability to reason about end-to-end release risk",
+            ],
+            "preferred_qualifications": [
+                "Experience testing workflow-heavy B2B products",
+            ],
+            "benefits": [
+                "Hybrid work and equipment support",
+                "Health insurance and festival bonuses",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "automation",
+                    "label": "Automation Strategy",
+                    "max_score": 10,
+                    "weight": 1.8,
+                },
+                {
+                    "key": "api_testing",
+                    "label": "API Testing",
+                    "max_score": 10,
+                    "weight": 1.3,
+                },
+                {
+                    "key": "frontend_testing",
+                    "label": "UI Testing",
+                    "max_score": 10,
+                    "weight": 1.1,
+                },
+                {
+                    "key": "quality_mindset",
+                    "label": "Quality Mindset",
+                    "max_score": 10,
+                    "weight": 0.8,
+                },
+            ],
+        },
+        {
+            "seed_key": "growth_engineer_draft",
+            "poster_slot": 0,
+            "title": "Growth Engineer (Candidate Acquisition)",
+            "location": "Lalitpur",
+            "location_type": LocationType.remote,
+            "salary_min": 100000,
+            "salary_max": 155000,
+            "currency": "NPR",
+            "status": JobStatus.draft,
+            "auto_shortlist": False,
+            "shortlist_threshold": 65,
+            "shortlist_status": ShortlistStatus.not_started,
+            "final_shortlist_completed": False,
+            "expires_at": NOW + timedelta(days=25),
+            "overview": "Draft role focused on acquisition funnels, landing pages, and experiment-driven product growth.",
+            "responsibilities": [
+                "Ship experiments across landing pages and conversion funnels",
+                "Work with product and marketing on measurement loops",
+            ],
+            "requirements": [
+                "Strong full-stack product instincts",
+                "Comfort with analytics and experimentation",
+            ],
+            "preferred_qualifications": [
+                "Experience in growth engineering or PLG products",
+            ],
+            "benefits": [
+                "Remote-first collaboration",
+                "Learning and wellness stipend",
+            ],
+            "evaluation_criteria": [
+                {
+                    "key": "product",
+                    "label": "Product Engineering",
+                    "max_score": 10,
+                    "weight": 1.5,
+                },
+                {
+                    "key": "analytics",
+                    "label": "Analytics & Experiments",
+                    "max_score": 10,
+                    "weight": 1.3,
+                },
+            ],
+        },
+    ],
+}
+
+MEMBERSHIP_REQUESTS = {
+    0: [
+        {
+            "full_name": "Sujan Khadka",
+            "email": "sujan.khadka@talentmail.dev",
+            "job_title": "Recruitment Operations Specialist",
+            "status": MembershipStatus.pending,
+        },
+        {
+            "full_name": "Sneha Adhikari",
+            "email": "sneha.adhikari@talentmail.dev",
+            "job_title": "Campus Recruiter",
+            "status": MembershipStatus.pending,
+        },
+        {
+            "full_name": "Prabin Neupane",
+            "email": "prabin.neupane@talentmail.dev",
+            "job_title": "Agency Recruiter",
+            "status": MembershipStatus.rejected,
+        },
+    ],
+    1: [
+        {
+            "full_name": "Mina Ghimire",
+            "email": "mina.ghimire@talentmail.dev",
+            "job_title": "Recruiter",
+            "status": MembershipStatus.pending,
+        },
+        {
+            "full_name": "Niraj Poudel",
+            "email": "niraj.poudel@talentmail.dev",
+            "job_title": "Technical Sourcer",
+            "status": MembershipStatus.pending,
+        },
+        {
+            "full_name": "Sagar Bhatta",
+            "email": "sagar.bhatta@talentmail.dev",
+            "job_title": "Contract Recruiter",
+            "status": MembershipStatus.rejected,
+        },
+    ],
+}
+
+LIVE_APPLICATIONS = [
+    {
+        "candidate_index": 4,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 0,
+        "score": 71,
+        "feedback": "Strong backend fundamentals and clear communication. Needs one more round to verify observability depth and production debugging breadth.",
+        "status": ApplicationStatus.screening,
+        "created_days_ago": 9,
+        "updated_days_ago": 1,
+    },
+    {
+        "candidate_index": 3,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 1,
+        "score": 78,
+        "feedback": "Good systems mindset and practical platform work. Ready for shortlist review and outreach preparation.",
+        "status": ApplicationStatus.shortlisted,
+        "created_days_ago": 8,
+        "updated_days_ago": 1,
+        "email_state": "drafted",
+    },
+    {
+        "candidate_index": 1,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 0,
+        "score": 84,
+        "feedback": "Excellent fit. Strong engineering leadership and sound incident response examples. Interview invite already prepared.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 10,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": 0,
+        "interview_hour": 11,
+    },
+    {
+        "candidate_index": 2,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 0,
+        "score": 54,
+        "feedback": "Good technical base, but the profile is more data-platform oriented than reliability engineering. We will not move forward for this role.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 7,
+        "updated_days_ago": 1,
+        "email_state": "discarded",
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 0,
+        "job_seed_key": "frontend_platform_active",
+        "resume_index": 1,
+        "score": None,
+        "feedback": None,
+        "status": ApplicationStatus.applied,
+        "created_days_ago": 4,
+        "updated_days_ago": 4,
+    },
+    {
+        "candidate_index": 3,
+        "company_index": 0,
+        "job_seed_key": "frontend_platform_active",
+        "resume_index": 0,
+        "score": 63,
+        "feedback": "Interesting frontend portfolio and product sense. Still in initial recruiter review.",
+        "status": ApplicationStatus.screening,
+        "created_days_ago": 5,
+        "updated_days_ago": 2,
+    },
+    {
+        "candidate_index": 4,
+        "company_index": 0,
+        "job_seed_key": "frontend_platform_active",
+        "resume_index": 1,
+        "score": 57,
+        "feedback": "Solid frontend execution, but design-system depth is not yet strong enough for this senior platform role.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 6,
+        "updated_days_ago": 1,
+        "email_state": "approved",
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 0,
+        "score": 86,
+        "feedback": "Excellent production ownership examples, strong architectural judgment, and clear communication. Interview loop completed successfully and Priya is aligning feedback for final decision.",
+        "status": ApplicationStatus.interview_completed,
+        "created_days_ago": 13,
+        "updated_days_ago": 1,
+        "email_state": "sent",
+        "interview_days_offset": -1,
+        "interview_hour": 15,
+        "create_evaluations": True,
+        "create_recording": True,
+    },
+    {
+        "candidate_index": 5,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 0,
+        "score": 93,
+        "feedback": "Top-tier fit for the platform reliability role. Strong observability depth, incident leadership, and practical examples from fintech and SaaS environments. Offer approved by the hiring panel.",
+        "status": ApplicationStatus.offer,
+        "created_days_ago": 16,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": -3,
+        "interview_hour": 11,
+        "create_evaluations": True,
+        "create_recording": True,
+    },
+    {
+        "candidate_index": 7,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 1,
+        "score": 58,
+        "feedback": "Strong data engineering profile, but the team felt the candidate was more aligned to analytics platform work than reliability and observability ownership.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 9,
+        "updated_days_ago": 2,
+        "email_state": "sent",
+    },
+    {
+        "candidate_index": 8,
+        "company_index": 0,
+        "job_seed_key": "platform_observability_active",
+        "resume_index": 0,
+        "score": None,
+        "feedback": None,
+        "status": ApplicationStatus.applied,
+        "created_days_ago": 2,
+        "updated_days_ago": 2,
+    },
+    {
+        "candidate_index": 6,
+        "company_index": 0,
+        "job_seed_key": "frontend_platform_active",
+        "resume_index": 0,
+        "score": 89,
+        "feedback": "Strong design-system depth, clear frontend platform ownership, and excellent examples of cross-team rollout. Priya approved the interview invite immediately after review.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 7,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": 3,
+        "interview_hour": 10,
+    },
+    {
+        "candidate_index": 1,
+        "company_index": 0,
+        "job_seed_key": "frontend_platform_active",
+        "resume_index": 1,
+        "score": 41,
+        "feedback": "Strong AI profile overall, but this frontend platform role needs hands-on design-system ownership and React architecture depth that are not present here.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 5,
+        "updated_days_ago": 2,
+        "email_state": "sent",
+    },
+    {
+        "candidate_index": 2,
+        "company_index": 0,
+        "job_seed_key": "frontend_platform_active",
+        "resume_index": 1,
+        "score": 47,
+        "feedback": "Candidate has good analytical thinking but too little direct frontend engineering depth for this senior platform opening.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 6,
+        "updated_days_ago": 3,
+        "email_state": "approved",
+    },
+    {
+        "candidate_index": 8,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 0,
+        "score": 90,
+        "feedback": "Excellent fit for partner APIs and merchant operations. Clear experience with webhook reliability, onboarding flows, and business-facing tooling.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 8,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": 2,
+        "interview_hour": 14,
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 2,
+        "score": 84,
+        "feedback": "Strong API architecture fundamentals, relevant fintech context, and much better alignment after Priya reviewed the merchant-focused resume variant. Interview booked for a final product-and-integrations round.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 9,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": 1,
+        "interview_hour": 15,
+    },
+    {
+        "candidate_index": 5,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 1,
+        "score": 69,
+        "feedback": "Strong reliability and platform ownership, but Priya is still deciding whether the candidate is product-facing enough for merchant integrations.",
+        "status": ApplicationStatus.screening,
+        "created_days_ago": 6,
+        "updated_days_ago": 1,
+    },
+    {
+        "candidate_index": 6,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 1,
+        "score": 38,
+        "feedback": "Impressive frontend background, but the role is backend-heavy and needs deep API and integration ownership.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 5,
+        "updated_days_ago": 2,
+        "email_state": "sent",
+    },
+    {
+        "candidate_index": 7,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 1,
+        "score": None,
+        "feedback": None,
+        "status": ApplicationStatus.applied,
+        "created_days_ago": 3,
+        "updated_days_ago": 3,
+    },
+    {
+        "candidate_index": 3,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 0,
+        "score": 83,
+        "feedback": "Strong product engineering and cross-functional communication. Priya completed the interview loop and captured feedback for final calibration.",
+        "status": ApplicationStatus.interview_completed,
+        "created_days_ago": 11,
+        "updated_days_ago": 1,
+        "email_state": "sent",
+        "interview_days_offset": -4,
+        "interview_hour": 16,
+        "create_evaluations": True,
+        "create_recording": True,
+    },
+    {
+        "candidate_index": 4,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 0,
+        "score": 46,
+        "feedback": "Shows good operations instincts, but the role needs more direct backend API ownership and external integration depth.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 7,
+        "updated_days_ago": 2,
+        "email_state": "approved",
+    },
+    {
+        "candidate_index": 2,
+        "company_index": 0,
+        "job_seed_key": "merchant_integrations_active",
+        "resume_index": 0,
+        "score": 66,
+        "feedback": "Interesting systems background and good SQL thinking. Priya kept the profile in screening while validating product-facing API experience.",
+        "status": ApplicationStatus.screening,
+        "created_days_ago": 4,
+        "updated_days_ago": 1,
+    },
+    {
+        "candidate_index": 7,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 0,
+        "score": 95,
+        "feedback": "Best fit in the pipeline for risk analytics. Strong fintech data background, warehouse practices, and communication with business stakeholders. Offer prepared after final panel alignment.",
+        "status": ApplicationStatus.offer,
+        "created_days_ago": 15,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": -2,
+        "interview_hour": 13,
+        "create_evaluations": True,
+        "create_recording": True,
+    },
+    {
+        "candidate_index": 2,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 0,
+        "score": 84,
+        "feedback": "Strong data engineering depth and good stakeholder communication. Interview invite approved and waiting on final scheduling.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 10,
+        "updated_days_ago": 1,
+        "email_state": "approved",
+        "interview_days_offset": 4,
+        "interview_hour": 11,
+    },
+    {
+        "candidate_index": 5,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 0,
+        "score": 62,
+        "feedback": "Excellent platform engineer, but the role needs deeper analytics engineering and warehouse modeling than the current profile demonstrates.",
+        "status": ApplicationStatus.shortlisted,
+        "created_days_ago": 7,
+        "updated_days_ago": 1,
+        "email_state": "drafted",
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 0,
+        "score": 68,
+        "feedback": "Strong systems thinker with solid SQL fundamentals. Priya is still calibrating whether the candidate is best placed in backend or analytics platform work.",
+        "status": ApplicationStatus.screening,
+        "created_days_ago": 5,
+        "updated_days_ago": 1,
+    },
+    {
+        "candidate_index": 8,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 1,
+        "score": 43,
+        "feedback": "Good API and integrations background, but the opening is too data-platform heavy for the candidate's current strengths.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 6,
+        "updated_days_ago": 2,
+        "email_state": "discarded",
+    },
+    {
+        "candidate_index": 4,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 1,
+        "score": None,
+        "feedback": None,
+        "status": ApplicationStatus.applied,
+        "created_days_ago": 2,
+        "updated_days_ago": 2,
+    },
+    {
+        "candidate_index": 1,
+        "company_index": 0,
+        "job_seed_key": "risk_analytics_active",
+        "resume_index": 0,
+        "score": 45,
+        "feedback": "The ML experience is strong, but this job needs deeper warehouse and analytics platform ownership than model-engineering work.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 7,
+        "updated_days_ago": 2,
+        "email_state": "sent",
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 0,
+        "job_seed_key": "engineering_manager_active",
+        "resume_index": 1,
+        "score": 87,
+        "feedback": "Strong technical leadership signals, clear team mentorship examples, and credible fintech depth. Bikash shortlisted the profile while aligning final people-management expectations with the hiring panel.",
+        "status": ApplicationStatus.shortlisted,
+        "created_days_ago": 12,
+        "updated_days_ago": 1,
+        "email_state": "drafted",
+    },
+    {
+        "candidate_index": 5,
+        "company_index": 0,
+        "job_seed_key": "engineering_manager_active",
+        "resume_index": 1,
+        "score": 73,
+        "feedback": "Excellent platform leadership instincts, but Bikash is still deciding whether the profile is people-management ready or stronger as a senior IC leader.",
+        "status": ApplicationStatus.screening,
+        "created_days_ago": 8,
+        "updated_days_ago": 1,
+    },
+    {
+        "candidate_index": 8,
+        "company_index": 0,
+        "job_seed_key": "engineering_manager_active",
+        "resume_index": 1,
+        "score": 84,
+        "feedback": "Strong stakeholder-facing engineering experience and solid product judgment. Interview scheduled to validate team leadership and organizational planning depth.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 9,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": 5,
+        "interview_hour": 12,
+    },
+    {
+        "candidate_index": 3,
+        "company_index": 0,
+        "job_seed_key": "engineering_manager_active",
+        "resume_index": 0,
+        "score": 59,
+        "feedback": "Strong product engineer, but the hiring panel decided the role needs more people-management and backend leadership depth than this profile currently shows.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 7,
+        "updated_days_ago": 2,
+        "email_state": "sent",
+    },
+    {
+        "candidate_index": 6,
+        "company_index": 0,
+        "job_seed_key": "engineering_manager_active",
+        "resume_index": 1,
+        "score": 52,
+        "feedback": "Impressive frontend leadership background, but this opening requires a backend/platform-oriented manager with fintech systems exposure.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 6,
+        "updated_days_ago": 2,
+        "email_state": "approved",
+    },
+    {
+        "candidate_index": 4,
+        "company_index": 0,
+        "job_seed_key": "engineering_manager_active",
+        "resume_index": 0,
+        "score": None,
+        "feedback": None,
+        "status": ApplicationStatus.applied,
+        "created_days_ago": 2,
+        "updated_days_ago": 2,
+    },
+    {
+        "candidate_index": 2,
+        "company_index": 1,
+        "job_seed_key": "applied_ai_active",
+        "resume_index": 0,
+        "score": 94,
+        "feedback": "Outstanding match. Strong data and ML systems experience, excellent product framing, and direct relevance to ranking and retrieval use cases.",
+        "status": ApplicationStatus.offer,
+        "created_days_ago": 14,
+        "updated_days_ago": 1,
+        "email_state": "sent",
+        "interview_days_offset": -2,
+        "interview_hour": 14,
+        "create_evaluations": True,
+        "create_recording": True,
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 1,
+        "job_seed_key": "applied_ai_active",
+        "resume_index": 0,
+        "score": 79,
+        "feedback": "Good backend architecture depth and promising product thinking. Ready for shortlist outreach after one more calibration pass.",
+        "status": ApplicationStatus.shortlisted,
+        "created_days_ago": 11,
+        "updated_days_ago": 2,
+        "email_state": "drafted",
+    },
+    {
+        "candidate_index": 4,
+        "company_index": 1,
+        "job_seed_key": "applied_ai_active",
+        "resume_index": 1,
+        "score": None,
+        "feedback": None,
+        "status": ApplicationStatus.applied,
+        "created_days_ago": 3,
+        "updated_days_ago": 3,
+    },
+    {
+        "candidate_index": 3,
+        "company_index": 1,
+        "job_seed_key": "qa_automation_active",
+        "resume_index": 1,
+        "score": 82,
+        "feedback": "Clear QA ownership examples and strong automation coverage strategy. Interview completed successfully; evaluation submitted.",
+        "status": ApplicationStatus.interview_completed,
+        "created_days_ago": 12,
+        "updated_days_ago": 0,
+        "email_state": "sent",
+        "interview_days_offset": 0,
+        "interview_hour": 9,
+        "create_evaluations": True,
+        "create_recording": True,
+    },
+    {
+        "candidate_index": 1,
+        "company_index": 1,
+        "job_seed_key": "qa_automation_active",
+        "resume_index": 1,
+        "score": 77,
+        "feedback": "Good cross-functional QA communication and reliable automation approach. Interview booked for later this week.",
+        "status": ApplicationStatus.interview_booked,
+        "created_days_ago": 9,
+        "updated_days_ago": 1,
+        "email_state": "approved",
+        "interview_days_offset": 2,
+        "interview_hour": 13,
+    },
+    {
+        "candidate_index": 0,
+        "company_index": 1,
+        "job_seed_key": "qa_automation_active",
+        "resume_index": 1,
+        "score": 49,
+        "feedback": "Strong engineering profile overall, but not enough direct automation ownership for this staff-level QA opening.",
+        "status": ApplicationStatus.rejected,
+        "created_days_ago": 8,
+        "updated_days_ago": 2,
+        "email_state": "sent",
+    },
+]
+
+AI_DRAFT_BLUEPRINTS = [
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "job-ai-platform-observability",
+        "status": "awaiting_human",
+        "mode": "create",
+        "source_prompt": "Create a backend platform reliability role focused on observability, internal tooling, and developer enablement.",
+        "locked_fields": ["location", "currency"],
+        "latest_draft": {
+            "title": "Senior Platform Reliability Engineer",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 130000,
+            "salary_max": 190000,
+            "currency": "NPR",
+            "status": JobStatus.draft,
+            "shortlist_threshold": 68,
+            "overview": "Own reliability tooling, internal platform APIs, and observability for high-throughput engineering teams.",
+            "responsibilities": [
+                "Improve production diagnostics and alerting quality",
+                "Build internal APIs and automation for developer teams",
+                "Partner with DevOps and backend leads on reliability goals",
+            ],
+            "requirements": [
+                "Strong Python backend experience",
+                "Hands-on observability and production support experience",
+                "Solid SQL and systems-debugging fundamentals",
+            ],
+            "preferred_qualifications": ["Experience in fintech or regulated products"],
+            "benefits": ["Hybrid work", "Health insurance", "Learning budget"],
+            "auto_shortlist": True,
+            "assumptions": [
+                "The role will work closely with the core payments team",
+                "The team prefers Kathmandu-based collaboration for at least part of the week",
+            ],
+            "missing_fields": [],
+            "warnings": ["On-call expectations should be confirmed before publishing."],
+        },
+        "salary_research": {
+            "role": "Senior Platform Reliability Engineer",
+            "country": "Nepal",
+            "currency": "NPR",
+            "recommended_min": 130000,
+            "recommended_max": 190000,
+            "confidence": "medium",
+            "rationale": "Comparable Kathmandu senior backend and DevOps roles cluster in the 1.3L to 1.9L NPR range.",
+            "sources": [
+                {
+                    "source_name": "Local hiring benchmark",
+                    "url": "https://example.com/salary-benchmark/platform-reliability",
+                    "country": "Nepal",
+                    "currency": "NPR",
+                    "quoted_min": 120000,
+                    "quoted_max": 185000,
+                    "notes": "Used as a directional market signal for senior platform roles.",
+                }
+            ],
+            "insufficient_evidence": False,
+        },
+        "assumptions": [
+            "Hiring manager wants a senior IC rather than a team lead",
+        ],
+        "warnings": ["Compensation should be validated before publishing."],
+        "missing_fields": [],
+    },
+    {
+        "company_index": 1,
+        "recruiter_slot": 1,
+        "thread_id": "job-ai-growth-engineer",
+        "status": "draft_saved",
+        "mode": "create",
+        "source_prompt": "Draft a growth engineer role for candidate acquisition funnels and experiment-driven product growth.",
+        "locked_fields": [],
+        "latest_draft": {
+            "title": "Growth Engineer",
+            "location": "Lalitpur",
+            "location_type": LocationType.remote,
+            "salary_min": 100000,
+            "salary_max": 155000,
+            "currency": "NPR",
+            "status": JobStatus.draft,
+            "shortlist_threshold": 65,
+            "overview": "Ship acquisition experiments, landing page improvements, and measurement loops that help grow candidate supply.",
+            "responsibilities": [
+                "Build growth experiments end to end",
+                "Instrument and analyze candidate funnel performance",
+                "Collaborate with product and marketing on iteration cycles",
+            ],
+            "requirements": [
+                "Strong product engineering instincts",
+                "Comfort with analytics and experimentation",
+                "Ability to move quickly with clear measurement",
+            ],
+            "preferred_qualifications": ["Marketplace or PLG experience"],
+            "benefits": ["Remote-first setup", "Health insurance", "Growth bonus"],
+            "auto_shortlist": False,
+            "assumptions": ["The role will report into product, not marketing."],
+            "missing_fields": ["Exact interview loop"],
+            "warnings": ["Success metrics should be finalized before publishing."],
+        },
+        "salary_research": None,
+        "assumptions": [
+            "This role will be measured primarily on conversion efficiency."
+        ],
+        "warnings": [
+            "Compensation band may need calibration against product engineering roles."
+        ],
+        "missing_fields": ["Hiring manager"],
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "job-ai-risk-analytics-lead",
+        "status": "awaiting_human",
+        "mode": "create",
+        "source_prompt": "Draft a senior risk analytics platform role for Pinnacle's transaction monitoring, reconciliation, and finance reporting stack.",
+        "locked_fields": ["currency", "location"],
+        "latest_draft": {
+            "title": "Senior Risk Analytics Platform Engineer",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 155000,
+            "salary_max": 225000,
+            "currency": "NPR",
+            "status": JobStatus.draft,
+            "shortlist_threshold": 72,
+            "overview": "Build the data platform behind transaction monitoring, merchant risk analytics, and finance-grade reporting across payment operations.",
+            "responsibilities": [
+                "Own warehouse models and orchestration for risk and finance analytics",
+                "Improve quality, lineage, and stakeholder trust in operational datasets",
+                "Partner with product, finance, and risk teams on metric definitions",
+            ],
+            "requirements": [
+                "Strong SQL and Python data engineering background",
+                "Hands-on Airflow and dbt experience",
+                "Good product judgment when working with business metrics",
+            ],
+            "preferred_qualifications": [
+                "Fintech analytics or reconciliation experience"
+            ],
+            "benefits": ["Hybrid work", "Health insurance", "Quarterly bonus"],
+            "auto_shortlist": True,
+            "assumptions": [
+                "The role should sit between data platform and business analytics ownership."
+            ],
+            "missing_fields": ["Final reporting line"],
+            "warnings": [
+                "The panel may want to split this into platform and analytics tracks later."
+            ],
+        },
+        "salary_research": {
+            "role": "Senior Risk Analytics Platform Engineer",
+            "country": "Nepal",
+            "currency": "NPR",
+            "recommended_min": 155000,
+            "recommended_max": 225000,
+            "confidence": "medium",
+            "rationale": "Comparable fintech data platform roles in Kathmandu tend to cluster in the upper senior IC range.",
+            "sources": [
+                {
+                    "source_name": "Internal recruiter benchmark",
+                    "url": "https://example.com/salary-benchmark/data-platform-nepal",
+                    "country": "Nepal",
+                    "currency": "NPR",
+                    "quoted_min": 145000,
+                    "quoted_max": 220000,
+                    "notes": "Directional benchmark used during recruiter calibration.",
+                }
+            ],
+            "insufficient_evidence": False,
+        },
+        "assumptions": [
+            "Priya intends to keep this role senior IC rather than people-manager."
+        ],
+        "warnings": [
+            "Compensation needs final approval from finance before the role is published."
+        ],
+        "missing_fields": ["Hiring manager", "Interview panel"],
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "job-ai-merchant-platform-followup",
+        "status": "draft_saved",
+        "mode": "create",
+        "source_prompt": "Draft a follow-up backend role focused on merchant platform tooling, partner enablement, and operational integrations for Pinnacle.",
+        "locked_fields": ["currency"],
+        "latest_draft": {
+            "title": "Backend Engineer (Merchant Platform Tooling)",
+            "location": "Kathmandu",
+            "location_type": LocationType.hybrid,
+            "salary_min": 135000,
+            "salary_max": 198000,
+            "currency": "NPR",
+            "status": JobStatus.draft,
+            "shortlist_threshold": 68,
+            "overview": "Build the internal APIs, onboarding workflows, and operational support tools that help Pinnacle scale merchant integrations cleanly.",
+            "responsibilities": [
+                "Ship partner enablement APIs and merchant tooling improvements",
+                "Improve diagnostics and internal workflows for merchant operations teams",
+                "Collaborate with commercial and support stakeholders on integration quality",
+            ],
+            "requirements": [
+                "Strong backend API development experience",
+                "Comfort working across product and business-facing workflows",
+                "Good debugging and operational ownership instincts",
+            ],
+            "preferred_qualifications": ["Payments or merchant platform experience"],
+            "benefits": ["Hybrid work", "Health insurance", "Festival bonuses"],
+            "auto_shortlist": True,
+            "assumptions": [
+                "Priya intends this role to support the main merchant integrations team rather than replace it."
+            ],
+            "missing_fields": ["Hiring manager", "Final level calibration"],
+            "warnings": [
+                "This role overlaps with the existing merchant integrations opening and may need scope clarification."
+            ],
+        },
+        "salary_research": None,
+        "assumptions": [
+            "The role should be positioned as a platform extension role rather than a customer-facing integrations lead."
+        ],
+        "warnings": [
+            "The team should avoid opening this role until the current merchant integrations pipeline is resolved."
+        ],
+        "missing_fields": ["Approval status", "Team placement"],
+    },
+]
+
+CHAT_SESSION_BLUEPRINTS = [
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-payments-overview",
+        "title": "Backend hiring pipeline review",
+        "last_interaction_offset_hours": 4,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 1,
+        "thread_id": "recruiter-chat-frontend-salary-research",
+        "title": "Frontend compensation research",
+        "last_interaction_offset_hours": 26,
+    },
+    {
+        "company_index": 1,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-ai-role-summary",
+        "title": "AI engineer candidate search",
+        "last_interaction_offset_hours": 8,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-platform-calibration",
+        "title": "Platform reliability calibration notes",
+        "last_interaction_offset_hours": 2,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-merchant-shortlist-batch",
+        "title": "Merchant integrations shortlist batch",
+        "last_interaction_offset_hours": 6,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-risk-analytics-forecast",
+        "title": "Risk analytics hiring forecast",
+        "last_interaction_offset_hours": 12,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-offer-prep-nischal",
+        "title": "Offer prep for Nischal Kharel",
+        "last_interaction_offset_hours": 18,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-outreach-approval-queue",
+        "title": "Outreach approval queue review",
+        "last_interaction_offset_hours": 1,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-interview-reschedule-log",
+        "title": "Interview reschedule and follow-up log",
+        "last_interaction_offset_hours": 9,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-rejection-copy-notes",
+        "title": "Rejection copy and candidate notes",
+        "last_interaction_offset_hours": 14,
+    },
+    {
+        "company_index": 0,
+        "recruiter_slot": 0,
+        "thread_id": "recruiter-chat-eng-manager-panel-sync",
+        "title": "Engineering manager panel sync",
+        "last_interaction_offset_hours": 21,
+    },
+]
+
+RESUME_IMPORT_TASK_BLUEPRINTS = [
+    {
+        "candidate_index": 0,
+        "status": "completed",
+        "source_file_name": "aashish-basnet-backend-resume.pdf",
+        "result_data": {
+            "headline": "Senior Backend Engineer | Payments & Platform Reliability",
+            "skills": ["Python", "FastAPI", "PostgreSQL", "Redis", "AWS"],
+            "summary": "Imported successfully with strong alignment to backend platform roles.",
+        },
+    },
+    {
+        "candidate_index": 0,
+        "status": "completed",
+        "source_file_name": "aashish-basnet-merchant-integrations.pdf",
+        "result_data": {
+            "headline": "Senior Backend Engineer | Merchant APIs and Integration Workflows",
+            "skills": [
+                "Python",
+                "FastAPI",
+                "PostgreSQL",
+                "Redis",
+                "API Security",
+                "Webhook Systems",
+            ],
+            "summary": "Imported successfully and used as a targeted resume for merchant integration opportunities.",
+        },
+    },
+    {
+        "candidate_index": 0,
+        "status": "failed",
+        "source_file_name": "aashish-basnet-old-scan.pdf",
+        "error_message": "The uploaded scan was low quality and several sections could not be extracted reliably.",
+    },
+    {
+        "candidate_index": 4,
+        "status": "failed",
+        "source_file_name": "richa-product-designer-resume.pdf",
+        "error_message": "The uploaded file was incomplete and could not be parsed end to end.",
+    },
+    {
+        "candidate_index": 5,
+        "status": "completed",
+        "source_file_name": "nischal-kharel-sre-resume.pdf",
+        "result_data": {
+            "headline": "Staff Platform Engineer | Reliability and Observability",
+            "skills": [
+                "Kubernetes",
+                "Prometheus",
+                "Grafana",
+                "OpenTelemetry",
+                "Python",
+            ],
+            "summary": "Imported successfully with strong alignment to platform reliability openings.",
+        },
+    },
+]
 
 
 def make_user(full_name: str, email: str, role: UserRole) -> User:
@@ -1600,18 +3525,33 @@ def make_user(full_name: str, email: str, role: UserRole) -> User:
 
 
 def make_membership(
-    user_id, company_id, role: MembershipRole, job_title: str
+    user_id,
+    company_id,
+    role: MembershipRole,
+    job_title: str,
+    status: MembershipStatus = MembershipStatus.active,
 ) -> CompanyMembership:
     return CompanyMembership(
         user_id=user_id,
         company_id=company_id,
         role=role,
-        status=MembershipStatus.active,
+        status=status,
         job_title=job_title,
     )
 
 
-def make_job(company_id, posted_by, data: dict) -> Job:
+def make_job(
+    company_id,
+    posted_by,
+    data: dict,
+    *,
+    status: JobStatus = JobStatus.expired,
+    auto_shortlist: bool = False,
+    shortlist_status: ShortlistStatus = ShortlistStatus.completed,
+    final_shortlist_completed: bool = True,
+    hiring_completed: bool = False,
+    expires_at: datetime | None = EXPIRED_DATE,
+) -> Job:
     return Job(
         company_id=company_id,
         posted_by=posted_by,
@@ -1621,17 +3561,18 @@ def make_job(company_id, posted_by, data: dict) -> Job:
         salary_min=data["salary_min"],
         salary_max=data["salary_max"],
         currency=data["currency"],
-        status=JobStatus.expired,
+        status=status,
         overview=data["overview"],
         responsibilities=data["responsibilities"],
         requirements=data["requirements"],
         preferred_qualifications=data["preferred_qualifications"],
         benefits=data["benefits"],
-        auto_shortlist=False,
+        auto_shortlist=auto_shortlist,
         shortlist_threshold=data.get("shortlist_threshold", 70),
-        shortlist_status=ShortlistStatus.completed,
-        final_shortlist_completed=True,
-        expires_at=EXPIRED_DATE,
+        shortlist_status=shortlist_status,
+        final_shortlist_completed=final_shortlist_completed,
+        hiring_completed=hiring_completed,
+        expires_at=expires_at,
     )
 
 
@@ -1724,13 +3665,187 @@ def generate_rejection_email(
     return subject, body
 
 
+async def ensure_schema() -> None:
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+
+
+async def clear_existing_data() -> None:
+    table_names = [f'"{table.name}"' for table in reversed(Base.metadata.sorted_tables)]
+    if not table_names:
+        return
+
+    async with engine.begin() as connection:
+        await connection.execute(
+            text(f"TRUNCATE TABLE {', '.join(table_names)} RESTART IDENTITY CASCADE")
+        )
+
+
+def build_credentials_document() -> dict:
+    accounts: list[dict] = []
+
+    for company in COMPANIES:
+        accounts.append(
+            {
+                "full_name": company["admin"]["full_name"],
+                "email": company["admin"]["email"],
+                "primary_role": UserRole.recruiter_admin.value,
+                "company": company["name"],
+                "membership_role": MembershipRole.admin.value,
+                "membership_status": MembershipStatus.active.value,
+                "job_title": company["admin"]["job_title"],
+            }
+        )
+
+        for recruiter in company["recruiters"]:
+            accounts.append(
+                {
+                    "full_name": recruiter["full_name"],
+                    "email": recruiter["email"],
+                    "primary_role": UserRole.recruiter.value,
+                    "company": company["name"],
+                    "membership_role": MembershipRole.recruiter.value,
+                    "membership_status": MembershipStatus.active.value,
+                    "job_title": recruiter["job_title"],
+                }
+            )
+
+    for candidate in CANDIDATES:
+        accounts.append(
+            {
+                "full_name": candidate["full_name"],
+                "email": candidate["email"],
+                "primary_role": UserRole.candidate.value,
+            }
+        )
+
+    for company_index, requests in MEMBERSHIP_REQUESTS.items():
+        company_name = COMPANIES[company_index]["name"]
+        for request in requests:
+            accounts.append(
+                {
+                    "full_name": request["full_name"],
+                    "email": request["email"],
+                    "primary_role": UserRole.recruiter.value,
+                    "company": company_name,
+                    "membership_role": MembershipRole.recruiter.value,
+                    "membership_status": request["status"].value,
+                    "job_title": request["job_title"],
+                }
+            )
+
+    return {
+        "generated_from": "backend/seed_data.py",
+        "default_password": DEFAULT_LOGIN_PASSWORD,
+        "notes": [
+            "All seeded accounts use the default password unless the seed script is changed.",
+            "Pending and rejected recruiter membership users are included for completeness, but their company access reflects the membership_status field.",
+        ],
+        "accounts": accounts,
+    }
+
+
+def write_credentials_file() -> Path:
+    credentials_path = Path(__file__).with_name("credentials.json")
+    credentials_path.write_text(
+        json.dumps(build_credentials_document(), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return credentials_path
+
+
+def get_historical_job_dates(
+    company_index: int, job_index: int
+) -> tuple[datetime, datetime]:
+    """Spread completed hiring cycles across multiple years for realistic trend data."""
+
+    days_ago = 150 + (company_index * 540) + (job_index * 140)
+    expires_at = NOW - timedelta(days=days_ago)
+    created_at = expires_at - timedelta(days=45 + (job_index * 6))
+    return created_at, expires_at
+
+
+async def create_job_with_schema(
+    db,
+    company_id,
+    posted_by,
+    data: dict,
+    *,
+    status: JobStatus,
+    auto_shortlist: bool,
+    shortlist_status: ShortlistStatus,
+    final_shortlist_completed: bool,
+    expires_at: datetime | None,
+    hiring_completed: bool = False,
+) -> Job:
+    job = make_job(
+        company_id,
+        posted_by,
+        data,
+        status=status,
+        auto_shortlist=auto_shortlist,
+        shortlist_status=shortlist_status,
+        final_shortlist_completed=final_shortlist_completed,
+        hiring_completed=hiring_completed,
+        expires_at=expires_at,
+    )
+    db.add(job)
+    await db.flush()
+
+    eval_criteria = data.get("evaluation_criteria", [])
+    if eval_criteria:
+        db.add(
+            JobEvaluationSchema(
+                job_id=job.id,
+                version=1,
+                criteria=eval_criteria,
+                human_weight=0.6,
+                llm_weight=0.4,
+            )
+        )
+        await db.flush()
+
+    return job
+
+
+def build_shared_snapshot(
+    candidate_user: User, candidate_data: dict, share: dict
+) -> dict:
+    return {
+        "shared_full_name": candidate_user.full_name,
+        "shared_email_value": candidate_user.email if share["share_email"] else None,
+        "shared_phone_value": candidate_data["phone"] if share["share_phone"] else None,
+        "shared_location_value": candidate_data["location"]
+        if share["share_location"]
+        else None,
+        "shared_headline_value": candidate_data["headline"]
+        if share["share_headline_summary"]
+        else None,
+        "shared_summary_value": candidate_data["summary"]
+        if share["share_headline_summary"]
+        else None,
+        "shared_linkedin_url": candidate_data.get("linkedin_url")
+        if share["share_links"]
+        else None,
+        "shared_github_url": candidate_data.get("github_url")
+        if share["share_links"]
+        else None,
+        "shared_portfolio_url": candidate_data.get("portfolio_url")
+        if share["share_links"]
+        else None,
+        "shared_avatar_url": None,
+    }
+
+
 # ============================================================================
 # SEEDING FUNCTIONS
 # ============================================================================
 
 
-async def seed_company(db, company_data: dict) -> tuple[list, User, list]:
-    """Seed a single company: admin + recruiters + jobs. Returns (jobs, admin, recruiter_users)."""
+async def seed_company(
+    db, company_index: int, company_data: dict
+) -> tuple[Company, list[Job], dict[str, Job], User, list[User]]:
+    """Seed a single company and return company context for downstream seed steps."""
 
     admin_info = company_data["admin"]
     admin = make_user(
@@ -1771,31 +3886,69 @@ async def seed_company(db, company_data: dict) -> tuple[list, User, list]:
         )
         recruiter_users.append(r)
 
-    created_jobs = []
+    created_jobs: list[Job] = []
+    extra_jobs: dict[str, Job] = {}
     posters = [admin] + recruiter_users
     for i, job_data in enumerate(company_data["jobs"]):
-        job = make_job(company.id, posters[i % len(posters)].id, job_data)
-        db.add(job)
-        await db.flush()
+        job_created_at, job_expires_at = get_historical_job_dates(company_index, i)
+        job = await create_job_with_schema(
+            db,
+            company.id,
+            posters[i % len(posters)].id,
+            job_data,
+            status=JobStatus.expired,
+            auto_shortlist=False,
+            shortlist_status=ShortlistStatus.completed,
+            final_shortlist_completed=True,
+            expires_at=job_expires_at,
+        )
+        job.created_at = job_created_at
+        job.updated_at = job_expires_at - timedelta(days=1)
         created_jobs.append(job)
 
-        # Create evaluation schema for this job
-        eval_criteria = job_data.get("evaluation_criteria", [])
-        if eval_criteria:
-            eval_schema = JobEvaluationSchema(
-                job_id=job.id,
-                version=1,
-                criteria=eval_criteria,
-                human_weight=0.6,
-                llm_weight=0.4,
+    for request in MEMBERSHIP_REQUESTS.get(company_index, []):
+        request_user = make_user(
+            request["full_name"], request["email"], UserRole.recruiter
+        )
+        db.add(request_user)
+        await db.flush()
+        db.add(
+            make_membership(
+                request_user.id,
+                company.id,
+                MembershipRole.recruiter,
+                request["job_title"],
+                status=request["status"],
             )
-            db.add(eval_schema)
-            await db.flush()
+        )
+
+    for job_data in EXTRA_COMPANY_JOBS.get(company_index, []):
+        poster = posters[job_data["poster_slot"] % len(posters)]
+        job = await create_job_with_schema(
+            db,
+            company.id,
+            poster.id,
+            job_data,
+            status=job_data["status"],
+            auto_shortlist=job_data.get("auto_shortlist", False),
+            shortlist_status=job_data.get(
+                "shortlist_status", ShortlistStatus.not_started
+            ),
+            final_shortlist_completed=job_data.get("final_shortlist_completed", False),
+            expires_at=job_data.get("expires_at"),
+            hiring_completed=job_data.get("hiring_completed", False),
+        )
+        job.created_at = NOW - timedelta(
+            days=55 + (company_index * 15) + (job_data["poster_slot"] * 6)
+        )
+        job.updated_at = NOW - timedelta(days=max(1, 8 - job_data["poster_slot"]))
+        extra_jobs[job_data["seed_key"]] = job
 
     print(
-        f"  ✓ {company_data['name']}: 1 admin, {len(recruiter_users)} recruiters, {len(created_jobs)} jobs"
+        f"  ✓ {company_data['name']}: 1 admin, {len(recruiter_users)} recruiters, "
+        f"{len(created_jobs)} completed jobs, {len(extra_jobs)} live/draft jobs"
     )
-    return created_jobs, admin, recruiter_users
+    return company, created_jobs, extra_jobs, admin, recruiter_users
 
 
 async def seed_candidate(db, data: dict) -> tuple[User, list[Resume]]:
@@ -1884,7 +4037,6 @@ async def seed_applications(
     candidate_users: list[tuple[User, list[Resume]]],
     company_jobs: list[list[Job]],
     company_data_list: list[dict],
-    company_extras: list[tuple[User, list]],
 ):
     """Seed applications, screening, shortlisting, outreach emails, and interview bookings."""
 
@@ -1925,29 +4077,14 @@ async def seed_applications(
         }
         share.update(share_overrides)
 
-        # Build shared profile snapshot based on share settings
-        shared_full_name = candidate_user.full_name
-        shared_email = candidate_user.email if share["share_email"] else None
         cand_data = CANDIDATES[cand_idx]
-        shared_phone = cand_data["phone"] if share["share_phone"] else None
-        shared_location = cand_data["location"] if share["share_location"] else None
-        shared_headline = (
-            cand_data["headline"] if share["share_headline_summary"] else None
-        )
-        shared_summary = (
-            cand_data["summary"] if share["share_headline_summary"] else None
-        )
-        shared_linkedin = (
-            cand_data.get("linkedin_url") if share["share_links"] else None
-        )
-        shared_github = cand_data.get("github_url") if share["share_links"] else None
-        shared_portfolio = (
-            cand_data.get("portfolio_url") if share["share_links"] else None
-        )
+        shared_snapshot = build_shared_snapshot(candidate_user, cand_data, share)
 
-        # Application created_at: spread across last 2-4 weeks before expiry
+        # Application history follows each completed job's own timeline.
         days_before_expiry = 7 + (application_counter * 3) % 21
-        app_created = EXPIRED_DATE - timedelta(days=days_before_expiry)
+        job_expiry = job.expires_at or EXPIRED_DATE
+        app_created = job_expiry - timedelta(days=days_before_expiry)
+        app_updated = min(NOW - timedelta(days=1), job_expiry - timedelta(days=1))
 
         application = Application(
             job_id=job.id,
@@ -1958,7 +4095,7 @@ async def seed_applications(
             status=target_status,
             shortlist_notified=True,
             created_at=app_created,
-            updated_at=NOW - timedelta(days=1),
+            updated_at=app_updated,
             # Share settings
             share_profile_all=share["share_profile_all"],
             share_avatar=share["share_avatar"],
@@ -1967,20 +4104,15 @@ async def seed_applications(
             share_location=share["share_location"],
             share_links=share["share_links"],
             share_headline_summary=share["share_headline_summary"],
-            # Shared snapshots
-            shared_full_name=shared_full_name,
-            shared_email_value=shared_email,
-            shared_phone_value=shared_phone,
-            shared_location_value=shared_location,
-            shared_headline_value=shared_headline,
-            shared_summary_value=shared_summary,
-            shared_linkedin_url=shared_linkedin,
-            shared_github_url=shared_github,
-            shared_portfolio_url=shared_portfolio,
-            shared_avatar_url=None,
+            **shared_snapshot,
         )
         db.add(application)
         await db.flush()
+        db.add(
+            ApplicationSyncEvent(
+                application_id=application.id, action=SyncAction.UPSERT
+            )
+        )
         application_counter += 1
 
         # Create outreach email draft
@@ -2004,7 +4136,10 @@ async def seed_applications(
 
             # Create interview booking
             interview_counter += 1
-            interview_base = NOW + timedelta(days=interview_counter * 2, hours=10)
+            interview_base = app_created + timedelta(
+                days=4 + (interview_counter % 4),
+                hours=10 + (interview_counter % 3),
+            )
             interview = Interview(
                 application_id=application.id,
                 cal_booking_uid=f"cal-booking-{uuid.uuid4().hex[:12]}",
@@ -2046,12 +4181,786 @@ async def seed_applications(
     print(f"  ✓ Interview bookings: {interview_counter}")
 
 
+async def seed_live_pipeline_data(
+    db,
+    candidate_users: list[tuple[User, list[Resume]]],
+    company_contexts: list[dict],
+) -> None:
+    print(
+        "\n📈 Seeding active pipeline applications, drafts, evaluations, and recordings..."
+    )
+
+    application_counter = 0
+    interview_counter = 0
+    evaluation_counter = 0
+    recording_counter = 0
+    draft_counter = 0
+
+    for spec in LIVE_APPLICATIONS:
+        candidate_user, candidate_resumes = candidate_users[spec["candidate_index"]]
+        candidate_data = CANDIDATES[spec["candidate_index"]]
+        company_context = company_contexts[spec["company_index"]]
+        company_data = company_context["company_data"]
+        job = company_context["extra_jobs"][spec["job_seed_key"]]
+        resume = candidate_resumes[spec["resume_index"]]
+
+        share = {
+            "share_profile_all": True,
+            "share_avatar": True,
+            "share_email": True,
+            "share_phone": True,
+            "share_location": True,
+            "share_links": True,
+            "share_headline_summary": True,
+        }
+        share.update(spec.get("share_overrides", {}))
+
+        created_at = NOW - timedelta(days=spec["created_days_ago"])
+        updated_at = NOW - timedelta(days=spec["updated_days_ago"])
+        shared_snapshot = build_shared_snapshot(candidate_user, candidate_data, share)
+
+        application = Application(
+            job_id=job.id,
+            user_id=candidate_user.id,
+            resume_id=resume.id,
+            score=spec.get("score"),
+            feedback=spec.get("feedback"),
+            status=spec["status"],
+            shortlist_notified=spec.get("email_state") == "sent",
+            created_at=created_at,
+            updated_at=updated_at,
+            share_profile_all=share["share_profile_all"],
+            share_avatar=share["share_avatar"],
+            share_email=share["share_email"],
+            share_phone=share["share_phone"],
+            share_location=share["share_location"],
+            share_links=share["share_links"],
+            share_headline_summary=share["share_headline_summary"],
+            **shared_snapshot,
+        )
+        db.add(application)
+        await db.flush()
+        db.add(
+            ApplicationSyncEvent(
+                application_id=application.id, action=SyncAction.UPSERT
+            )
+        )
+        application_counter += 1
+
+        email_state = spec.get("email_state")
+        if email_state:
+            if spec["status"] == ApplicationStatus.rejected:
+                subject, body = generate_rejection_email(
+                    candidate_user.full_name,
+                    job.title,
+                    company_data["name"],
+                    spec.get("feedback") or "Thank you for your time and interest.",
+                )
+            else:
+                subject, body = generate_shortlist_email(
+                    candidate_user.full_name,
+                    job.title,
+                    company_data["name"],
+                    company_data["cal_booking_url"],
+                )
+
+            db.add(
+                EmailDraft(
+                    application_id=application.id,
+                    subject=subject,
+                    body=body,
+                    is_approved=email_state in {"approved", "sent"},
+                    is_sent=email_state == "sent",
+                    is_discarded=email_state == "discarded",
+                )
+            )
+            draft_counter += 1
+
+        interview_days_offset = spec.get("interview_days_offset")
+        if interview_days_offset is not None:
+            interview_start = NOW.replace(
+                hour=spec.get("interview_hour", 11)
+            ) + timedelta(days=interview_days_offset)
+            db.add(
+                Interview(
+                    application_id=application.id,
+                    cal_booking_uid=f"cal-booking-live-{uuid.uuid4().hex[:12]}",
+                    candidate_name=candidate_user.full_name,
+                    candidate_email=candidate_user.email,
+                    start_time=interview_start,
+                    end_time=interview_start + timedelta(minutes=50),
+                    timezone="Asia/Kathmandu",
+                    location="Google Meet",
+                    title=f"Interview: {candidate_user.full_name} – {job.title}",
+                )
+            )
+            interview_counter += 1
+
+        if spec.get("create_evaluations"):
+            schema = await db.scalar(
+                select(JobEvaluationSchema).where(JobEvaluationSchema.job_id == job.id)
+            )
+            if schema is not None:
+                candidate_score = float(spec.get("score") or 75)
+                human_scores = {
+                    item["key"]: min(10.0, round(candidate_score / 10, 1))
+                    for item in schema.criteria
+                }
+                llm_scores = {
+                    item["key"]: max(
+                        5.0, min(10.0, round((candidate_score - 4) / 10, 1))
+                    )
+                    for item in schema.criteria
+                }
+
+                db.add(
+                    CandidateEvaluationScore(
+                        application_id=application.id,
+                        job_id=job.id,
+                        schema_id=schema.id,
+                        schema_version=schema.version,
+                        evaluator_type="human",
+                        scores=human_scores,
+                        criteria_snapshot=schema.criteria,
+                        notes="Human interview panel found strong evidence of role alignment and practical execution.",
+                        weighted_total=round(candidate_score / 10, 2),
+                        submitted_by_user_id=company_context["recruiters"][0].id,
+                    )
+                )
+                db.add(
+                    CandidateEvaluationScore(
+                        application_id=application.id,
+                        job_id=job.id,
+                        schema_id=schema.id,
+                        schema_version=schema.version,
+                        evaluator_type="llm",
+                        scores=llm_scores,
+                        criteria_snapshot=schema.criteria,
+                        notes="LLM evaluation mirrored the strongest signals from the interview transcript and structured answers.",
+                        weighted_total=round(max(candidate_score - 4, 50) / 10, 2),
+                        submitted_by_user_id=None,
+                    )
+                )
+                evaluation_counter += 2
+
+        if spec.get("create_recording"):
+            db.add(
+                InterviewRecording(
+                    application_id=application.id,
+                    s3_audio_url=f"https://demo-bucket.example.com/interviews/{application.id}.mp3",
+                    s3_audio_key=f"interviews/{application.id}.mp3",
+                    transcript="Candidate walked through architecture tradeoffs, testing strategy, and practical decision-making with strong clarity.",
+                    evaluation="Communication was clear, examples were concrete, and answers mapped well to the role's core expectations.",
+                    status=RecordingStatus.evaluated,
+                    duration_seconds=2840,
+                )
+            )
+            recording_counter += 1
+
+    await db.flush()
+    print(f"  ✓ Live applications: {application_counter}")
+    print(f"  ✓ Live email drafts: {draft_counter}")
+    print(f"  ✓ Live interviews: {interview_counter}")
+    print(f"  ✓ Evaluation records: {evaluation_counter}")
+    print(f"  ✓ Interview recordings: {recording_counter}")
+
+
+def _seed_chat_history_message(
+    role: str,
+    content: str,
+    *,
+    hours_ago: int,
+    response_type: str | None = None,
+    data: dict | None = None,
+) -> dict:
+    return {
+        "role": role,
+        "content": content,
+        "created_at": (NOW - timedelta(hours=hours_ago)).isoformat(),
+        "response_type": response_type,
+        "data": data,
+    }
+
+
+def _build_chat_session_state(blueprint: dict) -> dict:
+    title = blueprint["title"].lower()
+    base_history = [
+        _seed_chat_history_message(
+            "user",
+            blueprint["title"],
+            hours_ago=blueprint["last_interaction_offset_hours"] + 2,
+        ),
+    ]
+
+    if "salary" in title or "compensation" in title:
+        base_history.append(
+            _seed_chat_history_message(
+                "assistant",
+                "I compiled the latest frontend compensation benchmark for Nepal and nearby remote markets.",
+                hours_ago=blueprint["last_interaction_offset_hours"],
+                response_type="salary_answer",
+                data={
+                    "role": "Frontend Engineer",
+                    "country": "Nepal",
+                    "currency": "NPR",
+                    "recommended_min": 1800000,
+                    "recommended_max": 2600000,
+                },
+            )
+        )
+    elif "edit" in title or "calibration" in title or "panel sync" in title:
+        base_history.append(
+            _seed_chat_history_message(
+                "assistant",
+                "I prepared a safe job update preview for review before anything is applied.",
+                hours_ago=blueprint["last_interaction_offset_hours"],
+                response_type="job_edit_preview",
+                data={
+                    "job_id": str(uuid.uuid4()),
+                    "job_title": "Platform Reliability Engineer",
+                    "summary": "Update the requirements and tighten the reliability ownership language.",
+                    "patch": {"title": "Senior Platform Reliability Engineer"},
+                    "diffs": [
+                        {
+                            "field": "title",
+                            "before": "Platform Reliability Engineer",
+                            "after": "Senior Platform Reliability Engineer",
+                        }
+                    ],
+                },
+            )
+        )
+    else:
+        base_history.append(
+            _seed_chat_history_message(
+                "assistant",
+                "Here is a company job query summary with the roles that need attention next.",
+                hours_ago=blueprint["last_interaction_offset_hours"],
+                response_type="job_list",
+                data={
+                    "total": 3,
+                    "counts": {"active": 2, "draft": 1, "expired": 0},
+                    "jobs": [],
+                },
+            )
+        )
+
+    return {
+        "mode": "idle",
+        "history": base_history,
+        "salary_slots": {
+            "role": "Frontend Engineer" if "salary" in title else None,
+            "country": "Nepal" if "salary" in title else None,
+            "period": "yearly" if "salary" in title else None,
+            "year": NOW.year if "salary" in title else None,
+        },
+        "pending_job_match": None,
+        "pending_edit": None,
+        "default_scope": "company",
+        "seeded": True,
+        "title": blueprint["title"],
+    }
+
+
+def _status_activity_copy(
+    status: ApplicationStatus, company_name: str, job_title: str
+) -> tuple[str, str]:
+    if status == ApplicationStatus.screening:
+        return (
+            f"{company_name} is reviewing your application",
+            f"Your {job_title} application moved into screening.",
+        )
+    if status == ApplicationStatus.shortlisted:
+        return (
+            f"Shortlisted for {job_title}",
+            f"{company_name} shortlisted you for the next stage.",
+        )
+    if status == ApplicationStatus.interview_booked:
+        return (
+            f"Interview stage opened for {job_title}",
+            f"{company_name} moved your application into the interview stage.",
+        )
+    if status == ApplicationStatus.interview_completed:
+        return (
+            f"Interview completed for {job_title}",
+            f"Your interview loop for {job_title} has been completed.",
+        )
+    if status == ApplicationStatus.offer:
+        return (
+            f"Offer stage reached for {job_title}",
+            f"{company_name} recorded an offer outcome for your application.",
+        )
+    return (
+        f"Application closed for {job_title}",
+        f"{company_name} closed your application after review.",
+    )
+
+
+async def seed_preferences_and_activity(
+    db,
+    company_contexts: list[dict],
+) -> None:
+    print("\n🔔 Seeding recruiter preferences, activity events, and notifications...")
+
+    preference_counter = 0
+    activity_counter = 0
+
+    company_context_by_id = {
+        context["company"].id: context for context in company_contexts
+    }
+
+    async def create_seed_event(*, created_at: datetime, **kwargs):
+        event = await create_activity_event(db, **kwargs)
+        event.created_at = created_at
+        notifications_result = await db.execute(
+            select(Notification).where(Notification.activity_event_id == event.id)
+        )
+        for notification in notifications_result.scalars().all():
+            notification.created_at = created_at
+        return event
+
+    for company_index, company_context in enumerate(company_contexts):
+        members = [company_context["admin"], *company_context["recruiters"]]
+        for member_index, member in enumerate(members):
+            db.add(
+                RecruiterPreference(
+                    user_id=member.id,
+                    timezone="Asia/Kathmandu",
+                    notification_email_enabled=True,
+                    notification_in_app_enabled=True,
+                    default_interview_duration_minutes=45 + (member_index * 15),
+                    default_interview_buffer_minutes=15 if member_index == 0 else 10,
+                    outreach_signature=(
+                        f"{member.full_name}\n"
+                        f"{company_context['company_data']['name']}\n"
+                        "ConvexHire Recruiting Team"
+                    ),
+                    chat_default_scope="company"
+                    if company_index == 0
+                    else "candidates",
+                )
+            )
+            preference_counter += 1
+
+    await db.flush()
+
+    applications_result = await db.execute(
+        select(Application, Job, Company, User)
+        .join(Job, Job.id == Application.job_id)
+        .join(Company, Company.id == Job.company_id)
+        .join(User, User.id == Application.user_id)
+        .order_by(Application.created_at.asc())
+    )
+    for application, job, company, candidate in applications_result.all():
+        company_context = company_context_by_id.get(company.id)
+        if company_context is None:
+            continue
+
+        actors = [company_context["admin"], *company_context["recruiters"]]
+        actor = next(
+            (member for member in actors if member.id == job.posted_by), actors[0]
+        )
+
+        await create_seed_event(
+            created_at=application.created_at,
+            event_type="application_applied",
+            audience="candidate",
+            title=f"Applied to {job.title}",
+            description=f"You submitted your application to {company.name}.",
+            href=f"/candidate/applications/{application.id}",
+            user_id=candidate.id,
+            company_id=company.id,
+            application_id=application.id,
+            job_id=job.id,
+            actor_user_id=actor.id,
+            metadata={"status": ApplicationStatus.applied.value},
+        )
+        activity_counter += 1
+
+        await create_seed_event(
+            created_at=application.created_at,
+            event_type="application_received",
+            audience="recruiter",
+            title=f"New application from {candidate.full_name}",
+            description=f"{candidate.full_name} applied to {job.title}.",
+            href=f"/recruiter/candidates/{application.id}",
+            company_id=company.id,
+            application_id=application.id,
+            job_id=job.id,
+            actor_user_id=candidate.id,
+            metadata={"candidate_name": candidate.full_name},
+        )
+        activity_counter += 1
+
+        if application.score is not None or application.feedback:
+            review_at = max(
+                application.created_at + timedelta(hours=18),
+                application.updated_at - timedelta(days=1),
+            )
+            await create_seed_event(
+                created_at=review_at,
+                event_type="application_review_updated",
+                audience="recruiter",
+                title=f"Review captured for {candidate.full_name}",
+                description=f"Score and feedback were saved for {job.title}.",
+                href=f"/recruiter/candidates/{application.id}",
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                actor_user_id=actor.id,
+                metadata={"score": application.score},
+            )
+            activity_counter += 1
+
+            await create_seed_event(
+                created_at=review_at,
+                event_type="application_review_ready",
+                audience="candidate",
+                title=f"Review updated for {job.title}",
+                description=f"{company.name} added review details to your application.",
+                href=f"/candidate/applications/{application.id}",
+                user_id=candidate.id,
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                actor_user_id=actor.id,
+                metadata={"score": application.score},
+            )
+            activity_counter += 1
+
+        if application.status != ApplicationStatus.applied:
+            candidate_title, candidate_description = _status_activity_copy(
+                application.status,
+                company.name,
+                job.title,
+            )
+            await create_seed_event(
+                created_at=application.updated_at,
+                event_type=f"application_{application.status.value}",
+                audience="candidate",
+                title=candidate_title,
+                description=candidate_description,
+                href=f"/candidate/applications/{application.id}",
+                user_id=candidate.id,
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                actor_user_id=actor.id,
+                metadata={"status": application.status.value},
+            )
+            activity_counter += 1
+
+            await create_seed_event(
+                created_at=application.updated_at,
+                event_type=f"candidate_{application.status.value}",
+                audience="recruiter",
+                title=f"{candidate.full_name}: {application.status.value.replace('_', ' ')}",
+                description=f"{candidate.full_name} is now {application.status.value.replace('_', ' ')} for {job.title}.",
+                href=f"/recruiter/candidates/{application.id}",
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                actor_user_id=actor.id,
+                metadata={"status": application.status.value},
+            )
+            activity_counter += 1
+
+    drafts_result = await db.execute(
+        select(EmailDraft, Application, Job, Company, User)
+        .join(Application, Application.id == EmailDraft.application_id)
+        .join(Job, Job.id == Application.job_id)
+        .join(Company, Company.id == Job.company_id)
+        .join(User, User.id == Application.user_id)
+        .order_by(EmailDraft.created_at.asc())
+    )
+    for draft, application, job, company, candidate in drafts_result.all():
+        company_context = company_context_by_id.get(company.id)
+        if company_context is None:
+            continue
+        actors = [company_context["admin"], *company_context["recruiters"]]
+        actor = next(
+            (member for member in actors if member.id == job.posted_by), actors[0]
+        )
+
+        generated_at = max(
+            application.created_at + timedelta(days=1),
+            application.updated_at - timedelta(hours=20),
+        )
+        draft.generated_by_user_id = draft.generated_by_user_id or actor.id
+        draft.approved_by_user_id = draft.approved_by_user_id or (
+            actor.id if draft.is_approved or draft.is_sent else None
+        )
+        draft.sent_by_user_id = draft.sent_by_user_id or (
+            actor.id if draft.is_sent else None
+        )
+        draft.discarded_by_user_id = draft.discarded_by_user_id or (
+            actor.id if draft.is_discarded else None
+        )
+        draft.approved_at = draft.approved_at or (
+            generated_at + timedelta(hours=6)
+            if draft.is_approved or draft.is_sent
+            else None
+        )
+        draft.sent_at = draft.sent_at or (
+            generated_at + timedelta(hours=8) if draft.is_sent else None
+        )
+        draft.discarded_at = draft.discarded_at or (
+            generated_at + timedelta(hours=5) if draft.is_discarded else None
+        )
+
+        await create_seed_event(
+            created_at=generated_at,
+            event_type="outreach_draft_generated",
+            audience="recruiter",
+            title=f"Outreach draft prepared for {candidate.full_name}",
+            description=f"{job.title} draft is ready for review.",
+            href=f"/recruiter/candidates/{application.id}",
+            company_id=company.id,
+            application_id=application.id,
+            job_id=job.id,
+            draft_id=draft.id,
+            actor_user_id=actor.id,
+        )
+        activity_counter += 1
+
+        if draft.is_approved or draft.is_sent:
+            await create_seed_event(
+                created_at=draft.approved_at or generated_at,
+                event_type="outreach_draft_approved",
+                audience="recruiter",
+                title=f"Outreach approved for {candidate.full_name}",
+                description=f"{job.title} outreach has been approved.",
+                href="/recruiter/outreach",
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                draft_id=draft.id,
+                actor_user_id=actor.id,
+            )
+            activity_counter += 1
+
+        if draft.is_sent:
+            sent_time = draft.sent_at or generated_at
+            await create_seed_event(
+                created_at=sent_time,
+                event_type="outreach_email_sent",
+                audience="recruiter",
+                title=f"Outreach sent to {candidate.full_name}",
+                description=f"{job.title} email was delivered to the candidate.",
+                href="/recruiter/outreach",
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                draft_id=draft.id,
+                actor_user_id=actor.id,
+            )
+            activity_counter += 1
+
+            await create_seed_event(
+                created_at=sent_time,
+                event_type="outreach_email_sent",
+                audience="candidate",
+                title=f"Email update for {job.title}",
+                description=f"{company.name} sent you an application update.",
+                href=f"/candidate/applications/{application.id}",
+                user_id=candidate.id,
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                draft_id=draft.id,
+                actor_user_id=actor.id,
+            )
+            activity_counter += 1
+
+        if draft.is_discarded:
+            await create_seed_event(
+                created_at=draft.discarded_at or generated_at,
+                event_type="outreach_draft_discarded",
+                audience="recruiter",
+                title=f"Draft discarded for {candidate.full_name}",
+                description=f"{job.title} outreach was intentionally discarded.",
+                href="/recruiter/outreach",
+                company_id=company.id,
+                application_id=application.id,
+                job_id=job.id,
+                draft_id=draft.id,
+                actor_user_id=actor.id,
+            )
+            activity_counter += 1
+
+    interviews_result = await db.execute(
+        select(Interview, Application, Job, Company, User)
+        .join(Application, Application.id == Interview.application_id)
+        .join(Job, Job.id == Application.job_id)
+        .join(Company, Company.id == Job.company_id)
+        .join(User, User.id == Application.user_id)
+        .order_by(Interview.created_at.asc())
+    )
+    for interview, application, job, company, candidate in interviews_result.all():
+        company_context = company_context_by_id.get(company.id)
+        if company_context is None:
+            continue
+        actors = [company_context["admin"], *company_context["recruiters"]]
+        actor = next(
+            (member for member in actors if member.id == job.posted_by), actors[0]
+        )
+
+        await create_seed_event(
+            created_at=interview.created_at,
+            event_type="interview_booked",
+            audience="candidate",
+            title=f"Interview booked for {job.title}",
+            description="Your interview has been scheduled.",
+            href=f"/candidate/applications/{application.id}",
+            user_id=candidate.id,
+            company_id=company.id,
+            application_id=application.id,
+            interview_id=interview.id,
+            job_id=job.id,
+            actor_user_id=actor.id,
+            metadata={"start_time": interview.start_time.isoformat()},
+        )
+        activity_counter += 1
+
+        await create_seed_event(
+            created_at=interview.created_at,
+            event_type="interview_booked",
+            audience="recruiter",
+            title=f"Interview scheduled with {candidate.full_name}",
+            description=f"{candidate.full_name} booked an interview for {job.title}.",
+            href=f"/recruiter/candidates/{application.id}",
+            company_id=company.id,
+            application_id=application.id,
+            interview_id=interview.id,
+            job_id=job.id,
+            actor_user_id=actor.id,
+            metadata={"start_time": interview.start_time.isoformat()},
+        )
+        activity_counter += 1
+
+    memberships_result = await db.execute(
+        select(CompanyMembership, Company, User)
+        .join(Company, Company.id == CompanyMembership.company_id)
+        .join(User, User.id == CompanyMembership.user_id)
+        .where(
+            CompanyMembership.role == MembershipRole.recruiter,
+            CompanyMembership.status.in_(
+                [MembershipStatus.pending, MembershipStatus.rejected]
+            ),
+        )
+    )
+    for membership, company, recruiter in memberships_result.all():
+        await create_seed_event(
+            created_at=membership.created_at,
+            event_type="join_request_submitted",
+            audience="admin",
+            title=f"{recruiter.full_name} requested recruiter access",
+            description=f"{recruiter.email} requested access to {company.name}.",
+            href="/recruiter/recruiters",
+            company_id=company.id,
+            actor_user_id=recruiter.id,
+            metadata={
+                "membership_id": str(membership.id),
+                "status": membership.status.value,
+            },
+        )
+        activity_counter += 1
+
+        if membership.status == MembershipStatus.rejected:
+            await create_seed_event(
+                created_at=membership.created_at + timedelta(hours=6),
+                event_type="membership_rejected",
+                audience="recruiter",
+                title="Recruiter access request declined",
+                description=f"{company.name} declined your recruiter access request.",
+                href="/login",
+                user_id=recruiter.id,
+                company_id=company.id,
+                actor_user_id=company_context_by_id[company.id]["admin"].id,
+                metadata={"membership_id": str(membership.id)},
+            )
+            activity_counter += 1
+
+    await db.flush()
+    print(f"  ✓ Recruiter preferences: {preference_counter}")
+    print(f"  ✓ Activity events: {activity_counter}")
+
+
+async def seed_ai_artifacts(db, company_contexts: list[dict]) -> None:
+    print("\n🤖 Seeding recruiter AI drafts and chat sessions...")
+
+    for blueprint in AI_DRAFT_BLUEPRINTS:
+        company_context = company_contexts[blueprint["company_index"]]
+        recruiter = company_context["recruiters"][blueprint["recruiter_slot"]]
+        db.add(
+            JobAIDraft(
+                recruiter_id=recruiter.id,
+                company_id=company_context["company"].id,
+                thread_id=blueprint["thread_id"],
+                status=blueprint["status"],
+                mode=blueprint["mode"],
+                source_prompt=blueprint["source_prompt"],
+                source_text=None,
+                locked_fields=blueprint["locked_fields"],
+                latest_draft=blueprint["latest_draft"],
+                salary_research=blueprint["salary_research"],
+                assumptions=blueprint["assumptions"],
+                warnings=blueprint["warnings"],
+                missing_fields=blueprint["missing_fields"],
+                last_interrupt=None,
+            )
+        )
+
+    for blueprint in CHAT_SESSION_BLUEPRINTS:
+        company_context = company_contexts[blueprint["company_index"]]
+        recruiter = company_context["recruiters"][blueprint["recruiter_slot"]]
+        db.add(
+            RecruiterChatSession(
+                recruiter_id=recruiter.id,
+                company_id=company_context["company"].id,
+                thread_id=blueprint["thread_id"],
+                title=blueprint["title"],
+                last_interaction_at=NOW
+                - timedelta(hours=blueprint["last_interaction_offset_hours"]),
+                state_json=_build_chat_session_state(blueprint),
+            )
+        )
+
+    await db.flush()
+    print(f"  ✓ AI drafts: {len(AI_DRAFT_BLUEPRINTS)}")
+    print(f"  ✓ Chat sessions: {len(CHAT_SESSION_BLUEPRINTS)}")
+
+
+async def seed_candidate_import_tasks(
+    db, candidate_users: list[tuple[User, list[Resume]]]
+) -> None:
+    print("\n📄 Seeding resume import task history...")
+
+    for blueprint in RESUME_IMPORT_TASK_BLUEPRINTS:
+        user, _resumes = candidate_users[blueprint["candidate_index"]]
+        db.add(
+            ResumeImportTask(
+                user_id=user.id,
+                status=blueprint["status"],
+                source_file_name=blueprint["source_file_name"],
+                result_data=blueprint.get("result_data"),
+                error_message=blueprint.get("error_message"),
+            )
+        )
+
+    await db.flush()
+    print(f"  ✓ Resume import tasks: {len(RESUME_IMPORT_TASK_BLUEPRINTS)}")
+
+
 # ============================================================================
 # MAIN
 # ============================================================================
 
 
 async def seed() -> None:
+    await ensure_schema()
+    await clear_existing_data()
+
     async with AsyncSessionLocal() as db:
         print("\n🚀 Seeding ConvexHire – Nepal IT Hiring Platform\n")
 
@@ -2060,15 +4969,29 @@ async def seed() -> None:
             "📦 Seeding companies, admins, recruiters, jobs, and evaluation schemas..."
         )
         all_jobs: list[list[Job]] = []
-        company_extras = []
-        for company_data in COMPANIES:
-            jobs, admin, recruiters = await seed_company(db, company_data)
+        company_contexts: list[dict] = []
+        for company_index, company_data in enumerate(COMPANIES):
+            company, jobs, extra_jobs, admin, recruiters = await seed_company(
+                db, company_index, company_data
+            )
             all_jobs.append(jobs)
-            company_extras.append((admin, recruiters))
+            company_contexts.append(
+                {
+                    "company": company,
+                    "company_data": company_data,
+                    "primary_jobs": jobs,
+                    "extra_jobs": extra_jobs,
+                    "admin": admin,
+                    "recruiters": recruiters,
+                }
+            )
 
         # Queue all jobs for vector sync
-        for job_list in all_jobs:
-            for job in job_list:
+        for company_context in company_contexts:
+            for job in [
+                *company_context["primary_jobs"],
+                *company_context["extra_jobs"].values(),
+            ]:
                 db.add(JobSyncEvent(job_id=job.id, action=SyncAction.UPSERT))
 
         # --- Candidates ---
@@ -2079,19 +5002,89 @@ async def seed() -> None:
             candidate_users.append(user_resume_pair)
 
         # --- Applications, Screening, Shortlisting, Outreach, Interviews ---
-        await seed_applications(
-            db, candidate_users, all_jobs, COMPANIES, company_extras
-        )
+        await seed_applications(db, candidate_users, all_jobs, COMPANIES)
+        await seed_live_pipeline_data(db, candidate_users, company_contexts)
+        await seed_ai_artifacts(db, company_contexts)
+        await seed_candidate_import_tasks(db, candidate_users)
+        await seed_preferences_and_activity(db, company_contexts)
 
         await db.commit()
+        credentials_path = write_credentials_file()
 
         # --- Summary ---
-        total_jobs = sum(len(jl) for jl in all_jobs)
-        total_resumes = sum(len(c["resume_variants"]) for c in CANDIDATES)
-        shortlisted = sum(
-            1 for a in APPLICATIONS if a[6] == ApplicationStatus.interview_booked
-        )
-        rejected = sum(1 for a in APPLICATIONS if a[6] == ApplicationStatus.rejected)
+        total_jobs = await db.scalar(select(func.count(Job.id))) or 0
+        active_jobs = (
+            await db.scalar(
+                select(func.count(Job.id)).where(Job.status == JobStatus.active)
+            )
+        ) or 0
+        draft_jobs = (
+            await db.scalar(
+                select(func.count(Job.id)).where(Job.status == JobStatus.draft)
+            )
+        ) or 0
+        expired_jobs = (
+            await db.scalar(
+                select(func.count(Job.id)).where(Job.status == JobStatus.expired)
+            )
+        ) or 0
+        total_resumes = await db.scalar(select(func.count(Resume.id))) or 0
+        total_applications = await db.scalar(select(func.count(Application.id))) or 0
+        shortlisted = (
+            await db.scalar(
+                select(func.count(Application.id)).where(
+                    Application.status.in_(
+                        [
+                            ApplicationStatus.shortlisted,
+                            ApplicationStatus.interview_booked,
+                            ApplicationStatus.interview_completed,
+                            ApplicationStatus.offer,
+                        ]
+                    )
+                )
+            )
+        ) or 0
+        rejected = (
+            await db.scalar(
+                select(func.count(Application.id)).where(
+                    Application.status == ApplicationStatus.rejected
+                )
+            )
+        ) or 0
+        total_email_drafts = await db.scalar(select(func.count(EmailDraft.id))) or 0
+        total_interviews = await db.scalar(select(func.count(Interview.id))) or 0
+        total_eval_schemas = (
+            await db.scalar(select(func.count(JobEvaluationSchema.id)))
+        ) or 0
+        total_eval_scores = (
+            await db.scalar(select(func.count(CandidateEvaluationScore.id)))
+        ) or 0
+        total_recordings = (
+            await db.scalar(select(func.count(InterviewRecording.id)))
+        ) or 0
+        total_ai_drafts = await db.scalar(select(func.count(JobAIDraft.id))) or 0
+        total_chat_sessions = (
+            await db.scalar(select(func.count(RecruiterChatSession.id)))
+        ) or 0
+        total_import_tasks = (
+            await db.scalar(select(func.count(ResumeImportTask.id)))
+        ) or 0
+        total_activity_events = (
+            await db.scalar(text("select count(*) from activity_events"))
+        ) or 0
+        total_notifications = (
+            await db.scalar(text("select count(*) from notifications"))
+        ) or 0
+        total_preferences = (
+            await db.scalar(text("select count(*) from recruiter_preferences"))
+        ) or 0
+        pending_requests = (
+            await db.scalar(
+                select(func.count(CompanyMembership.id)).where(
+                    CompanyMembership.status == MembershipStatus.pending
+                )
+            )
+        ) or 0
 
         print("\n" + "=" * 70)
         print("✅ Seeding complete!")
@@ -2099,19 +5092,30 @@ async def seed() -> None:
         print(f"  Companies           : {len(COMPANIES)}")
         print(f"  Admins              : {len(COMPANIES)}")
         print(f"  Recruiters          : {sum(len(c['recruiters']) for c in COMPANIES)}")
+        print(f"  Membership requests : {pending_requests} pending")
         print(
-            f"  Jobs                : {total_jobs} (all expired, shortlisting completed)"
+            f"  Jobs                : {total_jobs} "
+            f"({active_jobs} active, {draft_jobs} draft, {expired_jobs} expired)"
         )
-        print(f"  Evaluation schemas  : {total_jobs}")
+        print(f"  Evaluation schemas  : {total_eval_schemas}")
+        print(f"  Evaluation scores   : {total_eval_scores}")
         print(f"  Candidates          : {len(CANDIDATES)}")
         print(f"  Resumes             : {total_resumes}")
-        print(f"  Applications        : {len(APPLICATIONS)}")
+        print(f"  Applications        : {total_applications}")
         print(f"    → Shortlisted     : {shortlisted} (with interview bookings)")
         print(f"    → Rejected        : {rejected} (with rejection emails)")
-        print(f"  Email drafts        : {len(APPLICATIONS)} (all approved & sent)")
-        print(f"  Interview bookings  : {shortlisted}")
+        print(f"  Email drafts        : {total_email_drafts}")
+        print(f"  Interview bookings  : {total_interviews}")
+        print(f"  Interview recordings: {total_recordings}")
+        print(f"  AI job drafts       : {total_ai_drafts}")
+        print(f"  Chat sessions       : {total_chat_sessions}")
+        print(f"  Resume import tasks : {total_import_tasks}")
+        print(f"  Activity events     : {total_activity_events}")
+        print(f"  Notifications       : {total_notifications}")
+        print(f"  Recruiter prefs     : {total_preferences}")
+        print(f"  Credentials file    : {credentials_path}")
         print()
-        print("  Login credentials for all accounts: Password@123")
+        print(f"  Login credentials for all accounts: {DEFAULT_LOGIN_PASSWORD}")
         print()
         print("  📧 Recruiter Admin logins:")
         for c in COMPANIES:

@@ -1,18 +1,31 @@
 'use client'
 
 import type { CSSProperties } from 'react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 
+import { getCompanyAccent } from '@/lib/companyAccent'
+import {
+  buildProfileStrengthBreakdown,
+  calculateProfileCompletionPercentage,
+} from '@/lib/profileCompletion'
 import { useAppSelector } from '@/store/hooks'
-import { useGetCandidateDashboardQuery } from '@/store/services/dashboardApi'
-import { useUpdateMyProfileMutation } from '@/store/services/profileApi'
+import { useGetMyActivityQuery } from '@/store/services/activityApi'
+import {
+  useGetCandidateDashboardAnalyticsQuery,
+  useGetCandidateDashboardQuery,
+} from '@/store/services/dashboardApi'
+import { useGetMyProfileQuery, useUpdateMyProfileMutation } from '@/store/services/profileApi'
 import { CalendarDays, Clock3, MapPin } from 'lucide-react'
 
+import ActivityFeedCard from '@/components/common/ActivityFeedCard'
+import DashboardErrorState from '@/components/common/DashboardErrorState'
 import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
+
+import CandidateDashboardInsights from './_components/CandidateDashboardInsights'
 
 type CandidateDashboardStatus =
   | 'applied'
@@ -25,16 +38,6 @@ type CandidateDashboardStatus =
 
 function getFirstName(name: string | null | undefined): string {
   return name?.trim().split(/\s+/)[0] ?? 'there'
-}
-
-function getCompanyAccent(name: string): { logo: string; color: string } {
-  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
-  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-
-  return {
-    logo: name.trim().charAt(0).toUpperCase() || 'C',
-    color: palette[seed % palette.length],
-  }
 }
 
 function buildTimeline(status: CandidateDashboardStatus): string[] {
@@ -67,12 +70,12 @@ function formatApplicationMeta(createdAt: string, status: CandidateDashboardStat
     day: 'numeric',
   })
 
-  if (status === 'screening') return `Applied ${createdLabel} · Under review`
-  if (status === 'shortlisted') return `Applied ${createdLabel} · Shortlisted`
-  if (status === 'interview_booked') return `Applied ${createdLabel} · Interview booked`
-  if (status === 'interview_completed') return `Applied ${createdLabel} · Interview completed`
-  if (status === 'offer') return `Applied ${createdLabel} · Offer received`
-  if (status === 'rejected') return `Applied ${createdLabel} · Not progressed`
+  if (status === 'screening') return `Applied ${createdLabel} | Under review`
+  if (status === 'shortlisted') return `Applied ${createdLabel} | Shortlisted`
+  if (status === 'interview_booked') return `Applied ${createdLabel} | Interview booked`
+  if (status === 'interview_completed') return `Applied ${createdLabel} | Interview completed`
+  if (status === 'offer') return `Applied ${createdLabel} | Offer received`
+  if (status === 'rejected') return `Applied ${createdLabel} | Not progressed`
   return `Applied ${createdLabel}`
 }
 
@@ -139,15 +142,37 @@ function CandidateDashboardSkeleton() {
 
 export default function UserDashboardPage() {
   const user = useAppSelector((state) => state.auth.user)
+  const [analyticsRangeKey, setAnalyticsRangeKey] = useState<'7d' | '30d' | '90d'>('30d')
   const {
     data: dashboardResponse,
     isLoading,
     isError,
+    isFetching,
+    error: dashboardError,
     refetch: refetchDashboard,
   } = useGetCandidateDashboardQuery()
+  const {
+    data: analyticsResponse,
+    isLoading: isAnalyticsLoading,
+    isFetching: isFetchingAnalytics,
+    refetch: refetchAnalytics,
+  } = useGetCandidateDashboardAnalyticsQuery(analyticsRangeKey)
+  const {
+    data: profileResponse,
+    isFetching: isFetchingProfile,
+    refetch: refetchProfile,
+  } = useGetMyProfileQuery()
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMyProfileMutation()
+  const { data: activityResponse } = useGetMyActivityQuery(8)
   const dashboardData = dashboardResponse?.data
+  const analyticsData = analyticsResponse?.data
+  const profile = profileResponse?.data
   const interviews = useMemo(() => dashboardData?.interviews ?? [], [dashboardData?.interviews])
+  const profileCompletion = useMemo(
+    () => calculateProfileCompletionPercentage(profile ?? null),
+    [profile],
+  )
+  const profileStrength = useMemo(() => buildProfileStrengthBreakdown(profile ?? null), [profile])
 
   const handleToggleOpenToWork = async () => {
     if (!dashboardData || isUpdating) return
@@ -160,6 +185,10 @@ export default function UserDashboardPage() {
     } catch {
       toast.error('Failed to update status.')
     }
+  }
+
+  const handleRetryDashboard = async () => {
+    await Promise.allSettled([refetchDashboard(), refetchAnalytics(), refetchProfile()])
   }
 
   const firstName = getFirstName(user?.full_name ?? dashboardData?.user_name)
@@ -184,7 +213,7 @@ export default function UserDashboardPage() {
                     className={`open-to-work-status__dot ${dashboardData?.is_open_to_work ? 'open-to-work-status__dot--active' : ''}`}
                   />
                   <span className="open-to-work-status__text">
-                    Open to Work {dashboardData?.is_open_to_work ? '· Active' : '· Off'}
+                    Open to Work {dashboardData?.is_open_to_work ? '| Active' : '| Off'}
                   </span>
                   <button
                     className={`open-to-work-status__toggle ${isUpdating ? 'open-to-work-status__toggle--loading' : ''}`}
@@ -214,13 +243,26 @@ export default function UserDashboardPage() {
       {isLoading ? (
         <CandidateDashboardSkeleton />
       ) : isError || !dashboardData ? (
-        <div className="dash-card">
-          <div className="dash-card__body">
-            Dashboard data is unavailable right now. Please refresh.
-          </div>
-        </div>
+        <DashboardErrorState
+          error={dashboardError}
+          isRetrying={isFetching || isFetchingAnalytics || isFetchingProfile}
+          onRetry={handleRetryDashboard}
+        />
       ) : (
         <div className="candidate-dashboard">
+          <CandidateDashboardInsights
+            analytics={analyticsData}
+            isLoading={isAnalyticsLoading}
+            rangeKey={analyticsRangeKey}
+            onRangeChange={setAnalyticsRangeKey}
+            readiness={{
+              completion: profileCompletion,
+              targetRoles: profile?.target_roles.length ?? 0,
+              skills: profile?.skills.length ?? 0,
+              isOpenToWork: dashboardData.is_open_to_work,
+            }}
+          />
+
           <div className="dash-stats candidate-dashboard__stats candidate-dashboard__stats-grid">
             <div className="stat-card">
               <div className="stat-card__value">{dashboardData.stats.total_applications}</div>
@@ -250,6 +292,47 @@ export default function UserDashboardPage() {
             </div>
           </div>
 
+          <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+            <ActivityFeedCard
+              title="Recent activity"
+              subtitle="Every recorded application and interview update."
+              items={activityResponse?.data ?? []}
+              emptyText="Your recent application activity will appear here."
+            />
+
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
+                  <div className="dash-card__title">Profile strength</div>
+                  <div className="dash-card__subtitle">
+                    Complete these sections to improve application readiness.
+                  </div>
+                </div>
+                <Link href="/candidate/profile" className="btn btn--outline btn--sm">
+                  Edit profile
+                </Link>
+              </div>
+              <div className="dash-card__body">
+                <div className="dashboard-funnel-list">
+                  {profileStrength.map((item) => (
+                    <div key={item.key} className="dashboard-funnel-list__row">
+                      <div className="dashboard-funnel-list__label">{item.label}</div>
+                      <div className="dashboard-funnel-list__track">
+                        <span
+                          className={`dashboard-funnel-list__fill ${item.complete ? 'dashboard-funnel-list__fill--offer' : 'dashboard-funnel-list__fill--rejected'}`}
+                          style={{ width: item.complete ? '100%' : '32%' }}
+                        />
+                      </div>
+                      <div className="dashboard-funnel-list__value">
+                        {item.complete ? 'Done' : 'Missing'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="dash-card">
             <div className="dash-card__header">
               <div>
@@ -276,7 +359,9 @@ export default function UserDashboardPage() {
 
             <div className="dash-card__body candidate-dashboard__list">
               {dashboardData.applications.length === 0 ? (
-                <div className="profile-empty">No applications yet. Start exploring jobs.</div>
+                <div className="profile-empty">
+                  No applications yet. <Link href="/candidate/jobs">Browse jobs</Link>
+                </div>
               ) : (
                 dashboardData.applications.map((application) => {
                   const accent = getCompanyAccent(application.company_name)
@@ -297,7 +382,7 @@ export default function UserDashboardPage() {
                           sizes="36px"
                           style={
                             {
-                              '--logo-bg': `${accent.color}1A`,
+                              '--logo-bg': accent.background,
                               '--logo-color': accent.color,
                             } as CSSProperties
                           }
@@ -307,7 +392,7 @@ export default function UserDashboardPage() {
                             {application.job_title}
                           </div>
                           <div className="candidate-pipeline-card__company">
-                            {application.company_name} ·{' '}
+                            {application.company_name} |{' '}
                             {application.location ?? application.location_type}
                           </div>
                           <div className="candidate-pipeline-card__timeline">
@@ -367,7 +452,7 @@ export default function UserDashboardPage() {
                           sizes="40px"
                           style={
                             {
-                              '--logo-bg': `${accent.color}1A`,
+                              '--logo-bg': accent.background,
                               '--logo-color': accent.color,
                             } as CSSProperties
                           }

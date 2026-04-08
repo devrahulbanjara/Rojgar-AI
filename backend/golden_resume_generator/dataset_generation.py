@@ -85,9 +85,8 @@ class GeminiRuntimePool:
 
 
 def is_rate_limit_error(exc: Exception) -> bool:
-    if (
-        google_api_exceptions is not None
-        and isinstance(exc, google_api_exceptions.ResourceExhausted)
+    if google_api_exceptions is not None and isinstance(
+        exc, google_api_exceptions.ResourceExhausted
     ):
         return True
 

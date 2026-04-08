@@ -1,34 +1,18 @@
 import type { NextRequest } from 'next/server'
 
+import {
+  getRecruiterChatBackendBaseUrl,
+  recruiterChatMisconfiguredResponse,
+  recruiterChatUnavailableResponse,
+} from '../routeUtils'
+
 export const runtime = 'nodejs'
 
-function getBackendBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL
-}
-
-function upstreamUnavailableResponse(error: unknown) {
-  const message = error instanceof Error ? error.message : 'Unable to reach backend service.'
-
-  return Response.json(
-    {
-      success: false,
-      message: `Recruiter chat backend is unavailable: ${message}`,
-      data: null,
-      errors: null,
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: null,
-      },
-    },
-    { status: 502 },
-  )
-}
-
 export async function GET(req: NextRequest) {
-  const backendBaseUrl = getBackendBaseUrl()
+  const backendBaseUrl = getRecruiterChatBackendBaseUrl()
 
   if (!backendBaseUrl) {
-    return new Response('NEXT_PUBLIC_API_URL is not configured.', { status: 500 })
+    return recruiterChatMisconfiguredResponse()
   }
 
   const authorization = req.headers.get('authorization')
@@ -50,16 +34,16 @@ export async function GET(req: NextRequest) {
         'Content-Type': response.headers.get('content-type') ?? 'application/json',
       },
     })
-  } catch (error) {
-    return upstreamUnavailableResponse(error)
+  } catch {
+    return recruiterChatUnavailableResponse()
   }
 }
 
 export async function POST(req: NextRequest) {
-  const backendBaseUrl = getBackendBaseUrl()
+  const backendBaseUrl = getRecruiterChatBackendBaseUrl()
 
   if (!backendBaseUrl) {
-    return new Response('NEXT_PUBLIC_API_URL is not configured.', { status: 500 })
+    return recruiterChatMisconfiguredResponse()
   }
 
   const authorization = req.headers.get('authorization')
@@ -83,7 +67,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': response.headers.get('content-type') ?? 'application/json',
       },
     })
-  } catch (error) {
-    return upstreamUnavailableResponse(error)
+  } catch {
+    return recruiterChatUnavailableResponse()
   }
 }
