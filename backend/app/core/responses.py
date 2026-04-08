@@ -7,6 +7,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.request_context import get_request_context
+
 T = TypeVar("T")
 
 
@@ -30,6 +32,7 @@ class ResponseMeta(BaseModel):
     """Metadata attached to every response envelope."""
 
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    requestId: str | None = None
 
 
 class UnifiedResponse(BaseModel, Generic[T]):
@@ -69,8 +72,10 @@ class ResponseBuilder:
 
     @staticmethod
     def _meta() -> dict:
+        request_context = get_request_context()
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "requestId": request_context.request_id,
         }
 
     @staticmethod

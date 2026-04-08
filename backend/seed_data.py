@@ -1,34 +1,20 @@
-"""
-Comprehensive seed script for ConvexHire – Nepal IT Hiring Platform.
-
-Seeds a clean local database with a broad, realistic demo dataset:
-  - 2 companies (each with 1 admin + 2 recruiters)
-  - 4 jobs per company (8 total), all expired → ready for shortlisting
-  - 5 candidates (each with profile + 2 resumes)
-  - Applications with varied share preferences
-  - AI screening scores & feedback
-  - Shortlisted / rejected statuses
-  - Outreach email drafts (shortlist + rejection)
-  - Cal.com interview bookings for shortlisted candidates
-  - Evaluation schemas per job
-
-Usage:
-    uv run python seed_data.py
-"""
-
 import asyncio
 import json
 import uuid
+from collections import defaultdict
+from enum import Enum
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from sqlalchemy import func, select, text
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import delete, func, inspect, select, text
 
 import app.core.model_registry  # noqa: F401
 from app.core.database import AsyncSessionLocal, Base, engine
 from app.core.security import hash_password
 from app.modules.activity.service import create_activity_event
 from app.modules.applications.models import Application, ApplicationSyncEvent
+from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
@@ -71,6 +57,119 @@ DEFAULT_LOGIN_PASSWORD = "Password@123"
 
 NOW = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 EXPIRED_DATE = NOW - timedelta(days=3)  # Jobs expired 3 days ago
+SEED_AUDIT_USER_AGENT = "ConvexHire Seed Script"
+AUDIT_REDACTED_FIELDS = {
+    "password_hash",
+    "password_reset_token",
+    "email_verify_token",
+    "jti",
+}
+
+
+def _audit_serialize_value(value):
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return jsonable_encoder(value)
+
+
+def _serialize_audit_entity(instance) -> dict:
+    state = inspect(instance)
+    data: dict[str, object] = {}
+    for column in state.mapper.columns:
+        key = column.key
+        if key in AUDIT_REDACTED_FIELDS:
+            data[key] = "[REDACTED]"
+            continue
+        data[key] = _audit_serialize_value(getattr(instance, key))
+    return data
+
+
+def _build_audit_snapshots(
+    instance,
+    *,
+    before_overrides: dict | None = None,
+    after_overrides: dict | None = None,
+) -> tuple[dict, dict, dict | None]:
+    after_json = _serialize_audit_entity(instance)
+    if after_overrides:
+        for key, value in after_overrides.items():
+            after_json[key] = _audit_serialize_value(value)
+
+    before_json = dict(after_json)
+    diff_json: dict[str, dict[str, object]] = {}
+    changed_fields = set(before_overrides or {}) | set(after_overrides or {})
+    for field in changed_fields:
+        before_value = _audit_serialize_value(
+            before_overrides[field] if before_overrides and field in before_overrides else before_json.get(field)
+        )
+        after_value = _audit_serialize_value(
+            after_overrides[field] if after_overrides and field in after_overrides else after_json.get(field)
+        )
+        before_json[field] = before_value
+        after_json[field] = after_value
+        if before_value != after_value:
+            diff_json[field] = {"before": before_value, "after": after_value}
+
+    return before_json, after_json, diff_json or None
+
+
+def _actor_role_value(actor: User | None) -> str | None:
+    return actor.primary_role.value if actor is not None else None
+
+
+def _queue_seed_audit_log(
+    db,
+    *,
+    created_at: datetime,
+    entity_type: str,
+    action_type: str,
+    actor: User | None = None,
+    entity_id: str | uuid.UUID | None = None,
+    company_id: uuid.UUID | None = None,
+    target_user_id: uuid.UUID | None = None,
+    parent_entity_type: str | None = None,
+    parent_entity_id: str | uuid.UUID | None = None,
+    before_json: dict | None = None,
+    after_json: dict | None = None,
+    diff_json: dict | None = None,
+    metadata: dict | None = None,
+    reason: str | None = None,
+    request_path: str | None = None,
+    request_method: str | None = None,
+) -> None:
+    request_hint = request_path or entity_type
+    db.add(
+        AuditLog(
+            actor_user_id=actor.id if actor is not None else None,
+            actor_role=_actor_role_value(actor),
+            target_user_id=target_user_id,
+            company_id=company_id,
+            entity_type=entity_type,
+            entity_id=str(entity_id) if entity_id is not None else None,
+            parent_entity_type=parent_entity_type,
+            parent_entity_id=str(parent_entity_id)
+            if parent_entity_id is not None
+            else None,
+            action_type=action_type,
+            request_id=f"seed-{request_hint.replace('/', '-').strip('-')}-{uuid.uuid4().hex[:10]}",
+            request_path=request_path,
+            request_method=request_method,
+            ip_address="127.0.0.1",
+            user_agent=SEED_AUDIT_USER_AGENT,
+            source="seed",
+            reason=reason,
+            success=True,
+            before_json=before_json,
+            after_json=after_json,
+            diff_json=diff_json,
+            metadata_json=metadata,
+            created_at=created_at,
+        )
+    )
 
 
 # ============================================================================
@@ -4952,6 +5051,1319 @@ async def seed_candidate_import_tasks(
     print(f"  ✓ Resume import tasks: {len(RESUME_IMPORT_TASK_BLUEPRINTS)}")
 
 
+async def seed_audit_history(
+    db,
+    company_contexts: list[dict],
+    candidate_users: list[tuple[User, list[Resume]]],
+) -> None:
+    print("\nAudit history seeding...")
+
+    await db.execute(delete(AuditLog))
+    await db.flush()
+
+    audit_counter = 0
+    candidate_data_by_email = {candidate["email"]: candidate for candidate in CANDIDATES}
+    membership_map: dict[tuple[uuid.UUID, uuid.UUID], CompanyMembership] = {}
+    actor_by_user_id: dict[uuid.UUID, User] = {}
+
+    memberships_result = await db.execute(select(CompanyMembership))
+    for membership in memberships_result.scalars().all():
+        membership_map[(membership.user_id, membership.company_id)] = membership
+
+    for context in company_contexts:
+        actor_by_user_id[context["admin"].id] = context["admin"]
+        for recruiter in context["recruiters"]:
+            actor_by_user_id[recruiter.id] = recruiter
+
+    for candidate_user, _resumes in candidate_users:
+        actor_by_user_id[candidate_user.id] = candidate_user
+
+    candidate_user_ids = [candidate_user.id for candidate_user, _ in candidate_users]
+    profiles = (
+        (
+            await db.execute(
+                select(Profile).where(Profile.user_id.in_(candidate_user_ids))
+            )
+        )
+        .scalars()
+        .all()
+    )
+    profiles_by_user_id = {profile.user_id: profile for profile in profiles}
+    profile_ids = [profile.id for profile in profiles]
+    profile_experiences_by_profile_id: dict[uuid.UUID, list[ProfileExperience]] = (
+        defaultdict(list)
+    )
+    profile_educations_by_profile_id: dict[uuid.UUID, list[ProfileEducation]] = (
+        defaultdict(list)
+    )
+    profile_skills_by_profile_id: dict[uuid.UUID, list[ProfileSkill]] = defaultdict(
+        list
+    )
+    if profile_ids:
+        for experience in (
+            (
+                await db.execute(
+                    select(ProfileExperience).where(
+                        ProfileExperience.profile_id.in_(profile_ids)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            profile_experiences_by_profile_id[experience.profile_id].append(experience)
+        for education in (
+            (
+                await db.execute(
+                    select(ProfileEducation).where(
+                        ProfileEducation.profile_id.in_(profile_ids)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            profile_educations_by_profile_id[education.profile_id].append(education)
+        for skill in (
+            (
+                await db.execute(
+                    select(ProfileSkill).where(ProfileSkill.profile_id.in_(profile_ids))
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            profile_skills_by_profile_id[skill.profile_id].append(skill)
+
+    resumes = (
+        (
+            await db.execute(select(Resume).where(Resume.user_id.in_(candidate_user_ids)))
+        )
+        .scalars()
+        .all()
+    )
+    resume_ids = [resume.id for resume in resumes]
+    resume_experiences_by_resume_id: dict[uuid.UUID, list[ResumeExperience]] = (
+        defaultdict(list)
+    )
+    resume_educations_by_resume_id: dict[uuid.UUID, list[ResumeEducation]] = (
+        defaultdict(list)
+    )
+    resume_skills_by_resume_id: dict[uuid.UUID, list[ResumeSkill]] = defaultdict(list)
+    if resume_ids:
+        for experience in (
+            (
+                await db.execute(
+                    select(ResumeExperience).where(
+                        ResumeExperience.resume_id.in_(resume_ids)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            resume_experiences_by_resume_id[experience.resume_id].append(experience)
+        for education in (
+            (
+                await db.execute(
+                    select(ResumeEducation).where(
+                        ResumeEducation.resume_id.in_(resume_ids)
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            resume_educations_by_resume_id[education.resume_id].append(education)
+        for skill in (
+            (
+                await db.execute(
+                    select(ResumeSkill).where(ResumeSkill.resume_id.in_(resume_ids))
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            resume_skills_by_resume_id[skill.resume_id].append(skill)
+
+    jobs = (
+        (await db.execute(select(Job).order_by(Job.created_at.asc()))).scalars().all()
+    )
+    jobs_by_id = {job.id: job for job in jobs}
+    applications = (
+        (
+            await db.execute(select(Application).order_by(Application.created_at.asc()))
+        )
+        .scalars()
+        .all()
+    )
+    applications_by_id = {application.id: application for application in applications}
+    interviews = (await db.execute(select(Interview))).scalars().all()
+    interview_by_application_id = {
+        interview.application_id: interview for interview in interviews
+    }
+    email_drafts = (await db.execute(select(EmailDraft))).scalars().all()
+    recordings = (await db.execute(select(InterviewRecording))).scalars().all()
+    scores = (await db.execute(select(CandidateEvaluationScore))).scalars().all()
+    evaluation_schemas = (
+        (await db.execute(select(JobEvaluationSchema))).scalars().all()
+    )
+    preferences = (await db.execute(select(RecruiterPreference))).scalars().all()
+    ai_drafts = (await db.execute(select(JobAIDraft))).scalars().all()
+    chat_sessions = (await db.execute(select(RecruiterChatSession))).scalars().all()
+    import_tasks = (
+        (
+            await db.execute(
+                select(ResumeImportTask).order_by(ResumeImportTask.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    def record(**kwargs) -> None:
+        nonlocal audit_counter
+        _queue_seed_audit_log(db, **kwargs)
+        audit_counter += 1
+
+    def queue_user_bootstrap(
+        user: User,
+        *,
+        created_at: datetime,
+        company_id: uuid.UUID | None = None,
+        actor: User | None = None,
+        is_onboarded: bool | None = None,
+    ) -> None:
+        record(
+            created_at=created_at - timedelta(minutes=20),
+            entity_type="user",
+            action_type="signup_requested",
+            target_user_id=user.id,
+            company_id=company_id,
+            metadata={
+                "email": user.email,
+                "primary_role": user.primary_role.value,
+            },
+            request_path="/auth/signup",
+            request_method="POST",
+        )
+        created_user_after = _serialize_audit_entity(user)
+        created_user_after["is_email_verified"] = False
+        if is_onboarded is not None:
+            created_user_after["is_onboarded"] = is_onboarded
+        record(
+            created_at=created_at - timedelta(minutes=10),
+            entity_type="user",
+            entity_id=user.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=user.id,
+            company_id=company_id,
+            after_json=created_user_after,
+            request_path="/auth/verify-email",
+            request_method="POST",
+        )
+        verify_before, verify_after, verify_diff = _build_audit_snapshots(
+            user,
+            before_overrides={"is_email_verified": False},
+        )
+        if is_onboarded is not None:
+            verify_before["is_onboarded"] = _audit_serialize_value(is_onboarded)
+            verify_after["is_onboarded"] = _audit_serialize_value(is_onboarded)
+        record(
+            created_at=created_at,
+            entity_type="user",
+            entity_id=user.id,
+            action_type="verify_email",
+            actor=user,
+            target_user_id=user.id,
+            company_id=company_id,
+            before_json=verify_before,
+            after_json=verify_after,
+            diff_json=verify_diff,
+            request_path="/auth/verify-email",
+            request_method="POST",
+        )
+        record(
+            created_at=created_at + timedelta(minutes=25),
+            entity_type="auth_session",
+            entity_id=f"seed-session-{uuid.uuid4().hex[:14]}",
+            action_type="login",
+            actor=user,
+            target_user_id=user.id,
+            company_id=company_id,
+            metadata={"email": user.email},
+            request_path="/auth/login",
+            request_method="POST",
+        )
+
+    for company_index, context in enumerate(company_contexts):
+        company = context["company"]
+        all_jobs = [*context["primary_jobs"], *context["extra_jobs"].values()]
+        company_anchor = min(job.created_at for job in all_jobs) - timedelta(days=180)
+        admin = context["admin"]
+        admin_membership = membership_map[(admin.id, company.id)]
+
+        queue_user_bootstrap(
+            admin,
+            created_at=company_anchor - timedelta(days=3),
+            company_id=company.id,
+            actor=admin,
+            is_onboarded=True,
+        )
+        record(
+            created_at=company_anchor,
+            entity_type="company",
+            entity_id=company.id,
+            action_type="create",
+            actor=admin,
+            company_id=company.id,
+            after_json=_serialize_audit_entity(company),
+            request_path="/companies/register",
+            request_method="POST",
+        )
+        company_before, company_after, company_diff = _build_audit_snapshots(
+            company,
+            before_overrides={
+                "website_url": None,
+                "cal_booking_url": None,
+                "description": f"{company.name} initial company profile.",
+            },
+        )
+        record(
+            created_at=company_anchor + timedelta(days=45),
+            entity_type="company",
+            entity_id=company.id,
+            action_type="update",
+            actor=admin,
+            company_id=company.id,
+            before_json=company_before,
+            after_json=company_after,
+            diff_json=company_diff,
+            request_path="/companies/me",
+            request_method="PATCH",
+        )
+        record(
+            created_at=company_anchor + timedelta(minutes=10),
+            entity_type="membership",
+            entity_id=admin_membership.id,
+            action_type="create",
+            actor=admin,
+            target_user_id=admin.id,
+            company_id=company.id,
+            parent_entity_type="company",
+            parent_entity_id=company.id,
+            after_json=_serialize_audit_entity(admin_membership),
+            request_path="/companies/register",
+            request_method="POST",
+        )
+
+        for recruiter_index, recruiter in enumerate(context["recruiters"]):
+            recruiter_membership = membership_map[(recruiter.id, company.id)]
+            recruiter_anchor = company_anchor + timedelta(
+                days=14 + (recruiter_index * 32)
+            )
+            queue_user_bootstrap(
+                recruiter,
+                created_at=recruiter_anchor,
+                company_id=company.id,
+                actor=admin,
+                is_onboarded=True,
+            )
+            membership_pending = _serialize_audit_entity(recruiter_membership)
+            membership_pending["status"] = MembershipStatus.pending.value
+            record(
+                created_at=recruiter_anchor + timedelta(minutes=8),
+                entity_type="membership",
+                entity_id=recruiter_membership.id,
+                action_type="create",
+                actor=recruiter,
+                target_user_id=recruiter.id,
+                company_id=company.id,
+                parent_entity_type="company",
+                parent_entity_id=company.id,
+                after_json=membership_pending,
+                request_path="/companies/join",
+                request_method="POST",
+            )
+            membership_before, membership_after, membership_diff = (
+                _build_audit_snapshots(
+                    recruiter_membership,
+                    before_overrides={"status": MembershipStatus.pending},
+                )
+            )
+            record(
+                created_at=recruiter_anchor + timedelta(hours=3),
+                entity_type="membership",
+                entity_id=recruiter_membership.id,
+                action_type="status_transition",
+                actor=admin,
+                target_user_id=recruiter.id,
+                company_id=company.id,
+                parent_entity_type="company",
+                parent_entity_id=company.id,
+                before_json=membership_before,
+                after_json=membership_after,
+                diff_json=membership_diff,
+                request_path="/companies/memberships/approve",
+                request_method="POST",
+            )
+
+        company_requests_result = await db.execute(
+            select(CompanyMembership, User)
+            .join(User, User.id == CompanyMembership.user_id)
+            .where(
+                CompanyMembership.company_id == company.id,
+                CompanyMembership.status.in_(
+                    [MembershipStatus.pending, MembershipStatus.rejected]
+                ),
+            )
+        )
+        for request_index, (membership, recruiter) in enumerate(
+            company_requests_result.all()
+        ):
+            request_anchor = company_anchor + timedelta(days=95 + (request_index * 18))
+            queue_user_bootstrap(
+                recruiter,
+                created_at=request_anchor,
+                company_id=company.id,
+                actor=None,
+                is_onboarded=True,
+            )
+            pending_snapshot = _serialize_audit_entity(membership)
+            pending_snapshot["status"] = MembershipStatus.pending.value
+            record(
+                created_at=request_anchor + timedelta(minutes=10),
+                entity_type="membership",
+                entity_id=membership.id,
+                action_type="create",
+                actor=recruiter,
+                target_user_id=recruiter.id,
+                company_id=company.id,
+                parent_entity_type="company",
+                parent_entity_id=company.id,
+                after_json=pending_snapshot,
+                request_path="/companies/join",
+                request_method="POST",
+            )
+            if membership.status == MembershipStatus.rejected:
+                rejected_before, rejected_after, rejected_diff = (
+                    _build_audit_snapshots(
+                        membership,
+                        before_overrides={"status": MembershipStatus.pending},
+                    )
+                )
+                record(
+                    created_at=request_anchor + timedelta(hours=6),
+                    entity_type="membership",
+                    entity_id=membership.id,
+                    action_type="reject",
+                    actor=admin,
+                    target_user_id=recruiter.id,
+                    company_id=company.id,
+                    parent_entity_type="company",
+                    parent_entity_id=company.id,
+                    before_json=rejected_before,
+                    after_json=rejected_after,
+                    diff_json=rejected_diff,
+                    request_path="/companies/memberships/reject",
+                    request_method="POST",
+                )
+
+        deleted_job_id = uuid.uuid4()
+        record(
+            created_at=NOW - timedelta(days=120 + (company_index * 35)),
+            entity_type="job",
+            entity_id=deleted_job_id,
+            action_type="delete",
+            actor=admin,
+            target_user_id=admin.id,
+            company_id=company.id,
+            before_json={
+                "id": str(deleted_job_id),
+                "company_id": str(company.id),
+                "posted_by": str(admin.id),
+                "title": "Legacy Integration Engineer",
+                "location": company.location,
+                "location_type": LocationType.hybrid.value,
+                "salary_min": 110000,
+                "salary_max": 155000,
+                "currency": "NPR",
+                "status": JobStatus.draft.value,
+                "overview": "Legacy role removed before publishing.",
+            },
+            request_path=f"/jobs/{deleted_job_id}",
+            request_method="DELETE",
+        )
+
+    for candidate_index, (candidate_user, resumes) in enumerate(candidate_users):
+        candidate_data = candidate_data_by_email[candidate_user.email]
+        candidate_anchor = NOW - timedelta(days=860 - (candidate_index * 45))
+        queue_user_bootstrap(
+            candidate_user,
+            created_at=candidate_anchor,
+            actor=candidate_user,
+            is_onboarded=False,
+        )
+        record(
+            created_at=candidate_anchor + timedelta(days=1),
+            entity_type="user",
+            entity_id=candidate_user.id,
+            action_type="status_transition",
+            actor=candidate_user,
+            target_user_id=candidate_user.id,
+            before_json={"is_onboarded": False},
+            after_json={"is_onboarded": True},
+            diff_json={"is_onboarded": {"before": False, "after": True}},
+            request_path="/profiles/onboarding",
+            request_method="POST",
+        )
+
+        profile = profiles_by_user_id.get(candidate_user.id)
+        if profile is not None:
+            record(
+                created_at=candidate_anchor + timedelta(days=2),
+                entity_type="profile",
+                entity_id=profile.id,
+                action_type="create",
+                actor=candidate_user,
+                target_user_id=candidate_user.id,
+                after_json=_serialize_audit_entity(profile),
+                request_path="/profiles/me",
+                request_method="POST",
+            )
+            profile_before, profile_after, profile_diff = _build_audit_snapshots(
+                profile,
+                before_overrides={
+                    "headline": None,
+                    "linkedin_url": None,
+                    "github_url": None,
+                    "portfolio_url": None,
+                    "target_roles": [],
+                    "is_open_to_work": False,
+                },
+            )
+            record(
+                created_at=candidate_anchor + timedelta(days=35),
+                entity_type="profile",
+                entity_id=profile.id,
+                action_type="update",
+                actor=candidate_user,
+                target_user_id=candidate_user.id,
+                before_json=profile_before,
+                after_json=profile_after,
+                diff_json=profile_diff,
+                request_path="/profiles/me",
+                request_method="PATCH",
+            )
+
+            profile_experiences = profile_experiences_by_profile_id.get(profile.id, [])
+            for offset, experience in enumerate(profile_experiences):
+                record(
+                    created_at=candidate_anchor + timedelta(days=3, hours=offset),
+                    entity_type="profile_experience",
+                    entity_id=experience.id,
+                    action_type="create",
+                    actor=candidate_user,
+                    target_user_id=candidate_user.id,
+                    parent_entity_type="profile",
+                    parent_entity_id=profile.id,
+                    after_json=_serialize_audit_entity(experience),
+                    request_path="/profiles/me",
+                    request_method="PATCH",
+                )
+
+            profile_educations = profile_educations_by_profile_id.get(profile.id, [])
+            for offset, education in enumerate(profile_educations):
+                record(
+                    created_at=candidate_anchor + timedelta(days=4, hours=offset),
+                    entity_type="profile_education",
+                    entity_id=education.id,
+                    action_type="create",
+                    actor=candidate_user,
+                    target_user_id=candidate_user.id,
+                    parent_entity_type="profile",
+                    parent_entity_id=profile.id,
+                    after_json=_serialize_audit_entity(education),
+                    request_path="/profiles/me",
+                    request_method="PATCH",
+                )
+
+            profile_skills = profile_skills_by_profile_id.get(profile.id, [])
+            for offset, skill in enumerate(profile_skills):
+                record(
+                    created_at=candidate_anchor + timedelta(days=5, hours=offset),
+                    entity_type="profile_skill",
+                    entity_id=skill.id,
+                    action_type="create",
+                    actor=candidate_user,
+                    target_user_id=candidate_user.id,
+                    parent_entity_type="profile",
+                    parent_entity_id=profile.id,
+                    after_json=_serialize_audit_entity(skill),
+                    request_path="/profiles/me",
+                    request_method="PATCH",
+                )
+
+        for resume_index, resume in enumerate(resumes):
+            resume_anchor = candidate_anchor + timedelta(days=6 + (resume_index * 6))
+            record(
+                created_at=resume_anchor,
+                entity_type="resume",
+                entity_id=resume.id,
+                action_type="create",
+                actor=candidate_user,
+                target_user_id=candidate_user.id,
+                after_json=_serialize_audit_entity(resume),
+                request_path="/resumes",
+                request_method="POST",
+            )
+            resume_before, resume_after, resume_diff = _build_audit_snapshots(
+                resume,
+                before_overrides={
+                    "headline": candidate_data["headline"].split("|")[0].strip(),
+                    "summary": "Initial imported resume summary.",
+                },
+            )
+            record(
+                created_at=resume_anchor + timedelta(days=25),
+                entity_type="resume",
+                entity_id=resume.id,
+                action_type="update",
+                actor=candidate_user,
+                target_user_id=candidate_user.id,
+                before_json=resume_before,
+                after_json=resume_after,
+                diff_json=resume_diff,
+                request_path=f"/resumes/{resume.id}",
+                request_method="PATCH",
+            )
+
+            resume_experiences = resume_experiences_by_resume_id.get(resume.id, [])
+            for offset, experience in enumerate(resume_experiences):
+                record(
+                    created_at=resume_anchor + timedelta(hours=offset + 1),
+                    entity_type="resume_experience",
+                    entity_id=experience.id,
+                    action_type="create",
+                    actor=candidate_user,
+                    target_user_id=candidate_user.id,
+                    parent_entity_type="resume",
+                    parent_entity_id=resume.id,
+                    after_json=_serialize_audit_entity(experience),
+                    request_path=f"/resumes/{resume.id}",
+                    request_method="PATCH",
+                )
+
+            resume_educations = resume_educations_by_resume_id.get(resume.id, [])
+            for offset, education in enumerate(resume_educations):
+                record(
+                    created_at=resume_anchor + timedelta(hours=offset + 2),
+                    entity_type="resume_education",
+                    entity_id=education.id,
+                    action_type="create",
+                    actor=candidate_user,
+                    target_user_id=candidate_user.id,
+                    parent_entity_type="resume",
+                    parent_entity_id=resume.id,
+                    after_json=_serialize_audit_entity(education),
+                    request_path=f"/resumes/{resume.id}",
+                    request_method="PATCH",
+                )
+
+            resume_skills = resume_skills_by_resume_id.get(resume.id, [])
+            for offset, skill in enumerate(resume_skills):
+                record(
+                    created_at=resume_anchor + timedelta(hours=offset + 3),
+                    entity_type="resume_skill",
+                    entity_id=skill.id,
+                    action_type="create",
+                    actor=candidate_user,
+                    target_user_id=candidate_user.id,
+                    parent_entity_type="resume",
+                    parent_entity_id=resume.id,
+                    after_json=_serialize_audit_entity(skill),
+                    request_path=f"/resumes/{resume.id}",
+                    request_method="PATCH",
+                )
+
+        if candidate_index == 0 and resumes:
+            deleted_resume_id = uuid.uuid4()
+            deleted_resume_snapshot = _serialize_audit_entity(resumes[0]) | {
+                "id": str(deleted_resume_id),
+                "resume_name": "Legacy Internship Resume",
+            }
+            record(
+                created_at=candidate_anchor + timedelta(days=120),
+                entity_type="resume",
+                entity_id=deleted_resume_id,
+                action_type="delete",
+                actor=candidate_user,
+                target_user_id=candidate_user.id,
+                before_json=deleted_resume_snapshot,
+                request_path=f"/resumes/{deleted_resume_id}",
+                request_method="DELETE",
+            )
+
+    for job in jobs:
+        actor = actor_by_user_id.get(job.posted_by)
+        record(
+            created_at=job.created_at,
+            entity_type="job",
+            entity_id=job.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=job.posted_by,
+            company_id=job.company_id,
+            after_json=_serialize_audit_entity(job),
+            request_path="/jobs",
+            request_method="POST",
+        )
+        job_update_before, job_update_after, job_update_diff = _build_audit_snapshots(
+            job,
+            before_overrides={
+                "salary_min": max((job.salary_min or 0) - 15000, 0) or None,
+                "salary_max": max((job.salary_max or 0) - 20000, 0) or None,
+                "overview": "Initial draft of the role description.",
+            },
+        )
+        record(
+            created_at=job.created_at + timedelta(hours=6),
+            entity_type="job",
+            entity_id=job.id,
+            action_type="update",
+            actor=actor,
+            target_user_id=job.posted_by,
+            company_id=job.company_id,
+            before_json=job_update_before,
+            after_json=job_update_after,
+            diff_json=job_update_diff,
+            request_path=f"/jobs/{job.id}",
+            request_method="PATCH",
+        )
+        if job.status != JobStatus.draft:
+            active_before, active_after, active_diff = _build_audit_snapshots(
+                job,
+                before_overrides={"status": JobStatus.draft},
+                after_overrides={"status": JobStatus.active},
+            )
+            record(
+                created_at=job.created_at + timedelta(hours=1),
+                entity_type="job",
+                entity_id=job.id,
+                action_type="status_transition",
+                actor=actor,
+                target_user_id=job.posted_by,
+                company_id=job.company_id,
+                before_json=active_before,
+                after_json=active_after,
+                diff_json=active_diff,
+                request_path=f"/jobs/{job.id}",
+                request_method="PATCH",
+            )
+        if job.status == JobStatus.expired and job.expires_at is not None:
+            expired_before, expired_after, expired_diff = _build_audit_snapshots(
+                job,
+                before_overrides={"status": JobStatus.active},
+            )
+            record(
+                created_at=job.expires_at,
+                entity_type="job",
+                entity_id=job.id,
+                action_type="status_transition",
+                actor=actor,
+                target_user_id=job.posted_by,
+                company_id=job.company_id,
+                before_json=expired_before,
+                after_json=expired_after,
+                diff_json=expired_diff,
+                request_path=f"/jobs/{job.id}/expire",
+                request_method="POST",
+            )
+        if job.hiring_completed:
+            hiring_before, hiring_after, hiring_diff = _build_audit_snapshots(
+                job,
+                before_overrides={"hiring_completed": False},
+            )
+            record(
+                created_at=(job.updated_at or job.created_at) + timedelta(hours=2),
+                entity_type="job",
+                entity_id=job.id,
+                action_type="mark_complete",
+                actor=actor,
+                target_user_id=job.posted_by,
+                company_id=job.company_id,
+                before_json=hiring_before,
+                after_json=hiring_after,
+                diff_json=hiring_diff,
+                request_path=f"/jobs/{job.id}/hiring-complete",
+                request_method="POST",
+            )
+
+    for schema in evaluation_schemas:
+        job = jobs_by_id.get(schema.job_id)
+        actor = actor_by_user_id.get(job.posted_by) if job is not None else None
+        record(
+            created_at=(job.created_at if job is not None else NOW) + timedelta(hours=2),
+            entity_type="job_evaluation_schema",
+            entity_id=schema.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=job.posted_by if job is not None else None,
+            company_id=job.company_id if job is not None else None,
+            parent_entity_type="job",
+            parent_entity_id=schema.job_id,
+            after_json=_serialize_audit_entity(schema),
+            request_path=f"/jobs/{schema.job_id}/evaluation-schema",
+            request_method="POST",
+        )
+
+    for application in applications:
+        job = jobs_by_id.get(application.job_id)
+        candidate = actor_by_user_id.get(application.user_id)
+        actor = actor_by_user_id.get(job.posted_by) if job is not None else None
+        interview = interview_by_application_id.get(application.id)
+
+        apply_after = _serialize_audit_entity(application)
+        apply_after["status"] = ApplicationStatus.applied.value
+        apply_after["score"] = None
+        apply_after["feedback"] = None
+        apply_after["shortlist_notified"] = False
+        record(
+            created_at=application.created_at,
+            entity_type="application",
+            entity_id=application.id,
+            action_type="create",
+            actor=candidate,
+            target_user_id=application.user_id,
+            company_id=job.company_id if job is not None else None,
+            parent_entity_type="job",
+            parent_entity_id=application.job_id,
+            after_json=apply_after,
+            request_path="/applications",
+            request_method="POST",
+        )
+        if application.score is not None or application.feedback:
+            review_before, review_after, review_diff = _build_audit_snapshots(
+                application,
+                before_overrides={"score": None, "feedback": None},
+            )
+            record(
+                created_at=application.created_at + timedelta(hours=18),
+                entity_type="application",
+                entity_id=application.id,
+                action_type="update",
+                actor=actor,
+                target_user_id=application.user_id,
+                company_id=job.company_id if job is not None else None,
+                parent_entity_type="job",
+                parent_entity_id=application.job_id,
+                before_json=review_before,
+                after_json=review_after,
+                diff_json=review_diff,
+                request_path=f"/applications/{application.id}/review",
+                request_method="PATCH",
+            )
+
+        status_path: list[ApplicationStatus] = []
+        if application.status in {
+            ApplicationStatus.screening,
+            ApplicationStatus.shortlisted,
+            ApplicationStatus.rejected,
+            ApplicationStatus.interview_booked,
+            ApplicationStatus.interview_completed,
+            ApplicationStatus.offer,
+        }:
+            status_path.append(ApplicationStatus.screening)
+        if application.status in {
+            ApplicationStatus.shortlisted,
+            ApplicationStatus.rejected,
+            ApplicationStatus.interview_booked,
+            ApplicationStatus.interview_completed,
+            ApplicationStatus.offer,
+        }:
+            status_path.append(ApplicationStatus.shortlisted)
+        if application.status in {
+            ApplicationStatus.interview_booked,
+            ApplicationStatus.interview_completed,
+            ApplicationStatus.offer,
+        }:
+            status_path.append(ApplicationStatus.interview_booked)
+        if application.status in {
+            ApplicationStatus.interview_completed,
+            ApplicationStatus.offer,
+        }:
+            status_path.append(ApplicationStatus.interview_completed)
+        if application.status == ApplicationStatus.rejected:
+            if interview is not None:
+                status_path.extend(
+                    [
+                        ApplicationStatus.interview_booked,
+                        ApplicationStatus.interview_completed,
+                    ]
+                )
+            status_path.append(ApplicationStatus.rejected)
+        if application.status == ApplicationStatus.offer:
+            status_path.append(ApplicationStatus.offer)
+
+        status_path = list(dict.fromkeys(status_path))
+        transition_time = application.created_at + timedelta(days=1)
+        previous_status = ApplicationStatus.applied
+        for next_status in status_path:
+            before_json, after_json, diff_json = _build_audit_snapshots(
+                application,
+                before_overrides={"status": previous_status},
+                after_overrides={"status": next_status},
+            )
+            record(
+                created_at=transition_time,
+                entity_type="application",
+                entity_id=application.id,
+                action_type="status_transition",
+                actor=actor,
+                target_user_id=application.user_id,
+                company_id=job.company_id if job is not None else None,
+                parent_entity_type="job",
+                parent_entity_id=application.job_id,
+                before_json=before_json,
+                after_json=after_json,
+                diff_json=diff_json,
+                request_path=f"/applications/{application.id}/status",
+                request_method="PATCH",
+            )
+            previous_status = next_status
+            transition_time += timedelta(days=2)
+
+    for draft in email_drafts:
+        application = applications_by_id.get(draft.application_id)
+        if application is None:
+            continue
+        job = jobs_by_id.get(application.job_id)
+        actor = actor_by_user_id.get(
+            draft.generated_by_user_id or (job.posted_by if job is not None else None)
+        )
+        company_id = job.company_id if job is not None else None
+        generated_at = (
+            draft.approved_at
+            or draft.sent_at
+            or draft.discarded_at
+            or application.updated_at
+            or application.created_at
+        ) - timedelta(hours=8)
+
+        create_after = _serialize_audit_entity(draft)
+        create_after.update(
+            {
+                "is_approved": False,
+                "is_sent": False,
+                "is_discarded": False,
+                "approved_at": None,
+                "sent_at": None,
+                "discarded_at": None,
+            }
+        )
+        record(
+            created_at=generated_at,
+            entity_type="email_draft",
+            entity_id=draft.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=application.user_id,
+            company_id=company_id,
+            parent_entity_type="application",
+            parent_entity_id=application.id,
+            after_json=create_after,
+            request_path="/outreach/generate",
+            request_method="POST",
+        )
+        if draft.is_approved or draft.is_sent:
+            approve_before, approve_after, approve_diff = _build_audit_snapshots(
+                draft,
+                before_overrides={
+                    "is_approved": False,
+                    "approved_by_user_id": None,
+                    "approved_at": None,
+                },
+            )
+            record(
+                created_at=draft.approved_at or (generated_at + timedelta(hours=3)),
+                entity_type="email_draft",
+                entity_id=draft.id,
+                action_type="approve",
+                actor=actor_by_user_id.get(draft.approved_by_user_id) or actor,
+                target_user_id=application.user_id,
+                company_id=company_id,
+                parent_entity_type="application",
+                parent_entity_id=application.id,
+                before_json=approve_before,
+                after_json=approve_after,
+                diff_json=approve_diff,
+                request_path=f"/outreach/{draft.id}/approve",
+                request_method="POST",
+            )
+        if draft.is_sent:
+            send_before, send_after, send_diff = _build_audit_snapshots(
+                draft,
+                before_overrides={
+                    "is_sent": False,
+                    "sent_by_user_id": None,
+                    "sent_at": None,
+                },
+            )
+            record(
+                created_at=draft.sent_at or (generated_at + timedelta(hours=5)),
+                entity_type="email_draft",
+                entity_id=draft.id,
+                action_type="send",
+                actor=actor_by_user_id.get(draft.sent_by_user_id) or actor,
+                target_user_id=application.user_id,
+                company_id=company_id,
+                parent_entity_type="application",
+                parent_entity_id=application.id,
+                before_json=send_before,
+                after_json=send_after,
+                diff_json=send_diff,
+                request_path=f"/outreach/{draft.id}/send",
+                request_method="POST",
+            )
+        if draft.is_discarded:
+            discard_before, discard_after, discard_diff = _build_audit_snapshots(
+                draft,
+                before_overrides={
+                    "is_discarded": False,
+                    "discarded_by_user_id": None,
+                    "discarded_at": None,
+                },
+            )
+            record(
+                created_at=draft.discarded_at or (generated_at + timedelta(hours=4)),
+                entity_type="email_draft",
+                entity_id=draft.id,
+                action_type="discard",
+                actor=actor_by_user_id.get(draft.discarded_by_user_id) or actor,
+                target_user_id=application.user_id,
+                company_id=company_id,
+                parent_entity_type="application",
+                parent_entity_id=application.id,
+                before_json=discard_before,
+                after_json=discard_after,
+                diff_json=discard_diff,
+                request_path=f"/outreach/{draft.id}/discard",
+                request_method="POST",
+            )
+
+    for interview in interview_by_application_id.values():
+        application = applications_by_id.get(interview.application_id)
+        if application is None:
+            continue
+        job = jobs_by_id.get(application.job_id)
+        actor = actor_by_user_id.get(job.posted_by) if job is not None else None
+        company_id = job.company_id if job is not None else None
+        record(
+            created_at=interview.created_at,
+            entity_type="interview",
+            entity_id=interview.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=application.user_id,
+            company_id=company_id,
+            parent_entity_type="application",
+            parent_entity_id=application.id,
+            after_json=_serialize_audit_entity(interview),
+            request_path="/interviews/webhook/booked",
+            request_method="POST",
+        )
+        if application.status in {
+            ApplicationStatus.interview_completed,
+            ApplicationStatus.offer,
+            ApplicationStatus.rejected,
+        } and interview.end_time <= NOW:
+            record(
+                created_at=interview.end_time,
+                entity_type="interview",
+                entity_id=interview.id,
+                action_type="mark_complete",
+                actor=actor,
+                target_user_id=application.user_id,
+                company_id=company_id,
+                parent_entity_type="application",
+                parent_entity_id=application.id,
+                before_json={"state": "booked", "ended_at": None},
+                after_json={
+                    "state": "completed",
+                    "ended_at": interview.end_time.isoformat(),
+                },
+                diff_json={
+                    "state": {"before": "booked", "after": "completed"},
+                    "ended_at": {
+                        "before": None,
+                        "after": interview.end_time.isoformat(),
+                    },
+                },
+                request_path=f"/interviews/{interview.id}/complete",
+                request_method="POST",
+            )
+
+    for recording in recordings:
+        application = applications_by_id.get(recording.application_id)
+        if application is None:
+            continue
+        job = jobs_by_id.get(application.job_id)
+        actor = actor_by_user_id.get(job.posted_by) if job is not None else None
+        company_id = job.company_id if job is not None else None
+        create_after = _serialize_audit_entity(recording)
+        create_after.update(
+            {
+                "status": RecordingStatus.uploaded.value,
+                "transcript": None,
+                "evaluation": None,
+            }
+        )
+        record(
+            created_at=recording.created_at,
+            entity_type="interview_recording",
+            entity_id=recording.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=application.user_id,
+            company_id=company_id,
+            parent_entity_type="application",
+            parent_entity_id=application.id,
+            after_json=create_after,
+            request_path="/interviews/recordings",
+            request_method="POST",
+        )
+        if recording.status != RecordingStatus.uploaded:
+            recording_before, recording_after, recording_diff = _build_audit_snapshots(
+                recording,
+                before_overrides={
+                    "status": RecordingStatus.uploaded,
+                    "transcript": None,
+                    "evaluation": None,
+                },
+            )
+            record(
+                created_at=(recording.updated_at or recording.created_at)
+                + timedelta(minutes=20),
+                entity_type="interview_recording",
+                entity_id=recording.id,
+                action_type="status_transition",
+                actor=actor,
+                target_user_id=application.user_id,
+                company_id=company_id,
+                parent_entity_type="application",
+                parent_entity_id=application.id,
+                before_json=recording_before,
+                after_json=recording_after,
+                diff_json=recording_diff,
+                request_path=f"/interviews/recordings/{recording.id}",
+                request_method="PATCH",
+            )
+
+    for score in scores:
+        application = applications_by_id.get(score.application_id)
+        if application is None:
+            continue
+        job = jobs_by_id.get(score.job_id)
+        actor = actor_by_user_id.get(
+            score.submitted_by_user_id or (job.posted_by if job is not None else None)
+        )
+        record(
+            created_at=(application.updated_at or application.created_at)
+            + timedelta(hours=4),
+            entity_type="candidate_evaluation_score",
+            entity_id=score.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=application.user_id,
+            company_id=job.company_id if job is not None else None,
+            parent_entity_type="application",
+            parent_entity_id=application.id,
+            after_json=_serialize_audit_entity(score),
+            request_path=f"/interviews/evaluations/{application.id}",
+            request_method="POST",
+        )
+
+    for preference in preferences:
+        actor = actor_by_user_id.get(preference.user_id)
+        company_id = None
+        for (member_user_id, member_company_id), membership in membership_map.items():
+            if (
+                member_user_id == preference.user_id
+                and membership.status == MembershipStatus.active
+            ):
+                company_id = member_company_id
+                break
+        preference_anchor = NOW - timedelta(days=180)
+        record(
+            created_at=preference_anchor,
+            entity_type="recruiter_preference",
+            entity_id=preference.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=preference.user_id,
+            company_id=company_id,
+            after_json=_serialize_audit_entity(preference),
+            request_path="/recruiter/preferences",
+            request_method="POST",
+        )
+        preference_before, preference_after, preference_diff = _build_audit_snapshots(
+            preference,
+            before_overrides={
+                "default_interview_duration_minutes": max(
+                    30, preference.default_interview_duration_minutes - 15
+                ),
+                "chat_default_scope": "jobs",
+            },
+        )
+        record(
+            created_at=preference_anchor + timedelta(days=21),
+            entity_type="recruiter_preference",
+            entity_id=preference.id,
+            action_type="update",
+            actor=actor,
+            target_user_id=preference.user_id,
+            company_id=company_id,
+            before_json=preference_before,
+            after_json=preference_after,
+            diff_json=preference_diff,
+            request_path="/recruiter/preferences",
+            request_method="PATCH",
+        )
+
+    for draft in ai_drafts:
+        actor = actor_by_user_id.get(draft.recruiter_id)
+        record(
+            created_at=draft.created_at,
+            entity_type="job_ai_draft",
+            entity_id=draft.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=draft.recruiter_id,
+            company_id=draft.company_id,
+            after_json=_serialize_audit_entity(draft),
+            request_path="/job-ai/drafts",
+            request_method="POST",
+        )
+        draft_before, draft_after, draft_diff = _build_audit_snapshots(
+            draft,
+            before_overrides={"status": "drafting", "warnings": []},
+        )
+        record(
+            created_at=(draft.updated_at or draft.created_at) + timedelta(hours=1),
+            entity_type="job_ai_draft",
+            entity_id=draft.id,
+            action_type="update",
+            actor=actor,
+            target_user_id=draft.recruiter_id,
+            company_id=draft.company_id,
+            before_json=draft_before,
+            after_json=draft_after,
+            diff_json=draft_diff,
+            request_path=f"/job-ai/drafts/{draft.id}",
+            request_method="PATCH",
+        )
+
+    first_chat_session = None
+    for session in chat_sessions:
+        actor = actor_by_user_id.get(session.recruiter_id)
+        if first_chat_session is None:
+            first_chat_session = session
+        record(
+            created_at=session.created_at,
+            entity_type="chat_session",
+            entity_id=session.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=session.recruiter_id,
+            company_id=session.company_id,
+            after_json=_serialize_audit_entity(session),
+            request_path="/recruiter-chat/sessions",
+            request_method="POST",
+        )
+        session_before, session_after, session_diff = _build_audit_snapshots(
+            session,
+            before_overrides={"title": "Untitled recruiter chat"},
+        )
+        record(
+            created_at=(session.updated_at or session.created_at) + timedelta(hours=2),
+            entity_type="chat_session",
+            entity_id=session.id,
+            action_type="update",
+            actor=actor,
+            target_user_id=session.recruiter_id,
+            company_id=session.company_id,
+            before_json=session_before,
+            after_json=session_after,
+            diff_json=session_diff,
+            request_path=f"/recruiter-chat/sessions/{session.id}",
+            request_method="PATCH",
+        )
+
+    if first_chat_session is not None:
+        deleted_chat_id = uuid.uuid4()
+        deleted_chat_snapshot = _serialize_audit_entity(first_chat_session) | {
+            "id": str(deleted_chat_id),
+            "title": "Old recruiter sync notes",
+        }
+        record(
+            created_at=NOW - timedelta(days=40),
+            entity_type="chat_session",
+            entity_id=deleted_chat_id,
+            action_type="delete",
+            actor=actor_by_user_id.get(first_chat_session.recruiter_id),
+            target_user_id=first_chat_session.recruiter_id,
+            company_id=first_chat_session.company_id,
+            before_json=deleted_chat_snapshot,
+            request_path=f"/recruiter-chat/sessions/{deleted_chat_id}",
+            request_method="DELETE",
+        )
+
+    for task_index, task in enumerate(import_tasks):
+        actor = actor_by_user_id.get(task.user_id)
+        task_anchor = NOW - timedelta(days=28 - task_index)
+        create_after = _serialize_audit_entity(task)
+        create_after["status"] = "pending"
+        create_after["error_message"] = None
+        create_after["result_data"] = None
+        record(
+            created_at=task_anchor,
+            entity_type="resume_import_task",
+            entity_id=task.id,
+            action_type="create",
+            actor=actor,
+            target_user_id=task.user_id,
+            after_json=create_after,
+            request_path="/resumes/import",
+            request_method="POST",
+        )
+        if task.status != "pending":
+            task_before, task_after, task_diff = _build_audit_snapshots(
+                task,
+                before_overrides={
+                    "status": "pending",
+                    "error_message": None,
+                    "result_data": None,
+                },
+            )
+            record(
+                created_at=task_anchor + timedelta(minutes=25),
+                entity_type="resume_import_task",
+                entity_id=task.id,
+                action_type="status_transition",
+                actor=actor,
+                target_user_id=task.user_id,
+                before_json=task_before,
+                after_json=task_after,
+                diff_json=task_diff,
+                request_path=f"/resumes/import/{task.id}",
+                request_method="PATCH",
+            )
+
+    await db.flush()
+    print(f"  Seeded audit logs: {audit_counter}")
+
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -4962,6 +6374,7 @@ async def seed() -> None:
     await clear_existing_data()
 
     async with AsyncSessionLocal() as db:
+        db.sync_session.info["audit_logs_disabled"] = True
         print("\n🚀 Seeding ConvexHire – Nepal IT Hiring Platform\n")
 
         # --- Companies, Admins, Recruiters, Jobs ---
@@ -5007,6 +6420,7 @@ async def seed() -> None:
         await seed_ai_artifacts(db, company_contexts)
         await seed_candidate_import_tasks(db, candidate_users)
         await seed_preferences_and_activity(db, company_contexts)
+        await seed_audit_history(db, company_contexts, candidate_users)
 
         await db.commit()
         credentials_path = write_credentials_file()
@@ -5078,6 +6492,7 @@ async def seed() -> None:
         total_preferences = (
             await db.scalar(text("select count(*) from recruiter_preferences"))
         ) or 0
+        total_audit_logs = await db.scalar(text("select count(*) from audit_logs")) or 0
         pending_requests = (
             await db.scalar(
                 select(func.count(CompanyMembership.id)).where(
@@ -5112,6 +6527,7 @@ async def seed() -> None:
         print(f"  Resume import tasks : {total_import_tasks}")
         print(f"  Activity events     : {total_activity_events}")
         print(f"  Notifications       : {total_notifications}")
+        print(f"  Audit logs          : {total_audit_logs}")
         print(f"  Recruiter prefs     : {total_preferences}")
         print(f"  Credentials file    : {credentials_path}")
         print()

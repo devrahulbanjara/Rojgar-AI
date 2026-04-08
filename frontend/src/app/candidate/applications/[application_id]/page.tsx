@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation'
 
 import { getApplicationStatusLabel } from '@/lib/applicationStatus'
 import { useGetApplicationByIdQuery } from '@/store/services/applicationsApi'
+import { useGetEntityAuditTrailQuery } from '@/store/services/auditApi'
 import { ArrowLeft, CalendarDays, Clock3, MapPin } from 'lucide-react'
 
+import AuditTrailCard from '@/components/common/AuditTrailCard'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 import StatusPill from '@/components/common/StatusPill'
 
@@ -25,7 +27,12 @@ export default function CandidateApplicationDetailPage() {
   const applicationId = params.application_id as string
   const { data, isLoading, isError, error, isFetching, refetch } =
     useGetApplicationByIdQuery(applicationId)
+  const { data: auditResponse } = useGetEntityAuditTrailQuery({
+    entityType: 'application',
+    entityId: applicationId,
+  })
   const application = data?.data
+  const auditTrail = auditResponse?.data ?? []
 
   return (
     <div className="dash-content container container--app-shell">
@@ -201,6 +208,13 @@ export default function CandidateApplicationDetailPage() {
               </div>
             </div>
           </div>
+
+          <AuditTrailCard
+            title="Audit trail"
+            subtitle="Stored audit evidence for this application, including state transitions and related writes."
+            items={auditTrail}
+            emptyText="No audit entries are available for this application yet."
+          />
         </div>
       )}
     </div>
