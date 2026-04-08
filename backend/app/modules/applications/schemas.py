@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import Field
 
 from app.core.schemas import BaseSchema
+from app.modules.activity.schemas import ActivityEventResponse
 from app.modules.resumes.schemas import ResumeResponse
 from app.shared.enums import ApplicationStatus, LocationType
 
@@ -66,6 +67,14 @@ class ApplicationResponse(BaseSchema):
     score: int | None = None
     feedback: str | None = None
     resume: ResumeResponse | None = None
+    job_title: str | None = None
+    company_name: str | None = None
+    company_logo_url: str | None = None
+    location: str | None = None
+    location_type: LocationType | None = None
+    interview: "RecruiterCandidateInterviewView | None" = None
+    timeline: list[ActivityEventResponse] = Field(default_factory=list)
+    next_step_hint: str | None = None
 
 
 class ApplicantSummary(BaseSchema):
@@ -180,3 +189,21 @@ class RecruiterCandidateDetailView(BaseSchema):
     interview: RecruiterCandidateInterviewView | None = None
     resume: ResumeResponse | None = None
     share_settings: CandidateShareSettings
+    timeline: list[ActivityEventResponse] = Field(default_factory=list)
+    outreach_audit: list["ApplicationOutreachAuditItem"] = Field(default_factory=list)
+
+
+class ApplicationOutreachAuditItem(BaseSchema):
+    draft_id: UUID
+    subject: str | None = None
+    is_approved: bool
+    is_sent: bool
+    is_discarded: bool
+    generated_by_user_id: UUID | None = None
+    approved_by_user_id: UUID | None = None
+    approved_at: datetime | None = None
+    sent_by_user_id: UUID | None = None
+    sent_at: datetime | None = None
+    discarded_by_user_id: UUID | None = None
+    discarded_at: datetime | None = None
+    updated_at: datetime

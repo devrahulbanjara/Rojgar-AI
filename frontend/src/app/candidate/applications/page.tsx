@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 import { getApplicationStatusLabel } from '@/lib/applicationStatus'
+import { getCompanyAccent } from '@/lib/companyAccent'
 import {
   type ApplicationStatus,
   type CandidateApplicationView,
@@ -13,6 +14,7 @@ import {
 } from '@/store/services/applicationsApi'
 import { Search, X } from 'lucide-react'
 
+import DashboardErrorState from '@/components/common/DashboardErrorState'
 import MediaBadge from '@/components/common/MediaBadge'
 import StatusPill from '@/components/common/StatusPill'
 
@@ -65,16 +67,6 @@ const ACTIVE_TIMELINE: Array<{
   { key: 'interview_completed', label: 'Interview Completed' },
   { key: 'offer', label: 'Offer' },
 ]
-
-function getCompanyAccent(name: string): { logo: string; color: string } {
-  const palette = ['#0f766e', '#2563eb', '#dc2626', '#9333ea', '#d97706', '#0891b2']
-  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0)
-
-  return {
-    logo: name.trim().charAt(0).toUpperCase() || 'C',
-    color: palette[seed % palette.length],
-  }
-}
 
 function getLocationTypeLabel(locationType: CandidateApplicationView['location_type']): string {
   switch (locationType) {
@@ -202,7 +194,10 @@ export default function ApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null)
 
-  const { data, isLoading, isFetching, isError } = useGetMyApplicationsQuery({ page: 1, size: 100 })
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetMyApplicationsQuery({
+    page: 1,
+    size: 100,
+  })
   const applications = useMemo(() => data?.data ?? [], [data?.data])
 
   const statusCounts = useMemo(() => {
@@ -271,9 +266,7 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
-        <div className="app-detail-empty content-fade-in">
-          <p>Applications are unavailable right now. Please refresh and try again.</p>
-        </div>
+        <DashboardErrorState error={error} isRetrying={isFetching} onRetry={() => void refetch()} />
       </div>
     )
   }
@@ -380,7 +373,14 @@ export default function ApplicationsPage() {
               {filteredApplications.length === 0 ? (
                 <div className="apps-empty">
                   <Search size={40} aria-hidden="true" />
-                  <p>No applications match your filters.</p>
+                  <p>
+                    {applications.length === 0
+                      ? 'No applications yet.'
+                      : 'No applications match your filters.'}
+                  </p>
+                  <Link href="/candidate/jobs" className="btn btn--primary btn--sm">
+                    Browse jobs
+                  </Link>
                 </div>
               ) : (
                 filteredApplications.map((application, index) => {
@@ -402,7 +402,7 @@ export default function ApplicationsPage() {
                         sizes="48px"
                         style={
                           {
-                            '--app-logo-bg': accent.color + '1A',
+                            '--app-logo-bg': accent.background,
                             '--app-logo-color': accent.color,
                           } as CSSProperties
                         }
@@ -469,8 +469,8 @@ export default function ApplicationsPage() {
                   sizes="72px"
                   style={
                     {
-                      '--app-logo-bg':
-                        getCompanyAccent(selectedApplication.company_name).color + '1A',
+                      '--app-logo-bg': getCompanyAccent(selectedApplication.company_name)
+                        .background,
                       '--app-logo-color': getCompanyAccent(selectedApplication.company_name).color,
                     } as CSSProperties
                   }
@@ -547,6 +547,12 @@ export default function ApplicationsPage() {
               </div>
 
               <div className="app-detail__actions">
+                <Link
+                  href={`/candidate/applications/${selectedApplication.id}`}
+                  className="btn btn--primary btn--sm"
+                >
+                  Open Full Detail
+                </Link>
                 <Link
                   href={`/candidate/jobs/${selectedApplication.job_id}`}
                   className="btn btn--outline btn--primary btn--sm"

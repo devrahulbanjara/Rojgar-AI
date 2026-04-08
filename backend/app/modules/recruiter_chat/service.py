@@ -35,6 +35,8 @@ from app.modules.recruiter_chat.schemas import (
     ChatHistoryResponse,
     ChatMessageRequest,
     ChatResponseType,
+    ChatSessionArtifact,
+    ChatSessionArtifactKind,
     ChatSessionResponse,
     CompanyJobListResult,
     ConfirmJobEditRequest,
@@ -44,6 +46,7 @@ from app.modules.recruiter_chat.schemas import (
     PendingActionType,
     RecruiterChatResponse,
 )
+from app.modules.recruiter_preferences.models import RecruiterPreference
 from app.modules.recruiter_chat.tools import (
     build_job_counts,
     build_source_items,
@@ -130,6 +133,78 @@ def _history_to_schema(state: dict[str, Any]) -> list[ChatHistoryMessage]:
         except Exception:
             continue
     return items
+
+
+def _artifacts_from_state(state: dict[str, Any]) -> list[ChatSessionArtifact]:
+    artifacts: list[ChatSessionArtifact] = []
+
+    for row in reversed(state.get("history", [])):
+        response_type = row.get("response_type")
+        raw_data = row.get("data")
+        data = raw_data if isinstance(raw_data, dict) else {}
+        created_at_raw = row.get("created_at")
+        if not created_at_raw:
+            continue
+
+        try:
+            created_at = datetime.fromisoformat(created_at_raw)
+        except ValueError:
+            continue
+
+        artifact: ChatSessionArtifact | None = None
+        if response_type == ChatResponseType.salary_answer.value:
+            artifact = ChatSessionArtifact(
+                kind=ChatSessionArtifactKind.salary_research,
+                title="Salary research",
+                summary=(
+                    f"{data.get('role', 'Role')} in {data.get('country', 'selected market')}"
+                ),
+                created_at=created_at,
+            )
+        elif response_type == ChatResponseType.job_edit_preview.value:
+            artifact = ChatSessionArtifact(
+                kind=ChatSessionArtifactKind.job_edit,
+                title="Saved job edit preview",
+                summary=str(data.get("job_title") or "Pending job update"),
+                created_at=created_at,
+            )
+        elif response_type == ChatResponseType.job_list.value:
+            total = data.get("total")
+            summary = (
+                f"{total} matching job{'s' if total != 1 else ''} in your workspace"
+                if isinstance(total, int)
+                else "Saved company job query"
+            )
+            artifact = ChatSessionArtifact(
+                kind=ChatSessionArtifactKind.job_query,
+                title="Saved company job query",
+                summary=summary,
+                created_at=created_at,
+            )
+
+        if artifact is None:
+            continue
+
+        artifacts.append(artifact)
+        if len(artifacts) == 3:
+            break
+
+    return artifacts
+
+
+def _serialize_session(session: RecruiterChatSession) -> ChatSessionResponse:
+    state = _copy_state(session.state_json)
+    return ChatSessionResponse(
+        id=session.id,
+        recruiter_id=session.recruiter_id,
+        company_id=session.company_id,
+        thread_id=session.thread_id,
+        title=session.title,
+        last_interaction_at=session.last_interaction_at,
+        created_at=session.created_at,
+        updated_at=session.updated_at,
+        artifacts=_artifacts_from_state(state),
+    )
 
 
 def _generate_session_title(message: str) -> str | None:
@@ -498,17 +573,23 @@ async def _save_session_state(
 
 async def create_session(db: AsyncSession, user: User) -> ChatSessionResponse:
     company_id = await get_active_company_id(db, user.id)
+    preference = await db.scalar(
+        select(RecruiterPreference).where(RecruiterPreference.user_id == user.id)
+    )
+    initial_state = _new_state()
+    if preference is not None:
+        initial_state["default_scope"] = preference.chat_default_scope
     session = RecruiterChatSession(
         recruiter_id=user.id,
         company_id=company_id,
         thread_id=str(uuid.uuid4()),
-        state_json=_new_state(),
+        state_json=initial_state,
         last_interaction_at=_utcnow(),
     )
     db.add(session)
     await db.commit()
     await db.refresh(session)
-    return ChatSessionResponse.model_validate(session)
+    return _serialize_session(session)
 
 
 async def list_sessions(db: AsyncSession, user: User) -> list[ChatSessionResponse]:
@@ -524,9 +605,7 @@ async def list_sessions(db: AsyncSession, user: User) -> list[ChatSessionRespons
             RecruiterChatSession.created_at.desc(),
         )
     )
-    return [
-        ChatSessionResponse.model_validate(session) for session in rows.scalars().all()
-    ]
+    return [_serialize_session(session) for session in rows.scalars().all()]
 
 
 async def get_history(

@@ -15,6 +15,7 @@ from app.core.cache import (
     invalidate_interview_list_caches,
 )
 from app.core.database import get_db
+from app.modules.activity.service import create_activity_event
 from app.modules.applications.models import Application
 from app.modules.applications.sync import enqueue_application_sync_event
 from app.modules.companies.models import Company
@@ -80,6 +81,7 @@ async def cal_webhook_handler(
         .order_by(Application.created_at.desc())
     )
     application = result.scalars().first()
+    job = None
 
     if application is None:
         logger.warning(
@@ -87,6 +89,8 @@ async def cal_webhook_handler(
             attendee_email,
         )
         return {"status": "no matching application"}
+
+    job = await db.scalar(select(Job).where(Job.id == application.job_id))
 
     existing = await db.scalar(
         select(Interview).where(Interview.cal_booking_uid == body.uid)
@@ -111,6 +115,33 @@ async def cal_webhook_handler(
     db.add(interview)
 
     application.status = ApplicationStatus.interview_booked
+    await create_activity_event(
+        db,
+        event_type="interview_booked",
+        audience="candidate",
+        title=f"Interview booked for {job.title if job else 'your application'}",
+        description="Your interview has been scheduled.",
+        href=f"/candidate/applications/{application.id}",
+        user_id=application.user_id,
+        company_id=company.id,
+        application_id=application.id,
+        interview_id=interview.id,
+        job_id=application.job_id,
+        metadata={"start_time": start_dt.isoformat(), "booking_uid": body.uid},
+    )
+    await create_activity_event(
+        db,
+        event_type="interview_booked",
+        audience="recruiter",
+        title=f"Interview scheduled with {application.user.full_name}",
+        description=f"{application.user.full_name} booked an interview.",
+        href=f"/recruiter/candidates/{application.id}",
+        company_id=company.id,
+        application_id=application.id,
+        interview_id=interview.id,
+        job_id=application.job_id,
+        metadata={"start_time": start_dt.isoformat(), "booking_uid": body.uid},
+    )
     enqueue_application_sync_event(db, application.id)
 
     await db.commit()

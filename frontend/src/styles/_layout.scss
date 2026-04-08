@@ -98,3 +98,107 @@
     }
   }
 }
+
+.backend-connection-banner {
+  position: sticky;
+  top: 0;
+  z-index: $z-sticky;
+  border-bottom: 1px solid rgba($color-warning, 0.24);
+  background:
+    linear-gradient(135deg, rgba($color-warning, 0.16), rgba($color-primary, 0.08)), $color-white;
+  backdrop-filter: blur(10px);
+
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+    padding-block: $space-4;
+
+    @include md {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  &__copy {
+    display: grid;
+    gap: $space-2;
+  }
+
+  &__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    color: $color-gray-700;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
+
+  &__title {
+    color: $color-text;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    line-height: $line-height-tight;
+  }
+
+  &__description {
+    color: $color-gray-700;
+    font-size: $font-size-sm;
+    line-height: $line-height-normal;
+    margin: 0;
+  }
+
+  &__action {
+    width: 100%;
+
+    @include md {
+      width: auto;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.app-error-state {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-block: $space-16;
+  background:
+    radial-gradient(circle at top, rgba($color-primary, 0.08), transparent 40%), $color-white;
+
+  &__panel {
+    display: grid;
+    gap: $space-4;
+    padding: $space-8;
+    border: 1px solid rgba($color-gray-300, 0.9);
+    border-radius: $radius-2xl;
+    background: $color-white;
+    box-shadow: $shadow-lg;
+    text-align: center;
+  }
+
+  &__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    color: $color-gray-700;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
+
+  &__title {
+    margin: 0;
+    color: $color-text;
+    font-size: clamp($font-size-2xl, 4vw, $font-size-4xl);
+    line-height: $line-height-tight;
+  }
+
+  &__description {
+    margin: 0;
+    color: $color-gray-600;
+    font-size: $font-size-base;
+    line-height: $line-height-normal;
+  }
+}

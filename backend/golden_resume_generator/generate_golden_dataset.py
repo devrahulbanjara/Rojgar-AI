@@ -19,8 +19,8 @@ BACKEND_DIR = CURRENT_DIR.parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from dataset_generation import main
-
 
 if __name__ == "__main__":
+    from dataset_generation import main
+
     main()

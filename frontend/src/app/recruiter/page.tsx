@@ -1,20 +1,29 @@
 'use client'
 
+import { useState } from 'react'
 import { toast } from 'react-toastify'
 
 import Link from 'next/link'
 
 import { useAppSelector } from '@/store/hooks'
+import { useGetCompanyActivityQuery } from '@/store/services/activityApi'
 import { useUpdateRecruiterStatusMutation } from '@/store/services/companyApi'
 import {
   type RecruiterAdminDashboardData,
   type RecruiterDashboardData,
+  useGetRecruiterAdminDashboardAnalyticsQuery,
   useGetRecruiterAdminDashboardQuery,
+  useGetRecruiterDashboardAnalyticsQuery,
   useGetRecruiterDashboardQuery,
 } from '@/store/services/dashboardApi'
 import { useApproveDraftMutation } from '@/store/services/outreachApi'
 
+import ActivityFeedCard from '@/components/common/ActivityFeedCard'
+import DashboardErrorState from '@/components/common/DashboardErrorState'
 import StatusPill from '@/components/common/StatusPill'
+
+import RecruiterAdminInsights from './_components/RecruiterAdminInsights'
+import RecruiterDashboardInsights from './_components/RecruiterDashboardInsights'
 
 const JOB_BAR_LEGEND = [
   { label: 'Applied', tone: 'applied' },
@@ -119,13 +128,28 @@ function RecruiterDashboardSkeleton({ showAdmin }: { showAdmin: boolean }) {
 export default function CompanyDashboardPage() {
   const { user } = useAppSelector((state) => state.auth)
   const isAdmin = user?.primary_role === 'recruiter_admin'
+  const [analyticsRangeKey, setAnalyticsRangeKey] = useState<'7d' | '30d' | '90d'>('30d')
 
   const recruiterQuery = useGetRecruiterDashboardQuery(undefined, { skip: isAdmin })
   const adminQuery = useGetRecruiterAdminDashboardQuery(undefined, { skip: !isAdmin })
+  const recruiterAnalyticsQuery = useGetRecruiterDashboardAnalyticsQuery(analyticsRangeKey)
+  const adminAnalyticsQuery = useGetRecruiterAdminDashboardAnalyticsQuery(analyticsRangeKey, {
+    skip: !isAdmin,
+  })
 
   const dashboardData = isAdmin ? adminQuery.data?.data : recruiterQuery.data?.data
   const isLoading = isAdmin ? adminQuery.isLoading : recruiterQuery.isLoading
   const isError = isAdmin ? adminQuery.isError : recruiterQuery.isError
+  const recruiterAnalyticsData = recruiterAnalyticsQuery.data?.data
+  const adminAnalyticsData = isAdmin ? adminAnalyticsQuery.data?.data : undefined
+  const { data: activityResponse } = useGetCompanyActivityQuery(10)
+  const isAnalyticsLoading = isAdmin
+    ? adminAnalyticsQuery.isLoading || recruiterAnalyticsQuery.isLoading
+    : recruiterAnalyticsQuery.isLoading
+  const dashboardError = isAdmin ? adminQuery.error : recruiterQuery.error
+  const isRetrying = isAdmin
+    ? adminQuery.isFetching || adminAnalyticsQuery.isFetching || recruiterAnalyticsQuery.isFetching
+    : recruiterQuery.isFetching || recruiterAnalyticsQuery.isFetching
 
   const [approveDraft, { isLoading: isApprovingDraft }] = useApproveDraftMutation()
   const [updateRecruiterStatus, { isLoading: isUpdatingRecruiter }] =
@@ -150,6 +174,19 @@ export default function CompanyDashboardPage() {
     }
   }
 
+  async function handleRetryDashboard() {
+    if (isAdmin) {
+      await Promise.allSettled([
+        adminQuery.refetch(),
+        adminAnalyticsQuery.refetch(),
+        recruiterAnalyticsQuery.refetch(),
+      ])
+      return
+    }
+
+    await Promise.allSettled([recruiterQuery.refetch(), recruiterAnalyticsQuery.refetch()])
+  }
+
   return (
     <div className="dash-content container container--app-shell">
       <div className="dash-page-header">
@@ -159,7 +196,7 @@ export default function CompanyDashboardPage() {
           </h2>
           <p className="dash-page-header__subtitle">
             {dashboardData?.company_name
-              ? `${dashboardData.company_name}${isAdmin ? ' Admin' : ''} · focus on what needs action today.`
+              ? `${dashboardData.company_name}${isAdmin ? ' Admin' : ''} | focus on what needs action today.`
               : 'Track jobs, interviews, and candidate communication.'}
           </p>
         </div>
@@ -168,13 +205,24 @@ export default function CompanyDashboardPage() {
       {isLoading ? (
         <RecruiterDashboardSkeleton showAdmin={isAdmin} />
       ) : isError || !dashboardData ? (
-        <div className="dash-card">
-          <div className="dash-card__body">
-            Dashboard data is unavailable right now. Please refresh.
-          </div>
-        </div>
+        <DashboardErrorState
+          error={dashboardError}
+          isRetrying={isRetrying}
+          onRetry={handleRetryDashboard}
+        />
       ) : (
         <div className="recruiter-dashboard">
+          <RecruiterDashboardInsights
+            analytics={recruiterAnalyticsData}
+            isLoading={isAnalyticsLoading}
+            rangeKey={analyticsRangeKey}
+            onRangeChange={setAnalyticsRangeKey}
+          />
+
+          {isAdmin ? (
+            <RecruiterAdminInsights analytics={adminAnalyticsData} isLoading={isAnalyticsLoading} />
+          ) : null}
+
           <div
             className={`dash-stats ${isAdmin ? 'recruiter-dashboard__stats recruiter-dashboard__stats--admin' : 'recruiter-dashboard__stats recruiter-dashboard__stats--recruiter'}`}
           >
@@ -218,6 +266,59 @@ export default function CompanyDashboardPage() {
             <div className="dash-card">
               <div className="dash-card__header">
                 <div>
+                  <div className="dash-card__title">Quick actions</div>
+                  <div className="dash-card__subtitle">
+                    Jump into the highest-priority recruiter workflows.
+                  </div>
+                </div>
+              </div>
+              <div className="dash-card__body recruiter-dashboard__panel-list">
+                <Link href="/recruiter/screening" className="recruiter-list-card">
+                  <div className="recruiter-list-card__title">Review screening queue</div>
+                  <div className="recruiter-list-card__meta">
+                    Assess scores and shortlist decisions.
+                  </div>
+                </Link>
+                <Link href="/recruiter/outreach" className="recruiter-list-card">
+                  <div className="recruiter-list-card__title">Approve outreach drafts</div>
+                  <div className="recruiter-list-card__meta">
+                    Send shortlist and rejection updates.
+                  </div>
+                </Link>
+                <Link href="/recruiter/interviews" className="recruiter-list-card">
+                  <div className="recruiter-list-card__title">Check interviews</div>
+                  <div className="recruiter-list-card__meta">
+                    See upcoming bookings and recordings.
+                  </div>
+                </Link>
+                <Link
+                  href={isAdmin ? '/recruiter/recruiters' : '/recruiter/jobs'}
+                  className="recruiter-list-card"
+                >
+                  <div className="recruiter-list-card__title">
+                    {isAdmin ? 'Manage recruiter access' : 'Open expiring jobs'}
+                  </div>
+                  <div className="recruiter-list-card__meta">
+                    {isAdmin
+                      ? 'Review pending join requests and team access.'
+                      : 'Focus on roles that need action soon.'}
+                  </div>
+                </Link>
+              </div>
+            </div>
+
+            <ActivityFeedCard
+              title="Recent activity"
+              subtitle="Recorded application, outreach, interview, and access updates."
+              items={activityResponse?.data ?? []}
+              emptyText="Your company activity feed will appear here."
+            />
+          </div>
+
+          <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
                   <div className="dash-card__title">Email drafts to approve</div>
                   <div className="dash-card__subtitle">
                     Review communication before it goes out.
@@ -241,7 +342,7 @@ export default function CompanyDashboardPage() {
                           <div className="recruiter-list-card__content">
                             <div className="recruiter-list-card__title">{draft.candidate_name}</div>
                             <div className="recruiter-list-card__meta">
-                              {draft.email_type === 'shortlist' ? 'Shortlist' : 'Rejection'} ·{' '}
+                              {draft.email_type === 'shortlist' ? 'Shortlist' : 'Rejection'} |{' '}
                               {draft.job_title}
                             </div>
                           </div>
@@ -327,7 +428,7 @@ export default function CompanyDashboardPage() {
                         <div>
                           <div className="recruiter-list-card__title">{job.title}</div>
                           <div className="recruiter-list-card__meta">
-                            {job.total_applications} applicants ·{' '}
+                            {job.total_applications} applicants |{' '}
                             {getExpiryLabel(job.days_until_expiry)}
                           </div>
                         </div>
@@ -373,129 +474,133 @@ export default function CompanyDashboardPage() {
           </div>
 
           {adminDashboardData ? (
-            <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-              <div className="dash-card">
-                <div className="dash-card__header">
-                  <div>
-                    <div className="dash-card__title">Team join requests</div>
-                    <div className="dash-card__subtitle">
-                      Approve or reject pending recruiter access.
+            <>
+              <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+                <div className="dash-card">
+                  <div className="dash-card__header">
+                    <div>
+                      <div className="dash-card__title">Team join requests</div>
+                      <div className="dash-card__subtitle">
+                        Approve or reject pending recruiter access.
+                      </div>
                     </div>
+                    <Link href="/recruiter/recruiters" className="btn btn--outline btn--sm">
+                      Manage team
+                    </Link>
                   </div>
-                  <Link href="/recruiter/recruiters" className="btn btn--outline btn--sm">
-                    Manage team
-                  </Link>
-                </div>
-                <div className="dash-card__body recruiter-dashboard__panel-list">
-                  {adminDashboardData.join_requests.length === 0 ? (
-                    <div className="profile-empty">No pending join requests.</div>
-                  ) : (
-                    adminDashboardData.join_requests.map((request) => (
-                      <div key={request.membership_id} className="recruiter-list-card">
-                        <div className="recruiter-list-card__top recruiter-list-card__top--compact">
-                          <div className="recruiter-list-card__content">
-                            <div className="recruiter-list-card__title">
-                              {request.recruiter_name}
+                  <div className="dash-card__body recruiter-dashboard__panel-list">
+                    {adminDashboardData.join_requests.length === 0 ? (
+                      <div className="profile-empty">No pending join requests.</div>
+                    ) : (
+                      adminDashboardData.join_requests.map((request) => (
+                        <div key={request.membership_id} className="recruiter-list-card">
+                          <div className="recruiter-list-card__top recruiter-list-card__top--compact">
+                            <div className="recruiter-list-card__content">
+                              <div className="recruiter-list-card__title">
+                                {request.recruiter_name}
+                              </div>
+                              <div className="recruiter-list-card__meta">
+                                {request.recruiter_email} | Requested{' '}
+                                {formatRelativeDate(request.requested_at)}
+                              </div>
                             </div>
-                            <div className="recruiter-list-card__meta">
-                              {request.recruiter_email} · Requested{' '}
-                              {formatRelativeDate(request.requested_at)}
+                            <div className="recruiter-draft-actions">
+                              <button
+                                className="btn btn--success btn--sm"
+                                disabled={isUpdatingRecruiter}
+                                onClick={() =>
+                                  handleUpdateJoinRequest(request.membership_id, 'active')
+                                }
+                              >
+                                Approve
+                              </button>
+                              <button
+                                className="btn btn--danger btn--sm"
+                                disabled={isUpdatingRecruiter}
+                                onClick={() =>
+                                  handleUpdateJoinRequest(request.membership_id, 'rejected')
+                                }
+                              >
+                                Reject
+                              </button>
                             </div>
-                          </div>
-                          <div className="recruiter-draft-actions">
-                            <button
-                              className="btn btn--success btn--sm"
-                              disabled={isUpdatingRecruiter}
-                              onClick={() =>
-                                handleUpdateJoinRequest(request.membership_id, 'active')
-                              }
-                            >
-                              Approve
-                            </button>
-                            <button
-                              className="btn btn--danger btn--sm"
-                              disabled={isUpdatingRecruiter}
-                              onClick={() =>
-                                handleUpdateJoinRequest(request.membership_id, 'rejected')
-                              }
-                            >
-                              Reject
-                            </button>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="dash-card">
-                <div className="dash-card__header">
-                  <div>
-                    <div className="dash-card__title">Team activity</div>
-                    <div className="dash-card__subtitle">
-                      Monthly shortlist and interview movement across the team.
+                <div className="dash-card">
+                  <div className="dash-card__header">
+                    <div>
+                      <div className="dash-card__title">Team activity</div>
+                      <div className="dash-card__subtitle">
+                        Monthly shortlist and interview movement across the team.
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="dash-card__body recruiter-dashboard__panel-list">
-                  {adminDashboardData.team_activity.length === 0 ? (
-                    <div className="profile-empty">No team activity available yet.</div>
-                  ) : (
-                    adminDashboardData.team_activity.map((member) => (
-                      <div key={member.membership_id} className="recruiter-list-card">
-                        <div className="recruiter-list-card__top recruiter-list-card__top--compact">
-                          <div className="recruiter-list-card__content">
-                            <div className="recruiter-list-card__title">
-                              {member.recruiter_name}
+                  <div className="dash-card__body recruiter-dashboard__panel-list">
+                    {adminDashboardData.team_activity.length === 0 ? (
+                      <div className="profile-empty">No team activity available yet.</div>
+                    ) : (
+                      adminDashboardData.team_activity.map((member) => (
+                        <div key={member.membership_id} className="recruiter-list-card">
+                          <div className="recruiter-list-card__top recruiter-list-card__top--compact">
+                            <div className="recruiter-list-card__content">
+                              <div className="recruiter-list-card__title">
+                                {member.recruiter_name}
+                              </div>
+                              <div className="recruiter-list-card__meta recruiter-team-activity__meta">
+                                {member.membership_status !== 'active' ? (
+                                  <span
+                                    className={`badge badge--${getMembershipTone(member.membership_status)}`}
+                                  >
+                                    {member.membership_status === 'pending'
+                                      ? 'Pending'
+                                      : 'Rejected'}
+                                  </span>
+                                ) : null}
+                              </div>
                             </div>
-                            <div className="recruiter-list-card__meta recruiter-team-activity__meta">
-                              {member.membership_status !== 'active' ? (
+                          </div>
+                          <div className="recruiter-team-activity">
+                            <div className="recruiter-team-activity__row">
+                              <span className="recruiter-team-activity__label">Shortlisted</span>
+                              <div className="recruiter-team-activity__bar">
                                 <span
-                                  className={`badge badge--${getMembershipTone(member.membership_status)}`}
-                                >
-                                  {member.membership_status === 'pending' ? 'Pending' : 'Rejected'}
-                                </span>
-                              ) : null}
+                                  className="recruiter-team-activity__fill"
+                                  style={{
+                                    width: `${Math.min(member.shortlisted_this_month * 8, 100)}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="recruiter-team-activity__count">
+                                {member.shortlisted_this_month}
+                              </span>
+                            </div>
+                            <div className="recruiter-team-activity__row">
+                              <span className="recruiter-team-activity__label">Interviews</span>
+                              <div className="recruiter-team-activity__bar">
+                                <span
+                                  className="recruiter-team-activity__fill recruiter-team-activity__fill--success"
+                                  style={{
+                                    width: `${Math.min(member.interviews_this_month * 10, 100)}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="recruiter-team-activity__count">
+                                {member.interviews_this_month}
+                              </span>
                             </div>
                           </div>
                         </div>
-                        <div className="recruiter-team-activity">
-                          <div className="recruiter-team-activity__row">
-                            <span className="recruiter-team-activity__label">Shortlisted</span>
-                            <div className="recruiter-team-activity__bar">
-                              <span
-                                className="recruiter-team-activity__fill"
-                                style={{
-                                  width: `${Math.min(member.shortlisted_this_month * 8, 100)}%`,
-                                }}
-                              />
-                            </div>
-                            <span className="recruiter-team-activity__count">
-                              {member.shortlisted_this_month}
-                            </span>
-                          </div>
-                          <div className="recruiter-team-activity__row">
-                            <span className="recruiter-team-activity__label">Interviews</span>
-                            <div className="recruiter-team-activity__bar">
-                              <span
-                                className="recruiter-team-activity__fill recruiter-team-activity__fill--success"
-                                style={{
-                                  width: `${Math.min(member.interviews_this_month * 10, 100)}%`,
-                                }}
-                              />
-                            </div>
-                            <span className="recruiter-team-activity__count">
-                              {member.interviews_this_month}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : null}
         </div>
       )}

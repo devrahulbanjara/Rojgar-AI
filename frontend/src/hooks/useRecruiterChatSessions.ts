@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import {
+  LIVE_DATA_UNAVAILABLE_MESSAGE,
+  isBackendConnectionIssue,
+  isBackendConnectionStatus,
+} from '@/lib/backendConnection'
 import type {
   ChatSessionApiResponse,
   ChatSessionResponse,
@@ -11,6 +16,7 @@ import type {
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import type { ApiResponse } from '@/store/services/baseApi'
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice'
+import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/store/slices/uiSlice'
 
 interface UseRecruiterChatSessionsReturn {
   sessions: ChatSessionResponse[]
@@ -23,6 +29,7 @@ interface UseRecruiterChatSessionsReturn {
 }
 
 function getErrorMessage(error: unknown) {
+  if (isBackendConnectionIssue(error)) return LIVE_DATA_UNAVAILABLE_MESSAGE
   if (error instanceof Error && error.message) return error.message
   return 'Unable to complete recruiter chat request.'
 }
@@ -47,7 +54,7 @@ export function useRecruiterChatSessions(): UseRecruiterChatSessionsReturn {
 
     const backendBaseUrl = getBackendBaseUrl()
     if (!backendBaseUrl) {
-      dispatch(clearCredentials())
+      dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
       return null
     }
 
@@ -68,14 +75,20 @@ export function useRecruiterChatSessions(): UseRecruiterChatSessionsReturn {
         }>
 
         if (!response.ok || !payload.success || !payload.data?.access_token) {
+          if (isBackendConnectionStatus(response.status)) {
+            dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+            return null
+          }
+
           dispatch(clearCredentials())
           return null
         }
 
+        dispatch(clearBackendConnectionIssue())
         dispatch(updateAccessToken(payload.data.access_token))
         return payload.data.access_token
       } catch {
-        dispatch(clearCredentials())
+        dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
         return null
       } finally {
         refreshPromise = null
@@ -116,6 +129,12 @@ export function useRecruiterChatSessions(): UseRecruiterChatSessionsReturn {
           }
         }
 
+        if (response.ok) {
+          dispatch(clearBackendConnectionIssue())
+        } else if (isBackendConnectionStatus(response.status)) {
+          dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+        }
+
         return { response, payload }
       }
 
@@ -132,6 +151,10 @@ export function useRecruiterChatSessions(): UseRecruiterChatSessionsReturn {
       }
 
       if (!response.ok) {
+        if (isBackendConnectionStatus(response.status)) {
+          throw new Error(LIVE_DATA_UNAVAILABLE_MESSAGE)
+        }
+
         throw new Error(
           (payload as { message?: string }).message ||
             `Request failed with status ${response.status}`,
@@ -140,7 +163,7 @@ export function useRecruiterChatSessions(): UseRecruiterChatSessionsReturn {
 
       return payload
     },
-    [accessToken, refreshAccessToken],
+    [accessToken, dispatch, refreshAccessToken],
   )
 
   const refreshSessions = useCallback(async () => {

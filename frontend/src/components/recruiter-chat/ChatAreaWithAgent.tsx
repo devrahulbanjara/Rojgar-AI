@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown'
 
 import Image from 'next/image'
 
+import { LIVE_DATA_UNAVAILABLE_MESSAGE, isBackendConnectionStatus } from '@/lib/backendConnection'
 import type {
   ChatExchangeApiResponse,
   ChatHistoryApiResponse,
@@ -18,7 +19,8 @@ import type {
   RecruiterChatStreamEvent,
   SourceItem,
 } from '@/lib/types/recruiterChat'
-import { useAppSelector } from '@/store/hooks'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { clearBackendConnectionIssue, reportBackendConnectionIssue } from '@/store/slices/uiSlice'
 import { ArrowUp, RotateCcw, Square } from 'lucide-react'
 import remarkGfm from 'remark-gfm'
 
@@ -235,6 +237,7 @@ function renderAssistantCard(
 }
 
 export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentProps) {
+  const dispatch = useAppDispatch()
   const accessToken = useAppSelector((state) => state.auth.accessToken)
   const [history, setHistory] = useState<ChatHistoryMessage[]>([])
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
@@ -300,9 +303,15 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
         })
 
         if (!response.ok) {
+          if (isBackendConnectionStatus(response.status)) {
+            dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+            throw new Error(LIVE_DATA_UNAVAILABLE_MESSAGE)
+          }
+
           throw new Error(`History request failed with status ${response.status}`)
         }
 
+        dispatch(clearBackendConnectionIssue())
         const payload = (await response.json()) as ChatHistoryApiResponse
         if (cancelled) return
 
@@ -327,7 +336,7 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       cancelled = true
       controller.abort()
     }
-  }, [accessToken, session.id])
+  }, [accessToken, dispatch, session.id])
 
   const applyExchange = (payload: ChatExchangeApiResponse) => {
     const nextHistory = payload.data?.history ?? []
@@ -439,9 +448,15 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       })
 
       if (!response.ok || !response.body) {
+        if (isBackendConnectionStatus(response.status)) {
+          dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+          throw new Error(LIVE_DATA_UNAVAILABLE_MESSAGE)
+        }
+
         throw new Error(`Request failed with status ${response.status}`)
       }
 
+      dispatch(clearBackendConnectionIssue())
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -618,8 +633,14 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       )
       const payload = (await response.json()) as ChatExchangeApiResponse
       if (!response.ok || !payload.success) {
+        if (isBackendConnectionStatus(response.status)) {
+          dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+          throw new Error(LIVE_DATA_UNAVAILABLE_MESSAGE)
+        }
+
         throw new Error(payload.message || `Request failed with status ${response.status}`)
       }
+      dispatch(clearBackendConnectionIssue())
       applyExchange(payload)
     } catch (error) {
       console.warn('Failed to confirm recruiter chat job selection:', error)
@@ -648,8 +669,14 @@ export function ChatAreaWithAgent({ onMessageSent, session }: ChatAreaWithAgentP
       })
       const payload = (await response.json()) as ChatExchangeApiResponse
       if (!response.ok || !payload.success) {
+        if (isBackendConnectionStatus(response.status)) {
+          dispatch(reportBackendConnectionIssue(LIVE_DATA_UNAVAILABLE_MESSAGE))
+          throw new Error(LIVE_DATA_UNAVAILABLE_MESSAGE)
+        }
+
         throw new Error(payload.message || `Request failed with status ${response.status}`)
       }
+      dispatch(clearBackendConnectionIssue())
       applyExchange(payload)
     } catch (error) {
       console.warn('Failed to record recruiter chat job edit decision:', error)

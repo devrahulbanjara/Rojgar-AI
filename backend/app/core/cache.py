@@ -24,7 +24,10 @@ async def _get_active_company_member_ids(
 
 async def invalidate_candidate_read_caches(user_id: str) -> None:
     await redis_service.delete(f"dashboard:candidate:{user_id}")
-    await redis_service.invalidate_pattern(f"applications:candidate:{user_id}:*")
+    await redis_service.invalidate_patterns(
+        f"dashboard:candidate:{user_id}:analytics:*",
+        f"applications:candidate:{user_id}:*",
+    )
 
 
 async def invalidate_profile_read_caches(user_id: str) -> None:
@@ -32,6 +35,7 @@ async def invalidate_profile_read_caches(user_id: str) -> None:
         f"profile:detail:{user_id}",
         f"dashboard:candidate:{user_id}",
     )
+    await redis_service.invalidate_pattern(f"dashboard:candidate:{user_id}:analytics:*")
 
 
 async def invalidate_candidate_read_caches_for_users(user_ids: Iterable[str]) -> None:
@@ -53,6 +57,13 @@ async def invalidate_company_dashboard_caches(
         keys.append(f"dashboard:recruiter-admin:{member_id}")
 
     await redis_service.delete_many(*keys)
+    await redis_service.invalidate_patterns(
+        *(f"dashboard:recruiter:{member_id}:analytics:*" for member_id in member_ids),
+        *(
+            f"dashboard:recruiter-admin:{member_id}:analytics:*"
+            for member_id in member_ids
+        ),
+    )
 
 
 async def invalidate_company_detail_caches(db: AsyncSession, company_id: str) -> None:
