@@ -103,3 +103,4 @@ __marimo__/
 .shared
 qdrant_data/
 postgres_data/
+backend/.env.prod
