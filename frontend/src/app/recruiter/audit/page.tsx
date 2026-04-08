@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 import { useAppSelector } from '@/store/hooks'
 import { useGetCompanyAuditLogsQuery, useGetMyAuditLogsQuery } from '@/store/services/auditApi'
 
-import AuditTrailCard from '@/components/common/AuditTrailCard'
+import AuditTrailCard, { AuditTrailCardSkeleton } from '@/components/common/AuditTrailCard'
 import DashboardErrorState from '@/components/common/DashboardErrorState'
 
 const ENTITY_OPTIONS = [
@@ -125,9 +125,14 @@ export default function RecruiterAuditPage() {
       </div>
 
       {isLoading ? (
-        <div className="dash-card">
-          <div className="dash-card__body">Loading audit records...</div>
-        </div>
+        <AuditTrailCardSkeleton
+          title={isAdmin ? 'Audit entries' : 'Your audit entries'}
+          subtitle={
+            isAdmin
+              ? 'Searchable company-wide evidence for state changes, approvals, deletes, and access-sensitive actions.'
+              : 'Stored evidence for actions that affected your recruiter account, assignments, and recruiter-owned workflow changes.'
+          }
+        />
       ) : isError ? (
         <DashboardErrorState
           error={error}

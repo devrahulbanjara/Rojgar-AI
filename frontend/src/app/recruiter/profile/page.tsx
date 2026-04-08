@@ -11,9 +11,9 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
   useChangeMyPasswordMutation,
   useGetMeQuery,
-  useRemoveMyAvatarMutation,
+  useRemoveMyAuthAvatarMutation,
   useUpdateMeMutation,
-  useUpdateMyAvatarMutation,
+  useUpdateMyAuthAvatarMutation,
 } from '@/store/services/authApi'
 import { useGetMyCompanyQuery } from '@/store/services/companyApi'
 import { updateUser } from '@/store/slices/authSlice'
@@ -72,8 +72,8 @@ export default function RecruiterProfilePage() {
   const { data: companyResp } = useGetMyCompanyQuery()
 
   const [updateMe, { isLoading: isSavingProfile }] = useUpdateMeMutation()
-  const [updateMyAvatar, { isLoading: isUploadingAvatar }] = useUpdateMyAvatarMutation()
-  const [removeMyAvatar, { isLoading: isRemovingAvatar }] = useRemoveMyAvatarMutation()
+  const [updateMyAvatar, { isLoading: isUploadingAvatar }] = useUpdateMyAuthAvatarMutation()
+  const [removeMyAvatar, { isLoading: isRemovingAvatar }] = useRemoveMyAuthAvatarMutation()
   const [changeMyPassword, { isLoading: isSavingPassword }] = useChangeMyPasswordMutation()
 
   const [profileForm, setProfileForm] = useState<ProfileForm>({

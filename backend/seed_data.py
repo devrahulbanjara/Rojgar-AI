@@ -12,7 +12,7 @@ from sqlalchemy import delete, func, inspect, select, text
 import app.core.model_registry  # noqa: F401
 from app.core.database import AsyncSessionLocal, Base, engine
 from app.core.security import hash_password
-from app.modules.activity.service import create_activity_event
+from app.modules.activity.models import ActivityEvent
 from app.modules.applications.models import Application, ApplicationSyncEvent
 from app.modules.audit.models import AuditLog
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
@@ -104,10 +104,14 @@ def _build_audit_snapshots(
     changed_fields = set(before_overrides or {}) | set(after_overrides or {})
     for field in changed_fields:
         before_value = _audit_serialize_value(
-            before_overrides[field] if before_overrides and field in before_overrides else before_json.get(field)
+            before_overrides[field]
+            if before_overrides and field in before_overrides
+            else before_json.get(field)
         )
         after_value = _audit_serialize_value(
-            after_overrides[field] if after_overrides and field in after_overrides else after_json.get(field)
+            after_overrides[field]
+            if after_overrides and field in after_overrides
+            else after_json.get(field)
         )
         before_json[field] = before_value
         after_json[field] = after_value
@@ -4607,15 +4611,65 @@ async def seed_preferences_and_activity(
     company_context_by_id = {
         context["company"].id: context for context in company_contexts
     }
+    active_member_ids_by_company = {
+        context["company"].id: [
+            context["admin"].id,
+            *[member.id for member in context["recruiters"]],
+        ]
+        for context in company_contexts
+    }
+    notifications_enabled_by_user_id = {
+        member_id: True
+        for member_ids in active_member_ids_by_company.values()
+        for member_id in member_ids
+    }
 
     async def create_seed_event(*, created_at: datetime, **kwargs):
-        event = await create_activity_event(db, **kwargs)
-        event.created_at = created_at
-        notifications_result = await db.execute(
-            select(Notification).where(Notification.activity_event_id == event.id)
+        event = ActivityEvent(
+            id=uuid.uuid4(),
+            event_type=kwargs["event_type"],
+            audience=kwargs["audience"],
+            title=kwargs["title"],
+            description=kwargs.get("description"),
+            href=kwargs.get("href"),
+            user_id=kwargs.get("user_id"),
+            company_id=kwargs.get("company_id"),
+            application_id=kwargs.get("application_id"),
+            job_id=kwargs.get("job_id"),
+            interview_id=kwargs.get("interview_id"),
+            draft_id=kwargs.get("draft_id"),
+            actor_user_id=kwargs.get("actor_user_id"),
+            metadata_json=kwargs.get("metadata"),
         )
-        for notification in notifications_result.scalars().all():
+        event.created_at = created_at
+        db.add(event)
+
+        notification_targets: list[uuid.UUID] = []
+        if kwargs.get("user_id") is not None:
+            target_user_id = kwargs["user_id"]
+            if notifications_enabled_by_user_id.get(target_user_id, True):
+                notification_targets.append(target_user_id)
+        elif kwargs.get("company_id") is not None:
+            notification_targets.extend(
+                user_id
+                for user_id in active_member_ids_by_company.get(
+                    kwargs["company_id"], []
+                )
+                if notifications_enabled_by_user_id.get(user_id, True)
+            )
+
+        for target_user_id in notification_targets:
+            notification = Notification(
+                kind=kwargs["event_type"],
+                title=kwargs["title"],
+                body=kwargs.get("description") or kwargs["title"],
+                href=kwargs.get("href"),
+                user_id=target_user_id,
+                company_id=kwargs.get("company_id"),
+                activity_event_id=event.id,
+            )
             notification.created_at = created_at
+            db.add(notification)
         return event
 
     for company_index, company_context in enumerate(company_contexts):
@@ -5062,7 +5116,9 @@ async def seed_audit_history(
     await db.flush()
 
     audit_counter = 0
-    candidate_data_by_email = {candidate["email"]: candidate for candidate in CANDIDATES}
+    candidate_data_by_email = {
+        candidate["email"]: candidate for candidate in CANDIDATES
+    }
     membership_map: dict[tuple[uuid.UUID, uuid.UUID], CompanyMembership] = {}
     actor_by_user_id: dict[uuid.UUID, User] = {}
 
@@ -5136,9 +5192,7 @@ async def seed_audit_history(
             profile_skills_by_profile_id[skill.profile_id].append(skill)
 
     resumes = (
-        (
-            await db.execute(select(Resume).where(Resume.user_id.in_(candidate_user_ids)))
-        )
+        (await db.execute(select(Resume).where(Resume.user_id.in_(candidate_user_ids))))
         .scalars()
         .all()
     )
@@ -5191,9 +5245,7 @@ async def seed_audit_history(
     )
     jobs_by_id = {job.id: job for job in jobs}
     applications = (
-        (
-            await db.execute(select(Application).order_by(Application.created_at.asc()))
-        )
+        (await db.execute(select(Application).order_by(Application.created_at.asc())))
         .scalars()
         .all()
     )
@@ -5205,9 +5257,7 @@ async def seed_audit_history(
     email_drafts = (await db.execute(select(EmailDraft))).scalars().all()
     recordings = (await db.execute(select(InterviewRecording))).scalars().all()
     scores = (await db.execute(select(CandidateEvaluationScore))).scalars().all()
-    evaluation_schemas = (
-        (await db.execute(select(JobEvaluationSchema))).scalars().all()
-    )
+    evaluation_schemas = (await db.execute(select(JobEvaluationSchema))).scalars().all()
     preferences = (await db.execute(select(RecruiterPreference))).scalars().all()
     ai_drafts = (await db.execute(select(JobAIDraft))).scalars().all()
     chat_sessions = (await db.execute(select(RecruiterChatSession))).scalars().all()
@@ -5447,11 +5497,9 @@ async def seed_audit_history(
                 request_method="POST",
             )
             if membership.status == MembershipStatus.rejected:
-                rejected_before, rejected_after, rejected_diff = (
-                    _build_audit_snapshots(
-                        membership,
-                        before_overrides={"status": MembershipStatus.pending},
-                    )
+                rejected_before, rejected_after, rejected_diff = _build_audit_snapshots(
+                    membership,
+                    before_overrides={"status": MembershipStatus.pending},
                 )
                 record(
                     created_at=request_anchor + timedelta(hours=6),
@@ -5804,7 +5852,8 @@ async def seed_audit_history(
         job = jobs_by_id.get(schema.job_id)
         actor = actor_by_user_id.get(job.posted_by) if job is not None else None
         record(
-            created_at=(job.created_at if job is not None else NOW) + timedelta(hours=2),
+            created_at=(job.created_at if job is not None else NOW)
+            + timedelta(hours=2),
             entity_type="job_evaluation_schema",
             entity_id=schema.id,
             action_type="create",
@@ -6073,11 +6122,15 @@ async def seed_audit_history(
             request_path="/interviews/webhook/booked",
             request_method="POST",
         )
-        if application.status in {
-            ApplicationStatus.interview_completed,
-            ApplicationStatus.offer,
-            ApplicationStatus.rejected,
-        } and interview.end_time <= NOW:
+        if (
+            application.status
+            in {
+                ApplicationStatus.interview_completed,
+                ApplicationStatus.offer,
+                ApplicationStatus.rejected,
+            }
+            and interview.end_time <= NOW
+        ):
             record(
                 created_at=interview.end_time,
                 entity_type="interview",
