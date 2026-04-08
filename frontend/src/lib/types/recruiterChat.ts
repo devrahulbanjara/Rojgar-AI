@@ -9,6 +9,13 @@ export type RecruiterChatUiType =
   | 'out_of_scope'
   | null
 
+export interface ChatSessionArtifact {
+  kind: 'salary_research' | 'job_edit' | 'job_query'
+  title: string
+  summary: string
+  created_at: string
+}
+
 export interface ChatSessionResponse {
   id: string
   recruiter_id: string
@@ -18,6 +25,7 @@ export interface ChatSessionResponse {
   last_interaction_at: string | null
   created_at: string
   updated_at: string
+  artifacts: ChatSessionArtifact[]
 }
 
 export type ChatSessionsApiResponse = ApiResponse<ChatSessionResponse[]>

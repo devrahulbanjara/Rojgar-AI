@@ -23,6 +23,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.modules.activity.service import create_activity_event
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import (
     OAuthAccount,
@@ -211,13 +212,25 @@ async def verify_email(db: AsyncSession, payload: VerifyEmailRequest) -> None:
         )
         company = company_result.scalar_one_or_none()
         if company:
-            db.add(
-                CompanyMembership(
-                    user_id=user.id,
-                    company_id=company.id,
-                    role=MembershipRole.recruiter,
-                    status=MembershipStatus.pending,
-                )
+            membership = CompanyMembership(
+                user_id=user.id,
+                company_id=company.id,
+                role=MembershipRole.recruiter,
+                status=MembershipStatus.pending,
+            )
+            db.add(membership)
+            await db.flush()
+            await create_activity_event(
+                db,
+                event_type="join_request_submitted",
+                audience="admin",
+                title=f"{user.full_name} requested recruiter access",
+                description=f"{user.full_name} requested access to {company.name}.",
+                href="/recruiter/recruiters",
+                user_id=user.id,
+                company_id=company.id,
+                actor_user_id=user.id,
+                metadata={"membership_id": str(membership.id)},
             )
             logger.info(
                 f"Recruiter {email} pending join for '{data['join_company_name']}' created"

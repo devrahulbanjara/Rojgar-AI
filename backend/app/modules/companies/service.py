@@ -16,6 +16,7 @@ from app.infrastructures.redis.service import redis_service
 
 from app.core.security import create_pending_signup_token, decode_pending_signup_token
 from app.infrastructures.email.service import EmailService
+from app.modules.activity.service import create_activity_event
 from app.modules.auth.enums import MembershipRole, MembershipStatus, UserRole
 from app.modules.auth.models import User
 from app.modules.companies.models import Company, CompanyMembership
@@ -300,6 +301,46 @@ async def update_recruiter_status(
 
     membership, recruiter_user = row
     membership.status = payload.status
+    await create_activity_event(
+        db,
+        event_type=(
+            "join_request_approved"
+            if payload.status == MembershipStatus.active
+            else "join_request_rejected"
+        ),
+        audience="admin",
+        title=f"{recruiter_user.full_name} request {payload.status.value}",
+        description=f"{recruiter_user.full_name}'s recruiter request was marked {payload.status.value}.",
+        href="/recruiter/recruiters",
+        user_id=recruiter_user.id,
+        company_id=company.id,
+        actor_user_id=user.id,
+        metadata={"membership_id": str(membership.id)},
+    )
+    await create_activity_event(
+        db,
+        event_type=(
+            "membership_activated"
+            if payload.status == MembershipStatus.active
+            else "membership_rejected"
+        ),
+        audience="recruiter",
+        title=(
+            f"Access approved for {company.name}"
+            if payload.status == MembershipStatus.active
+            else f"Access request declined for {company.name}"
+        ),
+        description=(
+            f"Your recruiter access to {company.name} is now active."
+            if payload.status == MembershipStatus.active
+            else f"Your recruiter access request to {company.name} was declined."
+        ),
+        href="/recruiter",
+        user_id=recruiter_user.id,
+        company_id=company.id,
+        actor_user_id=user.id,
+        metadata={"membership_id": str(membership.id)},
+    )
     await db.commit()
     await db.refresh(membership)
     await redis_service.delete_many(
@@ -307,6 +348,10 @@ async def update_recruiter_status(
         f"dashboard:recruiter:{recruiter_user.id}",
         f"dashboard:recruiter-admin:{recruiter_user.id}",
         _company_recruiters_cache_key(str(company.id)),
+    )
+    await redis_service.invalidate_patterns(
+        f"dashboard:recruiter:{recruiter_user.id}:analytics:*",
+        f"dashboard:recruiter-admin:{recruiter_user.id}:analytics:*",
     )
     await invalidate_company_dashboard_caches(db, str(company.id))
 
@@ -342,6 +387,18 @@ async def remove_recruiter(db: AsyncSession, user: User, membership_id: str) -> 
             detail="Recruiter membership not found.",
         )
 
+    await create_activity_event(
+        db,
+        event_type="membership_removed",
+        audience="recruiter",
+        title=f"Access removed from {company.name}",
+        description=f"Your recruiter access to {company.name} was removed.",
+        href="/recruiter",
+        user_id=membership.user_id,
+        company_id=company.id,
+        actor_user_id=user.id,
+        metadata={"membership_id": membership_id},
+    )
     await db.delete(membership)
     await db.commit()
     await redis_service.delete_many(
@@ -349,6 +406,10 @@ async def remove_recruiter(db: AsyncSession, user: User, membership_id: str) -> 
         f"dashboard:recruiter:{membership.user_id}",
         f"dashboard:recruiter-admin:{membership.user_id}",
         _company_recruiters_cache_key(str(company.id)),
+    )
+    await redis_service.invalidate_patterns(
+        f"dashboard:recruiter:{membership.user_id}:analytics:*",
+        f"dashboard:recruiter-admin:{membership.user_id}:analytics:*",
     )
     await invalidate_company_dashboard_caches(db, str(company.id))
     logger.info(f"Company {company.name}: recruiter membership {membership_id} removed")

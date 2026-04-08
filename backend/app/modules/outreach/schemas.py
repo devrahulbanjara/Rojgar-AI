@@ -21,6 +21,13 @@ class EmailDraftResponse(BaseSchema):
     is_approved: bool
     is_sent: bool
     is_discarded: bool
+    generated_by_user_id: UUID | None = None
+    approved_by_user_id: UUID | None = None
+    approved_at: datetime | None = None
+    sent_by_user_id: UUID | None = None
+    sent_at: datetime | None = None
+    discarded_by_user_id: UUID | None = None
+    discarded_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

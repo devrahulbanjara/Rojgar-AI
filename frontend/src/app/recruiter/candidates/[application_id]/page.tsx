@@ -286,6 +286,79 @@ export default function RecruiterCandidateDetailPage() {
           </div>
 
           <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
+                  <div className="dash-card__title">Application timeline</div>
+                  <div className="dash-card__subtitle">
+                    Recorded workflow events for this candidate.
+                  </div>
+                </div>
+              </div>
+              <div className="dash-card__body">
+                <div className="activity-list activity-list--panel">
+                  {candidate.timeline.map((event) => (
+                    <div key={event.id} className="activity-item activity-item--panel">
+                      <div className="activity-item__dot" />
+                      <div className="activity-item__body">
+                        <p className="activity-item__text">
+                          <strong>{event.title}</strong>
+                        </p>
+                        {event.description ? (
+                          <p className="activity-item__text">{event.description}</p>
+                        ) : null}
+                        <div className="activity-item__time">
+                          {new Date(event.created_at).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="dash-card">
+              <div className="dash-card__header">
+                <div>
+                  <div className="dash-card__title">Outreach audit</div>
+                  <div className="dash-card__subtitle">
+                    Approval and sending history for candidate communication.
+                  </div>
+                </div>
+              </div>
+              <div className="dash-card__body recruiter-dashboard__panel-list">
+                {candidate.outreach_audit.length === 0 ? (
+                  <div className="profile-empty">
+                    No outreach draft has been created for this candidate yet.
+                  </div>
+                ) : (
+                  candidate.outreach_audit.map((draft) => (
+                    <div key={draft.draft_id} className="recruiter-list-card">
+                      <div className="recruiter-list-card__title">
+                        {draft.subject ?? 'Untitled draft'}
+                      </div>
+                      <div className="recruiter-list-card__meta">
+                        {draft.is_sent
+                          ? `Sent ${draft.sent_at ? formatInterviewDate(draft.sent_at) : ''}`
+                          : draft.is_discarded
+                            ? 'Discarded'
+                            : draft.is_approved
+                              ? 'Approved'
+                              : 'Drafted'}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
             <div style={{ display: 'grid', gap: '1rem' }}>
               <InterviewRecordingCard applicationId={applicationId} />
               <CandidateEvaluationCard applicationId={applicationId} />

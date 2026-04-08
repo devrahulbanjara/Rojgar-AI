@@ -36,6 +36,19 @@ class ConfirmJobEditRequest(BaseSchema):
     approve: bool
 
 
+class ChatSessionArtifactKind(str, Enum):
+    salary_research = "salary_research"
+    job_edit = "job_edit"
+    job_query = "job_query"
+
+
+class ChatSessionArtifact(BaseSchema):
+    kind: ChatSessionArtifactKind
+    title: str
+    summary: str
+    created_at: datetime
+
+
 class ChatSessionResponse(BaseSchema):
     id: UUID
     recruiter_id: UUID
@@ -45,6 +58,7 @@ class ChatSessionResponse(BaseSchema):
     last_interaction_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+    artifacts: list[ChatSessionArtifact] = Field(default_factory=list)
 
 
 class SourceItem(BaseSchema):

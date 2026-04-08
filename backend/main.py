@@ -19,6 +19,7 @@ from app.infrastructures.qdrant.service import qdrant_service
 from app.infrastructures.redis.service import redis_service
 
 from app.modules.companies.router import router as companies_router
+from app.modules.activity.router import router as activity_router
 from app.modules.profiles.router import router as profiles_router
 from app.modules.resumes.router import router as resumes_router
 from app.modules.jobs.router import router as jobs_router
@@ -36,6 +37,10 @@ from app.modules.interviews.webhook import router as cal_webhook_router
 from app.modules.outreach.router import router as outreach_router
 from app.modules.resume_gap.router import router as resume_gap_router
 from app.modules.recruiter_chat.router import router as recruiter_chat_router
+from app.modules.recruiter_preferences.router import (
+    router as recruiter_preferences_router,
+)
+from app.modules.notifications.router import router as notifications_router
 from app.modules.shortlisting.router import router as shortlisting_router
 
 setup_logging()
@@ -95,6 +100,7 @@ if settings.environment == "dev":
 register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(activity_router)
 app.include_router(dash_router)
 app.include_router(companies_router, prefix="/companies", tags=["Companies"])
 app.include_router(profiles_router, prefix="/profiles", tags=["Profiles"])
@@ -103,6 +109,8 @@ app.include_router(job_ai_router, prefix="/jobs/ai", tags=["jobs-ai"])
 app.include_router(
     recruiter_chat_router, prefix="/recruiter-chat", tags=["recruiter-chat"]
 )
+app.include_router(notifications_router)
+app.include_router(recruiter_preferences_router)
 app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(applications_router, prefix="/applications", tags=["Applications"])
 app.include_router(

@@ -14,6 +14,8 @@
  */
 import type { ApiFieldError, ApiResponse } from '@/store/services/baseApi'
 
+import { LIVE_DATA_UNAVAILABLE_MESSAGE } from './backendConnection'
+
 // ---------------------------------------------------------------------------
 // Raw RTK error wrapper (what `.unwrap()` / catch receives)
 // ---------------------------------------------------------------------------
@@ -65,7 +67,7 @@ export function parseApiError(
   // --- Network / Connection Errors ----------------------------------------
   if (status === 'FETCH_ERROR' || status === 'TIMEOUT_ERROR') {
     return {
-      message: 'Unable to connect to the server. Please check if the backend is running.',
+      message: LIVE_DATA_UNAVAILABLE_MESSAGE,
       fieldErrors: {},
       status,
     }
