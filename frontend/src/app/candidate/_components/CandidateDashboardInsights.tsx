@@ -227,8 +227,8 @@ function CandidateActivityChart({
 
       <div className="dashboard-line-chart__frame">
         <div className="dashboard-line-chart__ylabels">
-          {yLabels.map((label) => (
-            <span key={label}>{label}</span>
+          {yLabels.map((label, index) => (
+            <span key={`${label}-${index}`}>{label}</span>
           ))}
         </div>
 
