@@ -270,11 +270,11 @@ def _build_shared_profile_snapshot(
 def _background_database_url(db: AsyncSession) -> str:
     bind = db.bind
     if bind is not None and hasattr(bind, "url"):
-        return str(bind.url)
+        return bind.url.render_as_string(hide_password=False)
 
     fallback_bind = AsyncSessionLocal.kw.get("bind")
     if fallback_bind is not None and hasattr(fallback_bind, "url"):
-        return str(fallback_bind.url)
+        return fallback_bind.url.render_as_string(hide_password=False)
 
     raise RuntimeError("Database bind is not configured for background task execution.")
 
@@ -713,7 +713,11 @@ async def get_company_candidate_detail(
     interview = await db.scalar(
         select(Interview).where(Interview.application_id == application.id)
     )
-    timeline = await list_application_timeline(db, application_id=str(application.id))
+    timeline = await list_application_timeline(
+        db,
+        application_id=str(application.id),
+        audience="recruiter",
+    )
     outreach_audit = await _get_outreach_audit_items(db, application.id)
 
     response = RecruiterCandidateDetailView(
@@ -834,7 +838,9 @@ async def get_application(
             select(Interview).where(Interview.application_id == application.id)
         )
         timeline = await list_application_timeline(
-            db, application_id=str(application.id)
+            db,
+            application_id=str(application.id),
+            audience="candidate",
         )
         return ApplicationResponse(
             id=application.id,
@@ -881,7 +887,9 @@ async def get_application(
                 select(Interview).where(Interview.application_id == application.id)
             )
             timeline = await list_application_timeline(
-                db, application_id=str(application.id)
+                db,
+                application_id=str(application.id),
+                audience="recruiter",
             )
             return ApplicationResponse(
                 id=application.id,
@@ -915,15 +923,49 @@ async def get_application(
 async def get_application_timeline(
     db: AsyncSession, user: User, application_id: str
 ) -> list[ActivityEventResponse]:
-    await get_application(db, user, application_id)
-    return await list_application_timeline(db, application_id=application_id)
+    result = await db.execute(
+        select(Application).where(Application.id == application_id)
+    )
+    application = result.scalar_one_or_none()
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found.",
+        )
+
+    if application.user_id == user.id:
+        return await list_application_timeline(
+            db,
+            application_id=application_id,
+            audience="candidate",
+        )
+
+    company_id = await _get_active_company_id(db, user)
+    job = await db.scalar(
+        select(Job).where(Job.id == application.job_id, Job.company_id == company_id)
+    )
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this application.",
+        )
+
+    return await list_application_timeline(
+        db,
+        application_id=application_id,
+        audience="recruiter",
+    )
 
 
 async def get_company_candidate_timeline(
     db: AsyncSession, user: User, application_id: str
 ) -> list[ActivityEventResponse]:
     await get_company_candidate_detail(db, user, application_id)
-    return await list_application_timeline(db, application_id=application_id)
+    return await list_application_timeline(
+        db,
+        application_id=application_id,
+        audience="recruiter",
+    )
 
 
 async def update_application_status(

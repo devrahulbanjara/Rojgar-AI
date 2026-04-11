@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { useApplyFlow } from '@/hooks/useApplyFlow'
@@ -75,6 +75,14 @@ function resolveStepTitle(step: string, jobTitle: string) {
     }
   }
 
+  if (step === 'submitting') {
+    return {
+      eyebrow: 'Step 4',
+      title: 'Applying to the job',
+      subtitle: 'Submitting your application and selected resume to the recruiter.',
+    }
+  }
+
   return {
     eyebrow: 'Step 4',
     title: 'Ready to submit',
@@ -116,6 +124,21 @@ export default function ApplyModal({
     'share_profile',
     'submitting',
   ].includes(flow.step)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousBodyOverflow = document.body.style.overflow
+    const previousHtmlOverflow = document.documentElement.style.overflow
+
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousHtmlOverflow
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -217,7 +240,12 @@ export default function ApplyModal({
               />
             ) : null}
 
-            {flow.step === 'submitting' ? <StepAnalyzing /> : null}
+            {flow.step === 'submitting' ? (
+              <StepAnalyzing
+                title="Submitting your application"
+                subtitle="Sending your resume and profile details to the recruiter."
+              />
+            ) : null}
           </div>
         </div>
       </div>

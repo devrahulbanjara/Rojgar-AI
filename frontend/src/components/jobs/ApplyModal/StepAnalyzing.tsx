@@ -1,6 +1,14 @@
 import styles from './applyModal.module.scss'
 
-export default function StepAnalyzing() {
+interface StepAnalyzingProps {
+  title?: string
+  subtitle?: string
+}
+
+export default function StepAnalyzing({
+  title = 'Analyzing your resume',
+  subtitle = 'Comparing your experience, skills, and summary against the job requirements.',
+}: StepAnalyzingProps) {
   return (
     <div className={styles.applyModal__loading}>
       <div className={styles.applyModal__loadingDots}>
@@ -9,10 +17,8 @@ export default function StepAnalyzing() {
         <span className={styles.applyModal__loadingDot} />
       </div>
       <div>
-        <p className={styles.applyModal__loadingTitle}>Analyzing your resume</p>
-        <p className={styles.applyModal__loadingCopy}>
-          Comparing your experience, skills, and summary against the job requirements.
-        </p>
+        <p className={styles.applyModal__loadingTitle}>{title}</p>
+        <p className={styles.applyModal__loadingCopy}>{subtitle}</p>
       </div>
     </div>
   )
