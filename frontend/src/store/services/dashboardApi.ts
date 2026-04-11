@@ -186,16 +186,6 @@ export interface ScoreDistribution {
   buckets: ScoreDistributionBucket[]
 }
 
-export interface JobHealthPoint {
-  job_id: string
-  job_title: string
-  days_until_expiry: number | null
-  applications: number
-  shortlisted: number
-  interviews: number
-  offers: number
-}
-
 export interface OutreachStateBreakdown {
   drafted: number
   approved: number
@@ -221,7 +211,6 @@ export interface RecruiterDashboardAnalyticsData {
   applications_timeseries: RecruiterDashboardAnalyticsTimeseriesPoint[]
   interview_load: InterviewLoadPoint[]
   score_distribution: ScoreDistribution
-  job_health: JobHealthPoint[]
   outreach: RecruiterOutreachSummary
   velocity: RecruiterDashboardAnalyticsVelocity
 }
@@ -255,7 +244,6 @@ export interface RecruiterAdminDashboardAnalyticsData {
   join_request_timeseries: JoinRequestTimeseriesPoint[]
   membership_breakdown: MembershipBreakdownPoint[]
   team_activity: TeamMemberActivity[]
-  portfolio_health: JobHealthPoint[]
   velocity: RecruiterDashboardAnalyticsVelocity
 }
 

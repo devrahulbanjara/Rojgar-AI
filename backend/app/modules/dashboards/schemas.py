@@ -202,16 +202,6 @@ class RecruiterOutreachSummary(BaseSchema):
     rejection: OutreachStateBreakdown
 
 
-class JobHealthPoint(BaseSchema):
-    job_id: UUID
-    job_title: str
-    days_until_expiry: int | None
-    applications: int
-    shortlisted: int
-    interviews: int
-    offers: int
-
-
 class RecruiterAnalyticsVelocity(BaseSchema):
     avg_days_to_review: float | None = None
     avg_days_to_shortlist: float | None = None
@@ -225,7 +215,6 @@ class RecruiterDashboardAnalyticsResponse(BaseSchema):
     applications_timeseries: list[RecruiterAnalyticsTimeseriesPoint]
     interview_load: list[InterviewLoadPoint]
     score_distribution: ScoreDistribution
-    job_health: list[JobHealthPoint]
     outreach: RecruiterOutreachSummary
     velocity: RecruiterAnalyticsVelocity
 
@@ -259,5 +248,4 @@ class RecruiterAdminDashboardAnalyticsResponse(BaseSchema):
     join_request_timeseries: list[JoinRequestTimeseriesPoint]
     membership_breakdown: list[MembershipBreakdownPoint]
     team_activity: list[TeamMemberActivity]
-    portfolio_health: list[JobHealthPoint]
     velocity: RecruiterAnalyticsVelocity
