@@ -537,7 +537,7 @@ export default function RecruiterScreeningPage() {
       toast.success('Shortlisting marked complete.')
       setIsPollingSummary(false)
       if (response.data.success || response.data.final_shortlist_completed) {
-        router.push(`/recruiter/jobs/${activeJobId}/outreach`)
+        router.push('/recruiter/outreach')
         return
       }
       void refreshAll()
@@ -562,7 +562,7 @@ export default function RecruiterScreeningPage() {
       toast.success('Agent shortlisting applied.')
       setIsPollingSummary(false)
       if (response.data.success || response.data.final_shortlist_completed) {
-        router.push(`/recruiter/jobs/${activeJobId}/outreach`)
+        router.push('/recruiter/outreach')
         return
       }
       void refreshAll()

@@ -468,6 +468,8 @@
 .sentList {
   display: grid;
   gap: 0.8rem;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
 }
 
 .sentRow {

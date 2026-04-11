@@ -87,37 +87,6 @@ function RecruiterDashboardSkeleton({ showAdmin }: { showAdmin: boolean }) {
       {showAdmin ? <RecruiterAdminInsights analytics={undefined} isLoading={true} /> : null}
 
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        <div className="dash-card">
-          <div className="dash-card__header">
-            <div>
-              <div className="dash-card__title">Quick actions</div>
-              <div className="dash-card__subtitle">
-                Jump into the highest-priority recruiter workflows.
-              </div>
-            </div>
-          </div>
-          <div className="dash-card__body recruiter-dashboard__panel-list">
-            <Link href="/recruiter/screening" className="recruiter-list-card">
-              <div className="recruiter-list-card__title">Review screening queue</div>
-              <div className="recruiter-list-card__meta">
-                Assess scores and shortlist decisions.
-              </div>
-            </Link>
-            <Link href="/recruiter/outreach" className="recruiter-list-card">
-              <div className="recruiter-list-card__title">Approve outreach drafts</div>
-              <div className="recruiter-list-card__meta">Send shortlist and rejection updates.</div>
-            </Link>
-            <Link href="/recruiter/interviews" className="recruiter-list-card">
-              <div className="recruiter-list-card__title">Check interviews</div>
-              <div className="recruiter-list-card__meta">See upcoming bookings and recordings.</div>
-            </Link>
-            <div className="recruiter-list-card" aria-hidden="true">
-              <div className="skeleton-block recruiter-list-card__title-skeleton" />
-              <div className="skeleton-block recruiter-list-card__meta-skeleton" />
-            </div>
-          </div>
-        </div>
-
         <div className="dash-card" aria-hidden="true">
           <div className="dash-card__header">
             <div>
@@ -347,52 +316,6 @@ export default function CompanyDashboardPage() {
           {isAdmin ? (
             <RecruiterAdminInsights analytics={adminAnalyticsData} isLoading={isAnalyticsLoading} />
           ) : null}
-
-          <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
-                  <div className="dash-card__title">Quick actions</div>
-                  <div className="dash-card__subtitle">
-                    Jump into the highest-priority recruiter workflows.
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body recruiter-dashboard__panel-list">
-                <Link href="/recruiter/screening" className="recruiter-list-card">
-                  <div className="recruiter-list-card__title">Review screening queue</div>
-                  <div className="recruiter-list-card__meta">
-                    Assess scores and shortlist decisions.
-                  </div>
-                </Link>
-                <Link href="/recruiter/outreach" className="recruiter-list-card">
-                  <div className="recruiter-list-card__title">Approve outreach drafts</div>
-                  <div className="recruiter-list-card__meta">
-                    Send shortlist and rejection updates.
-                  </div>
-                </Link>
-                <Link href="/recruiter/interviews" className="recruiter-list-card">
-                  <div className="recruiter-list-card__title">Check interviews</div>
-                  <div className="recruiter-list-card__meta">
-                    See upcoming bookings and recordings.
-                  </div>
-                </Link>
-                <Link
-                  href={isAdmin ? '/recruiter/recruiters' : '/recruiter/jobs'}
-                  className="recruiter-list-card"
-                >
-                  <div className="recruiter-list-card__title">
-                    {isAdmin ? 'Manage recruiter access' : 'Open expiring jobs'}
-                  </div>
-                  <div className="recruiter-list-card__meta">
-                    {isAdmin
-                      ? 'Review pending join requests and team access.'
-                      : 'Focus on roles that need action soon.'}
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </div>
 
           <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
             <div className="dash-card">

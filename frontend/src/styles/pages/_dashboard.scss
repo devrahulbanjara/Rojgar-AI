@@ -4395,36 +4395,6 @@
     padding-block: $space-10;
   }
 
-  &__iconWrap {
-    display: grid;
-    place-items: center;
-    width: 72px;
-    height: 72px;
-    border-radius: $radius-full;
-    background: rgba($color-primary, 0.08);
-    border: 1px solid rgba($color-primary, 0.14);
-  }
-
-  &__icon {
-    width: 34px;
-    height: 34px;
-    color: $color-primary;
-  }
-
-  &__eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.7rem;
-    border-radius: $radius-full;
-    background: rgba($color-primary, 0.08);
-    color: $color-primary;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
   &__title {
     font-family: $font-heading;
     font-size: $font-size-2xl;
@@ -4438,23 +4408,6 @@
     color: $color-text-muted;
     font-size: $font-size-sm;
     line-height: 1.7;
-  }
-
-  &__tips {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: $space-3;
-    width: 100%;
-  }
-
-  &__tip {
-    padding: $space-4;
-    border-radius: $radius-xl;
-    border: 1px solid rgba($color-gray-200, 0.95);
-    background: rgba($color-gray-100, 0.55);
-    font-size: $font-size-sm;
-    color: $color-gray-700;
-    line-height: 1.6;
   }
 
   &__actions {
@@ -13474,10 +13427,6 @@
 }
 
 @media (max-width: $bp-md) {
-  .dashboard-error-state__tips {
-    grid-template-columns: 1fr;
-  }
-
   .dashboard-metric-grid {
     grid-template-columns: 1fr;
   }
