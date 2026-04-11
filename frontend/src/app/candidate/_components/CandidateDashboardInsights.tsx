@@ -7,6 +7,8 @@ import {
   type CandidateDashboardAnalyticsTimeseriesPoint,
 } from '@/store/services/dashboardApi'
 
+import CandidateMetricCard, { buildAreaPath, buildLinePath } from './CandidateMetricCard'
+
 type RangeKey = '7d' | '30d' | '90d'
 
 type CandidateDashboardReadiness = {
@@ -24,7 +26,7 @@ type CandidateDashboardInsightsProps = {
   readiness: CandidateDashboardReadiness
 }
 
-type ActivitySeriesKey = 'applications' | 'shortlisted' | 'interviews' | 'offers'
+type ActivitySeriesKey = 'applications' | 'shortlisted' | 'interviews' | 'offers' | 'rejected'
 
 const RANGE_OPTIONS: Array<{ label: string; value: RangeKey }> = [
   { label: '7D', value: '7d' },
@@ -46,6 +48,7 @@ const SERIES_META = [
   { key: 'shortlisted', label: 'Shortlisted', tone: 'secondary' },
   { key: 'interviews', label: 'Interviews', tone: 'success' },
   { key: 'offers', label: 'Offers', tone: 'accent' },
+  { key: 'rejected', label: 'Rejected', tone: 'danger' },
 ] as const
 
 function formatDayLabel(value: string, rangeKey: RangeKey): string {
@@ -57,28 +60,6 @@ function formatDayLabel(value: string, rangeKey: RangeKey): string {
   return new Date(value).toLocaleDateString('en-US', format)
 }
 
-function buildLinePath(values: number[], width: number, height: number, maxValue: number): string {
-  if (values.length === 0) return ''
-  if (values.length === 1) {
-    const y = height - (values[0] / maxValue) * height
-    return `M 0 ${y} L ${width} ${y}`
-  }
-
-  return values
-    .map((value, index) => {
-      const x = (index / (values.length - 1)) * width
-      const y = height - (value / maxValue) * height
-      return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
-    })
-    .join(' ')
-}
-
-function buildAreaPath(values: number[], width: number, height: number, maxValue: number): string {
-  const linePath = buildLinePath(values, width, height, maxValue)
-  if (!linePath || values.length === 0) return ''
-  return `${linePath} L ${width} ${height} L 0 ${height} Z`
-}
-
 function sumSeries(
   data: CandidateDashboardAnalyticsTimeseriesPoint[],
   key: ActivitySeriesKey,
@@ -86,53 +67,74 @@ function sumSeries(
   return data.reduce((total, point) => total + point[key], 0)
 }
 
-function describeDelta(
-  data: CandidateDashboardAnalyticsTimeseriesPoint[],
-  key: ActivitySeriesKey,
-): string {
-  if (data.length < 2) return 'Stable in selected range'
-
-  const midpoint = Math.floor(data.length / 2)
-  const firstHalf = data.slice(0, midpoint).reduce((total, point) => total + point[key], 0)
-  const secondHalf = data.slice(midpoint).reduce((total, point) => total + point[key], 0)
-  const delta = secondHalf - firstHalf
-
-  if (delta > 0) return `+${delta} vs first half`
-  if (delta < 0) return `${delta} vs first half`
-  return 'Flat vs first half'
-}
-
 function InsightsSkeleton() {
   return (
     <div className="candidate-dashboard__analytics">
-      <div className="dashboard-metric-grid">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__body candidate-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
-              <div className="skeleton-block dashboard-card-skeleton__value" />
-              <div className="skeleton-block dashboard-card-skeleton__meta" />
+      <div className="dashboard-range-tabs" aria-hidden="true">
+        {RANGE_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={`dashboard-range-tabs__button${option.value === '30d' ? ' dashboard-range-tabs__button--active' : ''}`}
+            disabled
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="dashboard-metric-grid dashboard-metric-grid--candidate-top">
+        {SERIES_META.map((series) => (
+          <div key={series.key} className="stat-card dashboard-metric-card" aria-hidden="true">
+            <div className="dashboard-metric-card__header">
+              <div className="dashboard-metric-card__copy">
+                <div className="skeleton-block dashboard-card-skeleton__value" />
+                <div className="stat-card__label">{series.label}</div>
+              </div>
+              <div className="skeleton-block dashboard-card-skeleton__metric-sparkline" />
             </div>
           </div>
         ))}
       </div>
 
       <div className="dash-grid dash-grid--2col">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__header">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
-            </div>
-            <div className="dash-card__body candidate-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Application funnel</div>
+              <div className="dash-card__subtitle">
+                Current movement across your job search pipeline.
+              </div>
             </div>
           </div>
-        ))}
+          <div className="dash-card__body candidate-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Readiness</div>
+              <div className="dash-card__subtitle">
+                Profile strength and search posture from your latest setup.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body candidate-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
       </div>
 
       <div className="dash-card" aria-hidden="true">
         <div className="dash-card__header">
-          <div className="skeleton-block dashboard-card-skeleton__title" />
+          <div>
+            <div className="dash-card__title">Application activity</div>
+            <div className="dash-card__subtitle">
+              Applications sent and status milestones across the selected range.
+            </div>
+          </div>
         </div>
         <div className="dash-card__body candidate-dashboard__analytics-body">
           <div className="skeleton-block dashboard-analytics__chart-skeleton dashboard-analytics__chart-skeleton--tall" />
@@ -142,52 +144,19 @@ function InsightsSkeleton() {
   )
 }
 
-function MetricSparkline({ values, tone }: { values: number[]; tone: string }) {
-  const width = 120
-  const height = 36
-  const maxValue = Math.max(...values, 1)
-
-  return (
-    <svg
-      className="dashboard-metric-card__sparkline"
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-hidden="true"
-    >
-      <path
-        d={buildAreaPath(values, width, height, maxValue)}
-        className="dashboard-metric-card__sparklineArea"
-      />
-      <path
-        d={buildLinePath(values, width, height, maxValue)}
-        className={`dashboard-metric-card__sparklineLine dashboard-metric-card__sparklineLine--${tone}`}
-      />
-    </svg>
-  )
-}
-
 function CandidateMetricCards({ analytics }: { analytics: CandidateDashboardAnalyticsData }) {
   return (
-    <div className="dashboard-metric-grid">
+    <div className="dashboard-metric-grid dashboard-metric-grid--candidate-top">
       {SERIES_META.map((series) => {
         const values = analytics.timeseries.map((point) => point[series.key])
         return (
-          <div key={series.key} className="dash-card dashboard-metric-card">
-            <div className="dash-card__body candidate-dashboard__analytics-body">
-              <div className="dashboard-metric-card__header">
-                <div>
-                  <div className="dashboard-metric-card__label">{series.label}</div>
-                  <div className="dashboard-metric-card__value">
-                    {sumSeries(analytics.timeseries, series.key)}
-                  </div>
-                </div>
-                <MetricSparkline values={values} tone={series.tone} />
-              </div>
-              <div className="dashboard-metric-card__meta">
-                {describeDelta(analytics.timeseries, series.key)}
-              </div>
-            </div>
-          </div>
+          <CandidateMetricCard
+            key={series.key}
+            label={series.label}
+            value={sumSeries(analytics.timeseries, series.key)}
+            tone={series.tone}
+            values={values}
+          />
         )
       })}
     </div>
@@ -208,6 +177,7 @@ function CandidateActivityChart({
     point.shortlisted,
     point.interviews,
     point.offers,
+    point.rejected,
   ])
   const maxValue = Math.max(...allValues, 1)
   const yLabels = [maxValue, Math.max(Math.round(maxValue / 2), 1), 0]
@@ -397,15 +367,27 @@ export default function CandidateDashboardInsights({
             <div className="dashboard-velocity-grid">
               <div className="dashboard-velocity-grid__item">
                 <span>Avg. to shortlist</span>
-                <strong>{analytics.velocity.avg_days_to_shortlist ?? '--'}d</strong>
+                <strong>
+                  {analytics.velocity.avg_days_to_shortlist != null
+                    ? `${analytics.velocity.avg_days_to_shortlist}d`
+                    : 'N/A'}
+                </strong>
               </div>
               <div className="dashboard-velocity-grid__item">
                 <span>Avg. to interview</span>
-                <strong>{analytics.velocity.avg_days_to_interview ?? '--'}d</strong>
+                <strong>
+                  {analytics.velocity.avg_days_to_interview != null
+                    ? `${analytics.velocity.avg_days_to_interview}d`
+                    : 'N/A'}
+                </strong>
               </div>
               <div className="dashboard-velocity-grid__item">
                 <span>Avg. to offer</span>
-                <strong>{analytics.velocity.avg_days_to_offer ?? '--'}d</strong>
+                <strong>
+                  {analytics.velocity.avg_days_to_offer != null
+                    ? `${analytics.velocity.avg_days_to_offer}d`
+                    : 'N/A'}
+                </strong>
               </div>
             </div>
           </div>
@@ -415,9 +397,9 @@ export default function CandidateDashboardInsights({
       <div className="dash-card">
         <div className="dash-card__header">
           <div>
-            <div className="dash-card__title">Search activity</div>
+            <div className="dash-card__title">Application activity</div>
             <div className="dash-card__subtitle">
-              Applications sent and progress milestones across the selected range.
+              Applications sent and status milestones across the selected range.
             </div>
           </div>
         </div>

@@ -12,7 +12,6 @@ import {
   useGetCompanyCandidateByIdQuery,
   useUpdateApplicationStatusMutation,
 } from '@/store/services/applicationsApi'
-import { useGetEntityAuditTrailQuery } from '@/store/services/auditApi'
 import {
   ArrowLeft,
   CalendarDays,
@@ -24,8 +23,6 @@ import {
   Phone,
   UserRound,
 } from 'lucide-react'
-
-import AuditTrailCard from '@/components/common/AuditTrailCard'
 
 import CandidateEvaluationCard from '../_components/CandidateEvaluationCard'
 import { CandidateDetailSkeleton } from '../_components/CandidatesSkeletons'
@@ -78,14 +75,9 @@ export default function RecruiterCandidateDetailPage() {
   const params = useParams()
   const applicationId = params.application_id as string
   const { data: resp, isLoading, isError, refetch } = useGetCompanyCandidateByIdQuery(applicationId)
-  const { data: auditResponse } = useGetEntityAuditTrailQuery({
-    entityType: 'application',
-    entityId: applicationId,
-  })
   const [updateApplicationStatus, { isLoading: isUpdatingStatus }] =
     useUpdateApplicationStatusMutation()
   const candidate = resp?.data
-  const auditTrail = auditResponse?.data ?? []
   const interview = candidate?.interview
   const transitionOptions = candidate ? getRecruiterTransitionOptions(candidate.status) : []
 
@@ -238,13 +230,6 @@ export default function RecruiterCandidateDetailPage() {
               </div>
             </div>
 
-            <AuditTrailCard
-              title="Audit trail"
-              subtitle="Append-only record of writes and state transitions tied to this application."
-              items={auditTrail}
-              emptyText="No audit records are available for this candidate yet."
-            />
-
             <div className="dash-card">
               <div className="dash-card__header">
                 <div>
@@ -340,48 +325,6 @@ export default function RecruiterCandidateDetailPage() {
             <div className="dash-card">
               <div className="dash-card__header">
                 <div>
-                  <div className="dash-card__title">Outreach audit</div>
-                  <div className="dash-card__subtitle">
-                    Approval and sending history for candidate communication.
-                  </div>
-                </div>
-              </div>
-              <div className="dash-card__body recruiter-dashboard__panel-list">
-                {candidate.outreach_audit.length === 0 ? (
-                  <div className="profile-empty">
-                    No outreach draft has been created for this candidate yet.
-                  </div>
-                ) : (
-                  candidate.outreach_audit.map((draft) => (
-                    <div key={draft.draft_id} className="recruiter-list-card">
-                      <div className="recruiter-list-card__title">
-                        {draft.subject ?? 'Untitled draft'}
-                      </div>
-                      <div className="recruiter-list-card__meta">
-                        {draft.is_sent
-                          ? `Sent ${draft.sent_at ? formatInterviewDate(draft.sent_at) : ''}`
-                          : draft.is_discarded
-                            ? 'Discarded'
-                            : draft.is_approved
-                              ? 'Approved'
-                              : 'Drafted'}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              <InterviewRecordingCard applicationId={applicationId} />
-              <CandidateEvaluationCard applicationId={applicationId} />
-            </div>
-
-            <div className="dash-card">
-              <div className="dash-card__header">
-                <div>
                   <div className="dash-card__title">Resume attached</div>
                   <div className="dash-card__subtitle">
                     Snapshot details from the resume selected for this application.
@@ -408,6 +351,11 @@ export default function RecruiterCandidateDetailPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="dash-grid dash-grid--2col recruiter-candidate-detail__grid">
+            <InterviewRecordingCard applicationId={applicationId} />
+            <CandidateEvaluationCard applicationId={applicationId} />
           </div>
         </div>
       )}

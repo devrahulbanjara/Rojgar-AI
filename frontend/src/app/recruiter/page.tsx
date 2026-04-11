@@ -86,17 +86,6 @@ function RecruiterDashboardSkeleton({ showAdmin }: { showAdmin: boolean }) {
 
       {showAdmin ? <RecruiterAdminInsights analytics={undefined} isLoading={true} /> : null}
 
-      <div
-        className={`dash-stats ${showAdmin ? 'recruiter-dashboard__stats--admin' : 'recruiter-dashboard__stats--recruiter'}`}
-      >
-        {Array.from({ length: showAdmin ? 6 : 5 }).map((_, index) => (
-          <div key={index} className="stat-card" aria-hidden="true">
-            <div className="skeleton-block stat-card__value-skeleton" />
-            <div className="skeleton-block dashboard-card-skeleton__meta" />
-          </div>
-        ))}
-      </div>
-
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
         <div className="dash-card">
           <div className="dash-card__header">
@@ -187,21 +176,43 @@ function RecruiterDashboardSkeleton({ showAdmin }: { showAdmin: boolean }) {
 
       {showAdmin ? (
         <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <div key={index} className="dash-card" aria-hidden="true">
-              <div className="dash-card__header">
-                <div className="skeleton-block dashboard-card-skeleton__title" />
-              </div>
-              <div className="dash-card__body recruiter-dashboard__panel-list">
-                {Array.from({ length: 3 }).map((__, rowIndex) => (
-                  <div key={rowIndex} className="recruiter-list-card">
-                    <div className="skeleton-block recruiter-list-card__title-skeleton" />
-                    <div className="skeleton-block recruiter-list-card__meta-skeleton" />
-                  </div>
-                ))}
+          <div className="dash-card" aria-hidden="true">
+            <div className="dash-card__header">
+              <div>
+                <div className="dash-card__title">Team join requests</div>
+                <div className="dash-card__subtitle">
+                  Approve or reject pending recruiter access.
+                </div>
               </div>
             </div>
-          ))}
+            <div className="dash-card__body recruiter-dashboard__panel-list">
+              {Array.from({ length: 3 }).map((_, rowIndex) => (
+                <div key={rowIndex} className="recruiter-list-card">
+                  <div className="skeleton-block recruiter-list-card__title-skeleton" />
+                  <div className="skeleton-block recruiter-list-card__meta-skeleton" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="dash-card" aria-hidden="true">
+            <div className="dash-card__header">
+              <div>
+                <div className="dash-card__title">Team activity</div>
+                <div className="dash-card__subtitle">
+                  Monthly shortlist and interview movement across the team.
+                </div>
+              </div>
+            </div>
+            <div className="dash-card__body recruiter-dashboard__panel-list">
+              {Array.from({ length: 3 }).map((_, rowIndex) => (
+                <div key={rowIndex} className="recruiter-list-card">
+                  <div className="skeleton-block recruiter-list-card__title-skeleton" />
+                  <div className="skeleton-block recruiter-list-card__meta-skeleton" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
@@ -274,12 +285,44 @@ export default function CompanyDashboardPage() {
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <h2 className="dash-page-header__title">
-            Good morning, {dashboardData?.recruiter_name?.split(/\s+/)[0] ?? 'there'}
+            Good morning,
+            {isLoading ? (
+              <span
+                className="skeleton-block"
+                aria-hidden="true"
+                style={{
+                  display: 'inline-block',
+                  width: '120px',
+                  height: '36px',
+                  marginLeft: '8px',
+                  verticalAlign: 'middle',
+                }}
+              />
+            ) : (
+              ` ${dashboardData?.recruiter_name?.split(/\s+/)[0] ?? 'there'}`
+            )}
           </h2>
           <p className="dash-page-header__subtitle">
-            {dashboardData?.company_name
-              ? `${dashboardData.company_name}${isAdmin ? ' Admin' : ''} | focus on what needs action today.`
-              : 'Track jobs, interviews, and candidate communication.'}
+            {isLoading ? (
+              <>
+                <span
+                  className="skeleton-block"
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-block',
+                    width: isAdmin ? '160px' : '140px',
+                    height: '16px',
+                    marginRight: '8px',
+                    verticalAlign: 'middle',
+                  }}
+                />
+                <span>| focus on what needs action today.</span>
+              </>
+            ) : dashboardData?.company_name ? (
+              `${dashboardData.company_name}${isAdmin ? ' Admin' : ''} | focus on what needs action today.`
+            ) : (
+              'Track jobs, interviews, and candidate communication.'
+            )}
           </p>
         </div>
       </div>
@@ -304,45 +347,6 @@ export default function CompanyDashboardPage() {
           {isAdmin ? (
             <RecruiterAdminInsights analytics={adminAnalyticsData} isLoading={isAnalyticsLoading} />
           ) : null}
-
-          <div
-            className={`dash-stats ${isAdmin ? 'recruiter-dashboard__stats recruiter-dashboard__stats--admin' : 'recruiter-dashboard__stats recruiter-dashboard__stats--recruiter'}`}
-          >
-            <div className="stat-card">
-              <div className="stat-card__value">{dashboardData.stats.active_jobs}</div>
-              <div className="stat-card__label">Active jobs</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value">{dashboardData.stats.total_applications}</div>
-              <div className="stat-card__label">Total applicants</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value recruiter-dashboard__stat-value--primary">
-                {dashboardData.stats.shortlisted}
-              </div>
-              <div className="stat-card__label">Shortlisted</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value">{dashboardData.stats.interviews_today}</div>
-              <div className="stat-card__label">Interviews today</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value recruiter-dashboard__stat-value--warning">
-                {dashboardData.stats.pending_drafts}
-              </div>
-              <div className="stat-card__label">Drafts to approve</div>
-            </div>
-            {adminDashboardData ? (
-              <div className="stat-card">
-                <div
-                  className={`stat-card__value${adminDashboardData.stats.pending_join_requests > 0 ? ' recruiter-dashboard__stat-value--warning' : ' recruiter-dashboard__stat-value--primary'}`}
-                >
-                  {adminDashboardData.stats.pending_join_requests}
-                </div>
-                <div className="stat-card__label">Join requests</div>
-              </div>
-            ) : null}
-          </div>
 
           <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
             <div className="dash-card">

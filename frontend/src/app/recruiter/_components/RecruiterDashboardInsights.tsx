@@ -16,6 +16,7 @@ type RecruiterDashboardInsightsProps = {
 }
 
 type TrendSeriesKey = 'new_applicants' | 'completed_reviews' | 'interviews_scheduled'
+type RecruiterMetricTone = 'primary' | 'secondary' | 'success' | 'accent' | 'warning'
 
 const RANGE_OPTIONS: Array<{ label: string; value: RangeKey }> = [
   { label: '7D', value: '7d' },
@@ -45,6 +46,14 @@ const OUTREACH_STATES = [
   { key: 'discarded', label: 'Discarded', tone: 'danger' },
 ] as const
 
+const TOP_METRICS = [
+  { key: 'applicants', label: 'Applicants', tone: 'primary' },
+  { key: 'reviews', label: 'Reviews', tone: 'secondary' },
+  { key: 'interviews', label: 'Interviews', tone: 'success' },
+  { key: 'offers', label: 'Offers', tone: 'accent' },
+  { key: 'drafts', label: 'Drafts to approve', tone: 'warning' },
+] as const
+
 function formatShortDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US', {
     month: 'short',
@@ -52,26 +61,45 @@ function formatShortDate(value: string): string {
   })
 }
 
-function buildLinePath(values: number[], width: number, height: number, maxValue: number): string {
+function buildLinePath(
+  values: number[],
+  width: number,
+  height: number,
+  maxValue: number,
+  padding?: { x?: number; y?: number },
+): string {
   if (values.length === 0) return ''
+  const padX = padding?.x ?? 0
+  const padY = padding?.y ?? 0
+  const drawableWidth = Math.max(width - padX * 2, 1)
+  const drawableHeight = Math.max(height - padY * 2, 1)
+
   if (values.length === 1) {
-    const y = height - (values[0] / maxValue) * height
-    return `M 0 ${y} L ${width} ${y}`
+    const y = height - padY - (values[0] / maxValue) * drawableHeight
+    return `M ${padX} ${y} L ${width - padX} ${y}`
   }
 
   return values
     .map((value, index) => {
-      const x = (index / (values.length - 1)) * width
-      const y = height - (value / maxValue) * height
+      const x = padX + (index / (values.length - 1)) * drawableWidth
+      const y = height - padY - (value / maxValue) * drawableHeight
       return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
     })
     .join(' ')
 }
 
-function buildAreaPath(values: number[], width: number, height: number, maxValue: number): string {
-  const linePath = buildLinePath(values, width, height, maxValue)
+function buildAreaPath(
+  values: number[],
+  width: number,
+  height: number,
+  maxValue: number,
+  padding?: { x?: number; y?: number },
+): string {
+  const padX = padding?.x ?? 0
+  const padY = padding?.y ?? 0
+  const linePath = buildLinePath(values, width, height, maxValue, padding)
   if (!linePath || values.length === 0) return ''
-  return `${linePath} L ${width} ${height} L 0 ${height} Z`
+  return `${linePath} L ${width - padX} ${height - padY} L ${padX} ${height - padY} Z`
 }
 
 function sumSeries(
@@ -81,26 +109,20 @@ function sumSeries(
   return data.reduce((total, point) => total + point[key], 0)
 }
 
-function describeDelta(
-  data: RecruiterDashboardAnalyticsTimeseriesPoint[],
-  key: TrendSeriesKey,
-): string {
-  if (data.length < 2) return 'Stable in selected range'
-
-  const midpoint = Math.floor(data.length / 2)
-  const firstHalf = data.slice(0, midpoint).reduce((total, point) => total + point[key], 0)
-  const secondHalf = data.slice(midpoint).reduce((total, point) => total + point[key], 0)
-  const delta = secondHalf - firstHalf
-
-  if (delta > 0) return `+${delta} vs first half`
-  if (delta < 0) return `${delta} vs first half`
-  return 'Flat vs first half'
+function getValueClassName(tone: RecruiterMetricTone): string {
+  if (tone === 'warning') return 'stat-card__value recruiter-dashboard__stat-value--warning'
+  return 'stat-card__value'
 }
 
-function MetricSparkline({ values, tone }: { values: number[]; tone: string }) {
-  const width = 120
+function buildFlatSeries(value: number, length: number): number[] {
+  return Array.from({ length: Math.max(length, 2) }, () => value)
+}
+
+function MetricSparkline({ values, tone }: { values: number[]; tone: RecruiterMetricTone }) {
+  const width = 88
   const height = 36
   const maxValue = Math.max(...values, 1)
+  const padding = { x: 4, y: 5 }
 
   return (
     <svg
@@ -110,11 +132,11 @@ function MetricSparkline({ values, tone }: { values: number[]; tone: string }) {
       aria-hidden="true"
     >
       <path
-        d={buildAreaPath(values, width, height, maxValue)}
+        d={buildAreaPath(values, width, height, maxValue, padding)}
         className="dashboard-metric-card__sparklineArea"
       />
       <path
-        d={buildLinePath(values, width, height, maxValue)}
+        d={buildLinePath(values, width, height, maxValue, padding)}
         className={`dashboard-metric-card__sparklineLine dashboard-metric-card__sparklineLine--${tone}`}
       />
     </svg>
@@ -124,76 +146,195 @@ function MetricSparkline({ values, tone }: { values: number[]; tone: string }) {
 function InsightsSkeleton() {
   return (
     <div className="recruiter-dashboard__analytics">
-      <div className="dashboard-metric-grid">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__body recruiter-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
-              <div className="skeleton-block dashboard-card-skeleton__value" />
-              <div className="skeleton-block dashboard-card-skeleton__meta" />
+      <div className="dashboard-range-tabs" aria-hidden="true">
+        {RANGE_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={`dashboard-range-tabs__button${option.value === '30d' ? ' dashboard-range-tabs__button--active' : ''}`}
+            disabled
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-top">
+        {TOP_METRICS.map((item) => (
+          <div key={item.key} className="stat-card dashboard-metric-card" aria-hidden="true">
+            <div className="dashboard-metric-card__header">
+              <div className="dashboard-metric-card__copy">
+                <div className="skeleton-block dashboard-card-skeleton__value" />
+                <div className="stat-card__label">{item.label}</div>
+              </div>
+              <div className="skeleton-block dashboard-card-skeleton__metric-sparkline" />
             </div>
           </div>
         ))}
       </div>
 
       <div className="dash-grid dash-grid--2col">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__header">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
-            </div>
-            <div className="dash-card__body recruiter-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Company funnel</div>
+              <div className="dash-card__subtitle">
+                Live view of the hiring pipeline across current company activity.
+              </div>
             </div>
           </div>
-        ))}
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Pipeline velocity</div>
+              <div className="dash-card__subtitle">
+                Average movement from application to review, shortlist, and interview.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+      </div>
+
+      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Hiring trend</div>
+              <div className="dash-card__subtitle">
+                New applicants, completed reviews, and scheduled interviews.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Score distribution</div>
+              <div className="dash-card__subtitle">
+                Current screening score mix across company applications.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+      </div>
+
+      <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Interview load</div>
+              <div className="dash-card__subtitle">
+                Scheduled interviews over the next two weeks.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Outreach state</div>
+              <div className="dash-card__subtitle">
+                Drafted, approved, sent, and discarded communication.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+      </div>
+
+      <div className="dash-card recruiter-dashboard__jobs-card" aria-hidden="true">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Job health snapshot</div>
+            <div className="dash-card__subtitle">
+              Applicant volume and downstream conversion on active jobs.
+            </div>
+          </div>
+        </div>
+        <div className="dash-card__body recruiter-dashboard__analytics-body">
+          <div className="skeleton-block dashboard-analytics__chart-skeleton dashboard-analytics__chart-skeleton--tall" />
+        </div>
       </div>
     </div>
   )
 }
 
 function RecruiterMetricCards({ analytics }: { analytics: RecruiterDashboardAnalyticsData }) {
-  const offerValues = analytics.applications_timeseries.map((point) => point.interviews_scheduled)
+  const seriesLength = analytics.applications_timeseries.length
+  const offerValues = buildFlatSeries(analytics.stats.offers, seriesLength)
+  const draftValues = buildFlatSeries(analytics.stats.pending_drafts, seriesLength)
+  const cards = [
+    {
+      key: 'applicants',
+      label: 'Applicants',
+      value: sumSeries(analytics.applications_timeseries, 'new_applicants'),
+      tone: 'primary' as const,
+      values: analytics.applications_timeseries.map((point) => point.new_applicants),
+    },
+    {
+      key: 'reviews',
+      label: 'Reviews',
+      value: sumSeries(analytics.applications_timeseries, 'completed_reviews'),
+      tone: 'secondary' as const,
+      values: analytics.applications_timeseries.map((point) => point.completed_reviews),
+    },
+    {
+      key: 'interviews',
+      label: 'Interviews',
+      value: sumSeries(analytics.applications_timeseries, 'interviews_scheduled'),
+      tone: 'success' as const,
+      values: analytics.applications_timeseries.map((point) => point.interviews_scheduled),
+    },
+    {
+      key: 'offers',
+      label: 'Offers',
+      value: analytics.stats.offers,
+      tone: 'accent' as const,
+      values: offerValues,
+    },
+    {
+      key: 'drafts',
+      label: 'Drafts to approve',
+      value: analytics.stats.pending_drafts,
+      tone: 'warning' as const,
+      values: draftValues,
+    },
+  ]
 
   return (
-    <div className="dashboard-metric-grid">
-      {TREND_SERIES.map((series) => {
-        const values = analytics.applications_timeseries.map((point) => point[series.key])
-        return (
-          <div key={series.key} className="dash-card dashboard-metric-card">
-            <div className="dash-card__body recruiter-dashboard__analytics-body">
-              <div className="dashboard-metric-card__header">
-                <div>
-                  <div className="dashboard-metric-card__label">{series.label}</div>
-                  <div className="dashboard-metric-card__value">
-                    {sumSeries(analytics.applications_timeseries, series.key)}
-                  </div>
-                </div>
-                <MetricSparkline values={values} tone={series.tone} />
-              </div>
-              <div className="dashboard-metric-card__meta">
-                {describeDelta(analytics.applications_timeseries, series.key)}
-              </div>
-            </div>
-          </div>
-        )
-      })}
-
-      <div className="dash-card dashboard-metric-card">
-        <div className="dash-card__body recruiter-dashboard__analytics-body">
+    <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-top">
+      {cards.map((card) => (
+        <div key={card.key} className="stat-card dashboard-metric-card">
           <div className="dashboard-metric-card__header">
-            <div>
-              <div className="dashboard-metric-card__label">Offers</div>
-              <div className="dashboard-metric-card__value">{analytics.stats.offers}</div>
+            <div className="dashboard-metric-card__copy">
+              <div className={getValueClassName(card.tone)}>{card.value}</div>
+              <div className="stat-card__label">{card.label}</div>
             </div>
-            <MetricSparkline values={offerValues} tone="accent" />
-          </div>
-          <div className="dashboard-metric-card__meta">
-            {analytics.stats.pending_drafts} draft
-            {analytics.stats.pending_drafts === 1 ? '' : 's'} pending approval
+            <MetricSparkline values={card.values} tone={card.tone} />
           </div>
         </div>
-      </div>
+      ))}
     </div>
   )
 }
