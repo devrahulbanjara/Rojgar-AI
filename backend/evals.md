@@ -1,0 +1,10 @@
+ 
+============================================================
+  Baseline: OpenAI Whisper Small  (openai/whisper-small)
+============================================================
+preprocessor_config.json:  185k/? [00:00<00:00, 15.6MB/s]config.json:  1.97k/? [00:00<00:00, 174kB/s]tokenizer_config.json:  283k/? [00:00<00:00, 24.5MB/s]vocab.json:  836k/? [00:00<00:00, 30.7MB/s]tokenizer.json:  2.48M/? [00:00<00:00, 61.6MB/s]merges.txt:  494k/? [00:00<00:00, 26.8MB/s]normalizer.json:  52.7k/? [00:00<00:00, 5.00MB/s]added_tokens.json:  34.6k/? [00:00<00:00, 3.19MB/s]special_tokens_map.json:  2.19k/? [00:00<00:00, 232kB/s]model.safetensors: 100% 967M/967M [00:22<00:00, 49.6MB/s]Loading weights: 100% 479/479 [00:00<00:00, 1267.75it/s]generation_config.json:  3.87k/? [00:00<00:00, 273kB/s]`torch_dtype` is deprecated! Use `dtype` instead!
+  OpenAI Whisper Small:   0%|          | 0/80 [00:00<?, ?it/s]A custom logits processor of type <class 'transformers.generation.logits_process.SuppressTokensLogitsProcessor'> has been passed to `.generate()`, but it was also created in `.generate()`, given its parameterization. The custom <class 'transformers.generation.logits_process.SuppressTokensLogitsProcessor'> will take precedence. Please check the docstring of <class 'transformers.generation.logits_process.SuppressTokensLogitsProcessor'> to see related `.generate()` flags.
+A custom logits processor of type <class 'transformers.generation.logits_process.SuppressTokensAtBeginLogitsProcessor'> has been passed to `.generate()`, but it was also created in `.generate()`, given its parameterization. The custom <class 'transformers.generation.logits_process.SuppressTokensAtBeginLogitsProcessor'> will take precedence. Please check the docstring of <class 'transformers.generation.logits_process.SuppressTokensAtBeginLogitsProcessor'> to see related `.generate()` flags.
+  OpenAI Whisper Small:  12%|█▎        | 10/80 [00:34<04:29,  3.85s/it]You seem to be using the pipelines sequentially on GPU. In order to maximize efficiency please use a dataset
+  OpenAI Whisper Small: 100%|██████████| 80/80 [03:00<00:00,  2.26s/it]
+  WER: 130.80%  |  CER: 66.24%

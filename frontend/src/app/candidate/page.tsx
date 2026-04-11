@@ -112,15 +112,6 @@ function CandidateDashboardSkeleton() {
         }}
       />
 
-      <div className="dash-stats candidate-dashboard__stats-grid">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="stat-card" aria-hidden="true">
-            <div className="skeleton-block stat-card__value-skeleton" />
-            <div className="skeleton-block dashboard-card-skeleton__meta" />
-          </div>
-        ))}
-      </div>
-
       <div className="dash-card" aria-hidden="true">
         <div className="dash-card__header">
           <div>
@@ -237,11 +228,24 @@ export default function UserDashboardPage() {
       <div className="dash-page-header">
         <div className="dash-page-header__left">
           <div className="dash-page-header__title-row">
-            {isLoading && !user ? (
-              <div className="skeleton-block" style={{ width: '240px', height: '36px' }} />
-            ) : (
-              <h1 className="dash-page-header__title">Good morning, {firstName}</h1>
-            )}
+            <h1 className="dash-page-header__title">
+              Good morning,
+              {isLoading && !user ? (
+                <span
+                  className="skeleton-block"
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-block',
+                    width: '120px',
+                    height: '36px',
+                    marginLeft: '8px',
+                    verticalAlign: 'middle',
+                  }}
+                />
+              ) : (
+                ` ${firstName}`
+              )}
+            </h1>
 
             <div className="dash-page-header__status-inline">
               {isLoading ? (
@@ -267,14 +271,7 @@ export default function UserDashboardPage() {
           </div>
 
           <div className="dash-page-header__subtitle">
-            {isLoading ? (
-              <div
-                className="skeleton-block"
-                style={{ width: '200px', height: '14px', marginTop: '4px' }}
-              />
-            ) : (
-              'Track every application and take the next step quickly.'
-            )}
+            Track every application and take the next step quickly.
           </div>
         </div>
       </div>
@@ -301,35 +298,6 @@ export default function UserDashboardPage() {
               isOpenToWork: dashboardData.is_open_to_work,
             }}
           />
-
-          <div className="dash-stats candidate-dashboard__stats candidate-dashboard__stats-grid">
-            <div className="stat-card">
-              <div className="stat-card__value">{dashboardData.stats.total_applications}</div>
-              <div className="stat-card__label">Applications</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value candidate-dashboard__stat-value--warning">
-                {dashboardData.stats.shortlisted}
-              </div>
-              <div className="stat-card__label">Shortlisted</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value">{dashboardData.stats.interviews_booked}</div>
-              <div className="stat-card__label">Interviews</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-card__value">{dashboardData.stats.offers}</div>
-              <div className="stat-card__label">Offers</div>
-            </div>
-            <div className="stat-card">
-              <div
-                className={`stat-card__value${dashboardData.stats.rejected > 0 ? ' candidate-dashboard__stat-value--danger' : ''}`}
-              >
-                {dashboardData.stats.rejected}
-              </div>
-              <div className="stat-card__label">Rejected</div>
-            </div>
-          </div>
 
           <div className="dash-card">
             <div className="dash-card__header">

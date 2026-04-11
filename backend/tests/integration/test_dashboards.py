@@ -51,7 +51,7 @@ class TestDashboardAccess:
 
 class TestCandidateDashboard:
     @pytest.mark.asyncio
-    async def test_candidate_dashboard_returns_stats_pipeline_and_interviews(
+    async def test_candidate_dashboard_returns_pipeline_and_interviews(
         self, client, db
     ):
         recruiter = await make_user(
@@ -121,13 +121,6 @@ class TestCandidateDashboard:
         payload = resp.json()["data"]
         assert payload["user_name"] == "Casey Candidate"
         assert payload["is_open_to_work"] is True
-        assert payload["stats"] == {
-            "total_applications": 2,
-            "shortlisted": 0,
-            "interviews_booked": 1,
-            "offers": 0,
-            "rejected": 1,
-        }
         assert len(payload["applications"]) == 2
         assert payload["applications"][0]["pipeline_step"] in {None, 4}
         assert payload["interviews"][0]["title"] == "Technical Screen"

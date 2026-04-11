@@ -291,8 +291,24 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
                 <FileUp size={28} />
               )}
               <h4>Upload a PDF resume</h4>
-              <p>
-                We&apos;ll extract an editable draft and won&apos;t save anything until you confirm.
+              {isParsing ? (
+                <>
+                  <p className="resume-import__status">
+                    {taskId
+                      ? `Processing ${processingFileName || 'your resume'}...`
+                      : `Uploading ${processingFileName || 'your resume'}...`}
+                  </p>
+                  <p>This can take 1-5 minutes depending on the size of the resume you have.</p>
+                </>
+              ) : (
+                <p>
+                  We&apos;ll extract an editable draft and won&apos;t save anything until you
+                  confirm.
+                </p>
+              )}
+              <p className="resume-import__disclaimer">
+                Extracted information may not always be correct. Double-check everything before you
+                apply it.
               </p>
               <button
                 type="button"
@@ -302,14 +318,6 @@ export default function ResumeImportModal({ currentProfile, onClose }: ResumeImp
               >
                 Choose PDF
               </button>
-              {isParsing ? (
-                <div className="resume-import__processing">
-                  <LoaderCircle className="resume-import__spinner" size={16} aria-hidden="true" />
-                  {taskId
-                    ? `Processing ${processingFileName || 'your resume'}...`
-                    : 'Uploading your resume...'}
-                </div>
-              ) : null}
               {error ? <div className="resume-field__error">{error}</div> : null}
             </div>
           ) : (

@@ -274,28 +274,6 @@
   }
 }
 
-.recruiter-dashboard__stats {
-  gap: $space-6;
-  grid-template-columns: 1fr;
-
-  @include sm {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @include xl {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .stat-card {
-    padding: $space-6;
-    gap: $space-3;
-  }
-
-  .stat-card__footer {
-    margin-top: $space-2;
-  }
-}
-
 // ── Page Header ──────────────────────────────────────────────
 .dash-page-header {
   display: flex;
@@ -9877,13 +9855,19 @@
   }
 }
 
-.resume-import__processing {
-  display: inline-flex;
-  align-items: center;
-  gap: $space-2;
-  color: $color-gray-600;
+.resume-import__status {
+  color: $color-gray-700;
   font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
+}
+
+.resume-import__disclaimer {
+  padding: $space-3 $space-4;
+  border: 1px solid rgb($color-warning, 35%);
+  border-radius: $radius-lg;
+  background: rgb($color-warning, 12%);
+  color: $color-gray-700;
+  font-size: $font-size-sm;
 }
 
 .resume-import__spinner {
@@ -12903,6 +12887,14 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: $space-4;
+
+  &--candidate-top {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  &--recruiter-top {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .candidate-dashboard__analytics-body,
@@ -12913,40 +12905,28 @@
 }
 
 .dashboard-metric-card {
-  .dash-card__body {
-    min-height: 100%;
-  }
+  min-height: 100%;
+  justify-content: center;
+  gap: $space-3;
 
   &__header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: $space-3;
+    min-height: 100%;
   }
 
-  &__label {
-    font-size: $font-size-xs;
-    color: $color-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  &__value {
-    margin-top: $space-1;
-    font-family: $font-heading;
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: $color-gray-900;
-    line-height: $line-height-tight;
-  }
-
-  &__meta {
-    font-size: $font-size-xs;
-    color: $color-text-muted;
+  &__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    justify-content: center;
+    min-width: 0;
   }
 
   &__sparkline {
-    width: 120px;
+    width: 88px;
     height: 36px;
     flex-shrink: 0;
   }
@@ -12977,12 +12957,34 @@
   &__sparklineLine--accent {
     stroke: #e24b4a;
   }
+
+  &__sparklineLine--warning {
+    stroke: color.adjust($color-warning, $lightness: -18%);
+  }
+
+  &__sparklineLine--danger {
+    stroke: #c2410c;
+  }
 }
 
 .dashboard-card-skeleton__value {
   width: 4.5rem;
   height: 2rem;
   border-radius: $radius-lg;
+}
+
+.dashboard-card-skeleton__metric-label {
+  width: 5.25rem;
+  height: 0.85rem;
+  border-radius: $radius-full;
+  margin-top: $space-2;
+}
+
+.dashboard-card-skeleton__metric-sparkline {
+  width: 88px;
+  height: 36px;
+  border-radius: $radius-md;
+  flex-shrink: 0;
 }
 
 .dashboard-funnel-list {
