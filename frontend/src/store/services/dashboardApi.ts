@@ -2,14 +2,6 @@ import type { ApplicationStatus } from './applicationsApi'
 import { type ApiResponse, baseApi } from './baseApi'
 import type { JobStatus } from './jobsApi'
 
-export interface CandidateDashboardStats {
-  total_applications: number
-  shortlisted: number
-  interviews_booked: number
-  offers: number
-  rejected: number
-}
-
 export interface CandidateDashboardApplication {
   id: string
   job_id: string
@@ -41,7 +33,6 @@ export interface CandidateDashboardInterview {
 export interface CandidateDashboardData {
   user_name: string
   is_open_to_work: boolean
-  stats: CandidateDashboardStats
   applications: CandidateDashboardApplication[]
   interviews: CandidateDashboardInterview[]
 }

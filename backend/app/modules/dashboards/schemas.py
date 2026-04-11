@@ -6,14 +6,6 @@ from app.modules.auth.enums import MembershipStatus
 from app.shared.enums import ApplicationStatus, JobStatus, LocationType
 
 
-class CandidateStats(BaseSchema):
-    total_applications: int
-    shortlisted: int
-    interviews_booked: int
-    offers: int
-    rejected: int
-
-
 class ApplicationPipelineItem(BaseSchema):
     id: UUID
     job_id: UUID
@@ -45,7 +37,6 @@ class CandidateInterviewItem(BaseSchema):
 class CandidateDashboardResponse(BaseSchema):
     user_name: str
     is_open_to_work: bool = False
-    stats: CandidateStats
     applications: list[ApplicationPipelineItem]
     interviews: list[CandidateInterviewItem]
 

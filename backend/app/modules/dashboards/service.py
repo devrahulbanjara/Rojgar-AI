@@ -20,7 +20,6 @@ from app.modules.dashboards.schemas import (
     CandidateDashboardAnalyticsResponse,
     CandidateInterviewItem,
     CandidateDashboardResponse,
-    CandidateStats,
     InterviewLoadPoint,
     JoinRequestItem,
     JoinRequestTimeseriesPoint,
@@ -159,43 +158,6 @@ async def _get_company_context(
     return result[0], result[1]
 
 
-async def _get_candidate_stats(db: AsyncSession, user_id: uuid.UUID) -> CandidateStats:
-    stats_stmt = select(
-        func.count(Application.id).label("total"),
-        func.sum(
-            case((Application.status == ApplicationStatus.shortlisted, 1), else_=0)
-        ).label("shortlisted"),
-        func.sum(
-            case(
-                (
-                    Application.status.in_(
-                        [
-                            ApplicationStatus.interview_booked,
-                            ApplicationStatus.interview_completed,
-                        ]
-                    ),
-                    1,
-                ),
-                else_=0,
-            )
-        ).label("interviews_booked"),
-        func.sum(
-            case((Application.status == ApplicationStatus.offer, 1), else_=0)
-        ).label("offers"),
-        func.sum(
-            case((Application.status == ApplicationStatus.rejected, 1), else_=0)
-        ).label("rejected"),
-    ).where(Application.user_id == user_id)
-    stats_row = (await db.execute(stats_stmt)).one()
-    return CandidateStats(
-        total_applications=stats_row.total or 0,
-        shortlisted=stats_row.shortlisted or 0,
-        interviews_booked=stats_row.interviews_booked or 0,
-        offers=stats_row.offers or 0,
-        rejected=stats_row.rejected or 0,
-    )
-
-
 async def get_candidate_dashboard(
     db: AsyncSession, current_user: User
 ) -> CandidateDashboardResponse:
@@ -203,8 +165,6 @@ async def get_candidate_dashboard(
     cached_data = await redis_service.get(cache_key)
     if cached_data:
         return CandidateDashboardResponse.model_validate_json(cached_data)
-
-    stats = await _get_candidate_stats(db, current_user.id)
 
     profile_result = await db.execute(
         select(Profile.is_open_to_work).where(Profile.user_id == current_user.id)
@@ -293,7 +253,6 @@ async def get_candidate_dashboard(
     response = CandidateDashboardResponse(
         user_name=current_user.full_name,
         is_open_to_work=is_open_to_work,
-        stats=stats,
         applications=applications,
         interviews=interviews,
     )

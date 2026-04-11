@@ -17,29 +17,70 @@ function formatShortDate(value: string): string {
 function InsightsSkeleton() {
   return (
     <>
-      <div className="dashboard-metric-grid">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__body recruiter-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
+      <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-admin-top">
+        {[
+          {
+            key: 'active-recruiters',
+            label: 'Active recruiters',
+          },
+          {
+            key: 'pending-join-requests',
+            label: 'Pending join requests',
+          },
+          { key: 'requested', label: 'Requested' },
+          { key: 'approved', label: 'Approved' },
+        ].map((item) => (
+          <div key={item.key} className="stat-card dashboard-metric-card" aria-hidden="true">
+            <div className="dashboard-metric-card__copy">
               <div className="skeleton-block dashboard-card-skeleton__value" />
-              <div className="skeleton-block dashboard-card-skeleton__meta" />
+              <div className="stat-card__label">{item.label}</div>
             </div>
           </div>
         ))}
       </div>
 
       <div className="dash-grid dash-grid--2col recruiter-dashboard__grid">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className="dash-card" aria-hidden="true">
-            <div className="dash-card__header">
-              <div className="skeleton-block dashboard-card-skeleton__title" />
-            </div>
-            <div className="dash-card__body recruiter-dashboard__analytics-body">
-              <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Team access status</div>
+              <div className="dash-card__subtitle">
+                Current company membership mix across active, pending, and rejected access.
+              </div>
             </div>
           </div>
-        ))}
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+
+        <div className="dash-card" aria-hidden="true">
+          <div className="dash-card__header">
+            <div>
+              <div className="dash-card__title">Join request trend</div>
+              <div className="dash-card__subtitle">
+                Requested, approved, and rejected team access over time.
+              </div>
+            </div>
+          </div>
+          <div className="dash-card__body recruiter-dashboard__analytics-body">
+            <div className="skeleton-block dashboard-analytics__chart-skeleton" />
+          </div>
+        </div>
+      </div>
+
+      <div className="dash-card" aria-hidden="true">
+        <div className="dash-card__header">
+          <div>
+            <div className="dash-card__title">Recruiter workload</div>
+            <div className="dash-card__subtitle">
+              Real job ownership and this month&apos;s shortlist and interview activity.
+            </div>
+          </div>
+        </div>
+        <div className="dash-card__body recruiter-dashboard__analytics-body">
+          <div className="skeleton-block dashboard-analytics__chart-skeleton dashboard-analytics__chart-skeleton--tall" />
+        </div>
       </div>
     </>
   )
@@ -74,43 +115,45 @@ export default function RecruiterAdminInsights({
     (sum, item) => sum + item.rejected,
     0,
   )
+  const pendingJoinRequestsValueClassName =
+    analytics.stats.pending_join_requests > 0
+      ? 'stat-card__value recruiter-dashboard__stat-value--warning'
+      : 'stat-card__value'
+  const approvedValueClassName =
+    rejectedTotal > 0
+      ? 'stat-card__value recruiter-dashboard__stat-value--primary'
+      : 'stat-card__value'
 
   return (
     <>
-      <div className="dashboard-metric-grid">
-        <div className="dash-card dashboard-metric-card">
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-metric-card__label">Active recruiters</div>
-            <div className="dashboard-metric-card__value">{analytics.stats.active_recruiters}</div>
-            <div className="dashboard-metric-card__meta">Current active company members</div>
+      <div className="dashboard-metric-grid dashboard-metric-grid--recruiter-admin-top">
+        <div className="stat-card dashboard-metric-card">
+          <div className="dashboard-metric-card__copy">
+            <div className="stat-card__value">{analytics.stats.active_recruiters}</div>
+            <div className="stat-card__label">Active recruiters</div>
           </div>
         </div>
 
-        <div className="dash-card dashboard-metric-card">
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-metric-card__label">Pending join requests</div>
-            <div className="dashboard-metric-card__value">
+        <div className="stat-card dashboard-metric-card">
+          <div className="dashboard-metric-card__copy">
+            <div className={pendingJoinRequestsValueClassName}>
               {analytics.stats.pending_join_requests}
             </div>
-            <div className="dashboard-metric-card__meta">Awaiting admin action</div>
+            <div className="stat-card__label">Pending join requests</div>
           </div>
         </div>
 
-        <div className="dash-card dashboard-metric-card">
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-metric-card__label">Requested</div>
-            <div className="dashboard-metric-card__value">{requestedTotal}</div>
-            <div className="dashboard-metric-card__meta">Across selected range</div>
+        <div className="stat-card dashboard-metric-card">
+          <div className="dashboard-metric-card__copy">
+            <div className="stat-card__value">{requestedTotal}</div>
+            <div className="stat-card__label">Requested</div>
           </div>
         </div>
 
-        <div className="dash-card dashboard-metric-card">
-          <div className="dash-card__body recruiter-dashboard__analytics-body">
-            <div className="dashboard-metric-card__label">Approved</div>
-            <div className="dashboard-metric-card__value">{approvedTotal}</div>
-            <div className="dashboard-metric-card__meta">
-              {rejectedTotal} rejected in selected range
-            </div>
+        <div className="stat-card dashboard-metric-card">
+          <div className="dashboard-metric-card__copy">
+            <div className={approvedValueClassName}>{approvedTotal}</div>
+            <div className="stat-card__label">Approved</div>
           </div>
         </div>
       </div>

@@ -199,7 +199,7 @@ async def start_resume_import_task(
     db.add(task)
     await db.commit()
 
-    suffix = Path(task.source_file_name or "resume.pdf").suffix or ".pdf"
+    suffix = Path(task.source_file_name).suffix or ".pdf"
     temp_file = tempfile.NamedTemporaryFile(
         delete=False,
         prefix=f"resume-import-{task.id}-",
