@@ -21,10 +21,9 @@ from app.modules.dashboards.schemas import (
     CandidateInterviewItem,
     CandidateDashboardResponse,
     InterviewLoadPoint,
+    JobPipelineItem,
     JoinRequestItem,
     JoinRequestTimeseriesPoint,
-    JobPipelineItem,
-    JobHealthPoint,
     MembershipBreakdownPoint,
     OutreachStateBreakdown,
     PendingDraftItem,
@@ -815,66 +814,6 @@ async def _get_score_distribution(
     )
 
 
-async def _get_job_health_points(
-    db: AsyncSession, company_id: uuid.UUID
-) -> list[JobHealthPoint]:
-    job_rows = (
-        await db.execute(
-            select(
-                Job.id.label("job_id"),
-                Job.title.label("job_title"),
-                Job.expires_at,
-                func.count(Application.id).label("applications"),
-                func.sum(
-                    case(
-                        (
-                            Application.status.in_(tuple(SHORTLIST_RELATED_STATUSES)),
-                            1,
-                        ),
-                        else_=0,
-                    )
-                ).label("shortlisted"),
-                func.sum(
-                    case(
-                        (
-                            Application.status.in_(
-                                [
-                                    ApplicationStatus.interview_booked,
-                                    ApplicationStatus.interview_completed,
-                                ]
-                            ),
-                            1,
-                        ),
-                        else_=0,
-                    )
-                ).label("interviews"),
-                func.sum(
-                    case((Application.status == ApplicationStatus.offer, 1), else_=0)
-                ).label("offers"),
-            )
-            .select_from(Job)
-            .outerjoin(Application, Application.job_id == Job.id)
-            .where(Job.company_id == company_id, Job.status == JobStatus.active)
-            .group_by(Job.id)
-            .order_by(Job.expires_at.asc().nulls_last(), Job.created_at.asc())
-            .limit(8)
-        )
-    ).all()
-
-    return [
-        JobHealthPoint(
-            job_id=row.job_id,
-            job_title=row.job_title,
-            days_until_expiry=_job_days_until_expiry(row.expires_at),
-            applications=row.applications or 0,
-            shortlisted=row.shortlisted or 0,
-            interviews=row.interviews or 0,
-            offers=row.offers or 0,
-        )
-        for row in job_rows
-    ]
-
-
 async def _get_outreach_summary(
     db: AsyncSession, company_id: uuid.UUID
 ) -> RecruiterOutreachSummary:
@@ -977,7 +916,6 @@ async def get_recruiter_dashboard_analytics(
             applications_timeseries=[],
             interview_load=[],
             score_distribution=ScoreDistribution(buckets=[]),
-            job_health=[],
             outreach=RecruiterOutreachSummary(
                 shortlist=OutreachStateBreakdown(
                     drafted=0, approved=0, sent=0, discarded=0
@@ -1010,7 +948,6 @@ async def get_recruiter_dashboard_analytics(
         ),
         interview_load=await _get_recruiter_interview_load(db, company_id),
         score_distribution=await _get_score_distribution(db, company_id),
-        job_health=await _get_job_health_points(db, company_id),
         outreach=await _get_outreach_summary(db, company_id),
         velocity=await _get_recruiter_velocity(db, company_id),
     )
@@ -1365,7 +1302,6 @@ async def get_recruiter_admin_dashboard_analytics(
         ),
         membership_breakdown=membership_breakdown,
         team_activity=await _get_team_activity(db, company_id),
-        portfolio_health=await _get_job_health_points(db, company_id),
         velocity=await _get_recruiter_velocity(db, company_id),
     )
     await redis_service.set(cache_key, response.model_dump_json(), ttl_seconds=300)

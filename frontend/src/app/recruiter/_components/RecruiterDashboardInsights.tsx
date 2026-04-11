@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  type JobHealthPoint,
   type RecruiterDashboardAnalyticsData,
   type RecruiterDashboardAnalyticsTimeseriesPoint,
 } from '@/store/services/dashboardApi'
@@ -262,20 +261,6 @@ function InsightsSkeleton() {
           </div>
         </div>
       </div>
-
-      <div className="dash-card recruiter-dashboard__jobs-card" aria-hidden="true">
-        <div className="dash-card__header">
-          <div>
-            <div className="dash-card__title">Job health snapshot</div>
-            <div className="dash-card__subtitle">
-              Applicant volume and downstream conversion on active jobs.
-            </div>
-          </div>
-        </div>
-        <div className="dash-card__body recruiter-dashboard__analytics-body">
-          <div className="skeleton-block dashboard-analytics__chart-skeleton dashboard-analytics__chart-skeleton--tall" />
-        </div>
-      </div>
     </div>
   )
 }
@@ -416,57 +401,6 @@ function ApplicationsTrendChart({ data }: { data: RecruiterDashboardAnalyticsTim
           return <span key={point.date}>{shouldShowLabel ? formatShortDate(point.date) : ''}</span>
         })}
       </div>
-    </div>
-  )
-}
-
-function JobHealthRows({ rows }: { rows: JobHealthPoint[] }) {
-  return (
-    <div className="dashboard-job-health">
-      {rows.map((row) => {
-        const max = Math.max(row.applications, 1)
-        return (
-          <div key={row.job_id} className="dashboard-job-health__row">
-            <div className="dashboard-job-health__titleRow">
-              <div>
-                <div className="dashboard-job-health__title">{row.job_title}</div>
-                <div className="dashboard-job-health__meta">
-                  {row.days_until_expiry == null
-                    ? 'No expiry'
-                    : row.days_until_expiry <= 0
-                      ? 'Expires today'
-                      : `${row.days_until_expiry} day${row.days_until_expiry === 1 ? '' : 's'} left`}
-                </div>
-              </div>
-              <div className="dashboard-job-health__stats">
-                <span>{row.applications} applicants</span>
-                <span>{row.shortlisted} shortlisted</span>
-                <span>{row.interviews} interviews</span>
-                <span>{row.offers} offers</span>
-              </div>
-            </div>
-
-            <div className="dashboard-job-health__bar">
-              <span
-                className="dashboard-job-health__fill dashboard-job-health__fill--applications"
-                style={{ width: `${(row.applications / max) * 100}%` }}
-              />
-              <span
-                className="dashboard-job-health__fill dashboard-job-health__fill--shortlisted"
-                style={{ width: `${(row.shortlisted / max) * 100}%` }}
-              />
-              <span
-                className="dashboard-job-health__fill dashboard-job-health__fill--interviews"
-                style={{ width: `${(row.interviews / max) * 100}%` }}
-              />
-              <span
-                className="dashboard-job-health__fill dashboard-job-health__fill--offers"
-                style={{ width: `${(row.offers / max) * 100}%` }}
-              />
-            </div>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -706,19 +640,6 @@ export default function RecruiterDashboardInsights({
         </div>
       </div>
 
-      <div className="dash-card recruiter-dashboard__jobs-card">
-        <div className="dash-card__header">
-          <div>
-            <div className="dash-card__title">Job health snapshot</div>
-            <div className="dash-card__subtitle">
-              Applicant volume and downstream conversion on active jobs.
-            </div>
-          </div>
-        </div>
-        <div className="dash-card__body recruiter-dashboard__analytics-body">
-          <JobHealthRows rows={analytics.job_health} />
-        </div>
-      </div>
     </div>
   )
 }

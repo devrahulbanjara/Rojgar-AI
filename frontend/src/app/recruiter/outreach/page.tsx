@@ -137,6 +137,18 @@ export default function RecruiterOutreachPage() {
     [jobs],
   )
 
+  const defaultJobId = useMemo(() => {
+    const expiredJobs = [...jobs]
+      .filter((job) => job.status === 'expired')
+      .sort((left, right) => {
+        const leftExpiry = left.expires_at ? new Date(left.expires_at).getTime() : 0
+        const rightExpiry = right.expires_at ? new Date(right.expires_at).getTime() : 0
+        return rightExpiry - leftExpiry
+      })
+
+    return expiredJobs[0]?.id ?? ''
+  }, [jobs])
+
   const effectiveJobScope =
     jobScope === 'finalized' && finalizedJobs.length === 0 ? 'all' : jobScope
   const visibleJobs = useMemo(
@@ -144,7 +156,10 @@ export default function RecruiterOutreachPage() {
     [effectiveJobScope, finalizedJobs, jobs],
   )
 
-  const activeJob = visibleJobs.find((job) => job.id === selectedJobId) ?? visibleJobs[0] ?? null
+  const activeJob =
+    visibleJobs.find((job) => job.id === selectedJobId) ??
+    jobs.find((job) => job.id === defaultJobId) ??
+    null
 
   const {
     data: applicationsResp,
@@ -241,6 +256,18 @@ export default function RecruiterOutreachPage() {
       })),
     [draftByApplicationId, visibleApplications],
   )
+
+  useEffect(() => {
+    if (!selectedJobId && defaultJobId) {
+      setSelectedJobId(defaultJobId)
+
+      // If the default job is not in finalized jobs, switch scope to "all"
+      const isInFinalizedJobs = finalizedJobs.some((job) => job.id === defaultJobId)
+      if (!isInFinalizedJobs && finalizedJobs.length > 0) {
+        setJobScope('all')
+      }
+    }
+  }, [defaultJobId, selectedJobId, finalizedJobs])
 
   useEffect(() => {
     if (!candidateItems.length) {
@@ -659,61 +686,6 @@ export default function RecruiterOutreachPage() {
                       </div>
                     ) : null}
                   </div>
-                </div>
-              </div>
-            ) : allSent ? (
-              <div className={`dash-card ${styles.singleStateCard}`}>
-                <div className="dash-card__header">
-                  <div>
-                    <div className="dash-card__title">Outreach sent</div>
-                    <div className="dash-card__subtitle">
-                      Every outreach email for this job has already been sent.
-                    </div>
-                  </div>
-                </div>
-                <div className={`dash-card__body dash-card__body--no-top ${styles.sentList}`}>
-                  {candidateItems
-                    .filter((candidate) => candidate.draft?.is_sent)
-                    .map((candidate) => (
-                      <div key={candidate.application.id} className={`app-item ${styles.sentRow}`}>
-                        <div className="app-item__body">
-                          <div className={styles.draftRow}>
-                            <MediaBadge
-                              src={candidate.application.applicant_avatar_url}
-                              alt={candidate.application.applicant_name}
-                              fallback={getInitials(candidate.application.applicant_name)}
-                              className={styles.draftAvatar}
-                              sizes="46px"
-                            />
-                            <div className={styles.draftBody}>
-                              <div className={styles.draftTop}>
-                                <div className={styles.draftName}>
-                                  {candidate.application.applicant_name}
-                                </div>
-                                <span className="badge badge--success">Sent</span>
-                              </div>
-                              <div className={`app-item__meta ${styles.listMeta}`}>
-                                <span className={styles.draftMetaText}>
-                                  {candidate.application.applicant_email}
-                                </span>
-                                <span className="badge badge--gray">
-                                  {getApplicationLabel(
-                                    getDerivedOutreachStatus(candidate.application, {
-                                      finalShortlistCompleted:
-                                        activeJob?.final_shortlist_completed ?? false,
-                                      shortlistThreshold: activeJob?.shortlist_threshold ?? 70,
-                                    }) ?? 'rejected',
-                                  )}
-                                </span>
-                                <span className="badge badge--gray">
-                                  Sent {formatTimestamp(candidate.draft?.updated_at ?? '')}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                 </div>
               </div>
             ) : (
