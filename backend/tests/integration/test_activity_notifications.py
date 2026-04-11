@@ -215,6 +215,20 @@ class TestActivityAndNotifications:
             actor_user_id=recruiter.id,
         )
         interview_event.created_at = now - timedelta(days=1)
+        recruiter_applied_event = await create_activity_event(
+            db,
+            event_type="application_received",
+            audience="recruiter",
+            title="New applicant for Platform Engineer",
+            description="Casey Candidate applied to Platform Engineer.",
+            href=f"/recruiter/candidates/{application.id}",
+            user_id=None,
+            company_id=company.id,
+            application_id=application.id,
+            job_id=job.id,
+            actor_user_id=candidate.id,
+        )
+        recruiter_applied_event.created_at = now - timedelta(days=5)
         await db.commit()
 
         candidate_detail_resp = await client.get(
@@ -241,12 +255,20 @@ class TestActivityAndNotifications:
         assert candidate_detail["interview"]["title"] == "Technical Interview"
         assert candidate_detail["resume"]["resume_name"] == "Timeline Resume"
         assert candidate_detail["next_step_hint"] is not None
-        assert len(candidate_detail["timeline"]) >= 2
+        assert [event["event_type"] for event in candidate_detail["timeline"]] == [
+            "application_applied",
+            "interview_booked",
+        ]
         assert [event["event_type"] for event in timeline] == [
             "application_applied",
             "interview_booked",
         ]
-        assert recruiter_detail["timeline"][0]["event_type"] == "application_applied"
+        assert [event["event_type"] for event in recruiter_detail["timeline"]] == [
+            "application_received"
+        ]
+        assert recruiter_detail["timeline"][0]["description"] == (
+            "Casey Candidate applied to Platform Engineer."
+        )
         assert recruiter_detail["outreach_audit"][0]["draft_id"] == str(draft.id)
         assert recruiter_detail["outreach_audit"][0]["sent_by_user_id"] == str(
             recruiter.id

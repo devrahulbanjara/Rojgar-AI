@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from collections.abc import AsyncIterator
 from typing import Any, Type, TypeVar
 
@@ -14,6 +15,46 @@ from app.core.config import settings
 
 
 SchemaT = TypeVar("SchemaT", bound=BaseModel)
+
+
+def _walk_groq_strict_schema(node: Any) -> None:
+    if isinstance(node, list):
+        for item in node:
+            _walk_groq_strict_schema(item)
+        return
+
+    if not isinstance(node, dict):
+        return
+
+    properties = node.get("properties")
+    if isinstance(properties, dict):
+        # Groq strict json_schema expects every declared property to appear in required.
+        node["required"] = list(properties.keys())
+        node["additionalProperties"] = False
+        for value in properties.values():
+            _walk_groq_strict_schema(value)
+
+    for key in ("$defs", "definitions"):
+        definitions = node.get(key)
+        if isinstance(definitions, dict):
+            for value in definitions.values():
+                _walk_groq_strict_schema(value)
+
+    for key in ("items", "additionalProperties", "not"):
+        value = node.get(key)
+        if isinstance(value, (dict, list)):
+            _walk_groq_strict_schema(value)
+
+    for key in ("anyOf", "allOf", "oneOf", "prefixItems"):
+        value = node.get(key)
+        if isinstance(value, list):
+            _walk_groq_strict_schema(value)
+
+
+def _to_groq_strict_json_schema(schema_model: Type[SchemaT]) -> dict[str, Any]:
+    schema = deepcopy(schema_model.model_json_schema())
+    _walk_groq_strict_schema(schema)
+    return schema
 
 
 def _extract_groq_error_message(exc: Exception) -> str:
@@ -102,7 +143,7 @@ class AIService:
         Returns:
             Validated instance of schema_model
         """
-        schema = schema_model.model_json_schema()
+        schema = _to_groq_strict_json_schema(schema_model)
 
         # Groq-specific implementation (swap this block for OpenAI/Anthropic)
         try:

@@ -64,9 +64,7 @@ async def invalidate_user_read_caches(db: AsyncSession, user: User) -> None:
     await redis_service.delete(f"company:recruiters:{company_id}")
 
 
-async def _get_active_company_id_for_user(
-    db: AsyncSession, user_id
-) -> str | None:
+async def _get_active_company_id_for_user(db: AsyncSession, user_id) -> str | None:
     return await db.scalar(
         select(CompanyMembership.company_id).where(
             CompanyMembership.user_id == user_id,

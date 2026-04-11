@@ -121,16 +121,16 @@ export default function StepGapResults({
   return (
     <div className={styles.applyModal__results}>
       <div className={styles.applyModal__hero}>
-        <div className={styles.applyModal__heroScore}>
-          <ScoreRing score={result.overall_score_estimate} />
-          <span
-            className={`${styles.applyModal__scoreBadge} ${scoreTone(result.overall_score_estimate)}`}
-          >
-            Match estimate
-          </span>
-        </div>
+        <ScoreRing score={result.overall_score_estimate} />
         <div className={styles.applyModal__heroCopy}>
-          <h3 className={styles.applyModal__heroTitle}>How your resume looks right now</h3>
+          <div className={styles.applyModal__heroRow}>
+            <h3 className={styles.applyModal__heroTitle}>How your resume looks right now</h3>
+            <span
+              className={`${styles.applyModal__scoreBadge} ${scoreTone(result.overall_score_estimate)}`}
+            >
+              Match estimate
+            </span>
+          </div>
           <p className={styles.applyModal__verdict}>{result.overall_verdict}</p>
         </div>
       </div>
@@ -151,30 +151,33 @@ export default function StepGapResults({
             </section>
           )}
 
-          <TextList title="Things to add to your summary" items={result.things_to_add_to_summary} />
           <TextList
-            title="Things to remove or de-emphasize"
+            title="Consider adding to your summary"
+            items={result.things_to_add_to_summary}
+          />
+          <TextList
+            title="Consider removing or de-emphasizing"
             items={result.things_to_remove_or_deemphasize}
           />
         </div>
 
         <div className={styles.applyModal__resultsColumn}>
-          <GapList items={result.missing_skills} title="Missing skills" />
+          <GapList items={result.missing_skills} title="Skills you're missing" />
         </div>
       </div>
 
-      <GapList items={result.experience_gaps} title="Experience gaps" />
+      <GapList items={result.experience_gaps} title="Experience you're missing" />
 
-      <div className={styles.applyModal__ctaStack}>
-        <button className="btn btn--primary" onClick={onAutoPatch} type="button">
-          Let AI update my resume
+      <div className={styles.applyModal__ctaBar}>
+        <button className="btn btn--ghost" onClick={onBack} type="button">
+          Back
         </button>
-        <div className={styles.applyModal__stepActions}>
-          <button className="btn btn--ghost" onClick={onBack} type="button">
-            Back
-          </button>
+        <div className={styles.applyModal__ctaActions}>
           <button className="btn btn--outline" onClick={onApplyAnyway} type="button">
             Apply with current resume
+          </button>
+          <button className="btn btn--primary" onClick={onAutoPatch} type="button">
+            Let AI update my resume
           </button>
         </div>
       </div>

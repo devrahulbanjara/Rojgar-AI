@@ -124,12 +124,13 @@ async def list_application_timeline(
     db: AsyncSession,
     *,
     application_id: str,
+    audience: str | None = None,
 ) -> list[ActivityEventResponse]:
-    result = await db.execute(
-        select(ActivityEvent)
-        .where(ActivityEvent.application_id == application_id)
-        .order_by(ActivityEvent.created_at.asc())
-    )
+    stmt = select(ActivityEvent).where(ActivityEvent.application_id == application_id)
+    if audience is not None:
+        stmt = stmt.where(ActivityEvent.audience == audience)
+
+    result = await db.execute(stmt.order_by(ActivityEvent.created_at.asc()))
     return [
         ActivityEventResponse.model_validate(item) for item in result.scalars().all()
     ]
