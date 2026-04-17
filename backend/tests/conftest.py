@@ -2,6 +2,7 @@ import asyncio
 import os
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -12,12 +13,27 @@ from app.core.config import settings
 from app.core.database import Base, get_db
 
 
+@pytest.fixture(scope="session")
+def monkeypatch_session():
+    mp = MonkeyPatch()
+    yield mp
+    mp.undo()
+
+
 @pytest.fixture(scope="session", autouse=True)
-def disable_side_effects():
+def disable_side_effects(monkeypatch_session):
     original_send_emails = settings.send_emails
     original_redis_enabled = settings.redis_enabled
     settings.send_emails = False
     settings.redis_enabled = False
+
+    import app.infrastructures.qdrant.service as _qdrant_mod
+
+    async def _mock_search_jobs(**_kwargs):
+        return [], 0
+
+    monkeypatch_session.setattr(_qdrant_mod.qdrant_service, "search_jobs", _mock_search_jobs)
+
     yield
     settings.send_emails = original_send_emails
     settings.redis_enabled = original_redis_enabled
