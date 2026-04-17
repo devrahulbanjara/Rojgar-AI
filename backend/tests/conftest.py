@@ -32,7 +32,9 @@ def disable_side_effects(monkeypatch_session):
     async def _mock_search_jobs(**_kwargs):
         return [], 0
 
-    monkeypatch_session.setattr(_qdrant_mod.qdrant_service, "search_jobs", _mock_search_jobs)
+    monkeypatch_session.setattr(
+        _qdrant_mod.qdrant_service, "search_jobs", _mock_search_jobs
+    )
 
     yield
     settings.send_emails = original_send_emails
