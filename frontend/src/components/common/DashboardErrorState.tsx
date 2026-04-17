@@ -20,9 +20,7 @@ export default function DashboardErrorState({
     <div className="dash-card dashboard-error-state">
       <div className="dash-card__body">
         <div className="dash-empty-state dashboard-error-state__inner">
-          <div className="dashboard-error-state__title">
-            {title ?? 'Unable to load dashboard'}
-          </div>
+          <div className="dashboard-error-state__title">{title ?? 'Unable to load dashboard'}</div>
           <p className="dashboard-error-state__description">
             Something went wrong while loading this data.
           </p>

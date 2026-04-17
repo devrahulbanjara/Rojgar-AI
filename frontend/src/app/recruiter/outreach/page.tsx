@@ -301,8 +301,6 @@ export default function RecruiterOutreachPage() {
   const savedDraftCount = drafts.length
   const hasEligibleCandidates = candidatesReadyCount > 0
   const hasDrafts = savedDraftCount > 0
-  const allSent =
-    hasEligibleCandidates && candidateItems.every((candidate) => Boolean(candidate.draft?.is_sent))
   const hasUnsentDrafts = drafts.some((draft) => !draft.is_sent)
   const canSendAll = drafts.some((draft) => !draft.is_sent && !draft.is_discarded)
 

@@ -18,9 +18,69 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: convexhire_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     defaults:
       run:
         working-directory: backend
+
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://testuser:testpassword@localhost:5432/convexhire_test
+      SECRET_KEY: ci-secret-key-not-used-in-production
+      ALGORITHM: HS256
+      ENVIRONMENT: test
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:8000
+      SEND_EMAILS: "false"
+      REDIS_ENABLED: "false"
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: "587"
+      SMTP_USER: noreply@example.com
+      SMTP_PASSWORD: unused
+      MAIL_FROM: noreply@example.com
+      GOOGLE_CLIENT_ID: unused
+      GOOGLE_CLIENT_SECRET: unused
+      GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
+      DB_USER: testuser
+      DB_PASSWORD: testpassword
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: convexhire_test
+      TEST_DB_USER: testuser
+      TEST_DB_PASSWORD: testpassword
+      TEST_DB_HOST: localhost
+      TEST_DB_PORT: "5432"
+      TEST_DB_NAME: convexhire_test
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+      AWS_ACCESS_KEY_ID_SHORTLISTING: ${{ secrets.AWS_ACCESS_KEY_ID_SHORTLISTING }}
+      AWS_SECRET_ACCESS_KEY_SHORTLISTING: ${{ secrets.AWS_SECRET_ACCESS_KEY_SHORTLISTING }}
+      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+      QDRANT_COLLECTION_NAME: convexhire
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      LANGSMITH_TRACING: "false"
+      LANGSMITH_ENDPOINT: https://api.smith.langchain.com
+      LANGSMITH_API_KEY: unused
+      LANGSMITH_PROJECT: ConvexHire
+      LLAMA_CLOUD_API_KEY: unused
+      TAVILY_API_KEY: unused
+      GOOGLE_API_KEY: unused
 
     steps:
       - name: Checkout code
@@ -40,54 +100,8 @@ jobs:
       - name: Check code formatting
         run: uvx ruff format --check
 
-  #      - name: Validate required secrets
-  #        run: |
-  #          missing=()
-  #          [[ -z "$SECRET_KEY" ]]       && missing+=(SECRET_KEY)
-  #          [[ -z "$TEST_DB_USER" ]]     && missing+=(TEST_DB_USER)
-  #          [[ -z "$TEST_DB_PASSWORD" ]] && missing+=(TEST_DB_PASSWORD)
-  #          [[ -z "$TEST_DB_HOST" ]]     && missing+=(TEST_DB_HOST)
-  #          [[ -z "$TEST_DB_NAME" ]]     && missing+=(TEST_DB_NAME)
-  #          if [[ ${#missing[@]} -gt 0 ]]; then
-  #            echo "Missing required GitHub secrets: ${missing[*]}"
-  #            echo "Add them at: Settings → Secrets and variables → Actions"
-  #            exit 1
-  #          fi
-  #          echo "All required secrets are present"
-  #        env:
-  #          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  #          TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
-  #          TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-  #          TEST_DB_HOST: ${{ secrets.TEST_DB_HOST }}
-  #          TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
-
-  #      - name: Integration tests
-  #        run: uv run pytest -v
-  #        env:
-  #          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  #          ALGORITHM: HS256
-  #          ENVIRONMENT: test
-  #          FRONTEND_URL: http://localhost:3000
-  #          BACKEND_URL: http://localhost:8000
-  #          SEND_EMAILS: false
-  #          SMTP_HOST: smtp.gmail.com
-  #          SMTP_PORT: 587
-  #          SMTP_USER: ${{ secrets.SMTP_USER }}
-  #          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-  #          MAIL_FROM: ${{ secrets.MAIL_FROM }}
-  #          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-  #          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-  #          GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
-  #          DB_USER: ${{ secrets.TEST_DB_USER }}
-  #          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-  #          DB_HOST: ${{ secrets.TEST_DB_HOST }}
-  #          DB_PORT: ${{ secrets.TEST_DB_PORT }}
-  #          DB_NAME: ${{ secrets.TEST_DB_NAME }}
-  #          TEST_DB_USER: ${{ secrets.TEST_DB_USER }}
-  #          TEST_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-  #          TEST_DB_HOST: ${{ secrets.TEST_DB_HOST }}
-  #          TEST_DB_PORT: ${{ secrets.TEST_DB_PORT }}
-  #          TEST_DB_NAME: ${{ secrets.TEST_DB_NAME }}
+      - name: Run tests
+        run: uv run pytest -v
 
   frontend:
     name: Frontend
